@@ -258,6 +258,28 @@ f:com.intellij.openapi.editor.impl.EditorImpl
 - hashCode():I
 f:com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentationKt
 - *sf:createCodeInsightContextPresentation(com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.openapi.project.Project):com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentation
+*f:com.intellij.openapi.editor.inlay.EmbeddedEditorInlay
+- com.intellij.openapi.Disposable
+- dispose():V
+- f:getEmbeddedEditor():com.intellij.openapi.editor.Editor
+*f:com.intellij.openapi.editor.inlay.EmbeddedEditorInlayBuilder
+- f:editor(com.intellij.openapi.editor.Document,com.intellij.openapi.vfs.VirtualFile,Z,kotlin.jvm.functions.Function1):com.intellij.openapi.editor.Editor
+- bs:editor$default(com.intellij.openapi.editor.inlay.EmbeddedEditorInlayBuilder,com.intellij.openapi.editor.Document,com.intellij.openapi.vfs.VirtualFile,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.editor.Editor
+- f:getAlignment():com.intellij.openapi.editor.ComponentInlayAlignment
+- f:getCloseOnEscape():Z
+- f:getPriority():I
+- f:getRelatesToPrecedingText():Z
+- f:getShowAbove():Z
+- f:header(kotlin.jvm.functions.Function1):V
+- bs:header$default(com.intellij.openapi.editor.inlay.EmbeddedEditorInlayBuilder,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- f:setAlignment(com.intellij.openapi.editor.ComponentInlayAlignment):V
+- f:setCloseOnEscape(Z):V
+- f:setPriority(I):V
+- f:setRelatesToPrecedingText(Z):V
+- f:setShowAbove(Z):V
+- f:style(kotlin.jvm.functions.Function1):V
+*f:com.intellij.openapi.editor.inlay.EmbeddedEditorInlayKt
+- *sf:addEmbeddedEditorInlay(com.intellij.openapi.editor.Editor,I,kotlin.jvm.functions.Function1):com.intellij.openapi.editor.inlay.EmbeddedEditorInlay
 *:com.intellij.openapi.editor.markup.FillingLineMarkerRenderer
 - com.intellij.openapi.editor.markup.LineMarkerRendererEx
 - getIcon():javax.swing.Icon

@@ -20,8 +20,8 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-@ApiStatus.Internal
-class EditorInlayBuilder internal constructor(private val hostEditor: Editor) {
+@ApiStatus.Experimental
+class EmbeddedEditorInlayBuilder internal constructor(private val hostEditor: Editor) {
   var alignment: ComponentInlayAlignment = ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN
 
   var showAbove: Boolean = false
@@ -41,7 +41,7 @@ class EditorInlayBuilder internal constructor(private val hostEditor: Editor) {
     file: VirtualFile? = null,
     viewer: Boolean = true,
     settings: EditorSettings.() -> Unit = {},
-  ): EditorEx {
+  ): Editor {
     check(content == null) { "Inlay content is already set" }
     val editorFactory = EditorFactory.getInstance()
     val editor = when {
@@ -66,7 +66,7 @@ class EditorInlayBuilder internal constructor(private val hostEditor: Editor) {
     style.configure()
   }
 
-  internal fun build(offset: Int): EditorInlay? {
+  internal fun build(offset: Int): EmbeddedEditorInlay? {
     val content = requireNotNull(content) { "Inlay content is not set: call editor()" }
     val style = style.build(hostEditor.colorsScheme.defaultBackground)
     val panel = EditorInlayPanel(style, header?.build(embeddedFile), content)
@@ -80,7 +80,7 @@ class EditorInlayBuilder internal constructor(private val hostEditor: Editor) {
       return null
     }
 
-    val editorInlay = EditorInlay(inlay, panel, embeddedEditor)
+    val editorInlay = EmbeddedEditorInlay(inlay, panel, embeddedEditor)
     panel.closeHandler = { Disposer.dispose(editorInlay) }
     EditorUtil.disposeWithEditor(hostEditor, editorInlay)
     if (closeOnEscape) {

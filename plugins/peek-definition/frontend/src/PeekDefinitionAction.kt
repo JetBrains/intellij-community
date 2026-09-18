@@ -1,12 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.hint.actions
+package com.intellij.peek.definition.frontend
 
 import com.intellij.codeInsight.hint.ImplementationViewSession
+import com.intellij.codeInsight.hint.actions.ShowImplementationsAction
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class PeekDefinitionAction : ShowImplementationsAction(), ActionRemoteBehaviorSpecification.Frontend {
+internal class PeekDefinitionAction : ShowImplementationsAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun showImplementations(
     session: ImplementationViewSession,
     invokedFromEditor: Boolean,

@@ -1668,6 +1668,8 @@ plugins/minimap/core
 plugins/minimap/plugin
 plugins/ml-local-models
 plugins/ml-local-models/java
+plugins/peek-definition/frontend
+plugins/peek-definition/plugin
 plugins/performanceTesting/backend
 plugins/performanceTesting/commands-model
 plugins/performanceTesting/core

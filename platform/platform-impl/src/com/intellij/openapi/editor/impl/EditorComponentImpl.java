@@ -1149,7 +1149,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         result.add(new PropertyBean("Inlay Gutter Renderer", inlay.getGutterIconRenderer(), true));
       }
       result.add(new PropertyBean("Inlay Properties", inlay.getProperties()));
-      return new UiInspectorInfo("EditorInlay", result, null);
+      return new UiInspectorInfo("EmbeddedEditorInlay", result, null);
     }
     return null;
   }

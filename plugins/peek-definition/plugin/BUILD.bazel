@@ -1,0 +1,55 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.peek.definition.plugin` start
+dev_dist_plugin(
+    content_modules = ["intellij.peek.definition.frontend"],
+    main_module = "intellij.peek.definition.plugin",
+)
+### auto-generated section `dev intellij.peek.definition.plugin` end
+
+### auto-generated section `build intellij.peek.definition.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.peek.definition.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.peek.definition.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    content_modules = ["//plugins/peek-definition/frontend"],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.peek.definition.plugin` end
+
+### auto-generated section `iml intellij.peek.definition.plugin` start
+exports_files(
+    [
+        "intellij.peek.definition.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.peek.definition.plugin` end

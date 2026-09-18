@@ -1,15 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.hint.actions
+package com.intellij.peek.definition.frontend
 
 import com.intellij.codeInsight.hint.ImplementationViewElement
 import com.intellij.codeInsight.hint.ImplementationViewSession
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.inlay.EditorInlay
-import com.intellij.openapi.editor.inlay.addEditorInlay
+import com.intellij.openapi.editor.inlay.EmbeddedEditorInlay
+import com.intellij.openapi.editor.inlay.addEmbeddedEditorInlay
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -18,12 +18,10 @@ import com.intellij.psi.PsiBinaryFile
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.SwingUtilities
 
-@ApiStatus.Internal
-object PeekDefinitionManager {
-  private val ACTIVE_PEEK = Key.create<EditorInlay>("peek.definition.active")
+internal object PeekDefinitionManager {
+  private val ACTIVE_PEEK = Key.create<EmbeddedEditorInlay>("peek.definition.active")
 
   @RequiresEdt
   fun show(session: ImplementationViewSession): Boolean {
@@ -34,16 +32,16 @@ object PeekDefinitionManager {
     return true
   }
 
-  fun current(editor: Editor): EditorInlay? = editor.getUserData(ACTIVE_PEEK)
+  fun current(editor: Editor): EmbeddedEditorInlay? = editor.getUserData(ACTIVE_PEEK)
 
-  private fun show(hostEditor: EditorEx, implementation: ImplementationViewElement): EditorInlay? {
-    val target = ReadAction.computeBlocking<Target?, RuntimeException> {
-      implementation.elementForShowUsages?.let(Target::from)
+  private fun show(hostEditor: EditorEx, implementation: ImplementationViewElement): EmbeddedEditorInlay? {
+    val target = runReadActionBlocking {
+      implementation.elementForShowUsages?.let(Target.Companion::from)
     } ?: return null
     return show(hostEditor, target)
   }
 
-  private fun show(hostEditor: EditorEx, target: Target): EditorInlay? {
+  private fun show(hostEditor: EditorEx, target: Target): EmbeddedEditorInlay? {
     if (hostEditor.isDisposed || hostEditor.editorKind == EditorKind.PREVIEW) return null
 
     val document = FileDocumentManager.getInstance().getDocument(target.file) ?: return null
@@ -52,7 +50,7 @@ object PeekDefinitionManager {
     val hostOffset = hostEditor.caretModel.offset.coerceIn(0, hostDocument.textLength)
     val anchorOffset = hostDocument.getLineEndOffset(hostDocument.getLineNumber(hostOffset))
 
-    val peek = hostEditor.addEditorInlay(anchorOffset) {
+    val peek = hostEditor.addEmbeddedEditorInlay(anchorOffset) {
       val targetEditor = editor(document, target.file, viewer = !target.file.isWritable || !document.isWritable) {
         isLineNumbersShown = false
       }
@@ -82,7 +80,7 @@ object PeekDefinitionManager {
     return peek
   }
 
-  private fun scrollToTarget(editor: EditorEx) {
+  private fun scrollToTarget(editor: Editor) {
     editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
     editor.scrollingModel.scrollHorizontally(0)
   }

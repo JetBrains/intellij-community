@@ -1394,6 +1394,8 @@
       <module fileurl="file://$PROJECT_DIR$/notebooks/visualization/intellij.notebooks.visualization.iml" filepath="$PROJECT_DIR$/notebooks/visualization/intellij.notebooks.visualization.iml" />
       <module fileurl="file://$PROJECT_DIR$/notebooks/visualization/testFramework/intellij.notebooks.visualization.testFramework.iml" filepath="$PROJECT_DIR$/notebooks/visualization/testFramework/intellij.notebooks.visualization.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/notebooks/visualization/intellij.notebooks.visualization.tests.iml" filepath="$PROJECT_DIR$/notebooks/visualization/intellij.notebooks.visualization.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/peek-definition/frontend/intellij.peek.definition.frontend.iml" filepath="$PROJECT_DIR$/plugins/peek-definition/frontend/intellij.peek.definition.frontend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/peek-definition/plugin/intellij.peek.definition.plugin.iml" filepath="$PROJECT_DIR$/plugins/peek-definition/plugin/intellij.peek.definition.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/performanceTesting/core/intellij.performanceTesting.iml" filepath="$PROJECT_DIR$/plugins/performanceTesting/core/intellij.performanceTesting.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/performanceTesting/backend/intellij.performanceTesting.backend.iml" filepath="$PROJECT_DIR$/plugins/performanceTesting/backend/intellij.performanceTesting.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/performanceTesting/debugger/intellij.performanceTesting.debugger.iml" filepath="$PROJECT_DIR$/plugins/performanceTesting/debugger/intellij.performanceTesting.debugger.iml" />
