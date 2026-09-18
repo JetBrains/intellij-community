@@ -1016,6 +1016,7 @@
 
     <group id="WelcomeScreenRecentProjectActionGroup" searchable="false">
       <reference ref="WelcomeScreen.OpenSelected"/>
+      <reference ref="WelcomeScreen.UpdateProject"/>
       <reference ref="WelcomeScreen.RevealIn"/>
       <reference ref="WelcomeScreen.CopyProjectPath"/>
       <separator/>

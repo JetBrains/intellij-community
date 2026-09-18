@@ -380,6 +380,9 @@
     <extensionPoint qualifiedName="com.intellij.recentProjectsBranchesProvider"
                     interface="com.intellij.ide.vcs.RecentProjectsBranchesProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.recentProjectUpdater"
+                    interface="com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectUpdater"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.recentProjectsProvider"
                     interface="com.intellij.ide.RecentProjectProvider"
                     dynamic="true"/>
@@ -487,6 +490,11 @@
       key="ide.merge.external.changes"
       defaultValue="true"
       description="Merge an external file change into the unsaved changes, for a client that asks for it. Turning this off makes such a client keep the unsaved changes, and it takes effect at once. Turning it on reaches a document once the document loads or saves again."
+    />
+    <registryKey
+      key="ide.welcome.screen.recent.project.update"
+      defaultValue="false"
+      description="Show the 'Update Project' action for a recent version control project on the welcome screen"
     />
     <registryKey
       key="ide.hide.default.project.directory.for.isolated.workspace"

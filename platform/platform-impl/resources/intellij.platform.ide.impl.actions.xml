@@ -572,6 +572,8 @@
     <action id="OpenEditorInOppositeTabGroup" class="com.intellij.openapi.fileEditor.impl.OpenEditorInOppositeTabGroupAction"/>
     <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.ide.actions.OpenFileAction$OnWelcomeScreen"/>
     <action id="WelcomeScreen.OpenSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.OpenSelectedProjectsAction"/>
+    <action id="WelcomeScreen.UpdateProject" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.UpdateRecentProjectAction"
+            icon="AllIcons.Actions.CheckOut"/>
     <action id="WelcomeScreen.RevealIn" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RevealProjectDirAction"/>
     <action id="WelcomeScreen.CopyProjectPath" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.CopyProjectPathAction"
             use-shortcut-of="CopyPaths"/>

@@ -869,6 +869,7 @@
                         testServiceImplementation="git4idea.commit.signing.GpgAgentPathsLocatorTestFactory"/>
 
     <recentProjectsBranchesProvider implementation="git4idea.repo.GitRecentProjectsBranchesProvider"/>
+    <recentProjectUpdater implementation="git4idea.update.GitRecentProjectUpdater"/>
 
     <vcs.taskHandler implementation="git4idea.GitTaskHandler"/>
 

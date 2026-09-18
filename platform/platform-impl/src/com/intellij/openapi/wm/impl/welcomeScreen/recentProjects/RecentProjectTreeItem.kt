@@ -84,6 +84,9 @@ internal data class RecentProjectItem(
   companion object {
     fun openProjectAndLogRecent(file: Path, options: OpenProjectTask, projectGroup: ProjectGroup?) {
       service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(ClientId.coroutineContext()) {
+        // Dispose the frameless projects the welcome screen holds before opening the real project, so a held instance does not collide with it
+        // (for example on the VCS log). Disposing during or after the open is too late.
+        RecentProjectsService.getInstance().disposeHeldProjects()
         RecentProjectsManagerBase.getInstanceEx().openProject(file, options)
         for (extension in ProjectDetector.EXTENSION_POINT_NAME.extensions) {
           extension.logRecentProjectOpened(projectGroup)

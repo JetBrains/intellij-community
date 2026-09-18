@@ -279,6 +279,8 @@ public class GitMergeUpdater extends GitUpdater {
 
     @Override protected boolean proceedAfterAllMerged() throws VcsException {
       new GitMerger(myProject).mergeCommit(myRoot);
+      // Update the repository state: only a file event drops MERGING, which GitRecentProjectWatcher waits for.
+      myRoot.refresh(false, true);
       return true;
     }
   }

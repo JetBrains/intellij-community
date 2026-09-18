@@ -160,6 +160,8 @@ public final class GitRebaser {
       myProgressIndicator.setText(GitBundle.message("rebase.progress.indicator.title"));
       GitCommandResult result = myGit.runCommand(rh);
       myProgressIndicator.setText(oldText);
+      // Update the repository state: only a file event drops REBASING, which GitRecentProjectWatcher waits for.
+      root.refresh(false, true);
       if (result.success()) return true;
 
       return handleRebaseContinueFailure(root, result, rebaseConflictDetector);

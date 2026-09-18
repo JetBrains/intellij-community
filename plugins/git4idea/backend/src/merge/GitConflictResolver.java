@@ -183,8 +183,11 @@ public class GitConflictResolver {
 
       Collection<VirtualFile> unmergedFilesAfterResolve = getUnmergedFiles(myProject, myRoots);
       if (unmergedFilesAfterResolve.isEmpty()) {
-        LOG.info("merge no more unmerged files");
-        return mergeDialogInvokedFromNotification || proceedAfterAllMerged();
+        // The notification path does nothing after the merge, unless the user asked to finish it with "Accept and Finish".
+        if (mergeDialogInvokedFromNotification && !myShouldFinishMergeAfterDialog) {
+          return true;
+        }
+        return proceedAfterAllMerged();
       }
 
       LOG.info("mergeFiles unmerged files remain: " + unmergedFilesAfterResolve);
