@@ -51,6 +51,7 @@ jvm_library(
         "//libraries/hash4j",
         "//platform/eel-impl-base",
         "//platform/external-process-auth-helper/rt",
+        "//platform/util-ex",
     ],
 )
 
@@ -84,6 +85,7 @@ jvm_library(
         "//libraries/hash4j:hash4j_test_lib",
         "//platform/eel-impl-base:eel-impl-base_test_lib",
         "//platform/external-process-auth-helper/rt:rt_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.eel.impl` end
