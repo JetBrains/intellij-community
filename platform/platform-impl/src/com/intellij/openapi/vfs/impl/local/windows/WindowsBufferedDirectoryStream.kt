@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local.windows
 
+import com.intellij.util.system.WindowsException
+import com.intellij.util.system.WindowsReparsePoint
+import com.intellij.util.system.windowsPathString
 import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
 import java.io.IOException
@@ -21,7 +24,6 @@ import kotlin.io.path.name
 import kotlin.io.path.pathString
 
 private const val STANDARD_BUFFER_SIZE = 4096L
-private const val MAX_REPARSE_POINT_DATA_SIZE = 16384L
 
 @ApiStatus.Internal
 class WindowsBufferedDirectoryStream @Throws(IOException::class) constructor(val directory: Path) : DirectoryStream<com.intellij.openapi.util.Pair<Path, BasicFileAttributes>> {
@@ -87,50 +89,12 @@ internal class NTWindowsFileAttributes(
     val cached = isSymbolicLinkCached.load()
     if (cached != null) return cached
 
-    Arena.ofConfined().use { arena ->
-      val api = Windows(arena)
-
-      val handle = api.CreateFileW(
-        adaptForLongPathHandling(parentPath.toAbsolutePath().pathString), // not allowed
-        dwDesiredAccess = Windows.FileOperations.FILE_GENERIC_READ,
-        dwShareMode = Windows.FileShare.FILE_SHARE_READWRITE,
-        lpSecurityAttributes = Windows.NULL,
-        dwCreationDisposition = Windows.FileMode.OPEN_EXISTING,
-        dwFlagsAndAttributes = Windows.FileOperations.FILE_OPEN_REPARSE_POINT or Windows.FileOperations.FILE_FLAG_BACKUP_SEMANTICS,
-        hTemplateFile = Windows.NULL
-      )
-
-      val handleValue = Windows.Read.HANDLE(handle)
-      if (handleValue == 0L || handleValue == -1L) {
-        throw Windows.Error.win32ErrorToIOException(api.GetLastFFIError(), parentPath)
-      }
-
-      try {
-        val reparsePointDataBuffer: MemorySegment = arena.allocate(MAX_REPARSE_POINT_DATA_SIZE)
-
-        val returnCode = api.DeviceIoControl(
-          handle,
-          Windows.DeviceIoControlCodes.FSCTL_GET_REPARSE_POINT.toInt(),
-          Windows.NULL,
-          0,
-          reparsePointDataBuffer,
-          MAX_REPARSE_POINT_DATA_SIZE.toInt(),
-          Windows.NULL,
-          Windows.NULL
-        )
-
-        if (returnCode == 0) {
-          throw Windows.Error.win32ErrorToIOException(api.GetLastFFIError(), parentPath)
-        }
-
-        val isSymbolicLink = Windows.Read.REPARSE_DATA_BUFFER.Tag.IO_REPARSE_TAG_SYMLINK == Windows.Read.REPARSE_DATA_BUFFER.ReparseTag(reparsePointDataBuffer)
-        isSymbolicLinkCached.store(isSymbolicLink)
-        return isSymbolicLink
-      }
-      finally {
-        api.CloseHandle(handle)
-      }
+    val reparsePoint = WindowsReparsePoint.read(parentPath).getOrElse { failure ->
+      throw if (failure is WindowsException) Windows.Error.win32ErrorToIOException(failure.errorCode, parentPath) else failure
     }
+    val isSymbolicLink = reparsePoint.tag == WindowsReparsePoint.IO_REPARSE_TAG_SYMLINK
+    isSymbolicLinkCached.store(isSymbolicLink)
+    return isSymbolicLink
   }
 
   override fun isOther(): Boolean {
@@ -163,13 +127,6 @@ internal class NTWindowsFileAttributes(
 
 }
 
-private const val MAX_PATH = 260
-
-private fun adaptForLongPathHandling(path: String): String {
-    if (path.length < MAX_PATH) return path
-    return "\\\\?\\$path"
-}
-
 // That's insane but that's WinAPI
 // All dates and times are in absolute system-time format. Absolute system time is the number of 100-nanosecond intervals since the start of the year 1601.
 private fun convertFileTimeToMs(time: Long): Long {
@@ -199,7 +156,7 @@ class WindowsBufferedDirectoryIterator(val directory: Path) : MutableIterator<co
   init {
     val fullCanonicalPath = directory.toAbsolutePath().pathString
     try {
-      directoryHandle = createDirectoryHandle(adaptForLongPathHandling(fullCanonicalPath))
+      directoryHandle = createDirectoryHandle(windowsPathString(fullCanonicalPath))
     }
     catch (e: Exception) {
       api.close()

@@ -89,8 +89,6 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//platform/remote-core",
         "//platform/remote-core:remote-core_test_lib",
-        "//libraries/jna",
-        "//libraries/jna:jna_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//libraries/caffeine",

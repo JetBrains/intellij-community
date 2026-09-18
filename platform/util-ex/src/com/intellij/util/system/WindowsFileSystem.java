@@ -10,7 +10,6 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.StructLayout;
 import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
@@ -57,9 +56,9 @@ public final class WindowsFileSystem {
         information.set(JAVA_INT, 8, 1);
         var returned = arena.allocate(JAVA_INT);
         var size = (int)information.byteSize();
-        var success = (int)Handles.DEVICE_IO_CONTROL.invokeExact(
-          callState, handle, FSCTL_QUERY_PERSISTENT_VOLUME_STATE, information, size, information, size, returned, MemorySegment.NULL);
-        if (success == 0) {
+        var success = WindowsKernel32.deviceIoControl(
+          callState, handle, FSCTL_QUERY_PERSISTENT_VOLUME_STATE, information, size, information, size, returned);
+        if (!success) {
           if (LOG.isDebugEnabled()) LOG.debug("DeviceIoControl(" + path + "): " + WindowsKernel32.lastError(callState));
           return false;
         }
@@ -149,14 +148,5 @@ public final class WindowsFileSystem {
     static final MethodHandle GET_FILE_ATTRIBUTES = LINKER.downcallHandle(
       KERNEL32.findOrThrow("GetFileAttributesW"),
       FunctionDescriptor.of(JAVA_INT, ADDRESS));
-
-    /**
-     * {@code BOOL DeviceIoControl(HANDLE device, DWORD code, LPVOID inBuffer, DWORD inSize, LPVOID outBuffer, DWORD outSize,
-     * LPDWORD returned, LPOVERLAPPED)}, with {@code GetLastError} captured into the leading call-state argument
-     */
-    static final MethodHandle DEVICE_IO_CONTROL = LINKER.downcallHandle(
-      KERNEL32.findOrThrow("DeviceIoControl"),
-      FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, ADDRESS, JAVA_INT, ADDRESS, JAVA_INT, ADDRESS, ADDRESS),
-      WindowsKernel32.captureLastError());
   }
 }

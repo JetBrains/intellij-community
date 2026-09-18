@@ -2,26 +2,19 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.SystemInfo
-import com.sun.jna.platform.win32.Kernel32
-import com.sun.jna.platform.win32.Kernel32.FILE_FLAG_OPEN_REPARSE_POINT
-import com.sun.jna.platform.win32.Kernel32.FILE_SHARE_READ
-import com.sun.jna.platform.win32.Kernel32.GENERIC_READ
-import com.sun.jna.platform.win32.Kernel32.INSTANCE
-import com.sun.jna.platform.win32.Kernel32.INVALID_HANDLE_VALUE
-import com.sun.jna.platform.win32.Kernel32.OPEN_EXISTING
-import com.sun.jna.platform.win32.Ntifs
-import com.sun.jna.platform.win32.WinioctlUtil
-import com.sun.jna.ptr.IntByReference
+import com.intellij.util.system.WindowsReparsePoint
 import org.jetbrains.annotations.ApiStatus
-import java.nio.ByteBuffer
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
-import kotlin.io.path.pathString
 
 /**
  * AppX packages installed to AppX volume (see ``Get-AppxDefaultVolume``, ``Get-AppxPackage``).
@@ -34,7 +27,7 @@ import kotlin.io.path.pathString
  * But when executed, they are processed by NTFS filter and redirected to their real location in AppX volume.
  *
  * There may be ``python.exe`` there, but it may point to Windows Store (so it can be installed when accessed) or to the real python.
- * There is no Java API to see reparse point destination, so we use JNA.
+ * There is no Java API to see reparse point destination, so this tool reads the point with the FFM API.
  * This tool returns AppX name (either ``PythonSoftwareFoundation...`` or ``DesktopAppInstaller..``).
  * We use it to check if ``python.exe`` is real python or WindowsStore mock.
  *
@@ -105,7 +98,9 @@ private val userAppxFolder: Path? =
 
 
 // https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-fscc/c8e77b37-3909-4fe6-a4ea-2b9d423b1ee4
-private const val IO_REPARSE_TAG_APPEXECLINK = 0x8000001B
+
+/** The only `AppExecLink` payload version that Windows writes today. */
+private const val appExecLinkVersion = 3
 
 /**
  *  AppX apps are installed in "C:\Program Files\WindowsApps\".
@@ -119,54 +114,49 @@ So, files in "%LOCALAPPDATA%\Microsoft\WindowsApps" are reparse points to AppX a
 But for Python, there can be a reparse point that points to Windows store, so Store is opened when Python is not installed.
 There is no official way to tell if "python.exe" points to AppX python or AppX "Windows Store".
 
-MS provides API (via DeviceIOControl) to read reparse point structure.
-There is also a reparse point tag for "AppX link" in SDK.
-Reparse data is undocumented, but it is just an array of wide chars with some unprintable chars at the beginning.
-
 This tool reads reparse point info and tries to fetch AppX name, so we can see if it points to Store or not.
 See https://youtrack.jetbrains.com/issue/PY-43082
-
-Output is unicode 16-LE
  */
 private fun getAppxTag(path: Path): String? {
   if (!SystemInfo.isWin10OrNewer) return null
-  val kernel = INSTANCE
-  val logger = Logger.getInstance(Kernel32::class.java)
-  val file = kernel.CreateFile(path.pathString, GENERIC_READ, FILE_SHARE_READ, null, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT, null)
-  if (file == INVALID_HANDLE_VALUE) {
-    logger.warn("Invalid handle for $path")
+
+  val reparsePoint = WindowsReparsePoint.read(path).getOrElse { failure ->
+    appxFilesLogger.debug { "Cannot read the reparse point of $path: $failure" }
     return null
   }
-  val buffer = Ntifs.REPARSE_DATA_BUFFER()
-  val bytesRead = IntByReference()
-  if (!kernel.DeviceIoControl(file, WinioctlUtil.FSCTL_GET_REPARSE_POINT, null, 0, buffer.pointer, buffer.size(), bytesRead, null)) {
-    logger.warn("DeviceIoControl error ${kernel.GetLastError()}")
+  if (reparsePoint.tag != WindowsReparsePoint.IO_REPARSE_TAG_APPEXECLINK) {
+    appxFilesLogger.debug { "$path has the tag 0x${Integer.toHexString(reparsePoint.tag)}, not an AppExecLink" }
     return null
   }
-  if (bytesRead.value < 1) {
-    logger.warn("0 bytes read")
+  return parseAppExecLink(reparsePoint.data)
+}
+
+/**
+ * Reads the package family name from an `IO_REPARSE_TAG_APPEXECLINK` payload.
+ *
+ * The payload starts with a `ULONG` version, which is [appExecLinkVersion] today. A list of UTF-16LE strings
+ * follows it, and a null character ends each string. The order is the package family name, the application user
+ * model id, the target executable and the application type.
+ *
+ * @param payload the reparse data that follows the `REPARSE_DATA_BUFFER` header
+ * @return the package family name, for example `PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0`, or `null`
+ * when the payload holds no name
+ */
+@VisibleForTesting
+internal fun parseAppExecLink(payload: ByteArray): String? {
+  if (payload.size < Int.SIZE_BYTES + Char.SIZE_BYTES) {
+    appxFilesLogger.debug { "The AppExecLink payload holds ${payload.size} bytes, which is too few" }
     return null
   }
-  buffer.read()
-  if (buffer.ReparseTag != IO_REPARSE_TAG_APPEXECLINK.toInt()) {
-    logger.warn("Wrong tag ${buffer.ReparseTag}")
-    return null
+
+  val version = ByteBuffer.wrap(payload, 0, Int.SIZE_BYTES).order(ByteOrder.LITTLE_ENDIAN).int
+  if (version != appExecLinkVersion) {
+    // A later version still starts with the same string list, so read the name and only report the difference.
+    appxFilesLogger.info("The AppExecLink payload has the version $version, not $appExecLinkVersion")
   }
-  // output is array of LE 2 bytes chars: \0\0\0[text]\0[junk]
-  val charBuffer = Charsets.UTF_16LE.decode(ByteBuffer.wrap(buffer.u.genericReparseBuffer.DataBuffer))
-  var from = 0
-  var to = 0
-  var startFound = false
-  for ((i, char) in charBuffer.withIndex()) {
-    val validChar = Character.getType(char) != Character.CONTROL.toInt()
-    if (validChar && !startFound) {
-      from = i
-      startFound = true
-    }
-    if (!validChar && startFound) {
-      to = i
-      break
-    }
-  }
-  return charBuffer.substring(from, to)
+
+  // One character takes two bytes, so drop a trailing odd byte before the decode.
+  val textLength = (payload.size - Int.SIZE_BYTES) and 1.inv()
+  val name = String(payload, Int.SIZE_BYTES, textLength, Charsets.UTF_16LE).substringBefore('\u0000')
+  return name.ifEmpty { null }
 }

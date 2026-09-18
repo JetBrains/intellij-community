@@ -34,6 +34,13 @@ object WindowsError {
  * @param code the `GetLastError` code that the failing call captured, or the `NTSTATUS` that it answered
  */
 internal fun <T> winFailure(message: @NlsSafe String, code: Int): Result<T> =
-  Result.failure(WindowsException("$message: ${WindowsError.prettyHRESULT(code)}"))
+  Result.failure(WindowsException("$message: ${WindowsError.prettyHRESULT(code)}", code))
 
-private class WindowsException(message: @NlsSafe String) : Exception(message)
+/**
+ * A Windows call that failed.
+ *
+ * @property errorCode the `GetLastError` code of the failing call, or the `NTSTATUS` that it answered. A caller
+ * that maps a code to another exception needs the number, not the text of [message].
+ */
+@ApiStatus.Internal
+class WindowsException internal constructor(message: @NlsSafe String, val errorCode: Int) : Exception(message)

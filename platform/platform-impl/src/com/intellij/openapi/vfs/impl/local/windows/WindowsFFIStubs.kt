@@ -36,8 +36,7 @@ private enum class WindowsSymbol {
   GetFileAttributesW,
   NtQueryDirectoryFile,
   CloseHandle,
-  RtlNtStatusToDosError,
-  DeviceIoControl
+  RtlNtStatusToDosError
 }
 
 private val handleCache = mutableMapOf<Pair<WindowsLibrary, WindowsSymbol>, MethodHandle>()
@@ -68,7 +67,6 @@ private object WindowsStubs {
 
   val HANDLE = canonicalLayouts["void*"]!!
   val LPCWSTR = canonicalLayouts["void*"]!!
-  val LPVOID = canonicalLayouts["void*"]!!
   val LPSECURITY_ATTRIBUTES = canonicalLayouts["void*"]!!
   val DWORD = canonicalLayouts["long"]!!
   val BOOL = canonicalLayouts["int"]!!
@@ -102,7 +100,6 @@ private object WindowsStubs {
   val PVOID = canonicalLayouts["void*"]!!
   val PIO_STATUS_BLOCK = canonicalLayouts["void*"]!!
   val ULONG = canonicalLayouts["long"]!!
-  val USHORT = canonicalLayouts["short"]!!
   val FILE_INFORMATION_CLASS = canonicalLayouts["int"]!!
   val BOOLEAN = canonicalLayouts["char"]!!
   val PUNICODE_STRING = canonicalLayouts["void*"]!!
@@ -141,13 +138,6 @@ private object WindowsStubs {
     WCHAR.withName("FileName")
   )
 
-  val REPARSE_DATA_BUFFER: MemoryLayout = MemoryLayout.structLayout(
-    ULONG.withName("ReparseTag"), // ReparseTag
-    USHORT.withName("ReparseDataLength"), // ReparseDataLength
-    USHORT.withName("Reserved"), // Reserved
-    CHAR.withName("Data"), // Data
-  )
-
   val ULONG_PTR = canonicalLayouts["void*"]!!
 
   //NTSYSAPI ULONG RtlNtStatusToDosError(
@@ -158,28 +148,12 @@ private object WindowsStubs {
     NTSTATUS
   )
 
-  val LPDWORD = canonicalLayouts["void*"]!!
-  val LPOVERLAPPED = canonicalLayouts["void*"]!!
-
-  val DeviceIoControl: FunctionDescriptor = FunctionDescriptor.of(
-    BOOL, // return
-    HANDLE, // _In_ hDevice
-    DWORD, // _In_ dwIoControlCode
-    LPVOID, // _In_reads_bytes_opt_(nInBufferSize) lpInBuffer
-    DWORD, // _In_ nInBufferSize
-    LPVOID, // _Out_writes_bytes_to_opt_(nOutBufferSize,*lpBytesReturned) lpOutBuffer
-    DWORD, // _In_ nOutBufferSize
-    LPDWORD, // _Out_opt_ lpBytesReturned
-    LPOVERLAPPED, // _Inout_opt_ lpOverlapped
-  )
-
   private val labelMap = mapOf(
     WindowsSymbol.CreateFileW to CreateFileW,
     WindowsSymbol.GetFileAttributesW to GetFileAttributesW,
     WindowsSymbol.NtQueryDirectoryFile to NtQueryDirectoryFile,
     WindowsSymbol.CloseHandle to CloseHandle,
     WindowsSymbol.RtlNtStatusToDosError to RtlNtStatusToDosError,
-    WindowsSymbol.DeviceIoControl to DeviceIoControl,
   )
 
   operator fun get(label: WindowsSymbol): FunctionDescriptor? = labelMap[label]
@@ -232,9 +206,7 @@ internal class Windows(val arena: Arena) : Closeable {
 
   object FileOperations {
     const val FILE_LIST_DIRECTORY: Int = 0x1
-    const val FILE_GENERIC_READ: Int = 0x80000000.toInt()
     const val FILE_FLAG_BACKUP_SEMANTICS: Int = 0x02000000
-    const val FILE_OPEN_REPARSE_POINT: Int = 0x00200000
   }
 
   object FileMode {
@@ -254,10 +226,6 @@ internal class Windows(val arena: Arena) : Closeable {
 
   object FILE_FULL_DIR_INFORMATION {
     const val FILE_FULL_DIRECTORY_INFORMATION: Int = 2
-  }
-
-  object DeviceIoControlCodes {
-    const val FSCTL_GET_REPARSE_POINT: UInt = 0x000900A8U
   }
 
   object Read {
@@ -326,17 +294,6 @@ internal class Windows(val arena: Arena) : Closeable {
       }
     }
 
-    object REPARSE_DATA_BUFFER {
-      private val reparseTagHandle = WindowsStubs.REPARSE_DATA_BUFFER.varHandle(MemoryLayout.PathElement.groupElement("ReparseTag"))
-
-      fun ReparseTag(buffer: MemorySegment): Int {
-        return reparseTagHandle.get(buffer, 0L) as Int
-      }
-
-      object Tag {
-        const val IO_REPARSE_TAG_SYMLINK: Int = 0xA000000C.toInt()
-      }
-    }
   }
 
   object Alloc {
@@ -453,29 +410,6 @@ internal class Windows(val arena: Arena) : Closeable {
     return WindowsDllLookup.handleFor(WindowsLibrary.Ntdll, WindowsSymbol.RtlNtStatusToDosError).invokeExact(
       errorMemorySegment.get(),
       ntStatus
-    ) as Int
-  }
-
-  fun DeviceIoControl(
-    handle: MemorySegment,
-    dwIoControlCode: Int,
-    lpInBuffer: MemorySegment,
-    nInBufferSize: Int,
-    lpOutBuffer: MemorySegment,
-    nOutBufferSize: Int,
-    lpBytesReturned: MemorySegment,
-    lpOverlapped: MemorySegment
-  ): Int {
-    return WindowsDllLookup.handleFor(WindowsLibrary.Kernel32, WindowsSymbol.DeviceIoControl).invokeExact(
-      errorMemorySegment.get(),
-      handle,
-      dwIoControlCode,
-      lpInBuffer,
-      nInBufferSize,
-      lpOutBuffer,
-      nOutBufferSize,
-      lpBytesReturned,
-      lpOverlapped
     ) as Int
   }
 

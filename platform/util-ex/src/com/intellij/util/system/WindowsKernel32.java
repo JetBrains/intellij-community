@@ -43,6 +43,8 @@ public final class WindowsKernel32 {
   public static final int OPEN_EXISTING = 3;
   /** {@code FILE_FLAG_BACKUP_SEMANTICS}: a directory does not open without this flag. */
   public static final int FILE_FLAG_BACKUP_SEMANTICS = 0x02000000;
+  /** {@code FILE_FLAG_OPEN_REPARSE_POINT}: the open gives the reparse point itself, not its target. */
+  public static final int FILE_FLAG_OPEN_REPARSE_POINT = 0x00200000;
 
   /** {@code PROCESS_QUERY_INFORMATION} */
   public static final int PROCESS_QUERY_INFORMATION = 0x0400;
@@ -139,6 +141,24 @@ public final class WindowsKernel32 {
       () -> (int)Handles.READ_PROCESS_MEMORY.invokeExact(callState, process, address, buffer, size, MemorySegment.NULL)) != 0;
   }
 
+  /**
+   * {@code BOOL DeviceIoControl(HANDLE device, DWORD code, LPVOID inBuffer, DWORD inSize, LPVOID outBuffer,
+   * DWORD outSize, LPDWORD returned, LPOVERLAPPED overlapped)}, without an overlapped operation.
+   *
+   * @param inBuffer the input block, or {@link MemorySegment#NULL} for a code that needs none
+   * @param returned a {@code DWORD} that receives the number of bytes the call wrote into {@code outBuffer}
+   * @return {@code true} when the call succeeded. Read the code of a failure with {@link #lastError}.
+   */
+  @ApiStatus.Internal
+  public static boolean deviceIoControl(
+    @NotNull MemorySegment callState, @NotNull MemorySegment device, int code,
+    @NotNull MemorySegment inBuffer, int inSize, @NotNull MemorySegment outBuffer, int outSize,
+    @NotNull MemorySegment returned
+  ) {
+    return Downcalls.callInt(() -> (int)Handles.DEVICE_IO_CONTROL.invokeExact(
+      callState, device, code, inBuffer, inSize, outBuffer, outSize, returned, MemorySegment.NULL)) != 0;
+  }
+
   /** {@code BOOL CloseHandle(HANDLE)}. @return {@code true} when the call closed the handle */
   @ApiStatus.Internal
   public static boolean closeHandle(@NotNull MemorySegment handle) {
@@ -185,6 +205,11 @@ public final class WindowsKernel32 {
     static final MethodHandle READ_PROCESS_MEMORY = LINKER.downcallHandle(
       KERNEL32.findOrThrow("ReadProcessMemory"),
       FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, ADDRESS, JAVA_LONG, ADDRESS), CAPTURE_LAST_ERROR);
+
+    static final MethodHandle DEVICE_IO_CONTROL = LINKER.downcallHandle(
+      KERNEL32.findOrThrow("DeviceIoControl"),
+      FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, ADDRESS, JAVA_INT, ADDRESS, JAVA_INT, ADDRESS, ADDRESS),
+      CAPTURE_LAST_ERROR);
 
     private static final FunctionDescriptor CLOSE_HANDLE_DESCRIPTOR = FunctionDescriptor.of(JAVA_INT, ADDRESS);
 
