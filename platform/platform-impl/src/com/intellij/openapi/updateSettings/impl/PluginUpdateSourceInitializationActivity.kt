@@ -130,6 +130,7 @@ object PluginUpdateSourceInitializer {
       val updateSourceId = PluginUpdateSourceService.getInstance().createCustomRepositoryPluginUpdateSourceId(host)
       if (!updateSourceIds.add(updateSourceId)) continue
 
+      if (host.isEmpty()) continue
       val pluginResult = runCatching { RepositoryHelper.loadPluginModels(host, null, null) }
       val pluginModels = pluginResult.getOrHandleException {
         thisLogger().warn("Fail to get plugin list from repository $host; plugin update sources would be initialized next time", it)
