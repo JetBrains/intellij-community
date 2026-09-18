@@ -20,12 +20,6 @@ internal class PyNewScriptWelcomeScreenFeature : WelcomeScreenNewFileFeatureBack
   override val languageId: String = "Python"
 }
 
-internal class PyNewNotebookWelcomeScreenFeature : WelcomeScreenNewFileFeatureBackend() {
-  override val featureKey: String = WelcomeScreenFeatureIds.NEW_NOTEBOOK
-
-  override val languageId: String = "Jupyter"
-}
-
 internal class PyLearnWelcomeScreenFeature : WelcomeScreenFeatureBackend() {
   override val featureKey: String = WelcomeScreenFeatureIds.LEARN_IDE
 
