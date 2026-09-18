@@ -19,6 +19,7 @@ import com.intellij.platform.util.io.storages.durablemap.PatchableDurableMap
 import com.intellij.platform.util.io.storages.durablemap.PatchableDurableMap.PatchableValueExternalizer
 import com.intellij.platform.util.io.storages.intmultimaps.InMemoryIntToMultiLongMap
 import com.intellij.platform.util.io.storages.intmultimaps.IntToMultiLongMap
+import com.intellij.platform.util.io.storages.intmultimaps.RecordRefIndex
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64
 import com.intellij.util.io.CorruptedException
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -85,7 +86,7 @@ class PatchableDurableMapOverBlocksTest {
   }
 
   @Test
-  fun collisionsKeepIndependentChainsAcrossBlocksAndLookupRecovery() {
+  fun collisionsKeepIndependentChainsAcrossBlocksAndRecordRefIndexRecovery() {
     assertEquals("FB".hashCode(), "Ea".hashCode())
     BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
       val store = database.openStore("map", 1)
@@ -98,7 +99,7 @@ class PatchableDurableMapOverBlocksTest {
         }
         assertTrue(store.blocks().count { it.role() == DATA.persistentCode() } > 1)
       }
-      dropLookup(store)
+      dropRecordRefIndex(store)
       val codec = SetCodec().apply { failReads = true }
       openMap(store, codec = codec).use { map ->
         assertTrue(map.containsMapping("FB"))
@@ -130,7 +131,7 @@ class PatchableDurableMapOverBlocksTest {
         map.patchValue("Ea", listOf(6))
         map.patchValue("FB", listOf(7))
       }
-      dropLookup(store)
+      dropRecordRefIndex(store)
       openMap(store).use { map ->
         assertEquals(setOf(7), map.get("FB"))
         assertEquals(setOf(5, 6), map.get("Ea"))
@@ -174,10 +175,10 @@ class PatchableDurableMapOverBlocksTest {
   }
 
   @Test
-  fun aNewPersistentLookupReplaysPatchesFromAnInMemoryLookup() {
+  fun aNewPersistentRecordRefIndexReplaysPatchesFromAnInMemoryIndex() {
     BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
       val store = database.openStore("map", 1)
-      openMap(store, InMemoryIntToMultiLongMap()).use { map ->
+      openMap(store, InMemoryRecordRefIndex(), rebuildIndex = true).use { map ->
         map.patchValue("key", listOf(1))
         map.patchValue("key", listOf(-1, 2))
       }
@@ -186,16 +187,16 @@ class PatchableDurableMapOverBlocksTest {
   }
 
   @Test
-  fun failedPatchLeavesThePreviousValueAndCannotMarkTheLookupClean() {
+  fun failedPatchLeavesThePreviousValueAndCannotMarkTheRecordRefIndexClean() {
     BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
       val store = database.openStore("map", 1)
-      val lookup = openLookup(store)
+      val index = openRecordRefIndex(store)
       val codec = SetCodec()
-      openMap(store, lookup, codec).use { map ->
+      openMap(store, index, codec).use { map ->
         map.put("key", setOf(1))
         map.force()
-        assertFalse(lookup.isDirty)
-        codec.beforeWrite = { assertTrue(lookup.isDirty, "The lookup must be dirty before writing the patch") }
+        assertFalse(index.isDirty)
+        codec.beforeWrite = { assertTrue(index.isDirty, "The record reference index must be dirty before writing the patch") }
         codec.failWrites = true
         assertThrows(IOException::class.java) { map.patchValue("key", listOf(2, 3)) }
         assertTrue(map.isClosed)
@@ -210,43 +211,43 @@ class PatchableDurableMapOverBlocksTest {
   }
 
   @Test
-  fun failedLookupPublicationClosesTheMapAndReplaysTheCommittedPatch() {
+  fun failedIndexPublicationClosesTheMapAndReplaysTheCommittedPatch() {
     BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
       val store = database.openStore("map", 1)
-      val lookup = openLookup(store)
+      val index = openRecordRefIndex(store)
       val codec = SetCodec()
-      openMap(store, lookup, codec).use { map ->
+      openMap(store, index, codec).use { map ->
         map.put("key", setOf(1))
         map.force()
-        codec.beforeWrite = { lookup.closeKeepingDirty() }
+        codec.beforeWrite = { index.closeKeepingDirty() }
         assertThrows(IOException::class.java) { map.patchValue("key", listOf(-1, 2)) }
         assertTrue(map.isClosed, "A failed publication must prevent further writes through this instance")
       }
       openMap(store).use { map ->
-        assertEquals(setOf(2), map.get("key"), "The committed patch must survive the failed lookup update")
+        assertEquals(setOf(2), map.get("key"), "The committed patch must survive the failed index update")
       }
     }
   }
 
   @Test
-  fun committedPatchesRecoverBeforeAndAfterLookupPublication() {
-    for (publishLookup in listOf(false, true)) {
-      BlocksDatabaseFactory(CHUNK_SIZE).open(directory.resolve(publishLookup.toString())).use { database ->
+  fun committedPatchesRecoverBeforeAndAfterIndexPublication() {
+    for (publishIndex in listOf(false, true)) {
+      BlocksDatabaseFactory(CHUNK_SIZE).open(directory.resolve(publishIndex.toString())).use { database ->
         val store = database.openStore("map", 1)
-        val lookup = openLookup(store)
-        openMap(store, lookup).use { map ->
+        val index = openRecordRefIndex(store)
+        openMap(store, index).use { map ->
           map.put("key", setOf(1))
           map.force()
           var hash = 0
           var oldHead = 0L
-          lookup.forEach { keyHash, recordRef -> hash = keyHash; oldHead = recordRef; true }
-          lookup.markDirty()
+          index.forEach { keyHash, recordRef -> hash = keyHash; oldHead = recordRef; true }
+          index.markDirty()
           val newHead = records(store).append(12, oldHead) { payload ->
             payload.set(JAVA_LONG_UNALIGNED, 0, oldHead)
             payload.asSlice(8).asByteBuffer().putInt(-1)
           }
-          if (publishLookup) lookup.replace(hash, oldHead, newHead)
-          lookup.closeKeepingDirty()
+          if (publishIndex) index.replace(hash, oldHead, newHead)
+          index.closeKeepingDirty()
         }
         openMap(store).use { map ->
           assertEquals(emptySet<Int>(), map.get("key"), "Replay must include the committed patch at either crash boundary")
@@ -271,7 +272,7 @@ class PatchableDurableMapOverBlocksTest {
       val lastRef = refs.last()
       val block = store.blocks().single { it.id() == RecordStorageOverBlocks.blockId(lastRef) }
       block.content().set(JAVA_LONG_UNALIGNED, RecordStorageOverBlocks.recordOffset(lastRef).toLong() + 4, refs.first())
-      dropLookup(store)
+      dropRecordRefIndex(store)
       assertThrows(CorruptedException::class.java) { openMap(store) }
     }
   }
@@ -297,7 +298,7 @@ class PatchableDurableMapOverBlocksTest {
           "patch as base" -> block.content().set(JAVA_LONG_UNALIGNED, recordOffset + 12, refs[1])
         }
         openMap(store).use { map -> assertThrows(CorruptedException::class.java) { map.get("key") } }
-        dropLookup(store)
+        dropRecordRefIndex(store)
         repeat(2) {
           assertThrows(CorruptedException::class.java) { openMap(store) }
         }
@@ -341,26 +342,41 @@ class PatchableDurableMapOverBlocksTest {
 
   private fun openMap(
     store: BlocksStore,
-    lookup: IntToMultiLongMap? = null,
+    index: RecordRefIndex? = null,
     codec: SetCodec = SetCodec(),
+    rebuildIndex: Boolean = false,
   ): PatchableDurableMap<String, Set<Int>, List<Int>> {
     val descriptor = stringAsUTF8()
     val entryExternalizer = DefaultEntryExternalizer(descriptor, codec)
-    return if (lookup == null) {
+    return if (index == null) {
       DurableMapOverBlocks.openPatchable(store, BLOCK_SIZE, descriptor, null, entryExternalizer, codec)
     }
     else {
-      DurableMapOverBlocks.openPatchable(store, BLOCK_SIZE, lookup, descriptor, null, entryExternalizer, codec)
+      DurableMapOverBlocks.openPatchable(
+        store, BLOCK_SIZE, index, rebuildIndex, descriptor, null, entryExternalizer, codec
+      )
     }
+  }
+
+  private class InMemoryRecordRefIndex(
+    private val delegate: InMemoryIntToMultiLongMap = InMemoryIntToMultiLongMap(),
+  ) : RecordRefIndex, IntToMultiLongMap by delegate {
+    override fun markDirty() = Unit
+
+    override fun flush() = Unit
+
+    override fun close() = clear()
+
+    override fun closeKeepingDirty() = clear()
   }
 
   private fun records(store: BlocksStore): RecordStorageOverBlocks = RecordStorageOverBlocks.open(DurableMapBlockCatalog.open(store), BLOCK_SIZE)
 
-  private fun openLookup(store: BlocksStore): ExtendibleHashMapInt32ToInt64 = ExtendibleHashMapInt32ToInt64(
+  private fun openRecordRefIndex(store: BlocksStore): ExtendibleHashMapInt32ToInt64 = ExtendibleHashMapInt32ToInt64(
     ExtendibleHashMapStorageOverBlocksStore(store, LOOKUP.persistentCode(), DurableMapOverBlocks.SEGMENT_SIZE)
   )
 
-  private fun dropLookup(store: BlocksStore) {
+  private fun dropRecordRefIndex(store: BlocksStore) {
     for (block in store.blocks()) {
       if (block.role() == LOOKUP.persistentCode() && block.state() != RETIRED) {
         if (block.state() == ACTIVE) block.seal()

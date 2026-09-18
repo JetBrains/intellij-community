@@ -9,9 +9,8 @@ import com.intellij.platform.util.io.storages.database.storages.durablemap.Durab
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapOverBlocks;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.RecordStorageOverBlocks;
 import com.intellij.platform.util.io.storages.durablemap.DefaultEntryExternalizer;
-import com.intellij.platform.util.io.storages.intmultimaps.Durable;
 import com.intellij.platform.util.io.storages.intmultimaps.InMemoryIntToMultiLongMap;
-import com.intellij.platform.util.io.storages.intmultimaps.IntToMultiLongMap;
+import com.intellij.platform.util.io.storages.intmultimaps.RecordRefIndex;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -27,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Verifies the DATA log and the persistent hash lookup of a database map. */
+/** Verifies the DATA log and the persistent record reference index of a database map. */
 public class DurableMapOverBlocksTest {
   private static final int CHUNK_SIZE = 1024 * 1024;
   private static final int DATA_BLOCK_CONTENT_LENGTH = 128;
@@ -91,7 +90,7 @@ public class DurableMapOverBlocksTest {
   }
 
   @Test
-  public void reopeningUsesThePersistentLookup(@TempDir Path databaseDirectory) throws Exception {
+  public void reopeningUsesThePersistentRecordRefIndex(@TempDir Path databaseDirectory) throws Exception {
     var factory = new BlocksDatabaseFactory(CHUNK_SIZE);
     try (var database = factory.open(databaseDirectory);
          var map = createMap(database.openStore("map", 1))) {
@@ -112,10 +111,10 @@ public class DurableMapOverBlocksTest {
   }
 
   @Test
-  public void firstPersistentLookupRebuildsFromExistingDataRecords(@TempDir Path databaseDirectory) throws Exception {
+  public void firstPersistentRecordRefIndexRebuildsFromExistingDataRecords(@TempDir Path databaseDirectory) throws Exception {
     var factory = new BlocksDatabaseFactory(CHUNK_SIZE);
     try (var database = factory.open(databaseDirectory);
-         var map = createMap(database.openStore("map", 1), new InMemoryIntToMultiLongMap())) {
+         var map = createMap(database.openStore("map", 1), new TrackingRecordRefIndex(), true)) {
       map.put("key", "value");
     }
 
@@ -149,24 +148,25 @@ public class DurableMapOverBlocksTest {
   }
 
   @Test
-  public void durableLookupKeepsItsContentAndReceivesLifecycleCalls(@TempDir Path databaseDirectory) throws Exception {
+  public void recordRefIndexKeepsItsContentAndReceivesLifecycleCalls(@TempDir Path databaseDirectory) throws Exception {
     try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
       var store = database.openStore("map", 1);
-      var lookup = new TrackingDurableLookup();
-      var map = createMap(store, lookup);
+      var index = new TrackingRecordRefIndex();
+      var map = createMap(store, index);
       map.put("key", "value");
+      assertEquals(1, index.dirtyMarkCount);
 
       map.force();
-      assertEquals(1, lookup.flushCount);
+      assertEquals(1, index.flushCount);
 
       map.close();
-      assertEquals(1, lookup.closeCount);
-      assertEquals(1, lookup.size(), "Closing the durable lookup must preserve its content");
+      assertEquals(1, index.closeCount);
+      assertEquals(1, index.size(), "Closing the record reference index must preserve its content");
 
-      lookup.mutationCount = 0;
-      try (var reopenedMap = createMap(store, lookup)) {
+      index.mutationCount = 0;
+      try (var reopenedMap = createMap(store, index)) {
         assertEquals("value", reopenedMap.get("key"));
-        assertEquals(0, lookup.mutationCount, "Opening the durable lookup must not rebuild it from DATA records");
+        assertEquals(0, index.mutationCount, "Opening the record reference index must not rebuild it from DATA records");
       }
     }
   }
@@ -178,10 +178,18 @@ public class DurableMapOverBlocksTest {
   }
 
   private static @NotNull DurableMapOverBlocks<String, String> createMap(@NotNull BlocksStore store,
-                                                                         @NotNull IntToMultiLongMap lookup) throws IOException {
+                                                                         @NotNull RecordRefIndex index) throws IOException {
+    return createMap(store, index, false);
+  }
+
+  private static @NotNull DurableMapOverBlocks<String, String> createMap(@NotNull BlocksStore store,
+                                                                         @NotNull RecordRefIndex index,
+                                                                         boolean rebuildIndex) throws IOException {
     KeyDescriptorEx<String> descriptor = stringAsUTF8();
     var entryExternalizer = new DefaultEntryExternalizer<>(descriptor, descriptor);
-    return DurableMapOverBlocks.open(store, DATA_BLOCK_CONTENT_LENGTH, lookup, descriptor, descriptor, entryExternalizer);
+    return DurableMapOverBlocks.open(
+      store, DATA_BLOCK_CONTENT_LENGTH, index, rebuildIndex, descriptor, descriptor, entryExternalizer
+    );
   }
 
   private static @NotNull BlocksStore requireMapStore(@NotNull BlocksDatabase database) {
@@ -192,9 +200,10 @@ public class DurableMapOverBlocksTest {
     return store;
   }
 
-  private static final class TrackingDurableLookup implements IntToMultiLongMap, Durable {
+  private static final class TrackingRecordRefIndex implements RecordRefIndex {
     private final InMemoryIntToMultiLongMap delegate = new InMemoryIntToMultiLongMap();
     private int mutationCount;
+    private int dirtyMarkCount;
     private int flushCount;
     private int closeCount;
 
@@ -243,12 +252,22 @@ public class DurableMapOverBlocksTest {
     }
 
     @Override
+    public void markDirty() {
+      dirtyMarkCount++;
+    }
+
+    @Override
     public void flush() {
       flushCount++;
     }
 
     @Override
     public void close() {
+      closeCount++;
+    }
+
+    @Override
+    public void closeKeepingDirty() {
       closeCount++;
     }
   }

@@ -2,8 +2,7 @@
 package com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.platform.util.io.storages.intmultimaps.Durable;
-import com.intellij.platform.util.io.storages.intmultimaps.IntToMultiLongMap;
+import com.intellij.platform.util.io.storages.intmultimaps.RecordRefIndex;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.CorruptedException;
@@ -42,7 +41,7 @@ import static java.lang.foreign.ValueLayout.JAVA_SHORT;
  */
 @ApiStatus.Internal
 @SuppressWarnings("DuplicatedCode")
-public class ExtendibleHashMapInt32ToInt64 implements IntToMultiLongMap, Durable, CleanableStorage {
+public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableStorage {
   /** Version of binary format used by this class */
   public static final int IMPLEMENTATION_VERSION = 1;
 
@@ -286,13 +285,14 @@ public class ExtendibleHashMapInt32ToInt64 implements IntToMultiLongMap, Durable
   }
 
   /// Marks the lookup before its owner commits data that will require a lookup update
+  @Override
   public void markDirty() throws IOException {
     checkNotClosed();
     markModified();
     VarHandle.fullFence();
   }
 
-  /// Releases resources and preserves the dirty status after an incomplete update
+  @Override
   public void closeKeepingDirty() throws IOException {
     if (storage.isOpen()) {
       markDirty();
@@ -305,7 +305,7 @@ public class ExtendibleHashMapInt32ToInt64 implements IntToMultiLongMap, Durable
   @Override
   public void close() throws IOException {
     if (storage.isOpen()) {
-      flushStorage(true);
+      flushStorage( /*markProperlyClosed: */ true );
       storage.close();
 
       segmentsCache.clear();
@@ -351,11 +351,12 @@ public class ExtendibleHashMapInt32ToInt64 implements IntToMultiLongMap, Durable
     if (publishProperlyClosed) {
       header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
     }
+
     try {
       storage.flush();
     }
     catch (IOException | RuntimeException | Error failure) {
-      if (publishProperlyClosed) {
+      if (publishProperlyClosed) { //TODO RC: should be do it unconditionally?
         header.fileStatus(HeaderLayout.FILE_STATUS_OPENED);
       }
       throw failure;
