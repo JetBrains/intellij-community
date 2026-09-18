@@ -40,6 +40,7 @@ import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.C_LON
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.C_PTR
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.C_SHORT
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.GRID_REF
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.MODE_CONFIG_OFF_VALUE
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.POINT
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.POINT_COORD
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.POINT_COORD_OFF_Y
@@ -981,15 +982,17 @@ internal class GhosttyTerminalEmulator(
     }
   }
 
+  /** Fills a `GhosttyTerminalModeConfig` (`mode` in, `value` out) and reads it via [GhosttyTerminalData.MODE]. */
   private fun modeEnabled(mode: GhosttyMode): Boolean {
     ensureOpen()
-    scratchOut.set(C_BYTE, 0L, 0.toByte())
+    scratchOut.set(C_SHORT, 0L, mode.packed.toShort())
+    scratchOut.set(C_BYTE, MODE_CONFIG_OFF_VALUE, 0.toByte())
     try {
-      val r = LibGhosttyVt.terminalModeGet(terminal, mode.packed.toShort(), scratchOut)
+      val r = LibGhosttyVt.terminalGet(terminal, GhosttyTerminalData.MODE.code, scratchOut)
       // Unknown modes return GHOSTTY_INVALID_VALUE; treat as "not enabled".
-      return r == GhosttyResult.SUCCESS && scratchOut.get(C_BYTE, 0L).toInt() != 0
+      return r == GhosttyResult.SUCCESS && scratchOut.get(C_BYTE, MODE_CONFIG_OFF_VALUE).toInt() != 0
     } catch (t: Throwable) {
-      throw RuntimeException("ghostty_terminal_mode_get failed", t)
+      throw RuntimeException("ghostty_terminal_get(MODE) failed", t)
     }
   }
 

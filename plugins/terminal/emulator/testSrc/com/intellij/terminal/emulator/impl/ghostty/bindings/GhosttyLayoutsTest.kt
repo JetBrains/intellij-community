@@ -20,7 +20,9 @@ import java.lang.foreign.MemoryLayout.PathElement.groupElement
  */
 internal class GhosttyLayoutsTest {
 
-  private val types: JsonObject = Json.parseToJsonElement(LibGhosttyVt.typeJson()).jsonObject
+  // schema 1: struct/union/enum/... descriptors sit under "types"; the root also carries
+  // "schema", "abi", "library_version", "commit", "dirty".
+  private val types: JsonObject = Json.parseToJsonElement(LibGhosttyVt.typeJson()).jsonObject.getValue("types").jsonObject
 
   @Test
   fun point() {
@@ -53,6 +55,13 @@ internal class GhosttyLayoutsTest {
     // `progress` is the last field the bridge reads, so the minimum size is its end
     assertThat(GhosttyLayouts.PROGRESS_REPORT_MIN_SIZE)
       .isEqualTo(report.offset("progress") + report.sizeOf("progress"))
+  }
+
+  @Test
+  fun terminalModeConfig() {
+    val config = struct("GhosttyTerminalModeConfig")
+    assertThat(config.offset("mode")).isEqualTo(0L)
+    assertThat(GhosttyLayouts.MODE_CONFIG_OFF_VALUE).isEqualTo(config.offset("value"))
   }
 
   @Test

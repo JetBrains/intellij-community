@@ -100,10 +100,6 @@ internal object LibGhosttyVt {
   fun rowGet(row: Long, rowData: Int, out: MemorySegment): GhosttyResult =
     GhosttyResult.of(ROW_GET.invokeExact(row, rowData, out) as Int)
 
-  /** `ghostty_terminal_mode_get`: query a (packed) [GhosttyMode]; [out] receives a bool byte. */
-  fun terminalModeGet(terminal: MemorySegment, packedMode: Short, out: MemorySegment): GhosttyResult =
-    GhosttyResult.of(TERMINAL_MODE_GET.invokeExact(terminal, packedMode, out) as Int)
-
   /** `ghostty_terminal_set`: set a [GhosttyTerminalOption] (e.g. install the WRITE_PTY effect). */
   fun terminalSet(terminal: MemorySegment, option: Int, value: MemorySegment): GhosttyResult =
     GhosttyResult.of(TERMINAL_SET.invokeExact(terminal, option, value) as Int)
@@ -410,8 +406,6 @@ internal object LibGhosttyVt {
     FunctionDescriptor.of(C_INT, C_LONG, C_LONG, C_PTR, C_PTR, C_PTR)) }
   private val ROW_GET: MethodHandle by lazy { downcall("ghostty_row_get",
     FunctionDescriptor.of(C_INT, C_LONG, C_INT, C_PTR)) }
-  private val TERMINAL_MODE_GET: MethodHandle by lazy { downcall("ghostty_terminal_mode_get",
-    FunctionDescriptor.of(C_INT, C_PTR, C_SHORT, C_PTR)) }
   private val TERMINAL_SET: MethodHandle by lazy { downcall("ghostty_terminal_set",
     FunctionDescriptor.of(C_INT, C_PTR, C_INT, C_PTR)) }
   private val RENDER_STATE_NEW: MethodHandle by lazy { downcall("ghostty_render_state_new",

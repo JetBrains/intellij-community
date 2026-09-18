@@ -17,7 +17,10 @@ internal enum class GhosttyResult(val code: Int) {
   OUT_OF_MEMORY(-1),
   INVALID_VALUE(-2),
   OUT_OF_SPACE(-3),
-  NO_VALUE(-4);
+  NO_VALUE(-4),
+  IO_ERROR(-5),
+  LIMIT_EXCEEDED(-6),
+  REJECTED(-7);
 
   companion object {
     /** Map a raw C result code; any unmodeled code is coerced to [INVALID_VALUE] (i.e. a failure). */
@@ -27,6 +30,9 @@ internal enum class GhosttyResult(val code: Int) {
       -2 -> INVALID_VALUE
       -3 -> OUT_OF_SPACE
       -4 -> NO_VALUE
+      -5 -> IO_ERROR
+      -6 -> LIMIT_EXCEEDED
+      -7 -> REJECTED
       else -> INVALID_VALUE
     }
   }
@@ -116,6 +122,8 @@ internal enum class GhosttyTerminalData(val code: Int) {
   COLOR_FOREGROUND(18),
   COLOR_BACKGROUND(19),
   COLOR_PALETTE(21),
+  /** Reads a `GhosttyTerminalModeConfig`; the caller must set `mode` before the call. */
+  MODE(37),
 }
 
 /** `GhosttyCellData` (screen.h) — selector for `ghostty_cell_get_multi`. */
@@ -328,8 +336,9 @@ internal enum class GhosttyMouseEncoderOption(val code: Int) {
 }
 
 /**
- * DEC/ANSI mode ids for `ghostty_terminal_mode_get`, [packed] as `(value | ansi << 15)`. All below
- * are DEC private (ansi = false), so the packed id equals the raw mode number.
+ * DEC/ANSI mode ids for [GhosttyTerminalData.MODE] (`GhosttyTerminalModeConfig.mode`), [packed] as
+ * `(value | ansi << 15)`. All below are DEC private (ansi = false), so the packed id equals the raw
+ * mode number.
  */
 internal enum class GhosttyMode(val packed: Int) {
   DECCKM(1),          // application cursor keys
