@@ -6,9 +6,11 @@ import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider
 import com.intellij.ide.util.gotoByName.FileTypeRef
 import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.searchEverywhere.SeExtendedInfoProvider
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsPreviewProvider
@@ -17,6 +19,7 @@ import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SePreviewInfo
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetItemsProvider
+import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
 
@@ -36,6 +39,11 @@ internal class SeRecentFilesProvider private constructor(
 
   override suspend fun performExtendedAction(item: SeItem): Boolean =
     targetProvider.performExtendedAction(item, this)
+
+  override fun addDataForItem(item: SeItem, sink: DataSink): Unit = targetProvider.addDataForItem(item, sink)
+  override fun getPsiElementForItem(item: SeItem): PsiElement? = targetProvider.getPsiElementForItem(item)
+  override fun getVirtualFileForItem(item: SeItem): VirtualFile? = targetProvider.getVirtualFileForItem(item)
+  override fun getNavigatableForItem(item: SeItem): Navigatable? = targetProvider.getNavigatableForItem(item)
 
   override suspend fun getPreviewInfo(item: SeItem, project: Project): SePreviewInfo? =
     targetProvider.getPreviewInfo(item)

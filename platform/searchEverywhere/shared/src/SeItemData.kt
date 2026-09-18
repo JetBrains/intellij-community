@@ -49,17 +49,20 @@ class SeItemDataFactory {
     val entityRef = SeItemEntity.createWith(session, item) ?: return null
     val additionalInfo = additionalInfo.toMutableMap()
 
+    // The language holds for every item, because it comes out of the raw object.
+    computeCatchingOrNull(true, { e -> "Couldn't add language info (${providerId.value}): $e" }) {
+      PSIPresentationBgRendererWrapper.toPsi(item.rawObject)?.let {
+        readAction {
+          additionalInfo[SeItemDataKeys.PSI_LANGUAGE_ID] = it.language.id
+        }
+      }
+    }
+
     if (item is SeLegacyItem) {
       additionalInfo[SeItemDataKeys.PROVIDER_SORT_WEIGHT] = item.contributor.sortWeight.toString()
 
-      computeCatchingOrNull(true, { e -> "Couldn't add language info (${providerId.value}): $e" }) {
-        PSIPresentationBgRendererWrapper.toPsi(item.rawObject)?.let {
-          readAction {
-            additionalInfo[SeItemDataKeys.PSI_LANGUAGE_ID] = it.language.id
-          }
-        }
-      }
-
+      // A target provider runs a goto model, so it never returns a semantic element. Only a legacy
+      // item needs this key, and it needs the contributor to answer.
       computeCatchingOrNull(true, { e -> "Couldn't add isSemantic info (${providerId.value}): $e" }) {
         val element = (item.rawObject as? PSIPresentationBgRendererWrapper.ItemWithPresentation<*>)?.item
                       ?: item.rawObject

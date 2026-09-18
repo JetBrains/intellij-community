@@ -28,7 +28,12 @@ import com.intellij.ide.util.scopeChooser.ScopeSeparator
 import com.intellij.ide.vfs.rpcId
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.debug
@@ -43,6 +48,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.scopes.SearchScopeData
 import com.intellij.platform.scopes.SearchScopesInfo
@@ -60,6 +66,7 @@ import com.intellij.platform.searchEverywhere.providers.target.presentation.SeTa
 import com.intellij.platform.searchEverywhere.providers.target.selection.SeTargetItemSelectionProcessor
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.suspendLazy
+import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
@@ -521,6 +528,39 @@ class SeTargetItemsProvider<T> private constructor(
     SeLog.log(SeLog.USER_ACTION) { "$label: extended action" }
     return SeTargetItemSelectionProcessor.process(item, provider, InputEvent.SHIFT_DOWN_MASK, "") ?: false
   }
+
+  //endregion
+
+  //region Data snapshot
+
+  /**
+   * Puts the data of [item] in [sink]. An action that runs on the selected result reads this data.
+   */
+  fun addDataForItem(item: SeItem, sink: DataSink) {
+    val rawObject = (item as? SeTargetPresentableItem)?.rawObject ?: return
+    sink.lazy(CommonDataKeys.PSI_ELEMENT) { psiElementOf(rawObject) }
+  }
+
+  fun getPsiElementForItem(item: SeItem): PsiElement? = dataForItem(CommonDataKeys.PSI_ELEMENT, item)
+  fun getVirtualFileForItem(item: SeItem): VirtualFile? = dataForItem(CommonDataKeys.VIRTUAL_FILE, item)
+  fun getNavigatableForItem(item: SeItem): Navigatable? = dataForItem(CommonDataKeys.NAVIGATABLE, item)
+
+  private fun <T : Any> dataForItem(key: DataKey<T>, item: SeItem): T? {
+    if (item !is SeTargetPresentableItem) return null
+
+    val context = CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT) { sink ->
+      addDataForItem(item, sink)
+    }
+    return context.getData(key)
+  }
+
+  /**
+   * The PSI element behind a raw target, or null when the target holds none.
+   */
+  private fun psiElementOf(rawObject: Any): PsiElement? =
+    PSIPresentationBgRendererWrapper.toPsi(rawObject)
+    ?: (PSIPresentationBgRendererWrapper.getItem(rawObject) as? DataProvider)
+      ?.getData(CommonDataKeys.PSI_ELEMENT.name) as? PsiElement
 
   //endregion
 

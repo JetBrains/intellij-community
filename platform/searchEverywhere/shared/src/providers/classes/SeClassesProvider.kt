@@ -8,8 +8,10 @@ import com.intellij.ide.util.gotoByName.GotoClassModel2
 import com.intellij.ide.util.gotoByName.LanguageRef
 import com.intellij.ide.util.gotoByName.LanguageRef.Companion.forAllLanguages
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.SeExtendedInfoProvider
 import com.intellij.platform.searchEverywhere.SeItem
@@ -22,6 +24,8 @@ import com.intellij.platform.searchEverywhere.SeSearchScopesProvider
 import com.intellij.platform.searchEverywhere.SeTypeVisibilityStateProvider
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetItemsProvider
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
+import com.intellij.pom.Navigatable
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -45,6 +49,11 @@ class SeClassesProvider private constructor(
 
   override suspend fun performExtendedAction(item: SeItem): Boolean =
     targetProvider.performExtendedAction(item, this)
+
+  override fun addDataForItem(item: SeItem, sink: DataSink): Unit = targetProvider.addDataForItem(item, sink)
+  override fun getPsiElementForItem(item: SeItem): PsiElement? = targetProvider.getPsiElementForItem(item)
+  override fun getVirtualFileForItem(item: SeItem): VirtualFile? = targetProvider.getVirtualFileForItem(item)
+  override fun getNavigatableForItem(item: SeItem): Navigatable? = targetProvider.getNavigatableForItem(item)
 
   override suspend fun getSearchScopesInfo(): SearchScopesInfo? = targetProvider.getSearchScopesInfo()
 
