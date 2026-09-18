@@ -66,7 +66,10 @@ internal class TextEditorPsiDataRule : UiDataRule {
         getPsiFile(editor, file)
       }
     }
-    sink.lazy(CommonDataKeys.PSI_ELEMENT) {
+    sink.lazyValue(CommonDataKeys.PSI_ELEMENT) { data ->
+      // During the injected lookup, data[EDITOR] requests the injected editor.
+      // If absent, return null so the fallback can reuse the cached host PSI_ELEMENT
+      data[CommonDataKeys.EDITOR] ?: return@lazyValue null
       getPsiElementIn(editor, caret, file)
     }
     sink.lazy(PlatformCoreDataKeys.MODULE) {
