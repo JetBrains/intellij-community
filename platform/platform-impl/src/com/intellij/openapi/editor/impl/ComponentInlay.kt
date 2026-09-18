@@ -214,7 +214,7 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     // Step 1.1: Update inlay size, it may fail in batch mode so need to do it in separate loop
     for (inlay in inlays) {
       inlay.renderer.let {
-        it.inlaySize = when (it.alignment) {
+        val size = when (it.alignment) {
           ComponentInlayAlignment.FIT_CONTENT_WIDTH -> {
             it.component.run { Dimension(minimumSize.width, preferredSize.height) }
           }
@@ -225,6 +225,7 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
             it.component.preferredSize
           }
         }
+        it.inlaySize = if (size.width >= 0 && size.height >= 0) size else Dimension(maxOf(0, size.width), maxOf(0, size.height))
       }
     }
 
