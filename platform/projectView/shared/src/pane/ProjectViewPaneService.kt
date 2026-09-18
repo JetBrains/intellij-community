@@ -215,6 +215,7 @@ private class ProjectViewPaneManager(val pane: ProjectViewPaneModel, val descrip
           .collectLatest { isActive ->
             if (isActive) {
               try {
+                LOG.debug { "The pane $id became active, managing its state..." }
                 pane.manageState(stateBuilder)
               }
               catch (e: Exception) {
@@ -222,6 +223,7 @@ private class ProjectViewPaneManager(val pane: ProjectViewPaneModel, val descrip
                 LOG.error("The pane $id crashed", e)
               }
               finally {
+                LOG.debug { "The pane $id became inactive, clearing its state..." }
                 withContext(NonCancellable) {
                   stateBuilder.clear()
                 }
@@ -234,6 +236,7 @@ private class ProjectViewPaneManager(val pane: ProjectViewPaneModel, val descrip
   
   suspend inline fun <T> withPaneActive(code: () -> T): T {
     subscriberCount.update { it + 1 }
+    LOG.debug { "The pane $id is accessed, now there are ${subscriberCount.value} active accessors" }
     return try {
       // Await until the pane is actually "up and running."
       // This is needed because otherwise some calls won't be able to do anything meaningful.
@@ -247,6 +250,7 @@ private class ProjectViewPaneManager(val pane: ProjectViewPaneModel, val descrip
     }
     finally {
       subscriberCount.update { it - 1 }
+      LOG.debug { "An access operation is finished for the pane $id, now there are ${subscriberCount.value} active accessors" }
     }
   }
 
