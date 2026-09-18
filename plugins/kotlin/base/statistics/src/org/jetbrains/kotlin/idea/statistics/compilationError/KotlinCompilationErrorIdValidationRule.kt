@@ -18,8 +18,6 @@ class KotlinCompilationErrorIdValidationRule : CustomValidationRule() {
 
 private val allowedCompilationErrorsIds: Set<String> = buildSet {
     val classesWithDiagnostics = listOf(
-        "org.jetbrains.kotlin.diagnostics.Errors",
-        "org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm",
         "org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors",
         "org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors",
         "org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors",
