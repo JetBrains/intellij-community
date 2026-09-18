@@ -18,8 +18,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithTrivialLambdaFix
 import com.intellij.codeInsight.daemon.impl.quickfix.StreamFilterNotNullFixTest;
 import com.intellij.codeInsight.daemon.impl.quickfix.SurroundWithIfFixTest;
 import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapIfStatementFixTest;
-import com.intellij.java.codeInsight.completion.NormalCompletionDfaTest;
-import com.intellij.java.codeInsight.completion.SmartTypeCompletionDfaTest;
 import com.intellij.java.codeInspection.dataFlow.OptionalOfNullableMisuseInspectionTest;
 import com.intellij.java.slicer.SliceBackwardTest;
 import com.intellij.java.slicer.SliceTreeTest;
@@ -54,9 +52,6 @@ import org.junit.platform.suite.api.Suite;
 
   SliceTreeTest.class,
   SliceBackwardTest.class,
-
-  SmartTypeCompletionDfaTest.class,
-  NormalCompletionDfaTest.class,
 
   NullableStuffInspectionTest.class,
   NullableStuffInspectionAncientTest.class,
