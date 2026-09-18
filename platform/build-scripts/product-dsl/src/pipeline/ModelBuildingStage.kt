@@ -17,8 +17,10 @@ import com.intellij.platform.pluginGraph.isSlashNotation
 import com.intellij.platform.pluginGraph.isTestDescriptor
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
+import org.jetbrains.intellij.build.buildSpan
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.resolveDescriptor
@@ -44,9 +46,7 @@ import org.jetbrains.intellij.build.productLayout.discovery.computePluginContent
 import org.jetbrains.intellij.build.productLayout.graph.PluginGraphBuilder
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
 import org.jetbrains.intellij.build.productLayout.model.error.DuplicateDslTestPluginIdError
-import org.jetbrains.intellij.build.productLayout.stats.GenerationTiming
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
-import org.jetbrains.intellij.build.productLayout.stats.recordGenerationTiming
 import org.jetbrains.intellij.build.productLayout.traversal.collectPluginContentModules
 import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleNames
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
@@ -91,21 +91,17 @@ internal object ModelBuildingStage {
   /**
    * Executes the model building stage.
    *
-   * Each step is timed into [phaseTimings], because the whole stage reports as one bucket to the caller. Two rules hold
-   * for a timing here.
+   * Each step runs in a span, because the whole stage reports as one bucket to the caller. Two rules hold for a span
+   * here.
    *
    * A span carries the name of the called function. A step also carries a `Phase N` label in a comment, and the labels
    * do not follow the execution order. The order of the labels is 1, 2, 3, 4, 4b, 6, 7, 5, 6, 7 and 8. A span named
    * after a label would mislabel itself. A step that runs twice gets a `#2` suffix, so a reader can compare the two
    * runs.
    *
-   * The top level of this method is sequential, so a plain list is correct. A timing recorded inside a fork would
-   * race, so never put one there.
-   *
    * @param discovery Results from discovery stage
    * @param config Generation configuration
    * @param errorSink Sink for errors discovered during model building (e.g., xi:include resolution)
-   * @param phaseTimings Collects one timing per step of this stage
    * @return Fully initialized generation model
    */
   fun execute(
@@ -115,11 +111,10 @@ internal object ModelBuildingStage {
     updateSuppressions: Boolean,
     commitChanges: Boolean,
     errorSink: ErrorSink,
-    phaseTimings: MutableList<GenerationTiming>,
   ): GenerationModel {
     val projectRoot = config.projectRoot
     val outputProvider = config.outputProvider
-    val productPluginXmlOverrides = recordGenerationTiming("buildProductPluginXmlOverrides", phaseTimings) {
+    val productPluginXmlOverrides = buildSpan("buildProductPluginXmlOverrides") {
       buildProductPluginXmlOverrides(
         products = discovery.products,
         moduleSetsByLabel = discovery.moduleSetsByLabel,
@@ -132,7 +127,7 @@ internal object ModelBuildingStage {
     }
 
     // Load suppression config from path (single source of truth)
-    val suppressionConfig = recordGenerationTiming("SuppressionConfig.load", phaseTimings) {
+    val suppressionConfig = buildSpan("SuppressionConfig.load") {
       SuppressionConfig.load(config.suppressionConfigPath)
     }
 
@@ -206,7 +201,7 @@ internal object ModelBuildingStage {
         .flatten()
         .mapTo(HashSet()) { config.projectRoot.resolve(it.pluginXmlPath).normalize() }
       // `config.includeTestPluginDescriptorsFromSources` guards the step, so no span means the flag was off.
-      recordGenerationTiming("discoverPluginDescriptorsFromSources", phaseTimings) {
+      buildSpan("discoverPluginDescriptorsFromSources") {
         discoverPluginDescriptorsFromSources(
           outputProvider = outputProvider,
           testFrameworkContentModules = config.testFrameworkContentModules,
@@ -220,7 +215,7 @@ internal object ModelBuildingStage {
     }
     val testPluginModuleNames = config.testPluginsByProduct.values.flatten().toHashSet()
     testPluginModuleNames.addAll(extraPluginDescriptors.testPluginModules)
-    val declaredPluginModules = recordGenerationTiming("seedPluginsForExtraction", phaseTimings) {
+    val declaredPluginModules = buildSpan("seedPluginsForExtraction") {
       seedPluginsForExtraction(
         discovery = discovery,
         config = config,
@@ -233,11 +228,11 @@ internal object ModelBuildingStage {
     }
     // The graph view is built three times here, and frozen once. Each build gets its own span, because the cost of a
     // rebuild is not known.
-    val seededGraphView = recordGenerationTiming("builder.build", phaseTimings) { builder.build() }
-    val pluginsToExtract = recordGenerationTiming("collectSeededPluginTargets", phaseTimings) {
+    val seededGraphView = buildSpan("builder.build") { builder.build() }
+    val pluginsToExtract = buildSpan("collectSeededPluginTargets") {
       collectSeededPluginTargets(seededGraphView)
     }
-    recordGenerationTiming("extractPlugins", phaseTimings) {
+    buildSpan("extractPlugins") {
       extractPlugins(
         pluginTargets = pluginsToExtract,
         pluginContentCache = pluginContentCache,
@@ -251,11 +246,11 @@ internal object ModelBuildingStage {
 
     val includeAliasCache = SharedCache<String, Set<PluginId>>(owner)
     val moduleDescriptorAliasCache = SharedCache<ContentModuleName, Set<PluginId>>(owner)
-    recordGenerationTiming("linkProductsAndBundledPlugins", phaseTimings) { linkProductsAndBundledPlugins(discovery, builder) }
-    recordGenerationTiming("linkTestPluginsByProduct", phaseTimings) { linkTestPluginsByProduct(config, builder) }
-    recordGenerationTiming("addModuleSets", phaseTimings) { addModuleSets(discovery, builder) }
-    val baseGraphView = recordGenerationTiming("builder.build #2", phaseTimings) { builder.build() }
-    recordGenerationTiming("linkProductAliases", phaseTimings) {
+    buildSpan("linkProductsAndBundledPlugins") { linkProductsAndBundledPlugins(discovery, builder) }
+    buildSpan("linkTestPluginsByProduct") { linkTestPluginsByProduct(config, builder) }
+    buildSpan("addModuleSets") { addModuleSets(discovery, builder) }
+    val baseGraphView = buildSpan("builder.build #2") { builder.build() }
+    buildSpan("linkProductAliases") {
       linkProductAliases(
         discovery = discovery,
         config = config,
@@ -268,17 +263,17 @@ internal object ModelBuildingStage {
         pluginInfos = pluginInfos,
       )
     }
-    recordGenerationTiming("seedDslTestPluginTargets", phaseTimings) { seedDslTestPluginTargets(builder, dslTestPluginsByProduct) }
-    recordGenerationTiming("addJpsDependencies", phaseTimings) {
+    buildSpan("seedDslTestPluginTargets") { seedDslTestPluginTargets(builder, dslTestPluginsByProduct) }
+    buildSpan("addJpsDependencies") {
       addJpsDependencies(builder, outputProvider)
     }
-    recordGenerationTiming("registerReferencedPlugins", phaseTimings) {
+    buildSpan("registerReferencedPlugins") {
       registerReferencedPlugins(builder, pluginContentCache, pluginInfos)
     }
-    recordGenerationTiming("builder.markDescriptorModules", phaseTimings) { builder.markDescriptorModules(descriptorCache) }
-    val graphWithJpsDeps = recordGenerationTiming("builder.build #3", phaseTimings) { builder.build() }
+    buildSpan("builder.markDescriptorModules") { builder.markDescriptorModules(descriptorCache) }
+    val graphWithJpsDeps = buildSpan("builder.build #3") { builder.build() }
 
-    val dslTestPluginExpansion = recordGenerationTiming("expandDslTestPlugins", phaseTimings) {
+    val dslTestPluginExpansion = buildSpan("expandDslTestPlugins") {
       expandDslTestPlugins(
         discovery = discovery,
         config = config,
@@ -293,16 +288,16 @@ internal object ModelBuildingStage {
         errorSink = errorSink,
       )
     }
-    recordGenerationTiming("addJpsDependencies #2", phaseTimings) {
+    buildSpan("addJpsDependencies #2") {
       addJpsDependencies(builder, outputProvider)
     }
-    recordGenerationTiming("registerReferencedPlugins #2", phaseTimings) {
+    buildSpan("registerReferencedPlugins #2") {
       registerReferencedPlugins(builder, pluginContentCache, pluginInfos)
     }
-    recordGenerationTiming("builder.markDescriptorModules #2", phaseTimings) { builder.markDescriptorModules(descriptorCache) }
-    recordGenerationTiming("addPluginDependencyEdges", phaseTimings) { addPluginDependencyEdges(builder, pluginInfos) }
+    buildSpan("builder.markDescriptorModules #2") { builder.markDescriptorModules(descriptorCache) }
+    buildSpan("addPluginDependencyEdges") { addPluginDependencyEdges(builder, pluginInfos) }
 
-    val pluginGraph = recordGenerationTiming("builder.buildFrozen", phaseTimings) { builder.buildFrozen() }
+    val pluginGraph = buildSpan("builder.buildFrozen") { builder.buildFrozen() }
 
     // Build per-product allowedMissingDependencies map — includes both real products and test product specs
     val productAllowedMissing = (
@@ -402,7 +397,6 @@ internal object ModelBuildingStage {
       product.pluginXmlPath?.let { projectRoot.resolve(it).normalize() }
     }
 
-    val sweepStartNano = System.nanoTime()
     var scannedModuleCount = 0
     val moduleByPluginXmlPath = LinkedHashMap<Path, TargetName>()
     val productionSourceRootsByModule = LinkedHashMap<TargetName, List<Path>>()
@@ -430,13 +424,9 @@ internal object ModelBuildingStage {
       }
     }
 
-    val sweepMs = (System.nanoTime() - sweepStartNano) / 1_000_000
-    val productLoopStartNano = System.nanoTime()
     var examinedProductCount = 0
     var checkedProductCount = 0
     var renderedProductCount = 0
-    var descriptorCheckNano = 0L
-    var renderNano = 0L
     val probeStats = XIncludeProbeStats()
 
     // The model states the module that owns an include, so the search does not have to look for it. Without the
@@ -494,7 +484,6 @@ internal object ModelBuildingStage {
 
       checkedProductCount++
       val xIncludePrefix = xIncludePrefixFilter(pluginModule.value)
-      val descriptorCheckStartNano = System.nanoTime()
       val pluginXmlData = Files.readAllBytes(pluginXmlPath)
       val problems = findDescriptorProblems(
         pluginXmlData = pluginXmlData,
@@ -508,13 +497,11 @@ internal object ModelBuildingStage {
       )
       val unresolvedXInclude = problems.unresolvedXInclude
       val missingBackingContentModule = problems.missingBackingContentModule
-      descriptorCheckNano += System.nanoTime() - descriptorCheckStartNano
       if (unresolvedXInclude == null && missingBackingContentModule == null) {
         continue
       }
 
       renderedProductCount++
-      val renderStartNano = System.nanoTime()
       val generatedPluginXml = buildProductContentXml(
         spec = spec,
         outputProvider = outputProvider,
@@ -534,7 +521,6 @@ internal object ModelBuildingStage {
         resolvedIncludes = resolvedIncludes,
         stats = probeStats,
       ).unresolvedXInclude
-      renderNano += System.nanoTime() - renderStartNano
       if (unresolvedXIncludeInGenerated != null) {
         debug("productPluginOverride") {
           "skipping generated override for ${pluginModule.value}: unresolved xi:include '$unresolvedXIncludeInGenerated' remains in generated descriptor"
@@ -566,16 +552,15 @@ internal object ModelBuildingStage {
       }
     }
 
-    debug("timings") {
-      val productLoopMs = (System.nanoTime() - productLoopStartNano) / 1_000_000
-      "buildProductPluginXmlOverrides: module sweep $sweepMs ms over $scannedModuleCount statted modules, " +
-      "product loop $productLoopMs ms over $examinedProductCount products " +
-      "(descriptor check ${descriptorCheckNano / 1_000_000} ms over $checkedProductCount, " +
-      "render ${renderNano / 1_000_000} ms over $renderedProductCount), " +
-      "${probeStats.parseCalls} parses, ${probeStats.resolveRequests} include requests met by " +
-      "${probeStats.resolveMisses} resolutions costing ${probeStats.resolveNano / 1_000_000} ms, " +
-      "${result.size} overrides"
-    }
+    val span = Span.current()
+    span.setAttribute("scannedModuleCount", scannedModuleCount.toLong())
+    span.setAttribute("examinedProductCount", examinedProductCount.toLong())
+    span.setAttribute("checkedProductCount", checkedProductCount.toLong())
+    span.setAttribute("renderedProductCount", renderedProductCount.toLong())
+    span.setAttribute("parseCount", probeStats.parseCalls.toLong())
+    span.setAttribute("includeRequestCount", probeStats.resolveRequests.toLong())
+    span.setAttribute("includeResolutionCount", probeStats.resolveMisses.toLong())
+    span.setAttribute("overrideCount", result.size.toLong())
     return result
   }
 
@@ -608,7 +593,7 @@ internal object ModelBuildingStage {
     error("Cannot map product '$productName' plugin.xml '$relativePluginXmlPath' to a module with production sources")
   }
 
-  /** Counts what one run of the descriptor pre-check spends, for the `timings` debug tag. */
+  /** Counts what one run of the descriptor pre-check does, for the attributes of its span. */
   internal class XIncludeProbeStats {
     @JvmField
     var resolveRequests: Int = 0
@@ -616,8 +601,6 @@ internal object ModelBuildingStage {
     var resolveMisses: Int = 0
     @JvmField
     var parseCalls: Int = 0
-    @JvmField
-    var resolveNano: Long = 0
   }
 
   /** What a product's on-disk descriptor gets wrong, or nothing at all when it is healthy. */
@@ -675,7 +658,6 @@ internal object ModelBuildingStage {
           if (!processedPaths.add(xIncludePath)) continue
 
           if (stats != null) stats.resolveRequests++
-          val resolveStartNano = System.nanoTime()
           val includeData = if (resolvedIncludes.containsKey(xIncludePath)) {
             resolvedIncludes.get(xIncludePath)
           }
@@ -689,7 +671,6 @@ internal object ModelBuildingStage {
               declaredOwner = declaredIncludeOwners.get(xIncludePath.removePrefix("/")),
             ).also { resolvedIncludes.put(xIncludePath, it) }
           }
-          if (stats != null) stats.resolveNano += System.nanoTime() - resolveStartNano
           if (includeData == null) {
             return DescriptorProblems(unresolvedXInclude = xIncludePath, missingBackingContentModule = null)
           }

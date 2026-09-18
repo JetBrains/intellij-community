@@ -63,6 +63,19 @@ bazel run //platform/buildScripts:plugin-model-tool -- --log
 bazel run //platform/buildScripts:plugin-model-tool -- --log=filterDeps
 ```
 
+### Trace (`--trace`)
+
+`--trace=<file>` writes an OpenTelemetry trace of the whole run in the Jaeger JSON format. The trace holds the
+project load, the product derivation, the five pipeline stages, each model building step, each pipeline node, and the
+dev-distribution plan. A run without the flag opens no span and costs nothing.
+
+```bash
+bazel run //platform/buildScripts:plugin-model-tool -- --check --trace=/tmp/plugin-model-tool.json
+```
+
+Open the file in the Jaeger UI, or in any tool that reads the Jaeger JSON format. Read the trace before you optimize
+the generator, because the trace states which stage owns the run.
+
 ### Adding Debug Statements
 
 Use the `debug()` function when investigating issues:

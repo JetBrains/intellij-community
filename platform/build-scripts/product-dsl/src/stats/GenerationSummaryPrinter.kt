@@ -38,8 +38,9 @@ fun printGenerationSummary(
   stats: GenerationStats,
   errors: List<ValidationError> = emptyList(),
   committed: Boolean = false,
+  runDurationMs: Long? = null,
 ) {
-  print(buildGenerationSummary(stats = stats, errors = errors, committed = committed))
+  print(buildGenerationSummary(stats = stats, errors = errors, committed = committed, runDurationMs = runDurationMs))
 }
 
 /**
@@ -49,11 +50,14 @@ fun printGenerationSummary(
  * A test reads the text directly, and it needs no `System.out` swap.
  *
  * @param committed `true` means the run wrote its changes to disk.
+ * @param runDurationMs How long the whole run took, which covers the project load and the prologue too. `null` means
+ *        the caller does not measure the run, and then the summary states the generation alone.
  */
 internal fun buildGenerationSummary(
   stats: GenerationStats,
   errors: List<ValidationError> = emptyList(),
   committed: Boolean = false,
+  runDurationMs: Long? = null,
 ): String {
   val hasErrors = errors.isNotEmpty()
   val frameColor = if (hasErrors) AnsiColors.YELLOW else AnsiColors.CYAN
@@ -78,7 +82,12 @@ internal fun buildGenerationSummary(
       appendLine("${AnsiColors.YELLOW}\u270E${AnsiColors.RESET} The run wrote the files above. Commit the change.")
     }
 
-    appendLine("${frameColor}\u23F1${AnsiColors.RESET} Completed in ${AnsiColors.BOLD}${stats.durationMs / 1000.0}s${AnsiColors.RESET}")
+    // The generation is one part of the run. The project load and the prologue run before it, and they cost more than
+    // the generation on a cold checkout, so the run total is the number a reader compares against the wall clock.
+    val generationSeconds = stats.durationMs / 1000.0
+    val totalSeconds = if (runDurationMs == null) generationSeconds else runDurationMs / 1000.0
+    val generationPart = if (runDurationMs == null) "" else " (generation ${generationSeconds}s)"
+    appendLine("${frameColor}\u23F1${AnsiColors.RESET} Completed in ${AnsiColors.BOLD}${totalSeconds}s${AnsiColors.RESET}$generationPart")
     appendLine("${frameColor}${AnsiColors.BOLD}$SEPARATOR${AnsiColors.RESET}")
   }
 }

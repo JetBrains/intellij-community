@@ -12,6 +12,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.PluginDistribution
 import org.jetbrains.intellij.build.ProductProperties
@@ -26,8 +27,42 @@ import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.module.JpsModule
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.Optional
+import java.util.concurrent.ConcurrentHashMap
 
 private const val CORE_PLUGIN_ID = "com.intellij"
+
+/** The `META-INF/plugin.xml` of one module, with the text it holds. */
+@ApiStatus.Internal
+class PluginDescriptorFile(@JvmField val path: Path, @JvmField val text: CharSequence)
+
+/**
+ * The plugin descriptor of a module, or `null` when the module declares no plugin.
+ *
+ * A derivation walks the whole project once per product, and each walk finds and reads the descriptor of every module
+ * again. Both answers depend on the module alone, so a derivation of 22 products read the same file 22 times. One
+ * cache per derivation reads it once.
+ *
+ * The cache holds the text and not a parsed element, because a reader resolves the includes of its element in place,
+ * and that resolution reads the layout of one product.
+ */
+@ApiStatus.Internal
+class PluginDescriptorFileCache(private val outputProvider: ModuleOutputProvider) {
+  private val files = ConcurrentHashMap<String, Optional<PluginDescriptorFile>>()
+
+  fun find(moduleName: String): PluginDescriptorFile? {
+    return files.computeIfAbsent(moduleName) {
+      val path = findFileInModuleSources(
+        module = outputProvider.findRequiredModule(it),
+        relativePath = PLUGIN_XML_RELATIVE_PATH,
+        onlyProductionSources = true,
+      )
+      Optional.ofNullable(path?.let { file -> PluginDescriptorFile(path = file, text = Files.readString(file)) })
+    }.orElse(null)
+  }
+}
 
 /** Reads bundled plugins from the product declaration, including modular loader includes. */
 @ApiStatus.Internal
@@ -56,6 +91,7 @@ internal fun collectCompatiblePluginsToPublish(
   bundledPluginModules: List<String> = getBundledPluginModules(productProperties, outputProvider),
   modules: List<JpsModule> = outputProvider.getAllModules(),
   sourceOnly: Boolean = true,
+  descriptorFiles: PluginDescriptorFileCache = PluginDescriptorFileCache(outputProvider),
 ) {
   val resolveContext = descriptorResolveContext(outputProvider, productProperties.javaClass.simpleName, sourceOnly)
   val availableModulesAndPlugins = HashSet(collectBundledLayoutNames(
@@ -63,6 +99,7 @@ internal fun collectCompatiblePluginsToPublish(
     productProperties = productProperties,
     bundledPluginModules = bundledPluginModules,
     resolveContext = resolveContext,
+    descriptorFiles = descriptorFiles,
   ))
 
   val minimal = System.getProperty("intellij.build.minimal").toBoolean()
@@ -76,6 +113,7 @@ internal fun collectCompatiblePluginsToPublish(
     bundledPluginModules = bundledPluginModules,
     resolveContext = resolveContext,
     modules = modules,
+    descriptorFiles = descriptorFiles,
   )
   val allBundledPluginModules = java.util.Set.copyOf(bundledPluginModules)
   val descriptorMap = allDescriptors.filterValuesTo { it.mainModule !in allBundledPluginModules && (minimal || !it.isImplementationDetail) }
@@ -121,6 +159,7 @@ private fun collectBundledLayoutNames(
   productProperties: ProductProperties,
   bundledPluginModules: List<String>,
   resolveContext: DescriptorResolveContext,
+  descriptorFiles: PluginDescriptorFileCache,
 ): Set<String> {
   return spanBuilder("collect bundled layout names").use { span ->
     val result = LinkedHashSet<String>()
@@ -163,6 +202,7 @@ private fun collectBundledLayoutNames(
         nonTrivialPlugins = nonTrivialPlugins,
         productProperties = productProperties,
         resolveContext = resolveContext,
+        descriptorFiles = descriptorFiles,
       ) ?: continue
 
       result.add(descriptor.id)
@@ -228,6 +268,7 @@ fun collectPluginDescriptors(
     bundledPluginModules = context.getBundledPluginModules(),
     resolveContext = descriptorResolveContext(context),
     modules = context.project.modules,
+    descriptorFiles = PluginDescriptorFileCache(context.outputProvider),
   )
 }
 
@@ -239,6 +280,7 @@ private fun collectPluginDescriptors(
   bundledPluginModules: List<String>,
   resolveContext: DescriptorResolveContext,
   modules: List<JpsModule>,
+  descriptorFiles: PluginDescriptorFileCache,
 ): MutableMap<String, PluginDescriptor> {
   return spanBuilder("collect plugin descriptors")
     .setAttribute("skip.implementation.details", skipImplementationDetails)
@@ -265,6 +307,7 @@ private fun collectPluginDescriptors(
           nonTrivialPlugins = nonTrivialPlugins,
           productProperties = productProperties,
           resolveContext = resolveContext,
+          descriptorFiles = descriptorFiles,
         )
       }
 
@@ -318,6 +361,7 @@ private fun readPluginDescriptor(
   nonTrivialPlugins: Map<String, List<PluginLayout>>,
   productProperties: ProductProperties,
   resolveContext: DescriptorResolveContext,
+  descriptorFiles: PluginDescriptorFileCache,
 ): PluginDescriptor? {
   // when we migrate to Bazel, we will use a test marker to avoid checking the module name for "test" pattern
   if (moduleName.contains(".tests.") && !allBundledPlugins.contains(moduleName)) {
@@ -329,10 +373,10 @@ private fun readPluginDescriptor(
     return null
   }
 
-  val outputProvider = resolveContext.outputProvider
-  val pluginXml = findFileInModuleSources(module = outputProvider.findRequiredModule(moduleName), relativePath = "META-INF/plugin.xml", onlyProductionSources = true) ?: return null
+  val descriptorFile = descriptorFiles.find(moduleName) ?: return null
+  val pluginXml = descriptorFile.path
 
-  val xml = JDOMUtil.load(pluginXml)
+  val xml = JDOMUtil.load(descriptorFile.text)
   check(!xml.isEmpty) {
     "Module '$moduleName': '$pluginXml' is empty"
   }
@@ -431,7 +475,7 @@ private fun readPluginDescriptor(
     for (module in content.getChildren("module")) {
       val contentModuleName = module.getAttributeValue("name")
       if (contentModuleName != null && !contentModuleName.isEmpty()) {
-        addContentModuleAliases(contentModuleName = contentModuleName, result = declaredModules, outputProvider = outputProvider)
+        addContentModuleAliases(contentModuleName = contentModuleName, result = declaredModules, outputProvider = resolveContext.outputProvider)
         declaredModules.add(contentModuleName)
       }
     }

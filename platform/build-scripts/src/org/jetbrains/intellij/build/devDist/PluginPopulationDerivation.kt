@@ -8,6 +8,7 @@ import com.intellij.platform.distributionContent.NonBundledPluginRow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.impl.PluginDescriptorFileCache
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.collectCompatiblePluginsToPublish
 import org.jetbrains.intellij.build.impl.createPlatformLayout
@@ -57,9 +58,17 @@ fun deriveDevDistPlatformJars(
   products: Map<String, ProductProperties>,
   outputProvider: ModuleOutputProvider,
 ): DevDistPlatformJars {
+  // Every product walks the whole project for a plugin descriptor, and the answer of that walk is the same for each
+  // of them. One cache for the derivation turns 22 walks over the file system into one.
+  val descriptorFiles = PluginDescriptorFileCache(outputProvider)
   val rowsByProduct = products.entries.toList().mapConcurrent(concurrency = PRODUCT_DERIVATION_CONCURRENCY) { (product, properties) ->
     spanBuilder("derive platform jars: $product").use {
-      deriveProductPlatformJars(product = product, properties = properties, outputProvider = outputProvider)
+      deriveProductPlatformJars(
+        product = product,
+        properties = properties,
+        outputProvider = outputProvider,
+        descriptorFiles = descriptorFiles,
+      )
     }
   }
   return DevDistPlatformJars(
@@ -77,7 +86,12 @@ private class ProductPlatformJars(
   @JvmField val nonBundledPlugins: List<NonBundledPluginRow>,
 )
 
-private fun deriveProductPlatformJars(product: String, properties: ProductProperties, outputProvider: ModuleOutputProvider): ProductPlatformJars {
+private fun deriveProductPlatformJars(
+  product: String,
+  properties: ProductProperties,
+  outputProvider: ModuleOutputProvider,
+  descriptorFiles: PluginDescriptorFileCache,
+): ProductPlatformJars {
   // the bundled plugin list is read once, and the layout and the compatible-plugin walk both take it
   val bundledPluginModules = getBundledPluginModules(properties, outputProvider)
   val layout = createPlatformLayout(productProperties = properties, outputProvider = outputProvider, bundledPluginModules = bundledPluginModules)
@@ -96,6 +110,7 @@ private fun deriveProductPlatformJars(product: String, properties: ProductProper
       productProperties = properties,
       outputProvider = outputProvider,
       bundledPluginModules = bundledPluginModules,
+      descriptorFiles = descriptorFiles,
     )
   }
   val nonBundledPlugins = pluginsToPublish.map { it.mainModule }.distinct().sorted().map {

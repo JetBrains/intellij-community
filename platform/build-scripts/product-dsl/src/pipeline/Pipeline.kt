@@ -22,14 +22,12 @@ import org.jetbrains.intellij.build.productLayout.model.error.FileDiff
 import org.jetbrains.intellij.build.productLayout.model.error.ValidationError
 import org.jetbrains.intellij.build.productLayout.stats.DependencyGenerationResult
 import org.jetbrains.intellij.build.productLayout.stats.GenerationStats
-import org.jetbrains.intellij.build.productLayout.stats.GenerationTiming
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetFileResult
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetGenerationResult
 import org.jetbrains.intellij.build.productLayout.stats.PluginDependencyGenerationResult
 import org.jetbrains.intellij.build.productLayout.stats.ProductGenerationResult
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionConfigStats
 import org.jetbrains.intellij.build.productLayout.stats.TestPluginGenerationResult
-import org.jetbrains.intellij.build.productLayout.stats.recordGenerationTiming
 import org.jetbrains.intellij.build.productLayout.validator.CommunityLibraryLicenseValidator
 import org.jetbrains.intellij.build.productLayout.validator.ContentModuleBackingValidator
 import org.jetbrains.intellij.build.productLayout.validator.ContentModuleCopyConflictValidator
@@ -51,6 +49,7 @@ import org.jetbrains.intellij.build.productLayout.validator.TestLibraryScopeVali
 import org.jetbrains.intellij.build.productLayout.validator.TestPluginPluginDependencyValidator
 import org.jetbrains.intellij.build.productLayout.validator.UnusedEmbeddedLibraryModuleValidator
 import org.jetbrains.intellij.build.productLayout.validator.UnusedSharedLibraryModuleValidator
+import org.jetbrains.intellij.build.buildSpan
 import org.jetbrains.intellij.build.forEachConcurrent
 import java.nio.file.Path
 
@@ -147,19 +146,14 @@ internal class GenerationPipeline(
   ): GenerationResult {
     val startTime = System.currentTimeMillis()
 
-    // The five stages are sequential, so this list is what says which one owns the run's time. Without it a caller sees
-    // one total, and `nodeTimings` covers only the EXECUTE stage.
-    val stageTimings = ArrayList<GenerationTiming>(5)
-    // The steps of the BUILD_MODEL stage. They nest inside the `build model` stage, so they travel in their own list.
-    val phaseTimings = ArrayList<GenerationTiming>(23)
     return SharedTaskOwner("product model").use { owner ->
       // Stage 1: DISCOVER - Scan DSL definitions
-      val discovery = recordGenerationTiming("discover", stageTimings) { discover(config) }
+      val discovery = buildSpan("discover") { discover(config) }
 
       // Stage 2: BUILD_MODEL - Create caches and compute shared values
       // ModelBuildingStage has its own ErrorSink for xi:include errors discovered during extraction
       val modelBuildingErrorSink = ErrorSink()
-      val model = recordGenerationTiming("build model", stageTimings) {
+      val model = buildSpan("build model") {
         ModelBuildingStage.execute(
           owner = owner,
           discovery = discovery,
@@ -167,25 +161,24 @@ internal class GenerationPipeline(
           updateSuppressions = updateSuppressions,
           commitChanges = commitChanges,
           errorSink = modelBuildingErrorSink,
-          phaseTimings = phaseTimings,
         )
       }
 
       // Stage 3: EXECUTE - Run compute nodes in dependency order
-      val ctx = recordGenerationTiming("execute nodes", stageTimings) { executeNodes(model, validationFilter) }
+      val ctx = buildSpan("execute nodes") { executeNodes(model, validationFilter) }
 
       // Stage 4: AGGREGATE - Collect errors, diffs, and tracking maps
-      val aggregated = recordGenerationTiming("aggregate", stageTimings) { aggregate(ctx, model, modelBuildingErrorSink) }
+      val aggregated = buildSpan("aggregate") { aggregate(ctx, model, modelBuildingErrorSink) }
 
       // Stage 5: OUTPUT - Cleanup orphans and commit or return diffs
-      val outputResult = recordGenerationTiming("output", stageTimings) {
+      val outputResult = buildSpan("output") {
         output(aggregated.errors, model, commitChanges, aggregated.trackingMaps)
       }
 
       // Build final stats including deleted files (after cleanup)
       val stats = buildStats(ctx, System.currentTimeMillis() - startTime, outputResult.deletedModuleSetFiles, model.fileUpdater.getDiffs())
 
-      GenerationResult(errors = aggregated.errors, diffs = aggregated.diffs, stats = stats.copy(stageTimings = stageTimings, phaseTimings = phaseTimings))
+      GenerationResult(errors = aggregated.errors, diffs = aggregated.diffs, stats = stats)
     }
   }
 
@@ -237,25 +230,11 @@ internal class GenerationPipeline(
       for (level in levels) {
         // Run all nodes at this level in parallel
         level.forEachConcurrent { node ->
-          run {
-            val nodeCtx = ctx.forNode(node.id)
-            val startEpochMs = System.currentTimeMillis()
-            val startNano = System.nanoTime()
-            try {
-              node.execute(nodeCtx)
-            }
-            finally {
-              // in a `finally`, so a node that throws still reports how long it took before it did
-              ctx.nodeTimings.add(
-                GenerationTiming(
-                  name = node.id.name,
-                  startEpochMs = startEpochMs,
-                  durationMs = (System.nanoTime() - startNano) / 1_000_000,
-                )
-              )
-            }
-            ctx.finalizeNodeErrors(node.id)
+          buildSpan(node.id.name) { span ->
+            span.setAttribute("category", node.id.category.name)
+            node.execute(ctx.forNode(node.id))
           }
+          ctx.finalizeNodeErrors(node.id)
         }
       }
 
@@ -493,7 +472,6 @@ internal class GenerationPipeline(
       },
       durationMs = durationMs,
       fileUpdaterDiffs = fileUpdaterDiffs,
-      nodeTimings = ctx.nodeTimings.sortedBy(GenerationTiming::startEpochMs),
     )
   }
 

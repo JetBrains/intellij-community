@@ -279,7 +279,13 @@ fun resolveDescriptor(
     }
 
     if (pass == DescriptorSearchPass.MODULE_OUTPUT && searchAnyModuleOutput) {
-      outputProvider.findFileInAnyModuleOutput(path, walk?.includePrefix, processedModules)?.let { return it }
+      // The last resort may open the output of every module, so the trace has to name it. A search that lands here
+      // often is the search to give a [declaredOwner].
+      buildSpan("search any module output") { span ->
+        span.setAttribute("path", path)
+        span.setAttribute("module", module.name)
+        outputProvider.findFileInAnyModuleOutput(path, walk?.includePrefix, processedModules)
+      }?.let { return it }
     }
   }
 

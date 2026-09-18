@@ -110,7 +110,6 @@ class ModelBuildingStageTest {
         updateSuppressions = updateSuppressions,
         commitChanges = false,
         errorSink = ErrorSink(),
-        phaseTimings = ArrayList(),
       )
 
       model.pluginGraph.query {
@@ -188,7 +187,6 @@ class ModelBuildingStageTest {
           updateSuppressions = false,
           commitChanges = false,
           errorSink = ErrorSink(),
-          phaseTimings = ArrayList(),
         )
         val context = ComputeContextImpl(model)
         context.initSlot(Slots.PLUGIN_DEPENDENCY_PLAN)
@@ -252,7 +250,7 @@ class ModelBuildingStageTest {
         updateSuppressions = false,
         commitChanges = false,
         errorSink = ErrorSink(),
-        phaseTimings = ArrayList(), owner = owner,
+        owner = owner,
       )
 
       val wrapperPlugin = model.pluginContentCache.getOrExtract(wrapperModule)

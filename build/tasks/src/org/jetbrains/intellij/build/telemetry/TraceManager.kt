@@ -136,6 +136,9 @@ object TraceManager {
 
   fun spanBuilder(spanName: String): SpanBuilder = tracer.spanBuilder(spanName)
 
+  /** The tracer of the current build, for an entry point that hands it to a module that cannot depend on this one. */
+  fun currentTracer(): Tracer = tracer
+
   fun pushTracer(tracer: Tracer): AutoCloseable {
     synchronized(tracerLock) {
       val handle = TracerOverrideHandle(previousTracer = this.tracer)

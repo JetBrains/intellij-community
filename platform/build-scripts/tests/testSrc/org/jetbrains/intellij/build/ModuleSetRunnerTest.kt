@@ -5,6 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.productLayout.discoverCommunityModuleSetSources
 import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetSourceLabels
+import org.jetbrains.intellij.build.productLayout.parseGeneratorOptions
 import org.jetbrains.intellij.build.productLayout.parseJsonArgument
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
@@ -77,5 +78,26 @@ class ModuleSetRunnerTest {
     val filter = parseJsonArgument("""--json={"filter":"summary","operation":"old-mcp-shape","ignored":true}""")
 
     assertThat(filter?.filter).isEqualTo("summary")
+  }
+
+  @Test
+  fun `a run without the trace argument writes no trace`() {
+    assertThat(parseGeneratorOptions(arrayOf("--check")).traceFile).isNull()
+  }
+
+  @Test
+  fun `the trace argument becomes an absolute path`() {
+    val options = parseGeneratorOptions(arrayOf("--check", "--trace=trace.json"))
+
+    assertThat(options.traceFile).isAbsolute()
+    assertThat(options.traceFile?.fileName).isEqualTo(Path.of("trace.json"))
+    assertThat(options.commitChanges).isFalse()
+  }
+
+  @Test
+  fun `an empty trace argument throws`() {
+    assertThatThrownBy { parseGeneratorOptions(arrayOf("--trace=")) }
+      .isInstanceOf(IllegalArgumentException::class.java)
+      .hasMessageContaining("--trace needs a file")
   }
 }

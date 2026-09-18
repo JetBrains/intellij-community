@@ -13,6 +13,7 @@ import java.nio.file.Path
  * @param validationFilter If non-null, only runs validation rules with matching names
  * @param logFilter If non-null, enables debug output. Empty set = all debug, non-empty = only matching tags.
  * @param devSectionsDumpDir If non-null, the run writes the rendered dev-distribution build sections into this directory and generates nothing else
+ * @param traceFile If non-null, the run writes an OpenTelemetry trace of itself into this file in the Jaeger JSON format
  */
 data class GeneratorRunOptions(
   @JvmField val jsonFilter: String? = null,
@@ -21,7 +22,21 @@ data class GeneratorRunOptions(
   @JvmField val validationFilter: Set<String>? = null,
   @JvmField val logFilter: Set<String>? = null,
   @JvmField val devSectionsDumpDir: Path? = null,
+  @JvmField val traceFile: Path? = null,
 )
+
+/**
+ * Parses `--trace=<file>`.
+ * Returns null when the argument is absent.
+ *
+ * The path is absolute, because the trace writer creates the parent directory of the file.
+ */
+private fun parseTraceFile(args: Array<String>): Path? {
+  val arg = args.firstOrNull { it.startsWith("--trace=") } ?: return null
+  val value = arg.substringAfter("=")
+  require(value.isNotEmpty()) { "--trace needs a file" }
+  return Path.of(value).toAbsolutePath().normalize()
+}
 
 /**
  * Parses `--dump-dev-sections=<dir>`.
@@ -79,6 +94,7 @@ internal fun parseGeneratorOptions(args: Array<String>): GeneratorRunOptions {
   val logFilter = parseLogFilter(args)
   // A dump run renders the sections into a directory of its own and writes nothing into the repository.
   val devSectionsDumpDir = parseDevSectionsDumpDir(args)
+  val traceFile = parseTraceFile(args)
 
   return GeneratorRunOptions(
     jsonFilter = jsonArg,
@@ -87,5 +103,6 @@ internal fun parseGeneratorOptions(args: Array<String>): GeneratorRunOptions {
     validationFilter = validationFilter,
     logFilter = logFilter,
     devSectionsDumpDir = devSectionsDumpDir,
+    traceFile = traceFile,
   )
 }

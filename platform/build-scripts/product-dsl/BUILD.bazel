@@ -51,6 +51,7 @@ jvm_library(
         "//libraries/androidx-collections",
         "//platform/build-scripts/product-dsl/plugin-graph",
         "//platform/build-scripts/licenses",
+        "//libraries/opentelemetry",
     ],
 )
 
@@ -88,6 +89,7 @@ jvm_library(
         "//libraries/androidx-collections:androidx-collections_test_lib",
         "//platform/build-scripts/product-dsl/plugin-graph:plugin-graph_test_lib",
         "//platform/build-scripts/licenses:licenses_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.productDsl` end
@@ -180,6 +182,8 @@ jvm_library(
         "//platform/build-scripts/product-dsl/plugin-graph:plugin-graph_test_lib",
         "//platform/build-scripts/licenses",
         "//platform/build-scripts/licenses:licenses_test_lib",
+        "//libraries/opentelemetry",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.productDsl.tests` end

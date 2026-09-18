@@ -197,6 +197,23 @@ For running the generator and common commands, see [quick-start.md](quick-start.
 - **Bazel (preferred):** `bazel run //platform/buildScripts:plugin-model-tool`
 - **IDE:** Run configuration `Generate Product Layouts`
 - **JSON Analysis:** See [programmatic-content.md#json-analysis-endpoint](programmatic-content.md#json-analysis-endpoint)
+- **Trace:** `--trace=<file>` writes an OpenTelemetry trace of the run in the Jaeger JSON format
+
+## Trace
+
+The generator traces itself. Each stage, each model building step and each pipeline node opens a span, and a worker
+span nests under the task that forked it.
+
+```bash
+bazel run //platform/buildScripts:plugin-model-tool -- --check --trace=/tmp/plugin-model-tool.json
+```
+
+Open the file in the Jaeger UI. A run without `--trace` installs a tracer that records nothing, so it opens no span
+and writes no file.
+
+The pipeline reaches the tracer through `BuildTracer` in `intellij.platform.buildScripts.api`. The entry point
+installs the real tracer, because the pipeline must not depend on the telemetry module. Call `buildSpan("name")` to
+add a span.
 
 ## File Organization
 

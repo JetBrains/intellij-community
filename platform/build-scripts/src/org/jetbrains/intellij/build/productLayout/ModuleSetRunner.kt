@@ -6,7 +6,9 @@ package org.jetbrains.intellij.build.productLayout
 import com.intellij.platform.pluginGraph.PluginGraph
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.BuildLifetime
+import org.jetbrains.intellij.build.BuildTracer
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.buildSpan
 import org.jetbrains.intellij.build.impl.BazelModuleOutputProvider
 import org.jetbrains.intellij.build.impl.JpsModuleOutputProvider
 import org.jetbrains.intellij.build.impl.bazelOutputRoot
@@ -23,6 +25,9 @@ import org.jetbrains.intellij.build.productLayout.tooling.ModuleLocation
 import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetMetadata
 import org.jetbrains.intellij.build.productLayout.tooling.ProductCategory
 import org.jetbrains.intellij.build.productLayout.tooling.ProductSpec
+import org.jetbrains.intellij.build.telemetry.ConsoleSpanExporter
+import org.jetbrains.intellij.build.telemetry.TraceManager
+import org.jetbrains.intellij.build.telemetry.withTracer
 import org.jetbrains.intellij.build.telemetry.withoutTracer
 import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
@@ -85,6 +90,7 @@ private fun determineProductCategory(contentSpec: ProductModulesContentSpec?): P
  * - `--update-suppressions`: Only update suppressions.json (no XML changes)
  * - `--validation=<ids>`: Run only specified validation rules (comma-separated).
  *   Use `--validation=none` to skip all validation. Generation generators always run.
+ * - `--trace=<file>`: Write an OpenTelemetry trace of the run into the file, in the Jaeger JSON format.
  *
  * @param args Command line arguments
  * @param communityModuleSetSources Module sets from community sources grouped by discovery label
@@ -105,20 +111,29 @@ fun runModuleSetMain(
   generateXmlImpl: (outputProvider: ModuleOutputProvider, options: GeneratorRunOptions) -> GenerationResult,
   graphConfigProvider: ((outputProvider: ModuleOutputProvider, options: GeneratorRunOptions) -> ModuleSetGenerationConfig)? = null,
 ) {
-  withoutTracer {
-    val options = parseGeneratorOptions(args)
-    setProductDslLogFilter(options.logFilter)
+  // The process start, so the total covers the JVM start and the module set discovery of the caller, and not only the
+  // part below. A reader compares the total against the wall clock, and a total that starts here misses seconds.
+  val startTime = ProcessHandle.current().info().startInstant().map { it.toEpochMilli() }.orElseGet { System.currentTimeMillis() }
+  val options = parseGeneratorOptions(args)
+  setProductDslLogFilter(options.logFilter)
+  // A bad filter must fail before the run starts, so that no trace file stays half-written.
+  val jsonFilter = options.jsonFilter?.let {
+    try {
+      parseJsonArgument(it)
+    }
+    catch (e: IllegalArgumentException) {
+      System.err.println(e.message)
+      exitProcess(1)
+    }
+  }
 
+  var exitCode = 0
+  val run: () -> Unit = {
     BuildLifetime().use { lifetime ->
-      val outputProvider = createModuleOutputProvider(projectRoot = projectRoot, lifetime = lifetime)
+      val outputProvider = buildSpan("create module output provider") {
+        createModuleOutputProvider(projectRoot = projectRoot, lifetime = lifetime)
+      }
       if (options.jsonFilter != null) {
-        val filter = try {
-          parseJsonArgument(options.jsonFilter)
-        }
-        catch (e: IllegalArgumentException) {
-          System.err.println(e.message)
-          exitProcess(1)
-        }
         val pluginGraph = graphConfigProvider?.let { buildPluginGraphForJson(it(outputProvider, options)) }
                           ?: error("PluginGraph is required for --json output; graphConfigProvider was not supplied")
         jsonResponse(
@@ -127,7 +142,7 @@ fun runModuleSetMain(
           ultimateModuleSets = ultimateModuleSets,
           projectRoot = projectRoot,
           testProducts = testProducts,
-          filter = filter,
+          filter = jsonFilter,
           outputProvider = outputProvider,
           pluginGraph = pluginGraph,
         )
@@ -136,22 +151,48 @@ fun runModuleSetMain(
         // Update suppressions mode: only update suppressions.json, no XML changes
         val result = generateXmlImpl(outputProvider, options)
         println("Suppressions config updated.")
-        printGenerationSummary(result.stats, result.errors, committed = true)
+        printGenerationSummary(result.stats, result.errors, committed = true, runDurationMs = System.currentTimeMillis() - startTime)
       }
       else {
         // Default mode: Generate XML files but NOT suppressions.json
         val result = generateXmlImpl(outputProvider, options)
-        printGenerationSummary(result.stats, result.errors, committed = options.commitChanges)
+        printGenerationSummary(
+          stats = result.stats,
+          errors = result.errors,
+          committed = options.commitChanges,
+          runDurationMs = System.currentTimeMillis() - startTime,
+        )
         if (!options.commitChanges) {
           for (diff in result.diffs) {
             println("out of sync: ${projectRoot.relativize(diff.path)} (${diff.changeType})")
           }
         }
         if (result.errors.isNotEmpty() || (!options.commitChanges && result.diffs.isNotEmpty())) {
-          exitProcess(1)
+          exitCode = 1
         }
       }
     }
+  }
+
+  val traceFile = options.traceFile
+  if (traceFile == null) {
+    withoutTracer(run)
+  }
+  else {
+    // The trace goes to the file. The console exporter prints every span to stdout, which breaks the JSON output.
+    System.setProperty(ConsoleSpanExporter.IS_ENABLED_PROPERTY, "false")
+    withTracer(serviceName = "plugin-model-tool", traceFile = traceFile) {
+      BuildTracer.install(TraceManager.currentTracer()).use {
+        // One root span, so that every span of the run has a parent.
+        buildSpan("plugin-model-tool") { run() }
+      }
+    }
+    println("Trace: $traceFile")
+  }
+
+  // The exit must come after the trace file is closed, because a process exit skips the flush of the exporter.
+  if (exitCode != 0) {
+    exitProcess(exitCode)
   }
 }
 
@@ -278,11 +319,15 @@ internal fun parseJsonArgument(
 
 private fun createModuleOutputProvider(projectRoot: Path, lifetime: BuildLifetime): ModuleOutputProvider {
   val useTestCompilationOutput = true
-  val project = JpsSerializationManager.getInstance().loadProject(
-    projectRoot.toString(),
-    mapOf("MAVEN_REPOSITORY" to JpsMavenSettings.getMavenRepositoryPath()),
-    false
-  )
+  val project = buildSpan("load project") { span ->
+    val project = JpsSerializationManager.getInstance().loadProject(
+      projectRoot.toString(),
+      mapOf("MAVEN_REPOSITORY" to JpsMavenSettings.getMavenRepositoryPath()),
+      false
+    )
+    span.setAttribute("moduleCount", project.modules.size.toLong())
+    project
+  }
   val bazelOutputRoot = bazelOutputRoot ?: return JpsModuleOutputProvider(project, useTestCompilationOutput = useTestCompilationOutput)
   return BazelModuleOutputProvider(
     modules = project.modules,

@@ -8,7 +8,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.platform.bazel.runfiles.BazelRunfiles
 import com.intellij.util.io.URLUtil
 import io.opentelemetry.api.trace.Span
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -20,6 +19,7 @@ import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.JpsCompilationData
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.buildSpan
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
@@ -29,6 +29,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.net.URI
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
 import kotlin.io.path.pathString
@@ -140,11 +141,21 @@ class BazelTargetsInfo {
   companion object {
     private val bazelTargetsJson = Json { ignoreUnknownKeys = true }
 
-    @OptIn(ExperimentalSerializationApi::class)
-    fun loadBazelTargetsJson(projectRoot: Path): TargetsFile {
-      val targetsFilePath = ArchivedCompilationContextUtil.getBazelTargetsJsonPath(projectRoot)
-      val targetsFile = targetsFilePath.inputStream().use { bazelTargetsJson.decodeFromStream<TargetsFile>(it) }
-      return targetsFile
+    /**
+     * One parsed file per project root.
+     *
+     * The file holds every target of the repository, and it is megabytes of JSON. Two readers of one run asked for it
+     * twice, and each parse cost as much as a pipeline stage. The file is a build input, so it cannot change inside a
+     * run.
+     */
+    private val cache = ConcurrentHashMap<Path, TargetsFile>()
+
+    fun loadBazelTargetsJson(projectRoot: Path): TargetsFile = cache.computeIfAbsent(projectRoot) {
+      buildSpan("load bazel-targets.json") { span ->
+        val targetsFilePath = ArchivedCompilationContextUtil.getBazelTargetsJsonPath(it)
+        span.setAttribute("path", targetsFilePath.toString())
+        targetsFilePath.inputStream().use { input -> bazelTargetsJson.decodeFromStream<TargetsFile>(input) }
+      }
     }
   }
 
