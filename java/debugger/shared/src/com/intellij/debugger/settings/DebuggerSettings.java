@@ -133,7 +133,7 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
    * filter list from them when a launch configuration asks for the JDK filters.
    */
   public static ClassFilter[] getDefaultSteppingFilters() {
-    return DEFAULT_STEPPING_FILTERS.clone();
+    return ClassFilter.deepCopyOf(DEFAULT_STEPPING_FILTERS);
   }
 
   public static DebuggerSettings getInstance() {
