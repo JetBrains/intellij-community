@@ -8,16 +8,8 @@ plugins {
   id("fleet.project-module-conventions")
   id("fleet.toolchain-conventions")
   // GRADLE_PLUGINS__MARKER_START
-  id("fleet-module")
   alias(jps.plugins.kotlin.serialization)
   // GRADLE_PLUGINS__MARKER_END
-}
-
-fleetModule {
-  module {
-    name = "fleet.build.platform"
-    importedFromJps {}
-  }
 }
 
 @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)

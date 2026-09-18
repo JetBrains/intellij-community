@@ -2111,36 +2111,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "io.github.pdvrieze.xmlutil/core-0.91.3.jar_copy",
-    src = "@io_github_pdvrieze_xmlutil-core-0_91_3_http//file",
-    out = "io.github.pdvrieze.xmlutil/core-0.91.3.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "fleet-io-github-pdvrieze-xmlutil-core",
-    jar = "@io_github_pdvrieze_xmlutil-core-0_91_3_http//file",
-    source_jar = "@io_github_pdvrieze_xmlutil-core-0_91_3-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.github.pdvrieze.xmlutil/serialization-jvm-0.91.3.jar_copy",
-    src = "@io_github_pdvrieze_xmlutil-serialization-jvm-0_91_3_http//file",
-    out = "io.github.pdvrieze.xmlutil/serialization-jvm-0.91.3.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "fleet-io-github-pdvrieze-xmlutil-serialization-jvm",
-    jar = "@io_github_pdvrieze_xmlutil-serialization-jvm-0_91_3_http//file",
-    source_jar = "@io_github_pdvrieze_xmlutil-serialization-jvm-0_91_3-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "io.ktor/ktor-client-core-jvm-3.4.1.jar_copy",
     src = "@io_ktor-ktor-client-core-jvm-3_4_1_http//file",
     out = "io.ktor/ktor-client-core-jvm-3.4.1.jar",

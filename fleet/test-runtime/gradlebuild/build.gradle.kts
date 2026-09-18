@@ -8,15 +8,7 @@ plugins {
   id("fleet.project-module-conventions")
   id("fleet.toolchain-conventions")
   // GRADLE_PLUGINS__MARKER_START
-  id("fleet-module")
   // GRADLE_PLUGINS__MARKER_END
-}
-
-fleetModule {
-  module {
-    name = "fleet.test.runtime"
-    importedFromJps {}
-  }
 }
 
 @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)

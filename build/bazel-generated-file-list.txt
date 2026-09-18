@@ -222,7 +222,6 @@ community-resources
 community-resources/ide-customization
 fleet/andel
 fleet/bifurcan
-fleet/build/authentication
 fleet/build/bundles
 fleet/build/cli
 fleet/build/codecache

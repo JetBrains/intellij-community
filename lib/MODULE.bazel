@@ -1590,34 +1590,6 @@ http_file(
 )
 
 http_file(
-    name = "io_github_pdvrieze_xmlutil-core-0_91_3_http",
-    downloaded_file_path = "core-0.91.3.jar",
-    sha256 = "4af1acef851d201c7bfe3fd579057197f71b3b6570a02d04fe63c32bc5b29e93",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/pdvrieze/xmlutil/core/0.91.3/core-0.91.3.jar",
-)
-
-http_file(
-    name = "io_github_pdvrieze_xmlutil-core-0_91_3-sources_http",
-    downloaded_file_path = "core-0.91.3-sources.jar",
-    sha256 = "d6f8e61b78a96a934fd3cb2a52b255770649461b0b6bc5262ad068a1e5daa569",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/pdvrieze/xmlutil/core/0.91.3/core-0.91.3-sources.jar",
-)
-
-http_file(
-    name = "io_github_pdvrieze_xmlutil-serialization-jvm-0_91_3_http",
-    downloaded_file_path = "serialization-jvm-0.91.3.jar",
-    sha256 = "c8165f1f1b5c2c8c3bba7672429ca3813c1a4ab855dd8ee4086b4a3062b9b4e6",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/pdvrieze/xmlutil/serialization-jvm/0.91.3/serialization-jvm-0.91.3.jar",
-)
-
-http_file(
-    name = "io_github_pdvrieze_xmlutil-serialization-jvm-0_91_3-sources_http",
-    downloaded_file_path = "serialization-jvm-0.91.3-sources.jar",
-    sha256 = "6086ac512e970b99ab87a5a482a4defeb2984e65f69e973c5aaf033aaa141ba6",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/pdvrieze/xmlutil/serialization-jvm/0.91.3/serialization-jvm-0.91.3-sources.jar",
-)
-
-http_file(
     name = "io_ktor-ktor-client-core-jvm-3_4_1_http",
     downloaded_file_path = "ktor-client-core-jvm-3.4.1.jar",
     sha256 = "ec96ff9c9d6be26b630c6d7cdf1a9cccfc7c1d2c0e56eb4616021bb35ee1d008",

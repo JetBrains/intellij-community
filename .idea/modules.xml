@@ -4,7 +4,6 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/fleet/andel/fleet.andel.iml" filepath="$PROJECT_DIR$/fleet/andel/fleet.andel.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/bifurcan/fleet.bifurcan.iml" filepath="$PROJECT_DIR$/fleet/bifurcan/fleet.bifurcan.iml" />
-      <module fileurl="file://$PROJECT_DIR$/fleet/build/authentication/fleet.build.authentication.iml" filepath="$PROJECT_DIR$/fleet/build/authentication/fleet.build.authentication.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/build/bundles/fleet.build.bundles.iml" filepath="$PROJECT_DIR$/fleet/build/bundles/fleet.build.bundles.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/build/cli/fleet.build.cli.iml" filepath="$PROJECT_DIR$/fleet/build/cli/fleet.build.cli.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/build/codecache/fleet.build.codecache.iml" filepath="$PROJECT_DIR$/fleet/build/codecache/fleet.build.codecache.iml" />
