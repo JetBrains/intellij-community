@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.providers.nonIndexableFiles
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
@@ -14,7 +15,10 @@ internal class SeNonIndexableFilesProviderFactory: SeWrappedLegacyContributorIte
     get() = SeProviderIdUtils.NON_INDEXABLE_FILES_ID
 
   override suspend fun getItemsProvider(project: Project?, legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider? {
-    if (project == null || legacyContributor !is WeightedSearchEverywhereContributor<Any>) return null
+    if (project == null
+        || legacyContributor !is WeightedSearchEverywhereContributor<Any>
+        || WelcomeScreenProjectProvider.isWelcomeScreenProject(project)) return null
+
     return SeNonIndexableFilesProvider(SeAsyncContributorWrapper(legacyContributor))
   }
 }
