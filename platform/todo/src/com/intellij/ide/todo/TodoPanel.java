@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
@@ -615,7 +616,8 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
   }
 
   @ApiStatus.Internal
-  static final class MyShowPackagesAction extends ToggleAction implements DumbAware {
+  static final class MyShowPackagesAction extends ToggleAction
+    implements DumbAware, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
     MyShowPackagesAction() {
       super(IdeBundle.messagePointer("action.group.by.packages"), PlatformIcons.GROUP_BY_PACKAGES);
     }
@@ -648,7 +650,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
   }
 
   @ApiStatus.Internal
-  static final class MyShowModulesAction extends ToggleAction implements DumbAware {
+  static final class MyShowModulesAction extends ToggleAction implements DumbAware, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
     MyShowModulesAction() {
       super(IdeBundle.messagePointer("action.group.by.modules"), AllIcons.Actions.GroupByModule);
     }
@@ -682,7 +684,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
   }
 
   @ApiStatus.Internal
-  static final class MyFlattenPackagesAction extends ToggleAction implements DumbAware {
+  static final class MyFlattenPackagesAction extends ToggleAction implements DumbAware, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
     MyFlattenPackagesAction() {
       super(IdeBundle.messagePointer("action.flatten.view"), PlatformIcons.FLATTEN_PACKAGES_ICON);
     }
