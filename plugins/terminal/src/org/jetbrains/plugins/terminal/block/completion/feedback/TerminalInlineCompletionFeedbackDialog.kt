@@ -72,7 +72,7 @@ internal class TerminalInlineCompletionFeedbackDialog(
   )
 
   private fun imageBlock(): ImageBlock {
-    val icon = IconLoader.getIcon("icons/completion_illustration.png", TerminalInlineCompletionFeedbackDialog::class.java.classLoader)
+    val icon = IconLoader.getIcon("icons/inline_completion_illustration.png", TerminalInlineCompletionFeedbackDialog::class.java.classLoader)
     val arc = JBUIScale.scale(16)
     val arcRatio = arc.toDouble() / min(icon.iconWidth, icon.iconHeight)
     val roundedIcon = RoundedIcon(icon, arcRatio)
