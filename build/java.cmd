@@ -238,11 +238,7 @@ set POWERSHELL=%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
 
 if exist "%FORCED_JAVA_HOME%\release" (
   find "JAVA_VERSION=""%JDK_VERSION%." "%FORCED_JAVA_HOME%\release" >nul 2>&1
-  if not errorlevel 1 (
-    set JAVA_HOME=%FORCED_JAVA_HOME%
-    call "%JAVA_HOME%\bin\java.exe" %*
-    exit /B %ERRORLEVEL%
-  )
+  if not errorlevel 1 goto continueWithForcedJvm
 )
 
 if not exist "%JVM_TARGET_DIR%.flag" goto downloadAndExtractJvm
@@ -295,6 +291,10 @@ finally { ^
 "%POWERSHELL%" -nologo -noprofile -Command %DOWNLOAD_AND_EXTRACT_JVM_PS1%
 if errorlevel 1 goto fail
 
+:continueWithForcedJvm
+set "JAVA_HOME=%FORCED_JAVA_HOME%"
+goto runJava
+
 :continueWithJvm
 
 set JAVA_HOME=
@@ -304,6 +304,7 @@ if not exist "%JAVA_HOME%\bin\java.exe" (
   goto fail
 )
 
+:runJava
 call "%JAVA_HOME%\bin\java.exe" %*
 exit /B %ERRORLEVEL%
 endlocal
