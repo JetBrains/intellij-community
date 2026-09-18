@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.idea.base.psi.setCallableTypeReference
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.psi.KtCodeFragment
@@ -68,9 +69,9 @@ internal class SpecifyTypeExplicitlyInDestructuringAssignmentIntention :
         val entriesAndTypeReferences = elementContext.entriesAndTypeReferences
         var lastEntry: KtDestructuringDeclarationEntry? = null
 
-        for (entryAndTypeReference in entriesAndTypeReferences) {
-            entryAndTypeReference.key.typeReference = entryAndTypeReference.value
-            lastEntry = entryAndTypeReference.key
+        for ((key, value) in entriesAndTypeReferences) {
+            key.setCallableTypeReference(value)
+            lastEntry = key
         }
         lastEntry?.let { updater.moveCaretTo(lastEntry.endOffset) }
     }

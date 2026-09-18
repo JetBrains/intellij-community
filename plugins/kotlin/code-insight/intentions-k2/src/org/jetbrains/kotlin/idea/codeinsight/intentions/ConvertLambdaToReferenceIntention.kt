@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.intentions
 
 import com.intellij.modcommand.ActionContext
@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.setCallableTypeReference
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.getCallReferencedName
@@ -220,7 +221,7 @@ internal class ConvertLambdaToReferenceIntention :
         val renderedPropertyType = elementContext.renderedPropertyType
 
         if (parent is KtProperty && renderedPropertyType != null) {
-            parent.typeReference = KtPsiFactory(element.project).createType(renderedPropertyType)
+            parent.setCallableTypeReference(KtPsiFactory(element.project).createType(renderedPropertyType))
             shortenReferences(parent.typeReference!!)
         }
 

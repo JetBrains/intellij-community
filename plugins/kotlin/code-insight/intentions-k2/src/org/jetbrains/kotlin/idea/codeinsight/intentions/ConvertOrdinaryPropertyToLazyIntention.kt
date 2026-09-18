@@ -5,6 +5,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.idea.base.psi.setPropertyInitializer
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
@@ -57,6 +58,6 @@ internal class ConvertOrdinaryPropertyToLazyIntention :
             psiFactory.createExpressionByPattern("lazy { $0 }", initializer)
         }
         element.addAfter(psiFactory.createPropertyDelegate(newExpression), initializer)
-        element.initializer = null
+        element.setPropertyInitializer(null)
     }
 }
