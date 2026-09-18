@@ -31,6 +31,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public final class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
   public CreateClassFromUsageFix(PsiJavaCodeReferenceElement refElement, CreateClassKind kind) {
     super(kind, refElement);
@@ -151,7 +153,7 @@ public final class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
         CreateRecordFromNewFix.setupRecordComponentsFromPattern(aClass.getRecordHeader(), DummyTemplateBuilder.INSTANCE,
                                                                 pattern.getDeconstructionList());
       }
-      updater.moveCaretTo(aClass.getContainingFile());
+      updater.moveCaretTo(Objects.requireNonNullElse(aClass.getNameIdentifier(), aClass));
     }
   }
 }

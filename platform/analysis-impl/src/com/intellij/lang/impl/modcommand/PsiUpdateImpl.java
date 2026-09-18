@@ -487,10 +487,16 @@ final class PsiUpdateImpl {
       if (!element.isValid()) throw new IllegalArgumentException("Element " + element + " is not valid");
       if (myTracker == null || !PsiTreeUtil.isAncestor(myTracker.myCopyFile, element, false)) {
         PsiFile file = element.getContainingFile();
+        SmartPsiElementPointer<PsiElement> newFilePointer = null;
         // allow navigating to the beginning of files
         if (file.getViewProvider().getVirtualFile() instanceof LightVirtualFile lvf &&
             lvf.getParent() instanceof ChangedVirtualDirectory cvd) {
           myNavigationFile = new FutureVirtualFile(resolveParentForFutureVirtualFile(cvd), lvf.getName(), lvf.getFileType());
+          Document document = file.getFileDocument();
+          newFilePointer = SmartPointerManager.createPointer(element);
+          PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
+          manager.commitDocument(document);
+          manager.doPostponedOperationsAndUnblockDocument(document);
         }
         else {
           myNavigationFile = file.getOriginalFile().getVirtualFile();
@@ -500,7 +506,10 @@ final class PsiUpdateImpl {
         }
         myTracker = tracker(file.getOriginalFile());
         myTracker.myPositionDocument.addDocumentListener(this, this);
-        return element.getTextRange();
+        if (newFilePointer == null) return element.getTextRange();
+        Segment newFileRange = newFilePointer.getRange();
+        if (newFileRange == null) return null;
+        return TextRange.create(newFileRange);
       }
       SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(element);
       myTracker.unblock();

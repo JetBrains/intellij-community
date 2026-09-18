@@ -52,6 +52,8 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class CreateClassFromNewFix extends CreateFromUsageBaseFix implements IntentionActionWithModCommandFallback {
   private final SmartPsiElementPointer<PsiNewExpression> myNewExpression;
 
@@ -385,7 +387,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix implements Int
         getKind(), updater.getWritable(directory), name, reference, newExpression.getContainingFile(), null);
       if (aClass == null) return;
       setupNewClass(aClass, newExpression, DummyTemplateBuilder.INSTANCE);
-      updater.moveCaretTo(aClass.getContainingFile());
+      updater.moveCaretTo(Objects.requireNonNullElse(aClass.getNameIdentifier(), aClass));
     }
 
     /**
