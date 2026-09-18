@@ -4,11 +4,34 @@ package org.intellij.plugins.markdown.editor.livepreview
 import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.ide.rpc.DocumentPatchVersionAccessor
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 import org.jetbrains.annotations.ApiStatus
+
+/**
+ * Enables Markdown live preview for an editor. Always enabled for [EditorKind.MAIN_EDITOR].
+ */
+private val LIVE_PREVIEW_KEY: Key<Boolean> = Key.create("markdown.live.preview")
+
+@ApiStatus.Experimental
+fun Editor.enableLivePreviewSupport() {
+  putUserData(LIVE_PREVIEW_KEY, true)
+}
+
+@ApiStatus.Experimental
+fun Editor.supportsLivePreview(): Boolean {
+  return getUserData(LIVE_PREVIEW_KEY) ?: (editorKind == EditorKind.MAIN_EDITOR)
+}
+
+fun Editor.isLivePreviewEnabled(): Boolean {
+  return MarkdownApplicationSettings.getInstance().enableLivePreview && supportsLivePreview()
+}
 
 /** A serializable text range. */
 @ApiStatus.Internal

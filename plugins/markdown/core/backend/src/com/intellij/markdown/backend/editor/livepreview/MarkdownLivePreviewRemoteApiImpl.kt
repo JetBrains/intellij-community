@@ -12,7 +12,7 @@ import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.toRpc
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.dropWhile
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewRemoteApi
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
 
@@ -23,9 +23,9 @@ internal fun Editor.livePreviewSpecSetFlow(): MutableStateFlow<MarkdownLivePrevi
 }
 
 private class MarkdownLivePreviewRemoteApiImpl : MarkdownLivePreviewRemoteApi {
-  override suspend fun getLivePreviewSpecs(editorId: EditorId): RpcFlow<MarkdownLivePreviewSpecSet> {
+  override suspend fun getLivePreviewSpecs(editorId: EditorId): RpcFlow<MarkdownLivePreviewSpecSet?> {
     val specSets = editorId.findEditorOrNull()?.livePreviewSpecSetFlow() ?: return RpcFlow.empty()
-    return specSets.filterNotNull().toRpc()
+    return specSets.dropWhile { it == null }.toRpc()
   }
 
   override suspend fun requestLivePreviewImage(editorId: EditorId, destination: String) {

@@ -16,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewRemoteApi
+import org.intellij.plugins.markdown.editor.livepreview.supportsLivePreview
 import org.intellij.plugins.markdown.lang.supportsMarkdown
 
 internal class MarkdownLivePreviewEditorListener : EditorFactoryListener {
@@ -23,7 +24,7 @@ internal class MarkdownLivePreviewEditorListener : EditorFactoryListener {
     val editor = event.editor
     if (!editor.supportsMarkdown()) return
     ApplicationManager.getApplication().invokeLater {
-      if (editor.isDisposed) return@invokeLater
+      if (editor.isDisposed || !editor.supportsLivePreview()) return@invokeLater
       val project = editor.project ?: return@invokeLater
       val editorId = editor.editorIdOrNull() ?: return@invokeLater
       EditorScopeProvider.getInstance(project).getEditorScope(editor).launch(Dispatchers.Default) {

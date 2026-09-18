@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FoldingKeys
@@ -42,6 +44,11 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val livePreview = settings.enableLivePreview
     Disposer.register(testRootDisposable) { settings.enableLivePreview = livePreview }
     settings.enableLivePreview = true
+    EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
+      override fun editorCreated(event: EditorFactoryEvent) {
+        if (event.editor.editorKind == EditorKind.UNTYPED) event.editor.enableLivePreviewSupport()
+      }
+    }, testRootDisposable)
   }
 
   fun testMarkupIsHiddenWhileTheCaretIsElsewhere() {
@@ -691,16 +698,17 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     myFixture.checkResult("**bold**x")
   }
 
-  fun testLivePreviewSettingReconcilesImmediately() {
+  fun testLivePreviewSettingRepublishesSpecs() {
     configure("Some **bold** text<caret>")
-    assertFalse(concealed().isEmpty())
-    settings.update { it.enableLivePreview = false }
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-    assertEmpty(concealed())
-
-    settings.update { it.enableLivePreview = true }
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     assertEquals(listOf("**", "**"), concealed())
+
+    settings.enableLivePreview = false
+    myFixture.doHighlighting()
+    waitForConcealed(emptyList())
+
+    settings.enableLivePreview = true
+    myFixture.doHighlighting()
+    waitForConcealed(listOf("**", "**"))
   }
 
   fun testDiffEditorHidesNothing() {
@@ -795,6 +803,14 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     PlatformTestUtil.waitWithEventsDispatching(
       "Live-preview specs were not reconciled",
       { MarkdownLivePreviewReconciler.getExisting(myFixture.editor)?.hasCurrentSpecs() == true },
+      10,
+    )
+  }
+
+  private fun waitForConcealed(expected: List<String>) {
+    PlatformTestUtil.waitWithEventsDispatching(
+      "Expected $expected to be concealed",
+      { concealed() == expected },
       10,
     )
   }

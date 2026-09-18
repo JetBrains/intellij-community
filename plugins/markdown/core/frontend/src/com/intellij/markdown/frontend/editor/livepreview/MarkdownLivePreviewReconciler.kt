@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
@@ -34,15 +33,13 @@ import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
+import org.intellij.plugins.markdown.editor.livepreview.isLivePreviewEnabled
 import org.intellij.plugins.markdown.editor.livepreview.toTextRange
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
-import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Graphics
 import java.awt.Graphics2D
-
-private val AllowedEditorKinds = setOf(EditorKind.MAIN_EDITOR, EditorKind.UNTYPED)
 
 /**
  * Keeps one editor's concealing fold regions in step with the caret.
@@ -92,8 +89,6 @@ class MarkdownLivePreviewReconciler private constructor(
     editor.foldingModel.addListener(object : FoldingListener {
       override fun onFoldProcessingEnd() = scheduleReconcile()
     }, this)
-    ApplicationManager.getApplication().messageBus.connect(this)
-      .subscribe(MarkdownApplicationSettings.ChangeListener.TOPIC, MarkdownApplicationSettings.ChangeListener { scheduleReconcile() })
   }
 
   /**
@@ -101,8 +96,8 @@ class MarkdownLivePreviewReconciler private constructor(
    * Called on the EDT once the highlighting pass has finished computing.
    */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun publishSpecs(specSet: MarkdownLivePreviewSpecSet) {
-    if (this.specSet?.documentVersion?.matchesDocument(specSet.documentVersion) != true) {
+  fun publishSpecs(specSet: MarkdownLivePreviewSpecSet?) {
+    if (specSet == null || this.specSet?.documentVersion?.matchesDocument(specSet.documentVersion) != true) {
       imageRenderer.resetRequestedImages()
     }
     this.specSet = specSet
@@ -121,7 +116,7 @@ class MarkdownLivePreviewReconciler private constructor(
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun reconcileNow() {
     if (updating || editor.isDisposed || editor.document.isInBulkUpdate) return
-    if (!isLivePreviewEnabled()) {
+    if (!editor.isLivePreviewEnabled() || specSet == null) {
       removeAllOwned()
       return
     }
@@ -227,7 +222,7 @@ class MarkdownLivePreviewReconciler private constructor(
     // While a bulk change runs, the fold tree is not maintained. During event handling the folding model
     // may still be catching up, since it is a document listener itself.
     if (document.isInBulkUpdate || document.isInEventsHandling) return
-    if (!isLivePreviewEnabled()) return
+    if (!editor.isLivePreviewEnabled()) return
     val specSet = currentSpecSet() ?: return
     val revealed = revealedElementIndices(specSet)
     val newlyRevealed = revealed - revealedElements
@@ -328,18 +323,6 @@ class MarkdownLivePreviewReconciler private constructor(
     finally {
       updating = false
     }
-  }
-
-  /**
-   * Whether [editor] should hide Markdown markup right now.
-   *
-   * Evaluated on every reconciliation rather than watched through listeners: the reconciler already runs on
-   * caret and selection changes, and the find toolbar in particular gives no reliable signal when it closes.
-   */
-  private fun isLivePreviewEnabled(): Boolean {
-    // Diff, preview and console editors have their layout managed for them, and concealing markup would fight that.
-    // Both EditorKind.MAIN_EDITOR and EditorKind.UNTYPED are allowed because there are plenty of ordinary editors that use the latter kind.
-    return MarkdownApplicationSettings.getInstance().enableLivePreview && editor.editorKind in AllowedEditorKinds
   }
 
   private class CaretSnapshot(private val caret: Caret) {

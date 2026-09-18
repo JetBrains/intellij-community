@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface MarkdownLivePreviewRemoteApi : RemoteApi<Unit> {
-  suspend fun getLivePreviewSpecs(editorId: EditorId): RpcFlow<MarkdownLivePreviewSpecSet>
+  suspend fun getLivePreviewSpecs(editorId: EditorId): RpcFlow<MarkdownLivePreviewSpecSet?>
 
   suspend fun requestLivePreviewImage(editorId: EditorId, destination: String)
 

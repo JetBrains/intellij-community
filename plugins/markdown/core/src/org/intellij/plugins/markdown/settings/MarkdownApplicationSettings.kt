@@ -9,9 +9,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.util.application
-import com.intellij.util.messages.Topic
-import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.APP)
 @State(name = "MarkdownApplicationSettings",
@@ -31,24 +28,8 @@ class MarkdownApplicationSettings: SimplePersistentStateComponent<MarkdownApplic
     get() = state.enableLivePreview
     set(value) { state.enableLivePreview = value }
 
-  fun update(block: (MarkdownApplicationSettings) -> Unit) {
-    block(this)
-    application.messageBus.syncPublisher(ChangeListener.TOPIC).settingsChanged(this)
-  }
-
   override fun noStateLoaded() {
     loadState(State())
-  }
-
-  @ApiStatus.OverrideOnly
-  fun interface ChangeListener {
-    fun settingsChanged(settings: MarkdownApplicationSettings)
-
-    companion object {
-      @JvmField
-      @Topic.AppLevel
-      val TOPIC: Topic<ChangeListener> = Topic("MarkdownApplicationSettingsChanged", ChangeListener::class.java)
-    }
   }
 
   companion object {

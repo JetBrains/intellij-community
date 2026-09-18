@@ -44,6 +44,7 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import com.intellij.util.application
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSettingListener
 import org.intellij.plugins.markdown.editor.tables.ui.alignment.MarkdownTableAlignmentSettingsListener
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
@@ -119,7 +120,13 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
       }
       row {
         checkBox(MarkdownBundle.message("markdown.settings.enable.live.preview"))
-          .bindSelected(appSettings::enableLivePreview)
+          .bindSelected(
+            getter = { appSettings.enableLivePreview },
+            setter = {
+              appSettings.enableLivePreview = it
+              MarkdownLivePreviewSettingListener.fireChanged()
+            }
+          )
       }
       row {
         checkBox(MarkdownBundle.message("markdown.settings.align.table.cells.visually"))
@@ -324,10 +331,8 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
   }
 
   override fun apply() {
-    appSettings.update {
-      settings.update {
-        super.apply()
-      }
+    settings.update {
+      super.apply()
     }
   }
 

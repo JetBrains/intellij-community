@@ -13,8 +13,8 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
+import org.intellij.plugins.markdown.editor.livepreview.isLivePreviewEnabled
 import org.intellij.plugins.markdown.lang.isMarkdownLanguage
-import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 /** Recomputes live-preview specs when the Markdown PSI changes. */
 internal class MarkdownLivePreviewPassFactory:
@@ -28,9 +28,12 @@ internal class MarkdownLivePreviewPassFactory:
 
   override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? {
     if (!psiFile.language.isMarkdownLanguage()) return null
-    val currentVersion = editor.livePreviewSpecSetFlow().value?.documentVersion
-    if (currentVersion?.matches(editor.document, psiFile.project) == true) return null
-    return MarkdownLivePreviewPass(editor, psiFile)
+    val current = editor.livePreviewSpecSetFlow().value
+    val shouldNotCreate = when {
+      editor.isLivePreviewEnabled() -> current?.documentVersion?.matches(editor.document, psiFile.project) == true
+      else -> current == null
+    }
+    return if (shouldNotCreate) null else MarkdownLivePreviewPass(editor, psiFile)
   }
 }
 
@@ -40,10 +43,10 @@ private class MarkdownLivePreviewPass(editor: Editor, psiFile: PsiFile):
   private var specSet: MarkdownLivePreviewSpecSet? = null
 
   override fun doCollectInformation(progress: ProgressIndicator) {
-    specSet = computeLivePreviewSpecs(myFile, myEditor)
+    specSet = if (myEditor.isLivePreviewEnabled()) computeLivePreviewSpecs(myFile, myEditor) else null
   }
 
   override fun doApplyInformationToEditor() {
-    myEditor.livePreviewSpecSetFlow().value = specSet ?: return
+    myEditor.livePreviewSpecSetFlow().value = specSet
   }
 }
