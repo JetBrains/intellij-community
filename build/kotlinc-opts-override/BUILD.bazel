@@ -1,0 +1,8 @@
+load(":kotlinc-opts-override.bzl", "kotlinc_opts_overrides")
+
+kotlinc_opts_overrides(
+    options = [
+        "x_render_internal_diagnostic_names",
+        "x_report_all_warnings",
+    ],
+)
