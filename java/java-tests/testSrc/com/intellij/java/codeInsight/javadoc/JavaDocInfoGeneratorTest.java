@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.javadoc;
 
 import com.intellij.JavaTestUtil;
@@ -9,10 +9,9 @@ import com.intellij.codeInsight.documentation.DocumentationTargetFinder;
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
-import com.intellij.codeInsight.javadoc.JavaDocInfoHtmlPrinter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoPrinter;
 import com.intellij.codeInsight.javadoc.JavaDocHighlightingManagerImpl;
-import com.intellij.java.codeInsight.JavaExternalDocumentationTest;
+import com.intellij.java.codeInsight.JavaDocumentationTestUtil;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -398,8 +397,8 @@ abstract class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   }
 
   public void testLibraryPackageDocumentation() {
-    VirtualFile libClasses = JavaExternalDocumentationTest.getJarFile("library.jar");
-    VirtualFile libSources = JavaExternalDocumentationTest.getJarFile("library-src.jar");
+    VirtualFile libClasses = JavaDocumentationTestUtil.getJarFile("library.jar");
+    VirtualFile libSources = JavaDocumentationTestUtil.getJarFile("library-src.jar");
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary("myLib");

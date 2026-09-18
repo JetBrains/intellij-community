@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -7,9 +7,9 @@ import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.java.codeInsight.JSpecifyTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
@@ -49,31 +49,11 @@ public abstract class DataFlowInspectionTestCase extends LightJavaCodeInsightFix
   }
 
   public static void addJSpecifyNullMarked(JavaCodeInsightTestFixture fixture) {
-    @Language("JAVA") String nullMarked =
-      """
-        package org.jspecify.annotations;
-        import java.lang.annotation.*;
-        @Target({ElementType.TYPE, ElementType.METHOD, ElementType.MODULE})
-        public @interface NullMarked {}""";
-    fixture.addClass(nullMarked);
-    @Language("JAVA") String nullUnmarked =
-      """
-        package org.jspecify.annotations;
-        import java.lang.annotation.*;
-        @Target({ElementType.TYPE, ElementType.METHOD, ElementType.MODULE})
-        public @interface NullUnmarked {}""";
-    fixture.addClass(nullUnmarked);
+    JSpecifyTestUtil.addJSpecifyNullMarked(fixture);
   }
 
   public static void addJSpecifyNonNull(JavaCodeInsightTestFixture fixture) {
-    @Language("JAVA") String nonNull =
-      """
-        package org.jspecify.annotations;
-        import java.lang.annotation.*;
-        @Target(ElementType.TYPE_USE)
-        public @interface NonNull {
-        }""";
-    fixture.addClass(nonNull);
+    JSpecifyTestUtil.addJSpecifyNonNull(fixture);
   }
 
   public static void setupTypeUseAnnotations(String pkg, JavaCodeInsightTestFixture fixture) {

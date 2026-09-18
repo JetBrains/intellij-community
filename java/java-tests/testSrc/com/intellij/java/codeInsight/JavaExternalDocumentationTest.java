@@ -2,23 +2,11 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
@@ -33,15 +21,13 @@ import java.net.URLConnection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.platform.backend.documentation.impl.ImplKt.computeHtmlDocBlocking;
-
 public class JavaExternalDocumentationTest extends LightPlatformTestCase {
   private static final LightProjectDescriptor MY_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       super.configureModule(module, model, contentEntry);
-      final VirtualFile libClasses = getJarFile("library.jar");
-      final VirtualFile libJavadocJar = getJarFile("library-javadoc.jar");
+      final VirtualFile libClasses = JavaDocumentationTestUtil.getJarFile("library.jar");
+      final VirtualFile libJavadocJar = JavaDocumentationTestUtil.getJarFile("library-javadoc.jar");
       PsiTestUtil.newLibrary("myLib").classesRoot(libClasses).javaDocRoot(libJavadocJar).addTo(model);
     }
   };
@@ -64,7 +50,7 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
   }
 
   public void testImagesInsideJavadocJar() throws Exception {
-    String text = getDocumentationText("class Foo { com.jetbrains.<caret>Test field; }");
+    String text = JavaDocumentationTestUtil.getDocumentationText(getProject(), "class Foo { com.jetbrains.<caret>Test field; }");
     Matcher baseUrlMatcher = BASE_URL_PATTERN.matcher(text);
     assertTrue(baseUrlMatcher.find());
     String baseUrl = baseUrlMatcher.group(1);
@@ -103,7 +89,7 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
   }
 
   private void doTest(String text) {
-    String actualText = getDocumentationText(text);
+    String actualText = JavaDocumentationTestUtil.getDocumentationText(getProject(), text);
     assertSameLinesWithFile(getDataFile(getTestName(false) + ".html").toString(), 
                             replaceLocalHostUrlsWithPlaceholder(actualText));
   }
@@ -118,55 +104,4 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
     return new File(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/documentation/" + name);
   }
 
-  @NotNull
-  public static VirtualFile getJarFile(String name) {
-    VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(getDataFile(name).getAbsolutePath());
-    assertNotNull(file);
-    VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(file);
-    assertNotNull(jarFile);
-    return jarFile;
-  }
-
-  private String getDocumentationText(String sourceEditorText) {
-    return getDocumentationText(getProject(), sourceEditorText);
-  }
-
-  public static String getDocumentationText(Project project, String sourceEditorText) {
-    int caretPosition = sourceEditorText.indexOf(EditorTestUtil.CARET_TAG);
-    if (caretPosition >= 0) {
-      sourceEditorText = sourceEditorText.substring(0, caretPosition) +
-                         sourceEditorText.substring(caretPosition + EditorTestUtil.CARET_TAG.length());
-    }
-    PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(JavaLanguage.INSTANCE, sourceEditorText);
-    return getDocumentationText(psiFile, caretPosition);
-  }
-
-  public static String getDocumentationText(@NotNull PsiFile psiFile, int caretPosition) {
-    Project project = psiFile.getProject();
-    Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-    assertNotNull(document);
-    Editor editor = EditorFactory.getInstance().createEditor(document, project);
-    try {
-      if (caretPosition >= 0) {
-        editor.getCaretModel().moveToOffset(caretPosition);
-      }
-      return getDocumentationText(editor, psiFile);
-    }
-    finally {
-      EditorFactory.getInstance().releaseEditor(editor);
-    }
-  }
-
-  public static String getDocumentationText(@NotNull Editor editor) {
-    Project project = editor.getProject();
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    assertNotNull(psiFile);
-    return getDocumentationText(editor, psiFile);
-  }
-
-  public static String getDocumentationText(@NotNull Editor editor, @NotNull PsiFile psiFile) {
-    String html = computeHtmlDocBlocking(editor, psiFile);
-    if (html == null) html = "";
-    return DocumentationManager.decorate(html, null, null);
-  }
 }

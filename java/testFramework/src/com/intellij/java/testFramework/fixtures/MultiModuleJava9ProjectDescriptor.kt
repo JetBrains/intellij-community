@@ -29,8 +29,8 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
  */
 object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
   enum class ModuleDescriptor(
-    @JvmField internal val moduleName: String,
-    internal val sourceRootName: String? = null,
+    @JvmField val moduleName: String,
+    val sourceRootName: String? = null,
     internal val testRootName: String? = null,
     internal val resourceRootName: String? = null,
   ) {

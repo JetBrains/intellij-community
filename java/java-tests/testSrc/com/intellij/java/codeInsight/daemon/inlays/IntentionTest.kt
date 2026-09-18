@@ -2,7 +2,7 @@
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
-import com.intellij.java.codeInsight.completion.CompletionHintsTest
+import com.intellij.java.codeInsight.AbstractParameterInfoTestCase
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
 
@@ -62,7 +62,7 @@ class ParamHintsTest {
     val intention = myFixture.getAvailableIntention("Do not show hints for current method")
     myFixture.launchAction(intention!!)
     myFixture.doHighlighting()
-    CompletionHintsTest.waitTillAnimationCompletes(editor)
+    AbstractParameterInfoTestCase.waitTillAnimationCompletes(editor)
 
     val after = editor.inlayModel.getInlineElementsInRange(caretOffset, caretOffset)
     assertThat(after).isEmpty()
