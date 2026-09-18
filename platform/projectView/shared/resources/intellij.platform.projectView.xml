@@ -27,7 +27,11 @@
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="project.view.toolwindow.split" defaultValue="false" restartRequired="true"
-                 description="Enables the new experimental split Project View tool window" />
+                 description="Enables the new experimental split Project View tool window in all modes" />
+    <registryKey key="project.view.toolwindow.split.monolith" defaultValue="false" restartRequired="true"
+                 description="Enables the new experimental split Project View tool window in monolith only" />
+    <registryKey key="project.view.toolwindow.split.remdev" defaultValue="false" restartRequired="true"
+                 description="Enables the new experimental split Project View tool window in remdev only" />
     <remote.customDataContextSerializer implementation="com.intellij.platform.projectView.pane.ProjectViewPaneIdDataContextSerializer" />
     <remote.customDataContextSerializer implementation="com.intellij.platform.projectView.pane.ProjectViewSelectedNodeIdsDataContextSerializer" />
     <projectService
