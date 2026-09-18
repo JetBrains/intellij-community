@@ -10,28 +10,20 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.editorTab.LearnIdeEditorTab
 import com.intellij.platform.ide.nonModalWelcomeScreen.backend.WelcomeScreenFeatureBackend
-import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
-import com.intellij.pycharm.community.ide.impl.miscProject.PyMiscService
-import com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscScriptFileType
+import com.intellij.platform.ide.nonModalWelcomeScreen.backend.WelcomeScreenNewFileFeatureBackend
 import com.intellij.python.community.common.welcomeScreen.WelcomeScreenFeatureIds
 import com.intellij.util.application
 
-internal class PyNewScriptWelcomeScreenFeature : WelcomeScreenFeatureBackend() {
+internal class PyNewScriptWelcomeScreenFeature : WelcomeScreenNewFileFeatureBackend() {
   override val featureKey: String = WelcomeScreenFeatureIds.NEW_SCRIPT
 
-  override fun onClick(project: Project) {
-    val scriptMiscType = MiscScriptFileType
-    PyMiscService.getInstance().createMiscProject(project, scriptMiscType)
-  }
+  override val languageId: String = "Python"
 }
 
-internal class PyNewNotebookWelcomeScreenFeature : WelcomeScreenFeatureBackend() {
+internal class PyNewNotebookWelcomeScreenFeature : WelcomeScreenNewFileFeatureBackend() {
   override val featureKey: String = WelcomeScreenFeatureIds.NEW_NOTEBOOK
 
-  override fun onClick(project: Project) {
-    val notebookMiscType = MiscFileType.EP.extensionList.find { it.id == "newNotebook" } ?: return
-    PyMiscService.getInstance().createMiscProject(project, notebookMiscType)
-  }
+  override val languageId: String = "Jupyter"
 }
 
 internal class PyLearnWelcomeScreenFeature : WelcomeScreenFeatureBackend() {

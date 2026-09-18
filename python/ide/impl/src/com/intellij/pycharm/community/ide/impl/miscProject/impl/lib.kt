@@ -79,6 +79,21 @@ suspend fun createMiscProject(
   }
 }
 
+@ApiStatus.Internal
+suspend fun createMiscProject(
+  confirmInstallation: suspend () -> Boolean,
+  projectPath: Path = miscProjectDefaultPath,
+  systemPythonService: SystemPythonService = SystemPythonService(),
+  currentProject: Project? = null,
+): PyResult<Pair<Project, Sdk>> {
+  return createOrOpenProjectAndSdk(
+    projectPath,
+    confirmInstallation = confirmInstallation,
+    systemPythonService = systemPythonService,
+    currentProject = currentProject,
+  )
+}
+
 private suspend fun generateAndOpenFile(projectPath: Path, project: Project, fileType: MiscFileType, sdk: Sdk): PsiFile {
   val generateFile = generateFile(projectPath, fileType.fileName)
   val psiFile = openFile(project, generateFile)

@@ -9,8 +9,8 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectUsageCollector
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.emit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,6 +40,31 @@ class PyMiscService(private val scope: CoroutineScope) {
         is Result.Success -> {
           MiscProjectUsageCollector.projectCreated(miscFileType)
         }
+        is Result.Failure -> {
+          withContext(Dispatchers.EDT) {
+            ErrorSink().emit(projectCreationResult.error, project)
+          }
+        }
+      }
+    }
+  }
+
+  fun createMiscProject(project: Project) {
+    scope.launch {
+      val projectCreationResult = com.intellij.pycharm.community.ide.impl.miscProject.impl.createMiscProject(
+        confirmInstallation = {
+          withContext(Dispatchers.EDT) {
+            MessageDialogBuilder.yesNo(
+              PyCharmCommunityCustomizationBundle.message("misc.no.python.found"),
+              PyCharmCommunityCustomizationBundle.message("misc.install.python.question")
+            ).ask(project)
+          }
+        },
+        currentProject = project,
+      )
+
+      when (projectCreationResult) {
+        is Result.Success -> Unit
         is Result.Failure -> {
           withContext(Dispatchers.EDT) {
             ErrorSink().emit(projectCreationResult.error, project)

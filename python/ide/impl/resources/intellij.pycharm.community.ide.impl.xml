@@ -181,6 +181,8 @@
     <applicationSettings service="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeSettings"/>
 
     <postStartupActivity implementation="com.intellij.pycharm.community.ide.impl.whatsnew.PyCharmJcefWhatsNewPatcher" order="first"/>
+
+    <scratch.creationHelper language="Python" implementationClass="com.intellij.pycharm.community.ide.impl.miscProject.impl.WelcomePythonFilesSupport"/>
   </extensions>
 
   <applicationListeners>
