@@ -382,8 +382,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     try {
       ReadAction.run<Throwable> {
         LOG.info("Analyzer status for ${editor.description}\n ${
-          TrafficLightRenderer(project,
-                               editor.editor.document).use { it.daemonCodeAnalyzerStatus }
+          TrafficLightRenderer(project, editor.editor).use { it.daemonCodeAnalyzerStatus }
         }")
       }
     }

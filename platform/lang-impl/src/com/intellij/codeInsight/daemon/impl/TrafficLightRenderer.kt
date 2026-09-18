@@ -105,12 +105,12 @@ open class TrafficLightRenderer private constructor(
   @Volatile
   private var highlightingSettingsModificationCount: Long
 
+  @Deprecated("Use constructor with Editor")
   constructor(project: Project, document: Document)
-    : this(project, document, null, computeTrafficLightRendererInfo(document, project))
+    : this(project, document, null, computeTrafficLightRendererInfo(null, document, project))
 
-  @ApiStatus.Internal
   constructor(project: Project, editor: Editor)
-    : this(project, editor.getDocument(), editor, computeTrafficLightRendererInfo(editor.document, project))
+    : this(project, editor.getDocument(), editor, computeTrafficLightRendererInfo(editor, editor.document, project))
 
   init {
     // to be able to find PsiFile without "slow op in EDT" exceptions
@@ -670,11 +670,13 @@ open class TrafficLightRenderer private constructor(
       shouldHighlight = false,
     )
 
-    private fun computeTrafficLightRendererInfo(document: Document, project: Project): TrafficLightRendererInfo {
+    private fun computeTrafficLightRendererInfo(editor: Editor?, document: Document, project: Project): TrafficLightRendererInfo {
       val psiDocumentManager = PsiDocumentManager.getInstance(project)
       val fileIndex = ProjectFileIndex.getInstance(project)
       return runReadActionBlocking {
-        val file = psiDocumentManager.getPsiFile(document) ?: return@runReadActionBlocking EMPTY_TRAFFIC_LIGHT_INFO
+        val file = editor?.let { EditorContextManager.getPsiFileForEditor(it, project) }
+                   ?: psiDocumentManager.getPsiFile(document)
+                   ?: return@runReadActionBlocking EMPTY_TRAFFIC_LIGHT_INFO
         doComputeTrafficLightRendererInfo(file, project, fileIndex)
       }
     }
