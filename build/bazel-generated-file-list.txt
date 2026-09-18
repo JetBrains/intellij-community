@@ -321,6 +321,7 @@ java/java-analysis-api
 java/java-analysis-impl
 java/java-backend
 java/java-bookmarks
+java/java-completion-tests
 java/java-copyright
 java/java-features-trainer
 java/java-frontback-impl
