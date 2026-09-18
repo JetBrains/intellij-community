@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -11,6 +10,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.Function;
 import com.intellij.util.ResourceUtil;
 import kotlin.Unit;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,11 +21,14 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 
 @ApiStatus.Internal
 public final class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegistry {
@@ -36,24 +39,22 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   private final List<FeatureUsageEvent.Intention> myIntentionEvents = new ArrayList<>();
   private final Map<String, GroupDescriptor> myGroups = new HashMap<>();
   private final List<ApplicabilityFiltersData> myApplicabilityFilters = new ArrayList<>();
+  /** The IDs of the features that each {@link ProductivityFeaturesBean} contributed. */
+  private final Map<ProductivityFeaturesBean, List<String>> myXmlFeatureIds = new HashMap<>();
 
-  private record ConfigurationSource(@NotNull String path, boolean isRequired) {
-  }
-
-  private final List<ConfigurationSource> myFeatureConfigurationSources = List.of(
-    new ConfigurationSource("PlatformProductivityFeatures.xml", true),  // common features that exist in all IDEs
-    new ConfigurationSource("ProductivityFeaturesRegistry.xml", true),  // product specific features (IDEA, PyCharm, etc...)
-    new ConfigurationSource("IdeSpecificFeatures.xml", false)  // IDE specific features (IDEA Ultimate, PyCharm, etc...)
-  );
-
-  private boolean myAdditionalFeaturesLoaded;
+  private boolean myLoaded;
 
   private static final @NonNls String TAG_GROUP = "group";
   private static final @NonNls String TAG_FEATURE = "feature";
 
-  public ProductivityFeaturesRegistryImpl() {
-    reloadFromXml();
-    ProductivityFeaturesProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+  public ProductivityFeaturesRegistryImpl(@NotNull CoroutineScope coroutineScope) {
+    ProductivityFeaturesBean.EP_NAME.addExtensionPointListener(coroutineScope, new ExtensionPointListener<>() {
+      @Override
+      public void extensionRemoved(@NotNull ProductivityFeaturesBean extension, @NotNull PluginDescriptor pluginDescriptor) {
+        removeXmlFeatures(extension);
+      }
+    });
+    ProductivityFeaturesProvider.EP_NAME.addExtensionPointListener(coroutineScope, new ExtensionPointListener<>() {
       @Override
       public void extensionRemoved(@NotNull ProductivityFeaturesProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
         removeProvidedFeatures(extension);
@@ -61,77 +62,91 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     });
   }
 
-  private void reloadFromXml() {
-    for (ConfigurationSource source : myFeatureConfigurationSources) {
-      boolean found;
-      try {
-        found = readFromXml(source.path);
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-        found = false;
-      }
-      if (source.isRequired && !found && !ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.error(source.path + " not found");
-      }
-    }
-  }
-
-  private boolean readFromXml(@NotNull @NonNls String path) throws JDOMException, IOException {
-    return readFromXml(path, ProductivityFeaturesRegistryImpl.class.getClassLoader(), null);
-  }
-
-  private boolean readFromXml(@NotNull String path, @NotNull ClassLoader classLoader, @Nullable ProductivityFeaturesProvider provider)
-    throws JDOMException, IOException {
-    byte[] data = ResourceUtil.getResourceAsBytes(path, classLoader, true);
-    if (data == null) {
-      return false;
-    }
-
-    Element root = JDOMUtil.load(data);
-    for (Element groupElement : root.getChildren(TAG_GROUP)) {
-      readGroup(groupElement, provider);
-    }
-    return true;
-  }
-
-  private void lazyLoadFromPluginsFeaturesProviders() {
-    if (myAdditionalFeaturesLoaded) {
+  private void loadIfNeeded() {
+    if (myLoaded) {
       return;
     }
 
-    myAdditionalFeaturesLoaded = true;
-    ProductivityFeaturesProvider.EP_NAME.processWithPluginDescriptor((provider, pluginDescriptor) -> {
-      for (String xmlUrl : provider.getXmlFilesUrls()) {
-        try {
-          readFromXml(Strings.trimStart(xmlUrl, "/"), pluginDescriptor.getClassLoader(), provider);
-        }
-        catch (Exception e) {
-          LOG.error(new PluginException("Error while reading " + xmlUrl + " from " + provider + ": " + e.getMessage(),
-                                        pluginDescriptor.getPluginId()));
-        }
-      }
-
-      final GroupDescriptor[] groupDescriptors = provider.getGroupDescriptors();
-      if (groupDescriptors != null) {
-        for (GroupDescriptor groupDescriptor : groupDescriptors) {
-          // do not allow to override groups
-          myGroups.putIfAbsent(groupDescriptor.getId(), groupDescriptor);
-        }
-      }
-      final FeatureDescriptor[] featureDescriptors = provider.getFeatureDescriptors();
-      if (featureDescriptors != null) {
-        for (FeatureDescriptor featureDescriptor : featureDescriptors) {
-          addFeature(featureDescriptor);
-        }
-      }
-      final ApplicabilityFilter[] applicabilityFilters = provider.getApplicabilityFilters();
-      if (applicabilityFilters != null) {
-        myApplicabilityFilters.add(new ApplicabilityFiltersData(provider, applicabilityFilters));
-      }
-
+    myLoaded = true;
+    ProductivityFeaturesBean.EP_NAME.processWithPluginDescriptor((bean, pluginDescriptor) -> {
+      loadXml(bean, pluginDescriptor);
       return Unit.INSTANCE;
     });
+    ProductivityFeaturesProvider.EP_NAME.processWithPluginDescriptor((provider, pluginDescriptor) -> {
+      loadProvider(provider, pluginDescriptor);
+      return Unit.INSTANCE;
+    });
+  }
+
+  private void loadXml(@NotNull ProductivityFeaturesBean bean, @NotNull PluginDescriptor pluginDescriptor) {
+    String path = Strings.trimStart(bean.file, "/");
+    try {
+      List<String> featureIds = readFromXml(path, getClassLoader(pluginDescriptor), null);
+      if (featureIds == null) {
+        LOG.error(new PluginException(path + " not found", pluginDescriptor.getPluginId()));
+      }
+      else {
+        myXmlFeatureIds.put(bean, featureIds);
+      }
+    }
+    catch (Exception e) {
+      rethrowControlFlowException(e);
+      LOG.error(new PluginException("Error while reading " + path, e, pluginDescriptor.getPluginId()));
+    }
+  }
+
+  private void loadProvider(@NotNull ProductivityFeaturesProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
+    for (String xmlUrl : provider.getXmlFilesUrls()) {
+      try {
+        readFromXml(Strings.trimStart(xmlUrl, "/"), getClassLoader(pluginDescriptor), provider);
+      }
+      catch (Exception e) {
+        rethrowControlFlowException(e);
+        LOG.error(new PluginException("Error while reading " + xmlUrl + " from " + provider, e, pluginDescriptor.getPluginId()));
+      }
+    }
+
+    final GroupDescriptor[] groupDescriptors = provider.getGroupDescriptors();
+    if (groupDescriptors != null) {
+      for (GroupDescriptor groupDescriptor : groupDescriptors) {
+        // do not allow to override groups
+        myGroups.putIfAbsent(groupDescriptor.getId(), groupDescriptor);
+      }
+    }
+    final FeatureDescriptor[] featureDescriptors = provider.getFeatureDescriptors();
+    if (featureDescriptors != null) {
+      for (FeatureDescriptor featureDescriptor : featureDescriptors) {
+        addFeature(featureDescriptor);
+      }
+    }
+    final ApplicabilityFilter[] applicabilityFilters = provider.getApplicabilityFilters();
+    if (applicabilityFilters != null) {
+      myApplicabilityFilters.add(new ApplicabilityFiltersData(provider, applicabilityFilters));
+    }
+  }
+
+  private static @NotNull ClassLoader getClassLoader(@NotNull PluginDescriptor pluginDescriptor) {
+    ClassLoader classLoader = pluginDescriptor.getPluginClassLoader();
+    return classLoader == null ? ProductivityFeaturesRegistryImpl.class.getClassLoader() : classLoader;
+  }
+
+  /**
+   * @return the IDs of the loaded features, or {@code null} when the resource does not exist
+   */
+  private @Nullable List<String> readFromXml(@NotNull String path,
+                                             @NotNull ClassLoader classLoader,
+                                             @Nullable ProductivityFeaturesProvider provider) throws JDOMException, IOException {
+    byte[] data = ResourceUtil.getResourceAsBytes(path, classLoader, true);
+    if (data == null) {
+      return null;
+    }
+
+    List<String> featureIds = new ArrayList<>();
+    Element root = JDOMUtil.load(data);
+    for (Element groupElement : root.getChildren(TAG_GROUP)) {
+      readGroup(groupElement, provider, featureIds);
+    }
+    return featureIds;
   }
 
   private void addUsageEvents(FeatureDescriptor featureDescriptor) {
@@ -139,18 +154,22 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     myIntentionEvents.addAll(featureDescriptor.getIntentionEvents());
   }
 
-  private void readGroup(Element groupElement, ProductivityFeaturesProvider provider) {
+  private void readGroup(Element groupElement, @Nullable ProductivityFeaturesProvider provider, @NotNull List<String> featureIds) {
     GroupDescriptor groupDescriptor = new GroupDescriptor();
     groupDescriptor.readExternal(groupElement);
     String groupId = groupDescriptor.getId();
     myGroups.putIfAbsent(groupId, groupDescriptor);  // do not allow to override groups
-    readFeatures(groupElement, groupDescriptor, provider);
+    readFeatures(groupElement, groupDescriptor, provider, featureIds);
   }
 
-  private void readFeatures(Element groupElement, GroupDescriptor groupDescriptor, ProductivityFeaturesProvider provider) {
+  private void readFeatures(Element groupElement,
+                            GroupDescriptor groupDescriptor,
+                            @Nullable ProductivityFeaturesProvider provider,
+                            @NotNull List<String> featureIds) {
     for (Element featureElement : groupElement.getChildren(TAG_FEATURE)) {
       FeatureDescriptor featureDescriptor = new FeatureDescriptor(groupDescriptor, provider, featureElement);
       addFeature(featureDescriptor);
+      featureIds.add(featureDescriptor.getId());
     }
   }
 
@@ -164,23 +183,37 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     addUsageEvents(descriptor);
   }
 
+  private void removeXmlFeatures(@NotNull ProductivityFeaturesBean bean) {
+    List<String> featureIds = myXmlFeatureIds.remove(bean);
+    if (featureIds == null) {
+      return;
+    }
+    removeFeatures(featureIds);
+
+    LOG.info("Removed features loaded from " + bean.file + ": " + featureIds);
+  }
+
   private void removeProvidedFeatures(@NotNull ProductivityFeaturesProvider provider) {
     Class<? extends ProductivityFeaturesProvider> providerClass = provider.getClass();
     Set<String> featureIdsToRemove = myFeatures.entrySet().stream()
       .filter(entry -> entry.getValue().getProvider() == providerClass)
       .map(entry -> entry.getKey())
       .collect(Collectors.toSet());
-    featureIdsToRemove.forEach(id -> myFeatures.remove(id));
-    myActionEvents.removeIf(event -> featureIdsToRemove.contains(event.featureId()));
-    myIntentionEvents.removeIf(event -> featureIdsToRemove.contains(event.featureId()));
+    removeFeatures(featureIdsToRemove);
     myApplicabilityFilters.removeIf(data -> data.provider == provider);
 
     LOG.info("Removed features provided by " + providerClass.getName() + ": " + featureIdsToRemove);
   }
 
+  private void removeFeatures(@NotNull Collection<String> featureIds) {
+    featureIds.forEach(myFeatures::remove);
+    myActionEvents.removeIf(event -> featureIds.contains(event.featureId()));
+    myIntentionEvents.removeIf(event -> featureIds.contains(event.featureId()));
+  }
+
   private @Nullable <T extends FeatureUsageEvent> FeatureDescriptor findFeatureByEvent(List<? extends T> events,
                                                                                        Function<? super T, Boolean> eventChecker) {
-    lazyLoadFromPluginsFeaturesProviders();
+    loadIfNeeded();
     return events
       .stream()
       .filter(e -> eventChecker.fun(e))
@@ -191,25 +224,25 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
 
   @Override
   public @NotNull Set<String> getFeatureIds() {
-    lazyLoadFromPluginsFeaturesProviders();
+    loadIfNeeded();
     return myFeatures.keySet();
   }
 
   @Override
   public FeatureDescriptor getFeatureDescriptor(@NotNull String id) {
-    lazyLoadFromPluginsFeaturesProviders();
+    loadIfNeeded();
     return myFeatures.get(id);
   }
 
   @Override
   public GroupDescriptor getGroupDescriptor(@NotNull String id) {
-    lazyLoadFromPluginsFeaturesProviders();
+    loadIfNeeded();
     return myGroups.get(id);
   }
 
   @Override
   public ApplicabilityFilter @NotNull [] getMatchingFilters(@NotNull String featureId) {
-    lazyLoadFromPluginsFeaturesProviders();
+    loadIfNeeded();
     FeatureDescriptor descriptor = myFeatures.get(featureId);
     if (descriptor != null) {
       Class<? extends ProductivityFeaturesProvider> providerClass = descriptor.getProvider();
@@ -234,7 +267,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
 
   @Override
   public @NonNls String toString() {
-    return super.toString() + "; myAdditionalFeaturesLoaded=" + myAdditionalFeaturesLoaded;
+    return super.toString() + "; myLoaded=" + myLoaded;
   }
 
   private record ApplicabilityFiltersData(@NotNull ProductivityFeaturesProvider provider, ApplicabilityFilter @NotNull [] filters) {
@@ -242,10 +275,12 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
 
   @TestOnly
   public void prepareForTest() {
-    myAdditionalFeaturesLoaded = false;
+    myLoaded = false;
     myFeatures.clear();
-    myApplicabilityFilters.clear();
+    myActionEvents.clear();
+    myIntentionEvents.clear();
     myGroups.clear();
-    reloadFromXml();
+    myApplicabilityFilters.clear();
+    myXmlFeatureIds.clear();
   }
 }

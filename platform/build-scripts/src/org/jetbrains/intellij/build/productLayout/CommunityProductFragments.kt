@@ -32,7 +32,8 @@ object CommunityProductFragments {
    * - JSP base modules used by the Java plugin's JSP support
    * - Optional remote servers support
    * - Optional UI Designer support
-   * - Extensions for IDEA-specific customization (UTM tracking, new UI onboarding)
+   * - Extensions for IDEA-specific customization (UTM tracking, productivity features, tips)
+   * - The IDEA new UI onboarding configuration
    *
    * Use this fragment for products that include Java IDE functionality.
    */
@@ -49,8 +50,10 @@ object CommunityProductFragments {
     module("intellij.platform.remoteServers.impl")
     deprecatedInclude("intellij.uiDesigner", "META-INF/DesignerCorePlugin.xml", optional = true)
 
-    // Extensions block (UTM tracking, new UI onboarding)
+    // Extensions block (UTM tracking, productivity features, tips)
     requiredModule("intellij.java.ide.resources")
+    // The new UI onboarding configuration; optional because the frontend has no intellij.platform.backend
+    module("intellij.java.ide.newUiOnboarding")
   }
 
   /**

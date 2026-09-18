@@ -112,7 +112,6 @@ exports_files(
         "ide-common/resources/META-INF/PyCharmCorePlugin.xml",
         "ide-common/resources/idea/PyCharmCoreApplicationInfo.xml",
         "resources/META-INF/pycharm-core.xml",
-        "resources/ProductivityFeaturesRegistry.xml",
     ],
     visibility = ["//visibility:public"],
 )

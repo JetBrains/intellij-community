@@ -308,6 +308,7 @@ java/ide-customization
 java/ide-customization/backend
 java/ide-customization/training
 java/ide-resources
+java/ide-resources/newUiOnboarding
 java/idea-ui
 java/java-analysis-api
 java/java-analysis-impl

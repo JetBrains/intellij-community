@@ -401,6 +401,9 @@ f:com.intellij.featureStatistics.ProductivityFeatureNames
 - sf:CODEASSISTS_HIGHLIGHT_RETURN:java.lang.String
 - sf:CODEASSISTS_OVERRIDE_IMPLEMENT:java.lang.String
 - sf:REFACTORING_INTRODUCE_VARIABLE:java.lang.String
+f:com.intellij.featureStatistics.ProductivityFeaturesBean
+- file:java.lang.String
+- <init>():V
 a:com.intellij.featureStatistics.ProductivityFeaturesProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V

@@ -24,6 +24,7 @@
   <content namespace="jetbrains">
     <module name="intellij.platform.remoteServers.impl"/>
     <module name="intellij.java.ide.resources" loading="required"/>
+    <module name="intellij.java.ide.newUiOnboarding"/>
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
     <module name="intellij.xml.xmlbeans"/>

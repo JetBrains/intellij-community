@@ -92,6 +92,8 @@
     <extensionPoint qualifiedName="com.intellij.welcomeScreenCustomization" interface="com.intellij.openapi.wm.WelcomeScreenCustomization" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.productivityFeatures" beanClass="com.intellij.featureStatistics.ProductivityFeaturesBean"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.statusBarWidgetProvider" interface="com.intellij.openapi.wm.StatusBarWidgetProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.statusBarWidgetFactory" interface="com.intellij.openapi.wm.StatusBarWidgetFactory" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.editorNotificationProvider" area="IDEA_PROJECT" interface="com.intellij.ui.EditorNotificationProvider"
@@ -175,6 +177,7 @@
     <actionPromoter implementation="com.intellij.ui.ToolbarDecoratorActionPromoter"/>
     <applicationService serviceImplementation="com.intellij.ide.browsers.WebBrowserXmlService" open="true"/>
     <iconDescriptionBundle resourceBundle="messages.IdeBundle"/>
+    <productivityFeatures file="PlatformProductivityFeatures.xml"/>
   </extensions>
   <xi:include href="intellij.platform.ide.actions.xml"/>
 </idea-plugin>

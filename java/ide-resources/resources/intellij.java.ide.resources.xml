@@ -4,14 +4,13 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.ide.impl"/>
-    <module name="intellij.platform.ide.newUiOnboarding"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlReferencesModuleReachability (the inspection resolves the EP to a copy in a library jar, not to intellij.platform.core) -->
     <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
                         serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"/>
-    <ide.newUiOnboarding ideHelpName="idea"/>
+    <productivityFeatures file="JavaIdeProductivityFeatures.xml"/>
     <tipAndTrick file="CommandCompletion.html"/>
   </extensions>
 </idea-plugin>
