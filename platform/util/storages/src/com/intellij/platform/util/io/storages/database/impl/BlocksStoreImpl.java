@@ -118,6 +118,16 @@ final class BlocksStoreImpl implements BlocksStore {
     }
 
     @Override
+    public void activate() {
+      block.activate();
+    }
+
+    @Override
+    public void discard() {
+      block.discard();
+    }
+
+    @Override
     public void seal() {
       block.seal();
     }

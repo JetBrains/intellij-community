@@ -58,9 +58,10 @@ public final class BlockHeaderLayout {
   public static final int BLOCK_ALIGNMENT             = Math.toIntExact(LAYOUT.byteAlignment());
 
   public static final int UNPUBLISHED_STATE_CODE      = 0;
-  public static final int ACTIVE_STATE_CODE           = 1;
-  public static final int SEALED_STATE_CODE           = 2;
-  public static final int RETIRED_STATE_CODE          = 3;
+  public static final int ALLOCATED_STATE_CODE        = 1;
+  public static final int ACTIVE_STATE_CODE           = 2;
+  public static final int SEALED_STATE_CODE           = 3;
+  public static final int RETIRED_STATE_CODE          = 4;
   //@formatter:on
 
   public static void initialize(@NotNull MemorySegment blockSegment,
@@ -85,19 +86,19 @@ public final class BlockHeaderLayout {
     BLOCK_ID_HANDLE.set(blockSegment, 0L, blockId);
     BLOCK_LENGTH_HANDLE.set(blockSegment, 0L, blockLength);
 
-    STATE_HANDLE.setRelease(blockSegment, 0L, persistentCode(LifecycleState.ACTIVE));
+    STATE_HANDLE.setRelease(blockSegment, 0L, stateToPersistentCode(LifecycleState.ALLOCATED));
   }
 
   public static void validate(@NotNull Path chunkPath,
                               @NotNull MemorySegment source,
                               long blockOffset) throws IOException {
-    var persistentState = (int)STATE_HANDLE.getAcquire(source, 0L);
-    if (persistentState == UNPUBLISHED_STATE_CODE) {
+    var persistentStateCode = (int)STATE_HANDLE.getAcquire(source, 0L);
+    if (persistentStateCode == UNPUBLISHED_STATE_CODE) {
       throw corrupted(chunkPath, blockOffset, "block header is not published");
     }
-    var state = stateFromPersistentCode(persistentState);
+    var state = persistentCodeToState(persistentStateCode);
     if (state == null) {
-      throw corrupted(chunkPath, blockOffset, "unknown block state code " + Integer.toUnsignedString(persistentState));
+      throw corrupted(chunkPath, blockOffset, "unknown block state code " + Integer.toUnsignedString(persistentStateCode));
     }
 
     var headerVersion = (byte)HEADER_VERSION_HANDLE.get(source, 0L);
@@ -114,34 +115,40 @@ public final class BlockHeaderLayout {
     return Byte.toUnsignedInt((byte)ROLE_HANDLE.get(source, 0L));
   }
 
-  public static @NotNull BlocksStore.Block.LifecycleState readState(@NotNull MemorySegment source) {
-    var persistentState = (int)STATE_HANDLE.getAcquire(source, 0L);
-    var state = stateFromPersistentCode(persistentState);
-    if (state == null) {
-      throw new IllegalStateException("Unknown block state code " + Integer.toUnsignedString(persistentState));
+  /// @return a state of the block
+  /// @throws IllegalStateException if the state is unrecognizable, or the source is invalid (un-mapped)
+  public static @NotNull LifecycleState readState(@NotNull MemorySegment source) {
+    int persistentStateCode = (int)STATE_HANDLE.getAcquire(source, 0L);
+    var state = persistentCodeToState(persistentStateCode);
+    if (state == null) {//MAYBE RC: throw CorruptedException here?
+      throw new IllegalStateException("Unknown block state code " + Integer.toUnsignedString(persistentStateCode));
     }
     return state;
   }
 
-  /** Publishes one valid lifecycle transition and rejects a stale or concurrent transition. */
+  /// Publishes one valid lifecycle transition and rejects a stale or concurrent transition
   public static void transitionState(@NotNull MemorySegment blockSegment,
-                                     @NotNull BlocksStore.Block.LifecycleState expectedState,
-                                     @NotNull BlocksStore.Block.LifecycleState newState) {
+                                     @NotNull LifecycleState expectedState,
+                                     @NotNull LifecycleState newState) {
     if (!isValidTransition(expectedState, newState)) {
       throw new IllegalArgumentException("Block state transition " + expectedState + " -> " + newState + " is not valid");
     }
 
-    var previousCode = (int)STATE_HANDLE.compareAndExchange(
+    int expectedStateCode = stateToPersistentCode(expectedState);
+    int newStateCode = stateToPersistentCode(newState);
+    var actualStateCode = (int)STATE_HANDLE.compareAndExchange(
       blockSegment,
       0L,
-      persistentCode(expectedState),
-      persistentCode(newState)
+      expectedStateCode,
+      newStateCode
     );
-    if (previousCode != persistentCode(expectedState)) {
-      var previousState = stateFromPersistentCode(previousCode);
-      var previousStateText = previousState == null ? "unknown code " + Integer.toUnsignedString(previousCode) : previousState.toString();
+    if (actualStateCode != expectedStateCode) {
+      var actualState = persistentCodeToState(actualStateCode);
+      var actualStateText = actualState == null ?
+                            "unknown code " + Integer.toUnsignedString(actualStateCode) :
+                            actualState.toString();
       throw new IllegalStateException(
-        "Block state is " + previousStateText + ", but transition " + expectedState + " -> " + newState + " requires " + expectedState
+        "Block state is " + actualStateText + ", but transition [" + expectedState + " -> " + newState + "] requested"
       );
     }
   }
@@ -150,13 +157,20 @@ public final class BlockHeaderLayout {
   /// Used to discard a block when it is removed from its owning store
   public static void retireForStoreDrop(@NotNull MemorySegment blockSegment) {
     while (true) {
-      var state = readState(blockSegment);
-      if (state == LifecycleState.RETIRED) {
-        return;
-      }
-      var previousCode = (int)STATE_HANDLE.compareAndExchange(blockSegment, 0L, persistentCode(state), RETIRED_STATE_CODE);
-      if (previousCode == persistentCode(state)) {
-        return;
+      int stateCode = (int)STATE_HANDLE.getVolatile(blockSegment, 0L);
+      switch (stateCode) {
+        case ALLOCATED_STATE_CODE,
+             ACTIVE_STATE_CODE,
+             SEALED_STATE_CODE -> {
+          if (STATE_HANDLE.compareAndSet(blockSegment, 0L, stateCode, RETIRED_STATE_CODE)) {
+            return;
+          }
+        }
+        case RETIRED_STATE_CODE -> {
+          return;
+        }
+
+        default -> throw new IllegalStateException("unexpected stateCode(=" + stateCode + ")");
       }
     }
   }
@@ -173,26 +187,29 @@ public final class BlockHeaderLayout {
     return (int)BLOCK_LENGTH_HANDLE.get(source, 0L);
   }
 
-  /** Allows only monotonic, one-way transitions ACTIVE -> SEALED -> RETIRED. */
-  private static boolean isValidTransition(@NotNull BlocksStore.Block.LifecycleState oldState,
-                                           @NotNull BlocksStore.Block.LifecycleState newState) {
+  /** Allows normal lifecycle transitions and discarding an allocated block. */
+  private static boolean isValidTransition(@NotNull LifecycleState oldState,
+                                           @NotNull LifecycleState newState) {
     return switch (oldState) {
+      case ALLOCATED -> newState == LifecycleState.ACTIVE || newState == LifecycleState.RETIRED;
       case ACTIVE -> newState == LifecycleState.SEALED;
       case SEALED -> newState == BlocksStore.Block.LifecycleState.RETIRED;
       case RETIRED -> false;//terminal state
     };
   }
 
-  private static int persistentCode(@NotNull BlocksStore.Block.LifecycleState state) {
+  private static int stateToPersistentCode(@NotNull LifecycleState state) {
     return switch (state) {
+      case ALLOCATED -> ALLOCATED_STATE_CODE;
       case ACTIVE -> ACTIVE_STATE_CODE;
       case SEALED -> SEALED_STATE_CODE;
       case RETIRED -> RETIRED_STATE_CODE;
     };
   }
 
-  private static @Nullable BlocksStore.Block.LifecycleState stateFromPersistentCode(int persistentCode) {
+  private static @Nullable LifecycleState persistentCodeToState(int persistentCode) {
     return switch (persistentCode) {
+      case ALLOCATED_STATE_CODE -> LifecycleState.ALLOCATED;
       case ACTIVE_STATE_CODE -> LifecycleState.ACTIVE;
       case SEALED_STATE_CODE -> LifecycleState.SEALED;
       case RETIRED_STATE_CODE -> LifecycleState.RETIRED;

@@ -60,6 +60,8 @@ public class BlocksStoreTest {
       var numbers = database.openStore("numbers", 3);
       var wordsBlock = words.allocateBlock(1, BLOCK_CONTENT_LENGTH);
       var numbersBlock = numbers.allocateBlock(2, BLOCK_CONTENT_LENGTH);
+      wordsBlock.activate();
+      numbersBlock.activate();
       retiredBlockId = wordsBlock.id();
 
       assertEquals(BLOCK_CONTENT_LENGTH, wordsBlock.content().byteSize());
@@ -86,6 +88,20 @@ public class BlocksStoreTest {
       var retiredBlock = words.findBlock(retiredBlockId);
       assertNotNull(retiredBlock);
       assertEquals(BlocksStore.Block.LifecycleState.RETIRED, retiredBlock.state());
+    }
+  }
+
+  @Test
+  public void activeBlockRejectsAllocationCompletionTransitions(@TempDir Path databaseDirectory) throws Exception {
+    try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
+      var store = database.openStore("store", 1);
+      var block = store.allocateBlock(0, BLOCK_CONTENT_LENGTH);
+      assertEquals(BlocksStore.Block.LifecycleState.ALLOCATED, block.state());
+      block.activate();
+
+      assertEquals(BlocksStore.Block.LifecycleState.ACTIVE, block.state());
+      assertThrows(IllegalStateException.class, block::activate, "Activation must publish exactly one transition");
+      assertThrows(IllegalStateException.class, block::discard, "An active block must not return to allocation cleanup");
     }
   }
 
@@ -127,6 +143,7 @@ public class BlocksStoreTest {
     try (var database = factory.open(databaseDirectory)) {
       var store = database.openStore("store", 1);
       var block = store.allocateBlock(0, 1);
+      block.activate();
       blockId = block.id();
       contentLength = block.content().byteSize();
       assertTrue(contentLength >= 1);
@@ -147,9 +164,11 @@ public class BlocksStoreTest {
       var store = database.openStore("store", 1);
       var neighbour = database.openStore("neighbour", 1);
       var neighbourBlock = neighbour.allocateBlock(0, BLOCK_CONTENT_LENGTH);
+      neighbourBlock.activate();
       var blocks = new ArrayList<BlocksStore.Block>();
       for (var i = 0; i < 20; i++) {
         var block = store.allocateBlock(0, BLOCK_CONTENT_LENGTH);
+        block.activate();
         if (i % 3 != 0) {
           block.seal();
         }
@@ -189,6 +208,7 @@ public class BlocksStoreTest {
       try (var database = new BlocksDatabaseImpl(observedMetadata, chunks, blocks, false)) {
         var store = database.openStore("store", 1);
         var block = store.allocateBlock(0, BLOCK_CONTENT_LENGTH);
+        block.activate();
         doAnswer(_ -> {
           assertNull(metadata.findStore("store"), "The deletion must be appended before its persistence barrier");
           assertEquals(BlocksStore.Block.LifecycleState.ACTIVE, block.state(), "The header must not change before fsync succeeds");
@@ -214,6 +234,7 @@ public class BlocksStoreTest {
       try (var database = new BlocksDatabaseImpl(failingMetadata, chunks, blocks, false)) {
         var store = database.openStore("store", 1);
         var block = store.allocateBlock(0, BLOCK_CONTENT_LENGTH);
+        block.activate();
         var failure = new IOException("The metadata write failed");
         if (failFsync) {
           doThrow(failure).when(failingMetadata).fsync();
@@ -234,6 +255,7 @@ public class BlocksStoreTest {
     BlocksStore.Block block;
     try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
       block = database.openStore("store", 1).allocateBlock(0, BLOCK_CONTENT_LENGTH);
+      block.activate();
     }
     assertThrows(IllegalStateException.class, block::state, "State access must not read an unmapped block");
   }
@@ -248,6 +270,7 @@ public class BlocksStoreTest {
            var executor = Executors.newSingleThreadExecutor(Thread.ofPlatform().name("Store drop").factory())) {
         var store = database.openStore("store", 1);
         var block = store.allocateBlock(0, BLOCK_CONTENT_LENGTH);
+        block.activate();
         var fsyncStarted = new CountDownLatch(1);
         var finishFsync = new CountDownLatch(1);
         doAnswer(_ -> {
@@ -287,6 +310,7 @@ public class BlocksStoreTest {
       try (var database = new BlocksDatabaseImpl(observedMetadata, chunks, blocks, true);
            var executor = Executors.newSingleThreadExecutor(Thread.ofPlatform().name("Database close").factory())) {
         var block = database.openStore("store", 1).allocateBlock(0, BLOCK_CONTENT_LENGTH);
+        block.activate();
         var fsyncStarted = new CountDownLatch(1);
         var finishFsync = new CountDownLatch(1);
         doAnswer(_ -> {

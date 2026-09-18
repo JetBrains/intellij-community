@@ -220,7 +220,7 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
     synchronized (databaseLock) {
       var ownedBlock = requireOwnedBlock(store, block);
       return switch (ownedBlock.state()) {
-        case ACTIVE -> ownedBlock.contentSegment();
+        case ALLOCATED, ACTIVE -> ownedBlock.contentSegment();
         case SEALED -> ownedBlock.contentSegment().asReadOnly();
         case RETIRED -> throw new IllegalStateException("Block " + ownedBlock.blockId() + " is retired");
       };

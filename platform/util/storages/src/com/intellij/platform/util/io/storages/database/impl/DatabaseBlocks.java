@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ALLOCATED;
+
 /** Catalog and allocator of blocks */
 final class DatabaseBlocks implements Closeable {
   private final @NotNull DatabaseCatalog databaseCatalog;
@@ -41,8 +43,14 @@ final class DatabaseBlocks implements Closeable {
     for (var chunk : chunks.chunks()) {
       for (var block : chunk.blocks()) {
         registerBlock(block);
-        // Part of recovery: normally, all blocks removed from the store must be RETIRED already, but if DB was crashed
-        //  some of them could be left in active/sealed state => fix that:
+
+        //Recovery/clean up after possible crash:
+
+        if (block.state() == ALLOCATED) {
+          block.discard();//block is allocated, but requestor hasn't finished block initialization => discard
+        }
+        //Also part of recovery: normally, if block is removed from the store => it must be RETIRED already;
+        // but if DB was crashed some blocks could be left in active/sealed state => fix that:
         if (!currentStoreIds.contains(block.storeId())) {
           block.retireForStoreDrop();
         }

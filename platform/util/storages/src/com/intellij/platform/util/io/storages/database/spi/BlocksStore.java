@@ -30,6 +30,8 @@ public interface BlocksStore {
 
   /// Allocates one block with at least the specified number of content bytes.
   /// The returned content could be slightly larger, e.g. it can include alignment padding.
+  /// The returned block is [Block.LifecycleState#ALLOCATED] -- caller should [Block#activate()] it
+  /// after completing its own initialization
   @NotNull Block allocateBlock(int role, int minimumContentLength) throws IOException;
 
   /// @return true when completed store changes can require a flush
@@ -72,6 +74,15 @@ public interface BlocksStore {
     /// The caller must stop writes before it seals the block. A previously returned segment cannot become read-only.
     @NotNull MemorySegment content();
 
+    /// Publishes the block after the storage initializes its content.
+    /// TODO RC: allocate/activate protocol works reliably only without OS crashes -- on OS crash part of the changes could
+    ///          be lost. The only way to ensure _persistent ordering_ is to fsync the initialized content before activation,
+    ///          then fsync() the ACTIVE state before exposure -- which is quite costly, so we postponed it.
+    void activate();
+
+    /// Discards a block whose content initialization did not complete.
+    void discard();
+
     /// Marks the block as immutable after the application finishes all writes
     void seal();
 
@@ -80,6 +91,15 @@ public interface BlocksStore {
 
     /// The lifecycle state of a database block
     @ApiStatus.Internal
-    enum LifecycleState {ACTIVE, SEALED, RETIRED}
+    enum LifecycleState {
+      /// Block is allocated by DB, but not yet fully initialized by the storage
+      ALLOCATED,
+      /// Block is initialized by the storage, and modifiable
+      ACTIVE,
+      /// Block is read-only: no modifications allowed, but reading is allowed
+      SEALED,
+      /// No access is allowed, block is on its path to deallocation
+      RETIRED
+    }
   }
 }

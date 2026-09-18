@@ -46,6 +46,45 @@ public class DatabaseBlocksTest {
     }
   }
 
+  @Test
+  public void recoveryDiscardsAllocatedBlock(@TempDir Path databaseDirectory) throws Exception {
+    var catalogPath = databaseDirectory.resolve("database.meta");
+    int storeId;
+    int allocatedBlockId;
+    try (var metadata = DatabaseCatalogOverAppendOnlyLog.open(catalogPath, CHUNK_SIZE);
+         var chunks = DatabaseChunks.open(databaseDirectory, metadata);
+         var blocks = DatabaseBlocks.open(metadata, chunks)) {
+      storeId = metadata.nextStoreId();
+      metadata.registerNewStore(storeId, "store", 1);
+      var store = metadata.findStore("store");
+      assertNotNull(store);
+      var block = blocks.allocateBlock(store, 0, BLOCK_LENGTH);
+      allocatedBlockId = block.blockId();
+      chunks.fsync();
+      metadata.fsync();
+    }
+
+    var lastBlockId = allocatedBlockId;
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try (var metadata = DatabaseCatalogOverAppendOnlyLog.open(catalogPath, CHUNK_SIZE);
+           var chunks = DatabaseChunks.open(databaseDirectory, metadata);
+           var blocks = DatabaseBlocks.open(metadata, chunks)) {
+        var recoveredBlock = blocks.findBlock(allocatedBlockId);
+        assertNotNull(recoveredBlock);
+        assertEquals(BlocksStore.Block.LifecycleState.RETIRED, recoveredBlock.state());
+        assertTrue(blocks.blocks(storeId).contains(recoveredBlock), "Recovery must retain the discarded block for compaction");
+
+        var store = metadata.findStore("store");
+        assertNotNull(store);
+        var newBlock = blocks.allocateBlock(store, 0, BLOCK_LENGTH);
+        assertTrue(newBlock.blockId() > lastBlockId, "Recovery must reserve the discarded block identifier");
+        lastBlockId = newBlock.blockId();
+        newBlock.activate();
+        chunks.fsync();
+      }
+    }
+  }
+
   @ParameterizedTest
   @ValueSource(booleans = {false, true})
   public void recoveryCompletesStoreDrop(boolean partiallyRetired, @TempDir Path databaseDirectory) throws Exception {
@@ -60,9 +99,12 @@ public class DatabaseBlocksTest {
       var dropped = metadata.findStore("dropped");
       assertNotNull(dropped);
       var active = blocks.allocateBlock(dropped, 0, BLOCK_LENGTH);
+      active.activate();
       var sealed = blocks.allocateBlock(dropped, 0, BLOCK_LENGTH);
+      sealed.activate();
       sealed.seal();
       var retired = blocks.allocateBlock(dropped, 0, BLOCK_LENGTH);
+      retired.activate();
       retired.seal();
       retired.retire();
       chunks.fsync();
@@ -76,6 +118,7 @@ public class DatabaseBlocksTest {
       var replacement = metadata.findStore("dropped");
       assertNotNull(replacement);
       var replacementBlock = blocks.allocateBlock(replacement, 0, BLOCK_LENGTH);
+      replacementBlock.activate();
       lastBlockId = replacementBlock.blockId();
       chunks.fsync();
       metadata.fsync();
@@ -98,6 +141,7 @@ public class DatabaseBlocksTest {
         var newBlock = blocks.allocateBlock(replacement, 0, BLOCK_LENGTH);
         assertTrue(newBlock.blockId() > lastBlockId, "Recovery must reserve identifiers of retired blocks");
         lastBlockId = newBlock.blockId();
+        newBlock.activate();
         chunks.fsync();
       }
     }
@@ -118,8 +162,10 @@ public class DatabaseBlocksTest {
       var firstBlock = blocks.allocateBlock(firstStore, 0, BLOCK_LENGTH);
       var secondBlock = blocks.allocateBlock(secondStore, 0xFF, BLOCK_LENGTH);
       firstBlock.contentSegment().set(ValueLayout.JAVA_BYTE, 0, (byte)42);
+      firstBlock.activate();
       firstBlock.seal();
       firstBlock.retire();
+      secondBlock.activate();
 
       assertEquals(1, firstStore.storeId(), "The first store must use the first positive logical identifier");
       assertEquals(2, secondStore.storeId(), "A later store must use the next logical identifier");
@@ -156,4 +202,5 @@ public class DatabaseBlocksTest {
       assertEquals(List.of(firstBlock, thirdBlock), blocks.blocks(firstStore.storeId()));
     }
   }
+
 }

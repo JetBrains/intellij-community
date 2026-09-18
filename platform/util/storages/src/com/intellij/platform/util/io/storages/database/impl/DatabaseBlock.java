@@ -3,7 +3,6 @@ package com.intellij.platform.util.io.storages.database.impl;
 
 import com.intellij.platform.util.io.storages.database.impl.layout.BlockHeaderLayout;
 import com.intellij.platform.util.io.storages.database.impl.layout.ChunkHeaderLayout;
-import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState;
 import com.intellij.util.io.CorruptedException;
 import org.jetbrains.annotations.NotNull;
@@ -18,18 +17,24 @@ import java.nio.file.Path;
 /// 2. reduce contention on chunk's allocation cursors: different blocks could be filled up in parallel
 /// 3. group the data of one store and role, so compaction can move the block as a whole
 ///
-/// Block has 3 lifecycle stages:
-/// 1. [LifecycleState#ACTIVE] -- allocated and usable
-/// 2. [LifecycleState#SEALED] -- any new changes are prohibited, reads are allowed
-/// 3. [LifecycleState#RETIRED] -- marked for deletion, unusable
-/// The transition is one-way: ACTIVE -> SEALED -> RETIRED (terminal).
-/// Dropping the store also permits ACTIVE -> RETIRED.
-///
+/// Block lifecycle states:
+/// 1. [LifecycleState#ALLOCATED]: allocated but not yet usable -- a block-allocating site is still initializing it;
+/// 2. [LifecycleState#ACTIVE]:    initialized and usable;
+/// 3. [LifecycleState#SEALED]:    changes are prohibited, reads are allowed;
+/// 4. [LifecycleState#RETIRED]:   marked for deletion/deleted -- generally, a block in this state **should not** be accessed
+///    in any way, except for low-level database-internal code who knows that it is doing;
+/// State transitions are always one-way: from ALLOCATED to RETIRED (which is a terminal state).
+/// The normal transitions a one-step-at-a-time: ALLOCATED -> ACTIVE -> SEALED -> RETIRED, but there are few shortcuts:
+/// - ALLOCATED -> RETIRED: if an allocation hasn't been finished (block hasn't been transitioned to ACTIVE) and an app is
+///   crashed -- during recovery an unfinished ALLOCATED blocks are retired and discarded.
+/// - (any state) -> RETIRED: dropping the owning store retires all the store's blocks, regardless of theirs states.
 final class DatabaseBlock {
   static final int MIN_ROLE = 0;
   static final int MAX_ROLE = 0xFF;
 
+  /// including header
   private final @NotNull MemorySegment blockSegment;
+  /// excluding header
   private final @NotNull MemorySegment contentSegment;
 
   private final int storeId;
@@ -192,18 +197,28 @@ final class DatabaseBlock {
     return role;
   }
 
-  @NotNull BlocksStore.Block.LifecycleState state() {
+  @NotNull LifecycleState state() {
     return BlockHeaderLayout.readState(blockSegment);
   }
 
-  /** Marks the block as immutable after the application finishes writing it. */
-  void seal() {
-    BlockHeaderLayout.transitionState(blockSegment, LifecycleState.ACTIVE, BlocksStore.Block.LifecycleState.SEALED);
+  /// Publishes the block after its content is initialized: state transition ALLOCATED -> ACTIVE
+  void activate() {
+    BlockHeaderLayout.transitionState(blockSegment, LifecycleState.ALLOCATED, LifecycleState.ACTIVE);
   }
 
-  /** Marks a sealed block as unreachable application data that compaction can reclaim. */
+  /// Discards a block whose content initialization did not complete: state transition ALLOCATED -> RETIRED
+  void discard() {
+    BlockHeaderLayout.transitionState(blockSegment, LifecycleState.ALLOCATED, LifecycleState.RETIRED);
+  }
+
+  /// Marks the block as immutable after the application finishes writing it: : state transition ACTIVE -> SEALED
+  void seal() {
+    BlockHeaderLayout.transitionState(blockSegment, LifecycleState.ACTIVE, LifecycleState.SEALED);
+  }
+
+  /// Marks a sealed block as unreachable application data that compaction can reclaim: state transition SEALED -> RETIRED
   void retire() {
-    BlockHeaderLayout.transitionState(blockSegment, BlocksStore.Block.LifecycleState.SEALED, BlocksStore.Block.LifecycleState.RETIRED);
+    BlockHeaderLayout.transitionState(blockSegment, LifecycleState.SEALED, LifecycleState.RETIRED);
   }
 
   /// Unconditional transition: `<any state>` -> [LifecycleState#RETIRED]

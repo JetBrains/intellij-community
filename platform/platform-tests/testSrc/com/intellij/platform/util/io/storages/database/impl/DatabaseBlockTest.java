@@ -16,6 +16,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 
+import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ALLOCATED;
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.file.StandardOpenOption.WRITE;
@@ -45,10 +46,11 @@ public class DatabaseBlockTest {
       assertEquals(BLOCK_LENGTH, block.blockLength());
       assertEquals(STORE_ID, block.storeId());
       assertEquals(METADATA_ROLE, block.role());
-      assertEquals(BlocksStore.Block.LifecycleState.ACTIVE, block.state());
+      assertEquals(ALLOCATED, block.state());
       assertEquals(BLOCK_LENGTH - BlockHeaderLayout.HEADER_SIZE, block.contentSegment().byteSize());
       assertEquals(ChunkHeaderLayout.HEADER_SIZE + BLOCK_LENGTH, chunk.committedTail());
       assertEquals(chunk.committedTail(), chunk.allocatedTail());
+      block.activate();
       chunk.flush();
     }
 
@@ -102,6 +104,7 @@ public class DatabaseBlockTest {
     var chunkPath = directory.resolve("chunk.dat");
     try (var chunk = DatabaseChunk.create(chunkPath, DATABASE_ID, CHUNK_ID, CHUNK_SIZE)) {
       var block = chunk.allocateBlock(BLOCK_ID, STORE_ID, VALUE_ROLE, BLOCK_LENGTH);
+      block.activate();
       block.seal();
       block.retire();
       assertEquals(BlocksStore.Block.LifecycleState.RETIRED, block.state());
@@ -120,11 +123,60 @@ public class DatabaseBlockTest {
     try (var chunk = DatabaseChunk.create(chunkPath, DATABASE_ID, CHUNK_ID, CHUNK_SIZE)) {
       var block = chunk.allocateBlock(BLOCK_ID, STORE_ID, VALUE_ROLE, BLOCK_LENGTH);
 
+      assertThrows(IllegalStateException.class, block::seal, "An allocated block must be activated before sealing");
+      assertThrows(IllegalStateException.class, block::retire, "An allocated block must be activated before retirement");
+      block.activate();
       assertThrows(IllegalStateException.class, block::retire, "An active block must be sealed before retirement");
       block.seal();
       assertThrows(IllegalStateException.class, block::seal, "Sealing must publish exactly one state transition");
       block.retire();
       assertThrows(IllegalStateException.class, block::retire, "Retirement must publish exactly one state transition");
+    }
+  }
+
+  @Test
+  public void allocatedStateSupportsActivationAndDiscarding() throws Exception {
+    try (var arena = Arena.ofConfined()) {
+      var chunk = arena.allocate(CHUNK_SIZE, BlockHeaderLayout.BLOCK_ALIGNMENT);
+      var activatedBlock = DatabaseBlock.create(
+        chunk, CHUNK_ID, ChunkHeaderLayout.HEADER_SIZE, BLOCK_ID, BLOCK_LENGTH, STORE_ID, VALUE_ROLE
+      );
+
+      assertEquals(ALLOCATED, activatedBlock.state());
+      activatedBlock.activate();
+      assertEquals(BlocksStore.Block.LifecycleState.ACTIVE, activatedBlock.state());
+      assertThrows(
+        IllegalStateException.class,
+        activatedBlock::activate,
+        "Activation must publish exactly one transition"
+      );
+
+      var discardedBlock = DatabaseBlock.create(
+        chunk, CHUNK_ID, ChunkHeaderLayout.HEADER_SIZE + BLOCK_LENGTH, BLOCK_ID + 1, BLOCK_LENGTH, STORE_ID, VALUE_ROLE
+      );
+      assertEquals(ALLOCATED, discardedBlock.state());
+      discardedBlock.discard();
+      assertEquals(BlocksStore.Block.LifecycleState.RETIRED, discardedBlock.state());
+
+      var droppedBlock = DatabaseBlock.create(
+        chunk, CHUNK_ID, ChunkHeaderLayout.HEADER_SIZE + 2L * BLOCK_LENGTH, BLOCK_ID + 2, BLOCK_LENGTH, STORE_ID, VALUE_ROLE
+      );
+      droppedBlock.retireForStoreDrop();
+      assertEquals(BlocksStore.Block.LifecycleState.RETIRED, droppedBlock.state());
+    }
+  }
+
+  @Test
+  public void allocatedStateRejectsSealing() throws Exception {
+    try (var arena = Arena.ofConfined()) {
+      var chunk = arena.allocate(CHUNK_SIZE, BlockHeaderLayout.BLOCK_ALIGNMENT);
+      var block = DatabaseBlock.create(
+        chunk, CHUNK_ID, ChunkHeaderLayout.HEADER_SIZE, BLOCK_ID, BLOCK_LENGTH, STORE_ID, VALUE_ROLE
+      );
+
+      assertThrows(IllegalStateException.class, block::seal);
+      assertThrows(IllegalStateException.class, block::retire);
+      assertEquals(ALLOCATED, block.state());
     }
   }
 
@@ -137,11 +189,13 @@ public class DatabaseBlockTest {
   }
 
   @ParameterizedTest
-  @EnumSource(BlocksStore.Block.LifecycleState.class)
-  public void storeDropRetiresEveryState(BlocksStore.Block.LifecycleState initialState, @TempDir Path directory) throws Exception {
+  @EnumSource(value = BlocksStore.Block.LifecycleState.class, names = {"ACTIVE", "SEALED", "RETIRED"})
+  public void storeDropRetiresActiveSealedAndRetiredStates(BlocksStore.Block.LifecycleState initialState,
+                                                           @TempDir Path directory) throws Exception {
     var chunkPath = directory.resolve("chunk.dat");
     try (var chunk = DatabaseChunk.create(chunkPath, DATABASE_ID, CHUNK_ID, CHUNK_SIZE)) {
       var block = chunk.allocateBlock(BLOCK_ID, STORE_ID, VALUE_ROLE, BLOCK_LENGTH);
+      block.activate();
       if (initialState != BlocksStore.Block.LifecycleState.ACTIVE) {
         block.seal();
       }
