@@ -40,9 +40,9 @@ single_version_override(
 bazel_dep(name = "rules_kotlin", version = "2.2.2")
 archive_override(
     module_name = "rules_kotlin",
-    sha256 = "55be2ff6c30302834f7e6f6fc0ac3f9f4fad8a2b6c05a4e08bd1edb7f56737f1",
-    strip_prefix = "rules_kotlin-cf0bb4553cd90b8936b995ea8313a62dd024eea0",
-    url = "https://github.com/JetBrains/rules_kotlin/archive/cf0bb4553cd90b8936b995ea8313a62dd024eea0.zip",
+    sha256 = "f9e4ad312589048535bf9bdbbc9b0c8df22727d3d2b0bd224f9aba10f3069230",
+    strip_prefix = "rules_kotlin-f67028ddfa868b004432036d712bc8a79c9a1f30",
+    url = "https://github.com/JetBrains/rules_kotlin/archive/f67028ddfa868b004432036d712bc8a79c9a1f30.zip",
 )
 
 bazel_dep(name = "rules_pkg", version = "1.2.0")
@@ -284,6 +284,13 @@ http_file(
     downloaded_file_path = "kotlin-build-tools-impl-%s.jar" % _KOTLIN_VERSION,
     sha256 = "366d18291f6f642322b685e7def432e966d450a61b2d374da3822cd3a4791f4f",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-build-tools-impl/%s/kotlin-build-tools-impl-%s.jar" % (_KOTLIN_VERSION, _KOTLIN_VERSION),
+)
+
+http_file(
+    name = "kotlin-tooling-core_http",
+    downloaded_file_path = "kotlin-tooling-core-%s.jar" % _KOTLIN_VERSION,
+    sha256 = "5fc5db083803232857408ed5c25bcc307c703b04bdef6cb2c34ebf4db611a622",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-tooling-core/%s/kotlin-tooling-core-%s.jar" % (_KOTLIN_VERSION, _KOTLIN_VERSION),
 )
 
 http_file(
