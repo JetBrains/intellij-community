@@ -3,7 +3,6 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.marketplace.InstallPluginResult
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceServiceImpl
 import com.intellij.openapi.updateSettings.impl.createRepository
 import kotlinx.coroutines.NonCancellable
@@ -22,7 +21,7 @@ internal class PluginUpdateSourceApplier private constructor(
       // because in future pluginUpdateSource won't be updated on update. For uninstalled plugin one can't edit pluginUpdateSource
       val initialUpdateSource = modelFacade.getPendingPluginUpdateSource(pluginModel.pluginId)
       val wasInitialUpdateSourceExplicit =
-        (PluginUpdateSourceService.getInstance() as PluginUpdateSourceServiceImpl).hasExplicitlySetPluginUpdateSource(pluginModel.pluginId)
+        PluginUpdateSourceServiceImpl.getImplInstance().hasExplicitlySetPluginUpdateSource(pluginModel.pluginId)
       return PluginUpdateSourceApplier(pluginModel, modelFacade, initialUpdateSource, wasInitialUpdateSourceExplicit)
     }
   }

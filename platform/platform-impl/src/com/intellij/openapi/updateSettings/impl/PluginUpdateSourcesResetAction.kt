@@ -20,7 +20,7 @@ internal class PluginUpdateSourcesResetAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     if (!PluginUpdateSourceService.isFunctionalitySupported()) return
-    (PluginUpdateSourceService.getInstance() as PluginUpdateSourceServiceImpl).resetPluginUpdateSources()
+    PluginUpdateSourceServiceImpl.getImplInstance().resetPluginUpdateSources()
     NotificationGroupManager.getInstance()
       .getNotificationGroup("Plugin Update Sources Reset")
       .createNotification(IdeBundle.message("notification.content.plugin.update.sources.are.reset"), NotificationType.INFORMATION)

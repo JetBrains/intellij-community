@@ -194,7 +194,7 @@ object PluginUpdateSourceInitializer {
       return
     }
     val pluginUpdateSourceId = service.getPluginUpdateSourceId(pluginId)
-    if (pluginUpdateSourceId != null && (service as PluginUpdateSourceServiceImpl).hasExplicitlySetPluginUpdateSource(pluginId)) {
+    if (pluginUpdateSourceId != null && PluginUpdateSourceServiceImpl.getImplInstance().hasExplicitlySetPluginUpdateSource(pluginId)) {
       thisLogger().info("Plugin $pluginId already has update source")
       return
     }

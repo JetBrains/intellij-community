@@ -20,7 +20,7 @@ internal class PluginUpdateSourcesReinitializeAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     if (!PluginUpdateSourceService.isFunctionalitySupported()) return
-    (PluginUpdateSourceService.getInstance() as PluginUpdateSourceServiceImpl).resetPluginUpdateSources()
+    PluginUpdateSourceServiceImpl.getImplInstance().resetPluginUpdateSources()
     val result = PluginUpdateSourceInitializer.enforceInitialization()
     val message: String
     val notificationType : NotificationType

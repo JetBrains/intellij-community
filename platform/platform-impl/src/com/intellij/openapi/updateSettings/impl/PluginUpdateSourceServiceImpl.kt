@@ -29,6 +29,10 @@ import java.util.Random
 internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
                                                SerializablePersistentStateComponent<PluginUpdateSourceServiceImpl.State>(State()) {
 
+  companion object {
+    fun getImplInstance(): PluginUpdateSourceServiceImpl = PluginUpdateSourceService.getInstance() as PluginUpdateSourceServiceImpl
+  }
+
   override fun getPluginUpdateSourceId(pluginId: PluginId): PluginUpdateSourceId? {
     if (!isFunctionalitySupported()) {
       return null
