@@ -1,12 +1,8 @@
 // IMPORT__MARKER_START
-import fleet.buildtool.conventions.configureAtMostOneJvmTargetOrThrow
-import fleet.buildtool.conventions.withJavaSourceSet
 // IMPORT__MARKER_END
 
 plugins {
   alias(libs.plugins.kotlin.multiplatform)
-  id("fleet.project-module-conventions")
-  id("fleet.toolchain-conventions")
   // GRADLE_PLUGINS__MARKER_START
   alias(jps.plugins.kotlin.serialization)
   // GRADLE_PLUGINS__MARKER_END
@@ -30,9 +26,6 @@ kotlin {
     resources.srcDir(layout.projectDirectory.dir("../resources"))
     resources.srcDir(layout.projectDirectory.dir("../resourcesJvmMain"))
   }
-  configureAtMostOneJvmTargetOrThrow { compilations.named("main") { withJavaSourceSet { javaSourceSet ->
-    javaSourceSet.java.srcDir(layout.projectDirectory.dir("../srcJvmMain"))
-  } } }
   sourceSets.commonMain.configure {
     kotlin.srcDir(layout.projectDirectory.dir("../srcCommonMain"))
     resources.srcDir(layout.projectDirectory.dir("../resourcesCommonMain"))
@@ -45,9 +38,6 @@ kotlin {
     kotlin.srcDir(layout.projectDirectory.dir("../srcJvmTest"))
     resources.srcDir(layout.projectDirectory.dir("../resourcesJvmTest"))
   }
-  configureAtMostOneJvmTargetOrThrow { compilations.named("test") { withJavaSourceSet { javaSourceSet ->
-    javaSourceSet.java.srcDir(layout.projectDirectory.dir("../srcJvmTest"))
-  } } }
   sourceSets.commonMain.dependencies {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
