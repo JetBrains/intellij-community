@@ -12,7 +12,6 @@ val supportedPlatforms = listOf(
   Platform.MacOs.MacOsX64,
   Platform.MacOs.MacOsAarch64,
 )
-val supportedOses = supportedPlatforms.map { it.os }.toSet()
 
 @Serializable
 sealed class Platform(val os: OS) : JavaSerializable {
@@ -81,7 +80,7 @@ sealed class Platform(val os: OS) : JavaSerializable {
       Arch.X64 -> MacOs.MacOsX64
     }
 
-    fun List<Platform>.findPlatform(os: OS, arch: Arch) = singleOrNull { p ->
+    private fun List<Platform>.findPlatform(os: OS, arch: Arch) = singleOrNull { p ->
       p.os == os && p.arch == arch
     } ?: error("unsupported platform $os $arch (or more than one supported platform is matching this triple)")
 
@@ -143,16 +142,13 @@ enum class LibCImplementation {
       "glibc" -> GLIBC
       else -> error("unsupported libc implementation '$libc'")
     }
-
-    // TODO: proper heuristic on libc detection for alpine linux support for example
-    fun currentLibc() = GLIBC
   }
 }
 
 /**
  * String representation of OS in Fleet parts (S3 storage, artefact names, etc.)
  */
-fun OS.toFleetPartOsString() = when (this) {
+fun OS.toFleetPartOsString(): String = when (this) {
   OS.MACOS -> "macos"
   OS.WINDOWS -> "windows"
   OS.LINUX -> "linux"
@@ -161,12 +157,12 @@ fun OS.toFleetPartOsString() = when (this) {
 /**
  * String representation of Arch in Fleet parts (S3 storage, artefact names, etc.)
  */
-fun Arch.toFleetPartArchString() = when (this) {
+fun Arch.toFleetPartArchString(): String = when (this) {
   Arch.AARCH64 -> "aarch64"
   Arch.X64 -> "x64"
 }
 
-fun Arch.distributionArchSuffix() = when (this) {
+fun Arch.distributionArchSuffix(): String = when (this) {
   Arch.AARCH64 -> "-aarch64"
   Arch.X64 -> ""
 }
@@ -174,7 +170,7 @@ fun Arch.distributionArchSuffix() = when (this) {
 /**
  * String representation of lib C implementation in Fleet parts (S3 storage, Gradle tooling, etc.)
  */
-fun LibCImplementation.toFleetPartLibcString() = when (this) {
+fun LibCImplementation.toFleetPartLibcString(): String? = when (this) {
   LibCImplementation.GLIBC -> null // we do not specify GLIBC in the distribution slug, as of legacy
   LibCImplementation.MUSL -> "musl"
 }

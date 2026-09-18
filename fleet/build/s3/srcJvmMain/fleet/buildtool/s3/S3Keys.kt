@@ -21,9 +21,6 @@ sealed class S3Version {
 
 private const val partsPrefix = "fleet-parts"
 
-fun Platform.fleetFleetDockS3Key(s3Version: S3Version): String = fleetPartS3Key(s3Version, "fleet-dock", { ".tar.zst" })
-fun Platform.fleetFleetJBRS3Key(s3Version: S3Version): String = fleetPartS3Key(s3Version, "fleet-jbr", { ".tar.zst" }, archiveName = "jbr")
-
 fun Platform.fleetPartS3Key(
   s3Version: S3Version,
   partName: String,

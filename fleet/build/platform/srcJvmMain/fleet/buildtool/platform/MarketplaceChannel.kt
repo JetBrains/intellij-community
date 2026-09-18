@@ -7,9 +7,4 @@ enum class MarketplaceChannel(val value: String) {
   Nightly("nightly");
 
   override fun toString(): String = value
-
-  companion object {
-    private val byValues = MarketplaceChannel.values().associateBy { it.value }
-    fun fromString(s: String): MarketplaceChannel? = byValues[s]
-  }
 }

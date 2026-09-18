@@ -1,17 +1,14 @@
 package fleet.buildtool.fs
 
-import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteRecursively
-import kotlin.io.path.readBytes
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
 class UtilsTest {
@@ -42,24 +39,6 @@ class UtilsTest {
     assertEquals(expectedHash, sha256(resourceAsFile("example-abi-lf.txt").readBytesForSha256()), "LF line ending file must produce correct hash")
     assertEquals(expectedHash, sha256(resourceAsFile("example-abi-crlf.txt").readBytesForSha256()), "CRLF line ending file must produce correct hash")
     assertEquals(expectedHash, sha256(resourceAsFile("example-abi-cr.txt").readBytesForSha256()), "CR line ending file must produce correct hash")
-  }
-
-  @Test
-  fun `should have no action on LF`() {
-    val lfFile = resourceAsFile("example-abi-lf.txt").readBytes()
-    assertContentEquals(lfFile, ByteBuffer.wrap(lfFile).normaliseLineSeparators().array(), "should not have modified the content")
-  }
-
-  @Test
-  fun `should normalize CRLF`() {
-    val lfFile = resourceAsFile("example-abi-lf.txt").readBytes()
-    assertContentEquals(lfFile, ByteBuffer.wrap(resourceAsFile("example-abi-crlf.txt").readBytes()).normaliseLineSeparators().array(), "should not contain LF")
-  }
-
-  @Test
-  fun `should normalize CR `() {
-    val lfFile = resourceAsFile("example-abi-lf.txt").readBytes()
-    assertContentEquals(lfFile, ByteBuffer.wrap(resourceAsFile("example-abi-cr.txt").readBytes()).normaliseLineSeparators().array(), "should not contain CR")
   }
 
   private fun resourceAsFile(filename: String): Path {
