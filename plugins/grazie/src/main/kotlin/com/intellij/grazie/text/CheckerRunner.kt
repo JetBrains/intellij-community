@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.seemsCloudConnected
 import com.intellij.grazie.ide.fus.AcceptanceRateTracker
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
@@ -29,7 +28,6 @@ import com.intellij.grazie.utils.isGrammar
 import com.intellij.grazie.utils.isSpelling
 import com.intellij.grazie.utils.toProofreadingContext
 import com.intellij.lang.annotation.ProblemGroup
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -41,8 +39,6 @@ import com.intellij.psi.util.parents
 import com.intellij.psi.util.startOffset
 import com.intellij.spellchecker.inspections.SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME
 import org.jetbrains.annotations.ApiStatus
-
-private val LOG = Logger.getInstance(CheckerRunner::class.java)
 
 class CheckerRunner(val text: TextContent) {
   @Suppress("unused")
@@ -105,7 +101,6 @@ class CheckerRunner(val text: TextContent) {
       val description = problem.getDescriptionTemplate(isOnTheFly)
       return problem.fileHighlightRanges.mapNotNull { range ->
         val rangeInElement = range.shiftLeft(parent.startOffset)
-        validateRangeInElement(parent, rangeInElement, problem)
         val grazieDescriptor = GrazieProblemDescriptor(parent, description, rangeInElement, isOnTheFly, tooltip)
         if (isOnTheFly) {
           grazieDescriptor.quickFixes = toFixes(problem, grazieDescriptor)
@@ -149,14 +144,16 @@ class CheckerRunner(val text: TextContent) {
     fun checkTexts(allCheckers: List<TextChecker>, texts: List<TextContent>, checkedDomains: Set<TextDomain>): List<TextProblem> {
       if (allCheckers.isEmpty() || texts.isEmpty() || texts.all { it.isBlank() }) return emptyList()
       val checkers = if (texts.all { it.domain !in checkedDomains }) allCheckers.filter { it.isSpelling() } else allCheckers
-      val contexts = texts.toProofreadingContext(isLanguageDetectionRequired(checkers))
+      val languageDetectionRequired = checkers.any { it.isGrammar() }
+      val contexts = texts.toProofreadingContext(languageDetectionRequired)
       return TextCheckerManager.doRun(checkers, contexts).filterNot { shouldBeIgnored(it) }
     }
 
     private fun run(allCheckers: List<TextChecker>, text: TextContent, checkedDomains: Set<TextDomain>): List<TextProblem> {
       if (text.isBlank() || allCheckers.isEmpty()) return emptyList()
       val checkers = if (text.domain in checkedDomains && seemsNatural(text)) allCheckers else allCheckers.filterNot { it.isGrammar() }
-      val context = text.toProofreadingContext(isLanguageDetectionRequired(checkers))
+      val languageDetectionRequired = checkers.any { it.isGrammar() }
+      val context = text.toProofreadingContext(languageDetectionRequired)
       return TextCheckerManager.doRun(checkers, context).filterNot { shouldBeIgnored(it) }
     }
 
@@ -243,20 +240,5 @@ class CheckerRunner(val text: TextContent) {
       if (problem.isStyleLike) GrazieInspection.STYLE_INSPECTION
       else if (problem is TypoProblem) SPELL_CHECKING_INSPECTION_TOOL_NAME
       else GrazieInspection.GRAMMAR_INSPECTION
-
-    private fun validateRangeInElement(psi: PsiElement, rangeInElement: TextRange?, problem: TextProblem) {
-      if (rangeInElement != null && psi.textRange != null) {
-        TextRange.assertProperRange(rangeInElement)
-        val psiTextLength = psi.textRange.length
-        if (rangeInElement.endOffset > psiTextLength) {
-          LOG.error("Argument rangeInElement ($rangeInElement) endOffset must not exceed descriptor text range " +
-                    "(${psi.textRange.startOffset}, ${psi.textRange.endOffset}) length ($psiTextLength). " +
-                    "PSI language: ${psi.language.id}, TextContent.fileRanges: ${problem.text.rangesInFile}")
-        }
-      }
-    }
-
-    private fun isLanguageDetectionRequired(checkers: List<TextChecker>): Boolean =
-      checkers.any { it.isGrammar() } || checkers.any { it.isSpelling() } && seemsCloudConnected()
   }
 }

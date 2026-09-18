@@ -44,7 +44,7 @@ class GrazieRuleSettingsAction(private val rule: Rule, private val domain: TextS
   override fun applyFix(project: Project, psiFile: PsiFile?, editor: Editor?) {
     val state = GrazieConfig.get()
     val availableLang = state.availableLanguages.first { it.iso == rule.language.iso }
-    val ok = StyleConfigurable.focusSetting(rule.featuredSetting, rule, domain, availableLang, project)
+    val ok = StyleConfigurable.focusSetting(rule, domain, availableLang, project)
     val result = if (!ok) "canceled" else analyzeStateChange(state, GrazieConfig.get())
     GrazieFUSCounter.settingsUpdated("rule.settings:$result", rule, project)
   }

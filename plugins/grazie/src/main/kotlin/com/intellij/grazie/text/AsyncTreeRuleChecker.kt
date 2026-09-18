@@ -14,7 +14,7 @@ class AsyncTreeRuleChecker : ExternalTextChecker() {
   // Used by ReSharper
   override suspend fun checkExternally(context: ProofreadingContext): Collection<TextProblem> {
     if (!context.hasLanguage()) return emptyList()
-    val sentences = ParsedSentence.getSentencesAsync(context)
+    val sentences = ParsedSentence.getSentences(context)
     if (sentences.isEmpty()) return emptyList()
 
     return TreeRuleChecker.check(context.text, sentences)
@@ -22,7 +22,6 @@ class AsyncTreeRuleChecker : ExternalTextChecker() {
 
   override suspend fun checkExternally(contexts: List<ProofreadingContext>): Collection<TextProblem> {
     if (contexts.isEmpty()) return emptyList()
-    val texts = contexts.mapNotNull { if (it.hasLanguage()) it.text else null }
-    return TreeRuleChecker.checkText(ParsedSentence.getAllCheckedSentences(texts))
+    return TreeRuleChecker.checkText(ParsedSentence.getAllCheckedSentences(contexts))
   }
 }

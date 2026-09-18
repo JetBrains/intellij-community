@@ -3,7 +3,6 @@
 
 package com.intellij.grazie.ide.language
 
-import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.openapi.util.Disposer
@@ -76,32 +75,6 @@ class MarkdownSupportTest : GrazieTestBase() {
       - Primary outcomes the feature must deliver.
       ```
     """.trimIndent())
-    myFixture.checkHighlighting()
-  }
-
-  fun `test grazie rule controls associated LT rules`() {
-    // REPEAT_AGAIN is enabled by default in LT, so the style error should be detected
-    GrazieConfig.update { it.copy(userEnabledRules = setOf(), userDisabledRules = setOf()) }
-    myFixture.configureByText("a.md", """
-      Please <STYLE_SUGGESTION descr="REPEAT_AGAIN">repeat again</STYLE_SUGGESTION>.
-     """.trimIndent())
-    myFixture.checkHighlighting()
-
-    // Grazie TAUTOLOGY rule controls associated REPEAT_AGAIN LT rule, hence no style error should be detected
-    GrazieConfig.update { it.copy(userEnabledRules = setOf(), userDisabledRules = setOf("Grazie.RuleEngine.En.Style.TAUTOLOGY")) }
-    myFixture.configureByText("a.md", "Please repeat again.")
-    myFixture.checkHighlighting()
-
-    // Explicitly enabled REPEAT_AGAIN should still detect the style error
-    GrazieConfig.update {
-      it.copy(
-        userEnabledRules = setOf("LanguageTool.EN.REPEAT_AGAIN"),
-        userDisabledRules = setOf("Grazie.RuleEngine.En.Style.TAUTOLOGY")
-      )
-    }
-    myFixture.configureByText("a.md", """
-      Please <STYLE_SUGGESTION descr="REPEAT_AGAIN">repeat again</STYLE_SUGGESTION>.
-     """.trimIndent())
     myFixture.checkHighlighting()
   }
 

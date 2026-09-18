@@ -5,18 +5,11 @@ import ai.grazie.detector.DefaultLanguageDetectors
 import ai.grazie.gec.model.problem.ProblemHighlighting
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.Language.UNKNOWN
-import ai.grazie.rules.Rule
-import ai.grazie.rules.settings.RuleSetting
-import ai.grazie.rules.settings.Setting
-import ai.grazie.rules.toolkit.LanguageToolkit
 import ai.grazie.utils.mpp.FromResourcesDataLoader
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.detection.BatchLangDetector
 import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection.Companion.MAX_TEXT_LENGTH_IN_FILE
-import com.intellij.grazie.ide.ui.configurable.StyleConfigurable.Companion.ruleEngineLanguages
-import com.intellij.grazie.jlanguage.LangTool
-import com.intellij.grazie.rule.RuleIdeClient
 import com.intellij.grazie.rule.SentenceTokenizer.toTokens
 import com.intellij.grazie.spellcheck.SpellingTextChecker
 import com.intellij.grazie.text.CheckerRunner
@@ -38,43 +31,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.spellchecker.engine.DictionaryModificationTracker
-import com.intellij.util.containers.CollectionFactory.createConcurrentSoftValueMap
-import java.util.concurrent.ConcurrentHashMap
 import ai.grazie.text.TextRange as GrazieTextRange
 
 @JvmField
 internal val EXTRACTOR_SOURCE: Key<PsiElement> = Key("TextContent extractor source element")
-
-private val affectedGlobalRules = createConcurrentSoftValueMap<Language, Set<String>>()
-private val associatedGrazieRules = ConcurrentHashMap<Language, Map<String, Rule>>()
-
-fun getAssociatedGrazieRule(rule: com.intellij.grazie.text.Rule): Rule? {
-  if (rule.language !in ruleEngineLanguages) return null
-  return associatedGrazieRules
-    .computeIfAbsent(rule.language) { buildAssociatedGrazieMapping(rule.language) }
-    .get(rule.globalId)
-}
-
-fun getAffectedGlobalRules(language: Language): Set<String> {
-  if (language !in ruleEngineLanguages) return emptySet()
-  return affectedGlobalRules.computeIfAbsent(language) {
-    val prefix = Rule.globalIdPrefix(language)
-    featuredSettings(language)
-      .filterIsInstance<RuleSetting>()
-      .map { prefix + it.rule.id }
-      .toHashSet()
-  }
-}
-
-fun featuredSettings(language: Language): List<Setting> =
-  LanguageToolkit.forLanguage(language).getSettings(RuleIdeClient.INSTANCE)
-    .flatMap { it.settings() }
-    .flatMap { setting ->
-      when (setting) {
-        is RuleSetting -> listOf(setting) + setting.subSettings
-        else -> listOf(setting)
-      }
-    }
 
 @JvmOverloads
 internal fun getAllProblems(file: PsiFile, checkedDomains: Set<TextDomain>, allCheckers: List<TextChecker> = TextChecker.allCheckers()): List<TextProblem> {
@@ -144,29 +104,6 @@ internal fun TextChecker.isGrammar(): Boolean = this !is SpellingTextChecker
 
 val ProblemHighlighting.underline: TextRange?
   get() = GrazieTextRange.coveringIde(this.always)
-
-private fun buildAssociatedGrazieMapping(language: Language): Map<String, Rule> {
-  val associatedGrazieRules = hashMapOf<String, Rule>()
-  val ltPrefix = LangTool.globalIdPrefix(language)
-  featuredSettings(language)
-    .filterIsInstance<RuleSetting>()
-    .map { it.rule }
-    .forEach { grazieRule ->
-      grazieRule.associatedLTRules.forEach { associatedLTRule ->
-        associatedGrazieRules[ltPrefix + associatedLTRule.id] = grazieRule
-      }
-    }
-  return associatedGrazieRules
-}
-
-fun Rule.isEnabledInState(state: GrazieConfig.State, domain: TextStyleDomain): Boolean {
-  return if (this.isRuleEnabledByDefault(state.getTextStyle(domain), RuleIdeClient.INSTANCE)) {
-    !state.isRuleDisabled(this.globalId(), domain)
-  }
-  else {
-    state.isRuleEnabled(this.globalId(), domain)
-  }
-}
 
 internal fun getGrazieTracker(file: PsiFile): ModificationTracker {
   return ModificationTracker {
