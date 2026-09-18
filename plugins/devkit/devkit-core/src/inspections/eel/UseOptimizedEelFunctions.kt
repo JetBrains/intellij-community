@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootManager
@@ -41,6 +42,12 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (ModuleUtilCore.findModuleForPsiElement(holder.file)?.let(PsiUtil::isPluginModule) != true) {
       return PsiElementVisitor.EMPTY_VISITOR
+    }
+    val highlightType = if (IntelliJProjectUtil.isIntelliJPlatformProject(holder.project)) {
+      ProblemHighlightType.WARNING
+    }
+    else {
+      ProblemHighlightType.INFORMATION
     }
     return UastVisitorAdapter(object : AbstractUastNonRecursiveVisitor() {
       private val visitedCalls = hashSetOf<UExpression>()
@@ -83,24 +90,24 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
           "$containingClass.$actualMethodName"
         }
 
-        handleMethod(holder, node, fqn)
+        handleMethod(holder, node, fqn, highlightType)
 
         return true
       }
     }, true)
   }
 
-  private fun handleMethod(holder: ProblemsHolder, node: UCallExpression, fqn: String) {
+  private fun handleMethod(holder: ProblemsHolder, node: UCallExpression, fqn: String, highlightType: ProblemHighlightType) {
     val methodPsi = node.methodIdentifier?.sourcePsi ?: return
     if (fqn == "java.nio.file.Files.readAllBytes") {
       holder.registerProblem(
-        methodPsi, DevKitBundle.message("inspection.message.works.ineffectively.with.remote.eel"), ProblemHighlightType.WARNING,
+        methodPsi, DevKitBundle.message("inspection.message.works.ineffectively.with.remote.eel"), highlightType,
         ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "readAllBytes"),
       )
     }
     if (fqn == "java.nio.file.Files.readString") {
       holder.registerProblem(
-        methodPsi, DevKitBundle.message("inspection.message.works.ineffectively.with.remote.eel"), ProblemHighlightType.WARNING,
+        methodPsi, DevKitBundle.message("inspection.message.works.ineffectively.with.remote.eel"), highlightType,
         ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "readString"),
       )
     }
@@ -112,7 +119,7 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
       node.valueArgumentCount == 1
     ) {
       holder.registerProblem(
-        methodPsi, DevKitBundle.message("inspection.message.works.ineffectively.with.remote.eel"), ProblemHighlightType.WARNING,
+        methodPsi, DevKitBundle.message("inspection.message.works.ineffectively.with.remote.eel"), highlightType,
         ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFileUtils", "deleteRecursively"),
       )
     }
