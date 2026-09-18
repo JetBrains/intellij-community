@@ -1,0 +1,47 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <id>embedded.product</id>
+  <version>unchanged</version>
+  <idea-version since-build="1" until-build="2" />
+  <product-descriptor code="TEST" release-date="20260101" release-version="2026000" />
+  <description>&lt;b&gt;Product &amp; client&lt;/b&gt;</description>
+  <content>
+    <module name="intellij.embedded.existing">&lt;idea-plugin package=&quot;keep&quot;/&gt;</module>
+    <module name="intellij.embedded.noPackage"><![CDATA[<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.core" />
+  </dependencies>
+</idea-plugin>]]></module>
+  </content>
+  <content>
+    <module name="intellij.embedded.jar" loading="required"><![CDATA[<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="from.jar" separate-jar="true">
+  <extensions defaultExtensionNs="test">
+    <extension value="a &amp; b" />
+  </extensions>
+</idea-plugin>]]></module>
+    <module name="intellij.embedded.file"><![CDATA[<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="from.file" separate-jar="true">
+  <extensions defaultExtensionNs="test">
+    <extension value="a &amp; b" />
+  </extensions>
+</idea-plugin>]]></module>
+  </content>
+  <extensions defaultExtensionNs="test">
+    <extension value="from file" />
+  </extensions>
+  <content>
+    <module name="intellij.embedded/fragment"><![CDATA[<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="from.file">
+  <extensions defaultExtensionNs="test">
+    <extension value="a &amp; b" />
+  </extensions>
+</idea-plugin>]]></module>
+    <module name="intellij.embedded.notSeparate"><![CDATA[<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="from.file">
+  <extensions defaultExtensionNs="test">
+    <extension value="a &amp; b" />
+  </extensions>
+</idea-plugin>]]></module>
+    <module name="intellij.embedded.file"><![CDATA[<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="from.file" separate-jar="true">
+  <extensions defaultExtensionNs="test">
+    <extension value="a &amp; b" />
+  </extensions>
+</idea-plugin>]]></module>
+  </content>
+</idea-plugin>

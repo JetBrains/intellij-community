@@ -231,9 +231,7 @@ func TestTheLoadPathOfAnHref(t *testing.T) {
 	}
 }
 
-// A load path no declared file answers fails, and the failure names the path and every declared one. Every other step
-// of the platform's search reads a JPS project model, which the action refuses to load
-// (`RefusingDescriptorResolveContext` of `DevDistPluginDescriptorMain.kt`).
+// A missing required descriptor fails the action. The error names the missing path and all declared paths.
 func TestAnUnresolvableIncludeFails(t *testing.T) {
 	element := read(t, `<idea-plugin`+xi+`><xi:include href="absent.xml"/></idea-plugin>`)
 	err := structural.ResolveIncludes(element, resolverOver(map[string]string{

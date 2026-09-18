@@ -187,8 +187,7 @@ func TestNoReserializedOutputIsWrittenByDefault(t *testing.T) {
 	}
 }
 
-// Plain arguments are accepted too, so the binary is runnable by hand
-// (`readArgumentLines` of `DevDistPluginDescriptorMain.kt`).
+// The binary accepts direct arguments as well as a parameter file.
 func TestPlainArgumentsAreAccepted(t *testing.T) {
 	dir := t.TempDir()
 	source := filepath.Join(dir, "plugin.xml")
@@ -269,7 +268,7 @@ func TestAMissingRequiredOptionIsRefused(t *testing.T) {
 	}
 }
 
-// A descriptor pair that is not `<load path>=<file>` is refused (`putDescriptor` of `DevDistPluginDescriptorMain.kt`).
+// A descriptor pair must have the form <load path>=<file>.
 func TestAMalformedDescriptorPairIsRefused(t *testing.T) {
 	if code := run([]string{"--plugin-descriptor=no-separator"}); code != 2 {
 		t.Errorf("exit %d, want 2", code)
@@ -338,6 +337,52 @@ func TestAnUnreadableSourceFails(t *testing.T) {
 	})
 	if code != 1 {
 		t.Errorf("exit %d, want 1", code)
+	}
+}
+
+func TestOperationSelection(t *testing.T) {
+	for _, tt := range []struct {
+		arguments []string
+		want      string
+	}{
+		{nil, ""},
+		{[]string{"--out=o", "--source=s"}, ""},
+		{[]string{"--out=o", "--embedded-product", ""}, embeddedProductMode},
+		{[]string{"--application-info", "--out=o"}, applicationInfoMode},
+	} {
+		if got, err := selectOperation(tt.arguments); err != nil || got != tt.want {
+			t.Errorf("%v: got %q, %v; want %q", tt.arguments, got, err, tt.want)
+		}
+	}
+}
+
+func TestInvalidModesAreRefused(t *testing.T) {
+	for _, modes := range [][]string{
+		{"--embedded-product", "--embedded-product"},
+		{"--application-info", "--application-info"},
+		{"--embedded-product", "--application-info"},
+		{"--application-info", "--embedded-product"},
+		{"--embedded-product=true"},
+		{"--embedded-product="},
+		{"--application-info=true"},
+		{"--application-info="},
+	} {
+		t.Run(strings.Join(modes, " "), func(t *testing.T) {
+			dir := t.TempDir()
+			output := filepath.Join(dir, "output.xml")
+			arguments := append([]string{"--out=" + output, "--source=unused.xml"}, modes...)
+			if _, err := selectOperation(arguments); err == nil {
+				t.Fatal("expected mode selection to fail")
+			}
+			for _, input := range [][]string{arguments, {"--flagfile=" + requestFile(t, dir, arguments...)}} {
+				if code := run(input); code != 2 {
+					t.Errorf("exit %d, want 2", code)
+				}
+			}
+			if _, err := os.Stat(output); !os.IsNotExist(err) {
+				t.Errorf("the failure wrote %s", output)
+			}
+		})
 	}
 }
 

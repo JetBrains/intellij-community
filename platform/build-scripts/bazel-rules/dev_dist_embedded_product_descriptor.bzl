@@ -76,7 +76,7 @@ _dev_dist_embedded_product_descriptor = rule(
             doc = "Content modules whose embedded descriptor takes separate-jar=true.",
         ),
         "_resolver": attr.label(
-            default = "//platform/build-scripts/bazel-rules/dev-dist-plugin-descriptor:dev-dist-plugin-descriptor",
+            default = "//build/plugin-descriptor-patcher",
             executable = True,
             cfg = "exec",
         ),

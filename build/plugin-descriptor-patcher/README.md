@@ -1,12 +1,11 @@
 # plugin-descriptor-patcher
 
-Writes the `META-INF/plugin.xml` that a plugin's main jar receives.
+Writes plugin descriptors, embedded product descriptors, and application info for the embedded JetBrains Client.
 
 This is the Go port of `applyPluginDescriptorPatch`
 ([`PluginXmlPatcher.kt`](../../platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt)).
-[ADR 0006](../../../build/decisions/0006-content-module-in-jar-out-composer-places-it.md) puts the executors in Go and
-keeps the JVM in the generator only. A patched descriptor feeds every plugin main jar, so a JVM action for it sits on
-the build's critical path, which is what the ADR rules out.
+[ADR 0006](../../../build/decisions/0006-content-module-in-jar-out-composer-places-it.md) assigns build execution to Go.
+The generator and production assembly remain in Kotlin.
 
 `content-module-packer` is the neighbour to read for the conventions: a deterministic writer, a hand-maintained
 `BUILD.bazel`, and a byte gate against the code it replaces.
@@ -28,19 +27,17 @@ The patch has seven stages, in the order `applyPluginDescriptorPatch` runs them.
 A layout whose raw patch is a lambda rather than a `DescriptorMarkerPatcher` is held out of the population by name. Two
 marker row shapes exist. `os-arch:<osId>:<marketplaceName>` names the operating system and the architecture, and
 `osArchDescriptorMarker` owns the replacement text - it holds a newline the request's parameter file could not carry on
-one line. `marker:<literal>:<replacement>` states a plain replacement. Both producers replace the first occurrence of a
+one line. `marker:<literal>:<replacement>` states a plain replacement. The Go and Kotlin patches replace the first occurrence of a
 plain string, because `checkedReplace` compiles the literal as a regular expression and Go's RE2 is not Java's
 `Pattern`; the generator refuses a row that is not inert in both. An unknown shape fails the action.
 
-The two structural stages read **other** descriptors, and they read them from the files the action declares and from
-nothing else. Every other step of the platform's search needs a JPS project model, and
-`DevDistPluginDescriptorMain.kt` refuses to load one. So an include no declared file answers **fails**. The failure
-names the load path and every declared one, because the fix is always a missing entry in the generated plan.
+The two structural stages read only declared descriptor files and jars. They load no JPS project model.
+A required descriptor without a declared input fails the action. The failure names the load path and the declared inputs.
 
 One plugin reads a descriptor no production source root holds: the Kotlin compiler ships
 `META-INF/analysis-api/analysis-api-fir.xml` and five more inside library jars. The plan names the library container
 that groups those jars, and it states the entry. The container's jars are the declared inputs, and the request holds one
-`--plugin-descriptor-in-jar` row for each entry and jar, in the container's own jar order. Both producers seed the cache
+`--plugin-descriptor-in-jar` row for each entry and jar, in the container's own jar order. The patcher seeds the cache
 from those rows and take the first jar that answers. A container whose jars all miss fails the action, and the failure
 names every jar it asked. The load path is also the entry, because `toLoadPath` strips the leading `/`.
 
@@ -48,11 +45,18 @@ The stage that would silently lose bytes is the content-module filter, and the p
 survivors in order. The action refuses a descriptor that lists them in another order: the two are joined by position,
 and a wrong join takes the wrong `separate-jar` verdicts in silence.
 
-**This binary is the executor of `dev_dist_plugin_descriptor`**
-([`dev_dist_plugin_descriptor.bzl`](../../platform/build-scripts/bazel-rules/dev_dist_plugin_descriptor.bzl)). The JVM
-tool it replaced, `@community//platform/build-scripts/bazel-rules/dev-dist-plugin-descriptor`, stays as the second
-producer. Both take one request: the same option spelling and the same `--flagfile` parameter file, which is why the
-swap was an executable swap.
+## Operations
+
+This binary executes three Bazel rules:
+
+| Rule | Mode |
+|---|---|
+| [`dev_dist_plugin_descriptor`](../../platform/build-scripts/bazel-rules/dev_dist_plugin_descriptor.bzl) | No mode flag. Patches ordinary plugin descriptors. |
+| [`dev_dist_embedded_product_descriptor`](../../platform/build-scripts/bazel-rules/dev_dist_embedded_product_descriptor.bzl) | `--embedded-product`. Resolves includes and embeds content modules. |
+| [`dev_dist_frontend_application_info`](../../platform/build-scripts/bazel-rules/dev_dist_frontend_application_info.bzl) | `--application-info`. Applies product values to the client template. |
+
+Each operation accepts direct arguments or a multiline `--flagfile`. The rules keep their arguments, output names, and action mnemonics.
+The Kotlin executable is removed. There is no second producer.
 
 ## Why the round trip is the load-bearing half
 
@@ -76,6 +80,9 @@ wrong produces the wrong bytes for every plugin.
 
 The curated cases are the committed gate. Every expectation in them is a text the platform produced on a real
 classpath, one construct a case.
+
+The tests for the embedded product and application info compare bytes with saved Kotlin outputs, including the absent final newline.
+`descriptor_rule_tests` also checks both rules, their Go executable, and their generated files.
 
 ## Where the structural stages are proved
 

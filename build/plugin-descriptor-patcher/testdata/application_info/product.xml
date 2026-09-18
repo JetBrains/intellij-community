@@ -1,0 +1,5 @@
+<component xmlns="http://jetbrains.org/intellij/schema/application-info">
+  <names product="Fallback" fullname="Product &amp; Tools" edition="Ignored" motto="Create &lt;more&gt;" />
+  <version eap="false" major="263" minor="2" micro="3" patch="4" full="{0}.{1}.{2}" suffix="RC" />
+  <build number="IU-ignored" date="ignored" majorReleaseDate="__MAJOR_RELEASE_DATE__" branchName="ignored" />
+</component>

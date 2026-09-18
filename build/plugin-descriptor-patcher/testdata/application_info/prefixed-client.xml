@@ -1,0 +1,9 @@
+<component xmlns:app="http://jetbrains.org/intellij/schema/application-info" xmlns:other="urn:other">
+  <names fullname="Unqualified" />
+  <other:names fullname="Foreign" />
+  <app:names product="Client" />
+  <app:version />
+  <app:build number="__BUILD_NUMBER__" />
+  <build branchName="Unqualified" />
+  <other:build branchName="Foreign" />
+</component>

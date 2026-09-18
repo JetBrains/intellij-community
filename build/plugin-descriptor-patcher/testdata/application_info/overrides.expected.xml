@@ -1,0 +1,9 @@
+<component xmlns="http://jetbrains.org/intellij/schema/application-info" xmlns:other="urn:other" name="ApplicationInfo">
+  <names product="JetBrains Client" fullname="Product &amp; Tools" motto="Create &lt;more&gt;" other:edition="kept" />
+  <version suffix="Preview" major="263" minor="2" micro="3" patch="4" full="{0}.{1}.{2}" eap="custom" other:suffix="kept" />
+  <build number="JBC-263.123.4" apiVersion="263.123.4" date="__BUILD_DATE__" majorReleaseDate="__MAJOR_RELEASE_DATE__" branchName="template" />
+  <plugins url="" />
+  <other:build number="JBC-263.123.4" />
+  <note>263.123.4 &amp; JBC-263.123.4</note>
+  <dates seconds="__BUILD_DATE_IN_SECONDS__" unknown="__OTHER__" />
+</component>

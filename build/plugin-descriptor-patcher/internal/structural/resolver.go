@@ -10,22 +10,15 @@
 //
 //   - `community/platform/build-scripts/src/org/jetbrains/intellij/build/classPath/contentModuleEmbedding.kt` -
 //     `resolveIncludes`, `resolveXIncludeElement`, `extractNeededChildrenFor`,
-//     `resolveAndEmbedContentModuleDescriptor` and `XIncludeElementResolverImpl`;
-//   - `community/platform/build-scripts/src/org/jetbrains/intellij/build/dev/DevDistPluginDescriptorMain.kt` -
-//     the plan-driven content stage, its order assertion and the three `separate-jar` gates.
+//     `resolveAndEmbedContentModuleDescriptor` and `XIncludeElementResolverImpl`.
 //
 // ### The search collapses to the cache, and that is the whole point of the action
 //
 // `XIncludeElementResolverImpl.resolveElement` (`contentModuleEmbedding.kt:405-488`) searches a cache, then a module
 // output, then module dependencies, then every module of the project. Every step but the first needs a JPS project
-// model. `DevDistPluginDescriptorMain` hands the resolver a `RefusingModuleOutputProvider` whose every method throws
-// (`RefusingDescriptorResolveContext` of `DevDistPluginDescriptorMain.kt`), so a run that reaches one of those
-// steps fails rather than loading a
-// model.
+// model. This action reads only the cache seeded from declared inputs.
 //
-// This port therefore searches the cache and nothing else, and it fails with the same message shape where the JVM tool
-// would throw. The two-pass loop of `DescriptorSearchPass` collapses with it: a cache lookup does not depend on the
-// pass, so the second pass can only repeat the first.
+// A missing required descriptor fails the action. A second DescriptorSearchPass would repeat the same lookup, so one pass is sufficient.
 package structural
 
 import (
@@ -45,10 +38,8 @@ const xmlNamespace = "http://www.w3.org/XML/1998/namespace"
 
 // Cache is a descriptor cache seeded from declared files, keyed by the load path a resolver asks for.
 //
-// It is `SeededDescriptorContainer` (`DevDistPluginDescriptorMain.kt`), which is the seam that lets the patch
-// run with no project model. `PutIfAbsent` exists because the platform's resolver writes what it found back into the
-// cache; here every hit is already seeded, so the write is the identity. It is kept so that a reader can put this file
-// beside `resolveElement` and find every line of it.
+// PutIfAbsent follows the platform resolver, which writes resolved descriptors back into the cache.
+// Here every hit is already seeded, so that write leaves the cache unchanged.
 type Cache struct {
 	content map[string][]byte
 }
@@ -113,9 +104,7 @@ func NewResolver(searchPath []Scope) *Resolver {
 // instead, and the resolver is returned unchanged.
 //
 // The `require` that guards a container mismatch is not ported. It runs only when the product-properties class is
-// `org.jetbrains.intellij.build.IdeaUltimateProperties` (`contentModuleEmbedding.kt:388`), and this action has no
-// product properties: `DevDistPluginDescriptorMain.NO_PRODUCT_PROPERTIES` is the string it answers with
-// (`DevDistPluginDescriptorMain.kt`). So the branch is unreachable from here.
+// `org.jetbrains.intellij.build.IdeaUltimateProperties` (`contentModuleEmbedding.kt:388`). This action has no product properties.
 func (r *Resolver) CopyWithExtraSearchPath(moduleName string, cache *Cache) *Resolver {
 	for _, scope := range r.searchPath {
 		for _, module := range scope.Modules {

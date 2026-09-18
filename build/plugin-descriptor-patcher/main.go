@@ -2,6 +2,9 @@
 
 // Command plugin-descriptor-patcher writes the `META-INF/plugin.xml` a plugin's main jar receives.
 //
+// The --embedded-product mode resolves includes and embeds content modules without plugin stamps.
+// The --application-info mode produces the application info of the embedded JetBrains Client.
+//
 // It is the executor of the `dev_dist_plugin_descriptor` rule
 // (`community/platform/build-scripts/bazel-rules/dev_dist_plugin_descriptor.bzl`), and the Go counterpart of
 // `applyPluginDescriptorPatch`
@@ -95,6 +98,17 @@ func run(arguments []string) int {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		return 2
 	}
+	mode, err := selectOperation(lines)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+		return 2
+	}
+	switch mode {
+	case embeddedProductMode:
+		return runEmbeddedProduct(lines)
+	case applicationInfoMode:
+		return runApplicationInfo(lines)
+	}
 	parsed, err := parseRequest(lines)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
@@ -121,6 +135,30 @@ func run(arguments []string) int {
 		}
 	}
 	return 0
+}
+
+const (
+	embeddedProductMode = "--embedded-product"
+	applicationInfoMode = "--application-info"
+)
+
+// selectOperation leaves requests without a mode on the plugin patching path.
+func selectOperation(lines []string) (string, error) {
+	mode := ""
+	for _, line := range lines {
+		option, _, hasValue := strings.Cut(line, "=")
+		if option != embeddedProductMode && option != applicationInfoMode {
+			continue
+		}
+		if hasValue {
+			return "", fmt.Errorf("%s is a flag and takes no value", option)
+		}
+		if mode != "" {
+			return "", fmt.Errorf("only one mode flag is allowed, got %s and %s", mode, option)
+		}
+		mode = option
+	}
+	return mode, nil
 }
 
 // reserialize is the `JDOMUtil.load` and `JDOMUtil.write` pair the classpath writer applies to a descriptor.
@@ -241,10 +279,9 @@ func readSeed(files map[string]string) (*structural.Cache, error) {
 
 // seedFromJars puts a descriptor that lives inside a declared library container into the cache.
 //
-// It is `readSeedFromJars` (`DevDistPluginDescriptorMain.kt`). The assembly reaches such a file through
-// `findFileInModuleLibraryDependencies` (`moduleContentUtil.kt`), which asks each declared library jar for the load
-// path. The rule declares the container, so the candidates are its jars in its own order and the first jar that answers
-// wins. A container whose jars all miss fails the run, and the failure names every jar it asked.
+// The assembly uses findFileInModuleLibraryDependencies in moduleContentUtil.kt to check each library jar for the load path.
+// The rule declares the container. The patcher checks its jars in order and uses the first matching entry.
+// If no jar has the entry, the action fails and names every jar it checked.
 func seedFromJars(cache *structural.Cache, candidates map[string][]string) error {
 	for loadPath, jars := range candidates {
 		data, err := readFirstZipEntry(jars, loadPath)
@@ -293,10 +330,7 @@ func readZipEntry(reader *zip.ReadCloser, name string) ([]byte, bool, error) {
 	return nil, false, nil
 }
 
-// readArgumentLines is `readArgumentLines` (`DevDistPluginDescriptorMain.kt`).
-//
-// The rule passes one `--flagfile=<path>` of a multiline parameter file, the way `content_module_jar` and `ij_plugin`
-// do. Plain arguments are accepted too, so the binary is runnable by hand.
+// readArgumentLines reads a multiline --flagfile or returns the direct arguments.
 func readArgumentLines(arguments []string) ([]string, error) {
 	if len(arguments) == 1 && strings.HasPrefix(arguments[0], "--flagfile=") {
 		content, err := os.ReadFile(strings.TrimPrefix(arguments[0], "--flagfile="))
@@ -428,7 +462,7 @@ func parseBooleanStrict(value string) (bool, error) {
 	return false, fmt.Errorf("'%s' is neither 'true' nor 'false'", value)
 }
 
-// putDescriptor is `putDescriptor` (`DevDistPluginDescriptorMain.kt`).
+// putDescriptor records a declared file by its load path.
 func putDescriptor(into map[string]string, value string) error {
 	loadPath, file, found := strings.Cut(value, "=")
 	if !found || loadPath == "" {
@@ -438,7 +472,7 @@ func putDescriptor(into map[string]string, value string) error {
 	return nil
 }
 
-// appendDescriptorJar is `appendDescriptorJar` (`DevDistPluginDescriptorMain.kt`).
+// appendDescriptorJar records a jar candidate for a load path.
 //
 // One option per (load path, jar), because the rule declares a library container and states every jar of it. The order
 // is the container's own, and the first jar that has the entry answers.
