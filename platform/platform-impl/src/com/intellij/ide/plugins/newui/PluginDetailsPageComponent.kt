@@ -1882,6 +1882,7 @@ class PluginDetailsPageComponent private constructor(
     indicator = null
     nameAndButtons?.removeProgressComponent()
     updateReadOnlyProgress()
+    applyReadOnlyPreparedUpdate()
   }
 
   private fun setReadOnlyProgress(progress: PluginProgressState?) {
@@ -1894,9 +1895,14 @@ class PluginDetailsPageComponent private constructor(
     val shouldShow = progress != null
     if (shouldShow && readOnlyIndicator == null) {
       readOnlyIndicator = OneLineProgressIndicator(false, false)
-      val updateAction = checkNotNull(updateButton)
-      updateAction.isVisible = true
-      nameAndButtons?.setProgressDisabledButton(updateAction)
+      val progressAction = if (isMarketplace && showComponent?.getUpdatePluginDescriptor() == null) {
+        checkNotNull(installButton).getComponent()
+      }
+      else {
+        checkNotNull(updateButton)
+      }
+      progressAction.isVisible = true
+      nameAndButtons?.setProgressDisabledButton(progressAction)
       nameAndButtons?.setProgressComponent(null, readOnlyIndicator!!.createBaselineWrapper())
       fullRepaint()
     }
@@ -1913,6 +1919,7 @@ class PluginDetailsPageComponent private constructor(
       readOnlyIndicator = null
       if (indicator == null) {
         nameAndButtons?.removeProgressComponent()
+        applyReadOnlyPreparedUpdate()
       }
       fullRepaint()
     }
@@ -1963,6 +1970,7 @@ class PluginDetailsPageComponent private constructor(
                 applyReadOnlyPreparedUpdate()
                 return
               }
+              updateButton?.isVisible = false
             }
           }
           if (updateButton!!.isVisible) {

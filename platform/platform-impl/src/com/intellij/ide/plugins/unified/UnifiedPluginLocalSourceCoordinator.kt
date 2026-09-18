@@ -4,7 +4,6 @@ package com.intellij.ide.plugins.unified
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginInventoryChangeReason
 import com.intellij.ide.plugins.newui.PluginModelEvent
-import com.intellij.ide.plugins.newui.PluginOperationKind
 import com.intellij.ide.plugins.newui.PluginOperationTerminalResult
 import com.intellij.ide.plugins.newui.PluginProgressState
 import com.intellij.ide.plugins.newui.PluginRowInput
@@ -166,7 +165,7 @@ internal class UnifiedPluginLocalSourceCoordinator(
         }
       }
       is PluginModelEvent.OperationStarted -> {
-        if (event.sessionId != sessionId || event.kind != PluginOperationKind.UPDATE) return false
+        if (event.sessionId != sessionId) return false
         val next = UnifiedPluginManualUpdateState(
           event.operationId,
           UnifiedPluginManualUpdatePresentation.Downloading,
@@ -174,7 +173,7 @@ internal class UnifiedPluginLocalSourceCoordinator(
         manualUpdates.put(event.displayPluginId, next) != next
       }
       is PluginModelEvent.OperationFinished -> {
-        if (event.sessionId != sessionId || event.kind != PluginOperationKind.UPDATE) return false
+        if (event.sessionId != sessionId) return false
         val current = manualUpdates[event.displayPluginId]?.takeIf { it.operationId == event.operationId } ?: return false
         if (event.result == PluginOperationTerminalResult.SUCCEEDED) {
           val next = current.copy(

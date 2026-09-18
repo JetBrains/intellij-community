@@ -1287,6 +1287,127 @@ internal class LegacyPluginRowFactoryTest {
     }
 
   @Test
+  fun `prepared restart remains the only details action after progress ends`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this, unifiedDetailsPageLayout = true)
+      try {
+        val pluginId = PluginId.getId("prepared.restart.progress.plugin")
+        val installed = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+          .setName("Prepared Restart Progress Plugin")
+          .setIsConverted(true)
+          .build()
+        val update = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+          .setName("Prepared Restart Progress Plugin")
+          .setIsConverted(true)
+          .build()
+        val input = PluginRowInput(
+          installedPlugin = installed,
+          installationState = PluginInstallationState(true),
+          errors = emptyList(),
+          updateDescriptor = update,
+          enabled = true,
+          restrictedByProduct = false,
+          detailsProgress = PluginProgressState.Indeterminate,
+          preparedUpdate = PluginPreparedUpdateState(restartRequired = true),
+        )
+        val item = PluginItemState(
+          pluginId,
+          installed.name,
+          modelHandle = PluginItemModelHandle(installed),
+          rowInput = input,
+        )
+        val listener = LinkListener<Any> { _, _ -> }
+        val factory = LegacyPluginRowFactory(host, ListPluginModel(), listener, onSelectionChanged = {})
+        val presenter = LegacyPluginDetailsPresenter(host, listener)
+        UnifiedPluginsPageView({}, {}, { _, _ -> }, rowFactory = factory, detailsPresenter = presenter).use { view ->
+          val controller = UnifiedPluginsPageController(
+            listOf(PluginSectionState(PluginSectionId.Installed, items = listOf(item)))
+          )
+
+          view.render(controller.state.value)
+          yield()
+
+          val details = componentsOfType(presenter.component, PluginDetailsPageComponent::class.java).single { it.isVisible }
+          waitUntilAssertSucceeds {
+            assertThat(componentsOfType(details, JProgressBar::class.java)).hasSize(1)
+          }
+
+          val row = componentsOfType(view.component, ListPluginComponent::class.java).single()
+          details.showPlugins(listOf(row), readOnlyProgress = null, preparedUpdate = input.preparedUpdate)
+          yield()
+
+          assertOnlyPreparedDetailsAction(
+            presenter,
+            IdeBundle.message("plugins.configurable.restart.ide.button"),
+            enabled = true,
+          )
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
+    }
+
+  @Test
+  fun `completed Marketplace install has one details action after progress ends`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this, unifiedDetailsPageLayout = true)
+      try {
+        val pluginId = PluginId.getId("marketplace.install.progress.plugin")
+        val plugin = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+          .setName("Marketplace Install Progress Plugin")
+          .setIsConverted(true)
+          .build()
+        val input = PluginRowInput(
+          installedPlugin = null,
+          installationState = PluginInstallationState(false),
+          errors = emptyList(),
+          updateDescriptor = null,
+          enabled = true,
+          restrictedByProduct = false,
+          operationInProgress = true,
+          detailsProgress = PluginProgressState.Indeterminate,
+        )
+        val item = PluginItemState(
+          pluginId,
+          plugin.name,
+          modelHandle = PluginItemModelHandle(plugin),
+          rowInput = input,
+        )
+        val listener = LinkListener<Any> { _, _ -> }
+        val factory = LegacyPluginRowFactory(host, ListPluginModel(), listener, onSelectionChanged = {})
+        val section = PluginSectionState(PluginSectionId.Marketplace, items = listOf(item))
+        factory.createReconciler { _, _ -> }.use { reconciler ->
+          val binding = reconciler.reconcile(listOf(factory.specification(section, item))).single()
+          val row = binding.row as LegacyPluginRow
+          JPanel().add(row.component)
+          factory.rowsRendered(listOf(binding))
+          val details = host.createDetails(listener, marketplace = true)
+          details.showPlugins(listOf(row.component), input.detailsProgress, preparedUpdate = null)
+          waitUntilAssertSucceeds {
+            assertThat(componentsOfType(details, JProgressBar::class.java)).hasSize(1)
+            val actions = componentsOfType(detailsHeader(details.getValue(0, true)), BaselinePanel::class.java).single()
+            val installAction = actions.buttonComponents.filterIsInstance<InstallOptionButton>().single()
+            assertThat(actions.buttonComponents.filter(Component::isVisible)).containsExactly(installAction)
+            assertThat(installAction.isEnabled).isFalse()
+          }
+          details.showPlugins(listOf(row.component), readOnlyProgress = null, preparedUpdate = null)
+          yield()
+          details.finishInstall(success = true, restartRequired = false, installedPlugin = null)
+
+          assertOnlyPreparedDetailsAction(
+            details,
+            IdeBundle.message("plugin.status.installed"),
+            enabled = false,
+          )
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
+    }
+
+  @Test
   fun `a completed dynamic update does not request restart in recreated unified details`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val host = LegacyPluginUiHost(parentScope = this, operationScope = this, unifiedDetailsPageLayout = true)
@@ -1455,6 +1576,29 @@ internal class LegacyPluginRowFactoryTest {
       assertThat(buttons.filter(Component::isVisible).map(JButton::getText)).contains(expectedText)
       val action = buttons.single { button -> button.isVisible && button.text == expectedText }
       assertThat(action.isEnabled).isEqualTo(enabled)
+    }
+  }
+
+  private suspend fun assertOnlyPreparedDetailsAction(
+    presenter: LegacyPluginDetailsPresenter,
+    expectedText: String,
+    enabled: Boolean,
+  ) {
+    val details = componentsOfType(presenter.component, PluginDetailsPageComponent::class.java).single { it.isVisible }
+    assertOnlyPreparedDetailsAction(details, expectedText, enabled)
+  }
+
+  private suspend fun assertOnlyPreparedDetailsAction(
+    details: PluginDetailsPageComponent,
+    expectedText: String,
+    enabled: Boolean,
+  ) {
+    waitUntilAssertSucceeds {
+      val actions = componentsOfType(detailsHeader(details.getValue(0, true)), BaselinePanel::class.java).single()
+      val buttons = actions.buttonComponents.filterIsInstance<JButton>()
+      val visibleButtons = buttons.filter(Component::isVisible)
+      assertThat(visibleButtons.map(JButton::getText)).containsExactly(expectedText)
+      assertThat(visibleButtons.single().isEnabled).isEqualTo(enabled)
     }
   }
 

@@ -329,6 +329,29 @@ internal class UnifiedPluginLocalSourceCoordinatorTest {
   }
 
   @Test
+  fun `manual install state changes from downloading to prepared`() = runTest {
+    val events = MutableSharedFlow<PluginModelEvent>(extraBufferCapacity = 2)
+    val coordinator = coordinator(FakeLocalDataProvider(inventory()), hostEvents = events)
+    coordinator.start()
+    runCurrent()
+    val plugin = plugin("installed.plugin", "Installed Plugin")
+    val operationId = UUID.randomUUID()
+
+    assertThat(events.tryEmit(operationStarted(operationId, plugin))).isTrue()
+    runCurrent()
+
+    assertThat(coordinator.state.value.manualUpdates.getValue(plugin.pluginId).presentation)
+      .isEqualTo(UnifiedPluginManualUpdatePresentation.Downloading)
+
+    assertThat(events.tryEmit(operationFinished(operationId, plugin.pluginId))).isTrue()
+    runCurrent()
+
+    assertThat(coordinator.state.value.manualUpdates.getValue(plugin.pluginId).presentation)
+      .isEqualTo(UnifiedPluginManualUpdatePresentation.Prepared(restartRequired = false))
+    coordinator.close()
+  }
+
+  @Test
   fun `manual update ignores stale completion and clears on failure or reset`() = runTest {
     val events = MutableSharedFlow<PluginModelEvent>(extraBufferCapacity = 8)
     val coordinator = coordinator(FakeLocalDataProvider(inventory()), hostEvents = events)

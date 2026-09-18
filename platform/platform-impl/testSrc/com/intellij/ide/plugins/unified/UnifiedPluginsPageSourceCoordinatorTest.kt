@@ -6,6 +6,8 @@ import com.intellij.ide.plugins.newui.CustomPluginRepository
 import com.intellij.ide.plugins.newui.CustomPluginRepositoryLoadResult
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginModelEvent
+import com.intellij.ide.plugins.newui.PluginOperationKind
+import com.intellij.ide.plugins.newui.PluginOperationTerminalResult
 import com.intellij.ide.plugins.newui.PluginPreparedUpdateState
 import com.intellij.ide.plugins.newui.PluginProgressState
 import com.intellij.ide.plugins.newui.PluginRowInput
@@ -18,6 +20,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -175,6 +178,53 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
       assertThat(occurrence.rowInput?.preparedUpdate).isEqualTo(PluginPreparedUpdateState(restartRequired = true))
       assertThat(occurrence.rowInput?.updateDescriptor).isSameAs(cachedUpdate)
     }
+  }
+
+  @Test
+  fun `prepared Marketplace install stays installed after the query is repeated`() = runTest {
+    val events = MutableSharedFlow<PluginModelEvent>(extraBufferCapacity = 2)
+    val plugin = plugin("academy.plugin", "Academy Plugin")
+    val coordinator = coordinator(
+      provider = FakeLocalDataProvider(UnifiedPluginInventory(emptyList(), emptyList())),
+      initialQuery = "academy",
+      hostEvents = events,
+      marketplaceDataProvider = FixedMarketplaceDataProvider(plugin),
+    )
+    coordinator.start()
+    advanceTimeBy(500.milliseconds)
+    runCurrent()
+
+    val operationId = UUID.randomUUID()
+    assertThat(events.tryEmit(PluginModelEvent.OperationStarted(
+      sessionId = "session",
+      operationId = operationId,
+      displayPluginId = plugin.pluginId,
+      presentationModel = plugin,
+      target = PluginSource.LOCAL,
+      kind = PluginOperationKind.INSTALL,
+    ))).isTrue()
+    assertThat(events.tryEmit(PluginModelEvent.OperationFinished(
+      sessionId = "session",
+      operationId = operationId,
+      displayPluginId = plugin.pluginId,
+      target = PluginSource.LOCAL,
+      kind = PluginOperationKind.INSTALL,
+      result = PluginOperationTerminalResult.SUCCEEDED,
+    ))).isTrue()
+    runCurrent()
+
+    assertMarketplacePluginPrepared(coordinator.state.value, plugin.pluginId)
+    assertThat(coordinator.state.value.sections.single { it.id == PluginSectionId.Installing }.items.map { it.pluginId })
+      .containsExactly(plugin.pluginId)
+
+    coordinator.setQuery("")
+    runCurrent()
+    coordinator.setQuery("academy")
+    advanceTimeBy(500.milliseconds)
+    runCurrent()
+
+    assertMarketplacePluginPrepared(coordinator.state.value, plugin.pluginId)
+    coordinator.close()
   }
 
   @Test
@@ -1064,6 +1114,31 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
     }
   }
 
+  private class FixedMarketplaceDataProvider(
+    private val plugin: PluginUiModel,
+  ) : UnifiedPluginMarketplaceDataProvider by EmptyMarketplaceDataProvider {
+    override suspend fun searchMarketplace(query: String): UnifiedPluginMarketplaceFetchResult {
+      return UnifiedPluginMarketplaceFetchResult(listOf(plugin))
+    }
+
+    override suspend fun enrich(
+      models: List<PluginUiModel>,
+      updates: PluginUpdatesEvent?,
+      contentRevision: Long,
+    ): UnifiedPluginMarketplaceSnapshot {
+      return buildMarketplaceSnapshot(
+        models = models,
+        updates = updates,
+        contentRevision = contentRevision,
+        installedModels = emptyMap(),
+        enabledStates = emptyMap(),
+        errors = emptyMap(),
+        installationStates = emptyMap(),
+        restrictions = emptyMap(),
+      )
+    }
+  }
+
   private fun localState(
     sections: List<PluginSectionState> = listOf(
       PluginSectionState(PluginSectionId.Installed),
@@ -1110,6 +1185,11 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
 
   private fun installedIds(state: UnifiedPluginsPageSourceState): List<String> {
     return state.sections.single { it.id == PluginSectionId.Installed }.items.map { it.pluginId.idString }
+  }
+
+  private fun assertMarketplacePluginPrepared(state: UnifiedPluginsPageSourceState, pluginId: PluginId) {
+    val item = state.sections.single { it.id == PluginSectionId.Marketplace }.items.single { it.pluginId == pluginId }
+    assertThat(item.rowInput?.preparedUpdate).isEqualTo(PluginPreparedUpdateState(restartRequired = false))
   }
 
   private fun repositorySections(state: UnifiedPluginsPageSourceState): List<PluginSectionState> {
