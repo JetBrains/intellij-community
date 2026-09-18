@@ -125,7 +125,7 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
     val requiredComponents = listOf(
       listOf(mainToolbar, toolbarHeader),
       listOf(abstractToolbarCombo {
-        and(byType("com.intellij.openapi.wm.impl.AbstractToolbarCombo"), contains(byVisibleText(currentProject.getName())))
+        and(byType("com.intellij.openapi.wm.impl.AbstractToolbarCombo"), contains(byAccessibleName(currentProject.getName())))
       }),
       listOf(ideStatusBar()),
     )
