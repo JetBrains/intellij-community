@@ -1714,6 +1714,11 @@
       "Advertiser": {
         "background": "gray-160"
       }
+    },
+
+    "WelcomeTab.Banner": {
+      "infoBackground": "blue-160",
+      "infoBorderColor": "blue-140"
     }
   },
 

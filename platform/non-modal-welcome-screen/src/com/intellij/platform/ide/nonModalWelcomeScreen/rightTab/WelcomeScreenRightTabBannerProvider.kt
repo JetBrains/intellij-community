@@ -14,8 +14,13 @@ interface WelcomeScreenRightTabBannerProvider {
     private val EP_NAME =
       ExtensionPointName<WelcomeScreenRightTabBannerProvider>("com.intellij.platform.ide.welcomeScreenRightTabBannerProvider")
 
+    // TODO: again disable until we haven't better implementation
     fun createSingleBanner(project: Project): JComponent? {
       return EP_NAME.computeSafeIfAny { if (it.isApplicable(project)) it.createBanner(project) else null }
+    }
+
+    fun createSurveyBanner(project: Project): JComponent? {
+      return SurveyTabBannerProvider().let { if (it.isApplicable(project)) it.createBanner(project) else null }
     }
   }
 

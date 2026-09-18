@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
@@ -78,6 +79,7 @@ internal class WelcomeScreenRightTabImpl(
   private val contentPanel = BorderLayoutPanel()
 
   private var featureContents: List<WelcomeScreenFeatureUI.Content> = emptyList()
+  private var singleBanner: Any? = null
   private var disposed: Boolean = false
 
   /**
@@ -222,6 +224,7 @@ internal class WelcomeScreenRightTabImpl(
     val contents = featureContents
     featureContents = emptyList()
     disposeContents(contents)
+    disposeSingleBanner()
   }
 
   /** Disposes each section that states a disposable. A section that fails does not stop the others. */
@@ -233,6 +236,11 @@ internal class WelcomeScreenRightTabImpl(
     runSuppressing(*disposeCalls.toTypedArray())
   }
 
+  private fun disposeSingleBanner() {
+    (singleBanner as? Disposable)?.let(Disposer::dispose)
+    singleBanner = null
+  }
+
   private fun createDefaultContent(finish: () -> Unit) {
     val generation = contentGeneration
     contentProvider.coroutineScope.launch {
@@ -241,6 +249,7 @@ internal class WelcomeScreenRightTabImpl(
         val contents = createFeatureContents(backendFeatureIds)
 
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          disposeSingleBanner()
           // The tab can go while the sections build, and a switch to custom content can replace what this fill
           // was built for. A section holds an editor and a scope, so a fill that no tab takes must release it
           // here. Both checks and the disposal run on the EDT, and so does [dispose].
@@ -319,7 +328,7 @@ internal class WelcomeScreenRightTabImpl(
     additionalPanel.isOpaque = false
 
     createAdditionalComponents(additionalPanel)
-    //createSingleBanner(additionalPanel, extraContent) // TODO: again disable until we haven't better implementation
+    createSingleBanner(additionalPanel, extraContent)
 
     if (additionalPanel.componentCount > 0) {
       parentPanel.addToBottom(additionalPanel)
@@ -387,7 +396,8 @@ internal class WelcomeScreenRightTabImpl(
   }
 
   private fun createSingleBanner(parentPanel: JPanel, extraContent: Boolean) {
-    val singleBanner = WelcomeScreenRightTabBannerProvider.createSingleBanner(project)
+    val singleBanner = WelcomeScreenRightTabBannerProvider.createSurveyBanner(project)
+    this.singleBanner = singleBanner
     if (singleBanner != null) {
       val wrapper = Wrapper(singleBanner)
       wrapper.border = JBUI.Borders.emptyTop(if (extraContent) 32 else 52)
