@@ -6,6 +6,7 @@ import com.intellij.find.FindSettings
 import com.intellij.find.findInProject.FindInProjectManager
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.find.impl.FindPopupPanel
+import com.intellij.find.impl.WelcomeScreenFindScope
 import com.intellij.find.impl.getPresentableFilePath
 import com.intellij.find.replaceInProject.ReplaceInProjectManager
 import com.intellij.ide.ui.colors.rpcId
@@ -59,8 +60,8 @@ class FindInFilesApiImpl : FindInFilesApi {
         return@channelFlow
       }
       val filesToScanInitially = filesToScanInitially.mapNotNull { it.virtualFile() }.toSet()
-      // SearchScope is not serializable, so we will get it by id from the client
-      setCustomScopeById(project, findModel)
+      // SearchScope is not serializable, so the scope of the client is resolved here
+      resolveCustomScope(project, findModel)
       //read action is necessary in case of the loading from a directory
       val scope = readAction { FindInProjectUtil.getGlobalSearchScope(project, findModel) }
       LOG.debug {
@@ -138,7 +139,7 @@ class FindInFilesApiImpl : FindInFilesApi {
       LOG.warn("Project not found for id ${projectId}. FindAll/ReplaceAll operation skipped")
       return
     }
-    setCustomScopeById(project, findModel)
+    resolveCustomScope(project, findModel)
     if (findModel.isReplaceState) {
       ReplaceInProjectManager.getInstance(project).replaceInPath(findModel)
     }
@@ -152,12 +153,19 @@ class FindInFilesApiImpl : FindInFilesApi {
     return FindInProjectUtil.getDirectory(findModel) != null
   }
 
-  private suspend fun setCustomScopeById(project: Project, findModel: FindModel) {
+  private suspend fun resolveCustomScope(project: Project, findModel: FindModel) {
     if (findModel.customScope == null && findModel.isCustomScope) {
-      val scopeId = findModel.customScopeId ?: return
-      ScopesStateService.getInstance(project).getScopeById(scopeId)?.let {
-        findModel.customScope = it
+      findModel.customScopeId?.let { scopeId ->
+        ScopesStateService.getInstance(project).getScopeById(scopeId)?.let {
+          findModel.customScope = it
+        }
       }
+    }
+
+    // A SearchScope cannot cross the RPC boundary, and the welcome screen hides the scope chooser,
+    // so the frontend has no id to send. The fixed scope is rebuilt here.
+    if (findModel.customScope == null && WelcomeScreenFindScope.isApplicable(project)) {
+      WelcomeScreenFindScope.applyTo(project, findModel)
     }
   }
 }
