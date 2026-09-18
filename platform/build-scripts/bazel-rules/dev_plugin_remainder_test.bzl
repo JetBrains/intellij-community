@@ -4,7 +4,7 @@ load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "content_module_jar", "content_module_jar_target_name")
 load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_plugin_descriptor", "dev_dist_plugin_descriptor_target_name", "dev_dist_product_info", "dev_dist_product_info_transition")
-load(":dev_plugin_remainder.bzl", "DevPluginArtifactCatalogueInfo", "DevPluginGraphInfo", "DevPluginPreparationInfo", "DevPluginRemainderInfo", "dev_dist_complex_plugin", "dev_dist_complex_plugin_variant", "dev_plugin_artifact_catalogue", "dev_plugin_component", "dev_plugin_file_graph", "dev_plugin_preparation", "dev_plugin_remainder", "plan_product_error", "platform_values_error")
+load(":dev_plugin_remainder.bzl", "DevPluginArtifactCatalogueInfo", "DevPluginGraphInfo", "DevPluginRemainderInfo", "dev_dist_complex_plugin", "dev_dist_complex_plugin_variant", "dev_plugin_artifact_catalogue", "dev_plugin_component", "dev_plugin_file_graph", "dev_plugin_remainder_from_plan", "plan_product_error", "platform_values_error")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo")
 
 _EMPTY_JAR = "PK\005\006" + ("\000" * 18)
@@ -103,7 +103,7 @@ def _graph_resolution_test_impl(ctx):
     for slot, value in ctx.attr.platform_values.items():
         substitutions['"{platform:%s}"' % slot] = '"%s"' % value
     asserts.equals(env, substitutions, actions[0].substitutions)
-    consumers = [action for action in ctx.attr.consumer.actions if action.mnemonic in ["PrepareDevPlugin", "PackDevPluginRemainder"]]
+    consumers = [action for action in ctx.attr.consumer.actions if action.mnemonic == "PackDevPluginRemainder"]
     asserts.equals(env, 1, len(consumers))
     asserts.true(env, "--projection=" + resolved.path in consumers[0].argv)
     asserts.true(env, resolved in consumers[0].inputs.to_list())
@@ -116,7 +116,7 @@ _graph_resolution_test = analysistest.make(
         "platform": attr.string(mandatory = True),
         "platform_values": attr.string_dict(),
         "execution_version": attr.int(mandatory = True),
-        "consumer": attr.label(mandatory = True, doc = "The preparation or the from-plan remainder target of the chain."),
+        "consumer": attr.label(mandatory = True, doc = "The from-plan remainder target of the chain."),
     },
 )
 
@@ -195,109 +195,6 @@ _expected_failure_test = analysistest.make(
     attrs = {"expected_message": attr.string(mandatory = True)},
 )
 
-def _preparation_test_impl(ctx):
-    env = analysistest.begin(ctx)
-    target = analysistest.target_under_test(env)
-    preparation = target[DevPluginPreparationInfo]
-    graph = ctx.attr.graph[DevPluginGraphInfo]
-    asserts.equals(env, 1, len(ctx.attr.catalogue))
-    asserts.equals(env, 1, len(ctx.attr.descriptor))
-    asserts.equals(env, 1, len(ctx.attr.raw))
-    catalogue_target = ctx.attr.catalogue[0]
-    descriptor_target = ctx.attr.descriptor[0]
-    descriptor_info = descriptor_target[DevDistPluginDescriptorInfo]
-    descriptor = descriptor_info.descriptor
-    classpath_descriptor = descriptor_info.classpath_descriptor
-    raw = ctx.attr.raw[0][DefaultInfo].files.to_list()[0]
-    catalogue = catalogue_target[DevPluginArtifactCatalogueInfo]
-    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "PrepareDevPlugin"]
-    asserts.equals(env, 1, len(actions))
-    action = actions[0]
-    asserts.equals(env, ctx.attr.graph, preparation.graph)
-    asserts.equals(env, graph.execution_version, preparation.execution_version)
-
-    # The remainder reads every catalogue artifact that is not preparation-only, the descriptor included.
-    asserts.equals(env, [descriptor, raw], preparation.remainder_inputs.to_list())
-
-    # The classpath descriptor is always a file of its own. An ordinary plugin gets it from the primary action as its
-    # reserialized second output. A plugin that embeds no content module gets it from a second action.
-    asserts.true(env, descriptor != classpath_descriptor)
-    asserts.equals(env, [descriptor], descriptor_target[DefaultInfo].files.to_list())
-    asserts.equals(env, descriptor, catalogue.artifacts["descriptor"])
-    descriptor_actions = descriptor_info._declaration.actions
-    asserts.equals(env, 2 if ctx.attr.separate_classpath_descriptor else 1, len(descriptor_actions))
-    primary_actions = [candidate for candidate in descriptor_actions if descriptor in candidate.outputs]
-    classpath_actions = [candidate for candidate in descriptor_actions if classpath_descriptor in candidate.outputs]
-    asserts.equals(env, 1, len(primary_actions))
-    asserts.equals(env, 1, len(classpath_actions))
-    primary_embed = [value for flag, value in primary_actions[0].parameters if flag == "--embed-content-modules"]
-    classpath_embed = [value for flag, value in classpath_actions[0].parameters if flag == "--embed-content-modules"]
-    primary_reserialize = [value for flag, value in primary_actions[0].parameters if flag == "--reserialize-before-content-embedding"]
-    classpath_reserialize = [value for flag, value in classpath_actions[0].parameters if flag == "--reserialize-before-content-embedding"]
-    reserialized_output = [value for flag, value in primary_actions[0].parameters if flag == "--reserialized-output"]
-    asserts.equals(env, ["false" if ctx.attr.separate_classpath_descriptor else "true"], primary_embed)
-    asserts.equals(env, ["true"], classpath_embed)
-    asserts.equals(env, ["false"], primary_reserialize)
-    asserts.equals(env, ["true" if ctx.attr.separate_classpath_descriptor else "false"], classpath_reserialize)
-    asserts.equals(env, [] if ctx.attr.separate_classpath_descriptor else [classpath_descriptor], reserialized_output)
-    for input_file in [graph.projection, catalogue.catalogue, descriptor, classpath_descriptor, raw]:
-        asserts.true(env, input_file in action.inputs.to_list())
-    asserts.true(env, "--projection=" + graph.projection.path in action.argv)
-
-    # The plan file is the one committed input: no second plan and no recipe file reach the preparer.
-    asserts.equals(env, [], [argument for argument in action.argv if argument.startswith("--expected-plan=") or argument.startswith("--preparation-recipe=")])
-    asserts.true(env, "--descriptor=" + classpath_descriptor.path in action.argv)
-    asserts.false(env, "--descriptor=" + descriptor.path in action.argv)
-    asserts.equals(env, [], [argument for argument in action.argv if argument.startswith("--classpath-descriptor-is-ready")])
-    asserts.true(env, "--execution-version=%d" % graph.execution_version in action.argv)
-    return analysistest.end(env)
-
-_preparation_test = analysistest.make(
-    _preparation_test_impl,
-    attrs = {
-        "graph": attr.label(mandatory = True, providers = [DevPluginGraphInfo]),
-        "catalogue": attr.label(
-            mandatory = True,
-            cfg = dev_dist_product_info_transition,
-            providers = [DevPluginArtifactCatalogueInfo],
-        ),
-        "descriptor": attr.label(
-            mandatory = True,
-            cfg = dev_dist_product_info_transition,
-            providers = [DevDistPluginDescriptorInfo],
-        ),
-        "raw": attr.label(
-            mandatory = True,
-            allow_single_file = True,
-            cfg = dev_dist_product_info_transition,
-        ),
-        "product_info": attr.label(mandatory = True, providers = [DevDistProductInfo]),
-        "separate_classpath_descriptor": attr.bool(),
-        "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
-    },
-)
-
-def _remainder_test_impl(ctx):
-    env = analysistest.begin(ctx)
-    target = analysistest.target_under_test(env)
-    remainder = target[DevPluginRemainderInfo]
-    preparation = ctx.attr.preparation[DevPluginPreparationInfo]
-    actions = analysistest.target_actions(env)
-    asserts.equals(env, 1, len(actions))
-    asserts.equals(env, "PackDevPluginRemainder", actions[0].mnemonic)
-    asserts.equals(env, preparation.graph, remainder.graph)
-    asserts.equals(env, preparation.execution_version, remainder.execution_version)
-    asserts.true(env, remainder.directory.is_directory)
-    for input_file in [preparation.recipe, preparation.catalogue, preparation.prepared_entries] + preparation.remainder_inputs.to_list():
-        asserts.true(env, input_file in actions[0].inputs.to_list())
-    asserts.equals(env, [], [argument for argument in actions[0].argv if argument.startswith("--expected-plan=")])
-    return analysistest.end(env)
-
-_remainder_test = analysistest.make(
-    _remainder_test_impl,
-    attrs = {"preparation": attr.label(mandatory = True, providers = [DevPluginPreparationInfo])},
-)
-
 def _component_test_impl(ctx):
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
@@ -329,23 +226,22 @@ _component_test = analysistest.make(
     },
 )
 
-def _derived_preparation_test_impl(ctx):
-    """The derived form binds the platform-substituted resource, adds the descriptor under the derived ID, states the
-    plugin directory from the main module, and states the preparer choice."""
+def _derived_remainder_test_impl(ctx):
+    """The derived form binds the platform-substituted resource, adds the descriptor under the derived ID, and states
+    the plugin directory from the main module."""
     env = analysistest.begin(ctx)
     asserts.equals(env, 1, len(ctx.attr.catalogue))
     asserts.equals(env, 1, len(ctx.attr.raw))
     catalogue = ctx.attr.catalogue[0][DevPluginArtifactCatalogueInfo]
     asserts.equals(env, ctx.attr.raw[0][DefaultInfo].files.to_list()[0], catalogue.artifacts["raw"])
     asserts.equals(env, ["raw", ctx.attr.descriptor_id], catalogue.artifacts.keys())
-    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "PrepareDevPlugin"]
+    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "PackDevPluginRemainder"]
     asserts.equals(env, 1, len(actions))
     asserts.true(env, "--plugin-directory=" + ctx.attr.plugin_directory in actions[0].argv)
-    asserts.true(env, "--callback-preparation=false" in actions[0].argv)
     return analysistest.end(env)
 
-_derived_preparation_test = analysistest.make(
-    _derived_preparation_test_impl,
+_derived_remainder_test = analysistest.make(
+    _derived_remainder_test_impl,
     attrs = {
         "catalogue": attr.label(
             mandatory = True,
@@ -364,59 +260,10 @@ _derived_preparation_test = analysistest.make(
     },
 )
 
-def _preparation_kind_test_impl(ctx):
-    """The macro chooses the preparer from `preparation`: the callback preparer for `callback`, the plain preparer for
-    `plain`. Both read the callback input, and the remainder reads every catalogue artifact."""
-    env = analysistest.begin(ctx)
-    target = analysistest.target_under_test(env)
-    preparation = target[DevPluginPreparationInfo]
-    asserts.equals(env, 1, len(ctx.attr.catalogue))
-    asserts.equals(env, 1, len(ctx.attr.descriptor))
-    asserts.equals(env, 1, len(ctx.attr.raw))
-    catalogue = ctx.attr.catalogue[0][DevPluginArtifactCatalogueInfo]
-    descriptor = ctx.attr.descriptor[0][DevDistPluginDescriptorInfo].descriptor
-    raw = ctx.attr.raw[0][DefaultInfo].files.to_list()[0]
-    asserts.equals(env, ["descriptor", "raw"], catalogue.artifacts.keys())
-    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "PrepareDevPlugin"]
-    asserts.equals(env, 1, len(actions))
-    action = actions[0]
-    callback = ctx.attr.preparation == "callback"
-    asserts.true(env, "--callback-preparation=%s" % ("true" if callback else "false") in action.argv)
-    asserts.true(env, action.argv[0].split("/")[-1].startswith("plugin-callback-preparer" if callback else "plugin-preparer"))
-    callback_inputs = [argument for argument in action.argv if argument.startswith("--callback-input=")]
-    asserts.equals(env, [descriptor, raw], preparation.remainder_inputs.to_list())
-    asserts.equals(env, ["--callback-input=" + raw.path], callback_inputs)
-    asserts.true(env, raw in action.inputs.to_list())
-    return analysistest.end(env)
-
-_preparation_kind_test = analysistest.make(
-    _preparation_kind_test_impl,
-    attrs = {
-        "preparation": attr.string(mandatory = True, values = ["plain", "callback"]),
-        "catalogue": attr.label(
-            mandatory = True,
-            cfg = dev_dist_product_info_transition,
-            providers = [DevPluginArtifactCatalogueInfo],
-        ),
-        "descriptor": attr.label(
-            mandatory = True,
-            cfg = dev_dist_product_info_transition,
-            providers = [DevDistPluginDescriptorInfo],
-        ),
-        "raw": attr.label(
-            mandatory = True,
-            allow_single_file = True,
-            cfg = dev_dist_product_info_transition,
-        ),
-        "product_info": attr.label(mandatory = True, providers = [DevDistProductInfo]),
-        "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
-    },
-)
-
 def _remainder_from_plan_test_impl(ctx):
-    """A `none` chain packs the remainder from the plan file in one Go action. The action reads the plan file, the
-    input catalogue, the classpath descriptor and every catalogue artifact. It writes the remainder, the inventory,
-    the asset table and the classpath record, and the provider hands all four to the component."""
+    """A chain packs the remainder from the plan file in one Go action. The action reads the plan file, the input
+    catalogue, the classpath descriptor and every catalogue artifact. It writes the remainder, the inventory, the
+    asset table and the classpath record, and the provider hands all four to the component."""
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
     remainder = target[DevPluginRemainderInfo]
@@ -425,10 +272,34 @@ def _remainder_from_plan_test_impl(ctx):
     asserts.equals(env, 1, len(ctx.attr.descriptor))
     asserts.equals(env, 1, len(ctx.attr.raw))
     catalogue = ctx.attr.catalogue[0][DevPluginArtifactCatalogueInfo]
-    descriptor_info = ctx.attr.descriptor[0][DevDistPluginDescriptorInfo]
+    descriptor_target = ctx.attr.descriptor[0]
+    descriptor_info = descriptor_target[DevDistPluginDescriptorInfo]
+    descriptor = descriptor_info.descriptor
+    classpath_descriptor = descriptor_info.classpath_descriptor
     raw = ctx.attr.raw[0][DefaultInfo].files.to_list()[0]
     asserts.equals(env, ["descriptor", "raw"], catalogue.artifacts.keys())
-    asserts.equals(env, descriptor_info.descriptor, catalogue.artifacts["descriptor"])
+    asserts.equals(env, descriptor, catalogue.artifacts["descriptor"])
+
+    # The classpath descriptor is always a file of its own. An ordinary plugin gets it from the primary action as its
+    # reserialized second output. A plugin that embeds no content module gets it from a second action.
+    asserts.true(env, descriptor != classpath_descriptor)
+    asserts.equals(env, [descriptor], descriptor_target[DefaultInfo].files.to_list())
+    descriptor_actions = descriptor_info._declaration.actions
+    asserts.equals(env, 2 if ctx.attr.separate_classpath_descriptor else 1, len(descriptor_actions))
+    primary_actions = [candidate for candidate in descriptor_actions if descriptor in candidate.outputs]
+    classpath_actions = [candidate for candidate in descriptor_actions if classpath_descriptor in candidate.outputs]
+    asserts.equals(env, 1, len(primary_actions))
+    asserts.equals(env, 1, len(classpath_actions))
+    primary_embed = [value for flag, value in primary_actions[0].parameters if flag == "--embed-content-modules"]
+    classpath_embed = [value for flag, value in classpath_actions[0].parameters if flag == "--embed-content-modules"]
+    primary_reserialize = [value for flag, value in primary_actions[0].parameters if flag == "--reserialize-before-content-embedding"]
+    classpath_reserialize = [value for flag, value in classpath_actions[0].parameters if flag == "--reserialize-before-content-embedding"]
+    reserialized_output = [value for flag, value in primary_actions[0].parameters if flag == "--reserialized-output"]
+    asserts.equals(env, ["false" if ctx.attr.separate_classpath_descriptor else "true"], primary_embed)
+    asserts.equals(env, ["true"], classpath_embed)
+    asserts.equals(env, ["false"], primary_reserialize)
+    asserts.equals(env, ["true" if ctx.attr.separate_classpath_descriptor else "false"], classpath_reserialize)
+    asserts.equals(env, [] if ctx.attr.separate_classpath_descriptor else [classpath_descriptor], reserialized_output)
     actions = analysistest.target_actions(env)
     asserts.equals(env, ["PackDevPluginRemainder"], [action.mnemonic for action in actions])
     action = actions[0]
@@ -440,7 +311,7 @@ def _remainder_from_plan_test_impl(ctx):
     asserts.true(env, packer.split("/")[-1].startswith("plugin-remainder-packer"))
 
     # The tool inputs are the packer and its runfiles tree, both below the executable's path.
-    expected_inputs = [graph.projection, catalogue.catalogue, descriptor_info.classpath_descriptor, descriptor_info.descriptor, raw]
+    expected_inputs = [graph.projection, catalogue.catalogue, classpath_descriptor, descriptor, raw]
     asserts.equals(
         env,
         sorted([file.path for file in expected_inputs]),
@@ -450,7 +321,7 @@ def _remainder_from_plan_test_impl(ctx):
     asserts.equals(env, [
         "--projection=" + graph.projection.path,
         "--input-catalogue=" + catalogue.catalogue.path,
-        "--classpath-descriptor=" + descriptor_info.classpath_descriptor.path,
+        "--classpath-descriptor=" + classpath_descriptor.path,
         "--plugin-directory=plugins/test",
         "--execution-version=%d" % graph.execution_version,
         "--output-dir=" + remainder.directory.path,
@@ -486,37 +357,34 @@ _remainder_from_plan_test = analysistest.make(
             cfg = dev_dist_product_info_transition,
         ),
         "product_info": attr.label(mandatory = True, providers = [DevDistProductInfo]),
+        "separate_classpath_descriptor": attr.bool(),
         "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
     },
 )
 
-def _check_chain_shape(chain, preparation):
-    """Fails at load time when the targets of a chain differ from the shape its preparation kind states.
+def _check_chain_shape(chain):
+    """Fails at load time when the targets of a chain differ from the one chain shape.
 
-    A `plain` or `callback` chain has five targets and a `dev_plugin_remainder`. A `none` chain has four: no
-    preparation target, and a `dev_plugin_remainder_from_plan` in place of the remainder.
+    A chain has four targets: the graph, the catalogue, a `dev_plugin_remainder_from_plan` and the component. No chain
+    declares a preparation target.
     """
     expected = {
         "graph": "dev_plugin_file_graph",
         "catalogue": "_dev_plugin_artifact_catalogue",
         "catalogue_compiled_inputs": "_compiled_artifact_inputs",
+        "remainder": "dev_plugin_remainder_from_plan",
         "component": "dev_plugin_component",
     }
-    if preparation == "none":
-        expected["remainder"] = "dev_plugin_remainder_from_plan"
-    else:
-        expected["preparation"] = "dev_plugin_preparation"
-        expected["remainder"] = "dev_plugin_remainder"
     for suffix, kind in expected.items():
         rule = native.existing_rule(chain + "_" + suffix)
         if rule == None or rule["kind"] != kind:
-            fail("%s chain %s declares %s_%s as %s; expected %s" % (preparation, chain, chain, suffix, rule["kind"] if rule else None, kind))
-    if preparation == "none" and native.existing_rule(chain + "_preparation") != None:
-        fail("none chain %s declares a preparation target" % chain)
+            fail("chain %s declares %s_%s as %s; expected %s" % (chain, chain, suffix, rule["kind"] if rule else None, kind))
+    if native.existing_rule(chain + "_preparation") != None:
+        fail("chain %s declares a preparation target" % chain)
 
-def _none_plan(variant, layout_signature, destination):
-    """The plan file of a `none` fixture: one jar packed from a module-filter operation over the raw input. An analysis
-    test runs no action, so the packer never reads it. The content states what the chain would pack."""
+def _plan(variant, layout_signature, destination):
+    """The plan file of a fixture: one jar packed from a module-filter operation over the raw input. An analysis test
+    runs no action, so the packer never reads it. The content states what the chain would pack."""
     return json.encode({
         "version": 1,
         "plugin": "test.plugin",
@@ -536,11 +404,11 @@ def _none_plan(variant, layout_signature, destination):
         "operations": [{"id": "module-filter:raw", "input": {"artifact": "raw"}, "output": "module-filter:raw:output", "manifest": "keep", "excludes": ["drop/**"]}],
     }) + "\n"
 
-_NONE_PLAN = _none_plan("", "0" * 64, "lib/test.jar")
+_PLAN = _plan("", "0" * 64, "lib/test.jar")
 
 # The folded form of the same plan: the variant is the chain's platform, and the two leaves that differ per platform
 # are slots. The graph of each chain resolves them from the call's `platform_values`.
-_FOLDED_PLAN = _none_plan("{platform}", "{platform:layoutSignature}", "{platform:destination}")
+_FOLDED_PLAN = _plan("{platform}", "{platform:layoutSignature}", "{platform:destination}")
 
 def _check_platform_values_refusals(main_module):
     """Fails at load time when `platform_values_error` accepts a shape or a value the macro must refuse, or refuses a
@@ -582,8 +450,8 @@ def _reused_component_test_impl(ctx):
     actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "CollectDevPluginComponent"]
     asserts.equals(env, 1, len(actions))
 
-    # The macro derives the preparation list and the component map from one list of owner targets, so the reused
-    # content module jar reaches the payload beside the remainder.
+    # The macro derives the remainder and the component from one list of owner targets, so the reused content module
+    # jar reaches the payload beside the remainder.
     payload = fragment.payload.to_list()
     asserts.equals(env, 2, len(payload))
     asserts.true(env, remainder.directory in payload)
@@ -740,8 +608,17 @@ def dev_plugin_remainder_test_suite(name):
         expected_message = "unsafe repository-relative prefix",
     )
 
-    preparations = {}
-    preparation_tests = []
+    # The explicit rules: a remainder over a normal descriptor and over a descriptor that embeds no content module.
+    plan_file = name + "_plan"
+    _file(name = plan_file, content = _PLAN)
+    plan_graph = name + "_plan_graph"
+    dev_plugin_file_graph(
+        name = plan_graph,
+        projection = ":" + plan_file,
+        execution_version = 1,
+    )
+    remainders = {}
+    remainder_tests = []
     for suffix, descriptor, separate_classpath_descriptor in [
         ("normal", normal_descriptor, False),
         ("scrambled", scrambled_descriptor, True),
@@ -754,24 +631,23 @@ def dev_plugin_remainder_test_suite(name):
                 ":" + raw: "raw",
             },
         )
-        preparation = name + "_" + suffix + "_preparation"
-        preparations[suffix] = preparation
-        dev_plugin_preparation(
-            name = preparation,
-            graph = ":" + graph,
+        remainder = name + "_" + suffix + "_remainder"
+        remainders[suffix] = remainder
+        dev_plugin_remainder_from_plan(
+            name = remainder,
+            graph = ":" + plan_graph,
             artifact_catalogue = ":" + catalogue,
             descriptor = ":" + descriptor,
             plugin_directory = "plugins/test",
             product_info = ":" + product_info,
-            callback_input_ids = ["raw"],
             tags = ["manual"],
         )
-        preparation_test = preparation + "_test"
-        preparation_tests.append(preparation_test)
-        _preparation_test(
-            name = preparation_test,
-            target_under_test = ":" + preparation,
-            graph = ":" + graph,
+        remainder_test = remainder + "_test"
+        remainder_tests.append(remainder_test)
+        _remainder_from_plan_test(
+            name = remainder_test,
+            target_under_test = ":" + remainder,
+            graph = ":" + plan_graph,
             catalogue = ":" + catalogue,
             descriptor = ":" + descriptor,
             product_info = ":" + product_info,
@@ -779,16 +655,7 @@ def dev_plugin_remainder_test_suite(name):
             separate_classpath_descriptor = separate_classpath_descriptor,
         )
 
-    preparation = preparations["normal"]
-
-    remainder = name + "_remainder"
-    dev_plugin_remainder(name = remainder, preparation = ":" + preparation, tags = ["manual"])
-    remainder_test = remainder + "_test"
-    _remainder_test(
-        name = remainder_test,
-        target_under_test = ":" + remainder,
-        preparation = ":" + preparation,
-    )
+    remainder = remainders["normal"]
 
     component = name + "_component"
     dev_plugin_component(
@@ -824,7 +691,7 @@ def dev_plugin_remainder_test_suite(name):
         neutral = True,
     )
 
-    # The explicit form declares the five targets of a chain under the generator's names.
+    # The explicit form declares the four targets of a chain under the generator's names.
     member = name + "_member"
     _fixture_module(name = member, module_name = "test.%s.member" % name)
     content_module_jar(module = ":" + member)
@@ -839,17 +706,15 @@ def dev_plugin_remainder_test_suite(name):
         component_name = "plugin-test",
         platform_prefix = "idea",
         product_info = ":" + product_info,
-        preparation = "plain",
         target_platform = "linux_x64",
         resource_inputs = {
             ":" + normal_descriptor: "descriptor",
             ":" + raw: "raw",
         },
-        callback_input_ids = ["raw"],
         independent_artifacts = [":" + content_jar],
         tags = ["manual"],
     )
-    _check_chain_shape(complex, "plain")
+    _check_chain_shape(complex)
     complex_graph_test = complex + "_graph_test"
     _graph_resolution_test(
         name = complex_graph_test,
@@ -857,23 +722,7 @@ def dev_plugin_remainder_test_suite(name):
         projection = ":" + projection,
         platform = "linux_x64",
         execution_version = 1,
-        consumer = ":" + complex + "_preparation",
-    )
-    complex_preparation_test = complex + "_preparation_test"
-    _preparation_test(
-        name = complex_preparation_test,
-        target_under_test = ":" + complex + "_preparation",
-        graph = ":" + complex + "_graph",
-        catalogue = ":" + complex + "_catalogue",
-        descriptor = ":" + normal_descriptor,
-        product_info = ":" + product_info,
-        raw = ":" + raw,
-    )
-    complex_remainder_test = complex + "_remainder_test"
-    _remainder_test(
-        name = complex_remainder_test,
-        target_under_test = ":" + complex + "_remainder",
-        preparation = ":" + complex + "_preparation",
+        consumer = ":" + complex + "_remainder",
     )
     complex_component_test = complex + "_component_test"
     _reused_component_test(
@@ -882,64 +731,19 @@ def dev_plugin_remainder_test_suite(name):
         remainder = ":" + complex + "_remainder",
         content_jar = ":" + content_jar,
     )
-    complex_preparation_kind_test = complex + "_preparation_kind_test"
-    _preparation_kind_test(
-        name = complex_preparation_kind_test,
-        target_under_test = ":" + complex + "_preparation",
-        preparation = "plain",
-        catalogue = ":" + complex + "_catalogue",
-        descriptor = ":" + normal_descriptor,
-        raw = ":" + raw,
-        product_info = ":" + product_info,
-    )
 
-    # A `callback` chain keeps the five targets and runs the callback preparer over its callback inputs.
-    callback_chain = name + "_callback"
+    # A chain over a plan file with a module-filter operation. The Go packer executes the operation in the remainder
+    # action. The same action writes the asset table and the classpath record the component reads.
+    plan_chain = name + "_plan_chain"
     dev_dist_complex_plugin_variant(
-        name = callback_chain,
-        projection = ":" + projection,
+        name = plan_chain,
+        projection = ":" + plan_file,
         execution_version = 1,
         descriptor = ":" + normal_descriptor,
         plugin_directory = "plugins/test",
         component_name = "plugin-test",
         platform_prefix = "idea",
         product_info = ":" + product_info,
-        preparation = "callback",
-        target_platform = "linux_x64",
-        resource_inputs = {
-            ":" + normal_descriptor: "descriptor",
-            ":" + raw: "raw",
-        },
-        callback_input_ids = ["raw"],
-        tags = ["manual"],
-    )
-    _check_chain_shape(callback_chain, "callback")
-    callback_preparation_kind_test = callback_chain + "_preparation_kind_test"
-    _preparation_kind_test(
-        name = callback_preparation_kind_test,
-        target_under_test = ":" + callback_chain + "_preparation",
-        preparation = "callback",
-        catalogue = ":" + callback_chain + "_catalogue",
-        descriptor = ":" + normal_descriptor,
-        raw = ":" + raw,
-        product_info = ":" + product_info,
-    )
-
-    # A `none` chain declares four targets. The Go packer executes the module-filter operation of the plan file in the
-    # remainder action. The same action writes the asset table and the classpath record the component reads.
-    none_chain = name + "_none"
-    none_projection = none_chain + "_projection"
-    _file(name = none_projection, content = _NONE_PLAN)
-    dev_dist_complex_plugin_variant(
-        name = none_chain,
-        projection = ":" + none_projection,
-        execution_version = 1,
-        descriptor = ":" + normal_descriptor,
-        plugin_directory = "plugins/test",
-        component_name = "plugin-test",
-        platform_prefix = "idea",
-        product_info = ":" + product_info,
-        preparation = "none",
         target_platform = "linux_x64",
         resource_inputs = {
             ":" + normal_descriptor: "descriptor",
@@ -947,31 +751,31 @@ def dev_plugin_remainder_test_suite(name):
         },
         tags = ["manual"],
     )
-    _check_chain_shape(none_chain, "none")
-    none_graph_test = none_chain + "_graph_test"
+    _check_chain_shape(plan_chain)
+    plan_chain_graph_test = plan_chain + "_graph_test"
     _graph_resolution_test(
-        name = none_graph_test,
-        target_under_test = ":" + none_chain + "_graph",
-        projection = ":" + none_projection,
+        name = plan_chain_graph_test,
+        target_under_test = ":" + plan_chain + "_graph",
+        projection = ":" + plan_file,
         platform = "linux_x64",
         execution_version = 1,
-        consumer = ":" + none_chain + "_remainder",
+        consumer = ":" + plan_chain + "_remainder",
     )
-    none_remainder_test = none_chain + "_remainder_test"
+    plan_chain_remainder_test = plan_chain + "_remainder_test"
     _remainder_from_plan_test(
-        name = none_remainder_test,
-        target_under_test = ":" + none_chain + "_remainder",
-        graph = ":" + none_chain + "_graph",
-        catalogue = ":" + none_chain + "_catalogue",
+        name = plan_chain_remainder_test,
+        target_under_test = ":" + plan_chain + "_remainder",
+        graph = ":" + plan_chain + "_graph",
+        catalogue = ":" + plan_chain + "_catalogue",
         descriptor = ":" + normal_descriptor,
         raw = ":" + raw,
         product_info = ":" + product_info,
     )
-    none_component_test = none_chain + "_component_test"
+    plan_chain_component_test = plan_chain + "_component_test"
     _component_test(
-        name = none_component_test,
-        target_under_test = ":" + none_chain + "_component",
-        remainder = ":" + none_chain + "_remainder",
+        name = plan_chain_component_test,
+        target_under_test = ":" + plan_chain + "_component",
+        remainder = ":" + plan_chain + "_remainder",
     )
 
     # The derived form: one call, one chain per platform, the plan label and the descriptor entry derived, and the
@@ -987,19 +791,18 @@ def dev_plugin_remainder_test_suite(name):
         product_info = ":" + product_info,
         descriptor = ":" + normal_descriptor,
         execution_version = 1,
-        preparation = "plain",
         platforms = derived_platforms,
         resource_inputs = {":" + name + "_derived_raw_{platform}": "raw"},
-        callback_input_ids = ["raw"],
         tags = ["manual"],
     )
     derived_tests = []
     for platform in derived_platforms:
         stem = "idea_" + platform + "_" + derived_module
+        _check_chain_shape(stem)
         derived_test = stem + "_test"
-        _derived_preparation_test(
+        _derived_remainder_test(
             name = derived_test,
-            target_under_test = ":" + stem + "_preparation",
+            target_under_test = ":" + stem + "_remainder",
             catalogue = ":" + stem + "_catalogue",
             raw = ":" + name + "_derived_raw_" + platform,
             product_info = ":" + product_info,
@@ -1027,7 +830,6 @@ def dev_plugin_remainder_test_suite(name):
         product_info = ":" + product_info,
         descriptor = ":" + normal_descriptor,
         execution_version = 1,
-        preparation = "none",
         platforms = folded_platforms,
         platform_values = folded_values,
         resource_inputs = {":" + name + "_folded_raw_{platform}": "raw"},
@@ -1036,7 +838,7 @@ def dev_plugin_remainder_test_suite(name):
     folded_tests = []
     for platform in folded_platforms:
         stem = "idea_" + platform + "_" + folded_module
-        _check_chain_shape(stem, "none")
+        _check_chain_shape(stem)
         folded_test = stem + "_graph_test"
         _graph_resolution_test(
             name = folded_test,
@@ -1064,15 +866,14 @@ def dev_plugin_remainder_test_suite(name):
         product_info = ":" + product_info,
         descriptor = ":" + normal_descriptor,
         execution_version = 1,
-        preparation = "plain",
         platforms = product_platforms,
         resource_inputs = {":" + name + "_product_raw_{platform}": "raw"},
-        callback_input_ids = ["raw"],
         tags = ["manual"],
     )
     product_tests = []
     for platform in product_platforms:
         stem = "idea_" + platform + "_" + product_module
+        _check_chain_shape(stem)
         product_graph_test = stem + "_graph_test"
         _graph_resolution_test(
             name = product_graph_test,
@@ -1080,20 +881,20 @@ def dev_plugin_remainder_test_suite(name):
             projection = ":plugin-plans/" + product_module + ".idea." + platform + ".json",
             platform = platform,
             execution_version = 1,
-            consumer = ":" + stem + "_preparation",
+            consumer = ":" + stem + "_remainder",
         )
         product_tests.append(product_graph_test)
-        product_preparation_test = stem + "_preparation_test"
-        _derived_preparation_test(
-            name = product_preparation_test,
-            target_under_test = ":" + stem + "_preparation",
+        product_remainder_test = stem + "_remainder_test"
+        _derived_remainder_test(
+            name = product_remainder_test,
+            target_under_test = ":" + stem + "_remainder",
             catalogue = ":" + stem + "_catalogue",
             raw = ":" + name + "_product_raw_" + platform,
             product_info = ":" + product_info,
             descriptor_id = "descriptor:" + product_module,
             plugin_directory = "plugins/" + product_module.replace(".", "-"),
         )
-        product_tests.append(product_preparation_test)
+        product_tests.append(product_remainder_test)
     product_folded_module = "test.%s.product_folded" % name
     product_folded_projection = "plugin-plans/" + product_folded_module + ".idea.json"
     _file(name = product_folded_projection, content = _FOLDED_PLAN)
@@ -1106,7 +907,6 @@ def dev_plugin_remainder_test_suite(name):
         product_info = ":" + product_info,
         descriptor = ":" + normal_descriptor,
         execution_version = 1,
-        preparation = "none",
         platforms = product_platforms,
         platform_values = folded_values,
         resource_inputs = {":" + name + "_product_folded_raw_{platform}": "raw"},
@@ -1114,6 +914,7 @@ def dev_plugin_remainder_test_suite(name):
     )
     for platform in product_platforms:
         stem = "idea_" + platform + "_" + product_folded_module
+        _check_chain_shape(stem)
         product_folded_test = stem + "_graph_test"
         _graph_resolution_test(
             name = product_folded_test,
@@ -1160,18 +961,13 @@ def dev_plugin_remainder_test_suite(name):
             shared_source_tree_graph_test,
             source_tree_catalogue_test,
             unsafe_source_tree_graph_test,
-        ] + preparation_tests + [
-            remainder_test,
+        ] + remainder_tests + [
             component_test,
             neutral_component_test,
             complex_graph_test,
-            complex_preparation_test,
-            complex_remainder_test,
             complex_component_test,
-            complex_preparation_kind_test,
-            callback_preparation_kind_test,
-            none_graph_test,
-            none_remainder_test,
-            none_component_test,
+            plan_chain_graph_test,
+            plan_chain_remainder_test,
+            plan_chain_component_test,
         ] + derived_tests + folded_tests + product_tests + refused_graph_tests,
     )

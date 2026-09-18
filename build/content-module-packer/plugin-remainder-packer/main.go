@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -15,10 +14,8 @@ import (
 	"jetbrains.com/content-module-packer/internal/pluginpack"
 )
 
-// The packer has two modes. The recipe mode packs the recipe and the catalogue the Kotlin preparer wrote.
-// The projection mode derives the recipe from the plan file for a chain without a Kotlin preparation. It also
-// writes the asset rows and the plugin classpath record, which the preparer writes for the other chains.
-var recipeOptions = []string{"--recipe", "--catalogue", "--output-dir", "--inventory"}
+// The packer derives the recipe of one complex plugin from its plan file and packs the remainder against the
+// Starlark input catalogue. It also writes the asset rows and the plugin classpath record. Every option is required.
 var projectionOptions = []string{"--projection", "--input-catalogue", "--classpath-descriptor", "--plugin-directory", "--execution-version",
 	"--output-dir", "--inventory", "--assets", "--classpath"}
 
@@ -30,7 +27,7 @@ func run(arguments []string, output, errors io.Writer) int {
 	options := make(map[string]string)
 	for _, argument := range arguments {
 		name, value, present := strings.Cut(argument, "=")
-		if !slices.Contains(recipeOptions, name) && !slices.Contains(projectionOptions, name) {
+		if !slices.Contains(projectionOptions, name) {
 			fmt.Fprintf(errors, "ERROR: unknown option %q\n", name)
 			return 2
 		}
@@ -40,51 +37,13 @@ func run(arguments []string, output, errors io.Writer) int {
 		}
 		options[name] = value
 	}
-	projection := options["--projection"] != ""
-	if projection && options["--recipe"] != "" {
-		fmt.Fprintln(errors, "ERROR: --projection and --recipe are exclusive")
-		return 2
-	}
-	allowed, required, mode := recipeOptions, recipeOptions, "recipe"
-	if projection {
-		allowed, required, mode = projectionOptions, projectionOptions, "projection"
-	}
-	for _, name := range slices.Sorted(maps.Keys(options)) {
-		if !slices.Contains(allowed, name) {
-			fmt.Fprintf(errors, "ERROR: %s is not an option of the %s mode\n", name, mode)
-			return 2
-		}
-	}
-	for _, name := range required {
+	for _, name := range projectionOptions {
 		if options[name] == "" {
 			fmt.Fprintf(errors, "ERROR: %s is required\n", name)
 			return 2
 		}
 	}
-	if projection {
-		return runProjection(options, output, errors)
-	}
-	var recipe pluginpack.Recipe
-	var catalogue pluginpack.Catalogue
-	for _, document := range []struct {
-		option string
-		target any
-	}{{"--recipe", &recipe}, {"--catalogue", &catalogue}} {
-		if err := pluginpack.ReadJSON(options[document.option], document.target); err != nil {
-			fmt.Fprintf(errors, "ERROR: %v\n", err)
-			return 1
-		}
-	}
-	execution, err := pluginpack.Plan(recipe, catalogue)
-	if err == nil {
-		err = execution.Write(options["--output-dir"], options["--inventory"])
-	}
-	if err != nil {
-		fmt.Fprintf(errors, "ERROR: %v\n", err)
-		return 1
-	}
-	fmt.Fprintf(output, "Packed the remainder for %s\n", recipe.Plugin)
-	return 0
+	return runProjection(options, output, errors)
 }
 
 // runProjection derives the recipe from the plan file, packs it against the Starlark input catalogue, then writes

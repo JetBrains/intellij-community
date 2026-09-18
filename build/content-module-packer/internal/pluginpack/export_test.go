@@ -7,9 +7,10 @@ import (
 )
 
 // The derivation parity test lives in package pluginpack_test, because it imports internal/planfile, which imports
-// this package. The names below hand it the Kotlin harness of the internal tests.
+// this package. The names below hand it the fixture helpers and the golden reader of the internal tests.
 
 type (
+	KotlinGolden           = kotlinGolden
 	KotlinPlanFile         = kotlinPlanFile
 	KotlinPlanAsset        = kotlinPlanAsset
 	KotlinJarRecipe        = kotlinJarRecipe
@@ -21,15 +22,15 @@ type (
 )
 
 var (
-	KotlinPreparerExecutable    = kotlinPreparerExecutable
-	RunKotlinPreparer           = runKotlinPreparer
+	OpenKotlinGolden            = openKotlinGolden
+	JarEntryRecord              = jarEntryRecord
+	Sha256Hex                   = sha256Hex
 	ReadAssetRows               = readAssetRows
 	KotlinLayoutSignature       = kotlinLayoutSignature
 	KotlinModelSignature        = kotlinModelSignature
 	KotlinModuleFilterOperation = kotlinModuleFilterOperation
 	KotlinLayoutAssetsOperation = kotlinLayoutAssetsOperation
 	KotlinJSON                  = kotlinJSON
-	CanonicalOperations         = canonicalOperations
 	WriteExecution              = writeExecution
 	MaterializationRecord       = materializationRecord
 	RequireEqualRecords         = requireEqualRecords
@@ -43,6 +44,12 @@ var (
 	ArchiveTree                 = archiveTree
 	TreeMap                     = treeMap
 )
+
+// Check compares one fixture with the golden.
+func (golden *kotlinGolden) Check(t *testing.T, fixture string, record []string) {
+	t.Helper()
+	golden.check(t, fixture, record)
+}
 
 // ArchiveTestFile writes a jar whose entries hold the names and contents in order.
 func ArchiveTestFile(t *testing.T, file string, entries ...[2]string) {

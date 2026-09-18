@@ -3,7 +3,6 @@ package pluginpack
 import (
 	"archive/zip"
 	"bytes"
-	"context"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
@@ -13,280 +12,31 @@ import (
 	"hash/crc32"
 	"io"
 	"io/fs"
-	"maps"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"reflect"
 	"slices"
 	"strings"
 	"testing"
-	"time"
 	"unicode/utf16"
 
 	"jetbrains.com/content-module-packer/internal/filemetadata"
+	"jetbrains.com/content-module-packer/internal/nativelib"
 	"jetbrains.com/content-module-packer/internal/xxh3"
 )
 
-var kotlinPreparer = flag.String("kotlin-preparer", "", "The declared Kotlin preparation executable")
 var pluginRemainderPacker = flag.String("plugin-remainder-packer", "", "The declared Go plugin remainder executable")
+var sqliteNativeJar = flag.String("sqlite-native-jar", "", "The org.sqlite:native jar the native-select parity test selects from")
 
-const kotlinProjection = `{
-  "version": 1,
-  "plugin": "demo",
-  "variant": "linux",
-  "layoutSignature": "6yln12fn7aygix1ajef6zvpwn",
-  "assets": [
-    {"destination": "lib/content.jar", "inputs": ["content"], "recipe": {"sources": [{"input": "content", "kind": "module", "filter": "module-v1"}]}},
-    {"destination": "lib/demo.jar", "inputs": ["main"], "recipe": {"sources": [{"input": "main", "kind": "module", "filter": "module-v1"}]}},
-    {"destination": "lib/nested/custom.jar", "inputs": ["main"], "recipe": {"sources": [{"input": "main", "kind": "module", "filter": "module-v1"}]}},
-    {"destination": "bin/tool", "inputs": ["native"], "mode": 493},
-    {"destination": "bin/current", "inputs": [], "symlinkTarget": "./tool"}
-  ],
-  "reusableArtifacts": [{"label": "independent-content", "recipe": {"sources": [{"input": "content", "kind": "module", "filter": "module-v1"}]}}]
-}`
+// The parity tests below pack a hand-written Go recipe and compare the result with the golden under testdata. A
+// golden is the materialization of every fixture by the deleted Kotlin preparer, frozen under
+// testdata/<name>-golden-<date>.txt before the Kotlin materialization stopped. The goldens are read-only: the Go
+// packer is the only producer left, so a re-recording would compare Go with itself.
 
-const kotlinFilteredProjection = `{
-  "plugin": "filtered-plugin", "variant": "linux",
-  "layoutSignature": "c6yx54cclyu91esyjhzd6z0xe",
-  "assets": [{"destination": "lib/main.jar", "inputs": ["filtered"], "recipe": {
-    "sources": [{"input": "filtered", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "drop"}
-  }}],
-  "preparations": [{"id": "filter", "inputs": ["raw"], "outputs": ["filtered"],
-    "modelSignature": "4j4kth710fglswfsh1vosdrg4"}],
-  "operations": [{"id": "filter", "input": {"artifact": "raw"}, "output": "filtered", "manifest": "drop", "excludes": ["drop/**"]}]
-}`
-
-// TestKotlinModuleFilterRecipeSurvivesDifferentExecutionRoots runs the Kotlin preparer on a module-filter plan. The
-// preparer emits the archive source with the Java-glob excludes and lists the module jar as a remainder input. The Go
-// packer then runs in another execution root, where the relative roots of the catalogue must resolve.
-func TestKotlinModuleFilterRecipeSurvivesDifferentExecutionRoots(test *testing.T) {
-	if *kotlinPreparer == "" {
-		test.Skip("Run the Bazel pluginpack_test target to include the declared Kotlin preparer")
-	}
-	executable := *kotlinPreparer
-	if !filepath.IsAbs(executable) {
-		executable = filepath.Join(os.Getenv("TEST_SRCDIR"), filepath.FromSlash(executable))
-	}
-	for _, empty := range []bool{false, true} {
-		name := "entries"
-		if empty {
-			name = "empty"
-		}
-		test.Run(name, func(test *testing.T) {
-			preparationRoot := test.TempDir()
-			packingRoot := test.TempDir()
-			preparedPath := filepath.Join("out", "prepared-plugin")
-			prepared := filepath.Join(preparationRoot, preparedPath)
-			moduleJar := filepath.Join("raw", "module.jar")
-			writeTestFile(test, filepath.Join(preparationRoot, "projection.json"), []byte(kotlinFilteredProjection))
-			writeTestFile(test, filepath.Join(preparationRoot, "descriptor.xml"), []byte("<idea-plugin><id>filtered-plugin</id></idea-plugin>"))
-			catalogue := Catalogue{Version: Version, Artifacts: []Artifact{{ID: "raw", Kind: "file", Root: "raw/module.jar"}}}
-			data, err := json.Marshal(catalogue)
-			if err != nil {
-				test.Fatal(err)
-			}
-			writeTestFile(test, filepath.Join(preparationRoot, "catalogue.json"), data)
-			entries := []testEntry{{"drop/Ignore.class", "excluded"}}
-			if !empty {
-				entries = append(entries, testEntry{"keep/Service.class", "retained"})
-			}
-			archiveFile(test, filepath.Join(preparationRoot, moduleJar), entries...)
-			commandContext, cancel := context.WithTimeout(context.Background(), 90*time.Second)
-			defer cancel()
-			command := exec.CommandContext(commandContext, executable,
-				"--projection=projection.json", "--catalogue=catalogue.json",
-				"--descriptor=descriptor.xml", "--plugin-directory=plugins/filtered-plugin", "--output-dir="+preparedPath,
-				"--callback-preparation=false", "--remainder-input=raw/module.jar",
-			)
-			command.Dir = preparationRoot
-			if output, err := command.CombinedOutput(); err != nil {
-				test.Fatalf("Kotlin preparation failed: %v\n%s", err, output)
-			}
-			if err := ReadJSON(filepath.Join(prepared, "catalogue.json"), &catalogue); err != nil {
-				test.Fatal(err)
-			}
-			if len(catalogue.Artifacts) != 1 || catalogue.Artifacts[0].ID != "raw" || catalogue.Artifacts[0].Tree != nil ||
-				filepath.IsAbs(catalogue.Artifacts[0].Root) {
-				test.Fatalf("the module jar must be the one remainder input with its relative root: %+v", catalogue.Artifacts)
-			}
-			var recipe Recipe
-			if err := ReadJSON(filepath.Join(prepared, "recipe.json"), &recipe); err != nil {
-				test.Fatal(err)
-			}
-			want := []Operation{{Kind: "jar", Destination: "lib/main.jar", Mode: 0o644, Options: &JarOptions{Directories: "none"},
-				Sources: []Source{{Kind: "archive", Input: &Reference{Artifact: "raw"}, Filter: "module", Manifest: "drop", Excludes: []string{"drop/**"}}}}}
-			if actual, expected := canonicalOperations(test, recipe.Operations), canonicalOperations(test, want); actual != expected {
-				test.Fatalf("Kotlin did not emit the Go archive source:\n%s\n%s", actual, expected)
-			}
-			if leftovers, err := os.ReadDir(filepath.Join(prepared, "prepared")); err != nil || len(leftovers) != 0 {
-				test.Fatalf("a Go-executed operation must leave no prepared directory: %v, %v", leftovers, err)
-			}
-			// The packer runs in another execution root: only the module jar under its relative root reaches it.
-			writeTestFile(test, filepath.Join(packingRoot, moduleJar), readTestFile(test, filepath.Join(preparationRoot, moduleJar)))
-			if err := os.RemoveAll(preparationRoot); err != nil {
-				test.Fatal(err)
-			}
-			test.Chdir(packingRoot)
-			output, inventory := writeExecution(test, recipe, catalogue)
-			_, contents := readArchive(test, filepath.Join(output, "lib/main.jar"))
-			if _, present := contents["drop/Ignore.class"]; present {
-				test.Fatal("Java-excluded entry reached the Go writer")
-			}
-			if content, present := contents["keep/Service.class"]; present == empty || (!empty && content != "retained") {
-				test.Fatalf("prepared content differs: %v", contents)
-			}
-			if len(inventory) != 1 || inventory[0].RelativePath != "lib/main.jar" {
-				test.Fatalf("unexpected remainder inventory: %+v", inventory)
-			}
-		})
-	}
-}
-
-func TestKotlinProjectionPreparationAndGoBatch(test *testing.T) {
-	if *kotlinPreparer == "" {
-		test.Skip("Run the Bazel pluginpack_test target to include the declared Kotlin preparer")
-	}
-	executable := *kotlinPreparer
-	if !filepath.IsAbs(executable) {
-		executable = filepath.Join(os.Getenv("TEST_SRCDIR"), filepath.FromSlash(executable))
-	}
-	root := test.TempDir()
-	prepared := filepath.Join(root, "preparation")
-	module := filepath.Join(root, "raw-main.jar")
-	native := filepath.Join(root, "native-input")
-	writeTestFile(test, filepath.Join(root, "projection.json"), []byte(kotlinProjection))
-	writeTestFile(test, filepath.Join(root, "descriptor.xml"), []byte("<idea-plugin><id>demo</id></idea-plugin>"))
-	catalogue := Catalogue{Version: Version, Artifacts: []Artifact{
-		{ID: "main", Kind: "file", Root: module},
-		{ID: "native", Kind: "file", Root: native},
-	}}
-	data, err := json.Marshal(catalogue)
-	if err != nil {
-		test.Fatal(err)
-	}
-	writeTestFile(test, filepath.Join(root, "catalogue.json"), data)
-	context, cancel := context.WithTimeout(context.Background(), 90*time.Second)
-	defer cancel()
-	command := exec.CommandContext(context, executable,
-		"--projection="+filepath.Join(root, "projection.json"),
-		"--catalogue="+filepath.Join(root, "catalogue.json"),
-		"--descriptor="+filepath.Join(root, "descriptor.xml"),
-		"--plugin-directory="+filepath.Join(root, "demo"),
-		"--output-dir="+prepared,
-		"--remainder-input="+module,
-		"--remainder-input="+native,
-	)
-	if output, err := command.CombinedOutput(); err != nil {
-		test.Fatalf("Kotlin preparation failed: %v\n%s", err, output)
-	}
-	for _, source := range []string{module, native} {
-		if _, err := os.Stat(source); !os.IsNotExist(err) {
-			test.Fatalf("preparation unexpectedly materialized raw input %s: %v", source, err)
-		}
-	}
-	archiveFile(test, module,
-		testEntry{"com/", ""}, testEntry{"com/example/", ""},
-		testEntry{"com/example/Service.class", "class bytes"},
-		testEntry{"com/example/nested/Inner.class", "inner bytes"},
-		testEntry{"messages/Bundle.properties", "key=value"},
-		testEntry{"icon-robots.txt", "dropped: a build-time input"},
-		testEntry{"com/example/icon-robots.txt", "dropped: same, nested"},
-		testEntry{".unmodified", "dropped: compilation cache leftover"},
-		testEntry{"classpath.index", "dropped: compilation cache leftover"},
-		testEntry{"module-info.class", "dropped"},
-		testEntry{"__index__", "dropped: a stale index is never inherited"},
-		testEntry{"META-INF/MANIFEST.MF", "Manifest-Version: 1.0\r\n\r\n"},
-	)
-	writeTestFile(test, native, []byte("native bytes"))
-	var recipe Recipe
-	if err := ReadJSON(filepath.Join(prepared, "recipe.json"), &recipe); err != nil {
-		test.Fatal(err)
-	}
-	if err := ReadJSON(filepath.Join(prepared, "catalogue.json"), &catalogue); err != nil {
-		test.Fatal(err)
-	}
-	output, inventory := writeExecution(test, recipe, catalogue)
-	for _, name := range []string{"lib/demo.jar", "lib/nested/custom.jar"} {
-		digest := sha256.Sum256(readTestFile(test, filepath.Join(output, name)))
-		if actual := hex.EncodeToString(digest[:]); actual != "622c52ad7098cee4a36c94665b8759f456f1d7cede38ce6872d28007536227eb" {
-			test.Fatalf("%s differs from the Kotlin single-source golden: %s", name, actual)
-		}
-	}
-	if _, err := os.Lstat(filepath.Join(output, "lib/content.jar")); !os.IsNotExist(err) {
-		test.Fatalf("independent jar entered the remainder: %v", err)
-	}
-	if info, err := os.Stat(filepath.Join(output, "bin/tool")); err != nil || info.Mode().Perm() != 0o755 {
-		test.Fatalf("native mode differs: %v: %v", info, err)
-	}
-	if target, err := os.Readlink(filepath.Join(output, "bin/current")); err != nil || target != "./tool" {
-		test.Fatalf("link spelling differs: %q: %v", target, err)
-	}
-	if len(inventory) != 4 {
-		test.Fatalf("expected only four remainder outputs, got %+v", inventory)
-	}
-	for _, entry := range inventory {
-		actual, err := filemetadata.Inspect(filepath.Join(output, entry.RelativePath), entry.RelativePath)
-		if err != nil || actual != entry {
-			test.Fatalf("inventory differs: %+v, %+v: %v", entry, actual, err)
-		}
-	}
-	classpath := bytes.NewReader(readTestFile(test, filepath.Join(prepared, "plugin-classpath.txt")))
-	readShortString := func() string {
-		var size uint16
-		if err := binary.Read(classpath, binary.BigEndian, &size); err != nil {
-			test.Fatal(err)
-		}
-		value := make([]byte, size)
-		if _, err := io.ReadFull(classpath, value); err != nil {
-			test.Fatal(err)
-		}
-		return string(value)
-	}
-	var count uint16
-	if err := binary.Read(classpath, binary.BigEndian, &count); err != nil || count != 2 {
-		test.Fatalf("invalid classpath count: %d: %v", count, err)
-	}
-	if name := readShortString(); name != "demo" {
-		test.Fatalf("unexpected plugin directory: %s", name)
-	}
-	var descriptorSize uint32
-	if err := binary.Read(classpath, binary.BigEndian, &descriptorSize); err != nil {
-		test.Fatal(err)
-	}
-	if _, err := classpath.Seek(int64(descriptorSize), io.SeekCurrent); err != nil {
-		test.Fatal(err)
-	}
-	if paths := []string{readShortString(), readShortString()}; !reflect.DeepEqual(paths, []string{"lib/demo.jar", "lib/content.jar"}) || classpath.Len() != 0 {
-		test.Fatalf("classpath order differs: %v", paths)
-	}
-}
-
-// The two parity tests below run the Kotlin preparer on a plan file. The preparer emits the Go operation into the
-// recipe, and Go executes it from the raw inputs. The tests compare that result with the Go execution of a
-// hand-written recipe. They also compare it with the golden under testdata. The golden is the Kotlin materialization
-// of every fixture, frozen under testdata/<name>-golden-<date>.txt before the change that stopped the Kotlin
-// materialization. Do not re-record the goldens from a later state of the preparer.
-
-var recordKotlinGoldens = flag.String("record-kotlin-goldens", "", "Record the Kotlin materialization as goldens with this label, for example golden-2026-09-13")
-
-// kotlinPreparerExecutable resolves the declared Kotlin preparer, or skips the test outside the Bazel target.
-func kotlinPreparerExecutable(t *testing.T) string {
-	t.Helper()
-	if *kotlinPreparer == "" {
-		t.Skip("Run the Bazel pluginpack_test target to include the declared Kotlin preparer")
-	}
-	executable := *kotlinPreparer
-	if !filepath.IsAbs(executable) {
-		executable = filepath.Join(os.Getenv("TEST_SRCDIR"), filepath.FromSlash(executable))
-	}
-	return executable
-}
-
-// kotlinPlanFile is the plan file the parity fixtures write. The Kotlin preparer recomputes the layout signature
-// and every operation signature, and it refuses a stale file. The fixtures compute both the way
-// pluginPackingLayoutSignature and devPluginPreparationOperationSignature do. A zero Mode is the default 420. An
-// asset with a Module is the compact form of a module's own jar.
+// kotlinPlanFile is the plan file the derivation fixtures write, in the shape PluginPackingProjectionEncoding.kt
+// emits. The fixtures compute the layout signature and every operation signature the way
+// pluginPackingLayoutSignature and devPluginPreparationOperationSignature do, so a fixture is a plan file
+// plugin-model-tool --check would accept. A zero Mode is the default 420. An asset with a Module is the compact
+// form of a module's own jar.
 type kotlinPlanFile struct {
 	Version           int                      `json:"version"`
 	Plugin            string                   `json:"plugin"`
@@ -607,7 +357,7 @@ func kotlinLayoutSignature(plan kotlinPlanFile) string {
 }
 
 // TestKotlinSignatureHelpersReproduceTheFixtureConstants pins the two signature helpers against the constants the
-// Kotlin generator wrote into kotlinProjection and kotlinFilteredProjection.
+// Kotlin generator wrote for the filtered demo projection.
 func TestKotlinSignatureHelpersReproduceTheFixtureConstants(t *testing.T) {
 	filter := kotlinModuleFilterOperation(t, "filter", "raw", "filtered", "drop", []string{"drop/**"})
 	if got := kotlinModelSignature(filter); got != "4j4kth710fglswfsh1vosdrg4" {
@@ -620,22 +370,6 @@ func TestKotlinSignatureHelpersReproduceTheFixtureConstants(t *testing.T) {
 	if got := kotlinLayoutSignature(filtered); got != "c6yx54cclyu91esyjhzd6z0xe" {
 		t.Fatalf("layout signature of the filtered projection differs: %s", got)
 	}
-	var demo struct {
-		Plugin, Variant string
-		Assets          []struct {
-			Destination   string
-			Inputs        []string
-			Recipe        *kotlinJarRecipe
-			Mode          int
-			SymlinkTarget *string
-		}
-	}
-	if err := json.Unmarshal([]byte(kotlinProjection), &demo); err != nil {
-		t.Fatal(err)
-	}
-	if len(demo.Assets) != 5 || demo.Assets[3].Mode != 493 || demo.Assets[4].SymlinkTarget == nil {
-		t.Fatalf("the demo projection changed shape: %+v", demo.Assets)
-	}
 }
 
 // kotlinPlan states one preparation whose operation is the kotlinx text, and signs the file.
@@ -646,57 +380,6 @@ func kotlinPlan(t *testing.T, version int, plugin string, assets []kotlinPlanAss
 		Preparations: []kotlinPreparation{preparation}, Operations: []json.RawMessage{json.RawMessage(operation)}}
 	plan.LayoutSignature = kotlinLayoutSignature(plan)
 	return plan
-}
-
-// kotlinPreparationOutput is what the Kotlin preparer writes for one plan: the recipe, the remainder catalogue, the
-// asset rows and the plugin classpath record. The prepared directory stays empty for a plan Go executes.
-type kotlinPreparationOutput struct {
-	Recipe    Recipe
-	Catalogue Catalogue
-	Assets    []Asset
-	ClassPath []byte
-	Directory string
-}
-
-// runKotlinPreparer runs the Kotlin preparer on a plan whose operations Go executes. Every raw input is then a
-// remainder input. The plugin directory is plugins/<plugin>; descriptor is the classpath descriptor.
-func runKotlinPreparer(t *testing.T, plan kotlinPlanFile, inputs Catalogue, descriptor []byte) kotlinPreparationOutput {
-	t.Helper()
-	executable := kotlinPreparerExecutable(t)
-	root := t.TempDir()
-	writeTestFile(t, filepath.Join(root, "projection.json"), []byte(kotlinJSON(t, plan)))
-	writeTestFile(t, filepath.Join(root, "catalogue.json"), []byte(kotlinJSON(t, inputs)))
-	writeTestFile(t, filepath.Join(root, "descriptor.xml"), descriptor)
-	prepared := filepath.Join(root, "prepared-plugin")
-	arguments := []string{
-		"--projection=" + filepath.Join(root, "projection.json"),
-		"--catalogue=" + filepath.Join(root, "catalogue.json"),
-		"--descriptor=" + filepath.Join(root, "descriptor.xml"),
-		"--plugin-directory=" + filepath.Join("plugins", plan.Plugin),
-		"--output-dir=" + prepared,
-		"--callback-preparation=false",
-		fmt.Sprintf("--execution-version=%d", plan.Version),
-	}
-	for _, artifact := range inputs.Artifacts {
-		arguments = append(arguments, "--remainder-input="+artifact.Root)
-	}
-	commandContext, cancel := context.WithTimeout(context.Background(), 90*time.Second)
-	defer cancel()
-	command := exec.CommandContext(commandContext, executable, arguments...)
-	command.Dir = root
-	if output, err := command.CombinedOutput(); err != nil {
-		t.Fatalf("Kotlin preparation failed: %v\n%s", err, output)
-	}
-	result := kotlinPreparationOutput{Directory: prepared}
-	if err := ReadJSON(filepath.Join(prepared, "recipe.json"), &result.Recipe); err != nil {
-		t.Fatal(err)
-	}
-	if err := ReadJSON(filepath.Join(prepared, "catalogue.json"), &result.Catalogue); err != nil {
-		t.Fatal(err)
-	}
-	result.Assets = readAssetRows(t, filepath.Join(prepared, "assets.json"))
-	result.ClassPath = readTestFile(t, filepath.Join(prepared, "plugin-classpath.txt"))
-	return result
 }
 
 // readAssetRows decodes an assets.json, a JSON array, with the strictness of ReadJSON.
@@ -712,74 +395,6 @@ func readAssetRows(t *testing.T, file string) []Asset {
 		t.Fatalf("%s: expected one JSON document", file)
 	}
 	return assets
-}
-
-// kotlinMaterialization runs the Kotlin preparer on a plan whose one operation Go executes and returns the recipe
-// and the catalogue it wrote.
-func kotlinMaterialization(t *testing.T, plan kotlinPlanFile, inputs Catalogue) (Recipe, Catalogue) {
-	t.Helper()
-	output := runKotlinPreparer(t, plan, inputs, []byte("<idea-plugin><id>"+plan.Plugin+"</id></idea-plugin>"))
-	return output.Recipe, output.Catalogue
-}
-
-// canonicalOperations renders operations with the Go encoder. The Kotlin encoder writes empty lists and default
-// values; the Go encoder omits them, so both producers compare on the values the packer reads. An empty mapping
-// pattern reads as "**".
-func canonicalOperations(t *testing.T, operations []Operation) string {
-	t.Helper()
-	normalized := make([]Operation, 0, len(operations))
-	for _, operation := range operations {
-		operation.Layout = canonicalLayout(operation.Layout)
-		sources := make([]Source, 0, len(operation.Sources))
-		for _, source := range operation.Sources {
-			source.Layout = canonicalLayout(source.Layout)
-			sources = append(sources, source)
-		}
-		operation.Sources = sources
-		normalized = append(normalized, operation)
-	}
-	data, err := json.MarshalIndent(normalized, "", " ")
-	if err != nil {
-		t.Fatal(err)
-	}
-	return string(data)
-}
-
-func canonicalLayout(layout *LayoutAssets) *LayoutAssets {
-	if layout == nil {
-		return nil
-	}
-	result := *layout
-	result.Assets = slices.Clone(layout.Assets)
-	for index := range result.Assets {
-		transform := result.Assets[index].Transform
-		if transform == nil {
-			continue
-		}
-		copied := *transform
-		copied.Mappings = slices.Clone(transform.Mappings)
-		for mappingIndex := range copied.Mappings {
-			if copied.Mappings[mappingIndex].Pattern == "" {
-				copied.Mappings[mappingIndex].Pattern = "**"
-			}
-		}
-		result.Assets[index].Transform = &copied
-	}
-	return &result
-}
-
-// requireSameRecipeRows pins the rows both producers must agree on: the version, the layout signature, the asset
-// table, and the operations the Go packer executes. A Kotlin recipe that still materialized the operation, as a
-// copy-tree or an anchored entries source, fails here.
-func requireSameRecipeRows(t *testing.T, kotlin, recipe Recipe) {
-	t.Helper()
-	if kotlin.Version != recipe.Version || kotlin.Plugin != recipe.Plugin || kotlin.LayoutSignature != recipe.LayoutSignature ||
-		!reflect.DeepEqual(kotlin.Assets, recipe.Assets) {
-		t.Fatalf("the Kotlin recipe rows differ from the Go recipe:\n%+v\n%+v", kotlin, recipe)
-	}
-	if actual, expected := canonicalOperations(t, kotlin.Operations), canonicalOperations(t, recipe.Operations); actual != expected {
-		t.Fatalf("the Kotlin operations differ from the Go operations:\n%s\n%s", actual, expected)
-	}
 }
 
 // materializationRecord lists every entry of a written plugin directory in path order. A line holds the path, the
@@ -841,21 +456,6 @@ func requireEqualRecords(t *testing.T, what string, first, second []string) {
 	t.Fatalf("%s differs\nonly in the first:\n%s\nonly in the second:\n%s", what, strings.Join(onlyFirst, "\n"), strings.Join(onlySecond, "\n"))
 }
 
-// requireSameJar compares two jars by entry order and content before the byte comparison, for a readable failure.
-func requireSameJar(t *testing.T, kotlinJar, goJar string) {
-	t.Helper()
-	kotlinNames, kotlinEntries := readArchive(t, kotlinJar)
-	names, entries := readArchive(t, goJar)
-	if !slices.Equal(kotlinNames, names) {
-		t.Fatalf("jar entries differ\nKotlin: %v\nGo:     %v", kotlinNames, names)
-	}
-	for _, name := range names {
-		if kotlinEntries[name] != entries[name] {
-			t.Fatalf("entry %s differs between the Kotlin jar and the Go jar", name)
-		}
-	}
-}
-
 // requireInventoryMatchesTree pins every inventory row to the file it describes.
 func requireInventoryMatchesTree(t *testing.T, output string, inventory []filemetadata.Entry) {
 	t.Helper()
@@ -878,8 +478,7 @@ func requireRecordedPaths(t *testing.T, record []string, paths []string) {
 }
 
 // kotlinGolden is the record of the Kotlin materialization of every fixture, frozen at the end of Stage 1 under
-// testdata/<name>-<label>.txt. The label states the recording date. While recording, check stores the record and
-// write saves the file.
+// testdata/<name>-<label>.txt. The label states the recording date.
 type kotlinGolden struct {
 	name     string
 	label    string
@@ -888,10 +487,7 @@ type kotlinGolden struct {
 
 func openKotlinGolden(t *testing.T, name string) *kotlinGolden {
 	t.Helper()
-	golden := &kotlinGolden{name: name, label: *recordKotlinGoldens, fixtures: make(map[string][]string)}
-	if golden.label != "" {
-		return golden
-	}
+	golden := &kotlinGolden{name: name, fixtures: make(map[string][]string)}
 	matches, err := filepath.Glob(filepath.Join("testdata", name+"-*.txt"))
 	if err != nil || len(matches) != 1 {
 		t.Fatalf("expected one golden testdata/%s-<label>.txt, found %v: %v", name, matches, err)
@@ -910,40 +506,14 @@ func openKotlinGolden(t *testing.T, name string) *kotlinGolden {
 	return golden
 }
 
-// check compares one fixture with the golden, or stores its record while recording.
+// check compares one fixture with the golden.
 func (golden *kotlinGolden) check(t *testing.T, fixture string, record []string) {
 	t.Helper()
-	if *recordKotlinGoldens != "" {
-		golden.fixtures[fixture] = record
-		return
-	}
 	want, present := golden.fixtures[fixture]
 	if !present {
-		t.Fatalf("fixture %q has no golden in testdata/%s-%s.txt; record it with -record-kotlin-goldens=<label>", fixture, golden.name, golden.label)
+		t.Fatalf("fixture %q has no golden in testdata/%s-%s.txt", fixture, golden.name, golden.label)
 	}
 	requireEqualRecords(t, fixture+" against the golden", want, record)
-}
-
-// write saves the recorded goldens under TEST_UNDECLARED_OUTPUTS_DIR, or under testdata outside Bazel.
-func (golden *kotlinGolden) write(t *testing.T) {
-	t.Helper()
-	if *recordKotlinGoldens == "" {
-		return
-	}
-	directory := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
-	if directory == "" {
-		directory = "testdata"
-	}
-	lines := []string{
-		fmt.Sprintf("# %s: the Kotlin preparer's materialization, %s, recorded by pluginpack_test -record-kotlin-goldens.", golden.name, golden.label),
-		"# fixture\tpath\tkind (directory, file, symlink, or a jar entry when the jar order follows the host)\tmode\tsha256 or link target",
-	}
-	for _, fixture := range slices.Sorted(maps.Keys(golden.fixtures)) {
-		for _, entry := range golden.fixtures[fixture] {
-			lines = append(lines, fixture+"\t"+entry)
-		}
-	}
-	writeTestFile(t, filepath.Join(directory, fmt.Sprintf("%s-%s.txt", golden.name, golden.label)), []byte(strings.Join(lines, "\n")+"\n"))
 }
 
 // moduleFilterFixtureJar is the module output the module-filter cases filter. It holds the names the selection
@@ -963,11 +533,10 @@ var moduleFilterFixtureJar = []testEntry{
 	{"a/y.txt", "ay"},
 }
 
-// TestKotlinModuleFilterMaterializationMatchesGoExcludes runs the Kotlin module-filter preparation, which emits the
-// Go archive source with the excludes, and packs that recipe with Go. It requires the jar to be byte-identical to
-// the jar of the hand-written Go recipe and to the golden of the Kotlin materialization.
+// TestKotlinModuleFilterMaterializationMatchesGoExcludes packs the hand-written Go recipe of a module-filter
+// operation, the archive source with the excludes. It requires the jar to be identical to the golden of the Kotlin
+// materialization.
 func TestKotlinModuleFilterMaterializationMatchesGoExcludes(t *testing.T) {
-	kotlinPreparerExecutable(t)
 	golden := openKotlinGolden(t, "kotlin-module-filter")
 	cases := []struct {
 		name        string
@@ -1003,21 +572,12 @@ func TestKotlinModuleFilterMaterializationMatchesGoExcludes(t *testing.T) {
 					Recipe: &kotlinJarRecipe{Sources: []kotlinJarSource{{Input: "filtered", Kind: "prepared", Filter: "prepared"}},
 						Writer: kotlinJarWriter{Manifest: manifest, MergeEntities: true}}}},
 					kotlinPreparation{ID: "filter", Inputs: []string{"raw"}, Outputs: []string{"filtered"}}, operation)
-				kotlinRecipe, kotlinCatalogue := kotlinMaterialization(t, plan, inputs)
-				kotlinOutput, kotlinInventory := writeExecution(t, kotlinRecipe, kotlinCatalogue)
-
 				recipe := Recipe{Version: Version, Plugin: plan.Plugin, LayoutSignature: plan.LayoutSignature,
 					Assets: []Asset{{Destination: "lib/main.jar", Producer: "remainder"}},
 					Operations: []Operation{{Kind: "jar", Destination: "lib/main.jar", Mode: 0o644, Options: &JarOptions{MergeEntities: true, Directories: "none"},
 						Sources: []Source{{Kind: "archive", Input: &Reference{Artifact: "raw"}, Filter: "module", Manifest: manifest, Excludes: testCase.excludes}}}}}
-				requireSameRecipeRows(t, kotlinRecipe, recipe)
 				output, inventory := writeExecution(t, recipe, inputs)
-				requireSameJar(t, filepath.Join(kotlinOutput, "lib/main.jar"), filepath.Join(output, "lib/main.jar"))
-				kotlinRecord, record := materializationRecord(t, kotlinOutput), materializationRecord(t, output)
-				requireEqualRecords(t, "the hand-written Go recipe against the Kotlin-emitted recipe", kotlinRecord, record)
-				if !reflect.DeepEqual(kotlinInventory, inventory) {
-					t.Fatalf("inventories differ:\n%+v\n%+v", kotlinInventory, inventory)
-				}
+				record := materializationRecord(t, output)
 				requireInventoryMatchesTree(t, output, inventory)
 				names, _ := readArchive(t, filepath.Join(output, "lib/main.jar"))
 				for _, entry := range testCase.absent {
@@ -1038,7 +598,6 @@ func TestKotlinModuleFilterMaterializationMatchesGoExcludes(t *testing.T) {
 			})
 		}
 	}
-	golden.write(t)
 }
 
 // storedZipBytes writes STORED entries with their sizes and CRC in the local header and no data descriptor, the
@@ -1105,21 +664,25 @@ func chmodTestTree(t *testing.T, root string) {
 }
 
 // layoutParityFixture is one layout-assets operation with its raw inputs on disk. A tree fixture names its root; an
-// entries fixture names its jar. present lists the output paths the fixture exists for. hostOrder marks a jar whose
-// entry order follows the readdir order of the host: the live comparison checks the order, the golden does not.
+// entries fixture names its jar; a file fixture names its file. present lists the output paths the fixture exists
+// for. hostOrder marks a jar whose entry order follows the readdir order of the host: the live comparison checks the
+// order, the golden does not. decompress marks a jar of gzip entries: the golden holds the entry names and the
+// decompressed payload, because the Go deflater writes other bytes than the JDK deflater.
 type layoutParityFixture struct {
-	format    string
-	root      string
-	normalize bool
-	hostOrder bool
-	layout    LayoutAssets
-	inputs    Catalogue
-	present   []string
+	format     string
+	root       string
+	normalize  bool
+	hostOrder  bool
+	decompress bool
+	layout     LayoutAssets
+	inputs     Catalogue
+	present    []string
 }
 
 // jarEntryRecord lists the entries of a jar by name with their content digest, sorted by name. The generated index
-// follows the entry order and is left out; jarpack's own tests guard it.
-func jarEntryRecord(t *testing.T, jar string) []string {
+// follows the entry order and is left out; jarpack's own tests guard it. With decompress, the digest is over the
+// decompressed gzip payload of each entry.
+func jarEntryRecord(t *testing.T, jar string, decompress bool) []string {
 	t.Helper()
 	names, entries := readArchive(t, jar)
 	record := make([]string, 0, len(names))
@@ -1127,7 +690,11 @@ func jarEntryRecord(t *testing.T, jar string) []string {
 		if name == "__index__" {
 			continue
 		}
-		record = append(record, fmt.Sprintf("%s\tentry\t-\t%s", name, sha256Hex([]byte(entries[name]))))
+		content := entries[name]
+		if decompress {
+			content = readGzip(t, content)
+		}
+		record = append(record, fmt.Sprintf("%s\tentry\t-\t%s", name, sha256Hex([]byte(content))))
 	}
 	slices.Sort(record)
 	return record
@@ -1163,9 +730,8 @@ func treeMapFixture(t *testing.T, inputs, format string) layoutParityFixture {
 	return fixture
 }
 
-// layoutParityFixtures are the layout-assets operations Go executes: one per transform and per archive reader rule,
-// with the inputs written under the inputs directory of the fixture.
-// The kind gzip-xml-archive has no fixture, because it stays a Kotlin preparation.
+// layoutParityFixtures are the layout-assets operations Go executes: one per transform, per archive reader rule, and
+// per format, with the inputs written under the inputs directory of the fixture.
 var layoutParityFixtures = []struct {
 	name  string
 	build func(t *testing.T, inputs string) layoutParityFixture
@@ -1278,10 +844,40 @@ var layoutParityFixtures = []struct {
 			inputs:  Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("launcher", launcher), fileArtifact("tool", tool)}},
 			present: []string{"jbr/jre-build.txt", "jbr/bin/launcher", "jbr/lib/tool.jar"}}
 	}},
+	{"gzip-xml-archive entries hold the XML of each archive in central-directory order", func(t *testing.T, inputs string) layoutParityFixture {
+		// The first archive has a Unix directory entry and its files out of name order; the second repeats a name that
+		// the first archive already claimed.
+		first, second := filepath.Join(inputs, "dialects.jar"), filepath.Join(inputs, "more.zip")
+		writeZip(t, first, zipTestEntry{name: "dialects/", creator: 3, mode: 0o755},
+			zipTestEntry{name: "dialects/zeta.xml", content: "<zeta/>"}, zipTestEntry{name: "dialects/alpha.xml", content: "<alpha/>"},
+			zipTestEntry{name: "shared.xml", content: "<first/>"})
+		writeZip(t, second, zipTestEntry{name: "shared.xml", content: "<second/>"}, zipTestEntry{name: "beta.xml", content: "<beta/>"})
+		return layoutParityFixture{format: "entries", root: "dialects.jar", decompress: true,
+			layout: LayoutAssets{Inputs: []Reference{{Artifact: "first"}, {Artifact: "second"}}, Assets: []LayoutAsset{
+				{Destination: "resources", Sources: []int{0, 1}, Transform: &LayoutTransform{Kind: "gzip-xml-archive"}}}},
+			inputs:  Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("first", first), fileArtifact("second", second)}},
+			present: []string{"lib/dialects.jar"}}
+	}},
+	{"a layout file holds inline text", func(t *testing.T, inputs string) layoutParityFixture {
+		return layoutParityFixture{format: "file", root: "jre-build.txt",
+			layout: LayoutAssets{Inputs: []Reference{}, Assets: []LayoutAsset{
+				{Destination: "jre-build.txt", Transform: &LayoutTransform{Kind: "inline-text", Text: "21.0.7"}}}},
+			inputs:  Catalogue{Version: Version, Artifacts: []Artifact{}},
+			present: []string{"jre-build.txt"}}
+	}},
+	{"a layout file copies one file at the declared mode", func(t *testing.T, inputs string) layoutParityFixture {
+		build := filepath.Join(inputs, "build.txt")
+		writeTestFile(t, build, []byte("21.0.7"))
+		chmodTestFile(t, build, 0o755)
+		return layoutParityFixture{format: "file", root: "bin/jre-build.txt",
+			layout:  LayoutAssets{Inputs: []Reference{{Artifact: "build"}}, Assets: []LayoutAsset{{Destination: "bin/jre-build.txt", Sources: []int{0}}}},
+			inputs:  Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("build", build)}},
+			present: []string{"bin/jre-build.txt"}}
+	}},
 }
 
 func layoutInputIDs(layout LayoutAssets) []string {
-	var ids []string
+	ids := []string{}
 	for _, reference := range layout.Inputs {
 		if !slices.Contains(ids, reference.Artifact) {
 			ids = append(ids, reference.Artifact)
@@ -1290,12 +886,10 @@ func layoutInputIDs(layout LayoutAssets) []string {
 	return ids
 }
 
-// TestKotlinLayoutMaterializationMatchesGoTransforms runs the Kotlin layout-assets preparation on every fixture. The
-// preparer emits the layout-tree operation or the layout source, and Go executes it from the raw inputs. The test
-// requires the same bytes, modes, links, and inventory as the hand-written Go recipe and as the golden of the Kotlin
-// materialization.
+// TestKotlinLayoutMaterializationMatchesGoTransforms packs the hand-written Go recipe of every layout-assets fixture:
+// the layout-tree operation, the layout-file operation, or the layout source. Go executes it from the raw inputs. The
+// test requires the same bytes, modes, and links as the golden of the Kotlin materialization.
 func TestKotlinLayoutMaterializationMatchesGoTransforms(t *testing.T) {
-	kotlinPreparerExecutable(t)
 	golden := openKotlinGolden(t, "kotlin-layout")
 	const output = "layout-assets:output"
 	excluded := false
@@ -1305,7 +899,13 @@ func TestKotlinLayoutMaterializationMatchesGoTransforms(t *testing.T) {
 			preparation := kotlinPreparation{ID: "layout", Inputs: layoutInputIDs(fixture.layout), Outputs: []string{output}}
 			var plan kotlinPlanFile
 			var recipe Recipe
-			if fixture.format == "tree" {
+			if fixture.format == "file" {
+				operation := kotlinLayoutAssetsOperation(t, "layout", output, "file", fixture.root, fixture.layout)
+				plan = kotlinPlan(t, Version, "layout-plugin", []kotlinPlanAsset{{Destination: fixture.root, Inputs: []string{output}, ClassPath: &excluded}}, preparation, operation)
+				recipe = Recipe{Version: Version, Plugin: plan.Plugin, LayoutSignature: plan.LayoutSignature,
+					Assets:     []Asset{{Destination: fixture.root, Producer: "remainder", ClassPath: &excluded}},
+					Operations: []Operation{{Kind: "layout-file", Destination: fixture.root, Mode: 0o644, Layout: &fixture.layout}}}
+			} else if fixture.format == "tree" {
 				operation := kotlinLayoutAssetsOperation(t, "layout", output, "tree", fixture.root, fixture.layout)
 				plan = kotlinPlan(t, TreeVersion, "layout-plugin", []kotlinPlanAsset{{Destination: fixture.root, Inputs: []string{output},
 					Kind: "tree", ClassPath: &excluded, NormalizeTreeModes: fixture.normalize}}, preparation, operation)
@@ -1327,26 +927,81 @@ func TestKotlinLayoutMaterializationMatchesGoTransforms(t *testing.T) {
 					Operations: []Operation{{Kind: "jar", Destination: jar, Mode: 0o644, Options: &JarOptions{MergeEntities: true, Directories: "none"},
 						Sources: []Source{{Kind: "layout", Manifest: "keep", Layout: &fixture.layout}}}}}
 			}
-			kotlinRecipe, kotlinCatalogue := kotlinMaterialization(t, plan, fixture.inputs)
-			kotlinOutput, kotlinInventory := writeExecution(t, kotlinRecipe, kotlinCatalogue)
-			requireSameRecipeRows(t, kotlinRecipe, recipe)
 			goOutput, inventory := writeExecution(t, recipe, fixture.inputs)
-			if fixture.format == "entries" {
-				requireSameJar(t, filepath.Join(kotlinOutput, "lib", fixture.root), filepath.Join(goOutput, "lib", fixture.root))
-			}
-			kotlinRecord, record := materializationRecord(t, kotlinOutput), materializationRecord(t, goOutput)
-			requireEqualRecords(t, "the hand-written Go recipe against the Kotlin-emitted recipe", kotlinRecord, record)
-			if !reflect.DeepEqual(kotlinInventory, inventory) {
-				t.Fatalf("inventories differ:\n%+v\n%+v", kotlinInventory, inventory)
-			}
+			record := materializationRecord(t, goOutput)
 			requireInventoryMatchesTree(t, goOutput, inventory)
 			requireRecordedPaths(t, record, fixture.present)
 			goldenRecord := record
-			if fixture.hostOrder {
-				goldenRecord = jarEntryRecord(t, filepath.Join(goOutput, "lib", fixture.root))
+			if fixture.hostOrder || fixture.decompress {
+				goldenRecord = jarEntryRecord(t, filepath.Join(goOutput, "lib", fixture.root), fixture.decompress)
 			}
 			golden.check(t, definition.name, goldenRecord)
 		})
 	}
-	golden.write(t)
+}
+
+// sqliteNativeJarPath is the declared org.sqlite:native jar, the one native archive of intellij.platform.vcs.plugin.
+func sqliteNativeJarPath(t *testing.T) string {
+	t.Helper()
+	if *sqliteNativeJar == "" {
+		t.Skip("Run the Bazel pluginpack_test target to include the declared sqlite native jar")
+	}
+	jar := *sqliteNativeJar
+	if !filepath.IsAbs(jar) {
+		jar = filepath.Join(os.Getenv("TEST_SRCDIR"), filepath.FromSlash(jar))
+	}
+	return jar
+}
+
+// nativeSelectVariants are the six dev-dist platforms, the variants the vcs plan keeps one record for.
+var nativeSelectVariants = []string{"darwin_aarch64", "darwin_x64", "linux_aarch64", "linux_x64", "windows_aarch64", "windows_x64"}
+
+// TestNativeSelectMatchesTheFrozenKotlinSelection packs the sqlite native jar of intellij.platform.vcs.plugin for every
+// platform the way the planfile package compiles a native-select operation: the jar keeps the archive with its native
+// entries reserved, and the distribution tree lib/native holds the entries of the platform. The golden is the tree
+// the Kotlin DevPluginPresignedNativeRecipeRuntime wrote and the jar entries it left, frozen from the dev-dist build of
+// each platform before the Kotlin runtime was deleted.
+func TestNativeSelectMatchesTheFrozenKotlinSelection(t *testing.T) {
+	jar := sqliteNativeJarPath(t)
+	golden := openKotlinGolden(t, "kotlin-native-select")
+	const jarDestination, treeDestination = "lib/intellij.libraries.sqlite.native.jar", "lib/native"
+	excluded := false
+	for _, variant := range nativeSelectVariants {
+		t.Run(variant, func(t *testing.T) {
+			family, arch, err := nativelib.ParseVariant(variant)
+			if err != nil {
+				t.Fatal(err)
+			}
+			native := &Reference{Artifact: "native"}
+			recipe := Recipe{Version: ScopedVersion, Plugin: "intellij.platform.vcs.plugin", LayoutSignature: "native-select-" + variant,
+				Assets: []Asset{
+					{Destination: jarDestination, Producer: "remainder"},
+					{Destination: treeDestination, Producer: "remainder", Kind: "tree", ClassPath: &excluded, Scope: DistributionScope}},
+				Operations: []Operation{
+					{Kind: "jar", Destination: jarDestination, Mode: 0o644, Options: &JarOptions{MergeEntities: true, Directories: "none"},
+						Sources: []Source{{Kind: "archive", Input: native, Filter: "library", Manifest: "keep", ReserveNatives: true}}},
+					{Kind: "native-tree", Destination: treeDestination, Scope: DistributionScope, Input: native,
+						Native: &NativeTarget{OS: string(family), Arch: string(arch)}}}}
+			output, inventory := writeExecution(t, recipe, Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("native", jar)}})
+			requireInventoryMatchesTree(t, output, inventory)
+			treeRoot := TransportDestination(ScopedVersion, DistributionScope, treeDestination)
+			var record []string
+			for _, line := range materializationRecord(t, output) {
+				if strings.HasPrefix(line, treeRoot) {
+					record = append(record, line)
+				}
+			}
+			requireRecordedPaths(t, record, []string{treeRoot})
+			if len(record) != 3 {
+				t.Fatalf("the sqlite jar holds one native per platform, the tree holds %d entries:\n%s", len(record), strings.Join(record, "\n"))
+			}
+			record = append(record, jarEntryRecord(t, filepath.Join(output, filepath.FromSlash(jarDestination)), false)...)
+			for _, line := range record {
+				if nativelib.IsNativeEntry(strings.Split(line, "\t")[0]) && strings.Contains(line, "\tentry\t") {
+					t.Fatalf("the jar kept a native entry: %s", line)
+				}
+			}
+			golden.check(t, variant, record)
+		})
+	}
 }

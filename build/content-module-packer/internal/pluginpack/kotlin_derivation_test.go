@@ -194,21 +194,6 @@ func canonicalRows(t *testing.T, assets []pluginpack.Asset) string {
 	return string(data)
 }
 
-// requireSameRecipe pins the derived recipe to the recipe the Kotlin preparer wrote: the version, the identity, the
-// asset rows and the operations, each in its canonical Go encoding.
-func requireSameRecipe(t *testing.T, kotlin, derived pluginpack.Recipe) {
-	t.Helper()
-	if kotlin.Version != derived.Version || kotlin.Plugin != derived.Plugin || kotlin.LayoutSignature != derived.LayoutSignature {
-		t.Fatalf("the recipe identity differs:\n%+v\n%+v", kotlin, derived)
-	}
-	if actual, expected := canonicalRows(t, kotlin.Assets), canonicalRows(t, derived.Assets); actual != expected {
-		t.Fatalf("the asset rows of the recipe differ:\nKotlin: %s\nGo:     %s", actual, expected)
-	}
-	if actual, expected := pluginpack.CanonicalOperations(t, kotlin.Operations), pluginpack.CanonicalOperations(t, derived.Operations); actual != expected {
-		t.Fatalf("the operations differ:\nKotlin: %s\nGo:     %s", actual, expected)
-	}
-}
-
 // projectionOutput is what plugin-remainder-packer --projection writes.
 type projectionOutput struct {
 	directory string
@@ -245,21 +230,38 @@ func runProjectionPacker(t *testing.T, plan string, inputs pluginpack.Catalogue,
 	return output
 }
 
-// TestGoPlanDerivationMatchesKotlinPreparer runs the Kotlin preparer and the Go derivation on every fixture. The
-// recipe, the asset rows, the plugin classpath record, the packed directory and the inventory must be equal. It is
-// the live control between the two compilers of the plan file, and the leaf that keeps the Kotlin emit path alive.
+// derivationRecord is the golden record of one packed plugin directory with its asset rows and classpath record.
+// A jar is listed by its entries, sorted by name, so the record does not follow the readdir order of the host.
+func derivationRecord(t *testing.T, output string, assets []pluginpack.Asset, classPath []byte) []string {
+	t.Helper()
+	var record []string
+	for _, line := range pluginpack.MaterializationRecord(t, output) {
+		path, _, _ := strings.Cut(line, "\t")
+		if strings.HasSuffix(path, ".jar") && strings.Contains(line, "\tfile\t") {
+			for _, entry := range pluginpack.JarEntryRecord(t, filepath.Join(output, filepath.FromSlash(path)), false) {
+				record = append(record, path+"!"+entry)
+			}
+			continue
+		}
+		record = append(record, line)
+	}
+	record = append(record,
+		"assets.json\tjson\t-\t"+pluginpack.Sha256Hex([]byte(canonicalRows(t, assets))),
+		"plugin-classpath.txt\tfile\t-\t"+pluginpack.Sha256Hex(classPath))
+	return record
+}
+
+// TestGoPlanDerivationMatchesKotlinPreparer runs the Go derivation on every fixture and compares the packed
+// directory, the asset rows and the plugin classpath record with the golden the deleted Kotlin preparer wrote. The
+// packer's projection mode must then write the same directory, inventory, asset rows and classpath record as the
+// in-process derivation.
 func TestGoPlanDerivationMatchesKotlinPreparer(t *testing.T) {
-	pluginpack.KotlinPreparerExecutable(t)
+	golden := pluginpack.OpenKotlinGolden(t, "kotlin-derivation")
 	for _, definition := range derivationFixtures {
 		t.Run(definition.name, func(t *testing.T) {
 			fixture := definition.build(t, t.TempDir())
 			plan := fixture.plan
 			descriptor := []byte("<idea-plugin><id>" + plan.Plugin + "</id><version>1</version></idea-plugin>")
-			kotlin := pluginpack.RunKotlinPreparer(t, plan, fixture.inputs, descriptor)
-			if actual, expected := canonicalRows(t, kotlin.Assets), canonicalRows(t, kotlin.Recipe.Assets); actual != expected {
-				t.Fatalf("the Kotlin assets.json differs from its recipe rows:\n%s\n%s", actual, expected)
-			}
-
 			planPath := filepath.Join(t.TempDir(), "plan.json")
 			pluginpack.WriteTestFile(t, planPath, []byte(pluginpack.KotlinJSON(t, plan)))
 			file, err := planfile.Read(planPath)
@@ -270,34 +272,22 @@ func TestGoPlanDerivationMatchesKotlinPreparer(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			requireSameRecipe(t, kotlin.Recipe, derivation.Recipe)
-			if actual, expected := canonicalRows(t, kotlin.Assets), canonicalRows(t, derivation.Assets); actual != expected {
-				t.Fatalf("the asset rows differ:\nKotlin: %s\nGo:     %s", actual, expected)
-			}
-			if !bytes.Equal(kotlin.ClassPath, derivation.ClassPath) {
-				t.Fatalf("the plugin classpath record differs:\nKotlin: %x\nGo:     %x", kotlin.ClassPath, derivation.ClassPath)
-			}
-
-			kotlinOutput, kotlinInventory := pluginpack.WriteExecution(t, kotlin.Recipe, kotlin.Catalogue)
 			goOutput, inventory := pluginpack.WriteExecution(t, derivation.Recipe, derivation.Catalogue)
-			kotlinRecord, record := pluginpack.MaterializationRecord(t, kotlinOutput), pluginpack.MaterializationRecord(t, goOutput)
-			pluginpack.RequireEqualRecords(t, "the Go derivation against the Kotlin recipe", kotlinRecord, record)
-			if !reflect.DeepEqual(kotlinInventory, inventory) {
-				t.Fatalf("inventories differ:\n%+v\n%+v", kotlinInventory, inventory)
-			}
+			record := pluginpack.MaterializationRecord(t, goOutput)
 			pluginpack.RequireInventoryMatchesTree(t, goOutput, inventory)
 			pluginpack.RequireRecordedPaths(t, record, fixture.present)
+			golden.Check(t, definition.name, derivationRecord(t, goOutput, derivation.Assets, derivation.ClassPath))
 
 			packed := runProjectionPacker(t, planPath, fixture.inputs, descriptor, plan.Plugin, plan.Version)
-			pluginpack.RequireEqualRecords(t, "the packer's projection mode against the Kotlin recipe", kotlinRecord, pluginpack.MaterializationRecord(t, packed.directory))
-			if !reflect.DeepEqual(kotlinInventory, packed.inventory) {
-				t.Fatalf("the packer's inventory differs:\n%+v\n%+v", kotlinInventory, packed.inventory)
+			pluginpack.RequireEqualRecords(t, "the packer's projection mode against the in-process derivation", record, pluginpack.MaterializationRecord(t, packed.directory))
+			if !reflect.DeepEqual(inventory, packed.inventory) {
+				t.Fatalf("the packer's inventory differs:\n%+v\n%+v", inventory, packed.inventory)
 			}
-			if actual, expected := canonicalRows(t, kotlin.Assets), canonicalRows(t, packed.assets); actual != expected {
-				t.Fatalf("the packer's asset rows differ:\nKotlin: %s\nGo:     %s", actual, expected)
+			if actual, expected := canonicalRows(t, derivation.Assets), canonicalRows(t, packed.assets); actual != expected {
+				t.Fatalf("the packer's asset rows differ:\nderivation: %s\npacker:     %s", actual, expected)
 			}
-			if !bytes.Equal(kotlin.ClassPath, packed.classPath) {
-				t.Fatalf("the packer's plugin classpath record differs:\nKotlin: %x\nGo:     %x", kotlin.ClassPath, packed.classPath)
+			if !bytes.Equal(derivation.ClassPath, packed.classPath) {
+				t.Fatalf("the packer's plugin classpath record differs:\nderivation: %x\npacker:     %x", derivation.ClassPath, packed.classPath)
 			}
 		})
 	}

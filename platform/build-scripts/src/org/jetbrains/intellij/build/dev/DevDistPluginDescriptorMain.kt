@@ -19,12 +19,14 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Resolves one plugin's embedded product descriptor, from declared files and nothing else.
+ * Resolves one plugin's embedded product descriptor, or produces the application info of its embedded frontend, from
+ * declared files and nothing else.
  *
- * The `dev_dist_embedded_product_descriptor` rule runs one of these for each plugin that declares an embedded product
- * descriptor. It is a main of its own and not a mode of `DevDistMain`, because the assembler's every option exists to
- * serve the assembly. This entry point must not do any of the following, and a reviewer can read the list against the
- * code:
+ * The `dev_dist_embedded_product_descriptor` rule runs the `--embedded-product` mode for each plugin that declares an
+ * embedded product descriptor. The `dev_dist_frontend_application_info` rule runs the `--application-info` mode for the
+ * plugin that packs the JetBrains Client, see [prepareCwmClientApplicationInfo]. It is a main of its own and not a mode
+ * of `DevDistMain`, because the assembler's every option exists to serve the assembly. This entry point must not do any
+ * of the following, and a reviewer can read the list against the code:
  *
  * * construct a `BuildContext`, a `PluginLayout` or a `PlatformLayout`;
  * * call `buildProductInProcess`, `createDevBuildContext` or a product-properties factory;
@@ -39,10 +41,57 @@ import java.util.concurrent.ConcurrentHashMap
  * asks the provider anything.
  */
 fun main(args: Array<String>) {
-  val request = parseDevDistEmbeddedProductDescriptorRequest(readArgumentLines(args))
-  val content = resolveEmbeddedProductDescriptorFromPlan(request)
-  Files.createDirectories(request.output.parent)
-  Files.write(request.output, content)
+  val lines = readArgumentLines(args)
+  when (devDistPluginDescriptorMode(lines)) {
+    EMBEDDED_PRODUCT_MODE -> {
+      val request = parseDevDistEmbeddedProductDescriptorRequest(lines)
+      writeOutput(request.output, resolveEmbeddedProductDescriptorFromPlan(request))
+    }
+    APPLICATION_INFO_MODE -> {
+      val request = parseDevDistFrontendApplicationInfoRequest(lines)
+      writeOutput(request.output, resolveFrontendApplicationInfo(request).encodeToByteArray())
+    }
+  }
+}
+
+private fun writeOutput(output: Path, content: ByteArray) {
+  Files.createDirectories(output.parent)
+  Files.write(output, content)
+}
+
+internal const val EMBEDDED_PRODUCT_MODE: String = "--embedded-product"
+internal const val APPLICATION_INFO_MODE: String = "--application-info"
+
+/** The one mode flag of the request. A request states exactly one of [EMBEDDED_PRODUCT_MODE] and [APPLICATION_INFO_MODE]. */
+internal fun devDistPluginDescriptorMode(lines: List<String>): String {
+  val modes = lines.filter { it == EMBEDDED_PRODUCT_MODE || it == APPLICATION_INFO_MODE }
+  require(modes.size == 1) { "Exactly one of $EMBEDDED_PRODUCT_MODE and $APPLICATION_INFO_MODE is required, got $modes" }
+  return modes.single()
+}
+
+/** The declared inputs of the application info of one embedded frontend. */
+internal class DevDistFrontendApplicationInfoRequest(
+  @JvmField val output: Path,
+  @JvmField val clientApplicationInfo: Path,
+  @JvmField val productApplicationInfo: Path,
+  @JvmField val buildNumber: Path,
+  @JvmField val eapOverride: String? = null,
+  @JvmField val versionSuffixOverride: String? = null,
+  @JvmField val nightly: Boolean = false,
+  @JvmField val branchName: String? = null,
+)
+
+/** The application info XML of one embedded frontend from declared files and no product properties. */
+internal fun resolveFrontendApplicationInfo(request: DevDistFrontendApplicationInfoRequest): String {
+  return prepareCwmClientApplicationInfo(
+    clientFile = request.clientApplicationInfo,
+    productFile = request.productApplicationInfo,
+    buildNumberFile = request.buildNumber,
+    isEapOverride = request.eapOverride,
+    versionSuffixOverride = request.versionSuffixOverride,
+    nightlyBuild = request.nightly,
+    branchName = request.branchName,
+  )
 }
 
 /** The declared inputs of one embedded product descriptor. */
@@ -240,8 +289,8 @@ internal fun parseDevDistEmbeddedProductDescriptorRequest(lines: List<String>): 
     val option = if (separator == -1) line else line.substring(0, separator)
     val value = if (separator == -1) "" else line.substring(separator + 1)
     when (option) {
-      "--embedded-product" -> {
-        require(value.isEmpty() && !modeSeen) { "--embedded-product is a flag and is declared once" }
+      EMBEDDED_PRODUCT_MODE -> {
+        require(value.isEmpty() && !modeSeen) { "$EMBEDDED_PRODUCT_MODE is a flag and is declared once" }
         modeSeen = true
       }
       "--out" -> output = Path.of(value)
@@ -254,7 +303,7 @@ internal fun parseDevDistEmbeddedProductDescriptorRequest(lines: List<String>): 
     }
   }
 
-  require(modeSeen) { "--embedded-product is required" }
+  require(modeSeen) { "$EMBEDDED_PRODUCT_MODE is required" }
   return DevDistEmbeddedProductDescriptorRequest(
     output = requireNotNull(output) { "--out is required" },
     source = requireNotNull(source) { "--source is required" },
@@ -262,6 +311,62 @@ internal fun parseDevDistEmbeddedProductDescriptorRequest(lines: List<String>): 
     descriptorsInJar = descriptorsInJar,
     modules = modules,
     separateJarModules = separateJarModules,
+  )
+}
+
+/**
+ * The argument grammar of the `--application-info` mode. The three file options and `--out` are required. The four
+ * option overrides default to the values of a dev build: no EAP override, no suffix override, not nightly, no branch.
+ */
+internal fun parseDevDistFrontendApplicationInfoRequest(lines: List<String>): DevDistFrontendApplicationInfoRequest {
+  var output: Path? = null
+  var clientApplicationInfo: Path? = null
+  var productApplicationInfo: Path? = null
+  var buildNumber: Path? = null
+  var eapOverride: String? = null
+  var versionSuffixOverride: String? = null
+  var nightly = false
+  var branchName: String? = null
+  var modeSeen = false
+
+  for (line in lines) {
+    if (line.isEmpty()) {
+      continue
+    }
+
+    val separator = line.indexOf('=')
+    val option = if (separator == -1) line else line.substring(0, separator)
+    val value = if (separator == -1) "" else line.substring(separator + 1)
+    when (option) {
+      APPLICATION_INFO_MODE -> {
+        require(value.isEmpty() && !modeSeen) { "$APPLICATION_INFO_MODE is a flag and is declared once" }
+        modeSeen = true
+      }
+      "--out" -> output = Path.of(value)
+      "--client-application-info" -> clientApplicationInfo = Path.of(value)
+      "--product-application-info" -> productApplicationInfo = Path.of(value)
+      "--build-number" -> buildNumber = Path.of(value)
+      "--eap-override" -> eapOverride = value.ifEmpty { null }
+      "--version-suffix-override" -> versionSuffixOverride = value.ifEmpty { null }
+      "--nightly" -> {
+        require(value.isEmpty()) { "--nightly is a flag" }
+        nightly = true
+      }
+      "--branch-name" -> branchName = value.ifEmpty { null }
+      else -> throw IllegalArgumentException("Unknown frontend application info option '$option'")
+    }
+  }
+
+  require(modeSeen) { "$APPLICATION_INFO_MODE is required" }
+  return DevDistFrontendApplicationInfoRequest(
+    output = requireNotNull(output) { "--out is required" },
+    clientApplicationInfo = requireNotNull(clientApplicationInfo) { "--client-application-info is required" },
+    productApplicationInfo = requireNotNull(productApplicationInfo) { "--product-application-info is required" },
+    buildNumber = requireNotNull(buildNumber) { "--build-number is required" },
+    eapOverride = eapOverride,
+    versionSuffixOverride = versionSuffixOverride,
+    nightly = nightly,
+    branchName = branchName,
   )
 }
 

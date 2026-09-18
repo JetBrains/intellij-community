@@ -13,14 +13,17 @@ import (
 	"jetbrains.com/content-module-packer/internal/pluginpack"
 )
 
+// TestArguments refuses an unknown option, a malformed option, a repeated option, a missing option, and a version
+// outside the range. The deleted recipe options are unknown options.
 func TestArguments(t *testing.T) {
 	for _, arguments := range [][]string{
-		nil, {"--unknown=value"}, {"--recipe"}, {"--recipe="}, {"--recipe=one", "--recipe=two"},
-		{"--projection=plan.json", "--recipe=recipe.json"},
+		nil, {"--unknown=value"}, {"--projection"}, {"--projection="}, {"--projection=one", "--projection=two"},
 		{"--projection=plan.json"},
-		{"--recipe=recipe.json", "--catalogue=catalogue.json", "--output-dir=out", "--inventory=inventory.json", "--assets=assets.json"},
+		{"--recipe=recipe.json", "--catalogue=catalogue.json", "--output-dir=out", "--inventory=inventory.json"},
 		{"--projection=plan.json", "--input-catalogue=catalogue.json", "--classpath-descriptor=descriptor.xml", "--plugin-directory=plugins/x",
 			"--execution-version=1", "--output-dir=out", "--inventory=inventory.json", "--assets=assets.json", "--classpath=classpath.txt", "--catalogue=c.json"},
+		{"--projection=plan.json", "--input-catalogue=catalogue.json", "--classpath-descriptor=descriptor.xml", "--plugin-directory=plugins/x",
+			"--execution-version=1", "--output-dir=out", "--inventory=inventory.json", "--assets=assets.json", "--classpath=classpath.txt", "--recipe=recipe.json"},
 		{"--projection=plan.json", "--input-catalogue=catalogue.json", "--classpath-descriptor=descriptor.xml", "--plugin-directory=plugins/x",
 			"--execution-version=4", "--output-dir=out", "--inventory=inventory.json", "--assets=assets.json", "--classpath=classpath.txt"},
 	} {
@@ -29,45 +32,9 @@ func TestArguments(t *testing.T) {
 			t.Fatalf("arguments %v: code=%d, output=%q, errors=%q", arguments, code, &output, &errors)
 		}
 	}
-}
-
-func TestRun(t *testing.T) {
-	for _, stale := range []bool{false, true} {
-		root := t.TempDir()
-		assets := []pluginpack.Asset{{Destination: "lib/empty.jar", Producer: "remainder"}}
-		recipe := pluginpack.Recipe{Version: 1, Plugin: "example", LayoutSignature: "signature", Assets: assets,
-			Operations: []pluginpack.Operation{{Kind: "jar", Destination: "lib/empty.jar", Options: &pluginpack.JarOptions{Directories: "none"}}}}
-		catalogue := pluginpack.Catalogue{Version: 1}
-		if stale {
-			catalogue.Artifacts = []pluginpack.Artifact{{ID: "unused", Kind: "file", Root: filepath.Join(root, "unused.jar")}}
-		}
-		var arguments []string
-		for name, document := range map[string]any{"recipe": recipe, "catalogue": catalogue} {
-			file := filepath.Join(root, name+".json")
-			data, err := json.Marshal(document)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if err := os.WriteFile(file, data, 0o644); err != nil {
-				t.Fatal(err)
-			}
-			arguments = append(arguments, "--"+name+"="+file)
-		}
-		arguments = append(arguments, "--output-dir="+filepath.Join(root, "payload"), "--inventory="+filepath.Join(root, "inventory.json"))
-		var output, errors bytes.Buffer
-		code := run(arguments, &output, &errors)
-		if stale {
-			if code != 1 || errors.Len() == 0 || output.Len() != 0 {
-				t.Fatalf("unused catalogue input: code=%d, output=%q, errors=%q", code, &output, &errors)
-			}
-		} else {
-			if code != 0 || output.Len() == 0 || errors.Len() != 0 {
-				t.Fatalf("run: code=%d, output=%q, errors=%q", code, &output, &errors)
-			}
-			if _, err := os.Stat(filepath.Join(root, "payload/lib/empty.jar")); err != nil {
-				t.Fatal(err)
-			}
-		}
+	var output, errors bytes.Buffer
+	if code := run([]string{"--recipe=recipe.json"}, &output, &errors); code != 2 || !strings.Contains(errors.String(), `unknown option "--recipe"`) {
+		t.Fatalf("--recipe: code=%d, output=%q, errors=%q", code, &output, &errors)
 	}
 }
 
@@ -161,7 +128,7 @@ func TestProjectionRunWritesThePluginTheAssetsAndTheClassPath(t *testing.T) {
 
 func TestProjectionRunRefusesAKotlinPreparationAndAStaleVersion(t *testing.T) {
 	kotlinPlan := strings.Replace(projectionPlan, `"reusableArtifacts"`, `"preparations": [{"id": "native", "inputs": ["tool"], "outputs": ["native:output"], "modelSignature": "x"}],
-  "operations": [{"id": "native", "kind": "native-presigned", "input": {"artifact": "tool"}, "output": "native:output", "manifest": "keep", "filter": "library"}],
+  "operations": [{"id": "native", "kind": "library-layout-patches", "input": {"artifact": "tool"}, "output": "native:output", "manifest": "keep", "libraryLayout": {"any": 1}}],
   "reusableArtifacts"`, 1)
 	kotlinPlan = strings.Replace(kotlinPlan, `"inputs": ["tool"], "mode": 493`, `"inputs": ["native:output"], "mode": 493`, 1)
 	for name, scenario := range map[string]struct {

@@ -3,163 +3,65 @@ package org.jetbrains.intellij.build.dev
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
+import org.jetbrains.intellij.build.devDist.DISTRIBUTION_ASSET_SCOPE
 import org.jetbrains.intellij.build.devDist.JarSourceRecipe
 import org.jetbrains.intellij.build.devDist.JarWriterRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
 import org.jetbrains.intellij.build.devDist.PluginPackingPreparation
 import org.jetbrains.intellij.build.devDist.planPluginPacking
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.io.TempDir
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.nio.file.Files
-import java.nio.file.Path
-import java.util.zip.GZIPInputStream
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
 
 /**
- * The Kotlin layout-assets executor after the Go packer took the tree and entries transforms: the `gzip-xml-archive`
- * entries operation and the `file` operation. The executor cases of the Go transforms live in `layout_test.go`.
+ * The generation-time rules of a layout-assets operation and of its consumers in the plan. The Go packer executes every
+ * operation; the executor cases of every transform live in `layout_test.go`.
  */
 internal class DevPluginLayoutAssetPreparationTest {
   @Test
-  fun `gzip XML archives accept JAR files and keep source order`(@TempDir tempDir: Path) {
-    val first = tempDir.resolve("first.jar")
-    val second = tempDir.resolve("second.zip")
-    writeZip(first, listOf(
-      TestZipEntry("a.xml", "a".toByteArray()),
-      TestZipEntry("same.xml", "first".toByteArray()),
-    ))
-    writeZip(second, listOf(
-      TestZipEntry("b.xml", "b".toByteArray()),
-      TestZipEntry("same.xml", "second".toByteArray()),
-    ))
-
-    val result = runPreparation(
-      tempDir,
-      gzipXmlArchivePreparation(sources = listOf(0, 1)),
-      listOf(TestInput("first", first), TestInput("second", second)),
-    )
-    val entries = result.sources.single().sources.single().entries
-
-    assertThat(entries.map(DevPluginPreparedEntry::name)).containsExactly(
-      "resources/a.xml.gzip",
-      "resources/same.xml.gzip",
-      "resources/b.xml.gzip",
-    )
-    assertThat(entries.map { readGzip(result.content(it)) }).containsExactly("a", "first", "b")
-  }
-
-  @Test
-  fun `gzip XML archives read zip and jar archives only`(@TempDir tempDir: Path) {
-    val archive = Files.writeString(tempDir.resolve("resources.tar.gz"), "not read")
-
-    assertThatThrownBy {
-      runPreparation(tempDir, gzipXmlArchivePreparation(sources = listOf(0)), listOf(TestInput("archive", archive)))
-    }.hasMessageContaining("reads a zip or jar archive")
-  }
-
-  @Test
-  fun `gzip XML archives reject an entry that is not XML`(@TempDir tempDir: Path) {
-    val archive = tempDir.resolve("resources.jar")
-    writeZip(archive, listOf(TestZipEntry("a.xml", "a".toByteArray()), TestZipEntry("notes.txt", "text".toByteArray())))
-
-    assertThatThrownBy {
-      runPreparation(tempDir, gzipXmlArchivePreparation(sources = listOf(0)), listOf(TestInput("archive", archive)))
-    }.hasMessageContaining("Unexpected file 'notes.txt'")
-  }
-
-  @Test
-  fun `inline text produces one exact file without inputs`(@TempDir tempDir: Path) {
-    val result = runPreparation(
-      tempDir,
-      DevPluginLayoutAssetPreparation(
-        format = "file",
-        root = "jre-build.txt",
-        assets = listOf(DevPluginLayoutAsset(
-          destination = "jre-build.txt",
-          transform = DevPluginLayoutAssetTransform.inlineText("21.0.7"),
-        )),
-      ),
-      emptyList(),
-    )
-    val entries = result.sources.single().sources.single().entries
-
-    assertThat(entries.map(DevPluginPreparedEntry::name)).containsExactly("jre-build.txt")
-    assertThat(result.content(entries.single())).isEqualTo("21.0.7".toByteArray())
-  }
-
-  @Test
-  fun `a file layout asset copies one regular file`(@TempDir tempDir: Path) {
-    val source = Files.writeString(tempDir.resolve("build.txt"), "build")
-
-    val result = runPreparation(
-      tempDir,
-      DevPluginLayoutAssetPreparation(
-        format = "file",
-        root = "jre-build.txt",
-        assets = listOf(DevPluginLayoutAsset(destination = "jre-build.txt", sources = listOf(0))),
-      ),
-      listOf(TestInput("build", source)),
-    )
-    val entries = result.sources.single().sources.single().entries
-
-    assertThat(entries.map(DevPluginPreparedEntry::name)).containsExactly("jre-build.txt")
-    assertThat(result.content(entries.single())).isEqualTo("build".toByteArray())
-  }
-
-  @Test
-  fun `a file layout asset requires a regular file`(@TempDir tempDir: Path) {
-    val source = Files.createDirectories(tempDir.resolve("build"))
-
-    assertThatThrownBy {
-      runPreparation(
-        tempDir,
-        DevPluginLayoutAssetPreparation(
-          format = "file",
-          root = "jre-build.txt",
-          assets = listOf(DevPluginLayoutAsset(destination = "jre-build.txt", sources = listOf(0))),
-        ),
-        listOf(TestInput("build", source, "directory")),
-      )
-    }.hasMessageContaining("requires a regular file")
-  }
-
-  @Test
-  fun `a gzip-xml-archive asset shares its operation with gzip-xml-archive assets only`() {
+  fun `a gzip-xml-archive asset requires archive inputs and an entries output`() {
     val gzip = DevPluginLayoutAsset(destination = "resources", sources = listOf(0), transform = DevPluginLayoutAssetTransform.gzipXmlArchive())
     val inputs = listOf(DevPluginReference("archive"), DevPluginReference("tree"))
 
-    assertThatThrownBy {
-      validateLayoutAssets(DevPluginLayoutAssetPreparation(
-        format = "entries",
-        assets = listOf(
-          gzip,
-          DevPluginLayoutAsset(destination = "", sources = listOf(1), transform = DevPluginLayoutAssetTransform.treeMap(listOf(DevPluginLayoutAssetMapping()))),
-        ),
-      ), inputs)
-    }.hasMessageContaining("gzip-xml-archive assets only")
+    validateLayoutAssets(DevPluginLayoutAssetPreparation(
+      format = "entries",
+      assets = listOf(
+        gzip,
+        DevPluginLayoutAsset(destination = "", sources = listOf(1), transform = DevPluginLayoutAssetTransform.treeMap(listOf(DevPluginLayoutAssetMapping()))),
+      ),
+    ), inputs)
     assertThatThrownBy {
       validateLayoutAssets(DevPluginLayoutAssetPreparation(format = "tree", root = "payload", assets = listOf(gzip)), inputs)
+    }.hasMessageContaining("an entries output")
+    assertThatThrownBy {
+      validateLayoutAssets(DevPluginLayoutAssetPreparation(format = "entries", assets = listOf(gzip.copy(sources = emptyList()))), inputs)
     }.hasMessageContaining("an entries output")
   }
 
   @Test
-  fun `a Go-executed operation is emitted into the recipe and reads no preparation input`(@TempDir tempDir: Path) {
-    val module = Files.writeString(tempDir.resolve("module.jar"), "module")
-    val archive = Files.writeString(tempDir.resolve("assets.tar.gz"), "archive")
-    val tree = Files.createDirectories(tempDir.resolve("properties"))
+  fun `a file layout asset holds one plain copy or one inline text at its root`() {
+    val inputs = listOf(DevPluginReference("build"))
+    val inline = DevPluginLayoutAsset(destination = "jre-build.txt", transform = DevPluginLayoutAssetTransform.inlineText("21.0.7"))
+    val copy = DevPluginLayoutAsset(destination = "jre-build.txt", sources = listOf(0))
+
+    validateLayoutAssets(DevPluginLayoutAssetPreparation(format = "file", root = "jre-build.txt", assets = listOf(inline)), inputs)
+    validateLayoutAssets(DevPluginLayoutAssetPreparation(format = "file", root = "jre-build.txt", assets = listOf(copy)), inputs)
+    assertThatThrownBy {
+      validateLayoutAssets(DevPluginLayoutAssetPreparation(format = "file", root = "jre-build.txt", assets = listOf(inline, copy)), inputs)
+    }.hasMessageContaining("requires one asset")
+    assertThatThrownBy {
+      validateLayoutAssets(DevPluginLayoutAssetPreparation(format = "file", root = "other.txt", assets = listOf(inline)), inputs)
+    }.hasMessageContaining("one asset at its root")
+    assertThatThrownBy {
+      validateLayoutAssets(DevPluginLayoutAssetPreparation(
+        format = "file", root = "jre-build.txt",
+        assets = listOf(copy.copy(transform = DevPluginLayoutAssetTransform.archiveTree())),
+      ), inputs)
+    }.hasMessageContaining("plain copy or inline text only")
+  }
+
+  @Test
+  fun `every Go-executed operation binds its consumers in the plan`() {
     val treeAssets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0), transform = DevPluginLayoutAssetTransform.archiveTree(stripComponents = 1)))
-    val entryAssets = listOf(DevPluginLayoutAsset(
-      destination = "",
-      sources = listOf(0),
-      transform = DevPluginLayoutAssetTransform.treeMap(
-        mappings = listOf(DevPluginLayoutAssetMapping(pattern = "*.properties", destination = "messages")),
-        excludes = listOf("private.properties"),
-        directoryExcludes = listOf("tests", "**/tests"),
-      ),
-    ))
+    val fileAssets = listOf(DevPluginLayoutAsset(destination = "jre-build.txt", transform = DevPluginLayoutAssetTransform.inlineText("21.0.7")))
     val operations = listOf(
       DevPluginPreparationOperation(
         id = "module-filter:module", input = DevPluginReference("module"), output = "module-filter:module:output", manifest = "drop",
@@ -170,15 +72,22 @@ internal class DevPluginLayoutAssetPreparationTest {
         manifest = "keep", layoutAssets = DevPluginLayoutAssetPreparation(format = "tree", root = "payload", assets = treeAssets),
       ),
       DevPluginPreparationOperation(
-        id = "layout-assets:entries", kind = "layout-assets", inputs = listOf(DevPluginReference("tree")), output = "layout-assets:entries:output",
-        manifest = "keep", layoutAssets = DevPluginLayoutAssetPreparation(format = "entries", assets = entryAssets),
+        id = "layout-assets:gzip", kind = "layout-assets", inputs = listOf(DevPluginReference("dialects")), output = "layout-assets:gzip:output",
+        manifest = "keep", layoutAssets = gzipXmlArchivePreparation(sources = listOf(0)),
+      ),
+      DevPluginPreparationOperation(
+        id = "layout-assets:file", kind = "layout-assets", output = "layout-assets:file:output",
+        manifest = "keep", layoutAssets = DevPluginLayoutAssetPreparation(format = "file", root = "jre-build.txt", assets = fileAssets),
+      ),
+      DevPluginPreparationOperation(
+        id = "native-select:library", kind = "native-select", input = DevPluginReference("library"), output = "native-select:library:output",
+        manifest = "keep", filter = "library",
       ),
     )
     assertThat(operations).allMatch(::isGoExecutedOperation)
-    val recipe = DevPluginPreparationRecipe(version = 2, operations = operations)
     val plan = planPluginPacking(
       plugin = "test.plugin",
-      variant = "test",
+      variant = "linux_x64",
       assets = listOf(
         PluginPackingAsset(
           destination = "lib/main.jar", inputs = listOf("module-filter:module:output"),
@@ -186,14 +95,22 @@ internal class DevPluginLayoutAssetPreparationTest {
         ),
         PluginPackingAsset(destination = "payload", inputs = listOf("layout-assets:tree:output"), kind = "tree", classPath = false),
         PluginPackingAsset(
-          destination = "lib/localization.jar", inputs = listOf("layout-assets:entries:output"),
-          recipe = CanonicalJarRecipe(listOf(JarSourceRecipe("layout-assets:entries:output", "prepared", "prepared")), JarWriterRecipe(manifest = "drop")),
+          destination = "lib/dialects.jar", inputs = listOf("layout-assets:gzip:output"),
+          recipe = CanonicalJarRecipe(listOf(JarSourceRecipe("layout-assets:gzip:output", "prepared", "prepared")), JarWriterRecipe(manifest = "drop")),
+        ),
+        PluginPackingAsset(destination = "jre-build.txt", inputs = listOf("layout-assets:file:output"), classPath = false),
+        PluginPackingAsset(
+          destination = "lib/library.jar", inputs = listOf("native-select:library:output"),
+          recipe = CanonicalJarRecipe(listOf(JarSourceRecipe("native-select:library:output", "prepared", "prepared")), JarWriterRecipe(manifest = "keep")),
+        ),
+        PluginPackingAsset(
+          destination = "lib/native", inputs = listOf("native-select:library:output"), kind = "tree", classPath = false, scope = DISTRIBUTION_ASSET_SCOPE,
         ),
       ),
       preparations = operations.map { operation ->
         PluginPackingPreparation(
           id = operation.id,
-          inputs = (if (operation.kind == "module-filter") listOf(operation.input) else operation.inputs).map(DevPluginReference::artifact),
+          inputs = operation.sourceReferences().map(DevPluginReference::artifact),
           outputs = listOf(operation.output),
           modelSignature = devPluginPreparationOperationSignature(operation, version = 2),
         )
@@ -201,57 +118,21 @@ internal class DevPluginLayoutAssetPreparationTest {
       preparationRoots = emptyList(),
       artifacts = emptyList(),
     )
-    val catalogue = DevPluginArtifactCatalogue(artifacts = listOf(
-      DevPluginArtifact(id = "module", kind = "file", root = module.toString()),
-      DevPluginArtifact(id = "archive", kind = "file", root = archive.toString()),
-      DevPluginArtifact(id = "tree", kind = "directory", root = tree.toString()),
-    ))
 
-    validateDevPluginOperations(plan, catalogue.toPlanCatalogue(), recipe.operations)
-    val derivation = deriveDevPluginInputs(plan, catalogue.toPlanCatalogue(), recipe.operations)
-    assertThat(derivation.preparationInputs).isEmpty()
-    assertThat(derivation.remainderInputs).containsExactly("module", "archive", "tree")
-    assertThat(derivation.inputs).isEqualTo(derivation.remainderInputs)
-    val actions = compileDevPluginPreparationActions(recipe, plan, catalogue)
-    assertThat(actions).isEmpty()
-    assertThat(devPluginPreparationKind(recipe.operations)).isEqualTo("none")
-
-    val result = prepareDevPlugin(
-      plan = plan,
-      runtimeLayoutSignature = plan.layoutSignature,
-      remainderInputIds = derivation.inputs,
-      catalogue = catalogue,
-      cachedDescriptorContent = "<idea-plugin/>".toByteArray(),
-      pluginDirectory = Path.of("plugins/test"),
-      outputDirectory = tempDir.resolve("prepared-output"),
-      preparationActions = actions,
-      goExecutedOperations = recipe.operations,
-    )
-
-    assertThat(result.catalogue.artifacts.map(DevPluginArtifact::id)).containsExactly("module", "archive", "tree")
-    assertThat(result.recipe.operations).containsExactly(
-      DevPluginExecutionOperation(
-        kind = "jar", destination = "lib/main.jar", mode = 420, options = DevPluginExecutionJarOptions(),
-        sources = listOf(DevPluginExecutionSource(
-          kind = "archive", input = DevPluginReference("module"), filter = "module", excludes = listOf("drop/**"), manifest = "drop",
-        )),
-      ),
-      DevPluginExecutionOperation(
-        kind = "layout-tree", destination = "payload",
-        layout = DevPluginExecutionLayoutAssets(inputs = listOf(DevPluginReference("archive")), assets = treeAssets),
-      ),
-      DevPluginExecutionOperation(
-        kind = "jar", destination = "lib/localization.jar", mode = 420, options = DevPluginExecutionJarOptions(),
-        sources = listOf(DevPluginExecutionSource(
-          kind = "layout", manifest = "keep", layout = DevPluginExecutionLayoutAssets(inputs = listOf(DevPluginReference("tree")), assets = entryAssets),
-        )),
-      ),
-    )
-    assertThat(Files.list(result.preparedDirectory).use { it.count() }).isZero()
+    for (operation in operations.filter { it.kind == "layout-assets" }) {
+      validateDevPluginLayoutAssetConsumers(operation, plan)
+    }
+    validateDevPluginNativeSelectConsumers(operations.last(), plan)
+    val misplacedTree = operations[1].copy(layoutAssets = DevPluginLayoutAssetPreparation(format = "tree", root = "other", assets = treeAssets))
+    assertThatThrownBy { validateDevPluginLayoutAssetConsumers(misplacedTree, plan) }.hasMessageContaining("one tree asset at 'other'")
+    val misplacedFile = operations[3].copy(layoutAssets = DevPluginLayoutAssetPreparation(format = "file", root = "other.txt", assets = fileAssets))
+    assertThatThrownBy { validateDevPluginLayoutAssetConsumers(misplacedFile, plan) }.hasMessageContaining("one file asset at 'other.txt'")
+    assertThatThrownBy { validateDevPluginNativeSelectConsumers(operations.last().copy(output = "module-filter:module:output"), plan) }
+      .hasMessageContaining("one distribution tree consumer and one prepared jar source")
   }
 
   @Test
-  fun `the preparation kind follows the operation kinds`() {
+  fun `every operation of a plan file is Go-executed`() {
     val moduleFilter = DevPluginPreparationOperation(id = "filter", input = DevPluginReference("module"), output = "filtered", manifest = "keep")
     val gzip = DevPluginPreparationOperation(
       id = "gzip", kind = "layout-assets", inputs = listOf(DevPluginReference("jar")), output = "gzip:output", manifest = "keep",
@@ -264,20 +145,35 @@ internal class DevPluginLayoutAssetPreparationTest {
         assets = listOf(DevPluginLayoutAsset(destination = "jre-build.txt", transform = DevPluginLayoutAssetTransform.inlineText("21"))),
       ),
     )
+    val nativeSelect = DevPluginPreparationOperation(
+      id = "native", kind = "native-select", input = DevPluginReference("library"), output = "native:output", manifest = "keep", filter = "library",
+    )
     val presigned = DevPluginPreparationOperation(
-      id = "native", kind = "native-presigned", input = DevPluginReference("library"), output = "native:output", manifest = "keep", filter = "library",
+      id = "presigned", kind = "native-presigned", input = DevPluginReference("library"), output = "presigned:output", manifest = "keep", filter = "library",
     )
 
     assertThat(isGoExecutedOperation(moduleFilter)).isTrue()
-    assertThat(isGoExecutedOperation(gzip)).isFalse()
-    assertThat(isGoExecutedOperation(inlineFile)).isFalse()
-    assertThat(readsPlatform(presigned)).isTrue()
+    assertThat(isGoExecutedOperation(gzip)).isTrue()
+    assertThat(isGoExecutedOperation(inlineFile)).isTrue()
+    assertThat(isGoExecutedOperation(nativeSelect)).isTrue()
+    assertThat(readsPlatform(nativeSelect)).isTrue()
     assertThat(listOf(moduleFilter, gzip, inlineFile).none(::readsPlatform)).isTrue()
-    assertThat(devPluginPreparationKind(emptyList())).isEqualTo("none")
-    assertThat(devPluginPreparationKind(listOf(moduleFilter))).isEqualTo("none")
-    assertThat(devPluginPreparationKind(listOf(moduleFilter, gzip))).isEqualTo("plain")
-    assertThat(devPluginPreparationKind(listOf(inlineFile))).isEqualTo("plain")
-    assertThat(devPluginPreparationKind(listOf(moduleFilter, presigned))).isEqualTo("callback")
+    assertThat(isGoExecutedOperation(presigned)).isFalse()
+    assertThatThrownBy { devPluginPreparationOperationSignature(presigned, version = 2) }
+      .hasMessageContaining("No Go operation executes 'presigned' of kind 'native-presigned'")
+  }
+
+  @Test
+  fun `a native-select operation requires the library policy and recipe version 2`() {
+    val nativeSelect = DevPluginPreparationOperation(
+      id = "native", kind = "native-select", input = DevPluginReference("library"), output = "native:output", manifest = "keep", filter = "library",
+    )
+
+    assertThat(devPluginPreparationOperationSignature(nativeSelect, version = 2)).isNotEmpty()
+    assertThatThrownBy { devPluginPreparationOperationSignature(nativeSelect, version = 1) }.hasMessageContaining("recipe version 2")
+    for (invalid in listOf(nativeSelect.copy(filter = "module"), nativeSelect.copy(filter = ""), nativeSelect.copy(manifest = "drop"), nativeSelect.copy(excludes = listOf("a/**")))) {
+      assertThatThrownBy { devPluginPreparationOperationSignature(invalid, version = 2) }.hasMessageContaining("original library policy")
+    }
   }
 
   @Test
@@ -331,102 +227,5 @@ internal class DevPluginLayoutAssetPreparationTest {
       id = "layout-assets:test", kind = "layout-assets", inputs = inputs, output = "layout-assets:test:output", manifest = "keep", layoutAssets = preparation,
     )
     devPluginPreparationOperationSignature(operation, version = 2)
-  }
-
-  /** Runs the Kotlin action of one layout-assets operation. The operation must not be Go-executed. */
-  private fun runPreparation(
-    tempDir: Path,
-    preparation: DevPluginLayoutAssetPreparation,
-    inputs: List<TestInput>,
-  ): PreparedLayout {
-    Files.createDirectories(tempDir)
-    val output = "layout-assets:test:output"
-    val references = inputs.map { DevPluginReference(it.id, it.referencePath) }
-    val operation = DevPluginPreparationOperation(
-      id = "layout-assets:test",
-      kind = "layout-assets",
-      inputs = references,
-      output = output,
-      manifest = "keep",
-      layoutAssets = preparation,
-    )
-    assertThat(isGoExecutedOperation(operation)).isFalse()
-    val definition = PluginPackingPreparation(
-      id = operation.id,
-      inputs = references.map(DevPluginReference::artifact).distinct(),
-      outputs = listOf(output),
-      modelSignature = devPluginPreparationOperationSignature(operation, version = 2),
-    )
-    val assets = when (preparation.format) {
-      "entries" -> emptyList()
-      "file" -> listOf(PluginPackingAsset(
-        destination = preparation.root,
-        inputs = listOf(output),
-        mode = preparation.assets.single().mode.takeIf { it != 0 } ?: 420,
-        classPath = false,
-      ))
-      else -> error("The format '${preparation.format}' is executed by the Go packer")
-    }
-    val plan = planPluginPacking(
-      plugin = "test.plugin",
-      variant = "test",
-      assets = assets,
-      preparations = listOf(definition),
-      preparationRoots = if (preparation.format == "entries") listOf(output) else emptyList(),
-      artifacts = emptyList(),
-    )
-    val catalogue = DevPluginArtifactCatalogue(artifacts = inputs.map {
-      DevPluginArtifact(id = it.id, kind = it.kind, root = it.path.toString())
-    })
-    val recipe = DevPluginPreparationRecipe(version = 2, operations = listOf(operation))
-    validateDevPluginOperations(plan, catalogue.toPlanCatalogue(), recipe.operations)
-    deriveDevPluginInputs(plan, catalogue.toPlanCatalogue(), recipe.operations)
-    val action = compileDevPluginPreparationActions(recipe, plan, catalogue).getValue(operation.id)
-    val context = DevPluginPreparationContext(
-      definition = definition,
-      catalogue = PreparationCatalogue(catalogue),
-      outputDirectory = tempDir.resolve("prepared"),
-      plugin = plan.plugin,
-      layoutSignature = plan.layoutSignature,
-    )
-    val sources = action.prepare(context)
-    return PreparedLayout(root = tempDir.resolve("prepared/0"), sources = sources)
-  }
-
-  private fun writeZip(path: Path, entries: List<TestZipEntry>) {
-    val bytes = ByteArrayOutputStream()
-    ZipOutputStream(bytes).use { archive ->
-      for (entry in entries) {
-        archive.putNextEntry(ZipEntry(entry.name).apply { time = 0 })
-        archive.write(entry.content)
-        archive.closeEntry()
-      }
-    }
-    Files.write(path, bytes.toByteArray())
-  }
-
-  private fun readGzip(content: ByteArray): String {
-    return GZIPInputStream(ByteArrayInputStream(content)).use { it.readAllBytes().toString(Charsets.UTF_8) }
-  }
-
-  private data class TestInput(
-    @JvmField val id: String,
-    @JvmField val path: Path,
-    @JvmField val kind: String = "file",
-    @JvmField val referencePath: String = "",
-  )
-
-  private class TestZipEntry(
-    @JvmField val name: String,
-    @JvmField val content: ByteArray,
-  )
-
-  private data class PreparedLayout(
-    @JvmField val root: Path,
-    @JvmField val sources: List<DevPluginPreparedSource>,
-  ) {
-    fun content(entry: DevPluginPreparedEntry): ByteArray {
-      return Files.readAllBytes(root.resolve(requireNotNull(entry.input).path))
-    }
   }
 }

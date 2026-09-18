@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dev
 
+import com.intellij.openapi.util.JDOMUtil
+import org.jdom.Namespace
 import org.jetbrains.intellij.build.impl.BazelBuildInputs
 import org.jetbrains.intellij.build.impl.checkProducedPluginDescriptor
 import org.assertj.core.api.Assertions.assertThat
@@ -13,11 +15,12 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 /**
- * The embedded product descriptor resolver of `DevDistPluginDescriptorMain`, and the guard on a produced descriptor.
+ * The two modes of `DevDistPluginDescriptorMain`, and the guard on a produced descriptor.
  *
  * The resolver reads declared files only. A descriptor the request does not declare fails the run instead of loading a
- * project model. The two refusals of the guard and the no-manifest case are its negative control, and the accepted arm
- * is the reference. A check that cannot fail is not evidence, which is ADR 0006 rule 2.
+ * project model. The application info mode stamps the client template from three declared files. The two refusals of
+ * the guard and the no-manifest case are its negative control, and the accepted arm is the reference. A check that
+ * cannot fail is not evidence, which is ADR 0006 rule 2.
  */
 class DevDistPluginDescriptorTest {
   @Test
@@ -70,6 +73,81 @@ class DevDistPluginDescriptorTest {
       .containsExactly(dir.resolve("first.jar"), dir.resolve("second.jar"))
     assertThat(request.modules).containsExactly("intellij.frontend.split.customization", "intellij.example.backend")
     assertThat(request.separateJarModules).containsExactly("intellij.example.backend")
+  }
+
+  @Test
+  fun `a request states exactly one mode`() {
+    assertThat(devDistPluginDescriptorMode(listOf("--application-info", "--out=x"))).isEqualTo(APPLICATION_INFO_MODE)
+    assertThatThrownBy { devDistPluginDescriptorMode(listOf("--out=x")) }.isInstanceOf(IllegalArgumentException::class.java)
+    assertThatThrownBy { devDistPluginDescriptorMode(listOf("--embedded-product", "--application-info")) }
+      .isInstanceOf(IllegalArgumentException::class.java)
+  }
+
+  /**
+   * The `--application-info` mode: the client template takes the build number as `JBC-<build>`, and the product
+   * application info supplies the names, the version and the release date. The edition stays the client's own.
+   */
+  @Test
+  fun `the frontend application info takes the product values`(@TempDir dir: Path) {
+    val request = parseDevDistFrontendApplicationInfoRequest(listOf(
+      "--application-info",
+      "--out=${dir.resolve("out/JetBrainsClientApplicationInfo.xml")}",
+      "--client-application-info=${write(dir.resolve("client.xml"), CLIENT_APPLICATION_INFO)}",
+      "--product-application-info=${write(dir.resolve("product.xml"), PRODUCT_APPLICATION_INFO)}",
+      "--build-number=${write(dir.resolve("build.txt"), "263.SNAPSHOT\n")}",
+      "--branch-name=feature/client",
+    ))
+    assertThat(request.eapOverride).isNull()
+    assertThat(request.versionSuffixOverride).isNull()
+    assertThat(request.nightly).isFalse()
+
+    val result = JDOMUtil.load(resolveFrontendApplicationInfo(request))
+    val namespace = Namespace.getNamespace("http://jetbrains.org/intellij/schema/application-info")
+    val version = result.getChild("version", namespace)
+    val build = result.getChild("build", namespace)
+    val names = result.getChild("names", namespace)
+    assertThat(build.getAttributeValue("number")).isEqualTo("JBC-263.SNAPSHOT")
+    assertThat(build.getAttributeValue("date")).isEqualTo("__BUILD_DATE__")
+    assertThat(build.getAttributeValue("majorReleaseDate")).isEqualTo("20260909")
+    assertThat(build.getAttributeValue("branchName")).isEqualTo("feature/client")
+    assertThat(names.getAttributeValue("fullname")).isEqualTo("IntelliJ IDEA Ultimate")
+    assertThat(names.getAttributeValue("edition")).isNull()
+    assertThat(names.getAttributeValue("motto")).isEqualTo("Code")
+    assertThat(version.getAttributeValue("micro")).isEqualTo("2")
+    assertThat(version.getAttributeValue("patch")).isEqualTo("1")
+  }
+
+  @Test
+  fun `the frontend application info refuses an empty build number`(@TempDir dir: Path) {
+    val request = DevDistFrontendApplicationInfoRequest(
+      output = dir.resolve("out.xml"),
+      clientApplicationInfo = write(dir.resolve("client.xml"), CLIENT_APPLICATION_INFO),
+      productApplicationInfo = write(dir.resolve("product.xml"), PRODUCT_APPLICATION_INFO),
+      buildNumber = write(dir.resolve("build.txt"), "\n"),
+    )
+
+    assertThatThrownBy { resolveFrontendApplicationInfo(request) }
+      .isInstanceOf(IllegalArgumentException::class.java)
+      .hasMessageContaining("build number is empty")
+  }
+
+  @Test
+  fun `the frontend application info refuses a product without a unique version element`(@TempDir dir: Path) {
+    val request = DevDistFrontendApplicationInfoRequest(
+      output = dir.resolve("out.xml"),
+      clientApplicationInfo = write(dir.resolve("client.xml"), CLIENT_APPLICATION_INFO),
+      productApplicationInfo = write(dir.resolve("product.xml"), PRODUCT_APPLICATION_INFO.replace("<version ", "<edition ")),
+      buildNumber = write(dir.resolve("build.txt"), "263.SNAPSHOT"),
+    )
+
+    assertThatThrownBy { resolveFrontendApplicationInfo(request) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("no unique version element")
+  }
+
+  private fun write(file: Path, text: String): Path {
+    Files.writeString(file, text)
+    return file
   }
 
   /**
@@ -212,4 +290,21 @@ private val EMBEDDED_BACKEND_EXTENSIONS = """
       <applicationService serviceImplementation="com.example.BackendService"/>
     </extensions>
   </idea-plugin>
+""".trimIndent()
+
+private val CLIENT_APPLICATION_INFO = """
+  <component xmlns="http://jetbrains.org/intellij/schema/application-info">
+    <version major="2026" minor="3" eap="true"/>
+    <company name="JetBrains s.r.o." url="https://www.jetbrains.com/"/>
+    <build number="JBC-__BUILD__" date="__BUILD_DATE__"/>
+    <names product="JetBrainsClient" fullname="JetBrains Client" script="jetbrains_client" motto="Client"/>
+  </component>
+""".trimIndent()
+
+private val PRODUCT_APPLICATION_INFO = """
+  <component xmlns="http://jetbrains.org/intellij/schema/application-info">
+    <version major="2026" minor="3" micro="2" patch="1" full="{0}.{1}.{2}" suffix="EAP" eap="true"/>
+    <build number="IU-__BUILD__" majorReleaseDate="20260909"/>
+    <names product="IDEA" fullname="IntelliJ IDEA Ultimate" edition="ultimate" motto="Code"/>
+  </component>
 """.trimIndent()

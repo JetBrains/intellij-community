@@ -1,9 +1,10 @@
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.util.io.Decompressor
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.dev.extractDevPluginLibraryResources
 import java.nio.file.Path
 
+/** Extracts the one jar of the project library [libraryName] into [targetPath]. The dev-dist plan states it as an `archive-tree` asset. */
 internal data class LibraryResourceGenerator(
   @JvmField val libraryName: String,
   @JvmField val targetPath: String,
@@ -13,6 +14,6 @@ internal data class LibraryResourceGenerator(
     if (jars.size != 1) {
       throw IllegalStateException("$libraryName is expected to have only one jar")
     }
-    extractDevPluginLibraryResources(jars[0], targetDir.resolve(targetPath))
+    Decompressor.Zip(jars[0]).extract(targetDir.resolve(targetPath))
   }
 }

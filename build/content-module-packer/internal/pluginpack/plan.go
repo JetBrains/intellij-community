@@ -13,6 +13,7 @@ import (
 	"jetbrains.com/content-module-packer/internal/filemetadata"
 	"jetbrains.com/content-module-packer/internal/jarpack"
 	"jetbrains.com/content-module-packer/internal/javaglob"
+	"jetbrains.com/content-module-packer/internal/nativelib"
 )
 
 // Execution contains a validated plan. Planning does not access the filesystem.
@@ -273,7 +274,7 @@ func Plan(recipe Recipe, catalogue Catalogue) (*Execution, error) {
 		if err := execution.validateOperation(operation, used, usedLibraries); err != nil {
 			return nil, fmt.Errorf("%s: %w", operation.Destination, err)
 		}
-		writesTree := operation.Kind == "copy-tree" || operation.Kind == "layout-tree"
+		writesTree := operation.Kind == "copy-tree" || operation.Kind == "layout-tree" || operation.Kind == "native-tree"
 		if (assetKind(asset) == "directory") != (operation.Kind == "directory") || (assetKind(asset) == "tree") != writesTree {
 			return nil, fmt.Errorf("stale asset kind at %q", operation.Destination)
 		}
@@ -303,16 +304,40 @@ func (execution *Execution) validateOperation(operation Operation, used, usedLib
 	if operation.Mode > 0o777 {
 		return fmt.Errorf("invalid file mode %o", operation.Mode)
 	}
-	if operation.Layout != nil && operation.Kind != "layout-tree" {
-		return fmt.Errorf("only a layout-tree operation carries layout assets")
+	if operation.Layout != nil && operation.Kind != "layout-tree" && operation.Kind != "layout-file" {
+		return fmt.Errorf("only a layout-tree or a layout-file operation carries layout assets")
+	}
+	if operation.Native != nil && operation.Kind != "native-tree" {
+		return fmt.Errorf("only a native-tree operation carries a native target")
 	}
 	switch operation.Kind {
+	case "native-tree":
+		if execution.recipe.Version < TreeVersion || len(operation.Sources) != 0 || operation.Options != nil || operation.Target != "" ||
+			operation.Mode != 0 && operation.Mode != 0o644 || operation.Input == nil || operation.Input.Path != "" || operation.Native == nil {
+			return fmt.Errorf("native-tree requires version 2 or 3, one archive input, and a native target without file or jar options")
+		}
+		if !nativelib.ValidFamily(nativelib.Family(operation.Native.OS)) || !nativelib.ValidArch(nativelib.Arch(operation.Native.Arch)) {
+			return fmt.Errorf("unknown native target %s_%s", operation.Native.OS, operation.Native.Arch)
+		}
+		artifact, exists := execution.artifacts[operation.Input.Artifact]
+		if !exists || artifact.Kind != "file" {
+			return fmt.Errorf("native-tree requires a declared archive file")
+		}
+		used[artifact.ID] = true
 	case "layout-tree":
 		if execution.recipe.Version < TreeVersion || len(operation.Sources) != 0 || operation.Options != nil || operation.Target != "" ||
 			operation.Mode != 0 && operation.Mode != 0o644 || operation.Input != nil || operation.Layout == nil {
 			return fmt.Errorf("layout-tree requires version 2 or 3 and layout assets without an input, file, or jar options")
 		}
 		return execution.validateLayout(operation.Layout, layoutTreeFormat, used)
+	case "layout-file":
+		if len(operation.Sources) != 0 || operation.Options != nil || operation.Target != "" || operation.Input != nil || operation.Layout == nil {
+			return fmt.Errorf("layout-file requires layout assets without an input, a link target, or jar options")
+		}
+		if len(operation.Layout.Assets) != 1 || operation.Layout.Assets[0].Destination != operation.Destination {
+			return fmt.Errorf("layout-file requires one layout asset at its destination")
+		}
+		return execution.validateLayout(operation.Layout, layoutFileFormat, used)
 	case "copy-tree":
 		if execution.recipe.Version < TreeVersion || len(operation.Sources) != 0 || operation.Options != nil || operation.Target != "" ||
 			operation.Mode != 0 && operation.Mode != 0o644 || operation.Input == nil || operation.Input.Path != "" {
@@ -534,13 +559,16 @@ func (execution *Execution) validateSource(source Source, used, usedLibraries ma
 	switch source.Kind {
 	case "layout":
 		if source.Input != nil || source.Library != "" || source.Filter != "" || len(source.Excludes) != 0 || len(source.Entries) != 0 ||
-			len(source.Overrides) != 0 || source.Layout == nil || jarpack.ManifestMode(source.Manifest) != jarpack.ManifestKeep {
+			len(source.Overrides) != 0 || source.ReserveNatives || source.Layout == nil || jarpack.ManifestMode(source.Manifest) != jarpack.ManifestKeep {
 			return fmt.Errorf("layout source requires layout assets and the keep manifest policy without archive or filter options")
 		}
 		return execution.validateLayout(source.Layout, layoutEntriesFormat, used)
 	case "archive", "library":
 		if len(source.Entries) != 0 {
 			return fmt.Errorf("archive or library source cannot contain prepared entries")
+		}
+		if source.ReserveNatives && (source.Kind != "archive" || len(source.Overrides) != 0) {
+			return fmt.Errorf("native reservation requires an archive source without overrides")
 		}
 		if _, err := sourceFilter(source); err != nil {
 			return err
@@ -587,7 +615,7 @@ func (execution *Execution) validateSource(source Source, used, usedLibraries ma
 			}
 		}
 	case "entries":
-		if source.Input != nil || source.Library != "" || source.Filter != "" || len(source.Excludes) != 0 || len(source.Overrides) != 0 {
+		if source.Input != nil || source.Library != "" || source.Filter != "" || len(source.Excludes) != 0 || len(source.Overrides) != 0 || source.ReserveNatives {
 			return fmt.Errorf("prepared entries cannot contain archive or filter options")
 		}
 		for _, entry := range source.Entries {
@@ -646,12 +674,13 @@ func (execution *Execution) validateReference(reference *Reference, used map[str
 	return nil
 }
 
-// layoutFormat is the shape a layout payload writes: a tree under one root, or the file entries of one jar.
+// layoutFormat is the shape a layout payload writes: a tree under one root, the file entries of one jar, or one file.
 type layoutFormat string
 
 const (
 	layoutTreeFormat    layoutFormat = "tree"
 	layoutEntriesFormat layoutFormat = "entries"
+	layoutFileFormat    layoutFormat = "file"
 )
 
 // validateLayout applies the operation rules of the Kotlin generator to a layout payload without reading the filesystem.
@@ -702,13 +731,6 @@ func validateLayoutAsset(asset LayoutAsset, format layoutFormat, kinds []string)
 	if asset.Transform != nil {
 		kind = asset.Transform.Kind
 	}
-	if asset.Destination == "" {
-		if format != layoutTreeFormat && kind != "tree-map" {
-			return fmt.Errorf("only a tree or a mapped entry asset can use its output root")
-		}
-	} else if err := validateRelativePath(asset.Destination); err != nil {
-		return err
-	}
 	for _, index := range asset.Sources {
 		if index < 0 || index >= len(kinds) {
 			return fmt.Errorf("invalid source index %d", index)
@@ -718,6 +740,20 @@ func validateLayoutAsset(asset LayoutAsset, format layoutFormat, kinds []string)
 		return !slices.ContainsFunc(asset.Sources, func(index int) bool { return kinds[index] != kind })
 	}
 	transform := asset.Transform
+	if asset.Destination == "" {
+		// An entry asset writes its output root when every entry brings its own relative path: a mapped tree, an
+		// extracted archive, a gzip archive, or a copied directory.
+		expands := kind == "tree-map" || kind == "archive-tree" || kind == "gzip-xml-archive" ||
+			transform == nil && len(asset.Sources) == 1 && sourcesAre("directory")
+		if format != layoutTreeFormat && !expands {
+			return fmt.Errorf("only a tree, a mapped entry asset, an extracted archive, a gzip archive, or a copied directory can use its output root")
+		}
+	} else if err := validateRelativePath(asset.Destination); err != nil {
+		return err
+	}
+	if format == layoutFileFormat && (kind != "" && kind != "inline-text" || transform == nil && !sourcesAre("file")) {
+		return fmt.Errorf("a layout file is a plain copy of one file or an inline text")
+	}
 	if transform == nil {
 		if len(asset.Sources) != 1 {
 			return fmt.Errorf("a plain copy requires one source")
@@ -753,8 +789,13 @@ func validateLayoutAsset(asset LayoutAsset, format layoutFormat, kinds []string)
 	}
 	switch kind {
 	case "archive-tree":
-		if format != layoutTreeFormat || len(asset.Sources) != 1 || transform.Text != "" || !sourcesAre("file") {
-			return fmt.Errorf("archive-tree requires one archive file and a tree output")
+		if len(asset.Sources) != 1 || transform.Text != "" || !sourcesAre("file") {
+			return fmt.Errorf("archive-tree requires one archive file")
+		}
+	case "gzip-xml-archive":
+		if format != layoutEntriesFormat || len(asset.Sources) == 0 || transform.StripComponents != 0 || transform.Text != "" ||
+			len(transform.Mappings) != 0 || !sourcesAre("file") {
+			return fmt.Errorf("gzip-xml-archive requires ordered archive files and jar entries")
 		}
 	case "inline-text":
 		if len(asset.Sources) != 0 || transform.StripComponents != 0 || len(transform.Mappings) != 0 || strings.ContainsAny(transform.Text, "\r\n") {

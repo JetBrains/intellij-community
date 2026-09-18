@@ -1,16 +1,4 @@
-load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-
-java_binary(
-    name = "plugin-preparer",
-    jvm_flags = [
-        "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
-        "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
-    ],
-    main_class = "org.jetbrains.intellij.build.devServer.DevPluginPrepareMain",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":plugin-preparation"],
-)
 
 ### auto-generated section `build intellij.platform.buildScripts.pluginPreparation` start
 jvm_library(

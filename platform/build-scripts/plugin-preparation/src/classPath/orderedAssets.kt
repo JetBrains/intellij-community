@@ -2,30 +2,10 @@ package org.jetbrains.intellij.build.classPath
 
 import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import org.jetbrains.annotations.ApiStatus
-import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeToOrSelf
-
-/**
- * Writes the plugin classpath record of one plugin.
- *
- * [cachedDescriptorContent] is the descriptor in its final byte form. The record copies the bytes as they are.
- */
-@ApiStatus.Internal
-fun generatePluginClassPathFromOrderedAssets(
-  pluginDir: Path,
-  orderedFiles: List<Path>,
-  cachedDescriptorContent: ByteArray,
-): ByteArray {
-  return ByteArrayOutputStream().use { output ->
-    DataOutputStream(output).use { data ->
-      writeOrderedPluginClassPathEntry(data, orderedFiles, pluginDir, cachedDescriptorContent)
-    }
-    output.toByteArray()
-  }
-}
 
 @ApiStatus.Internal
 fun writeOrderedPluginClassPathEntry(

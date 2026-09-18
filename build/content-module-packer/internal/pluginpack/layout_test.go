@@ -5,6 +5,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
+	"io"
 	"os"
 	"path/filepath"
 	"slices"
@@ -30,6 +31,33 @@ func layoutJarRecipe(layout LayoutAssets) Recipe {
 		Assets: []Asset{{Destination: "lib/layout.jar", Producer: "remainder"}},
 		Operations: []Operation{{Kind: "jar", Destination: "lib/layout.jar", Options: &JarOptions{Directories: "none"},
 			Sources: []Source{{Kind: "layout", Manifest: "keep", Layout: &layout}}}}}
+}
+
+// layoutFileRecipe writes one file at destination from one layout-file operation.
+func layoutFileRecipe(destination string, mode uint32, layout LayoutAssets) Recipe {
+	excluded := false
+	return Recipe{Version: Version, Plugin: "layout", LayoutSignature: "layout-v1",
+		Assets:     []Asset{{Destination: destination, Producer: "remainder", ClassPath: &excluded}},
+		Operations: []Operation{{Kind: "layout-file", Destination: destination, Mode: mode, Layout: &layout}}}
+}
+
+// gzipXMLArchive is the transform that writes the .xml entries of its archives as .gzip jar entries.
+func gzipXMLArchive() *LayoutTransform {
+	return &LayoutTransform{Kind: "gzip-xml-archive"}
+}
+
+// readGzip decompresses one gzip member.
+func readGzip(t *testing.T, content string) string {
+	t.Helper()
+	reader, err := gzip.NewReader(strings.NewReader(content))
+	if err != nil {
+		t.Fatal(err)
+	}
+	decompressed, err := io.ReadAll(reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(decompressed)
 }
 
 func fileArtifact(id, root string) Artifact {
@@ -406,6 +434,70 @@ func TestLayoutAssetsMatchTheKotlinExecutorCases(t *testing.T) {
 		writeLayoutFailure(t, layoutTreeRecipe("payload", 0, layout), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", archive)}}, "unsafe archive path")
 		assertAbsent(t, filepath.Join(root, "outside"))
 	})
+	t.Run("gzip XML archives accept JAR files and keep source order", func(t *testing.T) {
+		root := t.TempDir()
+		first, second := filepath.Join(root, "first.jar"), filepath.Join(root, "second.zip")
+		writeZip(t, first, zipTestEntry{name: "a.xml", content: "a"}, zipTestEntry{name: "same.xml", content: "first"}, zipTestEntry{name: "dir/"})
+		writeZip(t, second, zipTestEntry{name: "b.xml", content: "b"}, zipTestEntry{name: "same.xml", content: "second"})
+		layout := LayoutAssets{Inputs: []Reference{{Artifact: "first"}, {Artifact: "second"}},
+			Assets: []LayoutAsset{{Destination: "resources", Sources: []int{0, 1}, Transform: gzipXMLArchive()}}}
+		output, _ := writeExecution(t, layoutJarRecipe(layout), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("first", first), fileArtifact("second", second)}})
+		names, entries := readArchive(t, filepath.Join(output, "lib/layout.jar"))
+		if !slices.Equal(names, []string{"resources/a.xml.gzip", "resources/same.xml.gzip", "resources/b.xml.gzip", "__index__"}) {
+			t.Fatalf("jar entries differ: %v", names)
+		}
+		for name, want := range map[string]string{"resources/a.xml.gzip": "a", "resources/same.xml.gzip": "first", "resources/b.xml.gzip": "b"} {
+			if got := readGzip(t, entries[name]); got != want {
+				t.Fatalf("%s decompresses to %q, want %q", name, got, want)
+			}
+		}
+		if header := entries["resources/a.xml.gzip"][:8]; header != "\x1f\x8b\x08\x00\x00\x00\x00\x00" {
+			t.Fatalf("the gzip header carries a name or a time: %x", header)
+		}
+	})
+	t.Run("gzip XML archives read zip and jar archives only", func(t *testing.T) {
+		root := t.TempDir()
+		archive := filepath.Join(root, "resources.tar.gz")
+		writeTarGz(t, archive, tarTestEntry{name: "a.xml", content: "a", mode: 0o644})
+		layout := LayoutAssets{Inputs: []Reference{{Artifact: "archive"}}, Assets: []LayoutAsset{{Destination: "resources", Sources: []int{0}, Transform: gzipXMLArchive()}}}
+		writeLayoutFailure(t, layoutJarRecipe(layout), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", archive)}}, "reads a zip or jar archive")
+	})
+	t.Run("gzip XML archives reject an entry that is not XML", func(t *testing.T) {
+		root := t.TempDir()
+		archive := filepath.Join(root, "resources.jar")
+		writeZip(t, archive, zipTestEntry{name: "a.xml", content: "a"}, zipTestEntry{name: "notes.txt", content: "text"})
+		layout := LayoutAssets{Inputs: []Reference{{Artifact: "archive"}}, Assets: []LayoutAsset{{Destination: "resources", Sources: []int{0}, Transform: gzipXMLArchive()}}}
+		writeLayoutFailure(t, layoutJarRecipe(layout), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", archive)}}, `unexpected file "notes.txt"`)
+		linked := filepath.Join(root, "linked.jar")
+		writeZip(t, linked, zipTestEntry{name: "a.xml", content: "b.xml", mode: 0o777, symlink: true, creator: 3})
+		writeLayoutFailure(t, layoutJarRecipe(layout), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", linked)}}, `unexpected file "a.xml"`)
+	})
+	t.Run("a layout file holds inline text or one copied file", func(t *testing.T) {
+		root := t.TempDir()
+		inline := LayoutAssets{Assets: []LayoutAsset{{Destination: "jre-build.txt", Transform: &LayoutTransform{Kind: "inline-text", Text: "21.0.7"}}}}
+		output, inventory := writeExecution(t, layoutFileRecipe("jre-build.txt", 0o644, inline), Catalogue{Version: Version})
+		assertContent(t, filepath.Join(output, "jre-build.txt"), "21.0.7")
+		assertMode(t, filepath.Join(output, "jre-build.txt"), 0o644)
+		if len(inventory) != 1 || inventory[0].RelativePath != "jre-build.txt" || inventory[0].Type != "file" {
+			t.Fatalf("inventory differs: %+v", inventory)
+		}
+		source := filepath.Join(root, "build.txt")
+		writeTestFile(t, source, []byte("build"))
+		if err := os.Chmod(source, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		copied := LayoutAssets{Inputs: []Reference{{Artifact: "build"}}, Assets: []LayoutAsset{{Destination: "bin/jre-build.txt", Sources: []int{0}}}}
+		output, _ = writeExecution(t, layoutFileRecipe("bin/jre-build.txt", 0, copied), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("build", source)}})
+		assertContent(t, filepath.Join(output, "bin/jre-build.txt"), "build")
+		assertMode(t, filepath.Join(output, "bin/jre-build.txt"), 0o755)
+		directory := filepath.Join(root, "tree")
+		writeTestFile(t, filepath.Join(directory, "member.txt"), []byte("member"))
+		if err := os.Symlink("member.txt", filepath.Join(directory, "link.txt")); err != nil {
+			t.Fatal(err)
+		}
+		link := LayoutAssets{Inputs: []Reference{{Artifact: "tree", Path: "link.txt"}}, Assets: []LayoutAsset{{Destination: "jre-build.txt", Sources: []int{0}}}}
+		writeLayoutFailure(t, layoutFileRecipe("jre-build.txt", 0, link), Catalogue{Version: Version, Artifacts: []Artifact{directoryArtifact("tree", directory)}}, "cannot be the symbolic link")
+	})
 }
 
 // TestLayoutArchiveReadersFollowTheKotlinReaderRules pins the zip creator rule, the streamed .zip.zst flattening,
@@ -734,7 +826,7 @@ func TestLayoutPlanRejectsInvalidPayloads(t *testing.T) {
 		{"layout on a copy-tree", Recipe{Version: TreeVersion, Plugin: "layout", LayoutSignature: "v",
 			Assets:     []Asset{{Destination: "payload", Producer: "remainder", Kind: "tree", ClassPath: &excluded}},
 			Operations: []Operation{{Kind: "copy-tree", Destination: "payload", Input: &Reference{Artifact: "tree"}, Layout: &LayoutAssets{}}}},
-			Catalogue{Version: Version, Artifacts: []Artifact{directory}}, "only a layout-tree operation carries layout assets"},
+			Catalogue{Version: Version, Artifacts: []Artifact{directory}}, "only a layout-tree or a layout-file operation carries layout assets"},
 		{"layout-tree on a file asset", Recipe{Version: TreeVersion, Plugin: "layout", LayoutSignature: "v",
 			Assets:     []Asset{{Destination: "payload", Producer: "remainder"}},
 			Operations: []Operation{{Kind: "layout-tree", Destination: "payload", Layout: &LayoutAssets{Inputs: []Reference{{Artifact: "tree"}}, Assets: []LayoutAsset{{Sources: []int{0}}}}}}},
@@ -764,16 +856,32 @@ func TestLayoutPlanRejectsInvalidPayloads(t *testing.T) {
 			recipe.Operations[0].Sources[0].Input = &Reference{Artifact: "archive"}
 			return recipe
 		}(), Catalogue{Version: Version, Artifacts: []Artifact{file}}, "only a layout source carries layout assets"},
-		{"archive-tree on a layout source", layoutJarRecipe(LayoutAssets{Inputs: []Reference{{Artifact: "archive"}},
-			Assets: []LayoutAsset{{Destination: "out", Sources: []int{0}, Transform: archiveTree(0)}}}),
-			Catalogue{Version: Version, Artifacts: []Artifact{file}}, "archive-tree requires one archive file and a tree output"},
 		{"archive-tree on a directory", layoutTreeRecipe("payload", 0, LayoutAssets{Inputs: []Reference{{Artifact: "tree"}},
 			Assets: []LayoutAsset{{Sources: []int{0}, Transform: archiveTree(0)}}}),
 			Catalogue{Version: Version, Artifacts: []Artifact{directory}}, "archive-tree requires one archive file"},
-		// The kind gzip-xml-archive stays a Kotlin preparation. Go refuses it like every other kind it does not execute.
-		{"gzip-xml-archive is not executed by Go", layoutJarRecipe(LayoutAssets{Inputs: []Reference{{Artifact: "archive"}},
-			Assets: []LayoutAsset{{Destination: "resources", Sources: []int{0}, Transform: &LayoutTransform{Kind: "gzip-xml-archive"}}}}),
-			Catalogue{Version: Version, Artifacts: []Artifact{file}}, "unsupported layout transform"},
+		{"gzip-xml-archive in a tree", layoutTreeRecipe("payload", 0, LayoutAssets{Inputs: []Reference{{Artifact: "archive"}},
+			Assets: []LayoutAsset{{Destination: "resources", Sources: []int{0}, Transform: gzipXMLArchive()}}}),
+			Catalogue{Version: Version, Artifacts: []Artifact{file}}, "gzip-xml-archive requires"},
+		{"gzip-xml-archive over a directory", layoutJarRecipe(LayoutAssets{Inputs: []Reference{{Artifact: "tree"}},
+			Assets: []LayoutAsset{{Destination: "resources", Sources: []int{0}, Transform: gzipXMLArchive()}}}),
+			Catalogue{Version: Version, Artifacts: []Artifact{directory}}, "gzip-xml-archive requires"},
+		{"gzip-xml-archive without a source", layoutJarRecipe(LayoutAssets{Assets: []LayoutAsset{{Destination: "resources", Transform: gzipXMLArchive()}}}),
+			Catalogue{Version: Version}, "gzip-xml-archive requires"},
+		{"layout-file with two assets", layoutFileRecipe("x.txt", 0o644, LayoutAssets{Assets: []LayoutAsset{
+			{Destination: "x.txt", Transform: &LayoutTransform{Kind: "inline-text", Text: "a"}}, {Destination: "x.txt", Transform: &LayoutTransform{Kind: "inline-text", Text: "b"}}}}),
+			Catalogue{Version: Version}, "one layout asset at its destination"},
+		{"layout-file at another destination", layoutFileRecipe("x.txt", 0o644, LayoutAssets{Assets: []LayoutAsset{{Destination: "y.txt", Transform: &LayoutTransform{Kind: "inline-text", Text: "a"}}}}),
+			Catalogue{Version: Version}, "one layout asset at its destination"},
+		{"layout-file of a directory", layoutFileRecipe("x.txt", 0o644, LayoutAssets{Inputs: []Reference{{Artifact: "tree"}}, Assets: []LayoutAsset{{Destination: "x.txt", Sources: []int{0}}}}),
+			Catalogue{Version: Version, Artifacts: []Artifact{directory}}, "plain copy of one file or an inline text"},
+		{"layout-file of an archive", layoutFileRecipe("x.txt", 0o644, LayoutAssets{Inputs: []Reference{{Artifact: "archive"}}, Assets: []LayoutAsset{{Destination: "x.txt", Sources: []int{0}, Transform: archiveTree(0)}}}),
+			Catalogue{Version: Version, Artifacts: []Artifact{file}}, "plain copy of one file or an inline text"},
+		{"layout-file on a tree asset", func() Recipe {
+			recipe := layoutFileRecipe("x.txt", 0o644, LayoutAssets{Assets: []LayoutAsset{{Destination: "x.txt", Transform: &LayoutTransform{Kind: "inline-text", Text: "a"}}}})
+			recipe.Version = TreeVersion
+			recipe.Assets[0].Kind = "tree"
+			return recipe
+		}(), Catalogue{Version: Version}, "stale asset kind"},
 		{"unknown transform", layoutTreeRecipe("payload", 0, LayoutAssets{Assets: []LayoutAsset{{Destination: "x", Transform: &LayoutTransform{Kind: "rename"}}}}),
 			Catalogue{Version: Version}, "unsupported layout transform"},
 		{"source index out of range", layoutTreeRecipe("payload", 0, LayoutAssets{Inputs: []Reference{{Artifact: "tree"}}, Assets: []LayoutAsset{{Sources: []int{1}}}}),
@@ -798,7 +906,9 @@ func TestLayoutPlanRejectsInvalidPayloads(t *testing.T) {
 			Assets: []LayoutAsset{{Sources: []int{0}, Transform: treeMap(LayoutMapping{Pattern: "{a"})}}}),
 			Catalogue{Version: Version, Artifacts: []Artifact{directory}}, "invalid mapping pattern"},
 		{"root destination for a plain jar entry", layoutJarRecipe(LayoutAssets{Inputs: []Reference{{Artifact: "archive"}}, Assets: []LayoutAsset{{Sources: []int{0}}}}),
-			Catalogue{Version: Version, Artifacts: []Artifact{file}}, "only a tree or a mapped entry asset"},
+			Catalogue{Version: Version, Artifacts: []Artifact{file}}, "can use its output root"},
+		{"root destination for an inline jar entry", layoutJarRecipe(LayoutAssets{Assets: []LayoutAsset{{Transform: &LayoutTransform{Kind: "inline-text", Text: "21"}}}}),
+			Catalogue{Version: Version}, "can use its output root"},
 		{"unsafe destination", layoutTreeRecipe("payload", 0, LayoutAssets{Inputs: []Reference{{Artifact: "tree"}}, Assets: []LayoutAsset{{Destination: "../x", Sources: []int{0}}}}),
 			Catalogue{Version: Version, Artifacts: []Artifact{directory}}, "unsafe relative path"},
 		{"invalid mode", layoutTreeRecipe("payload", 0, LayoutAssets{Inputs: []Reference{{Artifact: "tree"}}, Assets: []LayoutAsset{{Sources: []int{0}, Mode: 0o1000}}}),
@@ -819,7 +929,8 @@ func TestLayoutPlanRejectsInvalidPayloads(t *testing.T) {
 }
 
 // TestLayoutPlanAcceptsThePlanFileShapes pins the compact shapes the plan files hold: an empty mapping, a root
-// destination in a tree, and a directory input for a plain copy. Planning reads no file.
+// destination in a tree, a directory input for a plain copy, and the root-destination jar entries of a mapped tree,
+// an extracted archive, and a copied directory. Planning reads no file.
 func TestLayoutPlanAcceptsThePlanFileShapes(t *testing.T) {
 	layout := LayoutAssets{Inputs: []Reference{{Artifact: "tree"}, {Artifact: "archive"}}, Assets: []LayoutAsset{
 		{Sources: []int{0}},
@@ -831,10 +942,116 @@ func TestLayoutPlanAcceptsThePlanFileShapes(t *testing.T) {
 	if _, err := Plan(layoutTreeRecipe("", 0, layout), catalogue); err != nil {
 		t.Fatal(err)
 	}
-	entries := LayoutAssets{Inputs: []Reference{{Artifact: "tree"}}, Assets: []LayoutAsset{{Sources: []int{0}, Transform: treeMap(LayoutMapping{})}}}
-	if _, err := Plan(layoutJarRecipe(entries), Catalogue{Version: Version, Artifacts: []Artifact{directoryArtifact("tree", "missing-tree")}}); err != nil {
+	entries := LayoutAssets{Inputs: []Reference{{Artifact: "tree"}, {Artifact: "archive"}}, Assets: []LayoutAsset{
+		{Sources: []int{0}, Transform: treeMap(LayoutMapping{})},
+		{Sources: []int{1}, Transform: archiveTree(0, LayoutMapping{Pattern: "META-INF/extensions/**"})},
+		{Sources: []int{0}},
+	}}
+	if _, err := Plan(layoutJarRecipe(entries), catalogue); err != nil {
 		t.Fatal(err)
 	}
+	gzip := LayoutAssets{Inputs: []Reference{{Artifact: "archive"}}, Assets: []LayoutAsset{{Sources: []int{0}, Transform: gzipXMLArchive()}}}
+	if _, err := Plan(layoutJarRecipe(gzip), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", "missing.zip")}}); err != nil {
+		t.Fatal(err)
+	}
+	file := LayoutAssets{Assets: []LayoutAsset{{Destination: "jre-build.txt", Transform: &LayoutTransform{Kind: "inline-text", Text: "21"}}}}
+	if _, err := Plan(layoutFileRecipe("jre-build.txt", 0o644, file), Catalogue{Version: Version}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// nativeSelectRecipe is the recipe of a native-select operation for one platform: the jar keeps the archive with its
+// natives reserved, and the distribution tree lib/native takes the natives of the platform.
+func nativeSelectRecipe(os, arch string) Recipe {
+	excluded := false
+	native := &Reference{Artifact: "native"}
+	return Recipe{Version: ScopedVersion, Plugin: "native", LayoutSignature: "native-" + os + "-" + arch,
+		Assets: []Asset{
+			{Destination: "lib/pty4j.jar", Producer: "remainder"},
+			{Destination: "lib/native", Producer: "remainder", Kind: "tree", ClassPath: &excluded, Scope: DistributionScope}},
+		Operations: []Operation{
+			{Kind: "jar", Destination: "lib/pty4j.jar", Options: &JarOptions{Directories: "none"},
+				Sources: []Source{{Kind: "archive", Input: native, Filter: "library", Manifest: "keep", ReserveNatives: true}}},
+			{Kind: "native-tree", Destination: "lib/native", Scope: DistributionScope, Input: native, Native: &NativeTarget{OS: os, Arch: arch}}}}
+}
+
+// TestNativeTreeSelectsThePlatformNativesAndReservesThemInTheJar pins the rules of nativeLib.kt on a pty4j-shaped
+// archive: a universal macOS file serves both architectures, a POSIX file without an extension is executable, a Musl
+// entry and a 32-bit Windows entry are selected by no platform, and a platform without an entry gets no lib/native root.
+// The jar keeps the class and the checksum, and drops every native entry on every platform.
+func TestNativeTreeSelectsThePlatformNativesAndReservesThemInTheJar(t *testing.T) {
+	jar := filepath.Join(t.TempDir(), "pty4j-0.13.5.jar")
+	// The native entries carry the executable bit of the source jar; the tree gives them the mode of the rule.
+	writeZip(t, jar,
+		zipTestEntry{name: "com/pty4j/PtyProcess.class", content: "class"},
+		zipTestEntry{name: "resources/com/pty4j/native/darwin/libpty.dylib", content: "darwin", mode: 0o755, creator: 3},
+		zipTestEntry{name: "resources/com/pty4j/native/linux/x86-64/libpty.so", content: "linux x64", mode: 0o755, creator: 3},
+		zipTestEntry{name: "resources/com/pty4j/native/linux/x86-64/pty4j-unix-spawn-helper", content: "helper x64", mode: 0o644, creator: 3},
+		zipTestEntry{name: "resources/com/pty4j/native/linux/aarch64/libpty.so", content: "linux aarch64", mode: 0o755, creator: 3},
+		zipTestEntry{name: "resources/com/pty4j/native/Linux-Musl/libpty.so", content: "musl", mode: 0o755, creator: 3},
+		zipTestEntry{name: "resources/com/pty4j/native/win/x86/winpty.dll", content: "win32", mode: 0o755, creator: 3},
+		zipTestEntry{name: "resources/com/pty4j/native/linux/x86-64/libpty.so.sha256", content: "checksum"})
+	catalogue := Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("native", jar)}}
+	treeRoot := TransportDestination(ScopedVersion, DistributionScope, "lib/native")
+	for _, testCase := range []struct {
+		os, arch string
+		files    map[string]os.FileMode
+	}{
+		{"darwin", "aarch64", map[string]os.FileMode{"darwin/libpty.dylib": 0o644}},
+		{"darwin", "x64", map[string]os.FileMode{"darwin/libpty.dylib": 0o644}},
+		{"linux", "x64", map[string]os.FileMode{"linux/x86-64/libpty.so": 0o644, "linux/x86-64/pty4j-unix-spawn-helper": 0o755}},
+		{"linux", "aarch64", map[string]os.FileMode{"linux/aarch64/libpty.so": 0o644}},
+		{"windows", "x64", nil},
+		{"windows", "aarch64", nil},
+	} {
+		t.Run(testCase.os+"_"+testCase.arch, func(t *testing.T) {
+			output, inventory := writeExecution(t, nativeSelectRecipe(testCase.os, testCase.arch), catalogue)
+			requireInventoryMatchesTree(t, output, inventory)
+			var written []string
+			if testCase.files == nil {
+				assertAbsent(t, filepath.Join(output, filepath.FromSlash(treeRoot)))
+			} else {
+				assertMode(t, filepath.Join(output, filepath.FromSlash(treeRoot)), 0o755)
+				for _, line := range materializationRecord(t, filepath.Join(output, filepath.FromSlash(treeRoot))) {
+					if strings.Contains(line, "\tfile\t") {
+						written = append(written, strings.Split(line, "\t")[0])
+					}
+				}
+			}
+			for name, mode := range testCase.files {
+				file := filepath.Join(output, filepath.FromSlash(treeRoot), filepath.FromSlash(name))
+				assertMode(t, file, mode)
+				if !slices.Contains(written, name) {
+					t.Fatalf("%s is missing from %v", name, written)
+				}
+			}
+			if len(written) != len(testCase.files) {
+				t.Fatalf("the tree holds %v, want %v", written, testCase.files)
+			}
+			names, entries := readArchive(t, filepath.Join(output, "lib/pty4j.jar"))
+			want := []string{"com/pty4j/PtyProcess.class", "resources/com/pty4j/native/linux/x86-64/libpty.so.sha256", "__index__"}
+			if !slices.Equal(names, want) || entries["com/pty4j/PtyProcess.class"] != "class" {
+				t.Fatalf("the jar holds %v, want %v", names, want)
+			}
+		})
+	}
+	// The scope check does not read the tree: with no lib/native root, an inventory row for it is not written either.
+	_, inventory := writeExecution(t, nativeSelectRecipe("windows", "x64"), catalogue)
+	if slices.ContainsFunc(inventory, func(entry filemetadata.Entry) bool { return strings.HasPrefix(entry.RelativePath, treeRoot) }) {
+		t.Fatalf("an omitted native tree reached the inventory: %+v", inventory)
+	}
+}
+
+func TestNativeTreeRefusesAnArchiveWithoutNatives(t *testing.T) {
+	jar := filepath.Join(t.TempDir(), "plain-1.0.jar")
+	writeZip(t, jar, zipTestEntry{name: "com/Plain.class", content: "class"}, zipTestEntry{name: "a/b.so.sha256", content: "checksum"})
+	writeLayoutFailure(t, nativeSelectRecipe("linux", "x64"), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("native", jar)}}, "has no native entries")
+}
+
+func TestNativeTreeRefusesTwoPathPrefixes(t *testing.T) {
+	jar := filepath.Join(t.TempDir(), "mixed-1.0.jar")
+	writeZip(t, jar, zipTestEntry{name: "a/linux-x86-64/libx.so", content: "a"}, zipTestEntry{name: "b/linux-x86-64/liby.so", content: "b"})
+	writeLayoutFailure(t, nativeSelectRecipe("linux", "x64"), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("native", jar)}}, "common path prefix")
 }
 
 // A link created through a link that does not exist yet becomes a file link on Windows, so the writer orders the

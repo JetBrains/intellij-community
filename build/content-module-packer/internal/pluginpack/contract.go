@@ -35,9 +35,8 @@ func TransportDestination(version int, scope, destination string) string {
 
 // Recipe preserves the complete asset order and states each asset's producer.
 // It contains operations only for the remainder. The catalogue defines the remainder input set.
-// The Kotlin preparer writes it as recipe.json for a chain with a Kotlin preparation.
-// For a chain without one, plugin-remainder-packer --projection derives it in memory from the plan file
-// through the planfile package. The Starlark input catalogue is then the catalogue.
+// plugin-remainder-packer --projection derives it in memory from the plan file through the planfile package.
+// The Starlark input catalogue is the catalogue.
 type Recipe struct {
 	Version         int         `json:"version"`
 	Plugin          string      `json:"plugin"`
@@ -134,9 +133,13 @@ type Reference struct {
 	Path     string `json:"path,omitempty"`
 }
 
-// Operation writes one remainder asset. Kinds are jar, copy, directory, symlink, copy-tree, and layout-tree.
-// Version 2 adds copy-tree and layout-tree. A copy-tree copies one directory root and reserves each copied entry.
+// Operation writes one remainder asset. Kinds are jar, copy, directory, symlink, copy-tree, layout-tree, native-tree, and layout-file.
+// Version 2 adds copy-tree, layout-tree, and native-tree. A copy-tree copies one directory root and reserves each copied entry.
 // A layout-tree writes one directory root from its layout assets, then copies it like a copy-tree.
+// A native-tree reads the one native archive Input names and writes the native entries of the platform Native states
+// under its destination, at the path and with the executable bit nativeLib.kt gives them. It writes nothing, not even
+// its root, when the archive holds no entry of that platform.
+// A layout-file writes one file from its one layout asset, a plain copy of one file or an inline text, then copies it like a copy.
 // A tree mode of 0644 clears group-write from each source mode. Mode zero preserves source modes.
 // Other operations use permission bits and default to 0644 for files. Links retain their target spelling.
 // A link may target a declared asset or an implicit directory containing declared assets.
@@ -151,6 +154,14 @@ type Operation struct {
 	Target      string        `json:"target,omitempty"`
 	Mode        uint32        `json:"mode,omitempty"`
 	Layout      *LayoutAssets `json:"layout,omitempty"`
+	Native      *NativeTarget `json:"native,omitempty"`
+}
+
+// NativeTarget is the platform a native-tree operation selects for. OS is darwin, linux, or windows; Arch is x64 or
+// aarch64. The planfile package reads both from the variant of the plan file.
+type NativeTarget struct {
+	OS   string `json:"os"`
+	Arch string `json:"arch"`
 }
 
 // LayoutAssets is the layoutAssets payload of a plan file with its inputs turned into catalogue references.
@@ -162,6 +173,9 @@ type LayoutAssets struct {
 
 // LayoutAsset writes one file or one tree under Destination. Sources index LayoutAssets.Inputs.
 // A nil Transform is a plain copy of one file, link, or directory.
+// An empty Destination is the output root. A tree asset always accepts it. A jar entry asset accepts it
+// when every entry brings its own relative path: a tree-map, an archive-tree, a gzip-xml-archive, or a copied directory.
+// The one asset of a layout-file names the file destination of its operation.
 // Mode zero keeps the source mode, or the archive entry mode without group and other write bits.
 type LayoutAsset struct {
 	Destination string           `json:"destination"`
@@ -170,12 +184,13 @@ type LayoutAsset struct {
 	Mode        uint32           `json:"mode,omitempty"`
 }
 
-// LayoutTransform kinds are archive-tree, inline-text, and tree-map.
-// An archive-tree extracts one .zip, .jar, .zip.zst, .tar.gz, or .tgz archive after StripComponents.
+// LayoutTransform kinds are archive-tree, gzip-xml-archive, inline-text, and tree-map.
+// An archive-tree extracts one .zip, .jar, .zip.zst, .tar.gz, or .tgz archive after StripComponents, into a tree or into jar entries.
+// A gzip-xml-archive reads the .xml entries of its .zip or .jar archives in central-directory order and writes each one
+// as the jar entry <name>.gzip. It accepts no other file and no link.
 // An inline-text writes Text as UTF-8. A tree-map copies the entries of its directories that a mapping selects.
 // Only tree-map accepts Excludes and DirectoryExcludes. Both use java.nio globs over the whole relative path before mapping.
 // Excludes omits files and symlinks. DirectoryExcludes prunes matching directories and their descendants.
-// Plan refuses the kind gzip-xml-archive, which stays a Kotlin preparation.
 type LayoutTransform struct {
 	Kind              string          `json:"kind"`
 	StripComponents   int             `json:"stripComponents,omitempty"`
@@ -203,6 +218,8 @@ type JarOptions struct {
 // Filters are the existing module and library filters, or all. Custom filters use prepared entry lists instead.
 // Excludes are java.nio glob patterns. They are valid only on an archive source with the module filter.
 // An entry whose whole name matches an exclude is dropped. META-INF/listOfEntities.txt survives every exclude.
+// ReserveNatives reserves every native entry of an archive source that its filter includes, the entries a native-tree
+// operation selects from. It is valid on an archive source without Overrides, and the archive must hold one such entry.
 // A layout source adds the file entries its layout assets write, with the keep manifest policy.
 // Lazy sources must be expanded in place by preparation. Go executes no callbacks.
 // It executes the Java-glob excludes of a module source and the layout transforms the plan file states.
@@ -218,6 +235,8 @@ type Source struct {
 	Entries   []PreparedEntry `json:"entries,omitempty"`
 	Overrides []EntryOverride `json:"overrides,omitempty"`
 	Layout    *LayoutAssets   `json:"layout,omitempty"`
+
+	ReserveNatives bool `json:"reserveNatives,omitempty"`
 }
 
 // PreparedEntry kinds are file, patch, and reserve. Entries retain their declared order.

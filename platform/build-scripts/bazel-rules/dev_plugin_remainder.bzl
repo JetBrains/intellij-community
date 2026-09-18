@@ -1,4 +1,4 @@
-"""Internal preparation contract and packing action for one plugin remainder."""
+"""The execution chain of one complex plugin: the graph, the catalogue, the packed remainder and the component."""
 
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
@@ -12,7 +12,7 @@ def _graph_info_init(**_kwargs):
     fail("DevPluginGraphInfo must come from dev_plugin_file_graph")
 
 DevPluginGraphInfo, _new_graph_info = provider(
-    doc = "The plan file, its execution version and the normalized source trees, checked by preparation.",
+    doc = "The plan file, its execution version and the normalized source trees. The packer checks them.",
     fields = {
         "projection": "Immutable File: the plan file of the plugin, resolved for the chain's platform.",
         "execution_version": "Version derived from the projection assets.",
@@ -21,33 +21,13 @@ DevPluginGraphInfo, _new_graph_info = provider(
     init = _graph_info_init,
 )
 
-def _preparation_info_init(**_kwargs):
-    fail("DevPluginPreparationInfo must come from dev_plugin_preparation")
-
-DevPluginPreparationInfo, _new_preparation_info = provider(
-    doc = "Prepared execution inputs and metadata for one plugin.",
-    fields = {
-        "graph": "Target providing the validated graph.",
-        "execution_version": "Version derived by the graph owner.",
-        "recipe": "File containing the versioned execution recipe.",
-        "catalogue": "File identifying the declared roots needed by the remainder.",
-        "prepared_entries": "Directory File containing prepared entries and resources.",
-        "assets": "File containing the complete ordered asset table.",
-        "classpath": "File containing the plugin classpath record.",
-        "remainder_inputs": "depset of raw Files required by the remainder.",
-        "independent_artifacts": "depset of independent artifact references for downstream consumers, never raw inputs.",
-    },
-    init = _preparation_info_init,
-)
-
 def _remainder_info_init(**_kwargs):
-    fail("DevPluginRemainderInfo must come from dev_plugin_remainder or dev_plugin_remainder_from_plan")
+    fail("DevPluginRemainderInfo must come from dev_plugin_remainder_from_plan")
 
 DevPluginRemainderInfo, _new_remainder_info = provider(
     doc = """One packed plugin remainder with its inventory, the asset table and the classpath record.
 
-    `dev_plugin_remainder` passes the table and the record through from the Kotlin preparation.
-    `dev_plugin_remainder_from_plan` writes both in the packing action.""",
+    `dev_plugin_remainder_from_plan` writes all of them in the packing action.""",
     fields = {
         "graph": "The graph target of the chain.",
         "execution_version": "The execution version of the graph.",
@@ -382,7 +362,7 @@ dev_plugin_file_graph = rule(
         "platform_values": attr.string_dict(
             doc = "The value of each `{platform:<name>}` slot of the plan file for this chain's platform, keyed by name. Empty for a chain that serves every platform.",
         ),
-        "execution_version": attr.int(mandatory = True, values = [1, 2, 3], doc = "Derived execution_version from the private owner record. Preparation checks it against the plan file before planning."),
+        "execution_version": attr.int(mandatory = True, values = [1, 2, 3], doc = "Derived execution_version from the private owner record. The packer checks it against the plan file."),
         "source_tree_targets": attr.string_keyed_label_dict(
             allow_files = True,
             doc = "Declared source targets keyed by the stable artifact ID of each normalized directory. One target may serve two IDs with different prefixes.",
@@ -408,18 +388,6 @@ def _execution_version(info, name):
     if version != graph[DevPluginGraphInfo].execution_version:
         fail("%s has a stale execution version" % name)
     return version
-
-def _preparation_file(preparation, field, directory = False):
-    value = getattr(preparation, field, None)
-    if type(value) != "File" or value.is_directory != directory:
-        fail("DevPluginPreparationInfo.%s must be a %s File" % (field, "directory" if directory else "regular"))
-    return value
-
-def _preparation_files(preparation, field):
-    value = getattr(preparation, field, None)
-    if type(value) != "depset" or any([type(file) != "File" for file in value.to_list()]):
-        fail("DevPluginPreparationInfo.%s must be a depset of Files" % field)
-    return value
 
 def _overlapping_artifacts(first, second):
     return (
@@ -488,21 +456,6 @@ def _catalogue_id(value):
     if not value or value != value.strip() or any([character in value for character in ["\n", "\r", "\t"]]):
         fail("invalid catalogue ID: %r" % value)
     return value
-
-def _selected_inputs(ids, artifacts, libraries):
-    files = []
-    seen = {}
-    for identifier in ids:
-        if identifier in seen:
-            fail("duplicate selected input ID: %s" % identifier)
-        seen[identifier] = True
-        if identifier in artifacts:
-            files.append(artifacts[identifier])
-        elif identifier in libraries:
-            files.extend([artifacts[member] for member in libraries[identifier]])
-        else:
-            fail("unknown selected input ID: %s" % identifier)
-    return depset(files)
 
 def _write_catalogue(ctx, artifacts, libraries):
     record = {
@@ -578,7 +531,7 @@ _dev_plugin_artifact_catalogue = rule(
         "compiled_inputs": attr.label(mandatory = True, providers = [_CompiledArtifactInputsInfo]),
         "resource_inputs": attr.label_keyed_string_dict(
             allow_files = True,
-            doc = "Resources and descriptor providers in the catalogue's product configuration, available before preparation.",
+            doc = "Resources and descriptor providers in the catalogue's product configuration.",
         ),
         "source_tree_graph": attr.label(
             cfg = _module_transition,
@@ -625,184 +578,8 @@ def _catalogue_binding(ctx, artifact_catalogue):
                 fail("catalogue artifact %s overlaps independent artifact %s" % (identifier, independent.path))
     return binding
 
-def _bind_preparation_inputs(ctx, artifact_catalogue):
-    binding = _catalogue_binding(ctx, artifact_catalogue)
-    artifacts = binding.artifacts
-    return struct(
-        catalogue = binding.catalogue,
-        callback_inputs = _selected_inputs(ctx.attr.callback_input_ids, artifacts, binding.libraries),
-        remainder_inputs = _remainder_inputs(ctx, artifacts, binding.libraries),
-    )
-
-def _remainder_inputs(ctx, artifacts, libraries):
-    """Every catalogue artifact except the ones only the preparation reads.
-
-    The remainder packs every input the preparation did not consume, so the per-plugin fact is the short exclusion
-    list, not the long inclusion list. An excluded ID must be a callback input: an input nobody reads is a
-    declaration error.
-    """
-    seen = {}
-    excluded = {}
-    callback = {identifier: True for identifier in ctx.attr.callback_input_ids}
-    for identifier in ctx.attr.preparation_only_input_ids:
-        if identifier in seen:
-            fail("duplicate preparation-only input ID: %s" % identifier)
-        seen[identifier] = True
-        if identifier not in callback:
-            fail("preparation-only input %s is not a callback input" % identifier)
-        if identifier in artifacts:
-            excluded[identifier] = True
-        elif identifier in libraries:
-            for member in libraries[identifier]:
-                excluded[member] = True
-        else:
-            fail("unknown preparation-only input ID: %s" % identifier)
-    return depset([file for identifier, file in artifacts.items() if identifier not in excluded])
-
-def _dev_plugin_preparation_impl(ctx):
-    graph = ctx.attr.graph[DevPluginGraphInfo]
-    projection = graph.projection
-    execution_version = graph.execution_version
-    artifact_catalogue = _transitioned_target(ctx.attr.artifact_catalogue, "artifact_catalogue")
-    descriptor_target = _transitioned_target(ctx.attr.descriptor, "descriptor")
-    binding = _bind_preparation_inputs(ctx, artifact_catalogue)
-    descriptor = _descriptor_primary_file(descriptor_target)
-    classpath_descriptor = _descriptor_classpath_file(descriptor_target)
-    metadata_inputs = [projection, binding.catalogue, descriptor, classpath_descriptor]
-    inputs = depset(metadata_inputs, transitive = [binding.callback_inputs])
-    independent_artifacts = depset(ctx.files.independent_artifacts)
-    for source in inputs.to_list():
-        for artifact in independent_artifacts.to_list():
-            if _overlapping_artifacts(source, artifact):
-                fail("preparation input %s overlaps independent artifact %s" % (source.path, artifact.path))
-
-    output_root = ctx.label.name + ".preparation/"
-    recipe = ctx.actions.declare_file(output_root + "recipe.json")
-    catalogue = ctx.actions.declare_file(output_root + "catalogue.json")
-    assets = ctx.actions.declare_file(output_root + "assets.json")
-    classpath = ctx.actions.declare_file(output_root + "plugin-classpath.txt")
-    prepared_entries = ctx.actions.declare_directory(output_root + "prepared")
-    arguments = ctx.actions.args()
-    arguments.add(projection, format = "--projection=%s")
-    arguments.add(binding.catalogue, format = "--catalogue=%s")
-    arguments.add(classpath_descriptor, format = "--descriptor=%s")
-    arguments.add(ctx.attr.plugin_directory, format = "--plugin-directory=%s")
-    arguments.add(recipe.dirname, format = "--output-dir=%s")
-    arguments.add(execution_version, format = "--execution-version=%s")
-    arguments.add_all([file.path for file in binding.callback_inputs.to_list()], format_each = "--callback-input=%s")
-    arguments.add_all([file.path for file in binding.remainder_inputs.to_list()], format_each = "--remainder-input=%s")
-
-    # The callback preparer has the layout callbacks on its classpath. The preparer checks the stated choice against the
-    # operations of the plan file. A chain that states `False` for a plan with a callback operation fails in this action.
-    callback_preparation = ctx.attr.callback_preparation
-    arguments.add("true" if callback_preparation else "false", format = "--callback-preparation=%s")
-    preparer = ctx.executable._callback_preparer if callback_preparation else ctx.executable._preparer
-    ctx.actions.run(
-        mnemonic = "PrepareDevPlugin",
-        executable = preparer,
-        inputs = inputs,
-        outputs = [recipe, catalogue, assets, classpath, prepared_entries],
-        arguments = [arguments],
-        progress_message = "Preparing plugin remainder %{label}",
-    )
-    return [
-        DefaultInfo(files = depset([recipe, catalogue, assets, classpath, prepared_entries])),
-        _new_preparation_info(
-            graph = ctx.attr.graph,
-            execution_version = execution_version,
-            recipe = recipe,
-            catalogue = catalogue,
-            prepared_entries = prepared_entries,
-            assets = assets,
-            classpath = classpath,
-            remainder_inputs = binding.remainder_inputs,
-            independent_artifacts = independent_artifacts,
-        ),
-        OutputGroupInfo(
-            dev_dist_plugin_assets = depset([assets]),
-            dev_dist_plugin_classpath = depset([classpath]),
-        ),
-    ]
-
-dev_plugin_preparation = rule(
-    implementation = _dev_plugin_preparation_impl,
-    attrs = {
-        "graph": attr.label(mandatory = True, providers = [DevPluginGraphInfo]),
-        "descriptor": attr.label(
-            mandatory = True,
-            cfg = dev_dist_product_info_transition,
-            providers = [DevDistPluginDescriptorInfo],
-        ),
-        "callback_preparation": attr.bool(doc = "Whether the plan file holds an operation that needs the callback preparer. Checked by the executable against the plan file's operations."),
-        "plugin_directory": attr.string(mandatory = True),
-        "artifact_catalogue": attr.label(
-            mandatory = True,
-            cfg = dev_dist_product_info_transition,
-            providers = [DevPluginArtifactCatalogueInfo],
-        ),
-        "product_info": attr.label(mandatory = True, providers = [DevDistProductInfo]),
-        "callback_input_ids": attr.string_list(doc = "The catalogue IDs the preparation reads."),
-        "preparation_only_input_ids": attr.string_list(doc = "The callback input IDs the remainder does not read. The remainder reads every other catalogue artifact."),
-        "independent_artifacts": attr.label_list(
-            allow_files = True,
-            cfg = _module_transition,
-            doc = """The content module jars the plugin reuses. Reset to the neutral product configuration like every compiled
-input: without the reset, the product configuration reaches each jar's module and compiles it a second time.""",
-        ),
-        "_preparer": attr.label(default = "//platform/build-scripts/plugin-preparation:plugin-preparer", executable = True, cfg = "exec"),
-        "_callback_preparer": attr.label(default = "//platform/build-scripts/plugin-preparation/callback-runner:plugin-callback-preparer", executable = True, cfg = "exec"),
-        "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
-    },
-)
-
-def _dev_plugin_remainder_impl(ctx):
-    preparation = ctx.attr.preparation[DevPluginPreparationInfo]
-    execution_version = _execution_version(preparation, "DevPluginPreparationInfo")
-    graph = preparation.graph
-    recipe = _preparation_file(preparation, "recipe")
-    catalogue = _preparation_file(preparation, "catalogue")
-    prepared_entries = _preparation_file(preparation, "prepared_entries", directory = True)
-    assets = _preparation_file(preparation, "assets")
-    classpath = _preparation_file(preparation, "classpath")
-    remainder_inputs = _preparation_files(preparation, "remainder_inputs")
-    independent_artifacts = _preparation_files(preparation, "independent_artifacts")
-
-    preparation_artifacts = [recipe, catalogue, prepared_entries, assets, classpath]
-    seen = {}
-    for artifact in preparation_artifacts:
-        if artifact.path in seen:
-            fail("preparation artifacts must be distinct: %s" % artifact.path)
-        seen[artifact.path] = True
-
-    inputs = depset(
-        [recipe, catalogue, prepared_entries],
-        transitive = [remainder_inputs],
-    )
-    excluded = [assets, classpath] + independent_artifacts.to_list()
-    for source in inputs.to_list():
-        for artifact in excluded:
-            if _overlapping_artifacts(source, artifact):
-                fail("remainder input %s overlaps excluded artifact %s" % (source.path, artifact.path))
-
-    directory = ctx.actions.declare_directory(ctx.label.name + ".plugin")
-    metadata = ctx.actions.declare_file(ctx.label.name + ".file-metadata.json")
-    arguments = ctx.actions.args()
-    arguments.add(recipe, format = "--recipe=%s")
-    arguments.add(catalogue, format = "--catalogue=%s")
-    arguments.add(directory.path, format = "--output-dir=%s")
-    arguments.add(metadata, format = "--inventory=%s")
-    ctx.actions.run(
-        mnemonic = "PackDevPluginRemainder",
-        executable = ctx.executable._packer,
-        inputs = inputs,
-        outputs = [directory, metadata],
-        arguments = [arguments],
-        progress_message = "Packing plugin remainder %{label}",
-    )
-    return _remainder_providers(ctx, graph, execution_version, directory, metadata, assets, classpath, independent_artifacts)
-
 def _remainder_providers(ctx, graph, execution_version, directory, metadata, assets, classpath, independent_artifacts):
-    """The providers of a packed remainder. Both remainder rules return the same shape, so the component reads one contract."""
+    """The providers of a packed remainder. The component reads this one contract."""
     return [
         DefaultInfo(
             files = depset([directory]),
@@ -830,14 +607,6 @@ _PACKER = attr.label(
     default = "//build/content-module-packer/plugin-remainder-packer",
     executable = True,
     cfg = "exec",
-)
-
-dev_plugin_remainder = rule(
-    implementation = _dev_plugin_remainder_impl,
-    attrs = {
-        "preparation": attr.label(mandatory = True, providers = [DevPluginPreparationInfo]),
-        "_packer": _PACKER,
-    },
 )
 
 def _dev_plugin_remainder_from_plan_impl(ctx):
@@ -881,11 +650,11 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
 
 dev_plugin_remainder_from_plan = rule(
     implementation = _dev_plugin_remainder_from_plan_impl,
-    doc = """Packs the remainder of a plugin whose every preparation operation the Go packer executes.
+    doc = """Packs the remainder of one complex plugin in one Go action.
 
 The packer reads the plan file and the input catalogue in its `--projection` mode. It derives the recipe, runs the
-operations, packs the remainder, and writes the asset table and the plugin classpath record. The chain has no
-`PrepareDevPlugin` action, and no recipe or prepared directory exists as a file.""",
+operations, packs the remainder, and writes the asset table and the plugin classpath record. No recipe and no
+prepared directory exist as a file.""",
     attrs = {
         "graph": attr.label(mandatory = True, providers = [DevPluginGraphInfo]),
         "descriptor": attr.label(
@@ -899,13 +668,15 @@ operations, packs the remainder, and writes the asset table and the plugin class
             mandatory = True,
             cfg = dev_dist_product_info_transition,
             providers = [DevPluginArtifactCatalogueInfo],
-            doc = "The catalogue. The action reads every artifact of it, because no preparation consumes an input first.",
+            doc = "The catalogue. The action reads every artifact of it.",
         ),
         "product_info": attr.label(mandatory = True, providers = [DevDistProductInfo]),
         "independent_artifacts": attr.label_list(
             allow_files = True,
             cfg = _module_transition,
-            doc = "The same reset as `dev_plugin_preparation.independent_artifacts`. No input of the action may overlap a reused jar.",
+            doc = """The content module jars the plugin reuses. Reset to the neutral product configuration like every compiled
+input: without the reset, the product configuration reaches each jar's module and compiles it a second time. No input
+of the action may overlap a reused jar.""",
         ),
         "_packer": _PACKER,
         "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
@@ -1026,7 +797,7 @@ dev_plugin_component = rule(
         "independent_artifacts": attr.label_list(
             providers = [ContentModuleJarInfo],
             cfg = _module_transition,
-            doc = "The same reset as `dev_plugin_preparation.independent_artifacts`, so both rules see one `File` per reused jar.",
+            doc = "The same reset as `dev_plugin_remainder_from_plan.independent_artifacts`, so both rules see one `File` per reused jar.",
         ),
         "independent_artifact_ids": attr.string_list(
             doc = "The catalogue ID of each `independent_artifacts` entry, in the same order. A list beside a list, because a transition cannot sit on a label-keyed dict.",
@@ -1054,11 +825,6 @@ def _dict_for_platform(values, platform, what):
     if len(result) != len(values):
         fail("two %s entries name the same key on %s: %s" % (what, platform, sorted(values.keys())))
     return result
-
-# The preparer a chain runs. The generator derives the value from the operations of the plan file. `callback`: an
-# operation needs the layout callbacks. `plain`: an operation needs a Kotlin action. `none`: the Go packer executes
-# every operation from the plan file, and the chain declares no preparation target.
-_PREPARATION_KINDS = ["none", "plain", "callback"]
 
 def platform_values_error(main_module, platforms, platform_values):
     """Returns why `platform_values` does not fit `platforms`, or None when it does.
@@ -1115,7 +881,6 @@ def dev_dist_complex_plugin(
         product_info,
         descriptor,
         execution_version,
-        preparation,
         platforms = None,
         platform_values = {},
         plan_product = "",
@@ -1125,8 +890,6 @@ def dev_dist_complex_plugin(
         library_inputs = {},
         source_tree_targets = {},
         source_tree_prefixes = {},
-        callback_input_ids = [],
-        preparation_only_input_ids = [],
         independent_artifacts = [],
         tags = []):
     """Declares the execution chains of one complex plugin: one chain per platform it is bundled on, or one for all.
@@ -1148,8 +911,6 @@ def dev_dist_complex_plugin(
         product_info: The product info target that configures the descriptor and the catalogue.
         descriptor: The produced descriptor target. It may hold the platform token.
         execution_version: The execution version derived from the projection assets.
-        preparation: The preparer the plan file's operations need: `none`, `plain` or `callback`. A `none` chain
-            declares no preparation target; the Go packer executes the operations from the plan file.
         platforms: The `HOST_PLATFORMS` entries the plugin is bundled on, one chain each, or `None` for one chain
             that serves every platform.
         platform_values: The value of each plan file slot per platform, `{platform: {slot name: value}}`. A non-empty
@@ -1162,8 +923,6 @@ def dev_dist_complex_plugin(
         library_inputs: Ordered member IDs keyed by library ID.
         source_tree_targets: Declared source targets keyed by the artifact ID of each normalized directory.
         source_tree_prefixes: Repository-relative source prefix keyed by the source tree artifact ID.
-        callback_input_ids: The artifact IDs the preparation reads.
-        preparation_only_input_ids: The callback input IDs the remainder does not read.
         independent_artifacts: The `content_module_jar` targets whose jar the plugin reuses.
         tags: Tags for every target of every chain.
     """
@@ -1196,7 +955,6 @@ def dev_dist_complex_plugin(
             component_name = main_module,
             platform_prefix = product,
             product_info = product_info,
-            preparation = preparation,
             target_platform = platform,
             platform_values = platform_values[platform] if platform_values else {},
             source_tree_targets = _dict_for_platform(source_tree_targets, platform, "source_tree_targets"),
@@ -1207,8 +965,6 @@ def dev_dist_complex_plugin(
                 _for_platform(library, platform): [_for_platform(member, platform) for member in members]
                 for library, members in library_inputs.items()
             },
-            callback_input_ids = [_for_platform(identifier, platform) for identifier in callback_input_ids],
-            preparation_only_input_ids = [_for_platform(identifier, platform) for identifier in preparation_only_input_ids],
             independent_artifacts = [_for_platform(label, platform) for label in independent_artifacts],
             tags = tags,
         )
@@ -1222,7 +978,6 @@ def dev_dist_complex_plugin_variant(
         component_name,
         platform_prefix,
         product_info,
-        preparation,
         target_platform = None,
         platform_values = {},
         source_tree_targets = {},
@@ -1230,16 +985,13 @@ def dev_dist_complex_plugin_variant(
         artifact_inputs = {},
         resource_inputs = {},
         library_inputs = {},
-        callback_input_ids = [],
-        preparation_only_input_ids = [],
         independent_artifacts = [],
         tags = []):
     """Declares the execution chain of one complex plugin variant, every argument stated.
 
-    `dev_dist_complex_plugin` derives these arguments; this form is for a test that pins one of them. A `plain` or
-    `callback` chain is five targets: `<name>_graph`, `<name>_catalogue`, `<name>_preparation`, `<name>_remainder`
-    and `<name>_component`. A `none` chain is four targets: it has no `<name>_preparation`. Its `<name>_remainder`
-    is a `dev_plugin_remainder_from_plan`. That rule's Go action executes the operations from the plan file.
+    `dev_dist_complex_plugin` derives these arguments; this form is for a test that pins one of them. A chain is four
+    targets: `<name>_graph`, `<name>_catalogue`, `<name>_remainder` and `<name>_component`. The `<name>_remainder` is a
+    `dev_plugin_remainder_from_plan`. Its Go action executes the operations from the plan file.
     `DEV_DIST_PLUGIN_COMPONENTS` names the component. The macro merges the declarations only. The actions and their
     cache policies stay separate.
 
@@ -1252,7 +1004,6 @@ def dev_dist_complex_plugin_variant(
         component_name: The component kind, the plugin's main module.
         platform_prefix: The product's platform prefix.
         product_info: The product info target that configures the descriptor and the catalogue.
-        preparation: The preparer the plan file's operations need: `none`, `plain` or `callback`.
         target_platform: A `HOST_PLATFORMS` entry, or `None` for a component that serves every platform.
         platform_values: The value of each `{platform:<name>}` slot of the plan file for `target_platform`, keyed by
             name. Empty for a chain that serves every platform.
@@ -1262,20 +1013,12 @@ def dev_dist_complex_plugin_variant(
         artifact_inputs: Compiled targets mapped to stable artifact IDs.
         resource_inputs: Resource and descriptor targets mapped to stable artifact IDs.
         library_inputs: Ordered member IDs keyed by library ID.
-        callback_input_ids: The artifact IDs the preparation reads. Empty for a `none` preparation.
-        preparation_only_input_ids: The callback input IDs the remainder does not read. The remainder reads every
-            other catalogue artifact. Empty for a `none` preparation.
         independent_artifacts: The `content_module_jar` targets whose jar the plugin reuses. The jar is the target
             label plus `.production.jar`, and that label is also its artifact ID.
         tags: Tags for every target of the chain.
     """
-    if preparation not in _PREPARATION_KINDS:
-        fail("%s states the preparation %r; state one of %s" % (name, preparation, _PREPARATION_KINDS))
-    if preparation == "none" and (callback_input_ids or preparation_only_input_ids):
-        fail("%s needs no preparer but states preparation inputs: %s" % (name, callback_input_ids + preparation_only_input_ids))
     graph = name + "_graph"
     catalogue = name + "_catalogue"
-    preparation_target = name + "_preparation"
     remainder = name + "_remainder"
     dev_plugin_file_graph(
         name = graph,
@@ -1296,36 +1039,16 @@ def dev_dist_complex_plugin_variant(
         tags = tags,
     )
     independent_jars = [label + ".production.jar" for label in independent_artifacts]
-    if preparation == "none":
-        dev_plugin_remainder_from_plan(
-            name = remainder,
-            graph = ":" + graph,
-            artifact_catalogue = ":" + catalogue,
-            descriptor = descriptor,
-            plugin_directory = plugin_directory,
-            product_info = product_info,
-            independent_artifacts = independent_jars,
-            tags = tags,
-        )
-    else:
-        dev_plugin_preparation(
-            name = preparation_target,
-            graph = ":" + graph,
-            artifact_catalogue = ":" + catalogue,
-            descriptor = descriptor,
-            callback_preparation = preparation == "callback",
-            plugin_directory = plugin_directory,
-            product_info = product_info,
-            callback_input_ids = callback_input_ids,
-            preparation_only_input_ids = preparation_only_input_ids,
-            independent_artifacts = independent_jars,
-            tags = tags,
-        )
-        dev_plugin_remainder(
-            name = remainder,
-            preparation = ":" + preparation_target,
-            tags = tags,
-        )
+    dev_plugin_remainder_from_plan(
+        name = remainder,
+        graph = ":" + graph,
+        artifact_catalogue = ":" + catalogue,
+        descriptor = descriptor,
+        plugin_directory = plugin_directory,
+        product_info = product_info,
+        independent_artifacts = independent_jars,
+        tags = tags,
+    )
     dev_plugin_component(
         name = name + "_component",
         remainder = ":" + remainder,

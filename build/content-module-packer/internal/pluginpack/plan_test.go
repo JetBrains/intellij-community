@@ -196,6 +196,76 @@ func TestTreePlanRejectsUnsafeOwnershipAndOperationOptions(test *testing.T) {
 	}
 }
 
+// nativeSelectPlan is the recipe the planfile package compiles for a native-select operation: the jar reserves the
+// natives of the archive, and the distribution tree selects the natives of one platform. Plan opens no file.
+func nativeSelectPlan() (Recipe, Catalogue) {
+	excluded := false
+	native := &Reference{Artifact: "native"}
+	recipe := Recipe{Version: ScopedVersion, Plugin: "vcs", LayoutSignature: "vcs-v3",
+		Assets: []Asset{
+			{Destination: "lib/sqlite.jar", Producer: "remainder"},
+			{Destination: "lib/native", Producer: "remainder", Kind: "tree", ClassPath: &excluded, Scope: DistributionScope}},
+		Operations: []Operation{
+			{Kind: "jar", Destination: "lib/sqlite.jar", Options: &JarOptions{Directories: "none"},
+				Sources: []Source{{Kind: "archive", Input: native, Filter: "library", Manifest: "keep", ReserveNatives: true}}},
+			{Kind: "native-tree", Destination: "lib/native", Scope: DistributionScope, Input: native, Native: &NativeTarget{OS: "linux", Arch: "x64"}}}}
+	return recipe, Catalogue{Version: Version, Artifacts: []Artifact{{ID: "native", Kind: "file", Root: "absent-native.jar"}}}
+}
+
+func TestNativeTreePlanValidatesTheTargetAndTheReservation(test *testing.T) {
+	recipe, catalogue := nativeSelectPlan()
+	if _, err := Plan(recipe, catalogue); err != nil {
+		test.Fatal(err)
+	}
+	for _, scenario := range []struct {
+		name   string
+		mutate func(*Recipe, *Catalogue)
+		want   string
+	}{
+		{"version 1", func(recipe *Recipe, _ *Catalogue) {
+			recipe.Version = Version
+			recipe.Assets[1].Scope, recipe.Operations[1].Scope = "", ""
+		}, "requires version 2 or 3"},
+		{"no target", func(recipe *Recipe, _ *Catalogue) { recipe.Operations[1].Native = nil }, "native-tree requires"},
+		{"unknown os", func(recipe *Recipe, _ *Catalogue) { recipe.Operations[1].Native.OS = "mac" }, "unknown native target"},
+		{"unknown arch", func(recipe *Recipe, _ *Catalogue) { recipe.Operations[1].Native.Arch = "arm64" }, "unknown native target"},
+		{"universal arch", func(recipe *Recipe, _ *Catalogue) { recipe.Operations[1].Native.Arch = "" }, "unknown native target"},
+		{"no input", func(recipe *Recipe, _ *Catalogue) { recipe.Operations[1].Input = nil }, "native-tree requires"},
+		{"path input", func(recipe *Recipe, _ *Catalogue) {
+			recipe.Operations[1].Input = &Reference{Artifact: "native", Path: "child"}
+		}, "native-tree requires"},
+		{"mode", func(recipe *Recipe, _ *Catalogue) { recipe.Operations[1].Mode = 0o755 }, "native-tree requires"},
+		{"sources", func(recipe *Recipe, _ *Catalogue) { recipe.Operations[1].Sources = []Source{{Kind: "entries"}} }, "native-tree requires"},
+		{"directory input", func(recipe *Recipe, catalogue *Catalogue) {
+			recipe.Assets, recipe.Operations = recipe.Assets[1:], recipe.Operations[1:]
+			catalogue.Artifacts[0].Kind = "directory"
+		}, "declared archive file"},
+		{"target on a copy-tree", func(recipe *Recipe, catalogue *Catalogue) {
+			recipe.Assets, recipe.Operations = recipe.Assets[1:], recipe.Operations[1:]
+			recipe.Operations[0].Kind = "copy-tree"
+			catalogue.Artifacts[0].Kind = "directory"
+		}, "only a native-tree operation carries a native target"},
+		{"reservation on a library source", func(recipe *Recipe, catalogue *Catalogue) {
+			recipe.Operations[0].Sources[0] = Source{Kind: "library", Library: "natives", Filter: "library", Manifest: "keep", ReserveNatives: true}
+			catalogue.Libraries = []Library{{ID: "natives", Files: []Reference{{Artifact: "native"}}}}
+		}, "native reservation requires"},
+		{"reservation with overrides", func(recipe *Recipe, _ *Catalogue) {
+			recipe.Operations[0].Sources[0].Overrides = []EntryOverride{{Kind: "reserve", Name: "sqlite/x.so"}}
+		}, "native reservation requires"},
+		{"reservation on a layout source", func(recipe *Recipe, _ *Catalogue) {
+			recipe.Operations[0].Sources[0] = Source{Kind: "layout", Manifest: "keep", ReserveNatives: true, Layout: &LayoutAssets{}}
+		}, "layout source requires"},
+	} {
+		test.Run(scenario.name, func(test *testing.T) {
+			recipe, catalogue := nativeSelectPlan()
+			scenario.mutate(&recipe, &catalogue)
+			if _, err := Plan(recipe, catalogue); err == nil || !strings.Contains(err.Error(), scenario.want) {
+				test.Fatalf("expected %q, got %v", scenario.want, err)
+			}
+		})
+	}
+}
+
 func TestPlanReservesTheDistributionTransportPrefixForVersionThreePluginAssets(test *testing.T) {
 	excluded := false
 	for _, destination := range []string{distributionTransportRoot, distributionTransportRoot + "/child"} {

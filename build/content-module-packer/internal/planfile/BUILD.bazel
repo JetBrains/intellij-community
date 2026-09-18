@@ -9,6 +9,7 @@ go_library(
     importpath = "jetbrains.com/content-module-packer/internal/planfile",
     visibility = ["//visibility:public"],
     deps = [
+        "//build/content-module-packer/internal/nativelib",
         "//build/content-module-packer/internal/pluginclasspath",
         "//build/content-module-packer/internal/pluginpack",
     ],
