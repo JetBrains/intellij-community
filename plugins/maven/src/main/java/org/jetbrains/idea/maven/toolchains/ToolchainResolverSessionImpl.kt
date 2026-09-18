@@ -2,6 +2,8 @@
 package org.jetbrains.idea.maven.toolchains
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -100,10 +102,12 @@ class ToolchainResolverSession private constructor(
     if (descriptor == null) return null
     if (descriptor.type != "jdk") return null
     val jdkHome = descriptor.jdkHome ?: return null
+    // Compare home paths directly. A VFS lookup can return null for an existing directory.
+    val homePath = myProject.getEelDescriptor().getPath(jdkHome).asNioPath()
     val projectJdkTable = ProjectJdkTable.getInstance()
     val sdkType = ExternalSystemJdkUtil.getJavaSdkType()
     return projectJdkTable.getSdksOfType(sdkType)
-      .firstOrNull { it.homeDirectory?.toNioPath() == Path.of(jdkHome) }
+      .firstOrNull { sdk -> sdk.homePath?.let(::pathOrNull) == homePath }
   }
 
   suspend fun installSdkFromDescriptor(descriptor: ToolchainModel): Sdk? {
@@ -111,21 +115,26 @@ class ToolchainResolverSession private constructor(
     val jdkHome = descriptor.jdkHome ?: return null
     val eelDescriptor = myProject.getEelDescriptor()
     val ideaPath = eelDescriptor.getPath(jdkHome).asNioPath()
-    if (!JdkUtil.checkForJdk(ideaPath)) return null
+    if (!withContext(Dispatchers.IO) { JdkUtil.checkForJdk(ideaPath) }) return null
 
-    return withContext(Dispatchers.EDT) {
+    return withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
       SdkConfigurationUtil.createAndAddSDK(ideaPath.absolutePathString(), JavaSdk.getInstance())
     }
   }
 
   private suspend fun readDiscoveredJdks(): List<ToolchainModel> {
-    // Maven validates the cached JDK homes during discovery. A cache entry can be stale.
     val eelDescriptor = myProject.getEelDescriptor()
-    val cachedJdks = readToolchains(myDiscoveredJdkCacheFile)
-      .filter { model -> model.jdkHome?.let { JdkUtil.checkForJdk(eelDescriptor.getPath(it).asNioPath()) } == true }
+    val cachedModels = readToolchains(myDiscoveredJdkCacheFile)
     val order = defaultToolchainOrder(importerJdkHome())
-    // A registered SDK is explicit IDE configuration. It wins over a machine scan result.
-    return readRegisteredJdks().sortedWith(order) + (cachedJdks + environmentJdks() + detectJdks()).sortedWith(order)
+    val registeredJdks = readRegisteredJdks()
+    return withContext(Dispatchers.IO) {
+      // Maven validates the cached JDK homes during discovery. A cache entry can be stale.
+      val cachedJdks = cachedModels
+        .filter { model -> model.jdkHome?.let { JdkUtil.checkForJdk(eelDescriptor.getPath(it).asNioPath()) } == true }
+      // A registered SDK is explicit IDE configuration. It wins over a machine scan result.
+      val candidates = registeredJdks.sortedWith(order) + (cachedJdks + environmentJdks() + detectJdks()).sortedWith(order)
+      candidates.distinctBy { model -> model.jdkHome?.let(::pathOrNull) ?: model }
+    }
   }
 
   private fun importerJdkHome(): String? {
@@ -225,6 +234,15 @@ fun defaultToolchainOrder(currentJdkHome: String?): Comparator<ToolchainModel> {
     .thenBy { !it.provides.containsKey("env") }
     .thenByDescending { JavaVersion.tryParse(it.provides["version"]) ?: JavaVersion.compose(0) }
     .thenBy { it.provides["vendor"] ?: "" }
+}
+
+private fun pathOrNull(path: String): Path? {
+  return try {
+    Path.of(path)
+  }
+  catch (_: InvalidPathException) {
+    null
+  }
 }
 
 private fun isLtsVersion(version: String?): Boolean {
