@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote
 
+import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 
 /**
@@ -15,6 +16,9 @@ data class SshConnectionConfigPatch(
   var serverAliveInterval: Duration?,
   var proxyParams: ProxyParams?,
 ) {
+  // Not a regular data class field to avoid signature and api change.
+  @ApiStatus.Internal
+  var sshBackendLibrary: String? = null
   data class ProxyParams(
     var proxyHost: String,
     var proxyPort: Int,
@@ -71,8 +75,32 @@ data class SshConnectionConfigPatch(
 
   constructor() : this(hostKeyVerifier = null, serverAliveInterval = null, proxyParams = null)
 
-  fun deepCopy(): SshConnectionConfigPatch = copy(
-    hostKeyVerifier = hostKeyVerifier?.copy(),
-    proxyParams = proxyParams?.copy(),
-  )
+  fun deepCopy(): SshConnectionConfigPatch {
+    val result = copy(
+      hostKeyVerifier = hostKeyVerifier?.copy(),
+      serverAliveInterval = serverAliveInterval,
+      proxyParams = proxyParams?.copy()
+    )
+    result.sshBackendLibrary = sshBackendLibrary
+    return result
+  }
+
+  // custom to include non constructor property
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is SshConnectionConfigPatch) return false
+    return hostKeyVerifier == other.hostKeyVerifier &&
+           serverAliveInterval == other.serverAliveInterval &&
+           proxyParams == other.proxyParams &&
+           sshBackendLibrary == other.sshBackendLibrary
+  }
+
+  // custom to include non constructor property
+  override fun hashCode(): Int {
+    var result = hostKeyVerifier.hashCode()
+    result = 31 * result + serverAliveInterval.hashCode()
+    result = 31 * result + proxyParams.hashCode()
+    result = 31 * result + sshBackendLibrary.hashCode()
+    return result
+  }
 }
