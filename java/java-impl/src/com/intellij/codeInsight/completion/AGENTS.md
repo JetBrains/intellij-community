@@ -10,7 +10,9 @@ The Java completion of `intellij.java.impl`.
 
 ## New completion
 
-Write the new completion only as ModCompletionItemProvider.
+Write the new completion only as ModCompletionItemProvider. Such an item returns a `ModCommand`, so
+the language server runs the completion without an editor. A classic contributor builds a
+`LookupElement` and needs the editor.
 
 - Extend `JavaModCompletionItemProvider` in
   `java-impl/src/com/intellij/java/completion/modcommand/`
@@ -19,8 +21,9 @@ Write the new completion only as ModCompletionItemProvider.
   `ReferenceItemProvider` are the large ones.
 - Register the class as `modcompletion.completionItemProvider` with `language="JAVA"` in
   `java-backend/resources/META-INF/JavaPlugin.xml`.
-- `isEnabled()` follows the `ide.completion.modcommand` registry key, which is off. Override it and
-  return `true` when the provider is stable.
+- `isEnabled()` follows the `ide.completion.modcommand` registry key, which is off. The key is off
+  because the API is still experimental. Override `isEnabled()` and return `true` when the provider
+  is stable.
 
 ## Structure
 
