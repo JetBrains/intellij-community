@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.RepositoryHelper
+import com.intellij.ide.plugins.UnifiedPluginsPageFeature
 import com.intellij.ide.plugins.newui.SearchWords
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationGroupManager
@@ -73,10 +74,16 @@ object PluginsMissingUpdateSourceNotifier {
           project,
           configurable,
           Runnable {
-            configurable.openInstalledTab("")
-            val search = configurable.enableSearch(SearchWords.PLUGIN_UPDATE_SOURCE.value + null.getPresentableName())
-            if (search != null) {
-              ApplicationManager.getApplication().invokeLater(search)
+            if (UnifiedPluginsPageFeature.isEnabled()) {
+              configurable.navigateToInstalled(SearchWords.PLUGIN_UPDATE_SOURCE.value + null.getPresentableName())
+            }
+            else {
+              configurable.navigateToInstalled("")
+              @Suppress("DEPRECATION")  //case will be removed after full switching to UnifiedPluginsPageFeature
+              val search = configurable.enableSearch(SearchWords.PLUGIN_UPDATE_SOURCE.value + null.getPresentableName())
+              if (search != null) {
+                ApplicationManager.getApplication().invokeLater(search)
+              }
             }
           }
         )
