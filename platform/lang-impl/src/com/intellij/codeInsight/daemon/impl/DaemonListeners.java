@@ -282,7 +282,7 @@ public final class DaemonListeners implements Disposable {
 
         // worthBothering() checks for getCachedPsiFile, so call getPsiFile
         ErrorStripeUpdateManager errorStripeManager = ErrorStripeUpdateManager.getInstance(myProject);
-        errorStripeManager.launchRepaintErrorStripePanel(editorMarkup, editorProject, document);
+        errorStripeManager.launchRepaintErrorStripePanel(editorMarkup, editorProject);
         Disposable disposable = Disposer.newDisposable();
         FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
         foldingModel.addListener(new FoldingListener() {

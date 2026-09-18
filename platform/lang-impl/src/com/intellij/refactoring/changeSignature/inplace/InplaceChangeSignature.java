@@ -2,6 +2,7 @@
 package com.intellij.refactoring.changeSignature.inplace;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -143,7 +144,7 @@ public final class InplaceChangeSignature implements DocumentListener {
       if (myDetector == null) {
         return;
       }
-      PsiFile file = myDocumentManager.getPsiFile(event.getDocument());
+      PsiFile file = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
       if (file == null) {
         return;
       }

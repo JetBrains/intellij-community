@@ -3,6 +3,7 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.folding.CustomFoldingProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.LanguageFolding;
@@ -124,8 +125,8 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   }
 
   @RequiresReadLock
-  static PsiFile getPsiFileForFolding(@NotNull Project project, @NotNull Document document) {
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+  static PsiFile getPsiFileForFolding(@NotNull Project project, @NotNull Editor editor) {
+    PsiFile psiFile = EditorContextManager.getPsiFileForEditor(editor, project);
     if (psiFile == null || !psiFile.isValid()) {
       return null;
     }
@@ -283,7 +284,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   }
 
   private @Nullable FoldingUpdate.Result updateFoldRegions(@NotNull Editor editor, boolean firstTime, boolean quick) {
-    PsiFile psiFile = getPsiFileForFolding(myProject, editor.getDocument());
+    PsiFile psiFile = getPsiFileForFolding(myProject, editor);
     return psiFile == null ? null : FoldingUpdate.updateFoldRegions(editor, psiFile, firstTime, quick);
   }
 

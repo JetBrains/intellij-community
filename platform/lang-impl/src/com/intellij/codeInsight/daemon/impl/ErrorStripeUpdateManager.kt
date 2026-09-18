@@ -17,7 +17,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl
@@ -75,10 +74,10 @@ class ErrorStripeUpdateManager(private val project: Project, private val corouti
   }
 
   @JvmName("launchRepaintErrorStripePanel")
-  internal fun launchRepaintErrorStripePanel(model: EditorMarkupModel, editorProject: Project?, document: Document): Job {
+  internal fun launchRepaintErrorStripePanel(model: EditorMarkupModel, editorProject: Project?): Job {
     return coroutineScope.launch {
       val file = if (editorProject == null) null else readAction {
-        PsiDocumentManager.getInstance(project).getPsiFile(document)
+        EditorContextManager.getPsiFileForEditor(model.editor, project)
       }
       asyncRepaintErrorStripePanel(model, file)
     }

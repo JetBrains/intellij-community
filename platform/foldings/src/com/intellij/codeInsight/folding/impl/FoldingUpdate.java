@@ -92,7 +92,7 @@ public final class FoldingUpdate {
 
     return CachedValuesManager.getManager(project).getCachedValue(
       editor, CODE_FOLDING_KEY, () -> {
-        PsiFile psiFile1 = CodeFoldingManagerImpl.getPsiFileForFolding(project, document);
+        PsiFile psiFile1 = CodeFoldingManagerImpl.getPsiFileForFolding(project, editor);
         if (psiFile1 == null) {
           return null;
         }
