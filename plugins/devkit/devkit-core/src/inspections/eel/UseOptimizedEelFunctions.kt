@@ -33,6 +33,8 @@ import org.jetbrains.uast.getQualifiedName
 import org.jetbrains.uast.getUastParentOfType
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
+private val OPTIMIZED_METHOD_NAMES = setOf("deleteRecursively", "readAllBytes", "readString")
+
 @ApiStatus.Internal
 @VisibleForTesting
 class UseOptimizedEelFunctions : LocalInspectionTool() {
@@ -62,6 +64,7 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
         }
 
         val methodName = node.methodName ?: return true
+        if (methodName !in OPTIMIZED_METHOD_NAMES) return true
 
         val receiverName = node.receiver
           ?.getQualifiedChain()
