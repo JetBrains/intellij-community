@@ -14,6 +14,10 @@ import java.net.URL
 
 private val logger = fileLogger()
 
+fun isValidPort(port: Int): Boolean {
+  return port in 1..65535
+}
+
 internal fun isPortAvailable(port: Int): Boolean {
   return try {
     ServerSocket(port, 0, InetAddress.getLoopbackAddress()).close()

@@ -1,5 +1,6 @@
 package com.intellij.mcpserver.impl
 
+import com.intellij.mcpserver.impl.util.network.isValidPort
 import com.intellij.util.SystemProperties
 
 internal const val IJ_MCP_FORCE_ENABLE_PROPERTY: String = "idea.mcp.server.force.enable"
@@ -30,6 +31,6 @@ internal fun getForcedMcpServerPortOrNull(): Int? = when (val state = getForcedM
 internal fun getForcedMcpServerPortState(): ForcedPortState {
   val rawValue = System.getProperty(IJ_MCP_FORCE_PORT_PROPERTY) ?: return ForcedPortState.Absent
   val port = rawValue.toIntOrNull() ?: return ForcedPortState.Invalid(rawValue)
-  if (port !in 1..65535) return ForcedPortState.Invalid(rawValue)
+  if (!isValidPort(port)) return ForcedPortState.Invalid(rawValue)
   return ForcedPortState.Valid(port)
 }

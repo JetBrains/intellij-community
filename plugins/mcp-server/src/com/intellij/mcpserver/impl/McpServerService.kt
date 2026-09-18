@@ -26,6 +26,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
@@ -36,6 +37,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManager.ConflictResolution
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.ui.Messages
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -325,9 +327,19 @@ open class McpServerService(val cs: CoroutineScope) {
     return currentServer.engineConfig.connectors.firstOrNull()?.host?.takeUnless { it.isBlank() }
   }
 
-  //todo: I think that should be a subscription to McpServerSettings
+  /**
+   * Handles changes to the MCP server settings, updating the server state and configuration accordingly.
+   *
+   * If the server is effectively disabled, this method stops the current server instance, if any.
+   * If the server is enabled and the port is either unspecified or matches the currently used one, existing server instance is reused.
+   * Otherwise, a new server with the updated configuration is started.
+   *
+   * @param enabled Indicates whether the MCP server is enabled.
+   * @param port The optional port number to configure for the server. If null, the existing server port is reused.
+   */
+//todo: I think that should be a subscription to McpServerSettings
   @RequiresBackgroundThread(generateAssertion = false)
-  fun settingsChanged(enabled: Boolean) {
+  fun settingsChanged(enabled: Boolean, port: Int? = null) {
     ThreadingAssertions.softAssertBackgroundThread()
 
     server.update { currentServer ->
@@ -340,7 +352,17 @@ open class McpServerService(val cs: CoroutineScope) {
       else {
         // reuse old or start new
         enableIfNotExplicitlyDisabled()
-        return@update currentServer ?: startGlobalServer()
+        if (currentServer != null) {
+          if (port == null || currentServer.engineConfig.connectors.firstOrNull()?.port == port) {
+            // if there is a running server and the port did not change, reuse it.
+            return@update currentServer
+          }
+          else {
+            // port changed, stop old
+            currentServer.stop()
+          }
+        }
+        return@update startGlobalServer()
       }
     }
   }
@@ -387,7 +409,18 @@ open class McpServerService(val cs: CoroutineScope) {
     if (!hasMcpServerRuntimeOverrides()) {
       cs.launch {
         // save to settings can be done asynchronously
-        settings.mcpServerPort = server.engine.resolvedConnectors().first().port
+        val selectedPort = server.engine.resolvedConnectors().first().port
+        settings.mcpServerPort = selectedPort
+        if (selectedPort != desiredPort) {
+          withContext(Dispatchers.EDT) {
+            // We want to warn the user that the used port is different from what was used last, or directly requested by the user.
+            Messages.showWarningDialog(null,
+                                       McpServerBundle.message("mcp.server.port.changed.warning.message",
+                                                               desiredPort.toString(),
+                                                               selectedPort.toString()),
+                                       McpServerBundle.message("mcp.server.port.changed.warning.title"))
+          }
+        }
       }
     }
     // Warm the tool list up here rather than lazily on first use: this is where the latency matters, and it keeps the

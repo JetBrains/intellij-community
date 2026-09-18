@@ -23,6 +23,7 @@ import com.intellij.mcpserver.icons.McpserverIcons
 import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.McpServerTerminalPromotionDismissalState
+import com.intellij.mcpserver.impl.util.network.isValidPort
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.util.getHelpLink
 import com.intellij.mcpserver.util.getPathForMcp
@@ -67,6 +68,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.compose.swing.components.Label
 import org.jetbrains.compose.swing.components.button.Button
 import org.jetbrains.compose.swing.components.button.CheckBox
+import org.jetbrains.compose.swing.components.text.TextField
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.appearance.icon
 import org.jetbrains.compose.swing.modifier.appearance.toolTip
@@ -77,6 +79,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import kotlin.io.path.createFile
 
+
 /**
  * Settings page of the MCP Server plugin, rendered with the Swing-Compose UI stack.
  *
@@ -86,9 +89,11 @@ import kotlin.io.path.createFile
  */
 @ApiStatus.Internal
 class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
+  private val PORT_TXT_WIDTH = 5
   private val settings get() = McpServerSettings.getInstance()
 
   private var enabled by bind(settings::enableMcpServer)
+  private var port by bind(settings::mcpServerPort)
   private var braveMode by bind(settings::enableBraveMode)
   private var showTerminalPromotion by bind(TerminalPromotionSetting::isShown, TerminalPromotionSetting::setShown)
   private var terminalAnsiHighlighting by bind(settings::enableTerminalAnsiHighlighting)
@@ -148,8 +153,34 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
     super.reset()
     // Revert the live server state to the persisted value (the enable toggle starts/stops it eagerly).
     runWithModalProgressBlocking(ModalTaskOwner.guess(), McpServerBundle.message("apply.mcp.server.state.progress.text")) {
-      McpServerService.getInstance().settingsChanged(settings.enableMcpServer)
+      updateServerSettings(settings.enableMcpServer)
       refreshServerStatus()
+    }
+  }
+
+  override fun apply() {
+    // we need to check this before applying the settings.
+    val portChanged = port != settings.mcpServerPort
+    super.apply()
+    if (portChanged) {
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(getContent()).asContextElement()) {
+        updateServerSettings(settings.enableMcpServer, port)
+        refreshServerStatus()
+        // Note that we need to reset auto-config for all clients, as the port may have changed.
+        refreshClients(resetAutoConfig = true)
+      }
+
+    }
+  }
+
+  private suspend fun updateServerSettings(enabled: Boolean, port: Int? = null) {
+    // Note that when this function is called concurrently by different threads/coroutines
+    // it might lead to a race condition on currentServer, e.g. multiple threads will attempt to
+    // stop it. In addition, multiple threads might call startGlobalServer in parallel, creating
+    // multiple uncontrolled instances. For soundness, the life-cycle of the server and the creation
+    // of a new instance should be protected by e.g. a Mutex.
+    withContext(Dispatchers.Default) {
+      McpServerService.getInstance().settingsChanged(enabled, port)
     }
   }
 
@@ -175,12 +206,27 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
         onCheckedChange = ::requestEnabledChange,
       )
       if (enabled) {
-        BrowserLink(
-          text = sseUrl,
-          url = sseUrl,
-          modifier = SwingModifier.cell(smallGapAfter = true).toolTip(sseUrl),
-        )
-        BrowserLink(text = streamUrl, url = streamUrl, modifier = SwingModifier.toolTip(streamUrl))
+        FormGroup(McpServerBundle.message("mcp.server.global.configuration"), indent = true) {
+          FormRow {
+            Label(McpServerBundle.message("mcp.server.global.port.label"))
+            TextField(
+              value = port.toString(),
+              onValueChange = { newVal ->
+                newVal.toIntOrNull()?.let { parsedPort -> if (isValidPort(parsedPort)) port = parsedPort }
+              },
+              modifier = SwingModifier.cell(smallGapAfter = true),
+              columns = PORT_TXT_WIDTH
+            )
+          }
+          FormRow {
+            BrowserLink(
+              text = sseUrl,
+              url = sseUrl,
+              modifier = SwingModifier.cell(smallGapAfter = true).toolTip(sseUrl),
+            )
+            BrowserLink(text = streamUrl, url = streamUrl, modifier = SwingModifier.toolTip(streamUrl))
+          }
+        }
       }
     }
   }
@@ -306,25 +352,32 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(getContent()).asContextElement()) {
       if (!ConsentValidator.isValidNewValue(requested, activeProject)) return@launch
       enabled = requested
-
-      withContext(Dispatchers.Main) {
-        McpServerService.getInstance().settingsChanged(requested)
-        refreshServerStatus()
-      }
+      updateServerSettings(requested)
+      refreshServerStatus()
     }
   }
 
   private fun refreshServerStatus() {
     val service = McpServerService.getInstance()
     serverRunning = service.isRunning
+    if (serverRunning) {
+      port = service.port
+    }
     sseUrl = if (serverRunning) service.serverSseUrl else ""
     streamUrl = if (serverRunning) service.serverStreamUrl else ""
   }
 
-  private fun refreshClients() {
-    globalClientRows = globalClientControllers.map { it.toRowState() }
-    projectClients = projectClientControllers.takeIf { it.isNotEmpty() }
-      ?.let { controllers -> projectClients?.copy(clients = controllers.map { it.toRowState() }) }
+  private fun refreshClients(resetAutoConfig: Boolean = false) {
+    globalClientRows = globalClientControllers.map {
+      it.refresh(resetAutoConfig)
+      it.toRowState()
+    }
+    projectClients = projectClientControllers.takeIf { it.isNotEmpty() }?.let { controllers ->
+      projectClients?.copy(clients = controllers.map {
+        it.refresh(resetAutoConfig)
+        it.toRowState()
+      })
+    }
   }
 
   private fun buildDisabledExplanation(): @NlsContexts.DetailedDescription String =
@@ -362,6 +415,14 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
       )
     }
 
+    fun refresh(resetAutoConfig: Boolean) {
+      if (resetAutoConfig) {
+        autoConfigured = false
+      }
+      isConfigured = client.isConfigured() ?: false
+      isPortCorrect = client.isPortCorrect()
+    }
+
     /** How the client stands, in the order the states override one another. */
     private fun status(): ClientStatus {
       val error = errorMessage
@@ -389,14 +450,22 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
     suspend fun loadOptions(): List<AnAction> =
       withContext(Dispatchers.Default) {
         buildList {
-          runCatching { client.getStreamableHttpConfig() }.getOrNull()?.let { config ->
+          if (runCatching { client.getStreamableHttpConfig() }.getOrNull() != null) {
             add(action(McpServerBundle.message("configure.with.0.transport", "Streamable HTTP")) {
-              performConfiguration { client.configure(config) }
+              performConfiguration {
+                // reevaluate the httpConfig, make sure the configuration is up to date.
+                client.getStreamableHttpConfig()?.let { config -> client.configure(config) }
+              }
             })
           }
-          runCatching { client.getSSEConfig() }.getOrNull()?.let { config ->
+          if (runCatching { client.getSSEConfig() }.getOrNull() != null) {
             add(action(McpServerBundle.message("configure.with.0.transport", "SSE")) {
-              performConfiguration { client.configure(config) }
+              performConfiguration {
+                // reevaluate the SSEConfig, make sure the configuration is up to date.
+                client.getSSEConfig()?.let { config ->
+                  client.configure(config)
+                }
+              }
             })
           }
           add(action(McpServerBundle.message("configure.with.0.transport", "Stdio")) {

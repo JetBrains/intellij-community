@@ -19,6 +19,7 @@ interface McpServerSettings {
 
     @JvmStatic
     val DEFAULT_MCP_PORT: Int = BASE_MCP_PORT + getPortOffset()
+
     @JvmStatic
     val DEFAULT_MCP_PRIVATE_PORT: Int = DEFAULT_MCP_PORT + 100
   }
@@ -34,10 +35,18 @@ interface McpServerSettings {
 @State(name = "McpServerSettings", storages = [Storage("mcpServer.xml")])
 internal class McpServerSettingsImpl : McpServerSettings, SimplePersistentStateComponent<McpServerSettingsImpl.MyState>(MyState()) {
 
+  private val portLock = Any()
+
+  // Note that this `mcpServerPort` can be updated and read concurrently by multiple threads.
+  // In order to avoid data races, we synchronize access to this field. It is not possible to use @Volatile here.
   override var mcpServerPort: Int
-    get() = state.mcpServerPort
+    get() = synchronized(portLock) {
+      state.mcpServerPort
+    }
     set(value) {
-      state.mcpServerPort = value
+      synchronized(portLock) {
+        state.mcpServerPort = value
+      }
     }
 
   override var enableMcpServer: Boolean
