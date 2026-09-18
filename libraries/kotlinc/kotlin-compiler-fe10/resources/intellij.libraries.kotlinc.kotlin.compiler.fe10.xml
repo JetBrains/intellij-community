@@ -1,6 +1,0 @@
-<idea-plugin visibility="public">
-  <dependencies>
-    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
-    <module name="intellij.libraries.kotlinc.kotlin.compiler.ir"/>
-  </dependencies>
-</idea-plugin>

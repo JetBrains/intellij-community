@@ -1540,7 +1540,6 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     jetbrainsLibrary("kotlinc.kotlin-build-tools-impl"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-cli"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-common"),
-    jetbrainsLibrary("kotlinc.kotlin-compiler-fe10"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-fir"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-ir"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-tests"),

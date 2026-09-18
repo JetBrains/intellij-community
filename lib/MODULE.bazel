@@ -9094,20 +9094,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-compiler-fe10-for-ide-2_5_0-dev-9507_http",
-    downloaded_file_path = "kotlin-compiler-fe10-for-ide-2.5.0-dev-9507.jar",
-    sha256 = "91a64e357fa4203e772981be77df2097e0f09fb7d3d00616240694603bf61599",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.5.0-dev-9507/kotlin-compiler-fe10-for-ide-2.5.0-dev-9507.jar",
-)
-
-http_file(
-    name = "org_jetbrains_kotlin-kotlin-compiler-fe10-for-ide-2_5_0-dev-9507-sources_http",
-    downloaded_file_path = "kotlin-compiler-fe10-for-ide-2.5.0-dev-9507-sources.jar",
-    sha256 = "9c95f29bfa0ced8e21cbccf104940ade94d063e42e89892fc5153a26e2f7d84c",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.5.0-dev-9507/kotlin-compiler-fe10-for-ide-2.5.0-dev-9507-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-9507_http",
     downloaded_file_path = "kotlin-compiler-fir-for-ide-2.5.0-dev-9507.jar",
     sha256 = "da94b7460f5a53909e1b490603944772551353e3636e124c57084a7c8a932632",

@@ -912,26 +912,6 @@
             }
         },
         {
-            "destination": "lib/intellij.libraries.kotlinc.kotlin.compiler.fe10.jar",
-            "recipe": {
-                "sources": [
-                    {
-                        "input": "intellij.libraries.kotlinc.kotlin.compiler.fe10",
-                        "kind": "module",
-                        "filter": "module-v1"
-                    },
-                    {
-                        "input": "@lib//:libraries-kotlinc-kotlin-compiler-fe10-kotlinc-kotlin-compiler-fe10",
-                        "kind": "library",
-                        "filter": "library-v1"
-                    }
-                ],
-                "writer": {
-                    "mergeEntities": true
-                }
-            }
-        },
-        {
             "destination": "lib/intellij.libraries.kotlinc.kotlin.compiler.ir.jar",
             "recipe": {
                 "sources": [

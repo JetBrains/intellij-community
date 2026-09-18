@@ -30,7 +30,6 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
       "intellij.libraries.kotlinc.analysis.api.impl.base",
       "intellij.libraries.kotlinc.analysis.api.k2",
       "intellij.libraries.kotlinc.analysis.api.platform.interface",
-      "intellij.libraries.kotlinc.kotlin.compiler.fe10",
       "intellij.libraries.kotlinc.kotlin.compiler.fir",
       "intellij.libraries.kotlinc.kotlin.compiler.ir",
       "intellij.libraries.kotlinc.kotlin.jps.common",
@@ -128,7 +127,6 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
 
       spec.withModule("intellij.kotlin.jsr223")
 
-      spec.withModule("intellij.libraries.kotlinc.kotlin.compiler.fe10")
       withKotlincInPluginDirectory(spec = spec)
 
       spec.withProjectLibraryUnpackedIntoJar("kotlinc.kotlin-build-tools-api", spec.mainJarName)

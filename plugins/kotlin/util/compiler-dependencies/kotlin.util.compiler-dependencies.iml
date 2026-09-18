@@ -16,7 +16,6 @@
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-cli" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.fe10" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.fir" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.ir" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-gradle-statistics" level="project" />

@@ -164,7 +164,6 @@ dev_dist_plugin_descriptor(
         "intellij.libraries.kotlinc.compose.compiler.plugin",
         "intellij.libraries.kotlinc.js.plain.objects.compiler.plugin",
         "intellij.libraries.kotlinc.kotlin.compiler.common",
-        "intellij.libraries.kotlinc.kotlin.compiler.fe10",
         "intellij.libraries.kotlinc.kotlin.compiler.fir",
         "intellij.libraries.kotlinc.kotlin.compiler.ir",
         "intellij.libraries.kotlinc.kotlin.dataframe.compiler.plugin",

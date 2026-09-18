@@ -37,7 +37,6 @@ jvm_library(
         "//java/java-frontback-psi-impl:frontback-psi-impl",
         "//platform/backend",
         "//platform/indexing-api:indexing",
-        "//libraries/kotlinc/kotlin-compiler-fe10:libraries-kotlinc-kotlin-compiler-fe10",
         "//platform/ide-core",
     ],
 )
@@ -68,7 +67,6 @@ jvm_library(
         "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
         "//platform/backend:backend_test_lib",
         "//platform/indexing-api:indexing_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-fe10:libraries-kotlinc-kotlin-compiler-fe10_test_lib",
         "//platform/ide-core:ide-core_test_lib",
     ],
 )
