@@ -1,0 +1,3 @@
+fun <caret>String.foo(n: Int): Boolean = true
+
+val ref: (String, Int) -> Boolean = String::foo

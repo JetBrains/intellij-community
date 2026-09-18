@@ -1,0 +1,11 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xcallable-references-to-contextual
+
+interface Context
+
+context(_: Context)
+fun String.foo(): Int = 0
+
+context(_: Context)
+fun test() {
+    val ref: (String) -> Int = String::foo
+}

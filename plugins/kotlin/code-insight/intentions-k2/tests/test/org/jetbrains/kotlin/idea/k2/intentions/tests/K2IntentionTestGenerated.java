@@ -13702,6 +13702,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/brokenCode.kt");
         }
 
+        @TestMetadata("callableReferenceWithContextParameter.kt")
+        public void testCallableReferenceWithContextParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/callableReferenceWithContextParameter.kt");
+        }
+
         @TestMetadata("caretAfterParameterName.kt")
         public void testCaretAfterParameterName() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/caretAfterParameterName.kt");
@@ -13787,6 +13792,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/localObjectWithFunctionNameConflict.kt");
         }
 
+        @TestMetadata("memberCallableReferenceConflict.kt")
+        public void testMemberCallableReferenceConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/memberCallableReferenceConflict.kt");
+        }
+
         @TestMetadata("memberFun.kt")
         public void testMemberFun() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/memberFun.kt");
@@ -13820,6 +13830,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("topLevelFun.kt")
         public void testTopLevelFun() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/topLevelFun.kt");
+        }
+
+        @TestMetadata("unboundCallableReference.kt")
+        public void testUnboundCallableReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/unboundCallableReference.kt");
+        }
+
+        @TestMetadata("unboundCallableReferenceNonFirst.kt")
+        public void testUnboundCallableReferenceNonFirst() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/unboundCallableReferenceNonFirst.kt");
         }
 
         @TestMetadata("unresolvedCode.kt")
@@ -14862,6 +14882,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/definitelyNotNullType.kt");
         }
 
+        @TestMetadata("explicitBoundCallableReferenceConflict.kt")
+        public void testExplicitBoundCallableReferenceConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/explicitBoundCallableReferenceConflict.kt");
+        }
+
         @TestMetadata("explicitThisForExtension.kt")
         public void testExplicitThisForExtension() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/explicitThisForExtension.kt");
@@ -14875,6 +14900,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("genericReceiver.kt")
         public void testGenericReceiver() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/genericReceiver.kt");
+        }
+
+        @TestMetadata("implicitBoundCallableReferenceConflict.kt")
+        public void testImplicitBoundCallableReferenceConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/implicitBoundCallableReferenceConflict.kt");
         }
 
         @TestMetadata("localFun.kt")
@@ -14930,6 +14960,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("topLevelFun.kt")
         public void testTopLevelFun() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/topLevelFun.kt");
+        }
+
+        @TestMetadata("unboundReceiverCallableReference.kt")
+        public void testUnboundReceiverCallableReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/unboundReceiverCallableReference.kt");
         }
 
         @TestMetadata("usedInAnonymousObject.kt")
