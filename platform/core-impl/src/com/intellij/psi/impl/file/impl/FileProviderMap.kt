@@ -434,6 +434,8 @@ private class ManyItemMap<V : Any>(
     var newMap: MutableMap<CodeInsightContext, V>? = null
 
     for (k in map.keys) {
+      if (k == key) continue // the new value replaces the old one
+
       val v = map[k] ?: continue
 
       if (newMap == null) {
@@ -444,7 +446,7 @@ private class ManyItemMap<V : Any>(
     }
 
     if (newMap == null) {
-      // we have only one (k, v) pair
+      // we have only the new (key, value) pair
       return OneItemMap(key, value)
     }
 

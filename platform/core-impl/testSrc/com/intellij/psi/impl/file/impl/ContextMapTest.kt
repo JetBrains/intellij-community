@@ -169,6 +169,23 @@ class ContextMapTest {
   }
 
   @Test
+  fun testAddReplacesTheValueOfAnExistingKey() {
+    val context1 = MockContext("context1")
+    val context2 = MockContext("context2")
+    val value1 = Value("value1")
+    val value2 = Value("value2")
+    val value3 = Value("value3")
+
+    val map = emptyContextMap<Value>().add(context1, value1).add(context2, value2)
+
+    val updatedMap = map.add(context1, value3)
+
+    assertEquals(value3, updatedMap[context1])
+    assertEquals(value2, updatedMap[context2])
+    assertEquals(2, updatedMap.size())
+  }
+
+  @Test
   fun testValueCollectedAndThenNewAdded() {
     val context1 = MockContext("context1")
     val context2 = MockContext("context2")
