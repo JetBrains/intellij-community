@@ -48,7 +48,7 @@ final class MoveInitializerToIfBranchFixer implements EffectivelyFinalFixer {
     Branched branched = extractInitMode(var);
     // Do not add too many branches
     return branched != null && branched.numberOfNonInitializedBranches() <= 3 &&
-           canReorder(initializer, branched) &&
+           initializer != null && canReorder(initializer, branched) &&
            branched.conditions().noneMatch(cond -> VariableAccessUtils.variableIsUsed(var, cond));
   }
 
@@ -71,7 +71,7 @@ final class MoveInitializerToIfBranchFixer implements EffectivelyFinalFixer {
     return JavaBundle.message("intention.make.final.fixer.if", var.getName());
   }
 
-  private static boolean canReorder(PsiExpression initializer, Branched branched) {
+  private static boolean canReorder(@NotNull PsiExpression initializer, Branched branched) {
     if (ExpressionUtils.isSafelyRecomputableExpression(initializer) && !refersToNonFinalLocal(initializer)) return true;
     if (SideEffectChecker.mayHaveSideEffects(initializer)) return false;
     PsiIfStatement ifStatement = branched.ifStatement();
