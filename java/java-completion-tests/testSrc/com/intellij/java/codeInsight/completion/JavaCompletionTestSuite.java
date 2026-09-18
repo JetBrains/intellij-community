@@ -3,7 +3,6 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.TestCaseLoader;
 import com.intellij.java.codeInsight.completion.ml.JavaCompletionFeaturesTest;
-import com.intellij.java.codeInsight.template.postfix.templates.PostfixTemplateTestCase;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestIndexingModeSupporter;
@@ -39,8 +38,7 @@ public class JavaCompletionTestSuite extends TestSuite {
     myTestCaseLoader.fillTestCases("", TestCaseLoader.getClassRoots());
     List<Class<?>> classes = myTestCaseLoader.getClasses();
     for (Class<?> aClass : classes) {
-      if (!aClass.getSimpleName().contains("Completion") && 
-          !PostfixTemplateTestCase.class.isAssignableFrom(aClass)) continue;
+      if (!aClass.getSimpleName().contains("Completion") && !isJavaPostfixTest(aClass)) continue;
       // JavaCompletionFeaturesTest does not depend on indices
       if (JavaCompletionFeaturesTest.class.equals(aClass)) continue;
       // Exclude feature suggester tests
@@ -54,5 +52,11 @@ public class JavaCompletionTestSuite extends TestSuite {
       }
     }
     return TestFrameworkUtil.flattenSuite(suite);
+  }
+
+  private static boolean isJavaPostfixTest(Class<?> testClass) {
+    Class<?> superclass = testClass.getSuperclass();
+    return superclass != null &&
+           "com.intellij.java.codeInsight.template.postfix.templates.PostfixTemplateTestCase".equals(superclass.getName());
   }
 }

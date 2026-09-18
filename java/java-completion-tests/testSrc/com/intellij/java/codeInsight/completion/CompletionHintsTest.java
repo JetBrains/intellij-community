@@ -8,7 +8,7 @@ import com.intellij.codeInsight.hints.Option;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.java.codeInsight.AbstractParameterInfoTestCase;
-import com.intellij.java.codeInsight.JavaExternalDocumentationTest;
+import com.intellij.java.codeInsight.JavaDocumentationTestUtil;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -975,7 +975,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key)");
     checkResult("class C { void m() { System.getProperty(<caret>) } }");
-    String doc = JavaExternalDocumentationTest.getDocumentationText(getEditor());
+    String doc = JavaDocumentationTestUtil.getDocumentationText(getEditor());
     assertTrue(doc.contains("<code>null</code> if there is no property with that key"));
   }
 
@@ -983,7 +983,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     configureJava("class C { void m() { new Strin<caret> } }");
     complete("String(byte[] bytes, String charsetName)");
     checkResultWithInlays("class C { void m() { new String(<HINT text=\"bytes:\"/><caret><Hint text=\",charsetName:\"/>) } }");
-    String doc = JavaExternalDocumentationTest.getDocumentationText(getEditor());
+    String doc = JavaDocumentationTestUtil.getDocumentationText(getEditor());
     assertTrue(doc.contains("If the named charset is not supported"));
   }
 

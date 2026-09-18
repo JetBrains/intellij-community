@@ -32,7 +32,7 @@ import com.intellij.codeInspection.nullable.NullableStuffInspection
 import com.intellij.codeInspection.numeric.RemoveLiteralUnderscoresInspection
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.java.codeInspection.DataFlowInspectionTestCase
+import com.intellij.java.codeInsight.JSpecifyTestUtil
 import com.intellij.modcommand.ActionContext
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
@@ -1914,8 +1914,8 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
   fun testNotNullInspection() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.enableInspections(NullableStuffInspection())
-    DataFlowInspectionTestCase.addJSpecifyNullMarked(myFixture)
-    DataFlowInspectionTestCase.addJSpecifyNonNull(myFixture)
+    JSpecifyTestUtil.addJSpecifyNullMarked(myFixture)
+    JSpecifyTestUtil.addJSpecifyNonNull(myFixture)
     myFixture.configureByText("package-info.java", """
           @NullMarked
           package org.example;
