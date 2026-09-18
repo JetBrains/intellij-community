@@ -19,6 +19,9 @@ import com.intellij.openapi.extensions.PluginId
 abstract class PseudoProductTestPluginInitContext : EmptyTestPluginInitContext() {
   abstract val expiredPlugins: Set<PluginId>
 
+  /** The AI flag that the test sets, without the backing file. */
+  open val aiEnabled: Boolean get() = true
+
   override val environmentConfiguredModules: Map<PluginModuleId, PluginInitializationContext.EnvironmentConfiguredModuleData> by lazy {
     buildMap {
       configureProductModeModules(currentProductModeId)
@@ -28,7 +31,7 @@ abstract class PseudoProductTestPluginInitContext : EmptyTestPluginInitContext()
   override fun provideModuleExclusionsImposedByProductRules(
     pluginSet: UnambiguousPluginSet
   ): Sequence<Pair<PluginModuleDescriptor, ProductRulesImposedExclusion.ProductRulesImposedExclusionReason>> =
-    defaultProductRulesImposedExclusions(pluginSet, expiredPlugins, thirdPartyPluginsWithoutConsentCheckResult = null)
+    defaultProductRulesImposedExclusions(pluginSet, expiredPlugins, thirdPartyPluginsWithoutConsentCheckResult = null, aiEnabled = aiEnabled)
 
   override fun provideCompatibilityDependencies(
     descriptor: IdeaPluginDescriptorImpl,

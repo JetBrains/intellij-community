@@ -370,6 +370,7 @@ object PluginInitializationDiagnosticUtils {
       is PluginIsMarkedDisabled,
       is PluginVersionIsSuperseded -> false
       is ProductRulesImposedExclusion -> when (productReason) {
+        AiIsDisabled,
         NonBundledPluginsLoadingIsDisabled,
         PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading,
         PluginLoadingIsDisabledCompletelyExceptCore -> false

@@ -237,6 +237,7 @@ class PluginManagerStateService {
         is ProductRulesImposedExclusion -> {
           val productReason = exclusionReason.productReason as? IntelliJImposedModuleExclusionReason
           when (productReason) {
+            is AiIsDisabled -> {} // an expected exclusion, not a loading error
             is PluginHasExpiredLicense -> {} // not handled in old init, FIXME later
             is ThirdPartyPrivacyNoticeIsNotAccepted -> {}
             is LegacyPluginIsCompatibleOnlyWithIntelliJIDEA,

@@ -35,3 +35,8 @@ object PluginLoadingIsDisabledCompletelyExceptCore : IntelliJImposedModuleExclus
 object LegacyPluginIsCompatibleOnlyWithIntelliJIDEA : IntelliJImposedModuleExclusionReason {
   override fun getLogMessage(): String = "legacy plugin is compatible only with IntelliJ IDEA"
 }
+
+@ApiStatus.Internal
+object AiIsDisabled : IntelliJImposedModuleExclusionReason {
+  override fun getLogMessage(): String = "AI is disabled"
+}

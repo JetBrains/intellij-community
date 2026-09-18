@@ -38,6 +38,7 @@ class PluginSetTestBuilder private constructor(
   private var explicitPluginSubsetToLoad: Set<PluginId>? = null
   private var disableRequiredIfAvailable: Boolean = false
   private var customEnvironmentConfiguredModules: Map<PluginModuleId, EnvironmentConfiguredModuleData>? = null
+  private var aiEnabled: Boolean = true
   private var compatibilityDependenciesForRemainingCandidatesProvider:
     ((IdeaPluginDescriptorImpl, RemainingCandidatesView) -> Sequence<DependencyRef>)? = null
 
@@ -93,6 +94,11 @@ class PluginSetTestBuilder private constructor(
     customEnvironmentConfiguredModules = environmentConfiguredModules
   }
 
+  /** Sets the AI flag, as [com.intellij.ide.plugins.AiEnabledState] does at run time. */
+  fun withAiEnabled(enabled: Boolean): PluginSetTestBuilder = apply {
+    aiEnabled = enabled
+  }
+
   fun withCompatibilityDependenciesForRemainingCandidatesProvider(
     provider: (IdeaPluginDescriptorImpl, RemainingCandidatesView) -> Sequence<DependencyRef>,
   ): PluginSetTestBuilder = apply {
@@ -108,6 +114,7 @@ class PluginSetTestBuilder private constructor(
   fun buildInitContext(): PluginInitializationContext {
     return object : PseudoProductTestPluginInitContext() {
       override val expiredPlugins: Set<PluginId> = this@PluginSetTestBuilder.expiredPluginIds
+      override val aiEnabled: Boolean = this@PluginSetTestBuilder.aiEnabled
       override val productBuildNumber: BuildNumber = this@PluginSetTestBuilder.productBuildNumber
       override fun isPluginDisabled(id: PluginId): Boolean = id in disabledPluginIds
       override fun isPluginBroken(id: PluginId, version: String?): Boolean {

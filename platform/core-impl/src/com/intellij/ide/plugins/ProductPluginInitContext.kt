@@ -107,6 +107,9 @@ class ProductPluginInitContext(
   override val currentProductModeId: String
     get() = ProductLoadingStrategy.strategy.currentModeId
 
+  /** Read once, so the flag stays the same for the whole life of this context. */
+  private val aiEnabled: Boolean by lazy { AiEnabledState.isEnabled() }
+
   override val environmentConfiguredModules: Map<PluginModuleId, EnvironmentConfiguredModuleData> by lazy {
     buildMap {
       configureProductModeModules(currentProductModeId)
@@ -120,7 +123,7 @@ class ProductPluginInitContext(
     defaultProductCompatibilityDependenciesForRemainingCandidatesProvider(descriptor, remainingCandidates)
 
   override fun provideModuleExclusionsImposedByProductRules(pluginSet: UnambiguousPluginSet): Sequence<Pair<PluginModuleDescriptor, ProductRulesImposedExclusionReason>> =
-    defaultProductRulesImposedExclusions(pluginSet, expiredPlugins, thirdPartyPluginsWithoutConsentCheckResult)
+    defaultProductRulesImposedExclusions(pluginSet, expiredPlugins, thirdPartyPluginsWithoutConsentCheckResult, aiEnabled)
 
   override fun shouldIncludeContentModulesForDependsEdgeTarget(resolvedTarget: PluginMainDescriptor): Boolean =
     defaultShouldIncludeContentModulesForDependsEdgeTarget(resolvedTarget)
@@ -425,6 +428,7 @@ class ProductPluginInitContext(
       pluginSet: UnambiguousPluginSet,
       expiredPlugins: Set<PluginId>,
       thirdPartyPluginsWithoutConsentCheckResult: ThirdPartyPluginsWithoutConsentCheckResult?,
+      aiEnabled: Boolean,
     ): Sequence<Pair<PluginModuleDescriptor, ProductRulesImposedExclusionReason>> {
       return sequence {
         for (expiredPluginId in expiredPlugins) {
@@ -436,6 +440,10 @@ class ProductPluginInitContext(
           for (plugin in it.pluginsToExcludeFromLoading) {
             yield(plugin to ThirdPartyPrivacyNoticeIsNotAccepted)
           }
+        }
+        if (!aiEnabled) {
+          // Every module that depends on the marker goes out with it.
+          pluginSet.resolveContentModuleId(AIR_AI_MARKER_MODULE_ID)?.let { yield(it to AiIsDisabled) }
         }
       }
     }
@@ -511,6 +519,14 @@ private val vcsApiContentModules = arrayOf(
 private val COLLABORATION_TOOLS_MODULE_ID = PluginModuleId("intellij.platform.collaborationTools", PluginModuleId.JETBRAINS_NAMESPACE)
 
 private val BACKEND_MODULE_ID = PluginModuleId("intellij.platform.backend", PluginModuleId.JETBRAINS_NAMESPACE)
+
+/**
+ * The empty marker module that the Air plugin declares. The IDE takes it out of the plugin set while
+ * [AiEnabledState] says that AI is off, and every module that depends on it goes out too.
+ */
+@ApiStatus.Internal
+val AIR_AI_MARKER_MODULE_ID: PluginModuleId = PluginModuleId("intellij.air.aiEnabled", PluginModuleId.JETBRAINS_NAMESPACE)
+
 private val FRONTEND_MODULE_ID = PluginModuleId("intellij.platform.frontend", PluginModuleId.JETBRAINS_NAMESPACE)
 private val RPC_MODULE_ID = PluginModuleId("intellij.platform.rpc", PluginModuleId.JETBRAINS_NAMESPACE)
 
