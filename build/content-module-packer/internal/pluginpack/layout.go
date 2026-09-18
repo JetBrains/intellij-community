@@ -1,8 +1,7 @@
 package pluginpack
 
 import (
-	"bytes"
-	"compress/gzip"
+	"encoding/binary"
 	"fmt"
 	"io/fs"
 	"os"
@@ -549,6 +548,7 @@ func (executor *layoutExecutor) extractArchive(input layoutInput, asset LayoutAs
 
 // gzipXMLArchives reads the .xml entries of every source archive in central-directory order and writes each one as
 // <destination>/<name>.gzip. A source is a .zip or a .jar. A file that is not XML, and a link, fail with the archive name.
+// The entry keeps the deflate stream of the archive, so the Kotlin build and this packer write the same bytes.
 func (executor *layoutExecutor) gzipXMLArchives(inputs []layoutInput, asset LayoutAsset, writer layoutWriter) error {
 	for _, input := range inputs {
 		name := strings.ToLower(filepath.Base(input.path))
@@ -566,15 +566,11 @@ func (executor *layoutExecutor) gzipXMLArchives(inputs []layoutInput, asset Layo
 			case entry.kind != "file" || !strings.HasSuffix(entry.name, ".xml"):
 				return fmt.Errorf("unexpected file %q in %s", entry.name, input.path)
 			}
-			content, err := entry.content()
+			stream, err := entry.deflate()
 			if err != nil {
 				return fmt.Errorf("%s: %s: %w", input.path, entry.name, err)
 			}
-			compressed, err := gzipBytes(content)
-			if err != nil {
-				return err
-			}
-			return writer.file(joinLayoutPath(asset.Destination, entry.name+".gzip"), compressed, 0o644)
+			return writer.file(joinLayoutPath(asset.Destination, entry.name+".gzip"), gzipMember(stream), 0o644)
 		})
 		archive.close()
 		if err != nil {
@@ -584,20 +580,15 @@ func (executor *layoutExecutor) gzipXMLArchives(inputs []layoutInput, asset Layo
 	return nil
 }
 
-// gzipBytes compresses the content as one gzip member at the best speed, with a zero modification time and no name.
-// The Go gzip writer produces other bytes than the JDK deflater, so a *.xml.gzip entry differs from the production
-// build in bytes, not in payload.
-func gzipBytes(content []byte) ([]byte, error) {
-	var buffer bytes.Buffer
-	compressor, err := gzip.NewWriterLevel(&buffer, gzip.BestSpeed)
-	if err != nil {
-		return nil, err
-	}
-	if _, err := compressor.Write(content); err != nil {
-		return nil, err
-	}
-	if err := compressor.Close(); err != nil {
-		return nil, err
-	}
-	return buffer.Bytes(), nil
+// gzipMemberHeader starts one gzip member with the deflate method, no flags, a zero modification time, no extra
+// flags, and the unknown operating system.
+var gzipMemberHeader = []byte{0x1f, 0x8b, 8, 0, 0, 0, 0, 0, 0, 255}
+
+// gzipMember wraps the deflate stream as one gzip member: the header, the stream, the CRC-32 and the payload size.
+func gzipMember(stream deflateStream) []byte {
+	member := make([]byte, 0, len(gzipMemberHeader)+len(stream.data)+8)
+	member = append(member, gzipMemberHeader...)
+	member = append(member, stream.data...)
+	member = binary.LittleEndian.AppendUint32(member, stream.crc)
+	return binary.LittleEndian.AppendUint32(member, stream.size)
 }

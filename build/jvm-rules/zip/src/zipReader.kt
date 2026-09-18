@@ -55,6 +55,63 @@ fun readEntryFromZip(zipPath: Path, entryPath: String): ByteArray? {
   return result
 }
 
+/**
+ * One file entry of a zip as the central directory describes it. [rawData] returns the bytes the archive stores for
+ * the entry, without inflation. The buffer is valid until the entry processor returns.
+ */
+class RawZipEntry(
+  @JvmField val name: String,
+  @JvmField val method: Int,
+  @JvmField val crc32: Long,
+  @JvmField val uncompressedSize: Int,
+  @JvmField val rawData: () -> ByteBuffer,
+)
+
+/** Visits the file entries of a zip in central-directory order. A directory and the index entry are skipped. */
+fun readZipFileRaw(file: Path, entryProcessor: (RawZipEntry) -> Unit) {
+  try {
+    mapFileAndUse(file) { buffer, fileSize ->
+      val (centralDirPosition, centralDirSize) = locateCentralDirectory(buffer = buffer, fileSize = fileSize)
+      var offset = centralDirPosition
+      val endOffset = centralDirPosition + centralDirSize
+      while (offset < endOffset) {
+        if (buffer.getInt(offset) != 33639248) {
+          throw EOFException("Expected central directory size $centralDirSize but only at $offset no valid central directory file header signature")
+        }
+        val method = (buffer.getShort(offset + 10) and 0xffff.toShort()).toInt()
+        val crc32 = buffer.getInt(offset + 16).toLong() and 0xffffffffL
+        val compressedSize = buffer.getInt(offset + 20)
+        val uncompressedSize = buffer.getInt(offset + 24)
+        val nameLengthInBytes = (buffer.getShort(offset + 28) and 0xffff.toShort()).toInt()
+        val extraFieldLength = (buffer.getShort(offset + 30) and 0xffff.toShort()).toInt()
+        val commentLength = (buffer.getShort(offset + 32) and 0xffff.toShort()).toInt()
+        val headerOffset = buffer.getInt(offset + 42)
+        val nameBytes = ByteArray(nameLengthInBytes)
+        buffer.get(offset + 46, nameBytes)
+        offset += 46 + nameLengthInBytes + extraFieldLength + commentLength
+        if (nameBytes.isNotEmpty() && nameBytes.last() == '/'.code.toByte()) {
+          continue
+        }
+        val name = String(nameBytes, Charsets.UTF_8)
+        if (name == INDEX_FILENAME) {
+          continue
+        }
+        entryProcessor(RawZipEntry(name = name, method = method, crc32 = crc32, uncompressedSize = uncompressedSize) {
+          computeDataOffsetIfNeededAndReadInputBuffer(
+            mappedBuffer = buffer,
+            headerOffset = headerOffset,
+            nameLengthInBytes = nameLengthInBytes,
+            compressedSize = compressedSize,
+          )
+        })
+      }
+    }
+  }
+  catch (e: IOException) {
+    throw IOException("Cannot read $file", e)
+  }
+}
+
 suspend fun suspendAwareReadZipFile(file: Path, entryProcessor: suspend (String, () -> ByteBuffer) -> Unit) {
   // FileChannel is strongly required because only FileChannel provides `read(ByteBuffer dst, long position)` method -
   // ability to read data without setting channel position, as setting channel position will require synchronization
@@ -244,6 +301,21 @@ private fun computeDataOffset(mappedBuffer: ByteBuffer, headerOffset: Int, nameL
 }
 
 private inline fun readZipEntries(buffer: ByteBuffer, fileSize: Int, entryProcessor: EntryProcessor) {
+  val (centralDirPosition, centralDirSize) = locateCentralDirectory(buffer = buffer, fileSize = fileSize)
+  SingleByteBufferAllocator().use { byteBufferAllocator ->
+    readCentralDirectory(
+      buffer = buffer,
+      centralDirPosition = centralDirPosition,
+      centralDirSize = centralDirSize,
+      entryProcessor = entryProcessor,
+      byteBufferAllocator = byteBufferAllocator
+    )
+  }
+  buffer.clear()
+}
+
+/** Returns the position and the size of the central directory from the end-of-central-directory record. */
+private fun locateCentralDirectory(buffer: ByteBuffer, fileSize: Int): Pair<Int, Int> {
   // MIN_EOCD_SIZE
   var offset = fileSize - 22
   var finished = false
@@ -269,26 +341,11 @@ private inline fun readZipEntries(buffer: ByteBuffer, fileSize: Int, entryProces
     isZip64 = false
   }
 
-  val centralDirSize: Int
-  val centralDirPosition: Int
-  if (isZip64) {
-    centralDirSize = buffer.getLong(offset + 40).toInt()
-    centralDirPosition = buffer.getLong(offset + 48).toInt()
+  return if (isZip64) {
+    buffer.getLong(offset + 48).toInt() to buffer.getLong(offset + 40).toInt()
   }
   else {
-    centralDirSize = buffer.getInt(offset + 12)
-    centralDirPosition = buffer.getInt(offset + 16)
+    buffer.getInt(offset + 16) to buffer.getInt(offset + 12)
   }
-
-  SingleByteBufferAllocator().use { byteBufferAllocator ->
-    readCentralDirectory(
-      buffer = buffer,
-      centralDirPosition = centralDirPosition,
-      centralDirSize = centralDirSize,
-      entryProcessor = entryProcessor,
-      byteBufferAllocator = byteBufferAllocator
-    )
-  }
-  buffer.clear()
 }
 

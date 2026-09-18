@@ -5,6 +5,8 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
+	"encoding/binary"
+	"hash/crc32"
 	"io"
 	"os"
 	"path/filepath"
@@ -166,13 +168,14 @@ func writeTarGz(t *testing.T, file string, entries ...tarTestEntry) {
 
 // zipTestEntry states the creator platform of one entry. Creator 3 is Unix. Creator 19 is the MacOSX platform, and
 // both readers treat it as Unix through its low nibble. Creator 10 is the Windows NTFS platform. It carries no mode
-// and no link.
+// and no link. An entry is STORED unless deflate is set.
 type zipTestEntry struct {
 	name    string
 	content string
 	mode    uint32
 	symlink bool
 	creator uint16
+	deflate bool
 }
 
 func zipTestBytes(t *testing.T, entries ...zipTestEntry) []byte {
@@ -181,6 +184,9 @@ func zipTestBytes(t *testing.T, entries ...zipTestEntry) []byte {
 	writer := zip.NewWriter(&buffer)
 	for _, entry := range entries {
 		header := &zip.FileHeader{Name: entry.name, Method: zip.Store}
+		if entry.deflate {
+			header.Method = zip.Deflate
+		}
 		if entry.creator != 0 {
 			unixMode := entry.mode | 0o100000
 			if entry.symlink {
@@ -451,8 +457,55 @@ func TestLayoutAssetsMatchTheKotlinExecutorCases(t *testing.T) {
 				t.Fatalf("%s decompresses to %q, want %q", name, got, want)
 			}
 		}
-		if header := entries["resources/a.xml.gzip"][:8]; header != "\x1f\x8b\x08\x00\x00\x00\x00\x00" {
-			t.Fatalf("the gzip header carries a name or a time: %x", header)
+		if header := entries["resources/a.xml.gzip"][:10]; header != "\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff" {
+			t.Fatalf("the gzip header carries a name, a time, or an extra flag: %x", header)
+		}
+	})
+	t.Run("gzip XML archives keep the deflate stream of the source entry", func(t *testing.T) {
+		root := t.TempDir()
+		archive := filepath.Join(root, "resources.jar")
+		large := strings.Repeat("<row/>", 20000)
+		writeZip(t, archive, zipTestEntry{name: "deflated.xml", content: large, deflate: true}, zipTestEntry{name: "stored.xml", content: large},
+			zipTestEntry{name: "empty.xml"})
+		layout := LayoutAssets{Inputs: []Reference{{Artifact: "archive"}}, Assets: []LayoutAsset{{Destination: "resources", Sources: []int{0}, Transform: gzipXMLArchive()}}}
+		output, _ := writeExecution(t, layoutJarRecipe(layout), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", archive)}})
+		_, entries := readArchive(t, filepath.Join(output, "lib/layout.jar"))
+		trailer := binary.LittleEndian.AppendUint32(nil, crc32.ChecksumIEEE([]byte(large)))
+		trailer = binary.LittleEndian.AppendUint32(trailer, uint32(len(large)))
+		source, err := zip.OpenReader(archive)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer source.Close()
+		raw, err := source.File[0].OpenRaw()
+		if err != nil {
+			t.Fatal(err)
+		}
+		deflated, err := io.ReadAll(raw)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := entries["resources/deflated.xml.gzip"], string(gzipMemberHeader)+string(deflated)+string(trailer); got != want {
+			t.Fatalf("the deflated member is not the source stream: %d bytes, want %d", len(got), len(want))
+		}
+		if got := readGzip(t, entries["resources/deflated.xml.gzip"]); got != large {
+			t.Fatal("the deflated member decompresses to another payload")
+		}
+		stored := entries["resources/stored.xml.gzip"]
+		if got, want := stored[len(stored)-8:], string(trailer); got != want {
+			t.Fatalf("the stored member trailer is %x, want %x", got, want)
+		}
+		if len(stored) != len(gzipMemberHeader)+len(large)+2*5+8 {
+			t.Fatalf("the stored member holds %d bytes, want two stored blocks", len(stored))
+		}
+		if got := readGzip(t, stored); got != large {
+			t.Fatal("the stored member decompresses to another payload")
+		}
+		if got, want := entries["resources/empty.xml.gzip"], string(gzipMemberHeader)+"\x01\x00\x00\xff\xff"+"\x00\x00\x00\x00\x00\x00\x00\x00"; got != want {
+			t.Fatalf("the empty member is %x, want %x", got, want)
+		}
+		if got := readGzip(t, entries["resources/empty.xml.gzip"]); got != "" {
+			t.Fatalf("the empty member decompresses to %q", got)
 		}
 	})
 	t.Run("gzip XML archives read zip and jar archives only", func(t *testing.T) {

@@ -7,6 +7,7 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,13 +20,22 @@ import (
 const zipCreatorUnix = 3
 
 // layoutArchiveEntry is one archive member. Its name has one trailing slash removed and is never empty.
-// content reads the bytes of a file entry. It is valid until the visitor moves to the next entry.
+// content reads the bytes of a file entry. deflate reads the stored deflate stream of a zip file entry and is nil
+// for a tar entry. Both are valid until the visitor moves to the next entry.
 type layoutArchiveEntry struct {
 	name    string
 	kind    string
 	mode    uint32
 	target  string
 	content func() ([]byte, error)
+	deflate func() (deflateStream, error)
+}
+
+// deflateStream is one raw deflate stream with the CRC-32 and the size of its payload.
+type deflateStream struct {
+	data []byte
+	crc  uint32
+	size uint32
 }
 
 // layoutArchive visits an archive in the order the Kotlin reader used: the central directory of a zip, the stream of a tar.
@@ -117,7 +127,9 @@ func (archive *zipLayoutArchive) visit(visit func(layoutArchiveEntry) error) err
 		if !ok {
 			continue
 		}
-		entry := layoutArchiveEntry{name: name, kind: "file", content: func() ([]byte, error) { return readZipEntry(file) }}
+		entry := layoutArchiveEntry{name: name, kind: "file",
+			content: func() ([]byte, error) { return readZipEntry(file) },
+			deflate: func() (deflateStream, error) { return zipDeflateStream(file) }}
 		if !archive.streamed && (file.CreatorVersion>>8)&0x0f == zipCreatorUnix {
 			unixMode := file.ExternalAttrs >> 16
 			entry.mode = unixMode & 0o777
@@ -149,6 +161,54 @@ func readZipEntry(file *zip.File) ([]byte, error) {
 	}
 	defer input.Close()
 	return io.ReadAll(input)
+}
+
+// zipDeflateStream returns the deflate stream of a zip entry as the archive stores it. A DEFLATED entry is copied.
+// A STORED entry becomes stored deflate blocks. No deflater runs, so the bytes depend on the archive alone.
+func zipDeflateStream(file *zip.File) (deflateStream, error) {
+	if file.UncompressedSize64 > math.MaxUint32 {
+		return deflateStream{}, fmt.Errorf("%s is larger than 4 GiB", file.Name)
+	}
+	input, err := file.OpenRaw()
+	if err != nil {
+		return deflateStream{}, err
+	}
+	data, err := io.ReadAll(input)
+	if err != nil {
+		return deflateStream{}, err
+	}
+	stream := deflateStream{crc: file.CRC32, size: uint32(file.UncompressedSize64)}
+	switch file.Method {
+	case zip.Deflate:
+		stream.data = data
+	case zip.Store:
+		stream.data = storedDeflateBlocks(data)
+	default:
+		return deflateStream{}, fmt.Errorf("%s uses compression method %d, not deflate", file.Name, file.Method)
+	}
+	return stream, nil
+}
+
+// storedDeflateBlocks wraps the data in deflate blocks of type 0, each of at most 65535 bytes. The last block is final.
+func storedDeflateBlocks(data []byte) []byte {
+	blocks := make([]byte, 0, len(data)+5*(len(data)/math.MaxUint16+1))
+	for {
+		chunk := data
+		if len(chunk) > math.MaxUint16 {
+			chunk = data[:math.MaxUint16]
+		}
+		data = data[len(chunk):]
+		final := byte(0)
+		if len(data) == 0 {
+			final = 1
+		}
+		length := uint16(len(chunk))
+		blocks = append(blocks, final, byte(length), byte(length>>8), ^byte(length), ^byte(length>>8))
+		blocks = append(blocks, chunk...)
+		if final == 1 {
+			return blocks
+		}
+	}
 }
 
 // tarLayoutArchive reads a gzip tar in stream order. Only the first gzip member is read, as the Kotlin reader did.
