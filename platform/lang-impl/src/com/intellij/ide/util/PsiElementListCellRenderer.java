@@ -32,6 +32,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TextWithIcon;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
@@ -99,6 +100,8 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   protected PsiElementListCellRenderer() {
     super(new BorderLayout());
     myBackgroundRenderer = new PsiElementBackgroundListCellRenderer(this);
+
+    ThreadingAssertions.softAssertAwtOperationsThread();
   }
 
   private final class MyAccessibleContext extends JPanel.AccessibleJPanel {
