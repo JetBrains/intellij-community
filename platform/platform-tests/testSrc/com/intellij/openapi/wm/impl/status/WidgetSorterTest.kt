@@ -39,6 +39,57 @@ class WidgetSorterTest {
   }
 
   @Test
+  fun `reorderToIndex should move widget to the last position`() {
+    var persisted: Map<String, Int> = emptyMap()
+    val sorter = IdeStatusBarImpl.WidgetSorter(initialOrder = emptyMap(), persist = { persisted = it })
+
+    // A target widget id cannot express "after the last widget", so only an index reaches this position.
+    sorter.reorderToIndex("A", 2, listOf("A", "B", "C"))
+
+    assertEquals(mapOf("A" to 2), persisted)
+  }
+
+  @Test
+  fun `reorderToIndex should move widget to the first position`() {
+    var persisted: Map<String, Int> = emptyMap()
+    val sorter = IdeStatusBarImpl.WidgetSorter(initialOrder = emptyMap(), persist = { persisted = it })
+
+    sorter.reorderToIndex("C", 0, listOf("A", "B", "C"))
+
+    assertEquals(mapOf("C" to 0), persisted)
+  }
+
+  @Test
+  fun `reorderToIndex should renumber the widgets it already tracks`() {
+    var persisted: Map<String, Int> = mapOf("A" to 0, "B" to 1, "C" to 2)
+    val sorter = IdeStatusBarImpl.WidgetSorter(initialOrder = persisted, persist = { persisted = it })
+
+    sorter.reorderToIndex("A", 2, listOf("A", "B", "C"))
+
+    assertEquals(mapOf("A" to 2, "B" to 0, "C" to 1), persisted)
+  }
+
+  @Test
+  fun `reorderToIndex should clamp an index above the last position`() {
+    var persisted: Map<String, Int> = emptyMap()
+    val sorter = IdeStatusBarImpl.WidgetSorter(initialOrder = emptyMap(), persist = { persisted = it })
+
+    sorter.reorderToIndex("A", 99, listOf("A", "B", "C"))
+
+    assertEquals(mapOf("A" to 2), persisted)
+  }
+
+  @Test
+  fun `reorderToIndex with unknown source is a no-op`() {
+    var persistCount = 0
+    val sorter = IdeStatusBarImpl.WidgetSorter(initialOrder = mapOf("A" to 0), persist = { persistCount++ })
+
+    sorter.reorderToIndex("Ghost", 0, listOf("A", "B"))
+
+    assertEquals(0, persistCount)
+  }
+
+  @Test
   fun `should handle complex dependencies from example`() {
     val widgets = mutableListOf(
       TestOrderable("Position", LoadingOrder.ANY),

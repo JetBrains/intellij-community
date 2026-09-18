@@ -40,6 +40,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.BalloonHandler
 import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.PopupCornerType
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
@@ -50,6 +51,7 @@ import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget
 import com.intellij.openapi.wm.IconWidgetPresentation
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarListener
 import com.intellij.openapi.wm.StatusBarWidget
@@ -77,6 +79,8 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.ProgressState
 import com.intellij.platform.util.progress.StepState
+import com.intellij.toolWindow.ToolWindowDragHelper
+import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createThumbnailDragImage
 import com.intellij.ui.ClickListener
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
@@ -85,17 +89,25 @@ import com.intellij.ui.GuiUtils
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.UIBundle
+import com.intellij.ui.WindowRoundedCornersManager
+import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.border.name
+import com.intellij.ui.drag.DialogDragImageView
+import com.intellij.ui.drag.DragImageView
+import com.intellij.ui.drag.GlassPaneDragImageView
+import com.intellij.ui.paint.RectanglePainter
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.NotificationPopup
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.height
 import com.intellij.util.EventDispatcher
+import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy
@@ -131,8 +143,10 @@ import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
 import java.awt.Graphics
+import java.awt.Graphics2D
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import java.awt.Image
 import java.awt.Insets
 import java.awt.KeyboardFocusManager
 import java.awt.LayoutManager
@@ -142,7 +156,9 @@ import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.awt.image.BufferedImage
 import java.lang.ref.WeakReference
 import java.util.function.Supplier
 import javax.accessibility.Accessible
@@ -152,6 +168,7 @@ import javax.swing.AbstractAction
 import javax.swing.BoxLayout
 import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.KeyStroke
@@ -205,6 +222,7 @@ open class IdeStatusBarImpl @Internal constructor(
 
   private val centerPanel: JPanel
   private val effectRenderer = WidgetEffectRenderer(this)
+  private var isWidgetDragInProgress = false
   private var info: @NlsContexts.StatusBarText String? = null
 
   private var preferredTextHeight: Int = 0
@@ -258,15 +276,24 @@ open class IdeStatusBarImpl @Internal constructor(
         return
       }
 
-      val finalVisible = currentVisibleOrder.toMutableList()
-      val sourceIdx = finalVisible.indexOf(sourceWidgetId)
-      if (sourceIdx == -1) return
-
-      finalVisible.removeAt(sourceIdx)
-      val targetIdx = finalVisible.indexOf(targetWidgetId)
+      val withoutSource = currentVisibleOrder.toMutableList()
+      if (!withoutSource.remove(sourceWidgetId)) return
+      val targetIdx = withoutSource.indexOf(targetWidgetId)
       if (targetIdx == -1) return
 
-      finalVisible.add(targetIdx, sourceWidgetId)
+      reorderToIndex(sourceWidgetId, targetIdx, currentVisibleOrder)
+    }
+
+    /**
+     * Moves [sourceWidgetId] to [targetIndex] in [currentVisibleOrder] with the source itself removed.
+     *
+     * An index equal to the size of that list puts the widget last, which a target widget id cannot express.
+     */
+    fun reorderToIndex(sourceWidgetId: String, targetIndex: Int, currentVisibleOrder: List<String>) {
+      val finalVisible = currentVisibleOrder.toMutableList()
+      if (!finalVisible.remove(sourceWidgetId)) return
+
+      finalVisible.add(targetIndex.coerceIn(0, finalVisible.size), sourceWidgetId)
 
       finalVisible.forEachIndexed { i, id ->
         if (id == sourceWidgetId || order.containsKey(id)) {
@@ -296,20 +323,11 @@ open class IdeStatusBarImpl @Internal constructor(
 
   private val widgetSorter = WidgetSorter()
 
-  private fun reorderWidgets(sourceWidgetId: String, targetWidgetId: String) {
+  private fun reorderWidgets(sourceWidgetId: String, targetIndex: Int) {
     val sourceBean = widgetRegistry.get(sourceWidgetId) ?: return
-    val targetBean = widgetRegistry.get(targetWidgetId) ?: return
-
     if (sourceBean.position != Position.RIGHT) return
-    if (targetBean.position != Position.RIGHT) return
 
-    // Build the same sorted list that sortRightWidgets renders, then filter virtuals.
-    // This guarantees the drag insert positions match the on-screen widget order
-    // even when disabled-but-anchor-referenced extensions are injected as virtuals.
-    val sortedWithVirtuals = buildSortedRightWidgets()
-    val visibleOrder = sortedWithVirtuals.filterIsInstance<WidgetBean>().mapNotNull { it.orderId }
-
-    widgetSorter.reorder(sourceWidgetId, targetWidgetId, visibleOrder)
+    widgetSorter.reorderToIndex(sourceWidgetId, targetIndex, visibleRightWidgetIds())
 
     sortRightWidgets()
     rightPanel.revalidate()
@@ -317,11 +335,35 @@ open class IdeStatusBarImpl @Internal constructor(
   }
 
   /**
+   * Build the same sorted list that sortRightWidgets renders, then filter virtuals.
+   * This guarantees the drag insert positions match the on-screen widget order
+   * even when disabled-but-anchor-referenced extensions are injected as virtuals.
+   */
+  private fun visibleRightWidgets(): List<WidgetBean> = buildSortedRightWidgets().filterIsInstance<WidgetBean>()
+
+  private fun visibleRightWidgetIds(): List<String> = visibleRightWidgets().map { it.orderId }
+
+  /**
    * Detects drag-to-reorder of right-side widgets at the status bar glass-pane level.
-   * Reordering is committed on drop to prevent layout flickering on dynamic-width widgets.
+   *
+   * A ghost image of the widget follows the pointer. A [WidgetDropPlaceholder] takes the place of the
+   * dragged widget and moves to the position under the pointer, so the drop position is always visible
+   * and the other widgets keep their place. The new order is committed on drop.
+   *
+   * This repeats the approach of [com.intellij.toolWindow.innerDrag.ToolWindowInnerDragHelper] for tool window tabs.
    */
   private inner class WidgetDragHelper(parent: Disposable) : MouseDragHelper<JPanel>(parent, rightPanel) {
+    private val placeholder = WidgetDropPlaceholder()
+    private val initialOffset = Point()
+
     private var pressedWidgetId: String? = null
+    private var draggedWidgetId: String? = null
+    private var draggedComponent: JComponent? = null
+
+    /** The on-screen widgets without the dragged one. [dropIndex] is an insert position in this list. */
+    private var dragOrder: List<WidgetBean> = emptyList()
+    private var dropIndex = -1
+    private var dragImageView: DragImageView? = null
 
     override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean =
       widgetIdAt(dragComponentPoint) != null
@@ -332,21 +374,135 @@ open class IdeStatusBarImpl @Internal constructor(
     }
 
     override fun processDrag(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) {
-      // Do nothing during live drag to prevent dynamic-width layouts from flickering
+      if (isDragJustStarted) {
+        startDrag(event, startScreenPoint)
+      }
+      else {
+        relocate(event)
+      }
     }
 
     override fun processDragFinish(event: MouseEvent, willDragOutStart: Boolean) {
-      val sourceId = pressedWidgetId
-      pressedWidgetId = null // Clear state immediately
+      val sourceId = draggedWidgetId
+      val targetIndex = dropIndex
+      pressedWidgetId = null
 
-      if (sourceId == null || willDragOutStart) return
-
-      val pointInRightPanel = SwingUtilities.convertPoint(event.component, event.point, rightPanel)
-      val targetId = widgetIdAt(pointInRightPanel)
-
-      if (targetId != null && sourceId != targetId) {
-        reorderWidgets(sourceId, targetId)
+      try {
+        if (sourceId == null || willDragOutStart || targetIndex == -1) return
+        reorderWidgets(sourceId, targetIndex)
       }
+      finally {
+        endDrag()
+      }
+    }
+
+    override fun processDragCancel() {
+      pressedWidgetId = null
+      endDrag()
+    }
+
+    override fun stop() {
+      super.stop()
+      pressedWidgetId = null
+      endDrag()
+    }
+
+    private fun startDrag(event: MouseEvent, startScreenPoint: Point) {
+      val sourceId = pressedWidgetId ?: return
+      val component = widgetRegistry.get(sourceId)?.takeIf { it.position == Position.RIGHT }?.component ?: return
+      if (component.width <= 0 || component.height <= 0) return
+
+      initialOffset.location = Point(startScreenPoint).also { SwingUtilities.convertPointFromScreen(it, component) }
+      draggedWidgetId = sourceId
+      draggedComponent = component
+      dragOrder = visibleRightWidgets().filter { it.orderId != sourceId }
+
+      val dragImage = createThumbnailDragImage(component, thumbSize = -1)
+      dragImageView = if (StartupUiUtil.isWaylandToolkit()) {
+        GlassPaneDragImageView(IdeGlassPaneUtil.find(event.component)).apply { image = dragImage }
+      }
+      else {
+        DialogDragImageView(WidgetDragImageDialog(dragImage))
+      }
+
+      // The placeholder is as wide as the dragged widget, so hiding the widget does not move its neighbors.
+      placeholder.dropWidth = component.width
+      component.isVisible = false
+      rightPanel.add(placeholder)
+
+      isWidgetDragInProgress = true
+      applyWidgetEffect(null, null)
+
+      relocate(event)
+      dragImageView?.show()
+    }
+
+    private fun relocate(event: MouseEvent) {
+      val view = dragImageView ?: return
+      val screenPoint = DevicePoint(event).locationOnScreen
+      view.location = Point(screenPoint.x - initialOffset.x, screenPoint.y - initialOffset.y)
+
+      val index = dropIndexAt(event)
+      if (index != dropIndex) {
+        dropIndex = index
+        layoutWithPlaceholder(index)
+      }
+    }
+
+    /**
+     * Finds the insert position in [dragOrder] for the center of the dragged widget.
+     *
+     * The center is used instead of the pointer, so the drop position follows the ghost image.
+     * A widget keeps its place until the center passes the middle of that widget. Because the widgets
+     * move when the placeholder moves, the two thresholds differ and the placeholder does not flicker.
+     */
+    private fun dropIndexAt(event: MouseEvent): Int {
+      val point = SwingUtilities.convertPoint(event.component, event.point, rightPanel)
+      val centerX = point.x - initialOffset.x + placeholder.dropWidth / 2
+
+      var index = 0
+      for (bean in dragOrder) {
+        val component = bean.component
+        if (centerX <= component.x + component.width / 2) break
+        index++
+      }
+      return index
+    }
+
+    private fun layoutWithPlaceholder(index: Int) {
+      var gridX = 0
+      for ((position, bean) in dragOrder.withIndex()) {
+        if (position == index) {
+          setRightWidgetGridX(placeholder, gridX++)
+        }
+        setRightWidgetGridX(bean.component, gridX++)
+      }
+      if (index >= dragOrder.size) {
+        setRightWidgetGridX(placeholder, gridX)
+      }
+      rightPanel.revalidate()
+      rightPanel.repaint()
+    }
+
+    private fun endDrag() {
+      val component = draggedComponent ?: return
+
+      isWidgetDragInProgress = false
+      draggedWidgetId = null
+      draggedComponent = null
+      dragOrder = emptyList()
+      dropIndex = -1
+
+      dragImageView?.hide()
+      dragImageView = null
+
+      rightPanel.remove(placeholder)
+      component.isVisible = true
+
+      // Restore the constraints because a canceled drag keeps the placeholder layout otherwise.
+      sortRightWidgets()
+      rightPanel.revalidate()
+      rightPanel.repaint()
     }
 
     private fun widgetIdAt(point: Point): String? {
@@ -356,6 +512,62 @@ open class IdeStatusBarImpl @Internal constructor(
       return SwingUtilities.getDeepestComponentAt(rightPanel, point.x, point.y)
         ?.let { findWidgetComponent(it) }
         ?.let { ClientProperty.get(it, WIDGET_ID) }
+    }
+
+    private inner class WidgetDragImageDialog(
+      dragImage: BufferedImage,
+    ) : JDialog(ComponentUtil.getWindow(rightPanel), null, ModalityType.MODELESS) {
+      init {
+        type = Type.POPUP
+        focusableWindowState = false
+        isUndecorated = true
+        try {
+          opacity = ToolWindowDragHelper.THUMB_OPACITY
+        }
+        catch (_: Exception) {
+        }
+        isAlwaysOnTop = true
+        contentPane = JLabel(IconUtil.createImageIcon(dragImage as Image))
+        contentPane.addMouseListener(object : MouseAdapter() {
+          override fun mouseReleased(e: MouseEvent) {
+            this@WidgetDragHelper.mouseReleased(e)
+          }
+
+          override fun mouseDragged(e: MouseEvent) {
+            this@WidgetDragHelper.relocate(e)
+          }
+        })
+        pack()
+
+        if (InternalUICustomization.getInstance()?.isRoundedTabDuringDrag == true) {
+          WindowRoundedCornersManager.setRoundedCorners(this, PopupCornerType.RoundedWindow)
+        }
+      }
+    }
+  }
+
+  /**
+   * Reserves the space of a dragged widget and shows where it lands.
+   */
+  private class WidgetDropPlaceholder : JComponent() {
+    var dropWidth: Int = 0
+
+    init {
+      isOpaque = false
+    }
+
+    override fun getPreferredSize(): Dimension = Dimension(dropWidth, 1)
+
+    override fun paintComponent(g: Graphics) {
+      val arc = if (InternalUICustomization.getInstance()?.isRoundedTabDuringDrag == true) {
+        JBUI.CurrentTheme.MainToolbar.Button.hoverArc().get()
+      }
+      else {
+        null
+      }
+      val inset = if (arc == null) 0 else JBUI.scale(2)
+      g.color = JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
+      RectanglePainter.FILL.paint(g as Graphics2D, 0, inset, width, height - inset * 2, arc)
     }
   }
 
@@ -649,15 +861,19 @@ open class IdeStatusBarImpl @Internal constructor(
     val sorted = buildSortedRightWidgets()
 
     for ((index, item) in sorted.withIndex()) {
-      rightPanelLayout.setConstraints((item as? WidgetBean ?: continue).component, GridBagConstraints().apply {
-        gridx = index
-        gridy = 0
-        fill = GridBagConstraints.VERTICAL
-        weighty = 1.0
-        weightx = 1.0
-        anchor = GridBagConstraints.PAGE_END
-      })
+      setRightWidgetGridX((item as? WidgetBean ?: continue).component, index)
     }
+  }
+
+  private fun setRightWidgetGridX(component: JComponent, index: Int) {
+    rightPanelLayout.setConstraints(component, GridBagConstraints().apply {
+      gridx = index
+      gridy = 0
+      fill = GridBagConstraints.VERTICAL
+      weighty = 1.0
+      weightx = 1.0
+      anchor = GridBagConstraints.PAGE_END
+    })
   }
 
   //=== CORE: Add widget to THIS status bar only (no propagation) ===
@@ -874,6 +1090,12 @@ open class IdeStatusBarImpl @Internal constructor(
   }
 
   private fun applyWidgetEffect(component: JComponent?, widgetEffect: WidgetEffect?) {
+    // A drag shows the drop position with its own placeholder. A hover effect that follows the
+    // pointer over the other widgets only adds noise, so drop it while a drag runs.
+    if (isWidgetDragInProgress) {
+      effectRenderer.applyEffect(null, null)
+      return
+    }
     effectRenderer.applyEffect(component, widgetEffect)
   }
 
