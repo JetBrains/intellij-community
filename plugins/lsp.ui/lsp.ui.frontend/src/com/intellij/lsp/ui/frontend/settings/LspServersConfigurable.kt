@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lsp.ui.settings
+package com.intellij.lsp.ui.frontend.settings
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.plugins.PluginManagerConfigurable
-import com.intellij.lsp.ui.ConfigurableLspIntegrationProvider
-import com.intellij.lsp.ui.LspUiBundle
+import com.intellij.lsp.ui.frontend.ConfigurableLspIntegrationProvider
+import com.intellij.lsp.ui.frontend.LspUiBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -36,7 +36,7 @@ import javax.swing.tree.TreeNode
 
 private const val LSP_PLUGIN_SEARCH_TAG = "/tag:\"Language Server\""
 
-internal class LspServersConfigurable(private val project: Project) : MasterDetailsComponent(), SearchableConfigurable, Disposable {
+internal class LspServersConfigurable(private val project: Project) : com.intellij.openapi.ui.MasterDetailsComponent(), SearchableConfigurable, Disposable {
   private val settings = LspIntegrationSettingsImpl.getInstance(project)
   private val morePluginsLinkPanel = NonOpaquePanel(BorderLayout()).apply {
     border = JBUI.Borders.empty(8, 20, 8, 0)
@@ -76,7 +76,7 @@ internal class LspServersConfigurable(private val project: Project) : MasterDeta
 
   override fun createActions(fromPopup: Boolean): List<AnAction> = listOf(AddAction(), MyDeleteAction())
 
-  private inner class AddAction : DumbAwareAction(LspUiBundle.message("lsp.settings.action.add"), LspUiBundle.message("lsp.settings.action.add.description"), IconUtil.addIcon) {
+  private inner class AddAction : com.intellij.openapi.project.DumbAwareAction(LspUiBundle.message("lsp.settings.action.add"), LspUiBundle.message("lsp.settings.action.add.description"), IconUtil.addIcon) {
     override fun actionPerformed(e: AnActionEvent) {
       val newConfig = LspServerConfiguration(
         name = generateUniqueName(),
@@ -87,7 +87,7 @@ internal class LspServersConfigurable(private val project: Project) : MasterDeta
     }
   }
 
-  private inner class MyDeleteAction : DumbAwareAction(LspUiBundle.message("lsp.settings.action.delete"), LspUiBundle.message("lsp.settings.action.delete.description"), IconUtil.removeIcon) {
+  private inner class MyDeleteAction : com.intellij.openapi.project.DumbAwareAction(LspUiBundle.message("lsp.settings.action.delete"), LspUiBundle.message("lsp.settings.action.delete.description"), IconUtil.removeIcon) {
     override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -251,7 +251,7 @@ internal class LspServersConfigurable(private val project: Project) : MasterDeta
     private val project: Project,
     private val serverConfiguration: LspServerConfiguration,
     private val updateTree: Runnable,
-  ) : NamedConfigurable<LspServerConfiguration>(), Disposable {
+  ) : com.intellij.openapi.ui.NamedConfigurable<LspServerConfiguration>(), Disposable {
 
     private var serverConfigurable: LspServerConfigurable? = null
 

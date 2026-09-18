@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lsp.ui.settings
+package com.intellij.lsp.ui.frontend.settings
 
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.json.JsonLanguage
-import com.intellij.lsp.ui.LspUiBundle
+import com.intellij.lsp.ui.frontend.LspUiBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadActionBlocking
@@ -190,7 +190,7 @@ internal class PluginLspServerNamedConfigurable(
   private val configuration: LspPluginServerConfiguration,
   private val pluginDescriptor: PluginDescriptor,
   private val updateTree: Runnable,
-) : NamedConfigurable<LspPluginServerConfiguration>(), Disposable {
+) : com.intellij.openapi.ui.NamedConfigurable<LspPluginServerConfiguration>(), Disposable {
   private var serverConfigurable: PluginLspServerConfigurable? = null
 
   override fun setDisplayName(name: String) {

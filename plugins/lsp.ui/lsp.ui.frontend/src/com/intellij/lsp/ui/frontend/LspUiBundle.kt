@@ -1,4 +1,4 @@
-package com.intellij.lsp.ui
+package com.intellij.lsp.ui.frontend
 
 import com.intellij.DynamicBundle
 import org.jetbrains.annotations.Nls

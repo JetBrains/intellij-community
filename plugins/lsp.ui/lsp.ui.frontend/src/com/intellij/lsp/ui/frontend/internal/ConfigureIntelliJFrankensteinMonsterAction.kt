@@ -1,15 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lsp.ui.internal
+package com.intellij.lsp.ui.frontend.internal
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.intellij.execution.configuration.EnvironmentVariablesData
-import com.intellij.lsp.ui.ConfigurableLspIntegrationProvider
-import com.intellij.lsp.ui.LspUiBundle
-import com.intellij.lsp.ui.settings.LspServerConfiguration
-import com.intellij.lsp.ui.settings.LspIntegrationSettingsImpl
-import com.intellij.lsp.ui.settings.LspServersConfigurable
+import com.intellij.lsp.ui.frontend.ConfigurableLspIntegrationProvider
+import com.intellij.lsp.ui.frontend.LspUiBundle
+import com.intellij.lsp.ui.frontend.settings.LspServerConfiguration
+import com.intellij.lsp.ui.frontend.settings.LspIntegrationSettingsImpl
+import com.intellij.lsp.ui.frontend.settings.LspServersConfigurable
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType

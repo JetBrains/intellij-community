@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lsp.ui.settings
+package com.intellij.lsp.ui.frontend.settings
 
-import com.intellij.lsp.ui.LspUiBundle
+import com.intellij.lsp.ui.frontend.LspUiBundle
 import com.intellij.openapi.fileTypes.FileNameMatcher
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.ColoredListCellRenderer

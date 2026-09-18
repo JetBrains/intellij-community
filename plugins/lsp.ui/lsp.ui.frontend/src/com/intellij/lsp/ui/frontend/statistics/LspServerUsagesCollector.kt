@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lsp.ui.statistics
+package com.intellij.lsp.ui.frontend.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileExtensionValidationRule
@@ -7,8 +7,8 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringListValidatedByCustomRule
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.lsp.ui.settings.LspServerConfiguration
-import com.intellij.lsp.ui.settings.LspIntegrationSettingsImpl
+import com.intellij.lsp.ui.frontend.settings.LspServerConfiguration
+import com.intellij.lsp.ui.frontend.settings.LspIntegrationSettingsImpl
 import com.intellij.openapi.project.Project
 
 internal class LspServerUsagesCollector : ProjectUsagesCollector() {

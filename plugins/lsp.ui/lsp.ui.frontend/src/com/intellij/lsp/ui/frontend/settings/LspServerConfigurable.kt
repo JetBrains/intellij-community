@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lsp.ui.settings
+package com.intellij.lsp.ui.frontend.settings
 
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
 import com.intellij.json.JsonLanguage
-import com.intellij.lsp.ui.LspUiBundle
-import com.intellij.lsp.ui.settings.LspServerConfiguration.CommunicationMode
+import com.intellij.lsp.ui.frontend.LspUiBundle
+import com.intellij.lsp.ui.frontend.settings.LspServerConfiguration.CommunicationMode
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Editor
