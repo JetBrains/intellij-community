@@ -212,7 +212,7 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     }
     val finishedCounter = AtomicInteger()
     val comparisonTaskProgressManager = ConcurrentTasksProgressManager(indicator, idsToCompare.size)
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(idsToCompare, indicator, Processor { id ->
+    JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(idsToCompare, Processor { id ->
       val subIndicator = comparisonTaskProgressManager.createSubTaskIndicator(1)
       runBlocking {
         val (extension, disposable) = runReadAction { findFileBasedIndexExtension(id, storedIndexDir, coroutineScope = this@runBlocking) }
@@ -286,9 +286,8 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     indicator.isIndeterminate = false
     val fileDescriptors = Collections.synchronizedList(arrayListOf<FileDescriptor>())
     val finished = AtomicInteger()
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
+    JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(
       storedIndexedFileResolver.originalIndexedFiles.toList(),
-      indicator,
       Processor { originalFilePath ->
         if (ignoredFilesPatterns.any { originalFilePath.portableFilePath.hasPresentablePathMatching(it) }) {
           return@Processor true
