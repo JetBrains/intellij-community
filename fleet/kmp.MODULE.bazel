@@ -64,9 +64,9 @@ kmp_extension.configure(
         "org.jetbrains.kotlin:kotlin-test:2.4.20",
         "org.jetbrains.kotlin-wrappers:kotlin-browser:2026.4.12",
         "org.jetbrains.kotlinx:kotlinx-collections-immutable:0.5.2",
-        "org.jetbrains.kotlinx:kotlinx-io-core:0.7.0",
-        "org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0",
-        "org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0",
+        "org.jetbrains.kotlinx:kotlinx-io-core:0.9.1",
+        "org.jetbrains.kotlinx:kotlinx-serialization-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0",
     ],
 )
 use_repo(kmp_extension, "kmp_deps")
