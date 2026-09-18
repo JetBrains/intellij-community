@@ -22,11 +22,13 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.LineMarkerRenderer;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.accessibility.SimpleAccessible;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -411,7 +413,8 @@ final class AccessibleGutterLine extends JPanel {
         accessibleContext = new AccessibleJLabel() {
           @Override
           public String getAccessibleName() {
-            return getText();
+            String text = getText();
+            return XmlStringUtil.isWrappedInHtml(text) ? StringUtil.removeHtmlTags(text, true) : text;
           }
         };
       }
