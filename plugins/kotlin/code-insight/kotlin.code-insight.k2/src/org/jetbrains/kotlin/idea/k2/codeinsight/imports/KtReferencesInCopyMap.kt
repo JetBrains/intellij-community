@@ -3,13 +3,16 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElement
 import com.intellij.psi.util.descendants
 import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
+import java.util.Objects
 
+/**
+ * **Important**: This class can only be used on the files and references which are not being actively changed.
+ * Doing otherwise (e.g. actively modifying the PSI under the references in [originalReferenceMap]) will
+ * result in an undefined behavior.
+ */
 internal class KtReferencesInCopyMap(originalReferenceMap: Map<KtReference, KtReference>) {
 
     private val referenceMap: Map<KtReferenceStableKey, KtReference> = originalReferenceMap.mapKeys { KtReferenceStableKey(it.key) }
@@ -21,18 +24,12 @@ internal class KtReferencesInCopyMap(originalReferenceMap: Map<KtReference, KtRe
      * [KtReference] instance for the same logical reference after garbage collection.
      *
      * [equals] first checks [reference] identity as a fast path, then falls back to a
-     * [Snapshot] of the reference class, element, range, and resolved names.
-     * The snapshot does not resolve the reference.
+     * comparison of the reference class, element, range, and resolved names.
+     *
+     * Note: this class relies on the fact that [reference] and its properties
+     * remain the same throughout its lifetime.
      */
     private class KtReferenceStableKey(val reference: KtReference) {
-        private val snapshot: Snapshot = Snapshot(
-            referenceClass = reference.javaClass,
-            element = reference.element,
-            rangeInElement = reference.rangeInElement,
-            // IMPORTANT: we do not check the actual resolve here to avoid expensive computation
-            resolvesByNames = reference.resolvesByNames.toSet(),
-        )
-
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other !is KtReferenceStableKey) return false
@@ -40,16 +37,17 @@ internal class KtReferencesInCopyMap(originalReferenceMap: Map<KtReference, KtRe
             // Fast path - references share the same identity
             if (reference == other.reference) return true
 
-            return snapshot == other.snapshot
+            return reference.javaClass == other.reference.javaClass &&
+                    reference.element == other.reference.element &&
+                    reference.rangeInElement == other.reference.rangeInElement &&
+                    reference.resolvesByNames.toSet() == other.reference.resolvesByNames.toSet()
         }
 
-        override fun hashCode(): Int = snapshot.hashCode()
-
-        private data class Snapshot(
-            val referenceClass: Class<out KtReference>,
-            val element: PsiElement,
-            val rangeInElement: TextRange,
-            val resolvesByNames: Set<Name>,
+        override fun hashCode(): Int = Objects.hash(
+            reference.javaClass,
+            reference.element,
+            reference.rangeInElement,
+            reference.resolvesByNames.toSet(),
         )
     }
 
