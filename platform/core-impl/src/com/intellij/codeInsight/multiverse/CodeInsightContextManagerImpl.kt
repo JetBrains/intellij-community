@@ -132,6 +132,15 @@ class CodeInsightContextManagerImpl(
 
     log.trace { "requested preferred context of file ${file.path}" }
 
+    // selectPreferredContext returns a member of the context list. One context therefore determines
+    // the result, and the cache does not need an entry for it.
+    val contexts = getContextsOf(file)
+    if (contexts !is Array<*>) {
+      val preferred = contexts as CodeInsightContext
+      log.assertTrue(preferred !== anyContext()) { "preferredContext must not be anyContext" }
+      return preferred
+    }
+
     return preferredContext.getOrPut(file) {
       val preferred = selectPreferredContext(file)
       log.assertTrue(preferred !== anyContext()) { "preferredContext must not be anyContext" }
