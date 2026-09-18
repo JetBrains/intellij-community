@@ -122,6 +122,7 @@ import org.jetbrains.kotlin.idea.k2.copyright.AbstractFirUpdateKotlinCopyrightTe
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirMultiModuleRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameTest
+import org.jetbrains.kotlin.idea.k2.resolve.AbstractLombokReferenceResolveWithCompilerPluginWithoutIdePluginTest
 import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenInspectionTest
 import org.jetbrains.kotlin.idea.maven.configuration.AbstractMavenConfigureProjectByChangingFileTest
 import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
@@ -248,6 +249,12 @@ private fun assembleWorkspace(): TWorkspace = workspace() {
     testGroup("compiler-plugins/parcelize/tests/k2", testDataPath = "../testData", category = QUICKFIXES) {
         testClass<AbstractParcelizeK2QuickFixTest> {
             model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
+        }
+    }
+
+    testGroup("lombok/tests", category = CODE_INSIGHT) {
+        testClass<AbstractLombokReferenceResolveWithCompilerPluginWithoutIdePluginTest> {
+            model("resolve/referenceWithCompilerPluginsInSource", pattern = DIRECTORY, isRecursive = false)
         }
     }
 

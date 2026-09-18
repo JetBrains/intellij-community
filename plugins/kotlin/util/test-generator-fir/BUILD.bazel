@@ -60,6 +60,8 @@ jvm_library(
         "//plugins/kotlin/util/test-generator-api:test-generator-api_test_lib",
         "//plugins/kotlin/fir/tests",
         "//plugins/kotlin/fir/tests:tests_test_lib",
+        "//plugins/kotlin/lombok/tests",
+        "//plugins/kotlin/lombok/tests:tests_test_lib",
         "//plugins/kotlin/maven/tests",
         "//plugins/kotlin/maven/tests:tests_test_lib",
         "//plugins/kotlin/project-wizard/cli",
