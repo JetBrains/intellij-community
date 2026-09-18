@@ -318,4 +318,15 @@ class LazyFusClientLogWriter(private val recorderId: String) : FeatureUsageLogWr
       lazyClient.value.flushEvents()
     }
   }
+
+  /**
+   * Closes only when an event was written before, for the same reason as [flushEventsIfInitialized].
+   *
+   * A close also closes the SDK event queue, so every later event is dropped. Call this after the last flush.
+   */
+  fun closeIfInitialized() {
+    if (lazyClient.isInitialized()) {
+      lazyClient.value.close()
+    }
+  }
 }

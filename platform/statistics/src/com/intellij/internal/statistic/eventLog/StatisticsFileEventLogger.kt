@@ -124,7 +124,8 @@ open class StatisticsFileEventLogger(
 
   override fun dispose() {
     try {
-      flush().get(1, TimeUnit.SECONDS)
+      // `logExecutor` is FIFO, so this task runs after every event that the shutdown logged, `ide.close` included.
+      CompletableFuture.runAsync({ closeEventWriter() }, logExecutor).get(1, TimeUnit.SECONDS)
     }
     catch (_: Exception) {
       // executor may already be shut down, interrupted, or timed out; last event is lost in that case
@@ -133,14 +134,30 @@ open class StatisticsFileEventLogger(
   }
 
   fun flush(): CompletableFuture<Void> {
-    return CompletableFuture.runAsync({
-      when (val writer = eventWriter) {
-        // The production path. It skips the flush when no event was written, so dispose does not build the client.
-        is LazyFusClientLogWriter -> writer.flushEventsIfInitialized()
-        // A test can pass a FusClient directly.
-        is FusClient<LogEvent, *> -> writer.flushEvents()
-        else -> {}
-      }
-    }, logExecutor)
+    return try {
+      CompletableFuture.runAsync({ flushEventWriter() }, logExecutor)
+    }
+    catch (e: RejectedExecutionException) {
+      // the executor is shut down, which happens when a scheduled flush lands after dispose
+      CompletableFuture<Void>().also { it.completeExceptionally(e) }
+    }
+  }
+
+  private fun flushEventWriter() {
+    when (val writer = eventWriter) {
+      // The production path. It skips the flush when no event was written, so dispose does not build the client.
+      is LazyFusClientLogWriter -> writer.flushEventsIfInitialized()
+      // A test can pass a FusClient directly.
+      is FusClient<LogEvent, *> -> writer.flushEvents()
+      else -> {}
+    }
+  }
+
+  private fun closeEventWriter() {
+    when (val writer = eventWriter) {
+      is LazyFusClientLogWriter -> writer.closeIfInitialized()
+      is FusClient<LogEvent, *> -> writer.close()
+      else -> {}
+    }
   }
 }
