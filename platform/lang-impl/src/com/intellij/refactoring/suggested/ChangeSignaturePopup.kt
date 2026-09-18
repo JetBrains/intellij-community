@@ -22,8 +22,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution.NewParameterValue
 import com.intellij.ui.LanguageTextField
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
@@ -334,26 +334,27 @@ private class ParameterValuesPage(
       focusSequence.add { textField.editor!!.contentComponent }
       c.gridx++
 
-      val checkBox: JCheckBox?
+      var checkBox: JCheckBox? = null
       if (data.offerToUseAnyVariable) {
         c.weightx = 0.0
         c.insets = Insets(0, 10, 0, 0)
-        checkBox = JCheckBox(RefactoringBundle.message("suggested.refactoring.use.any.variable.checkbox.text"))
-        panel.add(checkBox, c)
-        focusSequence.add { checkBox }
 
-        checkBox.addItemListener {
-          textField.isEnabled = !checkBox.isSelected
+        val checkBoxPanel = panel {
+          row {
+            checkBox = checkBox(RefactoringBundle.message("suggested.refactoring.use.any.variable.checkbox.text"))
+              .onChanged {
+                textField.isEnabled = !it.isSelected
+              }.apply {
+                if (isFirstCheckbox) {
+                  contextHelp(RefactoringBundle.message("suggested.refactoring.use.any.variable.checkbox.hint"))
+                  isFirstCheckbox = false
+                }
+              }
+              .component
+            focusSequence.add { checkBox }
+          }
         }
-
-        if (isFirstCheckbox) {
-          val hint = RefactoringBundle.message("suggested.refactoring.use.any.variable.checkbox.hint")
-          panel.add(UI.PanelFactory.panel(checkBox).withTooltip(hint).createPanel(), c)
-        }
-        isFirstCheckbox = false
-      }
-      else {
-        checkBox = null
+        panel.add(checkBoxPanel, c)
       }
       newParameterControls.add(ParameterControls(data, nameComponent as? JTextField, checkBox, textField))
 
