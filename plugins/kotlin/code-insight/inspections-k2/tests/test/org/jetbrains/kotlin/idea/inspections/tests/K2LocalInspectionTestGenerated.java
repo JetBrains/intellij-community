@@ -31644,6 +31644,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantWasExperimental3.kt");
         }
 
+        @TestMetadata("superConstructorUsage.kt")
+        public void testSuperConstructorUsage() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/superConstructorUsage.kt");
+        }
+
         @TestMetadata("typeAlias.kt")
         public void testTypeAlias() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/typeAlias.kt");
