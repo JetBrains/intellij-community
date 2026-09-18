@@ -140,6 +140,18 @@ def _keep_manifest(library_jars, merged_module_names):
     ])
     return significant_sources == 1
 
+def module_output_jar(target):
+    """The module target's declared `<name>.jar`, or None if the target did not declare one.
+
+    This is the module's distribution jar, fetched in the uniformed way no matter which compilation backend is used:
+    rules_jvm (JPS) or the underlying rules_kotlin (BTA)
+    """
+    jar_name = target.label.name + ".jar"
+    for file in target[DefaultInfo].files.to_list():
+        if file.basename == jar_name:
+            return file
+    return None
+
 def _module(target, attr_name):
     """One merged module's own jar and JPS name.
 
@@ -150,9 +162,10 @@ def _module(target, attr_name):
     info = target[_KtJvmInfo]
     if not hasattr(info, "module_name") or not info.module_name:
         fail("%s is merged into this jar but is not a module" % target.label, attr = attr_name)
-    if not hasattr(info, "all_output_jars") or not info.all_output_jars:
+    jar = module_output_jar(target)
+    if jar == None:
         fail("%s has a module name ('%s') but produced no output jar" % (target.label, info.module_name), attr = attr_name)
-    return struct(jar = info.all_output_jars[0], name = info.module_name)
+    return struct(jar = jar, name = info.module_name)
 
 def declare_spans(ctx, name):
     """The action's span file, or `None` when the trace flag is off.

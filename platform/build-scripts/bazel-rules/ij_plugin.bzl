@@ -9,6 +9,7 @@ load("@rules_java//java/common:java_common.bzl", "java_common")
 load("@rules_jvm//:jvm.bzl", _jvm_platform_transition = "jvm_platform_transition", _scrubbed_host_platform_transition = "scrubbed_host_platform_transition")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load("//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", _PluginModuleInfo = "PluginModuleInfo")
+load(":content_module_jar.bzl", _module_output_jar = "module_output_jar")
 
 def _ij_plugin_impl(ctx):
     plugin_descriptor_module_info = _plugin_module_info(ctx.attr.descriptor_module)
@@ -106,9 +107,12 @@ def _plugin_module_info(target):
     if _PluginModuleInfo in target:
         return target[_PluginModuleInfo]
     kt_jvm_info = target[_KtJvmInfo]
+    module_jar = _module_output_jar(target)
+    if module_jar == None:
+        fail("%s has a module name ('%s') but produced no output jar" % (target.label, kt_jvm_info.module_name))
     return _PluginModuleInfo(
         module_name = kt_jvm_info.module_name,
-        all_output_jars = kt_jvm_info.all_output_jars,
+        all_output_jars = [module_jar],
         non_classpath_data = [],
     )
 

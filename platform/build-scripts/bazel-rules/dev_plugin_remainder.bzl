@@ -3,7 +3,7 @@
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load("//build:dev_launch_dependencies.bzl", "HOST_PLATFORMS", "platform_parts")
-load(":content_module_jar.bzl", "ContentModuleJarInfo")
+load(":content_module_jar.bzl", "ContentModuleJarInfo", "module_output_jar")
 load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_neutral_product_transition", "dev_dist_product_info_transition")
 load(":dev_plugin.bzl", "dev_dist_plugin_directory")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo")
@@ -321,10 +321,10 @@ def _artifact_file(target, compiled_module = True):
             fail("artifact input %s has ambiguous module and descriptor providers" % target.label)
         return _descriptor_primary_file(target)
     if compiled_module and _KtJvmInfo in target:
-        outputs = getattr(target[_KtJvmInfo], "all_output_jars", [])
-        if not outputs:
+        jar = module_output_jar(target)
+        if jar == None:
             fail("module %s has no own output jar" % target.label)
-        return outputs[0]
+        return jar
     files = target[DefaultInfo].files.to_list()
     if len(files) != 1:
         fail("artifact input %s must provide exactly one File, got %d" % (target.label, len(files)))

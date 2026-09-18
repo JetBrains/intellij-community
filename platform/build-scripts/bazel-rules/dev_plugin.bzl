@@ -17,7 +17,7 @@ target platform of the product.
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
-load(":content_module_jar.bzl", "ContentModuleJarInfo", "declare_spans", "library_entries", "merge_order_jars", "pack_jar")
+load(":content_module_jar.bzl", "ContentModuleJarInfo", "declare_spans", "library_entries", "merge_order_jars", "module_output_jar", "pack_jar")
 load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_neutral_product_transition")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo")
 
@@ -33,12 +33,12 @@ DevPluginInputsInfo = provider(
 def _dev_plugin_inputs_impl(ctx):
     module_jars = {}
     for target, name in ctx.attr.modules.items():
-        info = target[_KtJvmInfo]
-        if not hasattr(info, "all_output_jars") or not info.all_output_jars:
+        jar = module_output_jar(target)
+        if jar == None:
             fail("%s produced no output jar for module '%s'" % (target.label, name), attr = "modules")
         if name in module_jars:
             fail("module '%s' is named twice" % name, attr = "modules")
-        module_jars[name] = info.all_output_jars[0]
+        module_jars[name] = jar
 
     libraries = {}
     for target, token in ctx.attr.libraries.items():

@@ -2,6 +2,7 @@ load("@rules_java//java:defs.bzl", "JavaInfo")
 load("@rules_jvm//:jvm.bzl", _jvm_library = "jvm_library")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load("@rules_pkg//pkg:providers.bzl", "PackageFilegroupInfo", "PackageFilesInfo")
+load(":content_module_jar.bzl", _module_output_jar = "module_output_jar")
 
 PluginModuleInfo = provider(
     fields = {
@@ -36,9 +37,10 @@ def _ij_plugin_module_impl(ctx):
     module = ctx.attr.module
     kt_jvm_info = module[_KtJvmInfo]
 
-    all_output_jars = []
-    for jar in kt_jvm_info.all_output_jars:
-        all_output_jars.append(jar)
+    module_jar = _module_output_jar(module)
+    if module_jar == None:
+        fail("%s has a module name ('%s') but produced no output jar" % (module.label, kt_jvm_info.module_name), attr = "module")
+    all_output_jars = [module_jar]
     for dep in ctx.attr.packed_deps:
         java_info = dep[JavaInfo]
         if hasattr(java_info, "output_jar"):  # from jvm_import rule
