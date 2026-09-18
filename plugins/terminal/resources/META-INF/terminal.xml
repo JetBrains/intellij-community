@@ -22,6 +22,7 @@
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector"/>
     <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.terminal.fus.TerminalFocusRule"/>
     <statistics.applicationUsagesCollector implementation="org.jetbrains.plugins.terminal.fus.TerminalSettingsStateCollector"/>
+    <feedback.idleFeedbackSurvey implementation="org.jetbrains.plugins.terminal.block.completion.feedback.TerminalInlineCompletionFeedbackSurvey"/>
 
     <registryKey key="terminal.persistent.tabs" defaultValue="true"
                  description="Save state of terminal tabs between IDE restarts"/>
