@@ -21,7 +21,6 @@ import org.jetbrains.annotations.SystemDependent;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -35,9 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/**
- * Unless stated otherwise, all paths are {@link SystemDependent @SystemDependent}.
- */
+/// Unless stated otherwise, all paths are [`@SystemDependent`][SystemDependent].
 @ApiStatus.Internal
 public final class FileWatcher implements AppLifecycleListener {
   private static final Logger LOG = Logger.getInstance(FileWatcher.class);
@@ -76,7 +73,7 @@ public final class FileWatcher implements AppLifecycleListener {
   /// Watch roots that can't be monitored by available [PluggableFileWatcher]s, and must be refreshed 'manually', i.e.,
   /// mark the whole hierarchy under those roots as 'dirty' and rely on refresh (hence the name).
   /// @see LocalFileSystemImpl#markSuspiciousFilesDirty(List)
-  private volatile Map<Object, Set<String>> myManualWatchRoots = Collections.emptyMap();
+  private volatile Map<Object, Set<String>> myManualWatchRoots = Map.of();
 
   FileWatcher(@NotNull ManagingFS managingFS, @NotNull Runnable postInitCallback) {
     myManagingFS = managingFS;
@@ -150,11 +147,11 @@ public final class FileWatcher implements AppLifecycleListener {
         }
       }
     }
-    return result != null ? result : Collections.emptyList();
+    return result != null ? result : Set.of();
   }
 
   void setWatchRoots(@NotNull Supplier<CanonicalPathMap> pathMapSupplier) {
-    CompletableFuture<?> newTask = CompletableFuture.runAsync(() -> {
+    var newTask = CompletableFuture.runAsync(() -> {
       try {
         var pathMap = myShuttingDown ? CanonicalPathMap.empty() : pathMapSupplier.get();
         if (pathMap == null) return;

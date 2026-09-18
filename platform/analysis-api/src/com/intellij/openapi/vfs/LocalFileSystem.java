@@ -41,7 +41,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   /// Prefer [StandardFileSystems#local()] for a lookup, [VfsUtil#findFile(Path, boolean)] or [VirtualFileManager] for a path,
   /// [`RefreshQueue`][com.intellij.openapi.vfs.newvfs.RefreshQueue] for a refresh, [WatchRoots] for a watch root,
   /// and [VirtualFile#isInLocalFileSystem()] as the predicate.
-  @ApiStatus.Obsolete
   public static @NotNull LocalFileSystem getInstance() {
     var instance = ourInstance;
     if (instance == null) {
@@ -52,14 +51,12 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   }
 
   /// Prefer [#findFileByNioFile(Path)].
-  @ApiStatus.Obsolete
   @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
   public @Nullable VirtualFile findFileByIoFile(@NotNull java.io.File file) {
     return findFileByPath(file.getAbsolutePath());
   }
 
   /// Prefer [#refreshAndFindFileByNioFile(Path)].
-  @ApiStatus.Obsolete
   @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
   public @Nullable VirtualFile refreshAndFindFileByIoFile(@NotNull java.io.File file) {
     return refreshAndFindFileByPath(file.getAbsolutePath());
@@ -86,7 +83,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
 
   /// Prefer [`RefreshQueue#refreshPaths`][com.intellij.openapi.vfs.newvfs.RefreshQueue#refreshPaths(boolean, boolean, Runnable, Collection)]
   /// or [VfsUtil#markDirtyAndRefresh(boolean, boolean, boolean, Path...)].
-  @ApiStatus.Obsolete
   @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
   public void refreshIoFiles(@NotNull Iterable<? extends java.io.File> files) {
     refreshIoFiles(files, false, false, null);
@@ -94,14 +90,12 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
 
   /// Prefer [`RefreshQueue#refreshPaths`][com.intellij.openapi.vfs.newvfs.RefreshQueue#refreshPaths(boolean, boolean, Runnable, Collection)]
   /// or [VfsUtil#markDirtyAndRefresh(boolean, boolean, boolean, Path...)].
-  @ApiStatus.Obsolete
   public final void refreshNioFiles(@NotNull Iterable<? extends Path> files) {
     refreshNioFiles(files, false, false, null);
   }
 
   /// Prefer [`RefreshQueue#refreshPaths`][com.intellij.openapi.vfs.newvfs.RefreshQueue#refreshPaths(boolean, boolean, Runnable, Collection)]
   /// or [VfsUtil#markDirtyAndRefresh(boolean, boolean, boolean, Path...)]. Note that the paths come last there.
-  @ApiStatus.Obsolete
   @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
   public void refreshIoFiles(@NotNull Iterable<? extends java.io.File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
     refreshNioFiles(ContainerUtil.map(files, java.io.File::toPath), async, recursive, onFinish);
@@ -113,25 +107,21 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   ///
   /// Prefer [`RefreshQueue#refreshPaths`][com.intellij.openapi.vfs.newvfs.RefreshQueue#refreshPaths(boolean, boolean, Runnable, Collection)].
   /// Note that the paths come last there.
-  @ApiStatus.Obsolete
   public abstract void refreshNioFiles(@NotNull Iterable<? extends Path> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
 
   /// Performs a non-recursive synchronous refresh of specified files.
   ///
   /// Prefer [`RefreshQueue#refresh`][com.intellij.openapi.vfs.newvfs.RefreshQueue#refresh(boolean, boolean, Runnable, Collection)]
   /// or [VfsUtil#markDirtyAndRefresh(boolean, boolean, boolean, VirtualFile...)].
-  @ApiStatus.Obsolete
   public void refreshFiles(@NotNull Iterable<? extends VirtualFile> files) {
     refreshFiles(files, false, false, null);
   }
 
   /// Prefer [`RefreshQueue#refresh`][com.intellij.openapi.vfs.newvfs.RefreshQueue#refresh(boolean, boolean, Runnable, Collection)]
   /// or [VfsUtil#markDirtyAndRefresh(boolean, boolean, boolean, VirtualFile...)]. Note that the files come last there.
-  @ApiStatus.Obsolete
   public abstract void refreshFiles(@NotNull Iterable<? extends VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
 
   /// Prefer [WatchRoots.Token].
-  @ApiStatus.Obsolete
   public interface WatchRequest {
     @NotNull @SystemIndependent String getRootPath();
 
@@ -139,7 +129,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   }
 
   /// Prefer [WatchRoots#watch(String, boolean)].
-  @ApiStatus.Obsolete
   public @Nullable WatchRequest addRootToWatch(@NotNull String rootPath, boolean watchRecursively) {
     var result = addRootsToWatch(singleton(rootPath), watchRecursively);
     return result.size() == 1 ? result.iterator().next() : null;
@@ -149,7 +138,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   /// files and directories the client is interested in are loaded into VFS.
   ///
   /// Prefer [WatchRoots#watch(String, boolean)].
-  @ApiStatus.Obsolete
   public @NotNull Set<WatchRequest> addRootsToWatch(@NotNull Collection<String> rootPaths, boolean watchRecursively) {
     if (rootPaths.isEmpty()) {
       return Set.of();
@@ -163,13 +151,11 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   }
 
   /// Prefer [WatchRoots.Token#close()].
-  @ApiStatus.Obsolete
   public void removeWatchedRoot(@NotNull WatchRequest watchRequest) {
     removeWatchedRoots(singleton(watchRequest));
   }
 
   /// Prefer [WatchRoots.Token#close()].
-  @ApiStatus.Obsolete
   public void removeWatchedRoots(@NotNull Collection<WatchRequest> watchRequests) {
     if (!watchRequests.isEmpty()) {
       replaceWatchedRoots(watchRequests, null, null);
@@ -177,7 +163,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   }
 
   /// Prefer [WatchRoots#watch(String, boolean)] inside [WatchRoots#batch(Runnable)].
-  @ApiStatus.Obsolete
   public @Nullable WatchRequest replaceWatchedRoot(@Nullable WatchRequest watchRequest, @NotNull String rootPath, boolean watchRecursively) {
     var requests = watchRequest != null ? singleton(watchRequest) : Set.<WatchRequest>of();
     var roots = singleton(rootPath);
@@ -189,7 +174,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   /// May do nothing and return the same set of requests when it contains exactly the same paths.
   ///
   /// Prefer [WatchRoots#watch(String, boolean)] inside [WatchRoots#batch(Runnable)].
-  @ApiStatus.Obsolete
   public abstract @NotNull Set<WatchRequest> replaceWatchedRoots(
     @NotNull Collection<WatchRequest> watchRequests,
     @Nullable Collection<String> recursiveRoots,
@@ -200,13 +184,11 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   /// and to perform them through the VCS tool.
   ///
   /// Prefer the `com.intellij.vfs.local.fileOperationsHandler` extension point.
-  @ApiStatus.Obsolete
   public abstract void registerAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler);
 
   /// Unregisters a handler that allows a version control system plugin to intercept file operations in the local file system
   /// and to perform them through the VCS tool.
   ///
   /// Prefer the `com.intellij.vfs.local.fileOperationsHandler` extension point.
-  @ApiStatus.Obsolete
   public abstract void unregisterAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler);
 }
