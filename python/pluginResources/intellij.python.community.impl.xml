@@ -91,6 +91,7 @@
     <module name="intellij.platform.welcomeScreen.impl"/>
     <module name="intellij.platform.workspace.jps"/>
     <module name="intellij.platform.workspace.storage"/>
+    <module name="intellij.platform.wsl.impl"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.core.impl"/>

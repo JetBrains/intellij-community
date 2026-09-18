@@ -31,7 +31,6 @@
     <action id="Runner.CloseAllUnpinnedViews" class="com.intellij.execution.ui.layout.actions.CloseAllUnpinnedViewsAction" icon="AllIcons.Actions.Close"/>
     <action id="SendEOF" class="com.intellij.execution.actions.EOFAction"/>
     <action class="com.intellij.execution.actions.ActivateRunToolWindowAction" id="ActivateRunToolWindow"/>
-    <action id="WslSyncAction" class="com.intellij.execution.wsl.target.WslSyncAction" internal="true"/>
     <action id="TerminalIncreaseFontSize" class="com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction$IncreaseEditorFontSize"
             use-shortcut-of="EditorIncreaseFontSize">
       <override-text place="GoToAction"/>

@@ -2,7 +2,6 @@
 <!-- CoreActionsPrelude loads this file as a resource; keep it free of xi:include -->
 <idea-plugin>
   <actions>
-    <reference ref="WslSyncAction"/>
     <reference ref="TerminalIncreaseFontSize"/>
     <reference ref="TerminalDecreaseFontSize"/>
     <reference ref="TerminalResetFontSize"/>

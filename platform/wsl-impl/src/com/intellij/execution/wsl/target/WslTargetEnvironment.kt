@@ -24,7 +24,7 @@ import com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.util.asSafely
-import fleet.util.logging.logger
+import com.intellij.openapi.diagnostic.logger
 import java.nio.file.Path
 
 /**

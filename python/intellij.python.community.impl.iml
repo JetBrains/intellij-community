@@ -213,5 +213,6 @@
     <orderEntry type="module" module-name="intellij.platform.testIntegration.ui" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry.backend" />
     <orderEntry type="module" module-name="intellij.platform.eel.nioFs" />
+    <orderEntry type="module" module-name="intellij.platform.wsl.impl" />
   </component>
 </module>

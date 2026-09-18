@@ -1,14 +1,37 @@
 <idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.jediterm.core"/>
+    <module name="intellij.libraries.jediterm.ui"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.ktor.io"/>
     <module name="intellij.libraries.ktor.network.tls"/>
     <module name="intellij.libraries.ktor.utils"/>
     <module name="intellij.libraries.lz4"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.macro"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <executionTargetType implementation="com.intellij.execution.wsl.target.WslTargetType" os="windows"/>
+    <console.folding implementation="com.intellij.execution.wsl.WslDistributionConsoleFolding" os="windows"/>
+  </extensions>
+
+  <actions>
+    <action id="WslSyncAction" class="com.intellij.execution.wsl.target.WslSyncAction" internal="true"/>
+  </actions>
 </idea-plugin>

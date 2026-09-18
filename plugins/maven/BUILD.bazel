@@ -140,6 +140,7 @@ jvm_library(
         "//platform/smRunner",
         "//platform/testRunner",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/wsl-impl",
         ":platform_java-guiForms-rt_provided",
         ":plugins_maven_artifactResolver-m31_provided",
     ],
@@ -278,6 +279,7 @@ jvm_library(
         "//platform/smRunner:smRunner_test_lib",
         "//platform/testRunner:testRunner_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//platform/wsl-impl:wsl-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven` end

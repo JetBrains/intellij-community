@@ -55,13 +55,11 @@
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.workspace.jps"/>
     <module name="intellij.platform.workspace.storage"/>
-    <module name="intellij.platform.wsl.impl"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.execution.target.java.JavaLanguageRuntimeUIFactory"
                         serviceImplementation="com.intellij.execution.target.java.JavaLanguageRuntimeUIFactoryImpl"/>
-    <executionTargetType implementation="com.intellij.execution.wsl.target.WslTargetType" os="windows"/>
     <consoleFilterProvider implementation="com.intellij.execution.filters.UrlFilter$UrlFilterProvider"/>
     <notificationGroup id="Execution" displayType="TOOL_WINDOW" bundle="messages.ExecutionBundle" key="notification.group.execution"/>
     <projectService serviceInterface="com.intellij.execution.RunManager" open="true"
@@ -132,7 +130,6 @@
                         serviceImplementation="com.intellij.execution.ui.ExecutionUiServiceImpl"/>
     <actionPromoter implementation="com.intellij.execution.runToolbar.RunToolbarActionPromoter"/>
     <projectConfigurable groupId="build" provider="com.intellij.execution.runToolbar.RunToolbarSettingsConfigurableProvider" bundle="messages.LangBundle" key="run.toolbar.configurable.title"/>
-    <console.folding implementation="com.intellij.execution.wsl.WslDistributionConsoleFolding" os="windows"/>
     <projectService serviceInterface="com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager" open="true"
                     serviceImplementation="com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager"/>
     <customizableActionGroupProvider implementation="com.intellij.execution.ui.RunTabCustomizableActionGroupProvider"/>
