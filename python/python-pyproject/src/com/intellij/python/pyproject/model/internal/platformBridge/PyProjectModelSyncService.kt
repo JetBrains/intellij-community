@@ -27,12 +27,13 @@ import com.intellij.python.pyproject.model.internal.workspaceBridge.collectExclu
 import com.intellij.python.pyproject.model.internal.workspaceBridge.rebuildProjectModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
-import com.intellij.platform.util.coroutines.flow.debounceBatch
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -102,26 +103,40 @@ internal class PyProjectModelSyncService(private val project: Project, private v
   }
 
   /** Tracks changes from before the initial scan until the session ends. */
+  @OptIn(FlowPreview::class)
   private suspend fun trackChanges(): Unit = coroutineScope {
     ensureActive()
     val vfsListenerDisposable = Disposer.newDisposable("PyProjectModelSyncService")
-    val requests = Channel<RebuildRequest>(Channel.UNLIMITED)
+    val requests = PendingRebuildRequests()
+    var wsmTrackerJob: Job? = null
     try {
       knownRoots = setOf(project.stateStore.projectBasePath)
-      subscribeToPyProjectTomlChanges(vfsListenerDisposable, { knownRoots }) { requests.trySend(it) }
-      val wsmTrackerJob = createWsmTracker(project) { unExcluded, reason ->
-        requests.send(RebuildRequest(unExcluded, reason))
-      }
-      try {
-        consumeRequests(requests)
-      }
-      finally {
-        wsmTrackerJob.cancel()
-      }
+      requests.changes
+        .onSubscription {
+          subscribeToPyProjectTomlChanges(vfsListenerDisposable, { knownRoots }, requests::add)
+          wsmTrackerJob = createWsmTracker(project) { unExcluded, reason ->
+            requests.add(RebuildRequest(unExcluded, reason))
+          }
+          loadProjectRootsIntoVfs()
+          rebuildNow("the start of the sync")
+        }
+        .debounce(DEBOUNCE)
+        .filterNotNull()
+        .collect {
+          val batch = requests.take() ?: return@collect
+          if (batch.reloadProjectRoots) {
+            loadProjectRootsIntoVfs()
+          }
+          else if (batch.directoriesToLoad.isNotEmpty()) {
+            val loaded = measureTime { loadSubtreesIntoVfs(batch.directoriesToLoad, collectExcludedPaths(project)) }
+            log.debug { "Loaded ${batch.directoriesToLoad.size} new directories into the VFS in $loaded" }
+          }
+          rebuildNow(batch.reason)
+        }
     }
     finally {
+      wsmTrackerJob?.cancel()
       Disposer.dispose(vfsListenerDisposable)
-      requests.cancel()
     }
   }
 
@@ -172,29 +187,6 @@ internal class PyProjectModelSyncService(private val project: Project, private v
   }
 
   /**
-   * Rebuilds the model once for each batch of [requests].
-   *
-   * [debounceBatch] holds a request until [DEBOUNCE] of quiet, and it then reports every request of the
-   * burst. A burst of VFS events therefore costs one rebuild, and a long burst costs none until it ends.
-   * [rebuildProjectModel] holds a mutex of its own, hence two rebuilds never overlap.
-   *
-   * The producer stays a channel. A channel of [Channel.UNLIMITED] never rejects a request, and a producer
-   * runs inside a write action, where it cannot suspend.
-   */
-  private suspend fun consumeRequests(requests: Channel<RebuildRequest>) {
-    loadProjectRootsIntoVfs()
-    rebuildNow("the start of the sync")
-    requests.receiveAsFlow().debounceBatch(DEBOUNCE).collect { batch ->
-      val directoriesToLoad = batch.flatMapTo(LinkedHashSet()) { it.directoriesToLoad }
-      if (directoriesToLoad.isNotEmpty()) {
-        val loaded = measureTime { loadSubtreesIntoVfs(directoriesToLoad, collectExcludedPaths(project)) }
-        log.debug { "Loaded ${directoriesToLoad.size} new directories into the VFS in $loaded" }
-      }
-      rebuildNow(batch.mapTo(LinkedHashSet()) { it.reason }.joinToString(" and "))
-    }
-  }
-
-  /**
    * Builds the model at once, for a test.
    *
    * A test writes a `pyproject.toml` with `java.nio`, and it starts no sync, so the VFS knows no such file.
@@ -213,7 +205,7 @@ internal class PyProjectModelSyncService(private val project: Project, private v
   /**
    * Reads every `pyproject.toml` of the project and applies the result to the workspace model.
    *
-   * The build job of [start] builds the first model, and [consumeRequests] builds one model for each batch.
+   * [trackChanges] builds the first model and one model for each batch of pending changes.
    * [rebuildForTest] is the only other way in.
    */
   private suspend fun rebuildNow(reason: String) {

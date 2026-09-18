@@ -29,7 +29,7 @@ import org.jetbrains.annotations.CheckReturnValue
  * so this reason tells a reader whether a build started another build.
  */
 @CheckReturnValue
-internal fun CoroutineScope.createWsmTracker(project: Project, onWsmChanged: suspend (Set<VirtualFile>, String) -> Unit): Job =
+internal fun CoroutineScope.createWsmTracker(project: Project, onWsmChanged: (Set<VirtualFile>, String) -> Unit): Job =
   launch(start = CoroutineStart.UNDISPATCHED) {
     project.workspaceModel.eventLog.collect { event ->
       val trigger = event.findTrigger() ?: return@collect

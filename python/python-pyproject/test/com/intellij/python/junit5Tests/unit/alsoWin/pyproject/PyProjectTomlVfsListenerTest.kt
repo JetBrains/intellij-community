@@ -33,6 +33,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
@@ -59,11 +60,17 @@ internal class PyProjectTomlVfsListenerTest {
 
   private lateinit var root: Path
 
+  @Volatile
+  private var lastBuild: RebuiltModules? = null
+
   @BeforeEach
-  fun startSync(): Unit = timeoutRunBlocking(TEST_TIMEOUT) {
+  fun startSync(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(TEST_TIMEOUT) {
     root = projectPathFixture.get()
     root.resolve("member").writeToml("member")
     val project = projectFixture.get()
+    project.messageBus.connect(disposable).subscribe(MODEL_REBUILD, ModelRebuiltListener {
+      lastBuild = RebuiltModules(pyModuleNames(), pyModuleContentRootNames())
+    })
     // The scanning pass is what completes this deferred, and no scan runs in a test. The service waits for it,
     // so the test takes the place of `UnindexedFilesScanner`. In a test the call completes the wait at once.
     project.service<InitialVfsRefreshService>().scheduleInitialVfsRefresh()
@@ -79,8 +86,13 @@ internal class PyProjectTomlVfsListenerTest {
     awaitPyModules("a nested pyproject.toml of a new directory", "member", "nested")
   }
 
-  @Test
-  fun testNewDirectoryDuringInitialBuild(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(TEST_TIMEOUT) {
+  @ParameterizedTest
+  @CsvSource("3, false", "101, false", "101, true")
+  fun testNewDirectoriesDuringInitialBuild(
+    directoryCount: Int,
+    restart: Boolean,
+    @TestDisposable disposable: Disposable,
+  ): Unit = timeoutRunBlocking(TEST_TIMEOUT) {
     val service = projectFixture.get().service<PyProjectModelSyncService>()
     service.stop()
     val managers = PyProjectManager.EP.extensionList
@@ -98,13 +110,23 @@ internal class PyProjectTomlVfsListenerTest {
       }
     }
     ExtensionTestUtil.maskExtensions(PyProjectManager.EP, listOf(gatedManager) + managers.drop(1), disposable)
+    val names = (1..directoryCount).map { "member$it" }
+    val expected = (names + "member").toTypedArray()
     try {
       service.start()
       buildStarted.await()
-      root.resolve("fresh/nested").writeToml("nested")
-      refreshWithoutRecursion(root)
+      for (name in names) {
+        root.resolve("$name/nested").writeToml(name)
+        refreshWithoutRecursion(root)
+      }
+      assertEquals(listOf("member"), pyModuleNames(), "The initial build is still suspended")
+      if (restart) {
+        service.stop()
+        service.start()
+        awaitPyModules("a restart with pending VFS requests", *expected)
+      }
       continueBuild.complete(Unit)
-      awaitPyModules("a directory added during the initial build", "member", "nested")
+      awaitPyModules("directories added during the initial build", *expected)
     }
     finally {
       continueBuild.complete(Unit)
@@ -130,7 +152,7 @@ internal class PyProjectTomlVfsListenerTest {
     // The name is not asserted. `assignNames` reserves every current module name to keep the `.iml` rename
     // bridge safe (PY-89055), so a directory rename makes the module `member@1`. That behaviour predates
     // PY-91841 and this test must not pin it.
-    awaitValue("a renamed directory", listOf("renamed")) { pyModuleContentRootNames() }
+    awaitValue("a renamed directory", listOf("renamed")) { lastBuild?.contentRootNames }
   }
 
   @ParameterizedTest
@@ -230,8 +252,10 @@ internal class PyProjectTomlVfsListenerTest {
       .sorted()
 
   private suspend fun awaitPyModules(what: String, vararg expected: String) {
-    awaitValue(what, expected.sorted()) { pyModuleNames() }
+    awaitValue(what, expected.sorted()) { lastBuild?.names }
   }
+
+  private data class RebuiltModules(val names: List<String>, val contentRootNames: List<String>)
 
   /**
    * Waits until [actual] returns [expected].
