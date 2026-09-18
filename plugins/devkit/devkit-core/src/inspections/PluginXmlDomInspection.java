@@ -6,7 +6,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.MoveToPackageFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.diagnostic.ITNReporter;
@@ -32,9 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiTypes;
@@ -99,10 +96,8 @@ import java.text.SimpleDateFormat;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.regex.Pattern;
 
-import static com.intellij.psi.search.GlobalSearchScope.projectScope;
 import static org.jetbrains.idea.devkit.module.IdePluginModuleBuilderKt.DEVKIT_NEWLY_GENERATED_PROJECT;
 
 @VisibleForTesting
@@ -119,19 +114,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
   private static final int FIRST_BRANCH_SUPPORTING_STAR = 131;
 
-  public boolean myIgnoreUnstableApiDeclaredInThisProject = false;
-
   @Override
   public @NotNull String getShortName() {
     return "PluginXmlValidity";
-  }
-
-  @Override
-  public @NotNull OptPane getOptionsPane() {
-    return OptPane.pane(
-      OptPane.checkbox("myIgnoreUnstableApiDeclaredInThisProject",
-      DevKitBundle.message("devkit.unstable.api.usage.ignore.declared.inside.this.project")
-    ));
   }
 
   @Override
@@ -227,6 +212,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     assert ideaPlugin != null;
     for (var dependency : ideaPlugin.getDepends()) {
       if (dependency.getOptional().getValue() != Boolean.TRUE) {
+        //noinspection DialogTitleCapitalization
         holder.createProblem(dependency, ProblemHighlightType.WARNING, DevKitBundle.message(
             "inspections.plugin.xml.dependency.descriptor.should.not.use.depends"), null)
           .highlightWholeElement();
@@ -741,7 +727,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     return false;
   }
 
-  private void annotateExtension(Extension extension, DomElementAnnotationHolder holder) {
+  private static void annotateExtension(Extension extension, DomElementAnnotationHolder holder) {
     var extensionPoint = extension.getExtensionPoint();
     if (extensionPoint == null) return;
     var module = extension.getModule();
@@ -762,11 +748,11 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       else if ("order".equals(attributeDescription.getXmlElementName())) {
         annotateOrderAttributeProblems(holder, attributeValue);
       }
-      annotateReferencedFieldStatus(holder, extension, attributeDescription, attributeValue, module);
+      annotateReferencedFieldStatus(holder, extension, attributeDescription, attributeValue);
     }
   }
 
-  private void annotateExtensionPointStatus(
+  private static void annotateExtensionPointStatus(
     DomElementAnnotationHolder holder,
     Extension extension,
     ExtensionPoint extensionPoint,
@@ -797,29 +783,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
     else if (kind == ExtensionPoint.Status.Kind.OBSOLETE) {
       highlightObsolete(extension, holder);
-    }
-    else if (kind == ExtensionPoint.Status.Kind.EXPERIMENTAL_API) {
-      if (module != null) {
-        var fromSameProject = Optional.ofNullable(extension.getExtensionPoint())
-          .map(ExtensionPoint::getEffectiveClass)
-          .map(PsiElement::getContainingFile)
-          .map(PsiFile::getVirtualFile)
-          .map(file -> projectScope(module.getProject()).contains(file))
-          .orElse(false);
-        if (!myIgnoreUnstableApiDeclaredInThisProject || !fromSameProject) {
-          highlightExperimental(extension, holder);
-        }
-      }
-      else {
-        highlightExperimental(extension, holder);
-      }
-    }
-    else if (
-      kind == ExtensionPoint.Status.Kind.INTERNAL_API &&
-      module != null &&
-      !IntelliJProjectUtil.isIntelliJPlatformProject(module.getProject())
-    ) {
-      highlightInternal(extension, holder);
     }
   }
 
@@ -868,8 +831,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     DomElementAnnotationHolder holder,
     Extension extension,
     DomAttributeChildDescription<?> attributeDescription,
-    GenericAttributeValue<?> attributeValue,
-    @Nullable Module module
+    GenericAttributeValue<?> attributeValue
   ) {
     var declaration = attributeDescription.getDeclaration(extension.getManager().getProject());
     if (declaration instanceof PsiField psiField) {
@@ -880,16 +842,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         else {
           highlightDeprecated(attributeValue, DevKitBundle.message("inspections.plugin.xml.deprecated.attribute", attributeDescription.getName()), holder, false, true);
         }
-      }
-      else if (psiField.hasAnnotation(ApiStatus.Experimental.class.getCanonicalName())) {
-        highlightExperimental(attributeValue, holder);
-      }
-      else if (
-        psiField.hasAnnotation(ApiStatus.Internal.class.getCanonicalName()) &&
-        module != null &&
-        !IntelliJProjectUtil.isIntelliJPlatformProject(module.getProject())
-      ) {
-        highlightInternal(attributeValue, holder);
       }
       else if (psiField.hasAnnotation(ApiStatus.Obsolete.class.getCanonicalName())) {
         highlightObsolete(attributeValue, holder);
@@ -1174,28 +1126,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     if (highlightWholeElement) {
       problem.highlightWholeElement();
     }
-  }
-
-  @SuppressWarnings("unused") // might be useful again later
-  private static void highlightJetbrainsOnly(DomElement element, DomElementAnnotationHolder holder) {
-    holder.createProblem(
-      element, ProblemHighlightType.WARNING,
-      DevKitBundle.message("inspections.plugin.xml.jetbrains.only.api", ApiStatus.Experimental.class.getCanonicalName()), null
-    ).highlightWholeElement();
-  }
-
-  private static void highlightExperimental(DomElement element, DomElementAnnotationHolder holder) {
-    holder.createProblem(
-      element, ProblemHighlightType.WEAK_WARNING,
-      DevKitBundle.message("inspections.plugin.xml.usage.of.experimental.api", ApiStatus.Experimental.class.getCanonicalName()), null
-    ).highlightWholeElement();
-  }
-
-  private static void highlightInternal(DomElement element, DomElementAnnotationHolder holder) {
-    holder.createProblem(
-      element, ProblemHighlightType.GENERIC_ERROR,
-      DevKitBundle.message("inspections.plugin.xml.usage.of.internal.api", ApiStatus.Internal.class.getCanonicalName()), null
-    ).highlightWholeElement();
   }
 
   private static void highlightObsolete(DomElement element, DomElementAnnotationHolder holder) {

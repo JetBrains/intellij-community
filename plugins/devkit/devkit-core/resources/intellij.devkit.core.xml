@@ -298,6 +298,18 @@
                      enabledByDefault="false" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlReferencesModuleReachabilityInspection"
                      key="inspection.plugin.xml.references.module.reachability.display.name"/>
+    <localInspection language="XML" shortName="JetBrainsInternalExtensionsUsage" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.JetBrainsInternalExtensionsUsageInspection"
+                     key="inspection.jetbrains.internal.extensions.usage.display.name"/>
+    <localInspection language="XML" shortName="UnstableExtensionsUsage" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UnstableExtensionsUsageInspection"
+                     key="inspection.jetbrains.unstable.extensions.usage.display.name"/>
     <localInspection language="UAST" shortName="JetBrainsInternalApiUsage"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
