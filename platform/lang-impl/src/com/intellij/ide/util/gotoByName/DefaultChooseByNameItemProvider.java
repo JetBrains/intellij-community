@@ -6,7 +6,6 @@ import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -250,7 +249,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
       }
       final var names = allNamesProducer.get();
       final var started = System.currentTimeMillis();
-      processNamesByPattern(base, names, namePattern, indicator, collector, preferStartMatches);
+      processNamesByPattern(base, names, namePattern, collector, preferStartMatches);
       if (LOG.isDebugEnabled()) {
         LOG.debug("matched:"+ (System.currentTimeMillis() - started)+ "," + names.length);
       }
@@ -489,7 +488,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     if (pattern.isEmpty() && !base.canShowListForEmptyPattern()) return Collections.emptyList();
 
     final List<String> filtered = new ArrayList<>();
-    processNamesByPattern(base, names, pattern, ProgressIndicatorProvider.getGlobalProgressIndicator(), result -> {
+    processNamesByPattern(base, names, pattern, result -> {
       synchronized (filtered) {
         filtered.add(result.elementName);
       }
@@ -502,7 +501,6 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   private static void processNamesByPattern(final @NotNull ChooseByNameViewModel base,
                                             final String @NotNull [] names,
                                             final @NotNull String namePattern,
-                                            final @NotNull ProgressIndicator indicator,
                                             final @NotNull Consumer<? super MatchResult> consumer,
                                             final boolean preferStartMatches) {
     final var nameMatcher = buildPatternMatcher(namePattern, preferStartMatches);
@@ -514,7 +512,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
       }
       return true;
     };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(names), indicator, nameProcessor)) {
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(Arrays.asList(names), nameProcessor)) {
       throw new ProcessCanceledException();
     }
   }
