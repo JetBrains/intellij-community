@@ -4,7 +4,6 @@ package org.intellij.plugins.markdown.settings
 import com.intellij.ide.DataManager
 import com.intellij.ide.highlighter.HighlighterFactory
 import com.intellij.ide.projectView.ProjectView
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
@@ -258,8 +257,8 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
         val editor = createCustomStylesheetEditor()
         cell(editor.component)
           .align(AlignX.FILL)
-          .onApply { settings.customStylesheetText = runReadAction { editor.document.text } }
-          .onIsModified { settings.customStylesheetText != runReadAction { editor.document.text.takeIf { it.isNotEmpty() } } }
+          .onApply { settings.customStylesheetText = editor.document.text }
+          .onIsModified { settings.customStylesheetText != editor.document.text.takeIf { it.isNotEmpty() } }
           .onReset { resetEditorText(settings.customStylesheetText ?: "") }
         customStylesheetEditor = editor
         setEditorReadonlyState(isReadonly = !editorCheckbox.component.isSelected)
