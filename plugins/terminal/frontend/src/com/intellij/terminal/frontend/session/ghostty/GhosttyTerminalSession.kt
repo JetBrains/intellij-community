@@ -5,12 +5,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.emulator.CursorShape
 import com.intellij.terminal.emulator.ScreenChange
+import com.intellij.terminal.emulator.ScrollbackPullPolicy
 import com.intellij.terminal.emulator.TerminalCustomCommandListener
 import com.intellij.terminal.emulator.TerminalEmulator
 import com.intellij.terminal.emulator.TerminalListener
@@ -285,6 +287,16 @@ class GhosttyTerminalSession internal constructor(
     // them in sync with those settings for the rest of the session. Must run before the read loop
     // below starts, so the emulator never shows Ghostty's own hardcoded defaults even briefly.
     installDefaultCursorStateUpdating(coroutineScope.childScope("Default cursor state updating"))
+
+    // Windows host is using ConPTY that has its own buffer: it stores screen lines only,
+    // and when terminal size grows, it can't pull scrollback lines to the screen.
+    // So, we have to use "ScrollbackPullPolicy.NEVER" in the Windows case to ensure
+    // that emulator and ConPTY buffers are in sync after resize.
+    val scrollbackPullPolicy = if (eelDescriptor.osFamily == EelOsFamily.Windows) {
+      ScrollbackPullPolicy.NEVER
+    }
+    else ScrollbackPullPolicy.CURSOR_AT_BOTTOM
+    emulator.setResizeScrollbackPullPolicy(scrollbackPullPolicy)
 
     // Read the PTY on a dedicated daemon thread rather than a coroutine in the session
     // scope (production uses a plain executor for the same reason): the blocking read()
