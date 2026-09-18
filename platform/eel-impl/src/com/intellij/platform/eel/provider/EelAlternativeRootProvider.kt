@@ -6,15 +6,17 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPathBoundDescriptor
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
-import java.nio.file.Path.of
 
+/**
+ * Every local path prefix under which the files of this environment are reachable: [EelPathBoundDescriptor.rootPath]
+ * plus the roots from [EelAlternativeRootProvider]. The consumers compare prefixes as strings (the JPS build strips them
+ * from paths), so notations of one root that compare equal as `Path` objects, such as `\\wsl$\Ubuntu\` and
+ * `\\wsl.localhost\Ubuntu\`, are all kept.
+ */
 @ApiStatus.Internal
-fun EelDescriptor.routingPrefixes(): Set<Path> {
-  return EelAlternativeRootProvider.EP_NAME.extensionList
-           .flatMapTo(HashSet()) { provider ->
-             provider.getAlternativeRoots(this)?.map(Path::of) ?: emptySet()
-           } + setOfNotNull((this as? EelPathBoundDescriptor)?.rootPath)
+fun EelDescriptor.routingPrefixes(): List<@MultiRoutingFileSystemPath String> {
+  val alternativeRoots = EelAlternativeRootProvider.EP_NAME.extensionList.flatMap { it.getAlternativeRoots(this) ?: emptyList() }
+  return (alternativeRoots + listOfNotNull((this as? EelPathBoundDescriptor)?.rootPath?.toString())).distinct()
 }
 
 /**

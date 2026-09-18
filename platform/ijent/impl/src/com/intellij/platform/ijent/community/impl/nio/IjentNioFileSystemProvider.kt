@@ -86,7 +86,8 @@ import kotlin.contracts.contract
  * The URL must have the scheme "ijent", and the unique identifier of a filesystem
  * is represented with an authority and a path.
  *
- * For accessing WSL use [com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider].
+ * For accessing WSL, Docker, SSH and TCP environments
+ * use [com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwareFileSystemProvider].
  */
 class IjentNioFileSystemProvider : FileSystemProvider() {
   companion object {
@@ -642,7 +643,8 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   }
 
   override fun createLink(link: Path?, existing: Path?) {
-    TODO("Not yet implemented -> com.intellij.platform.ijent.functional.fs.TodoOperation.HARD_LINK")
+    // An optional operation of FileSystemProvider; IJent does not support hard links (com.intellij.platform.ijent.functional.fs.TodoOperation.HARD_LINK).
+    throw UnsupportedOperationException("Hard links are not supported by IJent file systems")
   }
 
   override fun readSymbolicLink(link: Path): Path {

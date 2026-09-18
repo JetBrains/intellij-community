@@ -131,7 +131,7 @@ internal class EelBuildCommandLineBuilder(val project: Project, exePath: Path) :
   }
 
   fun pathPrefixes(): Set<String> {
-    return eel.descriptor.routingPrefixes().map { it.toString().removeSuffix(FileSystems.getDefault().separator) }.toSet()
+    return eel.descriptor.routingPrefixes().map { it.removeSuffix(FileSystems.getDefault().separator) }.toSet()
   }
 
   /**

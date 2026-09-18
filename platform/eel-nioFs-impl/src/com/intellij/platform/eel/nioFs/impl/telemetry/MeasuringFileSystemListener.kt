@@ -44,7 +44,7 @@ internal class MeasuringFileSystemListener : FileSystemTracingListener<Measuring
   private val openOperations: ThreadLocal<State> = ThreadLocal.withInitial { State() }
 
   fun spanNamePrefixWithFileSystemClass(delegate: FileSystemProvider): String =
-    Measurer.DelegateType.fromDelegateClass(delegate.javaClass).toString()
+    Measurer.DelegateType.fromDelegate(delegate).toString()
 
   fun opStarted(delegate: FileSystemProvider, path1: Path?, path2: Path?, operation: Measurer.Operation): SpanEntry? {
     if (openOperations.get().recursionFlag) return null

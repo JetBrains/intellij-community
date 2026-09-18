@@ -292,7 +292,7 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
       catch (err: NoSuchFileException) {
         if (!Files.exists(from)) throw err
       }
-      // TODO: generalize com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider.copy
+      // TODO: generalize com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwareFileSystemProvider.copy
       EelPathTransfer.walkingTransfer(from,
                                       to,
                                       removeSource = false,
@@ -310,7 +310,7 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
       catch (err: NoSuchFileException) {
         if (!Files.exists(from)) throw err
       }
-      // TODO: generalize com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider.copy
+      // TODO: generalize com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwareFileSystemProvider.copy
       EelPathTransfer.walkingTransfer(from,
                                       to,
                                       removeSource = false,

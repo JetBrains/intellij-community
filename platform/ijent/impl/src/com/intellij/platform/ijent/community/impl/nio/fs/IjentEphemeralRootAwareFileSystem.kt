@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio.fs
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
 import com.intellij.platform.core.nio.fs.DelegatingFileSystem
@@ -10,10 +11,8 @@ import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.EelDescriptorOwner
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathTransfer
 import com.intellij.platform.eel.provider.utils.WindowsPathUtils
-import com.intellij.platform.eel.provider.utils.impl.getActualWslPath
 import com.intellij.platform.eel.provider.utils.impl.ijentToLocal
 import com.intellij.platform.eel.provider.utils.impl.localToIjent
 import com.intellij.platform.ijent.community.impl.nio.AbsoluteIjentNioPath
@@ -22,11 +21,14 @@ import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.net.URI
+import java.nio.channels.AsynchronousFileChannel
 import java.nio.file.CopyOption
 import java.nio.file.FileStore
 import java.nio.file.FileSystem
 import java.nio.file.Files
+import java.nio.file.InvalidPathException
 import java.nio.file.LinkOption
+import java.nio.file.OpenOption
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 import java.nio.file.ProviderMismatchException
@@ -35,9 +37,12 @@ import java.nio.file.WatchEvent
 import java.nio.file.WatchKey
 import java.nio.file.WatchService
 import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
 import java.nio.file.attribute.UserPrincipalLookupService
 import java.nio.file.spi.FileSystemProvider
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutorService
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.pathString
 
@@ -66,7 +71,42 @@ class IjentEphemeralRootAwarePath(
 ) : Path, BasicFileAttributesHolder2.Impl(originalPath.getCachedFileAttributesAndWrapToDosAttributesAdapterIfNeeded()) {
   override fun getFileSystem(): FileSystem = fileSystem
 
-  val actualPath: Path = getActualWslPath(originalPath)
+  private class ActualPathInfo(val actualPath: Path, val diverges: Boolean)
+
+  // Lazy: computing the actual path renders and parses the whole path through the original file system, which is
+  // too expensive to do for every constructed path object (directory streams wrap every entry), and the parse can
+  // fail for environment file names that the original file system cannot represent (e.g. `*` on Windows).
+  private val actualPathInfo: ActualPathInfo by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    val actualPathOnOriginalFs = fileSystem.actualPathOnOriginalFs
+    if (actualPathOnOriginalFs == null || !originalPath.isAbsolute) {
+      return@lazy ActualPathInfo(originalPath, false)
+    }
+    val presentable =
+      try {
+        fileSystem.originalFs.getPath(toString())
+      }
+      catch (_: InvalidPathException) {
+        // The name is not representable on the original file system; IJent-side operations keep working.
+        null
+      }
+    if (presentable == null) {
+      ActualPathInfo(originalPath, false)
+    }
+    else {
+      val actual = actualPathOnOriginalFs(presentable)
+      ActualPathInfo(actual, actual != presentable)
+    }
+  }
+
+  /**
+   * The path that physically backs this path on the original file system, when that file system sees the environment
+   * files: the presentable rendering mapped through [IjentEphemeralRootAwareFileSystem.actualPathOnOriginalFs].
+   * Otherwise it is the original IJent path itself.
+   */
+  val actualPath: Path get() = actualPathInfo.actualPath
+
+  /** `true` when [actualPath] is a different location than the presentable rendering (a mount of a host location). */
+  internal val actualPathDiverges: Boolean get() = actualPathInfo.diverges
 
   override fun invalidate() {
     originalPath.invalidate()
@@ -82,7 +122,10 @@ class IjentEphemeralRootAwarePath(
   }
 
   override fun getFileName(): Path? {
-    return originalPath.fileName
+    // Only the environment root has no file name; an empty relative path keeps the delegate behavior.
+    if (originalPath.isAbsolute && originalPath.nameCount == 0) return null
+    val fileName = originalPath.fileName ?: return null
+    return IjentEphemeralRootAwarePath(fileSystem, rootPath, fileName as IjentNioPath)
   }
 
   override fun getParent(): Path? {
@@ -95,7 +138,7 @@ class IjentEphemeralRootAwarePath(
   }
 
   override fun getName(index: Int): Path {
-    return originalPath.getName(index)
+    return IjentEphemeralRootAwarePath(fileSystem, rootPath, originalPath.getName(index) as IjentNioPath)
   }
 
   override fun subpath(beginIndex: Int, endIndex: Int): Path {
@@ -126,6 +169,13 @@ class IjentEphemeralRootAwarePath(
 
   override fun relativize(other: Path): Path {
     val other = other.unwrap()
+    if (isAbsolute != other.isAbsolute) {
+      throw IllegalArgumentException(
+        "Tried to relativize a relative and an absolute path: `$this` and `$other`." +
+        " Check for possible confusion." +
+        " Maybe some code up the call stack tried to use a path from the remote environment as a local path."
+      )
+    }
     return IjentEphemeralRootAwarePath(fileSystem,
                                        rootPath,
                                        originalPath.relativize(if (other is IjentEphemeralRootAwarePath) other.originalPath else other))
@@ -135,7 +185,7 @@ class IjentEphemeralRootAwarePath(
     if (isAbsolute && fileSystem.eelDescriptor.osFamily == EelOsFamily.Windows) {
       return fileSystem.originalFs.getPath(toString()).toUri()
     }
-    return rootPath.resolve(originalPath.pathString.removePrefix("/")).toUri()
+    return rootPath.resolve(ijentToLocal(originalPath.pathString.removePrefix("/"))).toUri()
   }
 
   override fun toAbsolutePath(): Path {
@@ -151,8 +201,9 @@ class IjentEphemeralRootAwarePath(
       return this
     }
 
-    val ijentNioRealPath = if (originalPath != actualPath) {
-      // `presentablePath` looks like `\\wsl$\distro\mnt\c`, any access to it from inside WSL throws permission denied errors.
+    val ijentNioRealPath = if (actualPathDiverges) {
+      // The rendering is a mount of a location outside the environment: resolving links there from inside the environment
+      // fails with permission errors, so the path is only normalized.
       originalPath.normalize()
     }
     else {
@@ -167,43 +218,63 @@ class IjentEphemeralRootAwarePath(
 
   override fun compareTo(other: Path): Int {
     val other = other.unwrap()
-    return originalPath.compareTo(if (other is IjentEphemeralRootAwarePath) other.originalPath else other)
+    if (other !is IjentEphemeralRootAwarePath) {
+      return originalPath.compareTo(other)
+    }
+    val byOriginalPath = originalPath.compareTo(other.originalPath)
+    if (byOriginalPath != 0) {
+      return byOriginalPath
+    }
+    if (fileSystem == other.fileSystem) {
+      return 0
+    }
+    // The same environment path in two different environments: order deterministically instead of colliding.
+    return fileSystem.eelDescriptor.toString().compareTo(other.fileSystem.eelDescriptor.toString())
   }
 
   override fun toFile(): File {
     return originalPath.toFile()
   }
 
+  // The original IJent path is already free of the root notation: paths reached through different notations of one
+  // root (`\\wsl$` vs `\\wsl.localhost`) carry equal original paths, while different environment files never do.
+  // Together with the value-based file system equality this defines one identity per environment file.
+  // `hashCode` delegates to the same components; `compareTo` too, within one environment.
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is Path) return false
 
     val other = other.unwrap()
 
-    return other is IjentEphemeralRootAwarePath && this pathEqual other
+    if (other !is IjentEphemeralRootAwarePath) {
+      return false
+    }
+
+    return fileSystem == other.fileSystem && originalPath == other.originalPath
   }
 
   override fun hashCode(): Int {
-    var result = rootPath.hashCode()
-    result = 31 * result + originalPath.hashCode()
-    return result
+    return fileSystem.hashCode() * 31 + originalPath.hashCode()
   }
 
   private val asString by lazy(LazyThreadSafetyMode.PUBLICATION) {
     if (isAbsolute) {
       when (fileSystem.eelDescriptor.osFamily) {
         EelOsFamily.Posix -> {
-          val other = ijentToLocal(originalPath.pathString.removePrefix("/").replace("\\", fileSystem.separator))
-          rootPath.resolve(other).pathString
+          // Rendered by plain string concatenation: parsing through the original file system could fail
+          // for names it cannot represent (e.g. `*` on Windows), and toString must never throw.
+          val relative = ijentToLocal(originalPath.pathString.removePrefix("/")).replace("/", fileSystem.separator)
+          if (relative.isEmpty()) rootPath.pathString
+          else rootPath.pathString.removeSuffix(fileSystem.separator) + fileSystem.separator + relative
         }
         EelOsFamily.Windows -> {
           WindowsPathUtils.getNioPathString(rootPath.toString(), (originalPath as AbsoluteIjentNioPath).eelPath, fileSystem.separator)
         }
       }
-
     }
     else {
-      ijentToLocal(originalPath.toString())
+      // A relative path is rendered with the separator of this file system, like an absolute one.
+      ijentToLocal(originalPath.toString()).replace(originalPath.fileSystem.separator, fileSystem.separator)
     }
   }
 
@@ -212,50 +283,66 @@ class IjentEphemeralRootAwarePath(
   }
 }
 
-private infix fun IjentEphemeralRootAwarePath.pathEqual(other: IjentEphemeralRootAwarePath): Boolean {
-  if (fileSystem != other.fileSystem || actualPath.root != other.actualPath.root) {
-    return false
-  }
-
-  if ((originalPath != actualPath || other.originalPath != other.actualPath) && (actualPath == other.actualPath) && (rootPath == other.rootPath)) {
-    return false
-  }
-
-  val delegateIter = actualPath.iterator()
-  val otherDelegateIter = other.actualPath.iterator()
-  while (delegateIter.hasNext() && otherDelegateIter.hasNext()) {
-    if (delegateIter.next() != otherDelegateIter.next()) {
-      return false
-    }
-  }
-  return !delegateIter.hasNext() && !otherDelegateIter.hasNext()
-}
-
 @ApiStatus.Internal
 class IjentEphemeralRootAwareFileSystemProvider(
   val root: Path,
   private val ijentFsProvider: FileSystemProvider,
   private val originalFsProvider: FileSystemProvider,
   private val useRootDirectoriesFromOriginalFs: Boolean,
-  private val eelDescriptor: EelDescriptor,
+  override val eelDescriptor: EelDescriptor,
+  /**
+   * Whether [root] must match path strings case-insensitively.
+   * A root that is a Windows-side string (a UNC root) requires `true`; a posix root requires `false`.
+   */
+  private val caseInsensitiveRoot: Boolean = false,
+  /**
+   * Maps the presentable rendering of an environment path (a path of the original file system under [root]) to the
+   * path that physically backs it on the original file system. Set it only when the original file system sees the
+   * files of the environment; then it also serves as the fallback for operations that IJent does not support.
+   * `null` when the original file system cannot see the environment files (Docker, SSH, TCP).
+   */
+  private val actualPathOnOriginalFs: ((presentablePath: Path) -> Path)? = null,
 ) : DelegatingFileSystemProvider<IjentEphemeralRootAwareFileSystemProvider, IjentEphemeralRootAwareFileSystem>(),
-    RoutingAwareFileSystemProvider {
+    RoutingAwareFileSystemProvider, EelDescriptorOwner {
   private val originalFs = originalFsProvider.getFileSystem(URI("file:/"))
 
+  private val wrappedFileSystems = ConcurrentHashMap<FileSystem, IjentEphemeralRootAwareFileSystem>()
+
   override fun wrapDelegateFileSystem(delegateFs: FileSystem): IjentEphemeralRootAwareFileSystem {
-    return IjentEphemeralRootAwareFileSystem(rootAwareFileSystemProvider = this,
-                                             ijentFs = delegateFs,
-                                             originalFs = originalFs,
-                                             useRootDirectoriesFromOriginalFs = useRootDirectoriesFromOriginalFs,
-                                             eelDescriptor = eelDescriptor)
+    return wrappedFileSystems.computeIfAbsent(delegateFs) {
+      IjentEphemeralRootAwareFileSystem(rootAwareFileSystemProvider = this,
+                                        ijentFs = delegateFs,
+                                        originalFs = originalFs,
+                                        useRootDirectoriesFromOriginalFs = useRootDirectoriesFromOriginalFs,
+                                        eelDescriptor = eelDescriptor,
+                                        caseInsensitiveRoot = caseInsensitiveRoot,
+                                        actualPathOnOriginalFs = actualPathOnOriginalFs)
+    }
   }
 
   override fun getScheme(): String? {
     return originalFsProvider.scheme
   }
 
-  override fun <V : FileAttributeView?> getFileAttributeView(path: Path?, type: Class<V?>?, vararg options: LinkOption?): V? {
-    return super.getFileAttributeView(path, type, *options)
+  override fun <V : FileAttributeView> getFileAttributeView(path: Path, type: Class<V>, vararg options: LinkOption): V {
+    return when {
+      originalFs.supportedFileAttributeViews().contains("dos") && eelDescriptor.osFamily == EelOsFamily.Posix -> {
+        ijentFsProvider.getFileAttributeViewUsingDosAttributesAdapter(path.toIjentPath(), type, *options)
+      }
+      else -> super.getFileAttributeView(path, type, *options)
+    }
+  }
+
+  override fun newAsynchronousFileChannel(
+    path: Path,
+    options: MutableSet<out OpenOption>,
+    executor: ExecutorService?,
+    vararg attrs: FileAttribute<*>?,
+  ): AsynchronousFileChannel {
+    if (actualPathOnOriginalFs != null && path.isAbsolute) {
+      return originalFsProvider.newAsynchronousFileChannel(originalFs.getPath(path.toString()), options, executor, *attrs)
+    }
+    throw UnsupportedOperationException("Asynchronous file channels are not supported for $eelDescriptor")
   }
 
   override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {
@@ -268,8 +355,13 @@ class IjentEphemeralRootAwareFileSystemProvider(
   }
 
   override fun copy(source: Path, target: Path, vararg options: CopyOption?) {
-    if (source.getEelDescriptor() == target.getEelDescriptor() && source.fileSystem == target.fileSystem) {
+    // Equal file systems wrap one IJent file system, whatever the notation of their roots, so IJent can do the work natively.
+    if (source.fileSystem == target.fileSystem) {
       super.copy(source, target, *options)
+    }
+    else if (source.toIjentPathOrNull() == null && target.toIjentPathOrNull() == null) {
+      LOG.warn("This branch is not supposed to execute. Copying $source => $target through an inappropriate FileSystemProvider")
+      originalFsProvider.copy(source.unwrap(), target.unwrap(), *options)
     }
     else {
       EelPathTransfer.walkingTransfer(source.toOriginalPath(),
@@ -280,8 +372,13 @@ class IjentEphemeralRootAwareFileSystemProvider(
   }
 
   override fun move(source: Path, target: Path, vararg options: CopyOption?) {
-    if (source.getEelDescriptor() == target.getEelDescriptor() && source.fileSystem == target.fileSystem) {
+    // Equal file systems wrap one IJent file system, whatever the notation of their roots, so IJent can do the work natively.
+    if (source.fileSystem == target.fileSystem) {
       super.move(source, target, *options)
+    }
+    else if (source.toIjentPathOrNull() == null && target.toIjentPathOrNull() == null) {
+      LOG.warn("This branch is not supposed to execute. Moving $source => $target through an inappropriate FileSystemProvider")
+      originalFsProvider.move(source.unwrap(), target.unwrap(), *options)
     }
     else {
       EelPathTransfer.walkingTransfer(source.toOriginalPath(),
@@ -317,7 +414,7 @@ class IjentEphemeralRootAwareFileSystemProvider(
       return path.actualPath.fileSystem.provider() == path2.fileSystem.provider() && Files.isSameFile(path.actualPath, path2)
     }
 
-    if (path.actualPath == path.originalPath && path2.actualPath == path2.originalPath) {
+    if (!path.actualPathDiverges && !path2.actualPathDiverges) {
       return Files.isSameFile(path.toIjentPath(), path2.toIjentPath())
     }
 
@@ -330,7 +427,8 @@ class IjentEphemeralRootAwareFileSystemProvider(
 
   override fun toDelegatePath(path: Path?): Path? {
     if (path is IjentEphemeralRootAwarePath) {
-      check(root === path.rootPath)
+      // The path may come from an equal file system created for another root of the same environment
+      // (e.g. `\\wsl$` vs `\\wsl.localhost`), so the roots are not required to match.
       return path.originalPath
     }
 
@@ -339,6 +437,10 @@ class IjentEphemeralRootAwareFileSystemProvider(
 
   override fun canHandleRouting(path: Path): Boolean {
     return true
+  }
+
+  private companion object {
+    private val LOG = logger<IjentEphemeralRootAwareFileSystemProvider>()
   }
 }
 
@@ -353,6 +455,8 @@ class IjentEphemeralRootAwareFileSystem(
   internal val originalFs: FileSystem,
   private val useRootDirectoriesFromOriginalFs: Boolean,
   override val eelDescriptor: EelDescriptor,
+  private val caseInsensitiveRoot: Boolean = false,
+  internal val actualPathOnOriginalFs: ((presentablePath: Path) -> Path)? = null,
 ) : DelegatingFileSystem<IjentEphemeralRootAwareFileSystemProvider>(), EelDescriptorOwner {
   private val root: Path = rootAwareFileSystemProvider.root
   private val invariantSeparatorRootPathString = root.invariantSeparatorsPathString.removeSuffix("/")
@@ -383,9 +487,11 @@ class IjentEphemeralRootAwareFileSystem(
       return IjentEphemeralRootAwarePath(this, root, ijentNioPath)
     }
 
+    // A path string outside the root is relative or foreign and arrives in the presentable rendering of this file system,
+    // so its separators and special characters are mapped back the same way as for a path under the root.
     val delegateFs = getDelegate(first)
-    val first = first.replace(originalFs.separator, delegateFs.separator)
-    val more = more.toList().map { it.replace(originalFs.separator, delegateFs.separator) }.toTypedArray()
+    val first = localToIjent(first.replace(originalFs.separator, delegateFs.separator))
+    val more = more.toList().map { localToIjent(it.replace(originalFs.separator, delegateFs.separator)) }.toTypedArray()
     return super.getPath(first, *more)
   }
 
@@ -412,18 +518,31 @@ class IjentEphemeralRootAwareFileSystem(
     addAll(ijentFs.supportedFileAttributeViews())
   }
 
+  // Neither the root nor the descriptor is a part of equality: the file systems created for different notations of one
+  // environment root (`\\wsl$` vs `\\wsl.localhost`) carry different descriptors but wrap one IJent file system, and they
+  // must be equal, and so must the paths they produce. `ijentFs` identifies the environment; `actualPathOnOriginalFs`
+  // is a property of the environment kind.
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is IjentEphemeralRootAwareFileSystem) return false
-    return eelDescriptor == other.eelDescriptor && ijentFs == other.ijentFs && originalFs == other.originalFs && useRootDirectoriesFromOriginalFs == other.useRootDirectoriesFromOriginalFs
+    return ijentFs == other.ijentFs &&
+           originalFs == other.originalFs &&
+           useRootDirectoriesFromOriginalFs == other.useRootDirectoriesFromOriginalFs &&
+           caseInsensitiveRoot == other.caseInsensitiveRoot
   }
 
   private fun isPathUnderRoot(path: String): Boolean {
-    return toSystemIndependentName(path).startsWith(invariantSeparatorRootPathString)
+    val invariantPath = toSystemIndependentName(path)
+    if (!invariantPath.startsWith(invariantSeparatorRootPathString, ignoreCase = caseInsensitiveRoot)) {
+      return false
+    }
+    // A path sharing the root as a plain string prefix (`/mnt/root-sibling` for the root `/mnt/root`) is not under the root.
+    return invariantPath.length == invariantSeparatorRootPathString.length || invariantPath[invariantSeparatorRootPathString.length] == '/'
   }
 
   private fun relativizeToRoot(path: String, parts: Array<String>, eelDescriptor: EelDescriptor): Array<String> {
-    val relativePath = (toSystemIndependentName(path).removePrefix(invariantSeparatorRootPathString)).nullize()
+    // `isPathUnderRoot` has verified the prefix; `substring` also works when the prefix matched case-insensitively.
+    val relativePath = toSystemIndependentName(path).substring(invariantSeparatorRootPathString.length).nullize()
     return when (eelDescriptor.osFamily) {
       EelOsFamily.Posix -> {
         arrayOf(relativePath ?: "/", *parts)
@@ -432,11 +551,12 @@ class IjentEphemeralRootAwareFileSystem(
         if (relativePath != null) {
           arrayOf(WindowsPathUtils.rootRelativeToEelPath(relativePath.removePrefix("/")), *parts)
         }
-        else if (path.isNotEmpty()) {
+        else if (parts.isNotEmpty()) {
           parts
         }
         else {
-          error("Windows $path is not under any root of $root")
+          throw IllegalArgumentException(
+            "The mount root `$root` of a Windows environment cannot be represented as a single path: it fans out to per-drive roots")
         }
       }
     }
@@ -444,12 +564,9 @@ class IjentEphemeralRootAwareFileSystem(
 
   override fun hashCode(): Int {
     var result = useRootDirectoriesFromOriginalFs.hashCode()
-    result = 31 * result + rootAwareFileSystemProvider.hashCode()
     result = 31 * result + ijentFs.hashCode()
     result = 31 * result + originalFs.hashCode()
-    result = 31 * result + eelDescriptor.hashCode()
-    result = 31 * result + root.hashCode()
-    result = 31 * result + invariantSeparatorRootPathString.hashCode()
+    result = 31 * result + caseInsensitiveRoot.hashCode()
     return result
   }
 }
