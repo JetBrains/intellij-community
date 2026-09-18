@@ -49,7 +49,11 @@ class CodeVisionPass(
     @Internal
     fun collectData(editor: Editor, file: PsiFile, providers: List<DaemonBoundCodeVisionProvider>): CodeVisionData {
       val providerIdToLenses = ConcurrentHashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>()
-      collect(EmptyProgressIndicator(), editor, file, providerIdToLenses, providers)
+      val indicator = EmptyProgressIndicator()
+      ProgressManager.getInstance().runProcess({
+         collect(indicator, editor, file, providerIdToLenses, providers)
+      }, indicator)
+
       val allProviders = CodeVisionProviderFactory.createAllProviders(file.project)
       val dataForAllProviders = HashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>()
       val modificationStamp = file.modificationStamp
@@ -70,7 +74,7 @@ class CodeVisionPass(
       val modificationTracker = PsiModificationTracker.getInstance(editor.project)
       tracer.spanBuilder("codeVision").use { span ->
         span.setAttribute("file", file.name)
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(providers, progress, Processor { provider ->
+        JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(providers, Processor { provider ->
           tracer.spanBuilder(provider.javaClass.simpleName).use {
             val results: List<Pair<TextRange, CodeVisionEntry>>
             val duration = measureTimeMillis {
