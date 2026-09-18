@@ -3,6 +3,8 @@ package com.intellij.psi.impl.file.impl
 
 import com.intellij.util.ref.GCWatcher
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
@@ -212,6 +214,65 @@ class ContextMapTest {
 
     assertNotNull(mapWith1.defaultValue())
     assertEquals(2, mapWith1.size())
+  }
+
+  @Test
+  fun testRemoveOfAnotherKeyEmptiesAOneItemMapWithACollectedValue() {
+    val context1 = MockContext("context1")
+    val context2 = MockContext("context2")
+
+    // value1 is not referenced from anywhere else, so it should be collected
+    fun initMap1(): Pair<ContextMap<Value>, GCWatcher> {
+      val value1 = Value("value1")
+
+      val map1 = emptyContextMap<Value>().add(context1, value1)
+
+      return map1 to GCWatcher.tracking(value1)
+    }
+
+    val (map1, value1Tracker) = initMap1()
+
+    value1Tracker.ensureCollected()
+
+    // context2 is not in the map, but the only value of the map is gone, so nothing is left to keep
+    val mapWithoutContext2 = map1.remove(context2)
+
+    assertEquals(0, mapWithoutContext2.size())
+    assertNull(mapWithoutContext2.defaultValue())
+  }
+
+  @Test
+  fun testRemoveOfTheDefaultContextReassignsTheDefaultValue() {
+    val context1 = MockContext("context1")
+    val context2 = MockContext("context2")
+    val context3 = MockContext("context3")
+    val value1 = Value("value1")
+    val value2 = Value("value2")
+    val value3 = Value("value3")
+
+    // the first added entry owns the default value
+    val map3 = emptyContextMap<Value>().add(context1, value1).add(context2, value2).add(context3, value3)
+    assertEquals(value1, map3.defaultValue())
+
+    val mapWithoutContext1 = map3.remove(context1)
+
+    assertEquals(2, mapWithoutContext1.size())
+    val defaultValue = mapWithoutContext1.defaultValue()
+    assertTrue(defaultValue == value2 || defaultValue == value3) { "unexpected default value: $defaultValue" }
+  }
+
+  @Test
+  fun testProcessQueueKeepsTheMapWhenNoValueWasCollected() {
+    val context1 = MockContext("context1")
+    val context2 = MockContext("context2")
+    val value1 = Value("value1")
+    val value2 = Value("value2")
+
+    val map1 = emptyContextMap<Value>().add(context1, value1)
+    assertSame(map1, map1.processQueue())
+
+    val map2 = map1.add(context2, value2)
+    assertSame(map2, map2.processQueue())
   }
 }
 
