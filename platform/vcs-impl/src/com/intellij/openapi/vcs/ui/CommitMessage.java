@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -350,7 +351,7 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
 
     @Override
     public void customize(@NotNull EditorEx editor) {
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      PsiFile file = EditorContextManager.getPsiFileForEditor(editor, myProject);
 
       if (file != null) {
         InspectionProfileWrapper.setCustomInspectionProfileWrapperTemporarily(file, profile ->

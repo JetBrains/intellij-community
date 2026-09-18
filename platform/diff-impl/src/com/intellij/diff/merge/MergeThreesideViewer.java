@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge;
 
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.InvalidDiffRequestException;
 import com.intellij.diff.actions.ProxyUndoRedoAction;
@@ -956,7 +957,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       return;
     }
 
-    PsiFile editablePsiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(getEditor().getDocument());
+    PsiFile editablePsiFile = EditorContextManager.getPsiFileForEditor(getEditor(), myProject);
     if (editablePsiFile == null) return;
 
     PsiDocumentManager.getInstance(myProject).commitDocument(editablePsiFile.getFileDocument());

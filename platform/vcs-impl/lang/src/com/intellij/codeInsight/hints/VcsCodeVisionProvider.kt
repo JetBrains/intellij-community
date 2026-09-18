@@ -11,6 +11,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.codeVision.CodeVisionState
 import com.intellij.codeInsight.codeVision.CodeVisionState.Companion.READY_EMPTY
 import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.icons.AllIcons
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
@@ -40,7 +41,6 @@ import com.intellij.openapi.vcs.annotate.LineAnnotationAspect.AUTHOR
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
@@ -84,7 +84,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
       }
 
     return InlayHintsUtils.computeCodeVisionUnderReadAction {
-      val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@computeCodeVisionUnderReadAction READY_EMPTY
+      val file = EditorContextManager.getPsiFileForEditor(editor, project) ?: return@computeCodeVisionUnderReadAction READY_EMPTY
 
       val fileLanguage = file.language
       val fileContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(fileLanguage)
