@@ -3,6 +3,7 @@ package com.intellij.util.indexing.storage.sharding;
 
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.IndexInfrastructure;
 import com.intellij.util.indexing.VfsAwareIndexStorage;
@@ -34,14 +35,26 @@ public class ShardedStorageLayout<Key, Value> implements VfsAwareIndexStorageLay
 
   private final StorageRef<ShardedForwardIndex, IOException> forwardIndexRef;
   private final StorageRef<ShardedIndexStorage<Key, Value>, IOException> indexStorageRef;
+  private final ThrowableRunnable<? extends IOException> indexStorageCleaner;
+  private final ThrowableRunnable<? extends IOException> forwardIndexCleaner;
 
   public ShardedStorageLayout(@NotNull FileBasedIndexExtension<Key, Value> extension,
                               @NotNull ThrowableNotNullFunction<Integer, ForwardIndex, IOException> forwardIndexFactory,
                               @NotNull ThrowableNotNullFunction<Integer, VfsAwareIndexStorage<Key, Value>, IOException> indexStorageFactory) {
+    this(extension, forwardIndexFactory, indexStorageFactory, () -> { }, () -> { });
+  }
+
+  public ShardedStorageLayout(@NotNull FileBasedIndexExtension<Key, Value> extension,
+                              @NotNull ThrowableNotNullFunction<Integer, ForwardIndex, IOException> forwardIndexFactory,
+                              @NotNull ThrowableNotNullFunction<Integer, VfsAwareIndexStorage<Key, Value>, IOException> indexStorageFactory,
+                              @NotNull ThrowableRunnable<? extends IOException> indexStorageCleaner,
+                              @NotNull ThrowableRunnable<? extends IOException> forwardIndexCleaner) {
     if (!(extension instanceof ShardableIndexExtension)) {
       throw new IllegalArgumentException("Extension(" + extension + ") must be ShardableIndexExtension");
     }
     this.extension = extension;
+    this.indexStorageCleaner = indexStorageCleaner;
+    this.forwardIndexCleaner = forwardIndexCleaner;
 
     DataExternalizer<Map<Key, Value>> inputMapExternalizer = inputMapExternalizerFor(extension);
     forwardIndexAccessor = new MapForwardIndexAccessor<>(inputMapExternalizer);
@@ -66,12 +79,12 @@ public class ShardedStorageLayout<Key, Value> implements VfsAwareIndexStorageLay
   }
 
   @Override
-  public @NotNull IndexStorage<Key, Value> openIndexStorage() throws IOException {
+  public synchronized @NotNull IndexStorage<Key, Value> openIndexStorage() throws IOException {
     return indexStorageRef.reopen();
   }
 
   @Override
-  public @Nullable ForwardIndex openForwardIndex() throws IOException {
+  public synchronized @Nullable ForwardIndex openForwardIndex() throws IOException {
     return forwardIndexRef.reopen();
   }
 
@@ -81,13 +94,11 @@ public class ShardedStorageLayout<Key, Value> implements VfsAwareIndexStorageLay
   }
 
   @Override
-  public void clearIndexData() {
+  public synchronized void clearIndexData() {
     try {
-      indexStorageRef.ensureClosed();
-      forwardIndexRef.ensureClosed();
-      //TODO RC: use storages .closeAndClean() methods -- to ensure
-      //         mmapped files (if used) are unmapped before an attempt to remove the file
-      FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(extension.getName()).toFile());
+      indexStorageRef.ensureClosedAndRun(indexStorageCleaner);
+      forwardIndexRef.ensureClosedAndRun(forwardIndexCleaner);
+      FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(extension.getName()));
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);

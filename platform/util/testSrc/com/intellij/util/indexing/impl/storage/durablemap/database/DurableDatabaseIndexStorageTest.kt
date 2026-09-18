@@ -3,10 +3,12 @@
 
 package com.intellij.util.indexing.impl.storage.durablemap.database
 
+import com.intellij.platform.util.io.storages.CommonKeyDescriptors.integer
 import com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8
 import com.intellij.platform.util.io.storages.database.DurableDatabase
 import com.intellij.platform.util.io.storages.database.DurableDatabaseFactory
 import com.intellij.util.indexing.IndexId
+import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.ManyKeysIntegerToIntegerIndexExtension
 import com.intellij.util.indexing.impl.ValueContainerProcessor
 import com.intellij.util.indexing.impl.storage.durablemap.DurableMapIndexStorage
 import com.intellij.util.io.EnumeratorStringDescriptor
@@ -14,10 +16,12 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.io.TempDir
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -77,6 +81,29 @@ class DurableDatabaseIndexStorageTest {
     openStorage().use { storage ->
       assertEquals(mapOf(2 to "after clear"), read(storage))
     }
+  }
+
+  @Test
+  fun clearIndexDataRecoversAfterOpenFailure() {
+    val extension = ManyKeysIntegerToIntegerIndexExtension()
+    val mapAccessor = DurableDatabaseMapAccessors.forwardMapAccessor(database, extension.name)
+    mapAccessor.open().close()
+    val mapName = database.mapNames().single()
+    database.dropMap(mapName)
+    database.openMap(mapName, 2, integer(), integer()).close()
+
+    val failedLayout = DurableDatabaseStorageLayout(database, extension)
+    failedLayout.openIndexStorage().use {
+      assertThrows(IOException::class.java) { failedLayout.openForwardIndex() }
+    }
+    assertEquals(2, database.mapNames().size, "The partial initialization must preserve both maps for cleanup")
+
+    failedLayout.clearIndexData()
+    assertTrue(database.mapNames().isEmpty(), "Cleanup must remove data after a partial open failure")
+
+    val recoveredLayout = DurableDatabaseStorageLayout(database, extension)
+    recoveredLayout.openIndexStorage().use { }
+    recoveredLayout.openForwardIndex().use { }
   }
 
   @Test
