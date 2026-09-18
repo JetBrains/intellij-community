@@ -567,9 +567,9 @@
       delombokFieldNameCostants
       delombokUtilityClass
       delombokStandardException
-    I18nize
     ConvertGroovyToJava
     ConvertToCompileStatic
+    I18nize
     AdditionalRefactoringsMenu
       RemoveMiddleman
       ReplaceTempWithQuery
@@ -963,9 +963,9 @@
       InternalKotlin
         <separator>
         KotlinInternalGroup
+          InspectBreakpointApplicability
           InvalidateK2CachesInternalAction
           ShortenSelectionAction
-          InspectBreakpointApplicability
           CreateIncrementalCompilationBackup
           ReactivePostOpenProjectActionsAction
         <separator>
@@ -1884,12 +1884,12 @@
   Gradle.ImportExternalProject
   JsonPathEvaluateAction
   XmlGenerateToolsGroup
+  OpenInSceneBuilder
   Git.Stage.Index.File.Menu
   GitLab.Create.Snippet
   Github.Create.Gist
   Github.PullRequest.Changed.MarkViewed.Toggle
   Mermaid.ExportDiagram
-  OpenInSceneBuilder
   Maven.AddFileAsMavenProject
   Maven.GlobalProjectMenu
   ChangeTemplateDataLanguage
@@ -1979,10 +1979,10 @@
   EditorTabPopupMenuEx
   ConvertJavaToKotlin
   ConvertJavaToKotlinGroup
-  GitLab.Create.Snippet
-  Github.Create.Gist
   OpenInSceneBuilder
   ExcludeFromStubGeneration
+  GitLab.Create.Snippet
+  Github.Create.Gist
 [group EditorTabPopupMenuEx]
   <separator>
   Scratch.ChangeLanguage
@@ -2589,8 +2589,8 @@
   NewScratchFile
   NewDir
   NewRemoteDevModule
-  JavaFxCreateActions
   compose.newVectorAsset
+  JavaFxCreateActions
   NewJavaSpecialFile
   AddPyProject
   NewPythonPackage
@@ -2740,13 +2740,13 @@
   UpdateCopyright
   ConvertJavaToKotlin
   ConvertJavaToKotlinGroup
+  OpenInSceneBuilder
   DissociateResourceBundleAction
   CombinePropertiesFilesAction
   Images.SetBackgroundImage
   GitLab.Create.Snippet
   Github.Create.Gist
   Mermaid.ExportDiagram
-  OpenInSceneBuilder
   Maven.AddFileAsMavenProject
   Maven.GlobalProjectMenu
   AddAntBuildFile
@@ -2822,9 +2822,9 @@
   PyConvertPackageToModuleAction
   LombokActionGroup
   DelombokActionGroup
-  I18nize
   ConvertGroovyToJava
   ConvertToCompileStatic
+  I18nize
   AdditionalRefactoringsMenu
 [group RemoveBom.Group]
   RemoveBom
