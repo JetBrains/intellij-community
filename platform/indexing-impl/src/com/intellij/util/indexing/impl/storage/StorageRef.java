@@ -3,6 +3,7 @@ package com.intellij.util.indexing.impl.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,5 +101,14 @@ public class StorageRef<C extends Closeable, E extends Exception> {
 
     //if we don't throw exception -- we should close storage here, otherwise this is not logically-consistent behavior:
     storage.close();
+  }
+
+  /**
+   * Ensures storage is closed, and run the task right after, under the same lock -- i.e. without a chance another thread
+   * lurks in and re-initialize the storage
+   */
+  public synchronized <EE extends Exception> void ensureClosedAndRun(@NotNull ThrowableRunnable<EE> task) throws IOException, EE {
+    ensureClosed();
+    task.run();
   }
 }

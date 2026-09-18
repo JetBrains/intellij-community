@@ -15,6 +15,8 @@ import java.nio.file.Path;
  * readOnly, pageSize, how to recover from corruptions, how to check storage version and what to do with older
  * versions ...) are wrapped into a factory, and configured factory is given to another part of the system
  * which just opens the storage over given file.
+ *
+ * @see StorageCleaner
  */
 @FunctionalInterface
 @ApiStatus.Internal
