@@ -40,6 +40,7 @@ import kotlin.test.assertTrue
  * as they emerge from the pipeline: the dispatcher republishes each queued event on `RAW_EVENT_TOPIC`, which
  * [FusComponentProvider] forwards to [EventLogListenersManager]. The test subscribes there to capture them.
  */
+@Suppress("EventLogDescription")
 class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
   @Test
