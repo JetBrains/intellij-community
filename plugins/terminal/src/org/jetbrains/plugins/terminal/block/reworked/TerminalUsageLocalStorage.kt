@@ -27,6 +27,7 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
   private val enterKeyPressedTimes = AtomicInteger()
 
   private val completionInlineShownTimes = AtomicInteger()
+  private val inlineCompletionAcceptedTimes = AtomicInteger()
   private val completionPopupShownTimes = AtomicInteger()
   private val completionItemChosenTimes = AtomicInteger()
 
@@ -35,6 +36,7 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
   override fun getState(): State = State(
     enterKeyPressedTimes.get(),
     completionInlineShownTimes.get(),
+    inlineCompletionAcceptedTimes.get(),
     completionPopupShownTimes.get(),
     completionItemChosenTimes.get(),
     firstIdeSessionMoment.get(),
@@ -43,6 +45,7 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
   override fun loadState(state: State) {
     enterKeyPressedTimes.set(state.enterKeyPressedTimes)
     completionInlineShownTimes.set(state.completionInlineShownTimes)
+    inlineCompletionAcceptedTimes.set(state.inlineCompletionAcceptedTimes)
     completionPopupShownTimes.set(state.completionPopupShownTimes)
     completionItemChosenTimes.set(state.completionItemChosenTimes)
     firstIdeSessionMoment.set(state.firstIdeSessionMoment)
@@ -52,8 +55,12 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
     enterKeyPressedTimes.incrementAndGet()
   }
 
-  fun recordInlineCompletionShown(){
+  fun recordInlineCompletionShown() {
     completionInlineShownTimes.incrementAndGet()
+  }
+
+  fun recordInlineCompletionAccepted() {
+    inlineCompletionAcceptedTimes.incrementAndGet()
   }
 
   fun recordCompletionPopupShown() {
@@ -72,6 +79,7 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
   data class State(
     val enterKeyPressedTimes: Int = 0,
     val completionInlineShownTimes: Int = 0,
+    val inlineCompletionAcceptedTimes: Int = 0,
     val completionPopupShownTimes: Int = 0,
     val completionItemChosenTimes: Int = 0,
     val firstIdeSessionMoment: TerminalFirstIdeSessionMoment? = null,
