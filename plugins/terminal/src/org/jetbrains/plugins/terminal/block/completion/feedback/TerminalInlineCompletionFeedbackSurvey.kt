@@ -54,6 +54,5 @@ private class TerminalInlineCompletionFeedbackSurveyConfig : InIdeFeedbackSurvey
   }
 
   override fun updateStateAfterNotificationShowed(project: Project) {
-    TerminalUsageLocalStorage.getInstance().recordInlineCompletionFeedbackNotificationShown()
   }
 }

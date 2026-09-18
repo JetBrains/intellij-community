@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicReference
 class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalStorage.State> {
   private val enterKeyPressedTimes = AtomicInteger()
 
+  private val completionInlineShownTimes = AtomicInteger()
   private val completionPopupShownTimes = AtomicInteger()
   private val completionItemChosenTimes = AtomicInteger()
 
@@ -33,6 +34,7 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
 
   override fun getState(): State = State(
     enterKeyPressedTimes.get(),
+    completionInlineShownTimes.get(),
     completionPopupShownTimes.get(),
     completionItemChosenTimes.get(),
     firstIdeSessionMoment.get(),
@@ -40,6 +42,7 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
 
   override fun loadState(state: State) {
     enterKeyPressedTimes.set(state.enterKeyPressedTimes)
+    completionInlineShownTimes.set(state.completionInlineShownTimes)
     completionPopupShownTimes.set(state.completionPopupShownTimes)
     completionItemChosenTimes.set(state.completionItemChosenTimes)
     firstIdeSessionMoment.set(state.firstIdeSessionMoment)
@@ -47,6 +50,10 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
 
   fun recordEnterKeyPressed() {
     enterKeyPressedTimes.incrementAndGet()
+  }
+
+  fun recordInlineCompletionShown(){
+    completionInlineShownTimes.incrementAndGet()
   }
 
   fun recordCompletionPopupShown() {
@@ -64,6 +71,7 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
   @Serializable
   data class State(
     val enterKeyPressedTimes: Int = 0,
+    val completionInlineShownTimes: Int = 0,
     val completionPopupShownTimes: Int = 0,
     val completionItemChosenTimes: Int = 0,
     val firstIdeSessionMoment: TerminalFirstIdeSessionMoment? = null,
