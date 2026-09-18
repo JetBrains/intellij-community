@@ -1176,14 +1176,14 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
   private static void highlightExperimental(DomElement element, DomElementAnnotationHolder holder) {
     holder.createProblem(
-      element, ProblemHighlightType.WARNING,
+      element, ProblemHighlightType.WEAK_WARNING,
       DevKitBundle.message("inspections.plugin.xml.usage.of.experimental.api", ApiStatus.Experimental.class.getCanonicalName()), null
     ).highlightWholeElement();
   }
 
   private static void highlightInternal(DomElement element, DomElementAnnotationHolder holder) {
     holder.createProblem(
-      element, ProblemHighlightType.WARNING,
+      element, ProblemHighlightType.GENERIC_ERROR,
       DevKitBundle.message("inspections.plugin.xml.usage.of.internal.api", ApiStatus.Internal.class.getCanonicalName()), null
     ).highlightWholeElement();
   }

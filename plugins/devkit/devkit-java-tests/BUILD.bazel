@@ -118,6 +118,8 @@ jvm_library(
         "//xml/dom-impl:dom-impl_test_lib",
         "//jvm/jvm-analysis-api:analysis",
         "//jvm/jvm-analysis-api:analysis_test_lib",
+        "//jvm/jvm-analysis-impl:analysis-impl",
+        "//jvm/jvm-analysis-impl:analysis-impl_test_lib",
         "//platform/usageView",
         "//platform/usageView:usageView_test_lib",
         "//plugins/devkit/devkit-tests:testFramework",

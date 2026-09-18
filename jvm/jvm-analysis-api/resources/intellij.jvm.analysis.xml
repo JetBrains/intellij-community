@@ -9,4 +9,9 @@
     <module name="intellij.platform.uast.ide"/>
   </dependencies>
   <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.unstableApiUsageFilter"
+                    interface="com.intellij.codeInspection.UnstableApiUsageFilter" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

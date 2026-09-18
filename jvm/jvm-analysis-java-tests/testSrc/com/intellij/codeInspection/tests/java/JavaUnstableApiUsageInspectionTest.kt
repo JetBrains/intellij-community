@@ -316,6 +316,34 @@ class JavaUnstableApiUsageInspectionTest : UnstableApiUsageInspectionTestBase() 
     """.trimIndent())
   }
 
+  fun `test java internal api usages are reported as unstable`() {
+    inspection.myIgnoreInsideImports = false
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import internal.pkg.<warning descr="'internal.pkg.AnnotatedClass' is marked unstable with @ApiStatus.Internal">AnnotatedClass</warning>;
+      import internal.pkg.<warning descr="'internal.pkg.ClassWithInternalTypeInSignature' is unstable because its signature references unstable class 'internal.pkg.AnnotatedClass' marked with @ApiStatus.Internal">ClassWithInternalTypeInSignature</warning>;
+      import internal.pkg.NonAnnotatedClass;
+      import internal.<warning descr="'internal.annotatedPkg' is marked unstable with @ApiStatus.Internal">annotatedPkg</warning>.<warning descr="'internal.annotatedPkg.ClassInAnnotatedPkg' is declared in unstable package 'internal.annotatedPkg' marked with @ApiStatus.Internal">ClassInAnnotatedPkg</warning>;
+
+      class InternalElementsTest {
+        public void test() {
+          String s = <warning descr="'internal.pkg.AnnotatedClass' is marked unstable with @ApiStatus.Internal">AnnotatedClass</warning>.<warning descr="'NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is declared in unstable class 'internal.pkg.AnnotatedClass' marked with @ApiStatus.Internal">NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>;
+          <warning descr="'internal.pkg.AnnotatedClass' is marked unstable with @ApiStatus.Internal">AnnotatedClass</warning> annotatedClass = new <warning descr="'AnnotatedClass()' is declared in unstable class 'internal.pkg.AnnotatedClass' marked with @ApiStatus.Internal"><warning descr="'internal.pkg.AnnotatedClass' is marked unstable with @ApiStatus.Internal">AnnotatedClass</warning></warning>();
+          annotatedClass.<warning descr="'nonAnnotatedMethodInAnnotatedClass()' is declared in unstable class 'internal.pkg.AnnotatedClass' marked with @ApiStatus.Internal">nonAnnotatedMethodInAnnotatedClass</warning>();
+          annotatedClass.<warning descr="'annotatedMethodInAnnotatedClass()' is marked unstable with @ApiStatus.Internal">annotatedMethodInAnnotatedClass</warning>();
+
+          NonAnnotatedClass nonAnnotatedClass = new NonAnnotatedClass();
+          nonAnnotatedClass.nonAnnotatedMethodInNonAnnotatedClass();
+          nonAnnotatedClass.<warning descr="'annotatedMethodInNonAnnotatedClass()' is marked unstable with @ApiStatus.Internal">annotatedMethodInNonAnnotatedClass</warning>();
+        }
+      }
+
+      class DirectOverrideAnnotatedMethod extends NonAnnotatedClass {
+        @Override
+        public void <warning descr="Overridden method 'annotatedMethodInNonAnnotatedClass()' is marked unstable with @ApiStatus.Internal">annotatedMethodInNonAnnotatedClass</warning>() {}
+      }
+    """.trimIndent())
+  }
+
   fun `test scheduled for removal fix`() {
     inspection.myIgnoreInsideImports = false
     inspection.myIgnoreApiDeclaredInThisProject = false

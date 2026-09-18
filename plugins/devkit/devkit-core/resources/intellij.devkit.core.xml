@@ -11,6 +11,7 @@
     <module name="intellij.java.ui"/>
     <module name="intellij.java.xml.dom.impl"/>
     <module name="intellij.json.backend"/>
+    <module name="intellij.jvm.analysis.impl"/>
     <module name="intellij.libraries.xerces"/>
     <module name="intellij.platform.jps.build"/>
     <module name="intellij.platform.structureView"/>
@@ -229,6 +230,14 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlExtensionRegistrationInspection"
                      key="inspection.plugin.xml.extension.registration.display.name"/>
+    <localInspection language="UAST" shortName="JetBrainsInternalApiUsage"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.JetBrainsInternalApiUsageInspection"
+                     key="inspections.jetbrains.internal.api.usage.display.name"/>
+    <codeInsight.unstableApiUsageFilter
+      implementation="org.jetbrains.idea.devkit.inspections.JetBrainsInternalApiUsageFilter"/>
 
     <localInspection language="JVM" shortName="ComponentNotRegistered"
                      projectType="INTELLIJ_PLUGIN"
