@@ -19,26 +19,30 @@ internal class OnceTaskTest {
   @Test
   fun `decision survives cancellation while child cleanup is pending`(): Unit = timeoutRunBlocking {
     val task = TestOnceTask()
-    val decision = 42
+    val decision = CachedFailure("The operation has ended")
     val cleanupStarted = CompletableDeferred<Unit>()
     val finishCleanup = CompletableDeferred<Unit>()
     val worker = launch {
-      task.getOrCompute({}) {
-        coroutineScope {
-          val child = launch(start = CoroutineStart.UNDISPATCHED) {
-            try {
-              awaitCancellation()
-            }
-            finally {
-              withContext(NonCancellable) {
-                cleanupStarted.complete(Unit)
-                finishCleanup.await()
+      try {
+        task.getOrCompute({}) {
+          coroutineScope {
+            launch(start = CoroutineStart.UNDISPATCHED) {
+              try {
+                awaitCancellation()
+              }
+              finally {
+                withContext(NonCancellable) {
+                  cleanupStarted.complete(Unit)
+                  finishCleanup.await()
+                }
               }
             }
+            throw decision
           }
-          child.cancel()
-          decision
         }
+      }
+      catch (e: CachedFailure) {
+        assertEquals(decision.message, e.message)
       }
     }
     cleanupStarted.await()
@@ -47,7 +51,13 @@ internal class OnceTaskTest {
     worker.join()
 
     repeat(2) {
-      assertEquals(decision, task.getOrCompute({}) { error("The task must not run again") })
+      try {
+        task.getOrCompute({}) { error("The dialog must not appear again") }
+        error("The decision must be thrown")
+      }
+      catch (e: CachedFailure) {
+        assertEquals(decision.message, e.message)
+      }
     }
   }
 
@@ -80,7 +90,9 @@ internal class OnceTaskTest {
     assertEquals(42, task.getOrCompute({}) { 42 })
   }
 
-  private class TestOnceTask : OnceTask<Int, Unit>() {
+  private class CachedFailure(message: String) : RuntimeException(message)
+
+  private class TestOnceTask : OnceTask<Int, Unit>(shouldCacheFailure = { it is CachedFailure }) {
     override suspend fun <R> executeUnderLockIfNotAlreadyAcquired(f: suspend () -> R): R = f()
   }
 }

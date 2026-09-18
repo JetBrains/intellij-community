@@ -34,24 +34,11 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-class IjentTimeoutException(message: String) : IOException(message)
-
-sealed class IjentUnavailableHandlerResult {
-  abstract fun throwException(): Nothing
-  class ProjectCloseDecision(val eelDescriptor: EelDescriptor) : IjentUnavailableHandlerResult() {
-    override fun throwException(): Nothing {
-      throw IjentTimeoutException("User decided to close the project without waiting for not responding ijent $eelDescriptor.")
-    }
-  }
-  class UnrelatedIjent(val eelDescriptor: EelDescriptor) : IjentUnavailableHandlerResult() {
-    override fun throwException(): Nothing {
-      throw IjentTimeoutException("User decided to close the target $eelDescriptor which is not related to any of open projects.")
-    }
-  }
-}
+/** Signals the user's final decision to stop waiting for IJent. */
+class IjentUnavailableUserDecisionException(message: String) : IOException(message)
 
 interface IjentUnavailableHandler {
-  suspend fun showModalDialog(eelDescriptor: EelDescriptor, uiHandle: ReconnectUiHandleImpl): IjentUnavailableHandlerResult
+  suspend fun showModalDialog(eelDescriptor: EelDescriptor, uiHandle: ReconnectUiHandleImpl): Nothing
   companion object {
     val EP_NAME: ExtensionPointName<IjentUnavailableHandler> = ExtensionPointName("com.intellij.project.root.unavailable")
   }
@@ -123,7 +110,7 @@ internal suspend fun <T> showModalDialogOnTimeout(eelDescriptor: EelDescriptor, 
         }
         else {
           try {
-            ijentUnavailableHandler.showModalDialog(eelDescriptor, uiHandle).throwException()
+            ijentUnavailableHandler.showModalDialog(eelDescriptor, uiHandle)
           }
           catch (e: Throwable) {
             uiHandle.setDialogSession(CompletableDeferred<ReconnectUiDialogImpl>().apply { completeExceptionally(e) })

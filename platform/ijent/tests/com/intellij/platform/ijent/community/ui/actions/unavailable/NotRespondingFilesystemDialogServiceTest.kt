@@ -6,8 +6,7 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.ijent.IjentCallerContext
 import com.intellij.platform.ijent.IjentCallerContextElement
-import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult
-import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult.ProjectCloseDecision
+import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableUserDecisionException
 import com.intellij.platform.ijent.community.impl.nio.ReconnectUiHandleImpl
 import com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogHandler.DialogParams
 import com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogHandler.DialogParams.ProjectIjent
@@ -26,6 +25,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -51,7 +51,6 @@ internal class NotRespondingFilesystemDialogServiceTest {
 
   @Test
   fun `calls for the same projects share the running task`(): Unit = timeoutRunBlocking(context = callerContext) {
-    val decision = ProjectCloseDecision(descriptor)
     val projects = listOf(firstProject.get(), secondProject.get())
     val finish = CompletableDeferred<Unit>()
     val firstContext = CompletableDeferred<Deferred<*>>()
@@ -59,7 +58,7 @@ internal class NotRespondingFilesystemDialogServiceTest {
 
     val first = runTask(ProjectIjent(descriptor, projects), { firstContext.complete(it) }) {
       finish.await()
-      decision
+      throw IjentUnavailableUserDecisionException("Close the projects")
     }
     val second = runTask(ProjectIjent(descriptor, projects.reversed()), { secondContext.complete(it) }) {
       error("The second task must not run")
@@ -68,79 +67,74 @@ internal class NotRespondingFilesystemDialogServiceTest {
     assertFalse(second.isCompleted)
 
     finish.complete(Unit)
-    assertSame(decision, first.await())
-    assertSame(decision, second.await())
+    assertEquals("Close the projects", first.await().message)
+    assertEquals("Close the projects", second.await().message)
   }
 
   @Test
   fun `a waiting call runs its task after the first call is cancelled`(): Unit = timeoutRunBlocking(context = callerContext) {
-    val decision = ProjectCloseDecision(descriptor)
     val params = ProjectIjent(descriptor, listOf(firstProject.get()))
     val first = runTask(params) {
       awaitCancellation()
     }
     val second = runTask(params) {
-      decision
+      throw IjentUnavailableUserDecisionException("The second task ran")
     }
     assertFalse(second.isCompleted)
     first.cancelAndJoin()
 
-    assertSame(decision, second.await())
+    assertEquals("The second task ran", second.await().message)
   }
 
   @Test
   fun `later calls for the same projects receive the stored decision`(): Unit = timeoutRunBlocking(context = callerContext) {
     val params = ProjectIjent(descriptor, listOf(firstProject.get()))
     val decision = runTask(params) {
-      ProjectCloseDecision(descriptor)
+      throw IjentUnavailableUserDecisionException("Close the project")
     }.await()
 
     repeat(2) {
       val repeatedDecision = runTask(params) {
         error("The next task must not run")
       }.await()
-      assertSame(decision, repeatedDecision)
+      assertEquals(decision.message, repeatedDecision.message)
     }
   }
 
   @Test
   fun `a new project gets a new task after cancellation`(): Unit = timeoutRunBlocking(context = callerContext) {
-    val decision = ProjectCloseDecision(descriptor)
     val first = runTask(ProjectIjent(descriptor, listOf(firstProject.get()))) {
       awaitCancellation()
     }
     first.cancelAndJoin()
 
     val second = runTask(ProjectIjent(descriptor, listOf(secondProject.get()))) {
-      decision
+      throw IjentUnavailableUserDecisionException("Close the second project")
     }
-    assertSame(decision, second.await())
+    assertEquals("Close the second project", second.await().message)
   }
 
   @Test
   fun `a new project gets a new task after a decision`(): Unit = timeoutRunBlocking(context = callerContext) {
-    val firstDecision = ProjectCloseDecision(descriptor)
-    val secondDecision = ProjectCloseDecision(descriptor)
     val first = runTask(ProjectIjent(descriptor, listOf(firstProject.get()))) {
-      firstDecision
+      throw IjentUnavailableUserDecisionException("Close the first project")
     }
-    assertSame(firstDecision, first.await())
+    assertEquals("Close the first project", first.await().message)
 
     val second = runTask(ProjectIjent(descriptor, listOf(secondProject.get()))) {
-      secondDecision
+      throw IjentUnavailableUserDecisionException("Close the second project")
     }
-    assertSame(secondDecision, second.await())
+    assertEquals("Close the second project", second.await().message)
   }
 
   @Test
   fun `the decision survives cancellation during child cleanup`(): Unit = timeoutRunBlocking(context = callerContext) {
     val params = ProjectIjent(descriptor, listOf(firstProject.get()))
-    val expectedDecision = ProjectCloseDecision(descriptor)
     val cleanupStarted = CompletableDeferred<Unit>()
     val finishCleanup = CompletableDeferred<Unit>()
     val first = runTask(params) {
       coroutineScope {
-        val child = launch(start = CoroutineStart.UNDISPATCHED) {
+        launch(start = CoroutineStart.UNDISPATCHED) {
           try {
             awaitCancellation()
           }
@@ -151,8 +145,7 @@ internal class NotRespondingFilesystemDialogServiceTest {
             }
           }
         }
-        child.cancel()
-        expectedDecision
+        throw IjentUnavailableUserDecisionException("Close the project")
       }
     }
     cleanupStarted.await()
@@ -163,24 +156,26 @@ internal class NotRespondingFilesystemDialogServiceTest {
     val decision = runTask(params) {
       error("The next task must not run")
     }.await()
-    assertSame(expectedDecision, decision)
+    assertEquals("Close the project", decision.message)
   }
 
   private suspend fun CoroutineScope.runTask(
     dialogParams: DialogParams,
     onComputing: (Deferred<*>) -> Unit = {},
-    task: suspend () -> IjentUnavailableHandlerResult,
-  ): Deferred<IjentUnavailableHandlerResult> {
+    task: suspend () -> Nothing,
+  ): Deferred<IjentUnavailableUserDecisionException> {
     val registered = CompletableDeferred<Unit>()
     val result = async {
       assertFalse(ApplicationManager.getApplication().isDispatchThread)
       try {
-        service.doOnceOrWait(dialogParams, {
-          onComputing(it)
-          registered.complete(Unit)
-        }) {
-          assertTrue(ApplicationManager.getApplication().isDispatchThread)
-          task()
+        expectDecision {
+          service.doOnceOrWait(dialogParams, {
+            onComputing(it)
+            registered.complete(Unit)
+          }) {
+            assertTrue(ApplicationManager.getApplication().isDispatchThread)
+            task()
+          }
         }
       }
       finally {
@@ -189,5 +184,14 @@ internal class NotRespondingFilesystemDialogServiceTest {
     }
     registered.await()
     return result
+  }
+
+  private suspend fun expectDecision(task: suspend () -> Nothing): IjentUnavailableUserDecisionException {
+    try {
+      task()
+    }
+    catch (e: IjentUnavailableUserDecisionException) {
+      return e
+    }
   }
 }
