@@ -6,6 +6,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl
@@ -62,6 +63,8 @@ class AnalysisIgnoreTest {
 
   private lateinit var module: Module
   private lateinit var projectRoot: VirtualFile
+  // The excluded URLs below projectRoot before any .analysisignore file. An exclude policy adds URLs of its own below a content root.
+  private lateinit var excludedUrlsWithoutPatterns: Set<String>
 
   @BeforeEach
   fun setUp() {
@@ -71,6 +74,7 @@ class AnalysisIgnoreTest {
     // therefore the content in which AnalysisIgnoreIndexableFileScanner finds a file. Refer to the scanner for the reason that a
     // ProjectRootEntity alone is not enough.
     PsiTestUtil.addSourceContentToRoots(module, projectRoot)
+    excludedUrlsWithoutPatterns = excludedUrls()
   }
 
   // -----------------------------------------------------------------------------------------------------------------------------------
@@ -809,6 +813,70 @@ class AnalysisIgnoreTest {
   }
 
   // -----------------------------------------------------------------------------------------------------------------------------------
+  // The excluded URLs of the project
+  // -----------------------------------------------------------------------------------------------------------------------------------
+  //
+  // The VFS refresh and the VCS know the excluded URLs of a project only, and not the condition of a file. A pattern that names one path
+  // is such a URL as well, and the refresh does not load that directory.
+
+  @Test
+  @RegistryKey(key = ENABLED, value = "true")
+  fun `a pattern that names one path is an excluded URL of the project`() = runBlocking {
+    val buildDir = dir("projectRoot/build")
+    val excludeFile = writeAnalysisIgnoreFile("projectRoot", "/build/", "a/b/third")
+
+    discover(excludeFile)
+
+    // 'a/b/third' does not exist yet. Its URL is registered all the same, as the URL of an exclude folder of a module is.
+    assertEquals(setOf(buildDir.url, "${projectRoot.url}/a/b/third"), excludedUrlsOfPatterns())
+    assertFalse(isInContent(buildDir))
+  }
+
+  @Test
+  @RegistryKey(key = ENABLED, value = "true")
+  fun `a pattern without a slash or with a wildcard is no excluded URL`() = runBlocking {
+    val buildDir = dir("projectRoot/build")
+    val logFile = file("projectRoot/a.log")
+    val excludeFile = writeAnalysisIgnoreFile("projectRoot", "build", "*.log")
+
+    discover(excludeFile)
+
+    // 'build' names a directory at any level, and '*.log' names any number of files. Neither is one URL. The condition excludes them.
+    assertEquals(emptySet<String>(), excludedUrlsOfPatterns())
+    assertEquals(setOf(buildDir.url, logFile.url), outOfContent(buildDir, logFile))
+  }
+
+  @Test
+  @RegistryKey(key = ENABLED, value = "true")
+  fun `a directory-only pattern is no excluded URL of a file at its path`() = runBlocking {
+    val outFile = file("projectRoot/out")
+    val dataFile = file("projectRoot/data")
+    val excludeFile = writeAnalysisIgnoreFile("projectRoot", "/out/", "/data")
+
+    discover(excludeFile)
+
+    // 'out/' matches a directory only, as in git, and thus the file 'out' stays in content. An excluded URL would take it out.
+    // '/data' without the slash matches the file, and so its URL is excluded.
+    assertEquals(setOf(dataFile.url), outOfContent(outFile, dataFile))
+    assertEquals(setOf(dataFile.url), excludedUrlsOfPatterns())
+  }
+
+  @Test
+  @RegistryKey(key = ENABLED, value = "true")
+  fun `an excluded URL goes away with its pattern`() = runBlocking {
+    val buildDir = dir("projectRoot/build")
+    val outDir = dir("projectRoot/out")
+    val excludeFile = writeAnalysisIgnoreFile("projectRoot", "/build/")
+    discover(excludeFile)
+    assertEquals(setOf(buildDir.url), excludedUrlsOfPatterns())
+
+    writeAction { VfsUtil.saveText(excludeFile, "/out/") }
+    discover(excludeFile)
+
+    assertEquals(setOf(outDir.url), excludedUrlsOfPatterns())
+  }
+
+  // -----------------------------------------------------------------------------------------------------------------------------------
   // The narrowed coverage: only the content that the IDE indexes
   // -----------------------------------------------------------------------------------------------------------------------------------
 
@@ -1290,6 +1358,14 @@ class AnalysisIgnoreTest {
     WorkspaceModel.getInstance(projectModel.project).currentSnapshot
       .entities(AnalysisIgnoreEntity::class.java)
       .associate { entity -> entity.baseDir.url to entity.patterns }
+  }
+
+  /** The excluded URLs that the `.analysisignore` files add below [projectRoot], as the VFS refresh and the VCS read them. */
+  private fun excludedUrlsOfPatterns(): Set<String> = excludedUrls() - excludedUrlsWithoutPatterns
+
+  private fun excludedUrls(): Set<String> {
+    val urls = ProjectManagerEx.getInstanceEx().getAllExcludedUrls(projectModel.project)
+    return urls.filterTo(HashSet()) { VfsUtilCore.isEqualOrAncestor(projectRoot.url, it) }
   }
 
   private fun urlOf(file: VirtualFile): VirtualFileUrl =
