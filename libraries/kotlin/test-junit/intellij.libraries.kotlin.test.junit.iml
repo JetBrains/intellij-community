@@ -10,10 +10,10 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="RUNTIME" />
     <orderEntry type="module-library" exported="">
       <library name="kotlin-test-junit" type="repository">
-        <properties maven-id="org.jetbrains.kotlin:kotlin-test-junit:2.4.20-RC3">
+        <properties maven-id="org.jetbrains.kotlin:kotlin-test-junit:2.4.20">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/2.4.20-RC3/kotlin-test-junit-2.4.20-RC3.jar">
-              <sha256sum>c605a3205fe87826b5e8ad024c771e22d9fb25a66ccb55170fc4d4adab2e4e6c</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/2.4.20/kotlin-test-junit-2.4.20.jar">
+              <sha256sum>8a5c498fa3cc04f451498cd4ff9d5d81cc6e9f08d6b5ab1cb39f6db09ea69d1e</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -22,11 +22,11 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/2.4.20-RC3/kotlin-test-junit-2.4.20-RC3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/2.4.20/kotlin-test-junit-2.4.20.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/2.4.20-RC3/kotlin-test-junit-2.4.20-RC3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/2.4.20/kotlin-test-junit-2.4.20-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
