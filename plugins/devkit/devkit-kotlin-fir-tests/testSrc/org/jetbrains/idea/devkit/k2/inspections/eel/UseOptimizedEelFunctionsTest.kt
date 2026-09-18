@@ -51,7 +51,7 @@ class UseOptimizedEelFunctionsTest {
     
           class Example {
             void example() throws IOException {
-              byte[] result = Files.<warning descr="Works ineffectively with remote Eel">readAllBytes</warning>(Path.of("hello.txt"));
+              byte[] result = Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt"));
             }
           }
         """.trimIndent()
@@ -82,7 +82,7 @@ class UseOptimizedEelFunctionsTest {
           import java.nio.file.Path
     
           fun example() {
-            val result = Files.<warning descr="Works ineffectively with remote Eel">readAllBytes</warning>(Path.of("hello.txt"))
+            val result = Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt"))
           }
         """.trimIndent()
 
@@ -167,7 +167,7 @@ class UseOptimizedEelFunctionsTest {
     
           class Example {
             void example() throws IOException {
-              ByteBuffer result = ByteBuffer.wrap(Files.<warning descr="Works ineffectively with remote Eel">readAllBytes</warning>(Path.of("hello.txt")));
+              ByteBuffer result = ByteBuffer.wrap(Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt")));
             }
           }
         """.trimIndent()
@@ -200,7 +200,7 @@ class UseOptimizedEelFunctionsTest {
           import java.nio.file.Path
     
           fun example() {
-            val result = ByteBuffer.wrap(Files.<warning descr="Works ineffectively with remote Eel">readAllBytes</warning>(Path.of("hello.txt")))
+            val result = ByteBuffer.wrap(Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt")))
           }
         """.trimIndent()
 
@@ -233,7 +233,7 @@ class UseOptimizedEelFunctionsTest {
     
           class Example {
             void example() throws IOException {
-              int hash = Files.<warning descr="Works ineffectively with remote Eel">readAllBytes</warning>(Path.of("hello.txt")).hashCode();
+              int hash = Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt")).hashCode();
             }
           }
         """.trimIndent()
@@ -266,7 +266,7 @@ class UseOptimizedEelFunctionsTest {
           import java.nio.file.Path
     
           fun example() {
-            val hash = Files.<warning descr="Works ineffectively with remote Eel">readAllBytes</warning>(Path.of("hello.txt")).hashCode()
+            val hash = Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt")).hashCode()
           }
         """.trimIndent()
 
@@ -297,7 +297,7 @@ class UseOptimizedEelFunctionsTest {
     
           class Example {
             void example() throws IOException {
-              byte[] result = Files.<warning descr="Works ineffectively with remote Eel">readAllBytes</warning>(Path.of("hello.txt"));
+              byte[] result = Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt"));
             }
           }
         """.trimIndent()
@@ -326,7 +326,7 @@ class UseOptimizedEelFunctionsTest {
           import java.nio.file.*
     
           fun example() {
-            val result = Files.<warning descr="Works ineffectively with remote Eel">readAllBytes</warning>(Path.of("hello.txt"))
+            val result = Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt"))
           }
         """.trimIndent()
 
@@ -354,7 +354,7 @@ class UseOptimizedEelFunctionsTest {
     
           class Example {
             void example() throws IOException {
-              var result = java.nio.file.Files.<warning descr="Works ineffectively with remote Eel">readAllBytes</warning>(java.nio.file.Path.of("hello.txt"));
+              var result = java.nio.file.Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(java.nio.file.Path.of("hello.txt"));
             }
           }
         """.trimIndent()
@@ -384,7 +384,7 @@ class UseOptimizedEelFunctionsTest {
           import java.nio.file.Files
     
           fun example() {
-            val result = java.nio.file.Files.<warning descr="Works ineffectively with remote Eel">readAllBytes</warning>(java.nio.file.Path.of("hello.txt"))
+            val result = java.nio.file.Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(java.nio.file.Path.of("hello.txt"))
           }
         """.trimIndent()
 
@@ -416,7 +416,7 @@ class UseOptimizedEelFunctionsTest {
     
           class Example {
             void example() throws IOException {
-              var result = <warning descr="Works ineffectively with remote Eel">readAllBytes</warning>(Path.of("hello.txt"));
+              var result = <warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt"));
             }
           }
         """.trimIndent()
@@ -447,7 +447,7 @@ class UseOptimizedEelFunctionsTest {
           import java.nio.file.Path
     
           fun example() {
-            val result = <warning descr="Works ineffectively with remote Eel">readAllBytes</warning>(Path.of("hello.txt"))
+            val result = <warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt"))
           }
         """.trimIndent()
 
@@ -474,7 +474,7 @@ class UseOptimizedEelFunctionsTest {
         import java.nio.file.Path
   
         fun example() {
-          val result = <warning descr="Works ineffectively with remote Eel">foobar</warning>(Path.of("hello.txt"))
+          val result = <warning descr="Can require multiple round trips for one file operation">foobar</warning>(Path.of("hello.txt"))
         }
       """.trimIndent()
 
@@ -505,7 +505,7 @@ class UseOptimizedEelFunctionsTest {
   
         class Example {
           void example() throws IOException {
-            byte[] result = Files.<warning descr="Works ineffectively with remote Eel">readAllBytes</warning>(Path.of("hello.txt"));
+            byte[] result = Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt"));
           }
         }
       """.trimIndent()
@@ -539,8 +539,8 @@ class UseOptimizedEelFunctionsTest {
   
         class Example {
           void example() throws IOException {
-            String a = Files.<warning descr="Works ineffectively with remote Eel">readString</warning>(Path.of("hello.txt"));
-            String b = Files.<warning descr="Works ineffectively with remote Eel">readString</warning>(Path.of("hello.txt"), StandardCharsets.UTF_8);
+            String a = Files.<warning descr="Can require multiple round trips for one file operation">readString</warning>(Path.of("hello.txt"));
+            String b = Files.<warning descr="Can require multiple round trips for one file operation">readString</warning>(Path.of("hello.txt"), StandardCharsets.UTF_8);
           }
         }
       """.trimIndent()
@@ -587,10 +587,10 @@ class UseOptimizedEelFunctionsTest {
   
         class Example {
           void example() throws IOException {
-            NioFiles.<warning descr="Works ineffectively with remote Eel">deleteRecursively</warning>(Path.of(""));
+            NioFiles.<warning descr="Can require multiple round trips for one file operation">deleteRecursively</warning>(Path.of(""));
             NioFiles.deleteRecursively(Path.of(""), path -> {});  // This overload has no replacement in eel.
             
-            FileUtilRt.<warning descr="Works ineffectively with remote Eel">deleteRecursively</warning>(Path.of(""));
+            FileUtilRt.<warning descr="Can require multiple round trips for one file operation">deleteRecursively</warning>(Path.of(""));
           }
         }
       """.trimIndent()
