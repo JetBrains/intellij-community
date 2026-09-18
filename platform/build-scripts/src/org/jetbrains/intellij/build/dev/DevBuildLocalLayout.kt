@@ -52,7 +52,6 @@ internal fun writeDevBuildLocalLayout(
       checkLocalPath(path)
       check(paths.add(devBuildPathIdentity(path))) { "Dev-build components both provide '$path'" }
       val symlinkTarget = entry.symlinkTarget
-      validateDevBuildSymlinkSource(entry, root, sourceDirectoryRunfiles.keys)
       val runfile = if (entry.type == "directory") {
         null
       }
@@ -101,22 +100,6 @@ private fun resolveSourceRunfile(source: Path, files: Map<Path, String>, directo
   val child = directory.relativize(absolute).invariantSeparatorsPathString
   checkLocalPath(child)
   return "$runfile/$child"
-}
-
-internal fun validateDevBuildSymlinkSource(entry: DevBuildComponentEntry, componentRoot: Path?, directories: Set<Path>): Path? {
-  val source = entry.symlinkSource ?: return null
-  check(componentRoot == null && entry.type == "symlink" && entry.symlinkTarget != null && entry.source == null && !entry.executable && entry.mode == null) {
-    "Dev-build component link '${entry.relativePath}' has conflicting symbolic link provenance"
-  }
-  val path = Path.of(source)
-  check(source.isNotBlank() && path.none { it.toString() == ".." || it.toString() == "." }) {
-    "Dev-build component link '${entry.relativePath}' has unsafe symbolic link provenance: $source"
-  }
-  val absolute = path.toAbsolutePath().normalize()
-  val directory = directories.map { it.toAbsolutePath().normalize() }
-    .filter { absolute != it && absolute.startsWith(it) }.maxByOrNull { it.nameCount }
-  check(directory != null) { "Dev-build component link '${entry.relativePath}' has undeclared directory provenance: $source" }
-  return directory
 }
 
 private fun checkLocalPath(path: String) {

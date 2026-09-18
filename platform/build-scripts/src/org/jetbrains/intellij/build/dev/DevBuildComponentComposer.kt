@@ -75,10 +75,7 @@ fun composeDevBuildComponents(
 ): ComposedDevBuild {
   require(components.isNotEmpty()) { "At least one dev-build component is required" }
   for (component in components) {
-    for (entry in component.manifest.entries) {
-      validateDevBuildEntryMode(entry)
-      validateDevBuildSymlinkSource(entry, component.root, sourceDirectoryRunfiles.keys)
-    }
+    component.manifest.entries.forEach(::validateDevBuildEntryMode)
   }
   val first = components.first().manifest
   // A component that only contributes files declares no main class - see `DevBuildComponentManifest.mainClass` - so the
@@ -187,7 +184,7 @@ private fun mergeDevBuildComponents(components: List<DevBuildComponent>, target:
       }
       check(paths.add(devBuildPathIdentity(path))) { "Dev-build components both provide '$path'" }
       entry.symlinkTarget?.let { checkDevBuildDistributionLink(path, it) }
-      if (component.root == null && entry.symlinkTarget != null && entry.symlinkSource == null) {
+      if (component.root == null && entry.symlinkTarget != null) {
         check(Path.of(entry.symlinkTarget).let { it.toString() == entry.symlinkTarget || it.invariantSeparatorsPathString == entry.symlinkTarget }) {
           "The exporter cannot preserve symbolic link '${entry.relativePath}' with target '${entry.symlinkTarget}'"
         }
@@ -330,7 +327,7 @@ private fun copyManifestOnlyComponent(
     check((staged.toString() == source || staged.invariantSeparatorsPathString == source) && staged.none { it.toString() == ".." || it.toString() == "." }) {
       "Dev-build component entry '${entry.relativePath}' has an unsafe source: $source"
     }
-    val boundSource = sourceBindings?.resolve(staged, symlink = false)
+    val boundSource = sourceBindings?.resolve(staged)
     // The one failure this shape has that a tree does not: a manifest may name a file the composing action never
     // declared, and then the file is simply not in the sandbox. Said plainly here rather than as a NoSuchFileException.
     check(Files.exists(staged)) {
@@ -356,24 +353,7 @@ private fun copyManifestOnlyComponent(
     val symlinkTarget = entry.symlinkTarget!!
     val destination = normalizedTarget.resolve(relativePath).normalize()
     Files.createDirectories(destination.parent)
-    val directory = validateDevBuildSymlinkSource(entry, null, sourceDirectories)
-    if (directory == null) {
-      Files.createSymbolicLink(destination, Path.of(symlinkTarget))
-    }
-    else {
-      val linkSource = Path.of(entry.symlinkSource!!)
-      check(linkSource.toString() == entry.symlinkSource || linkSource.invariantSeparatorsPathString == entry.symlinkSource) {
-        "Unsafe symbolic link source: ${entry.symlinkSource}"
-      }
-      val staged = linkSource.toAbsolutePath().normalize()
-      val source = sourceBindings?.resolve(staged, symlink = true) ?: staged
-      val physicalDirectory = sourceBindings?.directory(staged) ?: directory.toRealPath()
-      check(Files.isSymbolicLink(source) && source.parent.toRealPath().startsWith(physicalDirectory) &&
-            Files.readSymbolicLink(source).invariantSeparatorsPathString == symlinkTarget) {
-        "Dev-build component link '$relativePath' has stale or escaping symbolic link provenance: $source"
-      }
-      Files.copy(source, destination, LinkOption.NOFOLLOW_LINKS)
-    }
+    Files.createSymbolicLink(destination, Path.of(symlinkTarget))
   }
   return MergedDevBuildComponent(fileCount = manifest.entries.size, byteCount = byteCount)
 }

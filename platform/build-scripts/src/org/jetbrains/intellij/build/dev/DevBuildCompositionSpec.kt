@@ -7,7 +7,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
-import java.util.ArrayDeque
 import kotlin.io.path.invariantSeparatorsPathString
 
 private const val DEV_BUILD_COMPOSITION_SPEC_VERSION = 1
@@ -65,18 +64,9 @@ private data class DevBuildBoundSource(
 
 @ApiStatus.Internal
 class DevBuildComponentSources private constructor(private val sources: Map<String, DevBuildBoundSource>) {
-  private val directoryMembers = HashMap<String, HashSet<String>>().apply {
-    for (source in sources.values) {
-      val directory = source.directory?.toString() ?: continue
-      val members = getOrPut(directory) { HashSet() }
-      members.add(directory)
-      members.add(source.path.toString())
-    }
-  }
-
   internal fun directory(source: Path): Path? = sources.get(source.toAbsolutePath().normalize().toString())?.directory
 
-  internal fun resolve(source: Path, symlink: Boolean): Path {
+  internal fun resolve(source: Path): Path {
     val absoluteSource = source.toAbsolutePath().normalize()
     val bound = checkNotNull(sources.get(absoluteSource.toString())) { "Missing declared artifact binding for $source" }
     val path = bound.path
@@ -89,57 +79,11 @@ class DevBuildComponentSources private constructor(private val sources: Map<Stri
         "Declared source member has an escaping directory alias: $source"
       }
     }
-    if (symlink) {
-      check(Files.isSymbolicLink(path)) { "Declared source member is not a symbolic link: $source" }
-      val resolved = resolveLink(path, checkNotNull(directory) { "Missing symbolic link directory binding: $source" })
-      check(if (bound.type == "directory") Files.isDirectory(resolved) else Files.isRegularFile(resolved)) {
-        "Declared source member differs from its bound type: $source"
-      }
+    check(bound.type == "file" && Files.isRegularFile(path) && (directory == null || !Files.isSymbolicLink(path))) {
+      "Declared source member is not a regular file: $source"
     }
-    else {
-      check(bound.type == "file" && Files.isRegularFile(path) && (directory == null || !Files.isSymbolicLink(path))) {
-        "Declared source member is not a regular file: $source"
-      }
-    }
-    if (symlink && bound.type == "directory" && !Files.isSymbolicLink(source)) {
-      for ((memberPath, binding) in sources) {
-        val member = Path.of(memberPath)
-        if (member != absoluteSource && member.startsWith(absoluteSource) && binding.type == "file") {
-          val physicalMember = resolveLink(binding.path, checkNotNull(directory))
-          check(Files.isRegularFile(physicalMember)) { "Declared source member differs from its bound type: $member" }
-          check(member.toRealPath() == physicalMember) { "Staged source differs from its declared artifact binding: $member" }
-        }
-      }
-    }
-    else {
-      check(source.toRealPath() == path.toRealPath()) { "Staged source differs from its declared artifact binding: $source" }
-    }
-    return if (symlink) path else path.toRealPath()
-  }
-
-  private fun resolveLink(path: Path, directory: Path): Path {
-    val members = checkNotNull(directoryMembers.get(directory.toString())) { "Missing symbolic link directory binding: $path" }
-    val pending = ArrayDeque(directory.relativize(path).toList())
-    var resolved = directory
-    var links = 0
-    while (pending.isNotEmpty()) {
-      val next = resolved.resolve(pending.removeFirst()).normalize()
-      check(next.startsWith(directory)) { "Declared source symbolic link escapes its directory: $path" }
-      check(next.toString() in members) { "Declared source symbolic link has an unbound member spelling: $next" }
-      if (Files.isSymbolicLink(next)) {
-        check(++links <= 40) { "Declared source symbolic link has too many links: $path" }
-        val target = Files.readSymbolicLink(next)
-        check(!target.isAbsolute) { "Declared source symbolic link escapes its directory: $path" }
-        resolved = next.parent
-        for (part in target.toList().asReversed()) pending.addFirst(part)
-      }
-      else {
-        resolved = next
-      }
-    }
-    return resolved.toRealPath().also {
-      check(it.startsWith(directory)) { "Declared source symbolic link escapes its directory: $path" }
-    }
+    check(source.toRealPath() == path.toRealPath()) { "Staged source differs from its declared artifact binding: $source" }
+    return path.toRealPath()
   }
 
   companion object {

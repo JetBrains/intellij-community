@@ -71,6 +71,16 @@ func TestPluginComponentExpandsOwnedTreesWithoutPayloads(test *testing.T) {
 	if len(manifest.Entries) != len(entries)+2 {
 		test.Fatalf("tree inventory was not expanded: %s", data)
 	}
+	index := slices.IndexFunc(manifest.Entries, func(entry componentEntry) bool { return entry.RelativePath == "plugins/demo/kotlinc/current" })
+	if index < 0 {
+		test.Fatalf("tree link is missing: %s", data)
+	}
+	if link := manifest.Entries[index]; link.Type != "symlink" || link.SymlinkTarget != "lib/compiler.jar" || link.Hash != filemetadata.SymlinkHash("lib/compiler.jar") {
+		test.Fatalf("tree link is not recorded by its cleaned target: %#v", link)
+	}
+	if bytes.Contains(data, []byte(`"symlinkSource"`)) {
+		test.Fatalf("tree links retain payload provenance: %s", data)
+	}
 	actual, err := os.ReadFile("component.plugin-classpath-part")
 	expected, expectedError := os.ReadFile(spec.Classpath)
 	if err != nil || expectedError != nil || !bytes.Equal(actual, expected) {
@@ -511,13 +521,16 @@ func TestPluginComponentUsesOnlyMetadata(test *testing.T) {
 		if expectation.mode == 0644 {
 			modeMatches = entry.Mode == nil
 		}
-		if entry.Type != "component-file" || entry.Source != expectation.source || entry.Hash != expectation.hash || !modeMatches || entry.Executable != (expectation.mode&0111 != 0) || entry.SymlinkSource != "" {
+		if entry.Type != "component-file" || entry.Source != expectation.source || entry.Hash != expectation.hash || !modeMatches || entry.Executable != (expectation.mode&0111 != 0) {
 			test.Fatalf("incorrect file metadata: %#v", entry)
 		}
 	}
 	link := entries["plugins/demo/bin/current"]
-	if link.Type != "symlink" || link.Source != "" || link.SymlinkSource != "payload/remainder/bin/current" || link.SymlinkTarget != "./tool" || link.Mode != nil || link.Executable {
-		test.Fatalf("incorrect link provenance: %#v", link)
+	if link.Type != "symlink" || link.Source != "" || link.SymlinkTarget != "tool" || link.Hash != filemetadata.SymlinkHash("tool") || link.Mode != nil || link.Executable {
+		test.Fatalf("link is not recorded by its cleaned target: %#v", link)
+	}
+	if data, err := os.ReadFile("component.json"); err != nil || bytes.Contains(data, []byte(`"symlinkSource"`)) {
+		test.Fatalf("link retains payload provenance: %s, %v", data, err)
 	}
 	wantClasspath, err := os.ReadFile(spec.Classpath)
 	if err != nil {

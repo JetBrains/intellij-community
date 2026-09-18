@@ -146,6 +146,58 @@ func TestInventoryFollowsStagingLinks(t *testing.T) {
 	}
 }
 
+func TestInventoryCleansLinkTargetsWithoutPayload(t *testing.T) {
+	for _, target := range []struct{ source, expected string }{
+		{"./tool", "tool"},
+		{"lib//payload/", "lib/payload"},
+		{"lib/../lib/./native.jar", "lib/../lib/native.jar"},
+		{"../alias/../tool", "../alias/../tool"},
+		{"./cafe\u0301", "cafe\u0301"},
+	} {
+		t.Run(target.source, func(t *testing.T) {
+			root := t.TempDir()
+			source := filepath.Join(root, "source")
+			if err := os.Symlink(target.source, source); err != nil {
+				t.Fatal(err)
+			}
+			metadata, err := filemetadata.Inspect(source, "bin/current")
+			if err != nil {
+				t.Fatal(err)
+			}
+			expectedLink := filepath.Join(root, "expected")
+			if err := os.Symlink(target.expected, expectedLink); err != nil {
+				t.Fatal(err)
+			}
+			expected, err := filemetadata.Inspect(expectedLink, "bin/current")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Remove(source); err != nil {
+				t.Fatal(err)
+			}
+			for _, staged := range []bool{false, true} {
+				if staged {
+					if err := os.Symlink(filepath.Join(root, "unavailable"), source); err != nil {
+						t.Fatal(err)
+					}
+				}
+				entries, err := inventory([]sourcedFile{{Source: source, RelativePath: "bin/current", metadata: &metadata}}, nil, nil)
+				if err != nil || len(entries) != 1 {
+					t.Fatalf("inventory requires a payload: %+v, %v", entries, err)
+				}
+				entry := entries[0]
+				if entry.Type != "symlink" || entry.SymlinkTarget != target.expected || entry.Hash != expected.Hash || entry.Mode != nil || entry.Executable {
+					t.Errorf("incorrect cleaned link metadata: %+v", entry)
+				}
+				data, err := entry.MarshalJSON()
+				if err != nil || bytes.Contains(data, []byte(`"source"`)) || bytes.Contains(data, []byte(`"symlinkSource"`)) {
+					t.Fatalf("link retains payload provenance: %s, %v", data, err)
+				}
+			}
+		})
+	}
+}
+
 func TestInventoryRejectsNonFiles(t *testing.T) {
 	root := t.TempDir()
 	for _, source := range []string{root, filepath.Join(root, "missing")} {

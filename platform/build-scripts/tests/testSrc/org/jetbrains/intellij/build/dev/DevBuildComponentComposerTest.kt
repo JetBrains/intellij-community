@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.nio.file.attribute.PosixFileAttributeView
@@ -103,6 +104,44 @@ internal class DevBuildComponentComposerTest {
       assertThat(entry.type).isEqualTo("symlink")
       assertThat(entry.symlinkTarget).isEqualTo("A")
     }
+  }
+
+  @Test
+  fun `component manifest inventories a symlink by its cleaned target`(@TempDir tempDir: Path) {
+    if (!supportsSymbolicLinks(tempDir)) return
+    val componentRoot = tempDir.resolve("component")
+    val jcef = componentRoot.resolve("plugins/jcef")
+    Files.createDirectories(jcef.resolve("cef_server.app/Contents/Frameworks/Chromium Embedded Framework.framework"))
+    Files.createDirectories(jcef.resolve("Frameworks"))
+    Files.createSymbolicLink(jcef.resolve("Frameworks/Chromium Embedded Framework.framework"),
+                             Path.of("../cef_server.app/Contents/Frameworks/./Chromium Embedded Framework.framework"))
+    Files.createSymbolicLink(jcef.resolve("current"), Path.of("./Frameworks"))
+    Files.createSymbolicLink(jcef.resolve("plain"), Path.of("Frameworks"))
+    Files.createSymbolicLink(jcef.resolve("back"), Path.of("Frameworks/../Frameworks"))
+    val manifestFile = tempDir.resolve("component.json")
+
+    writeDevBuildComponentManifest(
+      file = manifestFile,
+      kind = "platform_resources",
+      platformPrefix = "idea",
+      os = OsFamily.MACOS,
+      arch = JvmArchitecture.aarch64,
+      additionalModules = emptyList(),
+      mainClass = "com.intellij.idea.Main",
+      coreClassPath = emptyList(),
+      pluginCount = 0,
+      componentRoot = componentRoot,
+    )
+
+    val entries = readDevBuildComponentManifest(manifestFile).entries.associateBy { it.relativePath }
+    assertThat(entries.getValue("plugins/jcef/Frameworks/Chromium Embedded Framework.framework").symlinkTarget)
+      .isEqualTo("../cef_server.app/Contents/Frameworks/Chromium Embedded Framework.framework")
+    val cleaned = entries.getValue("plugins/jcef/current")
+    val plain = entries.getValue("plugins/jcef/plain")
+    assertThat(cleaned.symlinkTarget).isEqualTo("Frameworks")
+    assertThat(cleaned.hash).isEqualTo(plain.hash)
+    // The OS resolves ".." through the link it follows, so the inventory keeps the segment.
+    assertThat(entries.getValue("plugins/jcef/back").symlinkTarget).isEqualTo("Frameworks/../Frameworks")
   }
 
   @Test
@@ -908,14 +947,14 @@ internal class DevBuildComponentComposerTest {
   }
 
   @Test
-  fun `composer copies provenanced links with exact native target spelling`(@TempDir tempDir: Path) {
-    if (tempDir.fileSystem.separator != "/" || !supportsSymbolicLinks(tempDir)) return
+  fun `composer creates a manifest-only link when the staged source is a real directory`(@TempDir tempDir: Path) {
+    if (!supportsSymbolicLinks(tempDir)) return
     val sourceRoot = tempDir.resolve("plugin")
-    Files.createDirectories(sourceRoot)
-    val source = sourceRoot.resolve("current")
-    val spelling = "lib//payload/"
-    check(ProcessBuilder("ln", "-s", spelling, source.toString()).start().waitFor() == 0)
-    val link = DevBuildComponentEntry("plugins/demo/current", "symlink", 1, symlinkTarget = spelling, symlinkSource = source.toString())
+    // Bazel materialized the link as a copied directory when it fetched the tree from the cache.
+    val stagedCopy = sourceRoot.resolve("current")
+    Files.createDirectories(stagedCopy)
+    Files.writeString(stagedCopy.resolve("payload"), "copied bytes")
+    val link = DevBuildComponentEntry("plugins/demo/current", "symlink", 1, symlinkTarget = "lib/payload")
     val target = tempDir.resolve("target")
 
     composeDevBuildComponents(
@@ -923,49 +962,28 @@ internal class DevBuildComponentComposerTest {
       sourceDirectoryRunfiles = mapOf(sourceRoot to "_main/plugin"),
     )
 
-    val readlink = ProcessBuilder("readlink", target.resolve(link.relativePath).toString()).start()
-    val actual = readlink.inputStream.readAllBytes().toString(Charsets.UTF_8)
-    assertThat(readlink.waitFor()).isZero()
-    assertThat(actual).isEqualTo("$spelling\n")
-    assertThat(Files.isSymbolicLink(source)).isTrue()
+    val composed = target.resolve(link.relativePath)
+    assertThat(Files.isSymbolicLink(composed)).isTrue()
+    assertThat(Files.readSymbolicLink(composed)).isEqualTo(Path.of("lib/payload"))
+    assertThat(Files.isDirectory(stagedCopy, LinkOption.NOFOLLOW_LINKS)).isTrue()
   }
 
   @Test
-  fun `composer rejects link provenance through an escaping directory alias`(@TempDir tempDir: Path) {
-    if (!supportsSymbolicLinks(tempDir)) return
-    val sourceRoot = tempDir.resolve("plugin")
-    val outside = tempDir.resolve("outside")
-    Files.createDirectories(sourceRoot)
-    Files.createDirectories(outside)
-    Files.createSymbolicLink(sourceRoot.resolve("escape"), outside)
-    Files.createSymbolicLink(outside.resolve("current"), Path.of("target"))
-    val link = DevBuildComponentEntry(
-      "plugins/demo/current", "symlink", 1, symlinkTarget = "target", symlinkSource = sourceRoot.resolve("escape/current").toString(),
-    )
-    assertThatThrownBy {
-      composeDevBuildComponents(
-        listOf(DevBuildComponent(null, manifest(kind = "plugin", entries = listOf(link)))), tempDir.resolve("target"),
-        sourceDirectoryRunfiles = mapOf(sourceRoot to "_main/plugin"),
-      )
-    }.hasMessageContaining("stale or escaping symbolic link provenance")
-  }
-
-  @Test
-  fun `composer rejects stale link targets instead of exporting them`(@TempDir tempDir: Path) {
+  fun `composer creates a manifest-only link from the manifest and not from the staged link`(@TempDir tempDir: Path) {
     if (!supportsSymbolicLinks(tempDir)) return
     val sourceRoot = tempDir.resolve("plugin")
     Files.createDirectories(sourceRoot)
-    val source = sourceRoot.resolve("current")
-    Files.createSymbolicLink(source, Path.of("../../outside"))
-    val link = DevBuildComponentEntry("plugins/demo/current", "symlink", 1, symlinkTarget = "lib/payload", symlinkSource = source.toString())
+    // The staged link keeps the spelling the packer wrote; the manifest holds the cleaned target.
+    Files.createSymbolicLink(sourceRoot.resolve("current"), Path.of("./lib/payload"))
+    val link = DevBuildComponentEntry("plugins/demo/current", "symlink", 1, symlinkTarget = "lib/payload")
     val target = tempDir.resolve("target")
-    assertThatThrownBy {
-      composeDevBuildComponents(
-        listOf(DevBuildComponent(null, manifest(kind = "plugin", entries = listOf(link)))), target,
-        sourceDirectoryRunfiles = mapOf(sourceRoot to "_main/plugin"),
-      )
-    }.hasMessageContaining("stale or escaping symbolic link provenance")
-    assertThat(Files.exists(target.resolve(link.relativePath), java.nio.file.LinkOption.NOFOLLOW_LINKS)).isFalse()
+
+    composeDevBuildComponents(
+      listOf(DevBuildComponent(null, manifest(kind = "plugin", entries = listOf(link)))), target,
+      sourceDirectoryRunfiles = mapOf(sourceRoot to "_main/plugin"),
+    )
+
+    assertThat(Files.readSymbolicLink(target.resolve(link.relativePath))).isEqualTo(Path.of("lib/payload"))
   }
 
   @Test
@@ -1093,7 +1111,7 @@ internal class DevBuildComponentComposerTest {
 
   @Test
   fun `composer fails instead of changing a manifest-only link target`(@TempDir tempDir: Path) {
-    for (target in listOf("payload/", "lib//payload")) {
+    for (target in listOf("payload/", "lib//payload", "lib//payload/")) {
       val link = DevBuildComponentEntry("plugins/demo/current", "symlink", 1, symlinkTarget = target)
       val component = DevBuildComponent(root = null, manifest = manifest("plugin", entries = listOf(link)))
       assertThatThrownBy { composeDevBuildComponents(listOf(component), tempDir.resolve("target")) }.hasMessageContaining("cannot preserve symbolic link")
@@ -1146,12 +1164,10 @@ internal class DevBuildComponentComposerTest {
   fun `composer consumes bound sandbox members and genuine links`(@TempDir tempDir: Path) {
     if (!supportsSymbolicLinks(tempDir)) return
     if (!Files.getFileStore(tempDir).supportsFileAttributeView(PosixFileAttributeView::class.java)) return
-    val fixture = boundTree(tempDir, listOf("lib/native.jar", "current"))
-    Files.createSymbolicLink(fixture.physical.resolve("current"), Path.of("lib/native.jar"))
-    Files.createSymbolicLink(fixture.staged.resolve("current"), fixture.physical.resolve("current"))
+    val fixture = boundTree(tempDir)
     val entries = listOf(
       sourcedEntry("plugins/demo/lib/native.jar", fixture.staged.resolve("lib/native.jar")).copy(mode = 489, executable = true),
-      DevBuildComponentEntry("plugins/demo/current", "symlink", 1, symlinkTarget = "lib/native.jar", symlinkSource = fixture.staged.resolve("current").toString()),
+      DevBuildComponentEntry("plugins/demo/current", "symlink", 1, symlinkTarget = "lib/native.jar"),
     )
     val target = tempDir.resolve("target")
     composeDevBuildComponents(
@@ -1184,20 +1200,20 @@ internal class DevBuildComponentComposerTest {
     if (!supportsSymbolicLinks(tempDir)) return
     val fixture = boundTree(tempDir)
     val outside = Files.writeString(tempDir.resolve("outside"), "native bytes")
-    assertThatThrownBy { fixture.bindings.resolve(outside, symlink = false) }.hasMessageContaining("Missing declared artifact binding")
-    assertThatThrownBy { fixture.bindings.resolve(fixture.staged.resolve("lib/Native.jar"), symlink = false) }
+    assertThatThrownBy { fixture.bindings.resolve(outside) }.hasMessageContaining("Missing declared artifact binding")
+    assertThatThrownBy { fixture.bindings.resolve(fixture.staged.resolve("lib/Native.jar")) }
       .hasMessageContaining("Missing declared artifact binding")
-    assertThatThrownBy { fixture.bindings.resolve(fixture.staged, symlink = false) }.hasMessageContaining("Missing declared artifact binding")
+    assertThatThrownBy { fixture.bindings.resolve(fixture.staged) }.hasMessageContaining("Missing declared artifact binding")
     val other = readDevBuildSourceBindings(
       fixture.staged.parent.parent.resolve("metadata/bindings.jsonl"),
       listOf(DevBuildCompositionComponent(manifest = "plugin"), DevBuildCompositionComponent(manifest = "other")),
     ).getValue("other")
-    assertThatThrownBy { other.resolve(fixture.staged.resolve("lib/native.jar"), symlink = false) }
+    assertThatThrownBy { other.resolve(fixture.staged.resolve("lib/native.jar")) }
       .hasMessageContaining("Missing declared artifact binding")
     val staged = fixture.staged.resolve("lib/native.jar")
     Files.delete(staged)
     Files.createSymbolicLink(staged, outside)
-    assertThatThrownBy { fixture.bindings.resolve(staged, symlink = false) }.hasMessageContaining("Staged source differs")
+    assertThatThrownBy { fixture.bindings.resolve(staged) }.hasMessageContaining("Staged source differs")
   }
 
   @Test
@@ -1221,76 +1237,13 @@ internal class DevBuildComponentComposerTest {
           Files.createSymbolicLink(fixture.physical, outside.parent)
         }
       }
-      assertThatThrownBy { fixture.bindings.resolve(fixture.staged.resolve("lib/native.jar"), symlink = false) }
+      assertThatThrownBy { fixture.bindings.resolve(fixture.staged.resolve("lib/native.jar")) }
         .hasMessageContaining(when (escape) {
           "file" -> "not a regular file"
           "directory" -> "escaping directory alias"
           else -> "escapes its artifact binding"
         })
     }
-  }
-
-  @Test
-  fun `source bindings reject escaping genuine links`(@TempDir tempDir: Path) {
-    if (!supportsSymbolicLinks(tempDir)) return
-    val fixture = boundTree(tempDir, listOf("lib/native.jar", "current"))
-    val outside = Files.writeString(fixture.physical.parent.resolve("outside"), "outside")
-    Files.createSymbolicLink(fixture.physical.resolve("current"), Path.of("../outside"))
-    Files.createSymbolicLink(fixture.staged.resolve("current"), fixture.physical.resolve("current"))
-    assertThat(Files.exists(outside)).isTrue()
-    assertThatThrownBy { fixture.bindings.resolve(fixture.staged.resolve("current"), symlink = true) }
-      .hasMessageContaining("symbolic link escapes its directory")
-  }
-
-  @Test
-  fun `source bindings check every link in a chain`(@TempDir tempDir: Path) {
-    if (!supportsSymbolicLinks(tempDir)) return
-    val fixture = boundTree(tempDir, listOf("lib/native.jar", "current", "bridge"))
-    Files.createSymbolicLink(fixture.physical.resolve("current"), Path.of("bridge"))
-    Files.createSymbolicLink(fixture.physical.resolve("bridge"), Path.of("lib/native.jar"))
-    Files.createSymbolicLink(fixture.staged.resolve("current"), fixture.physical.resolve("current"))
-    assertThat(fixture.bindings.resolve(fixture.staged.resolve("current"), symlink = true)).isEqualTo(fixture.physical.resolve("current"))
-    Files.delete(fixture.physical.resolve("bridge"))
-    Files.createSymbolicLink(fixture.physical.resolve("bridge"), Path.of("../roundtrip"))
-    Files.createSymbolicLink(fixture.physical.parent.resolve("roundtrip"), Path.of("plugin/lib/native.jar"))
-    assertThat(fixture.physical.resolve("current").toRealPath()).isEqualTo(fixture.physical.resolve("lib/native.jar"))
-    assertThatThrownBy { fixture.bindings.resolve(fixture.staged.resolve("current"), symlink = true) }
-      .hasMessageContaining("symbolic link escapes its directory")
-  }
-
-  @Test
-  fun `source bindings reject a case alias in a genuine link`(@TempDir tempDir: Path) {
-    if (!supportsSymbolicLinks(tempDir)) return
-    rejectBoundLinkAlias(tempDir, "lib/native.jar", "LIB/native.jar", intermediate = false)
-  }
-
-  @Test
-  fun `source bindings reject a Unicode alias in a genuine link`(@TempDir tempDir: Path) {
-    if (!supportsSymbolicLinks(tempDir)) return
-    rejectBoundLinkAlias(tempDir, "lib/\u00e9.jar", "lib/e\u0301.jar", intermediate = false)
-  }
-
-  @Test
-  fun `source bindings reject a case alias in an intermediate link`(@TempDir tempDir: Path) {
-    if (!supportsSymbolicLinks(tempDir)) return
-    rejectBoundLinkAlias(tempDir, "lib/native.jar", "LIB/native.jar", intermediate = true)
-  }
-
-  @Test
-  fun `source bindings reject a Unicode alias in an intermediate link`(@TempDir tempDir: Path) {
-    if (!supportsSymbolicLinks(tempDir)) return
-    rejectBoundLinkAlias(tempDir, "lib/\u00e9.jar", "lib/e\u0301.jar", intermediate = true)
-  }
-
-  @Test
-  fun `source bindings reject a case alias in a directory link`(@TempDir tempDir: Path) {
-    if (!supportsSymbolicLinks(tempDir)) return
-    val fixture = boundTree(tempDir, listOf("lib/native.jar", "current/native.jar"))
-    Files.createSymbolicLink(fixture.physical.resolve("current"), Path.of("LIB"))
-    Files.createDirectories(fixture.staged.resolve("current"))
-    Files.createSymbolicLink(fixture.staged.resolve("current/native.jar"), fixture.physical.resolve("current/native.jar"))
-    assertThatThrownBy { fixture.bindings.resolve(fixture.staged.resolve("current"), symlink = true) }
-      .hasMessageContaining("unbound member spelling")
   }
 
   @Test
@@ -1314,20 +1267,10 @@ internal class DevBuildComponentComposerTest {
   }
 
   @Test
-  fun `source bindings reject a changed member type`(@TempDir tempDir: Path) {
-    if (!supportsSymbolicLinks(tempDir)) return
-    val fixture = boundTree(tempDir, listOf("lib/native.jar", "current"))
-    Files.createSymbolicLink(fixture.physical.resolve("current"), Path.of("lib"))
-    Files.createSymbolicLink(fixture.staged.resolve("current"), fixture.physical.resolve("current"))
-    assertThatThrownBy { fixture.bindings.resolve(fixture.staged.resolve("current"), symlink = true) }
-      .hasMessageContaining("differs from its bound type")
-  }
-
-  @Test
   fun `source bindings reject missing members and aliases`(@TempDir tempDir: Path) {
     if (!supportsSymbolicLinks(tempDir)) return
     val fixture = boundTree(tempDir.resolve("missing"), emptyList())
-    assertThatThrownBy { fixture.bindings.resolve(fixture.staged.resolve("lib/native.jar"), symlink = false) }
+    assertThatThrownBy { fixture.bindings.resolve(fixture.staged.resolve("lib/native.jar")) }
       .hasMessageContaining("Missing declared artifact binding")
     for ((index, members) in listOf(
       listOf("lib/native.jar", "lib/native.jar"),
@@ -1365,36 +1308,15 @@ internal class DevBuildComponentComposerTest {
     @JvmField val bindings: DevBuildComponentSources,
   )
 
-  private fun rejectBoundLinkAlias(tempDir: Path, filename: String, target: String, intermediate: Boolean) {
-    val fixture = boundTree(tempDir, listOf(filename, "current") + if (intermediate) listOf("bridge") else emptyList())
-    if (filename != "lib/native.jar") {
-      Files.writeString(fixture.physical.resolve(filename), "native bytes")
-      Files.createSymbolicLink(fixture.staged.resolve(filename), fixture.physical.resolve(filename))
-    }
-    Files.createSymbolicLink(fixture.physical.resolve("current"), Path.of(if (intermediate) "bridge" else target))
-    if (intermediate) Files.createSymbolicLink(fixture.physical.resolve("bridge"), Path.of(target))
-    Files.createSymbolicLink(fixture.staged.resolve("current"), fixture.physical.resolve("current"))
-    assertThatThrownBy { fixture.bindings.resolve(fixture.staged.resolve("current"), symlink = true) }
-      .hasMessageContaining("unbound member spelling")
-  }
-
   private fun composeBoundLink(tempDir: Path, filename: String, linkTarget: String, directory: Boolean) {
-    val fixture = boundTree(tempDir, listOf(filename, if (directory) "current/native.jar" else "current"))
+    val fixture = boundTree(tempDir, listOf(filename))
     if (filename != "lib/native.jar") {
       Files.writeString(fixture.physical.resolve(filename), "native bytes")
       Files.createSymbolicLink(fixture.staged.resolve(filename), fixture.physical.resolve(filename))
-    }
-    Files.createSymbolicLink(fixture.physical.resolve("current"), Path.of(linkTarget))
-    if (directory) {
-      Files.createDirectories(fixture.staged.resolve("current"))
-      Files.createSymbolicLink(fixture.staged.resolve("current/native.jar"), fixture.physical.resolve("current/native.jar"))
-    }
-    else {
-      Files.createSymbolicLink(fixture.staged.resolve("current"), fixture.physical.resolve("current"))
     }
     val entries = listOf(
       sourcedEntry(filename, fixture.staged.resolve(filename)),
-      DevBuildComponentEntry("current", "symlink", 1, symlinkTarget = linkTarget, symlinkSource = fixture.staged.resolve("current").toString()),
+      DevBuildComponentEntry("current", "symlink", 1, symlinkTarget = linkTarget),
     )
     val target = tempDir.resolve("target")
     val result = composeDevBuildComponents(

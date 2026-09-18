@@ -19,13 +19,12 @@ import (
 )
 
 type sourcedFile struct {
-	Source        string `json:"source"`
-	RelativePath  string `json:"relativePath"`
-	Executable    bool   `json:"executable"`
-	metadata      *filemetadata.Entry
-	symlinkSource string
-	mode          *uint32
-	classPath     bool
+	Source       string `json:"source"`
+	RelativePath string `json:"relativePath"`
+	Executable   bool   `json:"executable"`
+	metadata     *filemetadata.Entry
+	mode         *uint32
+	classPath    bool
 }
 
 func collect(opts options, tracer *span.Tracer, parent *span.Span) (files []sourcedFile, err error) {

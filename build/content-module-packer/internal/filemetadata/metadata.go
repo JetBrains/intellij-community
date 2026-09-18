@@ -110,7 +110,7 @@ func Inspect(source, relativePath string) (Entry, error) {
 		entry.Type = "symlink"
 		entry.Size, entry.Mode, entry.Executable = 0, 0, false
 		entry.SymlinkTarget, err = ReadLinkTarget(source)
-		entry.Hash = int64(xxh3.HashString(entry.SymlinkTarget))
+		entry.Hash = SymlinkHash(entry.SymlinkTarget)
 	default:
 		return entry, fmt.Errorf("not a regular file or symbolic link: %s", source)
 	}
@@ -348,6 +348,24 @@ func ValidatePath(name string) error {
 	return nil
 }
 
+// SymlinkHash hashes the target text of a symbolic link.
+func SymlinkHash(target string) int64 {
+	return int64(xxh3.HashString(target))
+}
+
+// CleanLinkTarget removes dot segments and redundant slashes from a relative target in slash form.
+// It keeps every parent segment. It leaves empty and absolute targets unchanged.
+func CleanLinkTarget(target string) string {
+	if target == "" || path.IsAbs(target) {
+		return target
+	}
+	segments := slices.DeleteFunc(strings.Split(target, "/"), func(segment string) bool { return segment == "" || segment == "." })
+	if len(segments) == 0 {
+		return "."
+	}
+	return strings.Join(segments, "/")
+}
+
 // ReadLinkTarget reads the target of the link at source. A relative target comes back in slash form, the form the
 // metadata and the archives hold, because Windows stores it with backslashes. An absolute target keeps the host form.
 func ReadLinkTarget(source string) (string, error) {
@@ -375,7 +393,7 @@ func validateEntry(entry Entry) error {
 			return fmt.Errorf("file metadata has a link target: %s", entry.RelativePath)
 		}
 	case "symlink":
-		if entry.Hash != int64(xxh3.HashString(entry.SymlinkTarget)) || entry.Size != 0 || entry.Mode != 0 {
+		if entry.Hash != SymlinkHash(entry.SymlinkTarget) || entry.Size != 0 || entry.Mode != 0 {
 			return fmt.Errorf("invalid symbolic link metadata for %s", entry.RelativePath)
 		}
 		return validateLinkTarget(entry.RelativePath, entry.SymlinkTarget)

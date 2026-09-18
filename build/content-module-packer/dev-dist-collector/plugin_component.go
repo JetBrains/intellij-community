@@ -432,9 +432,7 @@ func collectPluginComponent(spec pluginComponentSpec, tracer *span.Tracer, paren
 					Source:       path.Join(spec.Remainder.Directory, entry.RelativePath),
 					RelativePath: pluginComponentDestination(spec.PluginDirectory, asset.Scope, logicalDestination), metadata: &entry,
 				}
-				if entry.Type == "symlink" {
-					file.symlinkSource = file.Source
-				} else {
+				if entry.Type != "symlink" {
 					file.mode = &entry.Mode
 				}
 				entry.RelativePath = file.RelativePath
@@ -453,9 +451,6 @@ func collectPluginComponent(spec pluginComponentSpec, tracer *span.Tracer, paren
 			transportDestination := pluginpack.TransportDestination(spec.Version, asset.Scope, asset.Destination)
 			file.Source = path.Join(spec.Remainder.Directory, transportDestination)
 			file.metadata = &entry
-			if entry.Type == "symlink" {
-				file.symlinkSource = file.Source
-			}
 		case "independent":
 			var exists bool
 			file, exists = independent[asset.Artifact]

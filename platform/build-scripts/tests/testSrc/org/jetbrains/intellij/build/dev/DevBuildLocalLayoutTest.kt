@@ -36,54 +36,11 @@ internal class DevBuildLocalLayoutTest {
   }
 
   @Test
-  fun `link provenance resolves declared directories without reading payloads`(@TempDir tempDir: Path) {
-    val directory = tempDir.resolve("absent-plugin")
-    val link = DevBuildComponentEntry(
-      "plugins/demo/current", "symlink", 1, symlinkTarget = "lib/payload", symlinkSource = directory.resolve("current").toString(),
-    )
+  fun `a manifest-only link reaches the local layout without a payload`(@TempDir tempDir: Path) {
+    val link = DevBuildComponentEntry("plugins/demo/current", "symlink", 1, symlinkTarget = "lib/payload")
     val target = tempDir.resolve("metadata")
-    composeDevBuildComponents(
-      listOf(component(null, "plugin", listOf(link))), target, sourceRunfiles = emptyMap(),
-      sourceDirectoryRunfiles = mapOf(directory to "_main/absent-plugin"),
-    )
-    val metadata = Files.readString(target.resolve("local-layout.json"))
-    assertThat(metadata).contains("\"symlinkTarget\":\"lib/payload\"")
-    assertThat(metadata).doesNotContain("symlinkSource")
-    assertThat(Files.exists(directory)).isFalse()
-  }
-
-  @Test
-  fun `link provenance rejects missing roots and escaping directory children`(@TempDir tempDir: Path) {
-    val directory = tempDir.resolve("plugin")
-    val cases = listOf(
-      directory.toString(),
-      directory.resolve("../outside/link").toString(),
-      tempDir.resolve("plugin-other/link").toString(),
-    )
-    for ((index, source) in cases.withIndex()) {
-      val link = DevBuildComponentEntry("plugins/demo/current", "symlink", 1, symlinkTarget = "lib/payload", symlinkSource = source)
-      val target = tempDir.resolve("metadata-$index")
-      assertThatThrownBy {
-        composeDevBuildComponents(
-          listOf(component(null, "plugin", listOf(link))), target, sourceRunfiles = emptyMap(),
-          sourceDirectoryRunfiles = mapOf(directory to "_main/plugin"),
-        )
-      }.hasMessageContaining("provenance")
-      assertThat(Files.exists(target)).isFalse()
-    }
-    val source = directory.resolve("link")
-    val link = DevBuildComponentEntry("plugins/demo/current", "symlink", 1, symlinkTarget = "lib/payload", symlinkSource = source.toString())
-    assertThatThrownBy {
-      composeDevBuildComponents(
-        listOf(component(null, "plugin", listOf(link))), tempDir.resolve("file-only"), sourceRunfiles = mapOf(source to "_main/plugin/link"),
-      )
-    }.hasMessageContaining("undeclared directory provenance")
-    assertThatThrownBy {
-      composeDevBuildComponents(
-        listOf(component(null, "plugin", listOf(entry("lib/plain.jar").copy(symlinkSource = source.toString())))),
-        tempDir.resolve("invalid-file"), sourceRunfiles = emptyMap(), sourceDirectoryRunfiles = mapOf(directory to "_main/plugin"),
-      )
-    }.hasMessageContaining("conflicting symbolic link provenance")
+    composeDevBuildComponents(listOf(component(null, "plugin", listOf(link))), target, sourceRunfiles = emptyMap())
+    assertThat(Files.readString(target.resolve("local-layout.json"))).contains("\"symlinkTarget\":\"lib/payload\"")
   }
 
   @Test

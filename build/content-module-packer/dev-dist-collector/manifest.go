@@ -19,7 +19,6 @@ type componentEntry struct {
 	Executable    bool    `json:"executable,omitempty"`
 	Source        string  `json:"source,omitempty"`
 	SymlinkTarget string  `json:"symlinkTarget,omitempty"`
-	SymlinkSource string  `json:"symlinkSource,omitempty"`
 	Mode          *uint32 `json:"mode,omitempty"`
 }
 
@@ -109,8 +108,8 @@ func inventory(files []sourcedFile, tracer *span.Tracer, parent *span.Span) (ent
 					return nil, fmt.Errorf("symbolic link has an executable override: %s", file.RelativePath)
 				}
 				entry.Type = "symlink"
-				entry.SymlinkTarget = metadata.SymlinkTarget
-				entry.SymlinkSource = file.symlinkSource
+				entry.SymlinkTarget = filemetadata.CleanLinkTarget(metadata.SymlinkTarget)
+				entry.Hash = filemetadata.SymlinkHash(entry.SymlinkTarget)
 				links[entry.RelativePath] = entry.SymlinkTarget
 			} else {
 				entry.Executable = file.Executable || metadata.Executable

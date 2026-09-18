@@ -349,6 +349,26 @@ func TestPathIdentityNormalizesUnicodeAliases(t *testing.T) {
 	}
 }
 
+func TestCleanLinkTargetKeepsARelativeTargetRelative(t *testing.T) {
+	for _, test := range []struct{ target, expected string }{
+		{"./tool", "tool"},
+		{"./cef_server.app/Contents/Frameworks/Chromium Embedded Framework.framework", "cef_server.app/Contents/Frameworks/Chromium Embedded Framework.framework"},
+		{"lib//payload/", "lib/payload"},
+		{"lib/../lib/./native.jar", "lib/../lib/native.jar"},
+		{"../alias/../tool", "../alias/../tool"},
+		{"../sibling", "../sibling"},
+		{"./cafe\u0301", "cafe\u0301"},
+		{".", "."},
+		{"./", "."},
+		{"", ""},
+		{"/absolute//./target/", "/absolute//./target/"},
+	} {
+		if actual := CleanLinkTarget(test.target); actual != test.expected {
+			t.Errorf("CleanLinkTarget(%q) = %q, want %q", test.target, actual, test.expected)
+		}
+	}
+}
+
 func TestMetadataPreservesUnicodeLinkSpellings(t *testing.T) {
 	for _, link := range []struct {
 		name   string

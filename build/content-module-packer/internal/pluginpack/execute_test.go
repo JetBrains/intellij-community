@@ -1118,6 +1118,37 @@ func TestOwnedTreeKeepsDirectoryLinkDereferencedByBazelTransport(test *testing.T
 	}
 }
 
+func TestOwnedTreeAcceptsCleanedLinkTargets(test *testing.T) {
+	for _, transport := range []bool{false, true} {
+		test.Run(fmt.Sprint(transport), func(test *testing.T) {
+			recipe, catalogue, backing := ownedTreeFixture(test)
+			link := filepath.Join(catalogue.Artifacts[0].Root, "current")
+			if transport {
+				link = filepath.Join(backing, "current")
+			}
+			if err := os.Remove(link); err != nil {
+				test.Fatal(err)
+			}
+			if err := os.Symlink("bin/tool", link); err != nil {
+				test.Fatal(err)
+			}
+			output, inventory := writeExecution(test, recipe, catalogue)
+			if target, err := os.Readlink(filepath.Join(output, "kotlinc/current")); err != nil || target != "./bin/tool" {
+				test.Fatalf("the declared link target changed: %q, %v", target, err)
+			}
+			for _, entry := range inventory {
+				actual, err := filemetadata.Inspect(filepath.Join(output, filepath.FromSlash(entry.RelativePath)), entry.RelativePath)
+				if err != nil || actual != entry {
+					test.Fatalf("inventory differs from output: %+v, %+v, %v", entry, actual, err)
+				}
+			}
+			if !bytes.Equal(readTestFile(test, filepath.Join(output, "kotlinc/current")), readTestFile(test, filepath.Join(backing, "bin/tool"))) {
+				test.Fatal("the link resolves to different content")
+			}
+		})
+	}
+}
+
 func TestOwnedTreeRejectsUnsafeLinkTransport(test *testing.T) {
 	for _, scenario := range []struct {
 		name   string
@@ -1129,6 +1160,15 @@ func TestOwnedTreeRejectsUnsafeLinkTransport(test *testing.T) {
 				test.Fatal(err)
 			}
 			if err := os.Symlink("./empty", link); err != nil {
+				test.Fatal(err)
+			}
+		}},
+		{"parent traversal", func(test *testing.T, _ Catalogue, backing string) {
+			link := filepath.Join(backing, "current")
+			if err := os.Remove(link); err != nil {
+				test.Fatal(err)
+			}
+			if err := os.Symlink("bin/../bin/tool", link); err != nil {
 				test.Fatal(err)
 			}
 		}},

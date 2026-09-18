@@ -53,8 +53,6 @@ data class DevBuildComponentEntry(
   @JvmField val source: String? = null,
   /** Exact POSIX permission bits when the producer declares more than the conventional executable flag. */
   @JvmField val mode: Int? = null,
-  /** A genuine link inside a declared directory artifact. This records provenance, not a file-byte source. */
-  @JvmField val symlinkSource: String? = null,
 )
 
 @Serializable
@@ -142,8 +140,9 @@ fun readDevBuildComponentManifest(file: Path): DevBuildComponentManifest {
 
 internal fun validateDevBuildEntryMode(entry: DevBuildComponentEntry) {
   if (entry.type == "directory") {
-    check(entry.hash == null && entry.source == null && entry.symlinkTarget == null && entry.symlinkSource == null &&
-          !entry.executable && entry.mode in 0..511) { "Invalid directory entry '${entry.relativePath}'" }
+    check(entry.hash == null && entry.source == null && entry.symlinkTarget == null && !entry.executable && entry.mode in 0..511) {
+      "Invalid directory entry '${entry.relativePath}'"
+    }
     return
   }
   check(entry.hash != null) { "Dev-build component entry '${entry.relativePath}' requires a hash" }
@@ -239,7 +238,7 @@ private fun inventoryDevBuildComponent(componentRoot: Path): List<DevBuildCompon
         if (Files.isSymbolicLink(file)) {
           val target = Files.readSymbolicLink(file)
           if (!target.isAbsolute && file.parent.resolve(target).normalize().startsWith(normalizedComponentRoot)) {
-            val normalizedTarget = target.invariantSeparatorsPathString
+            val normalizedTarget = normalizeDevBuildSymlinkTarget(target)
             result.add(
               DevBuildComponentEntry(
                 relativePath = relativePath,
@@ -322,6 +321,16 @@ private class DevBuildContentHasher {
 
 private fun computeDevBuildSymlinkHash(target: String): Long {
   return Hashing.xxh3_64().hashBytesToLong(target.toByteArray(StandardCharsets.UTF_8))
+}
+
+/**
+ * The cleaned slash form of a relative link target, the form the Go collector records.
+ * It drops a `.` segment, a repeated slash, and a trailing slash, and it keeps every `..` segment.
+ * The OS resolves a `..` segment through the link it follows, so a lexical collapse could change the resolved file.
+ * A link to its own directory becomes `.`.
+ */
+private fun normalizeDevBuildSymlinkTarget(target: Path): String {
+  return target.invariantSeparatorsPathString.split('/').filter { it.isNotEmpty() && it != "." }.joinToString("/").ifEmpty { "." }
 }
 
 private fun computeDevBuildLaunchMetadataHash(

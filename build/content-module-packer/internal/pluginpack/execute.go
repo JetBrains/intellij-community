@@ -814,7 +814,7 @@ func resolveOwnedTree(operation Operation, artifact Artifact) ([]resolvedOperati
 			if err != nil {
 				return nil, err
 			}
-			if target != entry.SymlinkTarget {
+			if filemetadata.CleanLinkTarget(target) != filemetadata.CleanLinkTarget(entry.SymlinkTarget) {
 				return nil, fmt.Errorf("prepared link target conflicts with metadata: %s", source)
 			}
 			if dereferencedDirectory {
