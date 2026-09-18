@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl
 
-import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.util.ref.GCWatcher
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -198,7 +197,5 @@ class ContextMapTest {
     assertEquals(2, mapWith1.size())
   }
 }
-
-private data class MockContext(val name: String = "") : CodeInsightContext
 
 private data class Value(val name: String = "")
