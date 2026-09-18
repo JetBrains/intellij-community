@@ -32,7 +32,7 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.indexing.ConcurrentFilesDeque
+import com.intellij.util.indexing.ConcurrentFileTraversal
 import com.intellij.util.text.matching.MatchingMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -228,8 +228,8 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
       {
         runBlockingCancellable {
           // we do not pass [filter] here, because we want to show files that do not match the filter in suboptimal matches
-          val nonIndexableDeque = readAction { ConcurrentFilesDeque.nonIndexableDequeue(project, searchInLibraries) }
-          val state = SearchJobsState(nonIndexableDeque)
+          val nonIndexableTraversal = readAction { ConcurrentFileTraversal.nonIndexableTraversal(project, searchInLibraries) }
+          val state = SearchJobsState(nonIndexableTraversal)
           if (state.roots.isEmpty()) return@runBlockingCancellable
 
           val toplevelProducerJob = launch(Dispatchers.IO.limitedParallelism(MAX_JOBS)) {
@@ -362,12 +362,12 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
 private class SearchJobsState {
   val roots: Set<VirtualFile>
   private val rootsPaths: List<String>
-  private val deque: ConcurrentFilesDeque
+  private val traversal: ConcurrentFileTraversal
   private val resultsChannel: Channel<Pair<VirtualFile, Int>> = Channel(Channel.UNLIMITED)
 
-  constructor(deque: ConcurrentFilesDeque) {
-    this.deque = deque
-    this.roots = ConcurrentHashMap.newKeySet<VirtualFile>().apply { addAll(deque.initialItems()) }
+  constructor(traversal: ConcurrentFileTraversal) {
+    this.traversal = traversal
+    this.roots = ConcurrentHashMap.newKeySet<VirtualFile>().apply { addAll(traversal.roots) }
     this.rootsPaths = roots.map { it.path }
   }
 
@@ -376,7 +376,7 @@ private class SearchJobsState {
   }
 
   fun processItem(file: VirtualFile, handle: ParallelQueueProcessor<VirtualFile>): Boolean {
-    return deque.computeNext(file) { files ->
+    return traversal.expand(file) { files ->
       files.forEach(handle::queueSpawningWorkerJobIfNotAtLimit)
     }
   }

@@ -110,18 +110,19 @@ private fun WorkspaceFileIndexEx.iterateNonIndexableFilesImpl(
 }
 
 /**
- * Concurrent-code-friendly version of [FilesDeque]
+ * A file traversal that supports concurrent calls to [expand].
+ *
+ * The caller owns the file queue. Add [roots] to the queue before the traversal starts.
  */
 @ApiStatus.Internal
-interface ConcurrentFilesDeque {
+interface ConcurrentFileTraversal {
   /**
-   * Computes the following elements and puts them to [consumer].
-   * Client should maintain a thread-safe queue of VirtualFiles. Client should first invoke [initialItems] to add initial elements
-   * to the queue, and then supply elements from the head of the queue to [computeNext] method in one or multiple threads
-   * @return `true` if the [file] itself should be processed, `false` if the [file] itself should be skipped.
-   */
-  fun computeNext(file: VirtualFile, consumer: (List<VirtualFile>) -> Unit): Boolean
-  fun initialItems(): Collection<VirtualFile>
+   * Adds the child files to [consumer].
+   *
+   * @return `true` when the caller must process [file].
+  */
+  fun expand(file: VirtualFile, consumer: (List<VirtualFile>) -> Unit): Boolean
+  val roots: Collection<VirtualFile>
 
   companion object {
 
@@ -136,17 +137,17 @@ interface ConcurrentFilesDeque {
     @JvmOverloads
     @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-    fun nonIndexableDequeue(
+    fun nonIndexableTraversal(
       project: Project,
       searchInLibraries: Boolean = true,
       filter: VirtualFileFilter? = null,
-    ): ConcurrentFilesDeque {
+    ): ConcurrentFileTraversal {
       val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
       val roots = when {
         searchInLibraries -> workspaceFileIndex.nonIndexableRootsAsCacheAvoiding()
         else -> workspaceFileIndex.nonIndexableRootsAsCacheAvoiding { fileSet -> fileSet.kind.isContent }
       }
-      return ConcurrentNonIndexableFilesDequeImpl(project, roots, filter)
+      return ConcurrentNonIndexableFileTraversal(project, roots, filter)
     }
   }
 }
@@ -173,23 +174,23 @@ interface FilesDeque {
       searchInLibraries: Boolean = true,
       filter: VirtualFileFilter? = null,
     ): FilesDeque {
-      val concurrentDeque = ConcurrentFilesDeque.nonIndexableDequeue(project, searchInLibraries, filter)
-      return FilesDequeImpl(concurrentDeque)
+      val traversal = ConcurrentFileTraversal.nonIndexableTraversal(project, searchInLibraries, filter)
+      return FilesDequeImpl(traversal)
     }
   }
 }
 
 @ApiStatus.Internal
 class FilesDequeImpl internal constructor(
-  private val concurrentDeque: ConcurrentFilesDeque,
+  private val traversal: ConcurrentFileTraversal,
 ) : FilesDeque {
-  private val bfsQueue = ArrayDeque(concurrentDeque.initialItems())
+  private val bfsQueue = ArrayDeque(traversal.roots)
 
   override fun computeNext(): VirtualFile? {
     while (bfsQueue.isNotEmpty()) {
       val file = bfsQueue.removeFirst()
 
-      val shouldProcessRoot = concurrentDeque.computeNext(file, bfsQueue::addAll)
+      val shouldProcessRoot = traversal.expand(file, bfsQueue::addAll)
       if (!shouldProcessRoot) continue // skip only the current file, children can pass the filter
 
       return file
@@ -199,11 +200,11 @@ class FilesDequeImpl internal constructor(
 }
 
 @ApiStatus.Internal
-class ConcurrentNonIndexableFilesDequeImpl internal constructor(
+class ConcurrentNonIndexableFileTraversal internal constructor(
   private val project: Project,
-  private val roots: Set<VirtualFile>,
+  override val roots: Set<VirtualFile>,
   private val filter: VirtualFileFilter?,
-) : ConcurrentFilesDeque {
+) : ConcurrentFileTraversal {
 
   private data class SubtreeProcessingMode(val shouldProcessRoot: Boolean, val shouldProcessChildren: Boolean){
     companion object {
@@ -225,7 +226,7 @@ class ConcurrentNonIndexableFilesDequeImpl internal constructor(
 
   private val visitedRoots: MutableSet<VirtualFile> = ConcurrentHashMap.newKeySet()
 
-  override fun computeNext(file: VirtualFile, consumer: (List<VirtualFile>) -> Unit): Boolean {
+  override fun expand(file: VirtualFile, consumer: (List<VirtualFile>) -> Unit): Boolean {
     if (file in visitedRoots) return false
     if (file in roots) {
       if (!visitedRoots.add(file)) return false
@@ -243,9 +244,5 @@ class ConcurrentNonIndexableFilesDequeImpl internal constructor(
     else {
       return false
     }
-  }
-
-  override fun initialItems(): Collection<VirtualFile> {
-    return roots
   }
 }
