@@ -13,6 +13,7 @@ import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.ValueContainerProcessor;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage;
 import com.intellij.util.io.IOUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,15 +23,16 @@ import java.io.IOException;
  * Sharded (inverted) index storage implementation: a wrapper around N {@link VfsAwareMapIndexStorage}
  * non-sharded index storages.
  */
-class ShardedIndexStorage<K, V> implements VfsAwareIndexStorage<K, V> {
+@ApiStatus.Internal
+public class ShardedIndexStorage<K, V> implements VfsAwareIndexStorage<K, V> {
   private final FileBasedIndexExtension<K, V> extension;
 
   private final VfsAwareIndexStorage<K, V>[] shards;
 
   private volatile boolean closed = false;
 
-  ShardedIndexStorage(@NotNull FileBasedIndexExtension<K, V> extension,
-                      @NotNull ThrowableNotNullFunction<Integer, VfsAwareIndexStorage<K, V>, IOException> storagesFactory)
+  public ShardedIndexStorage(@NotNull FileBasedIndexExtension<K, V> extension,
+                             @NotNull ThrowableNotNullFunction<Integer, VfsAwareIndexStorage<K, V>, IOException> storagesFactory)
     throws IOException {
     if (!(extension instanceof ShardableIndexExtension shardableExtension)) {
       throw new IllegalArgumentException("Extension(" + extension + ") must be ShardableIndexExtension");

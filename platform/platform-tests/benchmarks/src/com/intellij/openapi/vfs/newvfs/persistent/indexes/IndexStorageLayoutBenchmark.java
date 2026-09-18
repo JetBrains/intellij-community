@@ -34,7 +34,8 @@ import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.CommandLineOptionException;
+import org.openjdk.jmh.runner.options.CommandLineOptions;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.Collections;
@@ -108,8 +109,9 @@ public class IndexStorageLayoutBenchmark {
 
     @Param({
       "com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProvider",
-      //RC: for this to work, add 'index.storages.plugin.mmapped' to the classpath
-      //"com.intellij.index.storages.plugin.mmapped.DurableMapBasedFileIndexLayoutProvider"
+      "com.intellij.util.indexing.impl.storage.durablemap.database.DurableDatabaseIndexLayoutProvider",
+      //RC: for the file-based provider to work, add 'index.storages.plugin.mmapped' to the classpath
+      "com.intellij.index.storages.plugin.mmapped.DurableMapBasedFileIndexLayoutProvider"
     })
     private String storageLayoutProviderClassName;
 
@@ -319,33 +321,36 @@ public class IndexStorageLayoutBenchmark {
   }
 
 
-  public static void main(String[] args) throws RunnerException {
-    final Options opt = new OptionsBuilder()
-      .jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED",
-               "--add-opens=java.base/java.util=ALL-UNNAMED",
-               "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
-               "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
-               "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
-               "--add-opens=java.desktop/java.awt.event=ALL-UNNAMED",
-               "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED",
-               "--add-exports=java.base/jdk.internal.ref=ALL-UNNAMED",
+  public static void main(String[] args) throws RunnerException, CommandLineOptionException {
+    var optionsBuilder = new OptionsBuilder();
+    optionsBuilder.jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED",
+                           "--add-opens=java.base/java.util=ALL-UNNAMED",
+                           "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+                           "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
+                           "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
+                           "--add-opens=java.desktop/java.awt.event=ALL-UNNAMED",
+                           "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED",
+                           "--add-exports=java.base/jdk.internal.ref=ALL-UNNAMED",
 
-               //disable cache:
-               //"-Didea.use.slru.for.file.based.index=false",
+                           //disable cache:
+                           //"-Didea.use.slru.for.file.based.index=false",
 
-               "-Xmx4g"
-      )
+                           "-Xmx4g");
+    if (args.length == 0) {
       //.mode(Mode.SingleShotTime)
       //.warmupIterations(1000)
       //.warmupBatchSize(1000)
       //.measurementIterations(1000)
       //.include(IndexStorageLayoutBenchmark.class.getSimpleName() + ".*addValues.*")
-      .include(IndexStorageLayoutBenchmark.class.getSimpleName() + ".*")
+      optionsBuilder.include(IndexStorageLayoutBenchmark.class.getSimpleName() + ".*");
       //.threads(4)
       //.mode(Mode.SampleTime)
       //.forks(1)
-      .build();
+    }
+    else {
+      optionsBuilder.parent(new CommandLineOptions(args));
+    }
 
-    new Runner(opt).run();
+    new Runner(optionsBuilder.build()).run();
   }
 }

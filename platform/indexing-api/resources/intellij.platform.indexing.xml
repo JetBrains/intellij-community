@@ -67,6 +67,13 @@
                           providerClass="com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProvider"
                           version="0"/>
 
+    <fileBasedIndexLayout id="memory-mapped-database-impl"
+                          priority="-1"
+                          presentableNameKey="ide.indexes.memory-mapped-database-storage.presentable.name"
+                          bundleName="messages.IndexingBundle"
+                          providerClass="com.intellij.util.indexing.impl.storage.durablemap.database.DurableDatabaseIndexLayoutProvider"
+                          version="0"/>
+
     <!-- FileBasedIndex.USE_IN_MEMORY_INDEX=true to enable -->
     <fileBasedIndexLayout id="in-memory"
                           priority="-1"

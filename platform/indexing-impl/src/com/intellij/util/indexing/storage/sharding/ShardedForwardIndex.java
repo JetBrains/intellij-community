@@ -7,6 +7,7 @@ import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.IOUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,14 +17,15 @@ import java.io.IOException;
  * Sharded forward index: a wrapper around N {@link PersistentMapBasedForwardIndex} non-sharded forward
  * indexes.
  */
-class ShardedForwardIndex implements ForwardIndex {
+@ApiStatus.Internal
+public class ShardedForwardIndex implements ForwardIndex {
   private final ShardableIndexExtension extension;
   private final ForwardIndex[] shards;
 
   private volatile boolean closed = false;
 
-  <Value, Key> ShardedForwardIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
-                                   @NotNull ThrowableNotNullFunction<Integer, ForwardIndex, IOException> forwardIndexesFactory)
+  public <Value, Key> ShardedForwardIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
+                                          @NotNull ThrowableNotNullFunction<Integer, ForwardIndex, IOException> forwardIndexesFactory)
     throws IOException {
     if (!(extension instanceof ShardableIndexExtension shardableExtension)) {
       throw new IllegalArgumentException("Extension(" + extension + ") must be ShardableIndexExtension");
