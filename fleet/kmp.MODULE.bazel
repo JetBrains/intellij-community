@@ -32,6 +32,7 @@ kmp_extension.configure(
         "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/jcp-github",
         "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kt/bootstrap",
         "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kt/experimental",
+        "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/tbx/toolbox-api",
     ],
     substitutions = {
         "org.jetbrains.kotlinx:kotlinx-coroutines-core": "org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core:1.10.2-intellij-4",
