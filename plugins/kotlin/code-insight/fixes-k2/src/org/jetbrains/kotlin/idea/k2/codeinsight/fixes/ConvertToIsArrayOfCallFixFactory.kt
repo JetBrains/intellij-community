@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.arrayElementType
 import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
@@ -13,9 +13,9 @@ import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.ConvertToIsArrayOfCallFix
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtIsExpression
-import org.jetbrains.kotlin.types.Variance
 
 internal object ConvertToIsArrayOfCallFixFactory {
     context(session: KaSession)
@@ -25,7 +25,7 @@ internal object ConvertToIsArrayOfCallFixFactory {
         val lhsType = isExpression.leftHandSide.expressionType ?: return null
         val lhsIsNullable = lhsType.isMarkedNullable
         val lhsIsArray = lhsType.isArrayOrPrimitiveArray
-        val arrayArgumentTypeText = arrayArgumentType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
+        val arrayArgumentTypeText = KaRenderer.withQualifiedNames.renderToString(arrayArgumentType)
 
         return ConvertToIsArrayOfCallFix(
             element = isExpression,

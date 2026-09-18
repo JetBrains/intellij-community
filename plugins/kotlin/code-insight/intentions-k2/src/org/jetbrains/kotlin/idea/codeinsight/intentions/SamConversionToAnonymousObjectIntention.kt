@@ -9,7 +9,7 @@ import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -27,9 +27,10 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.getLambdaExpressionForSamConvers
 import org.jetbrains.kotlin.idea.k2.codeinsight.hasRecursiveSamCall
 import org.jetbrains.kotlin.idea.k2.codeinsight.isSamConversionAliasedWithVariance
 import org.jetbrains.kotlin.idea.k2.refactoring.util.LambdaToAnonymousFunctionUtil
+import org.jetbrains.kotlin.idea.util.renderToStringIfPresent
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
 import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.types.Variance
 
 internal class SamConversionToAnonymousObjectIntention :
     KotlinApplicableModCommandAction<KtCallExpression, SamConversionToAnonymousObjectContext>(KtCallExpression::class) {
@@ -112,7 +113,7 @@ private fun computeTypeArguments(
     val explicitTypeArguments = element.typeArgumentList?.arguments
     if (!explicitTypeArguments.isNullOrEmpty()) {
         val renderedTypes = explicitTypeArguments.mapNotNull { typeArg ->
-            typeArg.typeReference?.type?.render(position = Variance.IN_VARIANCE)
+            KaRenderer.withQualifiedDenotableSubtypes.renderToStringIfPresent(typeArg.typeReference?.type)
         }
         return if (renderedTypes.isNotEmpty()) {
             renderedTypes.joinToString(prefix = "<", postfix = ">", separator = ", ")
@@ -125,7 +126,7 @@ private fun computeTypeArguments(
     if (typeArguments.isEmpty() || declaredTypeParameters.isEmpty()) return ""
 
     val renderedTypes = typeArguments.take(declaredTypeParameters.size).mapNotNull { arg ->
-        arg.type?.takeIf { it !is KaErrorType }?.render(position = Variance.IN_VARIANCE)
+        KaRenderer.withQualifiedDenotableSubtypes.renderToStringIfPresent(arg.type?.takeIf { it !is KaErrorType })
     }
 
     return if (renderedTypes.isNotEmpty()) {

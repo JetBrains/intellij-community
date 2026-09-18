@@ -3,16 +3,16 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.setPropertyInitializer
 import org.jetbrains.kotlin.idea.base.psi.setPropertyTypeReference
+import org.jetbrains.kotlin.idea.util.renderToStringIfPresent
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
-import org.jetbrains.kotlin.types.Variance
 
 object UnfoldPropertyUtils {
     class Context(val propertyExplicitType: String?)
@@ -24,7 +24,7 @@ object UnfoldPropertyUtils {
         if (element.typeReference != null) return Context(null)
 
         val initializerType = initializer.expressionType
-        val propertyExplicitType = initializerType?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
+        val propertyExplicitType = KaRenderer.withQualifiedNames.renderToStringIfPresent(initializerType)
         return Context(propertyExplicitType)
     }
 

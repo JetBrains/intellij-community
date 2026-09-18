@@ -4,18 +4,10 @@ package org.jetbrains.kotlin.idea.util
 import com.intellij.psi.impl.compiled.ClsParameterImpl
 import com.intellij.psi.impl.java.stubs.impl.PsiParameterStubImpl
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KaDeclarationNameRenderer
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.fakeOverrideOriginal
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtProperty
 
@@ -82,42 +74,6 @@ val KaValueParameterSymbol.realName: Name?
 
         return realJavaName
     }
-
-/**
- * Creates a renderer that uses names from attached sources for value parameters based on cls java parameter names and delegates to the initial renderer otherwise
- *
- * @see KaVariableSignature.realName
- * @see KaValueParameterSymbol.hasSynthesizedName
- */
-fun createRealNameRenderer(renderer: KaDeclarationNameRenderer): KaDeclarationNameRenderer = object : KaDeclarationNameRenderer {
-    override fun renderName(
-        analysisSession: KaSession,
-        name: Name,
-        symbol: KaNamedSymbol?,
-        declarationRenderer: KaDeclarationRenderer,
-        printer: PrettyPrinter
-    ) {
-        val realParameterName = context(analysisSession) { getRealParameterName(symbol) }
-        renderer.renderName(analysisSession, realParameterName ?: name, symbol, declarationRenderer, printer)
-    }
-
-    context(_: KaSession)
-    private fun getRealParameterName(symbol: KaNamedSymbol?): Name? {
-        if (symbol is KaValueParameterSymbol) {
-            if (symbol.origin == KaSymbolOrigin.SUBSTITUTION_OVERRIDE) {
-                // TODO symbol.fakeOverrideOriginal should work, the following is a workaround for KT-69959
-                val functionSymbol = symbol.containingSymbol as? KaNamedFunctionSymbol ?: return null
-                val fakeOverrideOriginal = functionSymbol.fakeOverrideOriginal
-                if (fakeOverrideOriginal is KaNamedFunctionSymbol) {
-                    val idx = functionSymbol.valueParameters.indexOf(symbol)
-                    return fakeOverrideOriginal.valueParameters[idx].realName
-                }
-            }
-            return symbol.realName
-        }
-        return null
-    }
-}
 
 /**
  * A real name for the parameter represented by the given signature.

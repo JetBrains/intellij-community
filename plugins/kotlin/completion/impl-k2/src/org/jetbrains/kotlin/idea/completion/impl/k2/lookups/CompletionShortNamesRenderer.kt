@@ -5,17 +5,18 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.lookups
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.idea.util.withExpandedTypeAliasComment
+import org.jetbrains.kotlin.idea.util.withShortNames
+import org.jetbrains.kotlin.idea.util.withoutFunctionTypeParameterNames
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.types.Variance
 
 internal object CompletionShortNamesRenderer {
 
@@ -87,17 +88,12 @@ internal object CompletionShortNamesRenderer {
     }
 
     @KaExperimentalApi
-    val renderer = KaTypeRendererForSource.WITH_SHORT_NAMES_WITHOUT_PARAMETER_NAMES
+    val renderer: KaRenderer = KaRenderer.withShortNames.copy { withoutFunctionTypeParameterNames() }
 
     @KaExperimentalApi
-    val rendererVerbose = renderer.with {
-        expandedTypeRenderingMode = KaExpandedTypeRenderingMode.RENDER_ABBREVIATED_TYPE_WITH_EXPANDED_TYPE_COMMENT
-    }
+    val rendererVerbose: KaRenderer = renderer.copy { withExpandedTypeAliasComment() }
 }
 
-@KaExperimentalApi
 context(_: KaSession)
-internal fun KaType.renderVerbose(): @NonNls String = render(
-    renderer = CompletionShortNamesRenderer.rendererVerbose,
-    position = Variance.INVARIANT,
-)
+internal fun KaType.renderVerbose(): @NonNls String =
+    CompletionShortNamesRenderer.rendererVerbose.renderToString(this)

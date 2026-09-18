@@ -31,9 +31,8 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
@@ -101,6 +100,13 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.substringContextOrThis
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.renderToStringIfPresent
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
+import org.jetbrains.kotlin.idea.util.withReflectionTypesAsFunctionTypes
+import org.jetbrains.kotlin.idea.util.withShortDenotableSubtypes
+import org.jetbrains.kotlin.idea.util.withShortDenotableSupertypes
+import org.jetbrains.kotlin.idea.util.withShortNames
+import org.jetbrains.kotlin.idea.util.withoutFunctionTypeParameterNames
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtClass
@@ -130,6 +136,10 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.Collections
 
+private val NEW_PARAMETER_TYPE_RENDERER: KaRenderer = KaRenderer.withQualifiedDenotableSubtypes.copy {
+    withReflectionTypesAsFunctionTypes()
+    withoutFunctionTypeParameterNames()
+}
 
 open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduceParameterHelper<KtNamedDeclaration> = KotlinIntroduceParameterHelper.Default()) : RefactoringActionHandler {
 
@@ -255,7 +265,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
             } else if (expressionType.classId == KaStandardTypeClassIds.UNIT || expressionType.classId == KaStandardTypeClassIds.NOTHING) {
                 KotlinBundle.message(
                     "cannot.introduce.parameter.of.0.type",
-                    expressionType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT),
+                    KaRenderer.withShortNames.renderToString(expressionType),
                 )
             } else null
 
@@ -373,9 +383,9 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
     ) {
         val types = analyzeInModalWindow(physicalExpression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             buildList {
-                add(replacementType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
+                add(KaRenderer.withShortNames.renderToString(replacementType))
                 replacementType.allSupertypes(shouldApproximate = true).mapTo(this) {
-                    it.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+                    KaRenderer.withShortNames.renderToString(it)
                 }
             }
         }
@@ -407,9 +417,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
             callableDescriptor = targetParent,
             newParameterName = suggestedNames.first().quoteIfNeeded(),
             newParameterTypeText = analyze(physicalExpression) {
-                replacementType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
-                    functionalTypeRenderer = KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
-                }, position = Variance.IN_VARIANCE)
+                NEW_PARAMETER_TYPE_RENDERER.renderToString(replacementType)
             },
             argumentValue = argumentValue,
             withDefaultValue = false,
@@ -621,11 +629,13 @@ open class KotlinFirIntroduceLambdaParameterHandler(
         fun calculateFunctionalType(
             oldDescriptor: ExtractableCodeDescriptor,
         ): String {
-            val receiverText = oldDescriptor.receiverParameter?.parameterType?.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.IN_VARIANCE)?.let { "$it." } ?: ""
-            val parameters =
-                oldDescriptor.parameters.joinToString(", ", "(", ")") { it.parameterType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.IN_VARIANCE) }
+            val receiverText = KaRenderer.withShortDenotableSubtypes
+                .renderToStringIfPresent(oldDescriptor.receiverParameter?.parameterType)?.let { "$it." } ?: ""
 
-            val returnTypeText = oldDescriptor.returnType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE)
+            val parameters = oldDescriptor.parameters
+                .joinToString(", ", "(", ")") { KaRenderer.withShortDenotableSubtypes.renderToString(it.parameterType) }
+
+            val returnTypeText = KaRenderer.withShortDenotableSupertypes.renderToString(oldDescriptor.returnType)
             return "$receiverText$parameters -> $returnTypeText"
         }
 

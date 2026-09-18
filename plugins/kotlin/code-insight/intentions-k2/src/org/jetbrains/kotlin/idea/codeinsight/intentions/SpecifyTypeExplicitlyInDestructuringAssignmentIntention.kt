@@ -7,13 +7,14 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.psi.setCallableTypeReference
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.util.withShortDenotableSupertypes
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
@@ -21,7 +22,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.types.Variance
+import kotlin.collections.iterator
 
 internal class SpecifyTypeExplicitlyInDestructuringAssignmentIntention :
     KotlinApplicableModCommandAction<KtDestructuringDeclaration, SpecifyTypeExplicitlyInDestructuringAssignmentIntention.Context>(
@@ -53,7 +54,7 @@ internal class SpecifyTypeExplicitlyInDestructuringAssignmentIntention :
         for (entry in entries) {
             val returnType = entry.symbol.returnType
             if (returnType is KaErrorType) return null
-            val type = returnType.render(renderer = KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE)
+            val type = KaRenderer.withShortDenotableSupertypes.renderToString(returnType)
             val typeReference = factory.createType(type)
             entriesAndTypeReferences[entry] = typeReference
         }

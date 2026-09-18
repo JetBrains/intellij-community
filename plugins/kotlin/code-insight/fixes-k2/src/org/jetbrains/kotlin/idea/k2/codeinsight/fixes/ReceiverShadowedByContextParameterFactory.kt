@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.analysis.api.types.approximateToDenotableSupertypeOr
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -35,7 +36,6 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.types.Variance
 
 internal object ReceiverShadowedByContextParameterFactory {
     val addReceiverFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReceiverShadowedByContextParameter ->
@@ -64,7 +64,7 @@ internal object ReceiverShadowedByContextParameterFactory {
                 if (symbol is KaContextParameterSymbol) {
                     val nameOrContextOfCall = if (symbol.name.isSpecial) {
                         val approximatedType = symbol.returnType.approximateToDenotableSupertypeOrSelf(allowLocalDenotableTypes = true)
-                        val renderedType = approximatedType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT)
+                        val renderedType = KaRenderer.withShortNames.renderToString(approximatedType)
                         "contextOf<$renderedType>()"
                     } else {
                         symbol.name.identifier

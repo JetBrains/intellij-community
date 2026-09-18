@@ -6,14 +6,11 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderingOption
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -29,6 +26,9 @@ import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMemberInfo
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
+import org.jetbrains.kotlin.idea.util.withAlwaysRenderedReturnType
+import org.jetbrains.kotlin.idea.util.withShortNames
+import org.jetbrains.kotlin.idea.util.withValueParameterTypesOnly
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -90,7 +90,7 @@ internal object SpecifyOverrideExplicitlyFixFactory {
                 }
             }
 
-            val signature = delegatedDeclaration.render(renderer)
+            val signature = renderer.renderToString(delegatedDeclaration)
             val elementContext = ElementContext(signature, delegateParameters, generatedMembers)
             listOf(SpecifyOverrideExplicitlyFix(ktClass, elementContext))
         }
@@ -101,22 +101,13 @@ internal object SpecifyOverrideExplicitlyFixFactory {
         return nameReferenceExpression.resolveSuccessfulSymbol() as? KaNamedSymbol
     }
 
-    @KaExperimentalApi
-    private val renderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
-        returnTypeFilter = KaCallableReturnTypeFilter.ALWAYS
-        valueParameterRenderer = KaValueParameterSymbolRenderer.TYPE_ONLY
-        keywordsRenderer = keywordsRenderer.with {
-            keywordFilter = KaRendererKeywordFilter.without(
-                KtTokens.FUN_KEYWORD
-            )
+    private val renderer: KaRenderer = KaRenderer.withShortNames.copy {
+        withAlwaysRenderedReturnType()
+        withValueParameterTypesOnly()
+        set(KaRenderingOption.AllowedKeywords) { token ->
+            token != KtTokens.FUN_KEYWORD && token != KtTokens.OVERRIDE_KEYWORD
         }
-        modifiersRenderer = modifiersRenderer.with {
-            keywordsRenderer = keywordsRenderer.with {
-                keywordFilter = KaRendererKeywordFilter.without(
-                    KtTokens.OVERRIDE_KEYWORD,
-                )
-            }
-        }
+        set(KaRenderingOption.AnnotationsOnNewLine) { _ -> false }
     }
 
     private data class ElementContext(

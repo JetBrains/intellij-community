@@ -4,7 +4,8 @@ package org.jetbrains.kotlin.idea.k2.refactoring.pullUp
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -42,7 +44,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiverOrThis
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.unwrapNullability
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
-import org.jetbrains.kotlin.types.Variance
 
 private var KtElement.newFqName: FqName? by CopyablePsiUserDataProperty(Key.create("NEW_FQ_NAME"))
 private var KtElement.replaceWithTargetThis: Boolean? by CopyablePsiUserDataProperty(Key.create("REPLACE_WITH_TARGET_THIS"))
@@ -104,7 +105,7 @@ internal fun markElements(
                 val oldType = typeReference.type
                 val substituted = substitutor.substitute(oldType)
                 if (substituted.semanticallyEquals(oldType)) return
-                val rendered = substituted.render(position = Variance.INVARIANT)
+                val rendered = KaRenderer.withQualifiedNames.renderToString(substituted)
 
                 val targetFqName = targetClass.fqName ?: return
                 val map = typeReference.newTypeTextByTargetClass ?: mutableMapOf<FqName, () -> String?>().also {

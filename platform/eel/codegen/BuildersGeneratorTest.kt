@@ -78,8 +78,10 @@ import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaClassTypeQualification
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderingOption
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.classId
@@ -114,7 +116,6 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.types.Variance
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -1018,6 +1019,11 @@ private fun renderPropertyInBuilder(
   }
 }
 
+@OptIn(KaExperimentalApi::class)
+private val FQN_TYPE_RENDERER: KaRenderer = KaRenderer.default.copy {
+  set(KaRenderingOption.ClassTypeQualification, KaClassTypeQualification.FULLY_QUALIFIED)
+}
+
 /**
  * Renders some PSI element into a string, but all type references are specified with their full qualified names.
  */
@@ -1029,7 +1035,7 @@ private fun PsiElement.renderWithFqnTypes(): String {
         when {
           element is KtTypeReference -> {
             analyze(element) {
-              append(element.type.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT))
+              append(FQN_TYPE_RENDERER.renderToString(element.type))
             }
           }
           element is KtQualifiedExpression -> {

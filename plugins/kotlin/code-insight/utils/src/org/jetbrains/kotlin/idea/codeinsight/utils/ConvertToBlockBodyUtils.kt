@@ -7,12 +7,14 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.approximateToDenotableSupertypeOrSelf
 import org.jetbrains.kotlin.analysis.api.types.classId
-import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSupertypes
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtDeclarationWithReturnType
@@ -27,7 +29,6 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.types.Variance
 
 data class ConvertToBlockBodyContext(
     val returnTypeIsUnit: Boolean,
@@ -67,7 +68,7 @@ object ConvertToBlockBodyUtils {
         return ConvertToBlockBodyContext(
             returnTypeIsUnit = returnTypeClassId == KaStandardTypeClassIds.UNIT,
             returnTypeIsNothing = returnTypeClassId == KaStandardTypeClassIds.NOTHING && !returnType.isMarkedNullable,
-            returnTypeString = returnType.render(position = Variance.OUT_VARIANCE),
+            returnTypeString = KaRenderer.withQualifiedDenotableSupertypes.renderToString(returnType),
             bodyTypeIsUnit = bodyTypeClassId == KaStandardTypeClassIds.UNIT,
             bodyTypeIsNothing = bodyTypeClassId == KaStandardTypeClassIds.NOTHING && !bodyType.isMarkedNullable,
             reformat = reformat

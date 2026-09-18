@@ -9,8 +9,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.constructor
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.calculateAllTypes
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
+import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -69,7 +70,6 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolution.KtResolvable
-import org.jetbrains.kotlin.types.Variance
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -393,7 +393,7 @@ context(_: KaSession)
 private fun isConstructorLikeCall(type: KaType, initializer: KtExpression?): Boolean {
     val callExpression = initializer as? KtCallExpression ?: return false
     val name = (callExpression.calleeExpression as? KtNameReferenceExpression)?.getReferencedName() ?: return false
-    val typeString = type.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+    val typeString = KaRenderer.withShortNames.renderToString(type)
     return name == typeString
 }
 

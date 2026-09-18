@@ -4,14 +4,15 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ModCommandAction
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddGenericUpperBoundFix
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
+import org.jetbrains.kotlin.idea.util.withShortDenotableSubtypes
 import org.jetbrains.kotlin.psi.KtTypeParameter
-import org.jetbrains.kotlin.types.Variance
 
 internal object AddGenericUpperBoundFixFactories {
 
@@ -37,14 +38,8 @@ internal object AddGenericUpperBoundFixFactories {
 
         return AddGenericUpperBoundFix(
             element = typeParameter,
-            fqName = expectedUpperBound.render(
-                renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES,
-                position = Variance.IN_VARIANCE,
-            ),
-            shortName = expectedUpperBound.render(
-                renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,
-                position = Variance.IN_VARIANCE,
-            )
+            fqName = KaRenderer.withQualifiedDenotableSubtypes.renderToString(expectedUpperBound),
+            shortName = KaRenderer.withShortDenotableSubtypes.renderToString(expectedUpperBound)
         )
     }
 }

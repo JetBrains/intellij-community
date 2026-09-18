@@ -8,7 +8,7 @@ import com.intellij.refactoring.changeSignature.MethodDescriptor.ReadWriteOption
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -21,6 +21,8 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableMet
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
+import org.jetbrains.kotlin.idea.util.renderToStringIfPresent
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtConstructor
@@ -28,7 +30,6 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.types.Variance
 
 class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDescriptor<KotlinParameterInfo, KaSymbolVisibility> {
     private val callable: KtNamedDeclaration = findTargetCallable(c)
@@ -49,14 +50,14 @@ class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDesc
     @OptIn(KaAllowAnalysisOnEdt::class)
     internal val oldReturnType: String = allowAnalysisOnEdt {
         analyze(callable) {
-            (callable as? KtCallableDeclaration)?.returnType?.render(position = Variance.INVARIANT) ?: ""
+            KaRenderer.withQualifiedNames.renderToStringIfPresent((callable as? KtCallableDeclaration)?.returnType) ?: ""
         }
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class)
     internal val oldReceiverType: String? = allowAnalysisOnEdt {
         analyze(callable) {
-            (callable as? KtCallableDeclaration)?.receiverTypeReference?.type?.render(position = Variance.INVARIANT)
+            KaRenderer.withQualifiedNames.renderToStringIfPresent((callable as? KtCallableDeclaration)?.receiverTypeReference?.type)
         }
     }
 

@@ -5,7 +5,8 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.simple
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.k2.refactoring.moveFunctionLiteralOutsideParenthesesIfPossible
 import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -36,7 +38,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.unpackFunctionLiteral
 import org.jetbrains.kotlin.resolution.KtResolvable
 import org.jetbrains.kotlin.resolution.KtResolvableCall
-import org.jetbrains.kotlin.types.Variance
 
 object ConvertReferenceToLambdaUtil {
 
@@ -128,7 +129,7 @@ object ConvertReferenceToLambdaUtil {
             psiFactory.createLambdaExpression(
                 parameters = params.joinToString(separator = ", ") {
                     if (valueArgumentParent != null) it.first
-                    else it.first + ": " + it.second.render(position = Variance.IN_VARIANCE)
+                    else it.first + ": " + KaRenderer.withQualifiedDenotableSubtypes.renderToString(it.second)
                 },
                 body = if (callableSymbol is KaPropertySymbol) {
                     "$receiverPrefix$targetName"

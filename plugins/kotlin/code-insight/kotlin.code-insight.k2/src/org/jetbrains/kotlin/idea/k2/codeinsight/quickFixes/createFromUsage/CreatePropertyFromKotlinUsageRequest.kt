@@ -10,13 +10,14 @@ import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.builtinTypes
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToJvmType
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.getExpectedKotlinType
+import org.jetbrains.kotlin.idea.util.withTypeApproximation
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.types.Variance
 
@@ -49,10 +50,14 @@ internal class CreatePropertyFromKotlinUsageRequest (
     }
 
     private fun getReceiverTypeString(
-        referenceExpression: KtNameReferenceExpression, receiverType: KaType?, renderer: KaTypeRenderer
+        referenceExpression: KtNameReferenceExpression, receiverType: KaType?, renderer: KaRenderer
     ): String? {
         return analyze(referenceExpression) {
-            receiverType?.render(renderer, position = Variance.IN_VARIANCE)
+            receiverType?.let { receiverType ->
+                // The receiver is an input position, so its type is approximated to its closest denotable subtype.
+                val subtypeRenderer = renderer.copy { withTypeApproximation(Variance.IN_VARIANCE) }
+                subtypeRenderer.renderToString(receiverType)
+            }
         }
     }
 

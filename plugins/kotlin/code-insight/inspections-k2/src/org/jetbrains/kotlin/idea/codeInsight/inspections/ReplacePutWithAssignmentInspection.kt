@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.single
@@ -24,6 +24,8 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
+import org.jetbrains.kotlin.idea.util.renderToStringIfPresent
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -39,7 +41,6 @@ import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.dotQualifiedExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
-import org.jetbrains.kotlin.types.Variance
 
 private const val PUT_METHOD_NAME = "put"
 private val collectionsSetFqName = FqName("kotlin.collections.set")
@@ -76,7 +77,10 @@ internal class ReplacePutWithAssignmentInspection : KotlinApplicableInspectionBa
         val functionSymbol = resolvedCall.symbol
         if (functionSymbol.allOverriddenSymbolsWithSelf.none { it.isMutableMapPutFunction() }) return null
 
-        val receiverTypeText = element.receiverExpression.expressionType?.render(position = Variance.IN_VARIANCE) ?: return null
+        val receiverTypeText = KaRenderer.withQualifiedDenotableSubtypes
+            .renderToStringIfPresent(element.receiverExpression.expressionType)
+            ?: return null
+
         val assignment = createAssignmentExpression(element)
 
         val codeFragment = KtPsiFactory(

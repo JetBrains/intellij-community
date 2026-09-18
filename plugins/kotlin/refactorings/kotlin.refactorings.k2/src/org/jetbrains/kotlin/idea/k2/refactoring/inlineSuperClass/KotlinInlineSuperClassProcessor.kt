@@ -18,7 +18,8 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -65,6 +66,7 @@ import org.jetbrains.kotlin.idea.refactoring.memberInfo.resolveSuperTypeDeclarat
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -96,7 +98,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
-import org.jetbrains.kotlin.types.Variance
 
 internal class KotlinInlineSuperClassProcessor(
     project: Project,
@@ -326,7 +327,7 @@ internal class KotlinInlineSuperClassProcessor(
                     }
                     val type = entry.typeReference?.type ?: return@mapNotNull null
                     val replacement = entry.copy() as KtSuperTypeListEntry
-                    replacement.typeReference!!.replace(factory.createType(substitutor.substitute(type).render(position = Variance.INVARIANT)))
+                    replacement.typeReference!!.replace(factory.createType(KaRenderer.withQualifiedNames.renderToString(substitutor.substitute(type))))
                     entry to replacement
                 }
                 for (initializer in sourceClass.getAnonymousInitializers()) {
@@ -398,7 +399,7 @@ internal class KotlinInlineSuperClassProcessor(
 
             val modifiers = if (superParameter.hasValOrVar()) superParameter.modifierList?.text.orEmpty() else "private"
             val keyword = if (superParameter.isMutable) "var" else "val"
-            val type = parameterType.render(position = Variance.INVARIANT)
+            val type = KaRenderer.withQualifiedNames.renderToString(parameterType)
             val property = factory.createProperty("$modifiers $keyword ${name.quoteIfNeeded()}: $type = 0")
             property.initializer!!.replace(value)
             properties[superParameter] = property

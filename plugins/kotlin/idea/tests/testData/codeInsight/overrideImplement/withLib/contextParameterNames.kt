@@ -8,4 +8,4 @@ object CheckerImpl : AChecker {
     <caret>
 }
 
-// MEMBER: "context(checkerContext: CheckerContext, diagnosticReporter: DiagnosticReporter)\n check(d: String): Unit"
+// MEMBER: "context(checkerContext: CheckerContext, diagnosticReporter: DiagnosticReporter)\ncheck(d: String): Unit"

@@ -6,19 +6,20 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.dataflow.KaImplicitReceiverSmartCastKind
 import org.jetbrains.kotlin.analysis.api.dataflow.implicitReceiverSmartCasts
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
-import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.idea.highlighting.K2HighlightingBundle
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtWhenExpression
-import org.jetbrains.kotlin.types.Variance
 
 internal class KotlinExpressionsSmartcastSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
     override fun visitExpression(expression: KtExpression) {
@@ -38,7 +39,7 @@ internal class KotlinExpressionsSmartcastSemanticAnalyzer(holder: HighlightInfoH
                 K2HighlightingBundle.message(
                     "0.smart.cast.to.1",
                     receiverName,
-                    it.type.render(position = Variance.INVARIANT)
+                    KaRenderer.withQualifiedNames.renderToString(it.type)
                 )
             )
         }
@@ -56,7 +57,7 @@ internal class KotlinExpressionsSmartcastSemanticAnalyzer(holder: HighlightInfoH
                 KotlinHighlightInfoTypeSemanticNames.SMART_CAST_VALUE,
                 K2HighlightingBundle.message(
                     "smart.cast.to.0",
-                    info.smartCastType.render(position = Variance.INVARIANT)
+                    KaRenderer.withQualifiedNames.renderToString(info.smartCastType)
                 )
             )
         }

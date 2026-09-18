@@ -11,8 +11,8 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.returnType
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -21,12 +21,12 @@ import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.receiverType
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.api.types.withNullability
+import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassLiteralExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtVisitorVoid
-import org.jetbrains.kotlin.types.Variance
 
 internal class KtPolySymbolPropertyTypeInspection : LocalInspectionTool() {
 
@@ -77,11 +77,8 @@ internal class KtPolySymbolPropertyTypeInspection : LocalInspectionTool() {
               nameIdentifier,
               DevKitKotlinBundle.message(
                 "inspection.polySymbol.property.type.mismatch",
-                declaredType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT),
-                expectedPropertyType.render(
-                  KaTypeRendererForSource.WITH_SHORT_NAMES,
-                  position = Variance.INVARIANT
-                )
+                KaRenderer.withShortNames.renderToString(declaredType),
+                KaRenderer.withShortNames.renderToString(expectedPropertyType)
               ),
               ProblemHighlightType.GENERIC_ERROR_OR_WARNING
             )

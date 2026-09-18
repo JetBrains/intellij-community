@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.components.KaFirIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.projectStructure.copyOrigin
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.session.useSiteSession
@@ -46,6 +46,8 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameRefere
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.renderToStringIfPresent
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
@@ -59,7 +61,6 @@ import org.jetbrains.kotlin.psi.KtThrowExpression
 import org.jetbrains.kotlin.psi.psiUtil.getOutermostParenthesizerOrThis
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.types.Variance
 import java.util.ArrayDeque
 import java.util.LinkedList
 import java.util.PriorityQueue
@@ -241,7 +242,8 @@ internal fun createExtensionChecker(
 ): KaCompletionExtensionCandidateChecker? {
     val positionContext = positionContext as? KotlinSimpleNameReferencePositionContext ?: return null
     val receiver = positionContext.explicitReceiver
-    val runtimeTypeWithErasedTypeParameters = runtimeType?.replaceTypeParametersWithStarProjections()?.render(position = Variance.INVARIANT)
+    val runtimeTypeWithErasedTypeParameters = KaRenderer.withQualifiedNames
+        .renderToStringIfPresent(runtimeType?.replaceTypeParametersWithStarProjections())
     val runtimeTypeClassId = runtimeType?.symbol?.classId
     val castedReceiver = if (runtimeTypeWithErasedTypeParameters == null || runtimeTypeClassId == receiver?.expressionType?.symbol?.classId) {
         receiver

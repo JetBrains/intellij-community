@@ -7,14 +7,15 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.idea.util.withExpandedTypeAliases
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -23,7 +24,6 @@ import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
-import org.jetbrains.kotlin.types.Variance
 
 /**
  * Chooses the declaration among [candidates] that corresponds to [original], for example a source declaration for a compiled one.
@@ -126,11 +126,11 @@ private fun renderTypesForComparison(declaration: KtCallableDeclaration) = allow
             buildString {
                 val symbol = declaration.symbol as KaCallableSymbol
                 symbol.receiverType?.let { receiverType ->
-                    append(receiverType.render(renderer, position = Variance.INVARIANT))
+                    append(renderer.renderToString(receiverType))
                     append('.')
                 }
                 if (symbol is KaFunctionSymbol) {
-                    symbol.valueParameters.joinTo(this) { it.returnType.render(renderer, position = Variance.INVARIANT) }
+                    symbol.valueParameters.joinTo(this) { renderer.renderToString(it.returnType) }
                 }
             }
         }
@@ -138,6 +138,6 @@ private fun renderTypesForComparison(declaration: KtCallableDeclaration) = allow
 }
 
 @KaExperimentalApi
-private val renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
-    expandedTypeRenderingMode = KaExpandedTypeRenderingMode.RENDER_EXPANDED_TYPE
+private val renderer: KaRenderer = KaRenderer.withQualifiedNames.copy {
+    withExpandedTypeAliases()
 }

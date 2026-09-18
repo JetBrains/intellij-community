@@ -5,20 +5,22 @@ import com.intellij.psi.PsiComment
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaClassTypeQualification
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderingOption
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
+import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
-import org.jetbrains.kotlin.types.Variance
 
 internal fun getCommentText(comment: PsiComment): String {
     return when (comment.tokenType) {
@@ -30,12 +32,14 @@ internal fun getCommentText(comment: PsiComment): String {
 
 context(_: KaSession)
 internal fun KaType.renderNames(): Array<String> = arrayOf(
-    render(KaTypeRendererForSource.WITH_SHORT_NAMES.with {
-        classIdRenderer = KaClassTypeQualifierRenderer.WITH_SHORT_NAMES
-    }, Variance.INVARIANT),
-    render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT),
-    render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
+    SIMPLE_NAME_RENDERER.renderToString(this),
+    KaRenderer.withShortNames.renderToString(this),
+    KaRenderer.withQualifiedNames.renderToString(this),
 )
+
+private val SIMPLE_NAME_RENDERER: KaRenderer = KaRenderer.withShortNames.copy {
+    set(KaRenderingOption.ClassTypeQualification, KaClassTypeQualification.SIMPLE)
+}
 
 internal fun String.removeTypeParameters(): String {
     if (!contains('<') || !contains('>')) return this

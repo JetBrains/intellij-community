@@ -7,40 +7,38 @@ import com.intellij.openapi.components.serviceOrNull
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
+import com.intellij.psi.tree.TokenSet
 import com.intellij.util.Range
 import com.intellij.xdebugger.stepping.ForceSmartStepIntoSource
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KaDeclarationModifiersRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaModifierListRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KaTypeParameterRendererFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaCallableReceiverRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaConstructorSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.rendering.KaPiece
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderingOption
+import org.jetbrains.kotlin.analysis.api.rendering.KaTextAttribute
+import org.jetbrains.kotlin.analysis.api.rendering.append
+import org.jetbrains.kotlin.analysis.api.rendering.output
+import org.jetbrains.kotlin.analysis.api.rendering.push
+import org.jetbrains.kotlin.analysis.api.rendering.render
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
 import org.jetbrains.kotlin.idea.debugger.core.getClassName
+import org.jetbrains.kotlin.idea.util.withReflectionTypesAsFunctionTypes
+import org.jetbrains.kotlin.idea.util.withShortNames
+import org.jetbrains.kotlin.idea.util.withValueParameterTypesOnly
+import org.jetbrains.kotlin.idea.util.withoutAnnotations
+import org.jetbrains.kotlin.idea.util.withoutDeclarationKeywords
+import org.jetbrains.kotlin.idea.util.withoutModifiers
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.name.render
 import javax.swing.Icon
 
 context(session: KaSession)
 fun calcLabel(symbol: KaDeclarationSymbol): String {
-    return symbol.render(RENDERER)
+    return RENDERER.renderToString(symbol)
 }
 
 class KotlinMethodSmartStepTarget(
@@ -99,51 +97,31 @@ internal fun <T : PsiElement> SmartPsiElementPointer<T>?.getElementInReadAction(
     this?.let { runReadAction { element } }
 
 
-@KaExperimentalApi
-private val NO_RETURN_TYPE = object : KaCallableReturnTypeFilter {
-    override fun shouldRenderReturnType(analysisSession: KaSession, type: KaType, symbol: KaCallableSymbol): Boolean = false
-}
+/**
+ * Renders a smart-step-into label: the declaration name and its parameter types, without modifiers, annotations, receiver, type parameters or
+ * return type. The `constructor`, `get` and `set` keywords are kept, so an accessor target reads `Foo.get()`.
+ */
+private val RENDERER: KaRenderer = KaRenderer.withShortNames.copy {
+    withoutAnnotations()
+    withoutModifiers()
+    withoutDeclarationKeywords(except = TokenSet.create(KtTokens.GET_KEYWORD, KtTokens.SET_KEYWORD))
+    withValueParameterTypesOnly()
+    withReflectionTypesAsFunctionTypes()
+    set(KaRenderingOption.ContextParametersOnNewLine) { _ -> false }
 
-@KaExperimentalApi
-private val NO_CALLABLE_RECEIVER = object : KaCallableReceiverRenderer {
-    override fun renderReceiver(
-        analysisSession: KaSession,
-        symbol: KaReceiverParameterSymbol,
-        declarationRenderer: KaDeclarationRenderer,
-        printer: PrettyPrinter
-    ) {}
-}
+    push(KaPiece.NamedFunction) { function ->
+        render(function, KaPiece.ContextParameterList)
+        render(function, KaPiece.SymbolName)
+        render(function, KaPiece.ValueParameterList)
+    }
 
-@KaExperimentalApi
-private val NO_MODIFIER_LIST = object : KaModifierListRenderer {
-    override fun renderModifiers(
-        analysisSession: KaSession,
-        symbol: KaDeclarationSymbol,
-        declarationModifiersRenderer: KaDeclarationModifiersRenderer,
-        printer: PrettyPrinter
-    ) {}
+    push(KaPiece.Constructor) { constructor ->
+        output.append(KtTokens.CONSTRUCTOR_KEYWORD.value, KaTextAttribute.Keyword).space()
+        constructor.containingClassId?.shortClassName?.let { output.append(it.render(), KaTextAttribute.Identifier) }
+        render(constructor, KaPiece.ValueParameterList)
+    }
 
-}
-
-@KaExperimentalApi
-private val RENDERER = KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
-    annotationRenderer = annotationRenderer.with {
-        annotationFilter = KaRendererAnnotationsFilter.NONE
-    }
-    keywordsRenderer = keywordsRenderer.with {
-        keywordFilter = KaRendererKeywordFilter.onlyWith(KtTokens.CONSTRUCTOR_KEYWORD, KtTokens.GET_KEYWORD, KtTokens.SET_KEYWORD)
-    }
-    modifiersRenderer = modifiersRenderer.with {
-        modifierListRenderer = NO_MODIFIER_LIST
-    }
-    typeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES.with {
-        functionalTypeRenderer = KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
-    }
-    returnTypeFilter = NO_RETURN_TYPE
-    typeParametersFilter = KaTypeParameterRendererFilter { _, _ -> false }
-    constructorRenderer = KaConstructorSymbolRenderer.AS_RAW_SIGNATURE
-    valueParameterRenderer = KaValueParameterSymbolRenderer.TYPE_ONLY
-    callableReceiverRenderer = NO_CALLABLE_RECEIVER
+    push(KaPiece.Property) { render(it, KaPiece.SymbolName) }
 }
 
 private fun KtDeclaration.fetchNavigationElement(): KtDeclaration =

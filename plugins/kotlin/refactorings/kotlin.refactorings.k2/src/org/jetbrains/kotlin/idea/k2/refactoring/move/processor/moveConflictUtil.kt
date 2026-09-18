@@ -10,9 +10,10 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaPiece
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.pushEmpty
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -42,13 +43,14 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkVis
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkVisibilityConflictsForInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo
 import org.jetbrains.kotlin.idea.refactoring.pullUp.willBeMoved
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
+import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
-import org.jetbrains.kotlin.types.Variance
 
 /**
  * Find all conflicts when moving elements for a multi-file move.
@@ -120,10 +122,15 @@ internal fun findAllMoveConflicts(
     }
 }
 
+/** Renders a declaration named in a conflict message: its header alone, without the constant a `const` property is initialized with. */
+private val CONFLICT_DECLARATION_RENDERER: KaRenderer = KaRenderer.withShortNames.copy {
+    pushEmpty(KaPiece.PropertyInitializer)
+}
+
 @NlsSafe
 @ApiStatus.Internal
 context(_: KaSession)
-fun KaSymbol.renderForConflict(declarationRenderer: KaDeclarationRenderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES): String {
+fun KaSymbol.renderForConflict(declarationRenderer: KaRenderer = CONFLICT_DECLARATION_RENDERER): String {
     return when (this) {
         is KaClassSymbol -> {
             val keywords = when (classKind) {
@@ -135,14 +142,14 @@ fun KaSymbol.renderForConflict(declarationRenderer: KaDeclarationRenderer = KaDe
                 KaClassKind.INTERFACE -> listOf(KtTokens.INTERFACE_KEYWORD)
                 KaClassKind.ANONYMOUS_OBJECT -> emptyList()
             }
-            @NlsSafe val text = keywords.joinToString(" ", postfix = " ") + defaultType.render(position = Variance.INVARIANT)
+            @NlsSafe val text = keywords.joinToString(" ", postfix = " ") + KaRenderer.withQualifiedNames.renderToString(defaultType)
             text
         }
         is KaFunctionSymbol -> {
-            KotlinBundle.message("text.function.in.ticks.0", render(declarationRenderer))
+            KotlinBundle.message("text.function.in.ticks.0", declarationRenderer.renderToString(this))
         }
         is KaPropertySymbol -> {
-            KotlinBundle.message("text.property.in.ticks.0", render(declarationRenderer))
+            KotlinBundle.message("text.property.in.ticks.0", declarationRenderer.renderToString(this))
         }
         is KaPackageSymbol -> {
             @NlsSafe val text = fqName.asString()

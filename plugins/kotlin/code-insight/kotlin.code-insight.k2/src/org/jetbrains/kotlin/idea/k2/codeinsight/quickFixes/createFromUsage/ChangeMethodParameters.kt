@@ -22,11 +22,9 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaRendererTypeApproximator
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.appendParameter
@@ -35,6 +33,8 @@ import org.jetbrains.kotlin.idea.base.psi.insertParameterBefore
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreatePropertyFromUsageBuilder.addAnnotationEntry
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
+import org.jetbrains.kotlin.idea.util.withShortDenotableSubtypes
 import org.jetbrains.kotlin.load.java.NOT_NULL_ANNOTATIONS
 import org.jetbrains.kotlin.load.java.NULLABLE_ANNOTATIONS
 import org.jetbrains.kotlin.name.FqName
@@ -43,7 +43,6 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtParameterList
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.types.Variance
 
 internal class ChangeMethodParameters(
     target: KtNamedFunction,
@@ -65,11 +64,8 @@ internal class ChangeMethodParameters(
                     val convertType = helper.convertType(it)
 
                     analyze(target) {
-                        val kaType = convertType.asKaType(target)?.let {
-                            KaRendererTypeApproximator.TO_DENOTABLE.approximateType(useSiteSession, it, Variance.IN_VARIANCE)
-                        } ?: error("Can't convert type $it")
-                        val render = kaType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT)
-                        render
+                        val kaType = convertType.asKaType(target) ?: error("Can't convert type $it")
+                        KaRenderer.withShortDenotableSubtypes.renderToString(kaType)
                     }
                 } ?: KotlinBundle.message("fix.change.signature.error")
             "$parameterName: $renderedType"
@@ -230,11 +226,8 @@ internal class ChangeMethodParameters(
                 allowAnalysisOnEdt {
                     allowAnalysisFromWriteAction {
                         analyze(namedFunction) {
-                            val kaType = convertType.asKaType(namedFunction)?.let {
-                                KaRendererTypeApproximator.TO_DENOTABLE.approximateType(useSiteSession, it, Variance.IN_VARIANCE)
-                            } ?: error("Can't convert type $jvmType")
-                            val render = kaType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
-                            append(render)
+                            val kaType = convertType.asKaType(namedFunction) ?: error("Can't convert type $jvmType")
+                            append(KaRenderer.withQualifiedDenotableSubtypes.renderToString(kaType))
                         }
                     }
                 }

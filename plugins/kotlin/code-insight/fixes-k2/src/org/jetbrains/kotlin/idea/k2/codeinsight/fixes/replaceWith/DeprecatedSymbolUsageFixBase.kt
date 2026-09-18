@@ -13,14 +13,10 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaParameterDefaultValueRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaConstructorSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaNamedFunctionSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KaNamedClassSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaPiece
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.pushEmpty
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -46,6 +42,14 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.buildCodeToInlin
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.saveCommentsFromSurroundings
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
+import org.jetbrains.kotlin.idea.util.withCompactClassSignature
+import org.jetbrains.kotlin.idea.util.withCompactConstructorSignature
+import org.jetbrains.kotlin.idea.util.withCompactFunctionSignature
+import org.jetbrains.kotlin.idea.util.withShortNames
+import org.jetbrains.kotlin.idea.util.withValueParameterTypesAndVararg
+import org.jetbrains.kotlin.idea.util.withoutAnnotations
+import org.jetbrains.kotlin.idea.util.withoutDeclarationKeywords
+import org.jetbrains.kotlin.idea.util.withoutModifiers
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -118,24 +122,23 @@ internal object DeprecationFixFactory {
 
         val replaceWithData = fetchReplaceWithPattern(deprecatedSymbol) ?: return emptyList()
 
-        val renderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
-            modifiersRenderer = modifiersRenderer.with {
-                keywordsRenderer = keywordsRenderer.with { keywordFilter = KaRendererKeywordFilter.NONE }
-            }
-            namedClassRenderer = KaNamedClassSymbolRenderer.AS_SOURCE_WITHOUT_PRIMARY_CONSTRUCTOR
-            parameterDefaultValueRenderer = KaParameterDefaultValueRenderer.NO_DEFAULT_VALUE
-            constructorRenderer = KaConstructorSymbolRenderer.AS_RAW_SIGNATURE
-            namedFunctionRenderer = KaNamedFunctionSymbolRenderer.AS_RAW_SIGNATURE
-            annotationRenderer = annotationRenderer.with {
-                annotationFilter = KaRendererAnnotationsFilter.NONE
-            }
-            keywordsRenderer = keywordsRenderer.with { keywordFilter = KaRendererKeywordFilter.NONE }
-        }
-        val text = KotlinBundle.message("replace.usages.of.0.in.whole.project", deprecatedSymbol.render(renderer))
+        val text = KotlinBundle.message("replace.usages.of.0.in.whole.project", SIGNATURE_RENDERER.renderToString(deprecatedSymbol))
         return listOf(
             DeprecatedSymbolUsageFix(expression, replaceWithData),
             DeprecatedSymbolUsageInWholeProjectFix(expression, replaceWithData, text)
         )
+    }
+
+    /** Renders a declaration as a bare signature, for use in the quick-fix presentation text. */
+    private val SIGNATURE_RENDERER: KaRenderer = KaRenderer.withShortNames.copy {
+        withoutAnnotations()
+        withoutDeclarationKeywords()
+        withoutModifiers()
+        withValueParameterTypesAndVararg()
+        withCompactFunctionSignature()
+        withCompactConstructorSignature()
+        withCompactClassSignature()
+        pushEmpty(KaPiece.ValueParameterDefaultValue)
     }
 }
 

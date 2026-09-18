@@ -5,15 +5,19 @@ import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.ExpectedParameter
 import com.intellij.lang.jvm.actions.ExpectedType
 import com.intellij.util.text.UniqueNameGenerator
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaPiece
+import org.jetbrains.kotlin.analysis.api.rendering.KaPieceRenderer
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderingContext
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderingOutput
+import org.jetbrains.kotlin.analysis.api.rendering.KaTextAttribute
+import org.jetbrains.kotlin.analysis.api.rendering.append
+import org.jetbrains.kotlin.analysis.api.rendering.pushEmpty
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
+import org.jetbrains.kotlin.analysis.api.rendering.render
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -21,7 +25,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaClassTypeQualifier
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
@@ -29,7 +32,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.directSupertypes
 import org.jetbrains.kotlin.analysis.api.types.restore
-import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObjectToSupertypeOrSelf
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -38,6 +40,9 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.Creat
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.hasAbstractDeclaration
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.toKtTypeWithNullability
+import org.jetbrains.kotlin.idea.util.renderToStringIfPresent
+import org.jetbrains.kotlin.idea.util.withShortNames
+import org.jetbrains.kotlin.idea.util.withTypeApproximation
 import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.types.Variance
@@ -82,7 +87,7 @@ object CreateKotlinCallableActionTextBuilder {
             if (request.receiverExpression == null || request.receiverExpression.expressionType is KaErrorType) {
                 if (receiverType == null) return "" to ""
                 receiverSymbol = null
-                receiverTypeText = receiverType.render(renderer, Variance.INVARIANT)
+                receiverTypeText = renderer.renderToString(receiverType)
             } else {
                 receiverSymbol = request.receiverExpression.resolveExpression()
                 val receiverType = receiverType ?: request.receiverExpression.expressionType
@@ -90,7 +95,7 @@ object CreateKotlinCallableActionTextBuilder {
                 val addedPackage = if (recPackageFqName == container.containingKtFile.packageFqName || recPackageFqName == null || recPackageFqName.asString().startsWith("kotlin")) "" else recPackageFqName.asString()+"."
                 // Since receiverExpression.getKtType() returns `kotlin/Unit` for a companion object, we first try the symbol resolution and its type rendering.
                 val renderedReceiver = receiverSymbol?.renderAsReceiver(request, receiverType, renderer)
-                    ?: receiverType?.render(renderer, Variance.IN_VARIANCE)
+                    ?: renderer.copy { withTypeApproximation(Variance.IN_VARIANCE) }.renderToStringIfPresent(receiverType)
                     ?: request.receiverExpression.text
                 receiverTypeText = buildString {
                     append(addedPackage)
@@ -119,25 +124,27 @@ object CreateKotlinCallableActionTextBuilder {
     }
 
     context(_: KaSession)
-    private fun KaSymbol.renderAsReceiver(request: CreateMethodFromKotlinUsageRequest, ktType: KaType?, renderer: KaTypeRenderer): String? {
+    private fun KaSymbol.renderAsReceiver(request: CreateMethodFromKotlinUsageRequest, ktType: KaType?, renderer: KaRenderer): String? {
         val isAbstract = request.isAbstractClassOrInterface
+        // A receiver is an input position, so its type is approximated to its closest denotable subtype.
+        val receiverRenderer = renderer.copy { withTypeApproximation(Variance.IN_VARIANCE) }
         return when (this) {
             is KaCallableSymbol -> ktType?.selfOrSuperTypeWithAbstractMatch(isAbstract)
-                ?.render(renderer, Variance.IN_VARIANCE)
+                ?.let { receiverRenderer.renderToString(it) }
 
             is KaClassSymbol if (classKind == KaClassKind.ANONYMOUS_OBJECT) -> {
                 when {
                     isAbstract -> ktType?.selfOrSuperTypeWithAbstractMatch(isAbstract = true)
-                        ?.render(renderer, Variance.IN_VARIANCE)
+                        ?.let { receiverRenderer.renderToString(it) }
 
                     request.isExtension -> ktType?.approximateAnonymousObjectToSupertypeOrSelf()
-                        ?.render(renderer, Variance.IN_VARIANCE)
+                        ?.let { receiverRenderer.renderToString(it) }
 
                     else -> ""
                 }
             }
 
-            is KaClassLikeSymbol -> classId?.shortClassName?.render() ?: render(KaDeclarationRendererForSource.WITH_SHORT_NAMES)
+            is KaClassLikeSymbol -> classId?.shortClassName?.render() ?: CLASSIFIER_RENDERER_FOR_CREATE_FROM_USAGE_TEXT.renderToString(this)
             else -> null
         }
     }
@@ -148,33 +155,18 @@ object CreateKotlinCallableActionTextBuilder {
         return directSupertypes.firstNotNullOfOrNull { it.selfOrSuperTypeWithAbstractMatch(isAbstract) }
     }
 
+    /** Renders a local or anonymous classifier, which has no name to put into the action text, by its header alone. */
+    private val CLASSIFIER_RENDERER_FOR_CREATE_FROM_USAGE_TEXT: KaRenderer = KaRenderer.withShortNames.copy {
+        pushEmpty(KaPiece.ClassBody)
+    }
+
     // We must use short names of types for create-from-usage quick-fix (or IntentionAction) text.
-    @KaExperimentalApi
-    private val RAW_RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT: KaTypeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES.with {
-        classIdRenderer = createClassIdRenderer(true)
+    private val RAW_RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT: KaRenderer = KaRenderer.withShortNames.copy {
+        push(ClassTypeForActionTextRenderer(asRaw = true))
     }
 
-    @KaExperimentalApi
-    private val RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT: KaTypeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES.with {
-        classIdRenderer = createClassIdRenderer(false)
-    }
-
-    private fun createClassIdRenderer(asRaw: Boolean): KaClassTypeQualifierRenderer = object : KaClassTypeQualifierRenderer {
-        override fun renderClassTypeQualifier(
-            analysisSession: KaSession,
-            type: KaType,
-            qualifiers: List<KaClassTypeQualifier>,
-            typeRenderer: KaTypeRenderer,
-            printer: PrettyPrinter
-        ) {
-            val visibleQualifiers = K2CreateFunctionFromUsageUtil.filterOutImplementationDetailQualifiers(type, qualifiers)
-            printer.append(visibleQualifiers.joinToString(separator = ".") { it.name.render() })
-            if (!asRaw && type is KaClassType) {
-                printer.printCollectionIfNotEmpty(type.typeArguments, prefix = "<", postfix = ">", separator = ", ", renderItem = {
-                    typeRenderer.typeProjectionRenderer.renderTypeProjection(analysisSession, it, typeRenderer, this)
-                })
-            }
-        }
+    private val RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT: KaRenderer = KaRenderer.withShortNames.copy {
+        push(ClassTypeForActionTextRenderer(asRaw = false))
     }
 
 
@@ -189,7 +181,7 @@ object CreateKotlinCallableActionTextBuilder {
     fun renderTypeName(expectedType: ExpectedType, container: KtElement): String? {
         val ktType = if (expectedType is ExpectedKotlinType) expectedType.kaType else expectedType.toKtTypeWithNullability(container)
         if (ktType == null || ktType.classId == KaStandardTypeClassIds.UNIT) return null
-        return ktType.render(renderer = K2CreateFunctionFromUsageUtil.WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
+        return K2CreateFunctionFromUsageUtil.WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS.renderToString(ktType)
     }
 
     context(_: KaSession)
@@ -206,5 +198,24 @@ object CreateKotlinCallableActionTextBuilder {
             val semanticNames = expectedParameter.semanticNames.ifEmpty { return@mapNotNull null }
             ParamCandidate(semanticNames.map { generator.generateUniqueName(it) }, types)
         }
+    }
+}
+
+/**
+ * Renders a class type for quick-fix presentation text: the visible qualifiers only, without the ones which are implementation details of a
+ * generated wrapper class. With [asRaw] the type arguments are dropped as well.
+ */
+private class ClassTypeForActionTextRenderer(private val asRaw: Boolean) : KaPieceRenderer<KaClassType>(KaPiece.ClassType) {
+    context(session: KaSession, context: KaRenderingContext, output: KaRenderingOutput)
+    override fun render(value: KaClassType, next: () -> Unit): Boolean {
+        val visibleQualifiers = K2CreateFunctionFromUsageUtil.filterOutImplementationDetailQualifiers(value, value.qualifiers)
+        output.append(visibleQualifiers.joinToString(separator = ".") { it.name.asString() }, KaTextAttribute.Identifier)
+
+        if (!asRaw && value.typeArguments.isNotEmpty()) {
+            render(value.typeArguments, KaPiece.TypeArgumentList)
+        }
+
+        render(value, KaPiece.TypeNullability)
+        return true
     }
 }

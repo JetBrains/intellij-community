@@ -20,7 +20,8 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.projectStructure.contextModule
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.analyzeCopy
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.idea.refactoring.suggested.KotlinSuggestedRefactorin
 import org.jetbrains.kotlin.idea.refactoring.suggested.defaultValue
 import org.jetbrains.kotlin.idea.refactoring.suggested.modifiers
 import org.jetbrains.kotlin.idea.refactoring.suggested.receiverType
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -46,7 +48,6 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasBody
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.simpleNameExpressionRecursiveVisitor
-import org.jetbrains.kotlin.types.Variance
 
 class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactoringSupport) :
     SuggestedRefactoringAvailability(refactoringSupport) {
@@ -183,7 +184,7 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
     }
 
     context(_: KaSession)
-    private fun KaType.fqText() = render(position = Variance.INVARIANT)
+    private fun KaType.fqText() = KaRenderer.withQualifiedNames.renderToString(this)
 
     override fun detectAvailableRefactoring(state: SuggestedRefactoringState): SuggestedRefactoringData? {
         val declaration = state.declaration

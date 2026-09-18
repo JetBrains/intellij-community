@@ -19,11 +19,15 @@ import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.fir.components.KaFirIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaPiece
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderingOption
+import org.jetbrains.kotlin.analysis.api.rendering.push
+import org.jetbrains.kotlin.analysis.api.rendering.render
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.analyzeCopy
-import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
@@ -34,7 +38,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.builtinTypes
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
-import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
@@ -63,6 +66,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.getDefau
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.resolveResult
 import org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
@@ -272,16 +276,16 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
         val container = extractionData.commonParent.getStrictParentOfType<KtNamedFunction>() ?: return emptyList()
         return analyze(container) {
             val owner = container.symbol
-            val renderer = KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES.annotationRenderer
-            owner.annotations.filter { it.classId in annotationClassIds }.map { annotation ->
-                val printer = PrettyPrinter()
-                printer.append('@')
-                renderer.annotationUseSiteTargetRenderer.renderUseSiteTarget(useSiteSession, annotation, owner, renderer, printer)
-                renderer.annotationsQualifiedNameRenderer.renderQualifier(useSiteSession, annotation, owner, renderer, printer)
-                renderer.annotationArgumentsRenderer.renderAnnotationArguments(useSiteSession, annotation, owner, renderer, printer)
-                printer.append('\n')
-                printer.toString()
+
+            // The new engine has no entry point for rendering a `KaAnnotation`, so the owner is rendered through a renderer reduced to its
+            // annotation list, one annotation per line.
+            val renderer = KaRenderer.withQualifiedNames.copy {
+                set(KaRenderingOption.Annotations) { annotated -> annotated.annotations.filter { it.classId in annotationClassIds } }
+                set(KaRenderingOption.AnnotationsOnNewLine) { _ -> true }
+                push(KaPiece.NamedFunction) { render(it, KaPiece.FunctionAnnotations) }
             }
+
+            renderer.renderToString(owner).lineSequence().filter { it.isNotBlank() }.map { "$it\n" }.toList()
         }
     }
 }

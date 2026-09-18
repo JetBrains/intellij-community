@@ -8,17 +8,16 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.psi.createSmartPointer
 import com.intellij.ui.RowIcon
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.base.KaContextReceiversOwner
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KaContextReceiversRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverListRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaFunctionLikeBodyRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaPiece
+import org.jetbrains.kotlin.analysis.api.rendering.KaPieceRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderingContext
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderingOutput
+import org.jetbrains.kotlin.analysis.api.rendering.KaTextAttribute
+import org.jetbrains.kotlin.analysis.api.rendering.append
+import org.jetbrains.kotlin.analysis.api.rendering.pushEmpty
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -30,7 +29,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.fakeOverrideOriginal
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
-import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.OverridesCompletionLookupElementDecorator
@@ -43,12 +41,13 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.withAllowedResolve
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.PreferAbstractForOverrideWeigher
 import org.jetbrains.kotlin.idea.completion.implCommon.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
-import org.jetbrains.kotlin.idea.core.overrideImplement.ContextParametersListRenderer
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtOverrideMembersHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
-import org.jetbrains.kotlin.idea.core.overrideImplement.WITHOUT_LABEL
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
+import org.jetbrains.kotlin.idea.util.withOnlyModifiers
+import org.jetbrains.kotlin.idea.util.withShortNames
+import org.jetbrains.kotlin.idea.util.withoutAnnotations
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -161,10 +160,11 @@ internal class OverrideKeywordHandler(
         )
 
         val classOrObjectPointer = classOrObject.createSmartPointer()
+        val text = TextRenderer.renderToString(memberSymbol)
         return OverridesCompletionLookupElementDecorator(
             lookupElement = baseLookupElement,
             declaration = declaration,
-            text = "override " + memberSymbol.render(TextRenderer),
+            text = "override " + text,
             tailText = memberSymbol.contextReceivers
                 .takeUnless { it.isEmpty() }
                 ?.joinToString(prefix = " for ") { it.type.renderVerbose() }, // TODO could be a different DeclarationRenderer rendering only tail text information
@@ -204,48 +204,33 @@ internal class OverrideKeywordHandler(
     }
 }
 
-@KaExperimentalApi
-private val TextRenderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
-    annotationRenderer = annotationRenderer.with {
-        annotationFilter = KaRendererAnnotationsFilter.NONE
-    }
+/**
+ * Renders a placeholder body after the function signature, so that the lookup element shows `override fun foo() {...}`.
+ *
+ * Only a named function gets a placeholder: a property is rendered without one, accessors included.
+ */
+private object PlaceholderBodyRenderer : KaPieceRenderer<KaFunctionSymbol>(KaPiece.FunctionBody) {
+    context(session: KaSession, context: KaRenderingContext, output: KaRenderingOutput)
+    override fun render(value: KaFunctionSymbol, next: () -> Unit): Boolean {
+        if (value !is KaNamedFunctionSymbol) return false
 
-    modifiersRenderer = modifiersRenderer.with {
-        keywordsRenderer = keywordsRenderer.with {
-            keywordFilter = KaRendererKeywordFilter.onlyWith(KtTokens.TYPE_MODIFIER_KEYWORDS)
-        }
+        output.append(" {...}", KaTextAttribute.Punctuation)
+        return true
     }
+}
 
-    contextReceiversRenderer = contextReceiversRenderer.with {
-        contextReceiverListRenderer = ContextParametersListRenderer
-    }
+private val TextRenderer: KaRenderer = KaRenderer.withShortNames.copy {
+    withoutAnnotations()
+    withOnlyModifiers(KtTokens.TYPE_MODIFIER_KEYWORDS)
+    push(PlaceholderBodyRenderer)
 
-    typeRenderer = typeRenderer.with {
-        contextReceiversRenderer = KaContextReceiversRenderer {
-            contextReceiverListRenderer = object : KaContextReceiverListRenderer {
-
-                override fun renderContextReceivers(
-                    analysisSession: KaSession,
-                    owner: KaContextReceiversOwner,
-                    contextReceiversRenderer: KaContextReceiversRenderer,
-                    typeRenderer: KaTypeRenderer,
-                    printer: PrettyPrinter,
-                ) {
-                }
-            }
-            contextReceiverLabelRenderer = WITHOUT_LABEL
-        }
-    }
-
-    functionLikeBodyRenderer = object : KaFunctionLikeBodyRenderer {
-        override fun renderBody(
-            analysisSession: KaSession,
-            symbol: KaFunctionSymbol,
-            printer: PrettyPrinter,
-        ) = printer {
-            append(" {...}")
-        }
-    }
+    /**
+     * If lengthy context parameters appear in the beginning of the completion item, the user won't be able to see the entire
+     * declaration signature (KTIJ-26587). So they're appended to the end.
+     *
+     * @see OverrideKeywordHandler.createLookupElementToGenerateSingleOverrideMember
+      */
+    pushEmpty(KaPiece.ContextParameterList)
 }
 
 private val KtValVarKeywordOwner.isVal: Boolean

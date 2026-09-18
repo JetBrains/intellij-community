@@ -14,20 +14,18 @@ import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.editor.Editor
 import kotlinx.serialization.Serializable
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.useSiteModule
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
+import org.jetbrains.kotlin.idea.util.withShortNames
+import org.jetbrains.kotlin.idea.util.withoutAnnotations
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.types.Variance
 
 /**
  * An insertion handler that uses templates for inserting a trailing lambda, adding a
@@ -184,10 +182,7 @@ private fun buildTrailingLambdaParameterData(
         val initialSuggestedNames = suggestedName?.let { sequenceOf(it.asString()) }
             ?: kotlinNameSuggester.suggestTypeNames(parameterType)
 
-        val parameterTypeText = parameterType.render(
-            renderer = NoAnnotationsTypeRenderer,
-            position = Variance.INVARIANT,
-        )
+        val parameterTypeText = NoAnnotationsTypeRenderer.renderToString(parameterType)
 
         val suggestedNames = initialSuggestedNames.map {
             KotlinNameSuggester.suggestNameByName(it, validator)
@@ -211,9 +206,4 @@ private class LambdaParameterExpression(
         lookupElements.toTypedArray()
 }
 
-@KaExperimentalApi
-private val NoAnnotationsTypeRenderer: KaTypeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES.with {
-    annotationsRenderer = annotationsRenderer.with {
-        annotationFilter = KaRendererAnnotationsFilter.NONE
-    }
-}
+private val NoAnnotationsTypeRenderer: KaRenderer = KaRenderer.withShortNames.copy { withoutAnnotations() }

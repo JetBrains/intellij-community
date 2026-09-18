@@ -15,17 +15,18 @@ import com.intellij.util.PlatformIcons
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaParameterDefaultValueRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererModalityModifierProvider
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererOtherModifiersProvider
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaPiece
+import org.jetbrains.kotlin.analysis.api.rendering.KaPieceRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderingContext
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderingOption
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderingOutput
+import org.jetbrains.kotlin.analysis.api.rendering.KaTextAttribute
+import org.jetbrains.kotlin.analysis.api.rendering.append
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
@@ -39,19 +40,22 @@ import org.jetbrains.kotlin.analysis.api.types.allSupertypes
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.analysis.api.types.symbol
-import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.addAnnotation
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateClassBody
 import org.jetbrains.kotlin.idea.base.psi.predictImplicitModality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.util.withShortNames
+import org.jetbrains.kotlin.idea.util.withoutAnnotations
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.core.TemplateKind
 import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddMemberToSupertypeFixFactory.MemberData
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSupertypes
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -59,8 +63,8 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.addRemoveModifier.sortModifiers
 import org.jetbrains.kotlin.psi.psiUtil.modalityModifier
-import org.jetbrains.kotlin.types.Variance
 import javax.swing.Icon
 
 internal object AddMemberToSupertypeFixFactory {
@@ -102,14 +106,14 @@ internal object AddMemberToSupertypeFixFactory {
     val project = memberElement.project
     val callableSymbol = memberElement.symbol
     val targetClass = classSymbol.psi as? KtClass ?: return null
-    val signaturePreview = callableSymbol.render(KaDeclarationRendererForSource.WITH_SHORT_NAMES.render(classSymbol))
-    var sourceCode = callableSymbol.render(KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES.render(classSymbol))
+    val signaturePreview = KaRenderer.withShortNames.forTargetClass(classSymbol).renderToString(callableSymbol)
+    var sourceCode = KaRenderer.withQualifiedNames.forTargetClass(classSymbol).renderToString(callableSymbol)
     if (memberElement is KtNamedFunction) {
       if (classSymbol.classKind != KaClassKind.INTERFACE && classSymbol.modality != KaSymbolModality.ABSTRACT && classSymbol.modality != KaSymbolModality.SEALED) {
         val returnType = (callableSymbol as KaNamedFunctionSymbol).returnType
         sourceCode += if (returnType.classId != KaStandardTypeClassIds.UNIT) {
           val bodyText = getFunctionBodyTextFromTemplate(project, TemplateKind.FUNCTION, callableSymbol.name.asString(),
-                                                         callableSymbol.returnType.render(position = Variance.OUT_VARIANCE),
+                                                         KaRenderer.withQualifiedDenotableSupertypes.renderToString(callableSymbol.returnType),
                                                          classSymbol.importableFqName)
           "{\n$bodyText\n}"
         }
@@ -127,46 +131,26 @@ internal object AddMemberToSupertypeFixFactory {
     return MemberData(signaturePreview, sourceCode, targetClass)
   }
 
-  context(_: KaSession)
-  private fun KaDeclarationRenderer.render(targetClassSymbol: KaClassSymbol) = with {
-    modifiersRenderer = modifiersRenderer.with {
-      modalityProvider = object : KaRendererModalityModifierProvider {
-        override fun getModalityModifier(
-          analysisSession: KaSession,
-          symbol: KaDeclarationSymbol,
-        ): KtModifierKeywordToken? {
-          if (symbol.containingSymbol is KaClassSymbol) { // do not provide modifiers for parameters
-            return if (targetClassSymbol.modality == KaSymbolModality.SEALED || targetClassSymbol.modality == KaSymbolModality.ABSTRACT) KtTokens.ABSTRACT_KEYWORD
-            else KtTokens.OPEN_KEYWORD
-          }
-          return null
+  private fun KaRenderer.forTargetClass(targetClassSymbol: KaClassSymbol): KaRenderer = copy {
+    withoutAnnotations()
+    push(SourceDefaultValueExpressionRenderer)
+
+    set(KaRenderingOption.Modifiers) { symbol, modifiers ->
+      buildList {
+        addAll(modifiers)
+        remove(KtTokens.OVERRIDE_KEYWORD)
+
+        if (symbol.containingSymbol is KaClassSymbol) {
+          removeAll { it in KtTokens.MODALITY_MODIFIERS }
+          add(
+            if (targetClassSymbol.modality == KaSymbolModality.SEALED || targetClassSymbol.modality == KaSymbolModality.ABSTRACT) {
+              KtTokens.ABSTRACT_KEYWORD
+            } else {
+              KtTokens.OPEN_KEYWORD
+            }
+          )
         }
-      }
-      otherModifiersProvider = object : KaRendererOtherModifiersProvider {
-        override fun getOtherModifiers(
-          analysisSession: KaSession,
-          symbol: KaDeclarationSymbol,
-        ): List<KtModifierKeywordToken> = buildList {
-          addAll(KaRendererOtherModifiersProvider.ALL.getOtherModifiers(analysisSession, symbol))
-          remove(KtTokens.OVERRIDE_KEYWORD) // keep expect/actual even when not approriate
-        }
-      }
-    }
-    //annotations would be copied as is
-    annotationRenderer = annotationRenderer.with {
-      annotationFilter = KaRendererAnnotationsFilter.NONE
-    }
-    parameterDefaultValueRenderer = object : KaParameterDefaultValueRenderer {
-      override fun renderDefaultValue(
-        analysisSession: KaSession,
-        symbol: KaValueParameterSymbol,
-        printer: PrettyPrinter,
-      ) {
-        val defaultValue = symbol.defaultValue
-        if (defaultValue != null) {
-          printer.append(defaultValue.text)
-        }
-      }
+      }.distinct().let(::sortModifiers)
     }
   }
 }
@@ -271,4 +255,21 @@ private class AddPropertyToSupertypeFix(
 ) : AddMemberToSupertypeFix(element, properties) {
   override val kind: String = "property"
   override val icon: Icon = PlatformIcons.PROPERTY_ICON
+}
+
+/**
+ * Renders a value parameter's default value as the expression written in the source code.
+ *
+ * The built-in renderer evaluates the default value and renders a placeholder for anything which is not a compile-time constant, which is
+ * wrong when the member is being copied into a supertype: the expression has to survive verbatim. Declines when the parameter has no source
+ * expression, so the built-in placeholder logic still applies.
+ */
+private object SourceDefaultValueExpressionRenderer :
+  KaPieceRenderer<KaValueParameterSymbol>(KaPiece.ValueParameterDefaultValueExpression) {
+  context(session: KaSession, context: KaRenderingContext, output: KaRenderingOutput)
+  override fun render(value: KaValueParameterSymbol, next: () -> Unit): Boolean {
+    val defaultValue = value.defaultValue ?: return false
+    output.append(defaultValue.text, KaTextAttribute.Identifier)
+    return true
+  }
 }

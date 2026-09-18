@@ -10,7 +10,8 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.getTopmostParenthesizedExpressionOrSelf
 import org.jetbrains.kotlin.idea.codeinsight.utils.setTypeReference
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSupertypes
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -42,7 +44,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.KtWhenEntry
-import org.jetbrains.kotlin.types.Variance
 
 internal class ConvertToCollectionLiteralsInspection :
     KotlinApplicableInspectionBase.Simple<KtCallExpression, ConvertToCollectionLiteralsInspection.Context>() {
@@ -122,7 +123,7 @@ internal class ConvertToCollectionLiteralsInspection :
     context(session: KaSession)
     private fun renderExplicitTypeIfNeeded(element: KtCallExpression, fqName: FqName): String? {
         if (fqName != LIST_LITERAL || element.typeArguments.isNotEmpty()) {
-            return element.expressionType!!.render(position = Variance.OUT_VARIANCE)
+            return KaRenderer.withQualifiedDenotableSupertypes.renderToString(element.expressionType!!)
         }
         return null
     }

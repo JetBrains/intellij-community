@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.classId
@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
-import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.idea.util.withShortNames
 
 internal object NumberConversionFixFactory {
 
@@ -51,10 +51,7 @@ internal fun prepareNumberConversionElementContext(
     val fromTypeClassId = fromType.classId
     val toTypeClassId = toType.classId
     return NumberConversionFix.ElementContext(
-        typePresentation = toType.withNullability(false).render(
-            renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,
-            position = Variance.INVARIANT,
-        ),
+        typePresentation = KaRenderer.withShortNames.renderToString(toType.withNullability(false)),
         fromInt = fromTypeClassId == KaStandardTypeClassIds.INT,
         fromChar = fromTypeClassId == KaStandardTypeClassIds.CHAR,
         fromFloatOrDouble = fromTypeClassId == KaStandardTypeClassIds.FLOAT || fromTypeClassId == KaStandardTypeClassIds.DOUBLE,

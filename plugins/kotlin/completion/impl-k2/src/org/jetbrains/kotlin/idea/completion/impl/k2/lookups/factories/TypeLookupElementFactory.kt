@@ -7,11 +7,9 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
@@ -23,16 +21,18 @@ import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsert
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.withClassifierSymbolInfo
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
+import org.jetbrains.kotlin.idea.util.withShortNames
+import org.jetbrains.kotlin.idea.util.withoutAnnotations
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.types.Variance
 
 internal object TypeLookupElementFactory {
 
     context(_: KaSession)
     fun createLookup(type: KaType): LookupElement? {
-        val renderedType = type.render(TYPE_RENDERING_OPTIONS_SHORT_NAMES, position = Variance.INVARIANT)
-        val lookupObject = TypeLookupObject(type.render(TYPE_RENDERING_OPTIONS, position = Variance.INVARIANT))
+        val renderedType = TYPE_RENDERING_OPTIONS_SHORT_NAMES.renderToString(type)
+        val lookupObject = TypeLookupObject(TYPE_RENDERING_OPTIONS.renderToString(type))
 
         val symbol = type.getSymbolIfTypeParameterOrUsualClass()
 
@@ -92,15 +92,9 @@ internal object TypeLookupElementFactory {
         else -> null
     }
 
-    @KaExperimentalApi
-    private val TYPE_RENDERING_OPTIONS_SHORT_NAMES = KaTypeRendererForSource.WITH_SHORT_NAMES.with {
-        annotationsRenderer = annotationsRenderer.with { annotationFilter = KaRendererAnnotationsFilter.NONE }
-    }
+    private val TYPE_RENDERING_OPTIONS_SHORT_NAMES = KaRenderer.withShortNames.copy { withoutAnnotations() }
 
-    @KaExperimentalApi
-    private val TYPE_RENDERING_OPTIONS = KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
-        annotationsRenderer = annotationsRenderer.with { annotationFilter = KaRendererAnnotationsFilter.NONE }
-    }
+    private val TYPE_RENDERING_OPTIONS = KaRenderer.withQualifiedNames.copy { withoutAnnotations() }
 }
 
 @Serializable

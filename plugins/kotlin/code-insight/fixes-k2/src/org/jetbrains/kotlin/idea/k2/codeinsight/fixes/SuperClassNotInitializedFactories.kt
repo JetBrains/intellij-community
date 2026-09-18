@@ -10,11 +10,11 @@ import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.SupertypeNotInitialized
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.session.useSiteModule
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.substitute
@@ -40,6 +40,8 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
+import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -48,7 +50,6 @@ import org.jetbrains.kotlin.psi.KtSuperTypeEntry
 import org.jetbrains.kotlin.psi.KtSuperTypeList
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.match
 
 internal object SuperClassNotInitializedFactories {
@@ -267,7 +268,7 @@ internal object SuperClassNotInitializedFactories {
                 }
                 return ParameterInfo(
                     renderedName = renderedName,
-                    parameterType = superParameterType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT),
+                    parameterType = KaRenderer.withShortNames.renderToString(superParameterType),
                     parameterGenerationInfo = ParameterGenerationInfo.Reused,
                     varargInfo = varargInfo,
                 )
@@ -276,12 +277,12 @@ internal object SuperClassNotInitializedFactories {
         } else {
             val defaultValueText = superParameter.symbol.defaultValue?.text?.let { " = $it" } ?: ""
             // IN variance: the type is a parameter type, approximating safely to a denotable type
-            val renderedType = superParameterType.render(position = Variance.IN_VARIANCE)
+            val renderedType = KaRenderer.withQualifiedDenotableSubtypes.renderToString(superParameterType)
             val varargKeywordOrEmpty = "vararg ".takeIf { isVararg }.orEmpty()
             val parameterText = "$varargKeywordOrEmpty$renderedName: ${renderedType}$defaultValueText"
             return ParameterInfo(
                 renderedName = renderedName,
-                parameterType = superParameterType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT),
+                parameterType = KaRenderer.withShortNames.renderToString(superParameterType),
                 parameterGenerationInfo = ParameterGenerationInfo.New(parameterText),
                 varargInfo = if (isVararg) VarargInfo.VarargWithSpread else VarargInfo.NotVararg,
             )

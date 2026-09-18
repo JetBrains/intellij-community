@@ -15,17 +15,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.psi.tree.TokenSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaParameterDefaultValueRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
+import org.jetbrains.kotlin.analysis.api.rendering.KaPiece
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.pushEmpty
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
@@ -37,7 +33,15 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
 import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
-import org.jetbrains.kotlin.idea.util.createRealNameRenderer
+import org.jetbrains.kotlin.idea.util.withAlwaysRenderedReturnType
+import org.jetbrains.kotlin.idea.util.withEllipsisDefaultValues
+import org.jetbrains.kotlin.idea.util.withExpandedTypeAliasComment
+import org.jetbrains.kotlin.idea.util.withOnlyModifiers
+import org.jetbrains.kotlin.idea.util.withJavaSourceParameterNames
+import org.jetbrains.kotlin.idea.util.withPsiTextForErrorReturnType
+import org.jetbrains.kotlin.idea.util.withShortDenotableSupertypes
+import org.jetbrains.kotlin.idea.util.withoutAnnotations
+import org.jetbrains.kotlin.idea.util.withoutDeclarationKeywords
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassBody
@@ -375,31 +379,16 @@ abstract class KtGenerateMembersHandler(
 
     companion object {
         @KaExperimentalApi
-        val renderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
-            keywordsRenderer = KaKeywordsRenderer.NONE
-
-            returnTypeFilter = KaCallableReturnTypeFilter.ALWAYS
-
-            parameterDefaultValueRenderer = KaParameterDefaultValueRenderer.THREE_DOTS
-
-            typeRenderer = typeRenderer.with {
-                expandedTypeRenderingMode = KaExpandedTypeRenderingMode.RENDER_ABBREVIATED_TYPE_WITH_EXPANDED_TYPE_COMMENT
-            }
-
-            withoutLabel()
-
-            annotationRenderer = annotationRenderer.with {
-                annotationFilter = KaRendererAnnotationsFilter.NONE
-            }
-            modifiersRenderer = modifiersRenderer.with {
-                keywordsRenderer = keywordsRenderer.with {
-                    keywordFilter = KaRendererKeywordFilter.onlyWith(KtTokens.VARARG_KEYWORD)
-                }
-            }
-
-            propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
-
-            nameRenderer = createRealNameRenderer(nameRenderer)
+        val renderer: KaRenderer = KaRenderer.withShortDenotableSupertypes.copy {
+            withoutDeclarationKeywords()
+            withOnlyModifiers(TokenSet.create(KtTokens.VARARG_KEYWORD))
+            withAlwaysRenderedReturnType()
+            withPsiTextForErrorReturnType()
+            withExpandedTypeAliasComment()
+            withoutAnnotations()
+            withJavaSourceParameterNames()
+            withEllipsisDefaultValues()
+            pushEmpty(KaPiece.PropertyAccessors)
         }
     }
 

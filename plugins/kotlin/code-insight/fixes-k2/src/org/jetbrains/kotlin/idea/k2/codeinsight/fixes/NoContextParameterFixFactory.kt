@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidate
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
@@ -29,6 +29,8 @@ import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
+import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -43,7 +45,6 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolution.KtResolvableCall
-import org.jetbrains.kotlin.types.Variance
 
 /** A context argument to provide at a call site: a visible value [candidateName],
  *  or (when `null`) a `TODO(...)` placeholder of the given type. */
@@ -183,8 +184,8 @@ internal object NoContextParameterFixFactory {
     private fun contextArgument(candidateName: String?, type: KaType): ContextArgument =
         ContextArgument(
             candidateName = candidateName,
-            typeText = type.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT),
-            typeFqNameText = type.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT),
+            typeText = KaRenderer.withShortNames.renderToString(type),
+            typeFqNameText = KaRenderer.withQualifiedNames.renderToString(type),
         )
 
     /**
@@ -206,8 +207,8 @@ internal object NoContextParameterFixFactory {
             contextParameters = missingTypes.map { type ->
                 AddContextParameterFix.ContextParameter(
                     name = null,
-                    type = type.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT),
-                    shortType = type.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT),
+                    type = KaRenderer.withQualifiedNames.renderToString(type),
+                    shortType = KaRenderer.withShortNames.renderToString(type),
                 )
             },
         )

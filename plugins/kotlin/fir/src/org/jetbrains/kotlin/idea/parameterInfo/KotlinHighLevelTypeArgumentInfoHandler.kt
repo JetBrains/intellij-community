@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -28,12 +28,12 @@ import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.api.visibility.createUseSiteVisibilityChecker
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.filterCandidateByReceiverTypeAndVisibility
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
+import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.types.Variance
 
 /**
  * Presents type argument info for class type references (e.g., property type in declaration, base class in super types list).
@@ -128,7 +128,7 @@ abstract class KotlinHighLevelTypeArgumentInfoHandlerBase : AbstractKotlinTypeAr
             } else {
                 it.classId == KaStandardTypeClassIds.ANY && it.isMarkedNullable
             }
-            val renderedType = it.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+            val renderedType = KaRenderer.withShortNames.renderToString(it)
             UpperBoundInfo(isNullableAnyOrFlexibleAny, renderedType)
         }
         return TypeParameterInfo(parameter.name.asString(), parameter.isReified, parameter.variance, upperBounds)

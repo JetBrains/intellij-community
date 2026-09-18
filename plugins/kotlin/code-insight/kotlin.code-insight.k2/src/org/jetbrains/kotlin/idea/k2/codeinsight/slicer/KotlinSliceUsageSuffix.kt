@@ -4,16 +4,10 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.slicer
 import com.intellij.slicer.SliceUsage
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaParameterDefaultValueRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaConstructorSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaNamedFunctionSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KaNamedClassSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesFilter
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaPiece
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.pushEmpty
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -27,9 +21,15 @@ import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.name.render
+import org.jetbrains.kotlin.idea.util.withCompactClassSignature
+import org.jetbrains.kotlin.idea.util.withCompactConstructorSignature
+import org.jetbrains.kotlin.idea.util.withCompactFunctionSignature
+import org.jetbrains.kotlin.idea.util.withShortNames
+import org.jetbrains.kotlin.idea.util.withValueParameterTypesAndVararg
+import org.jetbrains.kotlin.idea.util.withoutDeclarationKeywords
+import org.jetbrains.kotlin.idea.util.withoutModifiers
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -41,7 +41,6 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.types.Variance
 
 object KotlinSliceUsageSuffix {
     //private val descriptorRenderer = DescriptorRenderer.ONLY_NAMES_WITH_SHORT_TYPES.withOptions {
@@ -78,7 +77,7 @@ object KotlinSliceUsageSuffix {
                 if (!(symbol is KaCallableSymbol && symbol.isExtension) && symbol !is KaConstructorSymbol && !(symbol is KaClassSymbol && symbol.classKind == KaClassKind.COMPANION_OBJECT)) {
                     val containingClassifier = ((symbol as? KaPropertyAccessorSymbol)?.containingDeclaration ?: symbol).containingDeclaration as? KaClassSymbol
                     if (containingClassifier != null) {
-                        append(containingClassifier.render(renderer()))
+                        append(RENDERER.renderToString(containingClassifier))
                         append(".")
                     }
                 }
@@ -93,7 +92,7 @@ object KotlinSliceUsageSuffix {
                     }
 
                     else -> {
-                        append(symbol.render(renderer()))
+                        append(RENDERER.renderToString(symbol))
                     }
                 }
             }
@@ -113,25 +112,21 @@ object KotlinSliceUsageSuffix {
         val receiverType = callableSymbol.receiverType
         if (receiverType != null) {
             append(" on ")
-            append(receiverType.render(renderer().typeRenderer, position = Variance.INVARIANT))
+            append(RENDERER.renderToString(receiverType))
         }
     }
 
-    private fun renderer() = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
-        returnTypeFilter = object : KaCallableReturnTypeFilter {
-            override fun shouldRenderReturnType(analysisSession: KaSession, type: KaType, symbol: KaCallableSymbol): Boolean = false
-        }
-        keywordsRenderer = KaKeywordsRenderer.AS_WORD.with {
-            keywordFilter = KaRendererKeywordFilter.NONE
-        }
-        superTypesFilter = KaSuperTypesFilter.NONE
-        namedClassRenderer = KaNamedClassSymbolRenderer.AS_SOURCE_WITHOUT_PRIMARY_CONSTRUCTOR
-        parameterDefaultValueRenderer = KaParameterDefaultValueRenderer.NO_DEFAULT_VALUE
-        constructorRenderer = KaConstructorSymbolRenderer.AS_RAW_SIGNATURE
-        namedFunctionRenderer = KaNamedFunctionSymbolRenderer.AS_RAW_SIGNATURE
-        modifiersRenderer = modifiersRenderer.with {
-            keywordsRenderer = keywordsRenderer.with { keywordFilter = KaRendererKeywordFilter.NONE }
-        }
+    private val RENDERER: KaRenderer = KaRenderer.withShortNames.copy {
+        withoutDeclarationKeywords()
+        withoutModifiers()
+        withValueParameterTypesAndVararg()
+        withCompactFunctionSignature()
+        withCompactConstructorSignature()
+        pushEmpty(KaPiece.NamedFunctionReturnType)
+        withCompactClassSignature()
+        pushEmpty(KaPiece.SupertypeList)
+        pushEmpty(KaPiece.ClassBody)
+        pushEmpty(KaPiece.PropertyInitializer)
     }
 
     //private class TruncatedValueParametersHandler(private val maxParameters: Int) : DescriptorRenderer.ValueParametersHandler {

@@ -8,8 +8,8 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -32,6 +32,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickF
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
+import org.jetbrains.kotlin.idea.util.withShortDenotableSubtypes
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -43,7 +45,6 @@ import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.resolution.KtResolvable
 import org.jetbrains.kotlin.resolution.KtResolvableCall
-import org.jetbrains.kotlin.types.Variance
 
 object ChangeParameterTypeFixFactory {
 
@@ -136,8 +137,8 @@ object ChangeParameterTypeFixFactory {
         val functionName = getDeclarationName(functionLikeSymbol) ?: return null
 
         val approximatedType = targetType.approximateToDenotableSupertypeOrSelf(false)
-        val typePresentation = approximatedType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.IN_VARIANCE)
-        val typeFQNPresentation = approximatedType.render(position = Variance.IN_VARIANCE)
+        val typePresentation = KaRenderer.withShortDenotableSubtypes.renderToString(approximatedType)
+        val typeFQNPresentation = KaRenderer.withQualifiedDenotableSubtypes.renderToString(approximatedType)
 
         return ChangeParameterTypeFix(
             parameter,

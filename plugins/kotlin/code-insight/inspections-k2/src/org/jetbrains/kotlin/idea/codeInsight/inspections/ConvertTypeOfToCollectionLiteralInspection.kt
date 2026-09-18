@@ -10,8 +10,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.getTopmostParenthesizedExpressionOrSelf
 import org.jetbrains.kotlin.idea.codeinsight.utils.setTypeReference
+import org.jetbrains.kotlin.idea.util.withShortDenotableSupertypes
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
@@ -37,7 +38,6 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtVisitorVoid
-import org.jetbrains.kotlin.types.Variance
 
 internal class ConvertTypeOfToCollectionLiteralInspection :
     KotlinApplicableInspectionBase.Simple<KtDotQualifiedExpression, ConvertTypeOfToCollectionLiteralInspection.Context>() {
@@ -82,7 +82,7 @@ internal class ConvertTypeOfToCollectionLiteralInspection :
         val parent = element.getTopmostParenthesizedExpressionOrSelf().parent
         if (parent is KtValueArgument && !isCollectionLiteralSafeAsArgument(element, expressionType)) return null
         if (isTypeChanged(parent, expressionType)) return null
-        val typeText = expressionType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.OUT_VARIANCE)
+        val typeText = KaRenderer.withShortDenotableSupertypes.renderToString(expressionType)
 
         return Context(typeText)
     }

@@ -24,13 +24,14 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.JavaPsiRecordUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.psi.addMemberDeclaration
 import org.jetbrains.kotlin.idea.base.psi.setPropertyInitializer
 import org.jetbrains.kotlin.idea.base.psi.setPropertyTypeReference
+import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.j2k.externalCodeProcessing.J2kMemberKey
 import org.jetbrains.kotlin.j2k.externalCodeProcessing.OriginalJavaPsiContext
@@ -46,7 +47,6 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
-import org.jetbrains.kotlin.types.Variance
 
 private val originalPsiPointerKeyForTests = Key.create<SmartPsiElementPointer<PsiElement>>("j2k.test.original.psi.pointer")
 
@@ -340,7 +340,7 @@ private data class PartialSemanticsForTests(
 @OptIn(KaExperimentalApi::class)
 private fun KtProperty.renderTypeForPartialTests(): String =
     typeReference?.text ?: analyze(this) {
-        symbol.returnType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+        KaRenderer.withShortNames.renderToString(symbol.returnType)
     }
 
 private fun defaultInitializerForPartialTests(typeText: String): Pair<String, String> {

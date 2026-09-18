@@ -64,6 +64,7 @@ jvm_library(
         "//plugins/kotlin/code-insight/utils",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
         "//plugins/kotlin/base/code-insight/minimal",
+        "//plugins/kotlin/base/code-insight",
         "//libraries/junit4",
         "//plugins/kotlin/j2k/k2:kotlin-j2k",
         "//plugins/kotlin/base/psi",

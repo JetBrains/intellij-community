@@ -2,17 +2,12 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.codeInsight.intention.IntentionAction
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererVisibilityModifierProvider
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.useSiteModule
-import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
@@ -39,6 +34,10 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories.Unresolved
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.quickfix.ImportFixHelper
 import org.jetbrains.kotlin.idea.quickfix.ImportPrioritizer
+import org.jetbrains.kotlin.idea.util.withAlwaysRenderedReturnType
+import org.jetbrains.kotlin.idea.util.withImplicitVisibility
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
+import org.jetbrains.kotlin.idea.util.withoutAnnotations
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -72,15 +71,10 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
         return factories.flatMap { with (it) { createQuickFixes(diagnostics) } }
     }
 
-    @KaExperimentalApi
-    private val renderer: KaDeclarationRenderer = KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
-        modifiersRenderer = modifiersRenderer.with {
-            visibilityProvider = KaRendererVisibilityModifierProvider.WITH_IMPLICIT_VISIBILITY
-        }
-        annotationRenderer = annotationRenderer.with {
-            annotationFilter = KaRendererAnnotationsFilter.NONE
-        }
-        returnTypeFilter = KaCallableReturnTypeFilter.ALWAYS
+    private val renderer: KaRenderer = KaRenderer.withQualifiedNames.copy {
+        withImplicitVisibility()
+        withoutAnnotations()
+        withAlwaysRenderedReturnType()
     }
 
     context(_: KaSession)
@@ -94,7 +88,7 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
         ) {
             append("class $fqName")
         } else {
-            renderer.renderDeclaration(useSiteSession, candidate.symbol, printer = this)
+            append(renderer.renderToString(candidate.symbol))
         }
 
         candidate.packageName?.let { packageName ->

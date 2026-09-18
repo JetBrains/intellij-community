@@ -9,7 +9,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -71,7 +71,7 @@ internal class JavaDefaultMethodsNotOverriddenByDelegationInspection : AbstractK
                         val fqName = containingSymbol.classId?.asSingleFqName()?.toString() ?: containingSymbol.name?.asString()
                         KtClassMemberInfo.create(
                             symbol = javaDefaultMethod,
-                            memberText = javaDefaultMethod.render(KtGenerateMembersHandler.renderer),
+                            memberText = KtGenerateMembersHandler.renderer.renderToString(javaDefaultMethod),
                             memberIcon = KotlinIconProvider.getIcon(javaDefaultMethod),
                             containingSymbolText = fqName,
                             containingSymbolIcon = KotlinIconProvider.getIcon(javaDefaultMethod),

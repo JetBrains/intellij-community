@@ -7,7 +7,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
@@ -18,11 +19,11 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.UnderscoreTypeArgumentsUtils.isUnderscoreTypeArgument
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.UnderscoreTypeArgumentsUtils.replaceTypeProjection
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSupertypes
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.psi.KtTypeProjection
-import org.jetbrains.kotlin.types.Variance
 
 internal class ReplaceUnderscoreWithTypeArgumentIntention :
     KotlinApplicableModCommandAction<KtTypeProjection, ReplaceUnderscoreWithTypeArgumentIntention.Context>(KtTypeProjection::class) {
@@ -39,7 +40,7 @@ internal class ReplaceUnderscoreWithTypeArgumentIntention :
         if (newType is KaErrorType) return null
 
         // Any of Variance is fine for this case
-        val renderedNewType = newType.render(position = Variance.OUT_VARIANCE)
+        val renderedNewType = KaRenderer.withQualifiedDenotableSupertypes.renderToString(newType)
 
         val argumentList = element.parent as? KtTypeArgumentList ?: return null
         val newTypeProjection = replaceTypeProjection(element, argumentList, renderedNewType)

@@ -15,7 +15,8 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -55,6 +56,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.ClassImportFilter
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSupertypes
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -91,7 +93,6 @@ import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.psi.unpackFunctionLiteral
 import org.jetbrains.kotlin.resolve.ImportPath
-import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.sure
 
 @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
@@ -460,7 +461,7 @@ internal fun specifyNullTypeExplicitly(codeToInline: MutableCodeToInline, origin
     if (mainExpression?.isNull() == true) {
         val useSiteKtElement = originalDeclaration as KtDeclarationWithReturnType
         val nullCast = analyze(useSiteKtElement) {
-            "null as ${useSiteKtElement.returnType.render(position = Variance.OUT_VARIANCE)}"
+            "null as ${KaRenderer.withQualifiedDenotableSupertypes.renderToString(useSiteKtElement.returnType)}"
         }
 
         codeToInline.addPreCommitAction(mainExpression) {

@@ -41,7 +41,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -85,7 +85,9 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.substringContextOrThis
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.renderToStringIfPresent
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
@@ -110,7 +112,6 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.isInsideOf
-import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
@@ -213,7 +214,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                             }
                         ) {
                             mustSpecifyTypeExplicitly = true
-                        } else if (property.returnType.toDenotable()?.render(position = Variance.INVARIANT) == expressionRenderedType) {
+                        } else if (KaRenderer.withQualifiedNames.renderToStringIfPresent(property.returnType.toDenotable()) == expressionRenderedType) {
                             renderedTypeArgumentsIfMightBeNeeded = null
                         } else if (initializer is KtLambdaExpression && !areTypeArgumentsNeededForCorrectTypeInference(initializer)) {
                             mustSpecifyTypeExplicitly = true
@@ -437,7 +438,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             val physicalExpression = expression.substringContextOrThis
 
             val expressionType = substringInfo?.guessLiteralType() ?: calculateExpectedType(physicalExpression)
-            expressionType?.toDenotable()?.render(position = Variance.INVARIANT)
+            KaRenderer.withQualifiedNames.renderToStringIfPresent(expressionType?.toDenotable())
         } ?: return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.expression.has.unit.type"))
 
         val renderedTypeArguments = expression.getPossiblyQualifiedCallExpression()?.let { callExpression ->

@@ -3,17 +3,19 @@ package org.jetbrains.kotlin.idea.refactoring.util
 
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtParameterList
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.types.Variance
 
 context(session: KaSession)
 fun getExplicitLambdaSignature(element: KtLambdaExpression): String? {
@@ -24,8 +26,8 @@ fun getExplicitLambdaSignature(element: KtLambdaExpression): String? {
         val parameter = param.psi as? KtParameter
         if (parameter != null) {
             (parameter.name ?: parameter.destructuringDeclaration?.text
-            ?: "_") + ": " + param.returnType.render(position = Variance.IN_VARIANCE)
-        } else param.render()
+            ?: "_") + ": " + KaRenderer.withQualifiedDenotableSubtypes.renderToString(param.returnType)
+        } else KaRenderer.withQualifiedNames.renderToString(param)
     }
 }
 

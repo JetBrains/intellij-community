@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableImplementationState
@@ -43,31 +44,30 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
         }
     }
 
-context(_: KaSession)
-private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> {
-    if (classOrObject is KtClass && classOrObject.isAnnotation()) return emptyList()
-    val classSymbol = (classOrObject.symbol as? KaEnumEntrySymbol)?.initializer as? KaClassSymbol ?: classOrObject.classSymbol ?: return emptyList()
-    return getOverridableMembers(classSymbol).map { overrideMember ->
-        val symbol = overrideMember.symbol
-        val bodyType = overrideMember.bodyType
-        val containingSymbol = overrideMember.containingSymbol
+    context(_: KaSession)
+    private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> {
+        if (classOrObject is KtClass && classOrObject.isAnnotation()) return emptyList()
+        val classSymbol = (classOrObject.symbol as? KaEnumEntrySymbol)?.initializer as? KaClassSymbol ?: classOrObject.classSymbol ?: return emptyList()
+        return getOverridableMembers(classSymbol).map { overrideMember ->
+            val symbol = overrideMember.symbol
+            val bodyType = overrideMember.bodyType
+            val containingSymbol = overrideMember.containingSymbol
 
-        @NlsSafe
-        val fqName = containingSymbol?.classId?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString()
-        KtClassMember(
-            KtClassMemberInfo.create(
-                symbol,
-                renderMemberText(symbol),
-                KotlinIconProvider.getIcon(symbol),
-                fqName,
-                containingSymbol?.let { KotlinIconProvider.getIcon(it) },
-            ),
-            bodyType,
-            preferConstructorParameter = false,
-        )
+            @NlsSafe
+            val fqName = containingSymbol?.classId?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString()
+            KtClassMember(
+                KtClassMemberInfo.create(
+                    symbol,
+                    renderer.renderToString(symbol),
+                    KotlinIconProvider.getIcon(symbol),
+                    fqName,
+                    containingSymbol?.let { KotlinIconProvider.getIcon(it) },
+                ),
+                bodyType,
+                preferConstructorParameter = false,
+            )
+        }
     }
-}
-
 
     context(_: KaSession)
     fun noConcreteDirectOverriddenSymbol(symbol: KaCallableSymbol): Boolean {

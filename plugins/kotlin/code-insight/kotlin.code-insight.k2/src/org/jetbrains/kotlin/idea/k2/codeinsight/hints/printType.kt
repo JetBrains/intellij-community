@@ -1,174 +1,122 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
-import com.intellij.codeInsight.hints.declarative.InlayActionData
 import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
-import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHandler
-import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
-import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl
-import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.rendering.KaPiece
+import org.jetbrains.kotlin.analysis.api.rendering.KaPieceRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderingContext
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderingOption
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderingOutput
+import org.jetbrains.kotlin.analysis.api.rendering.KaTextAttribute
+import org.jetbrains.kotlin.analysis.api.rendering.KaTextAttribute.Symbol
+import org.jetbrains.kotlin.analysis.api.rendering.append
+import org.jetbrains.kotlin.analysis.api.rendering.output
+import org.jetbrains.kotlin.analysis.api.rendering.push
+import org.jetbrains.kotlin.analysis.api.rendering.pushEmpty
+import org.jetbrains.kotlin.analysis.api.rendering.render
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
-import org.jetbrains.kotlin.analysis.api.types.KaDynamicType
-import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaResolvedClassTypeQualifier
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
-import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
-import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
-import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.isNullable
-import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObjectToSupertypeOrSelf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isAnnotatedWithTypeUseOnly
-import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler
-import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
 
-private val suppressedAnnotatedTypePackages =
-    listOf(
-        "kotlin",
-    ).mapTo(hashSetOf(), ::FqName)
-
 context(_: KaSession)
 internal fun PresentationTreeBuilder.printKtType(type: KaType) {
-    // See org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer.renderType
-    type.abbreviation?.let { abbreviatedType ->
-        printKtType(abbreviatedType)
-        return
-    }
-
-    type.annotations.forEach { annotation ->
-        if (!annotation.isAnnotatedWithTypeUseOnly()) return@forEach
-
-        annotation.constructorSymbol?.returnType?.let {
-            val packageName = (it as? KaClassType)?.classId?.packageFqName
-            if (packageName in suppressedAnnotatedTypePackages) return@let
-
-            text("@")
-            printKtType(it)
-            text(" ")
-        }
-    }
-
-    var markedNullable = type.isMarkedNullable
-    when (type) {
-        is KaCapturedType -> text("*")
-        is KaDefinitelyNotNullType -> {
-            printKtType(type.original)
-            text(" & ")
-            text(KaStandardTypeClassIds.ANY.relativeClassName.asString())
-        }
-        is KaUsualClassType -> printNonErrorClassType(type)
-        is KaFlexibleType -> {
-            val lower = type.lowerBound
-            val upper = type.upperBound
-            markedNullable = lower.isMarkedNullable
-            if (isMutabilityFlexibleType(lower, upper)) {
-                text("(")
-                printClassId((lower as KaClassType).classId, "Mutable")
-                text(")")
-                printKtType(upper.withNullability(false))
-            } else {
-                if (isNullabilityFlexibleType(lower, upper)) {
-                    printKtType(lower)
-                    text("!")
-                } else if (isNonNullableFlexibleType(upper, lower)) {
-                    printNonErrorClassType(upper as KaClassType, lower as KaClassType)
-                } else {
-                    // fallback case
-
-                    // to be consistent with kdoc
-                    // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer.AS_SHORT
-                    // KaFlexibleTypeRenderer.kt:79
-
-                    text("(")
-                    printKtType(lower)
-                    text("..")
-                    printKtType(upper)
-                    text(")")
-                }
-            }
-        }
-        is KaTypeParameterType -> {
-            // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeParameterTypeRenderer.AS_SOURCE
-            val symbol = type.symbol
-            printSymbolPsi(symbol, type.name.asString())
-        }
-        is KaIntersectionType -> {
-            // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtIntersectionTypeRenderer.AS_INTERSECTION
-            val iterator = type.conjuncts.iterator()
-            while (iterator.hasNext()) {
-                printKtType(iterator.next())
-                if (iterator.hasNext()) {
-                    text(" & ")
-                }
-            }
-        }
-        is KaFunctionType -> {
-            // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
-            if (type.isSuspend) {
-                text(KtTokens.SUSPEND_KEYWORD.value)
-                text(" ")
-            }
-            val contextParameterTypes = type.contextParameterTypes
-            if (contextParameterTypes.isNotEmpty()) {
-                text("context(")
-                contextParameterTypes.forEachIndexed { index, contextType ->
-                    if (index != 0) text(", ")
-                    printKtType(contextType)
-                }
-                text(") ")
-            }
-            type.receiverType?.let {
-                printKtType(it)
-                text(".")
-            }
-            val iterator = type.parameters.iterator()
-            text("(")
-            while (iterator.hasNext()) {
-                val valueParameter = iterator.next()
-                if (valueParameter.name != null)
-                    text("${valueParameter.name}: ")
-                printKtType(valueParameter.type)
-                if (iterator.hasNext()) {
-                    text(", ")
-                }
-            }
-            text(") -> ")
-            printKtType(type.returnType)
-        }
-        is KaDynamicType -> {
-            // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtDynamicTypeRenderer.AS_DYNAMIC_WORD
-            text(KtTokens.DYNAMIC_KEYWORD.value)
-        }
-        is KaErrorType -> {
-            // error types should not be printed
-        }
-    }
-
-    if (markedNullable) text("?")
+    val output = KaPresentationTreeOutput(this)
+    HINT_TYPE_RENDERER.render(type, output)
+    output.flush()
 }
 
-context(_: KaSession)
-private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, anotherType: KaClassType? = null) {
+private val HINT_TYPE_RENDERER: KaRenderer = KaRenderer.default.copy {
+    set(KaRenderingOption.LinkSymbols, true)
+
+    // Render the type exactly as it was inferred.
+    set(KaRenderingOption.TypeTransformation) { it }
+
+    set(KaRenderingOption.Annotations) { annotated ->
+        annotated.annotations.filter { annotation ->
+            // Annotations declared in the `kotlin` package describe syntax the type is already rendered with — `@ExtensionFunctionType`
+            // the receiver, `@ParameterName` the parameter name — so rendering them as well would duplicate it.
+            annotation.isAnnotatedWithTypeUseOnly() && annotation.classId?.packageFqName != StandardClassIds.BASE_KOTLIN_PACKAGE
+        }
+    }
+
+    // A hint has no room for annotation arguments, so an annotation is rendered by its name alone.
+    pushEmpty(KaPiece.AnnotationValues)
+
+    push(HintReflectionFunctionTypeRenderer)
+    push(HintFlexibleTypeRenderer)
+    push(KaPiece.ClassTypeName) { renderClassTypeName(it) }
+    push(KaPiece.CapturedType) {
+        output.append("*", KaTextAttribute.Punctuation)
+        render(it, KaPiece.TypeNullability)
+    }
+    // Error types are not rendered at all.
+    pushEmpty(KaPiece.ErrorType)
+}
+
+/**
+ * Renders a reflection function type, such as `KFunction1<Int, String>`, with function type syntax: `(Int) -> String`.
+ *
+ * The built-in renderer sends such a type to [KaPiece.ClassType], because function type syntax cannot express that the type is a reflection
+ * one. A hint deliberately drops that distinction, as the shorter form is what the callable reference reads like at the use site.
+ */
+private object HintReflectionFunctionTypeRenderer : KaPieceRenderer<KaClassType>(KaPiece.ClassType) {
+    context(session: KaSession, context: KaRenderingContext, output: KaRenderingOutput)
+    override fun render(value: KaClassType, next: () -> Unit): Boolean {
+        if (value !is KaFunctionType) return false
+
+        render(value, KaPiece.FunctionType)
+        return true
+    }
+}
+
+/**
+ * Merges the bounds of a flexible type which differ only in their type arguments into a single rendering which parentheses the arguments
+ * that differ, so `Array<String!>..Array<out String!>` is rendered as `Array<(out) String!>`.
+ *
+ * This is the one compact form of a flexible type the built-in renderer has no notion of; it renders such a type as a range. Every other
+ * form is left to it.
+ */
+private object HintFlexibleTypeRenderer : KaPieceRenderer<KaFlexibleType>(KaPiece.FlexibleType) {
+    context(session: KaSession, context: KaRenderingContext, output: KaRenderingOutput)
+    override fun render(value: KaFlexibleType, next: () -> Unit): Boolean {
+        val lower = value.lowerBound
+        val upper = value.upperBound
+        if (!isNonNullableFlexibleType(lower, upper)) return false
+
+        // The upper bound is the primary one, so that the type arguments which carry the variance the other bound lacks are the ones
+        // rendered, with that variance parenthesized.
+        renderClassTypeName(upper as KaClassType, lower as KaClassType)
+        return true
+    }
+}
+
+/**
+ * Renders the name of [type], collapsing qualifier segments that carry no type arguments into a single truncated name.
+ *
+ * When [anotherType] is given, the two types are rendered as one: a type argument that differs between them is
+ * parenthesized. This is why the rendering lives in a function rather than in a [KaPieceRenderer], which only ever
+ * receives one value.
+ *
+ * The nullability marker is not rendered here: it belongs to [KaPiece.ClassType], which appends it around this piece.
+ */
+context(session: KaSession, context: KaRenderingContext, output: KaRenderingOutput)
+private fun renderClassTypeName(type: KaClassType, anotherType: KaClassType? = null) {
     val classType = type.approximateAnonymousObjectToSupertypeOrSelf() as KaClassType
     val qualifiers = classType.qualifiers
     val anotherQualifiers = anotherType?.qualifiers
@@ -182,18 +130,15 @@ private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, an
         }
 
         val truncatedName = truncatedName(qualifiers.subList(lastUsedIndex + 1, index + 1))
-        if (truncatedName.isNotEmpty()) {
-            if (nested) text(".")
+        if (truncatedName.isEmpty()) continue
 
-            val classId = (qualifier.symbol as? KaClassLikeSymbol)?.classId
-            if (classId == null) {
-                printSymbolPsi(qualifier.symbol, truncatedName)
-            } else {
-                printClassId(classId, truncatedName)
-            }
+        if (nested) output.append(".", KaTextAttribute.Punctuation)
+        output.append(truncatedName, setOf(KaTextAttribute.Identifier, Symbol(qualifier.symbol)))
 
-            val ownTypeArguments = qualifier.typeArguments.ifEmpty { break } // no type arguments, so we've reached the end of qualifiers
-            text("<")
+        val ownTypeArguments = qualifier.typeArguments.ifEmpty { break } // no type arguments, so we've reached the end of qualifiers
+
+        output.group(KaPiece.TypeProjection) {
+            output.append("<", KaTextAttribute.Punctuation)
 
             val anotherOwnTypeArguments = anotherQualifiers?.getOrNull(index)?.typeArguments
             val iterator = ownTypeArguments.iterator()
@@ -202,82 +147,40 @@ private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, an
                 val projection = iterator.next()
                 val anotherProjection = anotherIterator?.takeIf { it.hasNext() }?.next()
 
-                printProjection(projection, anotherProjection != null && projection != anotherProjection)
+                renderProjection(projection, anotherProjection != null && projection != anotherProjection)
 
-                if (iterator.hasNext()) text(", ")
+                if (iterator.hasNext()) output.append(", ", KaTextAttribute.Punctuation)
             }
 
-            text(">")
-            lastUsedIndex = index
-            nested = true
+            output.append(">", KaTextAttribute.Punctuation)
         }
+        lastUsedIndex = index
+        nested = true
     }
 }
 
-
-context(_: KaSession)
-private fun PresentationTreeBuilder.printProjection(projection: KaTypeProjection, optionalProjection: Boolean) {
-    fun String.asOptional(optional: Boolean): String =
-        if (optional) "($this)" else this
+/**
+ * Renders [projection], parenthesizing its variance — or the whole projection, if it is a star — when [optionalProjection] is set, which
+ * marks a type argument that differs between the two bounds of a merged flexible type.
+ */
+context(session: KaSession, context: KaRenderingContext, output: KaRenderingOutput)
+private fun renderProjection(projection: KaTypeProjection, optionalProjection: Boolean) {
+    if (!optionalProjection) {
+        render(projection, KaPiece.TypeProjection)
+        return
+    }
 
     when (projection) {
         is KaStarTypeProjection -> {
-            text("*".asOptional(optionalProjection))
+            output.append("(*)", KaTextAttribute.Punctuation)
         }
         is KaTypeArgumentWithVariance -> {
             projection.variance.label.takeIf { it.isNotEmpty() }?.let {
-                text("${it.asOptional(optionalProjection)} ")
+                output.append("($it) ", KaTextAttribute.Keyword)
             }
-            printKtType(projection.type)
+            render(projection.type, KaPiece.Type)
         }
     }
-}
-
-
-private fun PresentationTreeBuilder.printClassId(classId: ClassId, name: String) {
-    if (classId.shortClassName.isSpecial) {
-        text(name)
-    } else {
-        text(
-            name,
-            InlayActionData(
-                StringInlayActionPayload(classId.asFqNameString()),
-                KotlinFqnDeclarativeInlayActionHandler.HANDLER_NAME
-            )
-        )
-    }
-}
-
-private fun PresentationTreeBuilder.printSymbolPsi(symbol: KaSymbol, name: String) {
-    text(
-        name,
-        symbol.psi?.createSmartPointer()?.let {
-            InlayActionData(
-                PsiPointerInlayActionPayload(it),
-                PsiPointerInlayActionNavigationHandler.HANDLER_ID
-            )
-        }
-    )
-}
-
-private fun isMutabilityFlexibleType(lower: KaType, upper: KaType): Boolean {
-    // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer.AS_SHORT.isMutabilityFlexibleType
-    return !(lower !is KaClassType || upper !is KaClassType) &&
-            (StandardClassIds.Collections.mutableCollectionToBaseCollection[lower.classId] == upper.classId)
-}
-
-
-context(_: KaSession)
-private fun isNullabilityFlexibleType(lower: KaType, upper: KaType): Boolean {
-    if (!lower.isNullable && upper.isNullable) {
-        if (lower is KaTypeParameterType && upper is KaTypeParameterType && lower.symbol == upper.symbol) {
-            return true
-        }
-        if (lower is KaClassType && upper is KaClassType && lower.classId == upper.classId) {
-            return isSimilarTypes(lower, upper)
-        }
-    }
-    return false
 }
 
 context(_: KaSession)

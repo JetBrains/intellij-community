@@ -1,4 +1,4 @@
-// "Add constructor parameters from ArrayList(kotlin.collections.(Mutable)Collection<out String!>)" "true"
+// "Add constructor parameters from ArrayList((Mutable)Collection<out String!>)" "true"
 // ACTION: Add constructor parameters from ArrayList((MutableCollection<out String!>..Collection<String!>?))
 // ACTION: Add constructor parameters from ArrayList(Int)
 // ACTION: Change to constructor invocation

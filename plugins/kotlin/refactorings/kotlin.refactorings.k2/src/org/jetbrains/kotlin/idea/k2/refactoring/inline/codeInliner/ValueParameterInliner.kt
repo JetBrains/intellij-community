@@ -5,7 +5,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.simple
@@ -42,6 +43,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.NonLocalJumpToke
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.collectDescendantsOfType
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.render
@@ -79,7 +81,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolution.KtResolvableCall
-import org.jetbrains.kotlin.types.Variance
 
 internal class IntroduceValueForParameter(
     val parameterName: Name,
@@ -322,7 +323,7 @@ internal class ValueParameterInliner(
                 appendFixedText(arrayOfFunctionName)
                 if (argumentExpressionsForParameter.isEmpty() && elementType !is KaErrorType && arrayOfFunctionName == "kotlin.arrayOf") {
                     appendFixedText("<")
-                    appendFixedText(elementType.render(position = Variance.INVARIANT))
+                    appendFixedText(KaRenderer.withQualifiedNames.renderToString(elementType))
                     appendFixedText(">")
                 }
                 appendFixedText("(")

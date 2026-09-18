@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.returnType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleOrMultiCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -62,6 +62,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.isRes
 import org.jetbrains.kotlin.idea.quickfix.ChangeTypeFixUtils
 import org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -95,7 +96,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getOutermostParenthesizerOrThis
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.resolution.KtResolvableCall
-import org.jetbrains.kotlin.types.Variance
 
 internal object ChangeTypeQuickFixFactories {
     enum class TargetType {
@@ -554,10 +554,7 @@ internal object ChangeTypeQuickFixFactories {
                     val elementContext = prepareNumberConversionElementContext(actualType, expectedType)
                     add(NumberConversionFix(expression, elementContext))
                     if (isRoundNumberFixAvailable(expression, expectedType)) {
-                        val renderedExpectedType = expectedType.render(
-                            renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,
-                            position = Variance.INVARIANT
-                        )
+                        val renderedExpectedType = KaRenderer.withShortNames.renderToString(expectedType)
                         add(RoundNumberFix(expression, renderedExpectedType))
                     }
                 }

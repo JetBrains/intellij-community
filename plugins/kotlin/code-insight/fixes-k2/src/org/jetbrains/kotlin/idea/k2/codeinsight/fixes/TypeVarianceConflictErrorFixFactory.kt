@@ -2,12 +2,13 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.RemoveTypeVarianceFix
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.types.Variance
@@ -26,10 +27,7 @@ internal object TypeVarianceConflictErrorFixFactory {
             RemoveTypeVarianceFix(
                 typeParameter,
                 variance,
-                type.render(
-                    renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES,
-                    position = Variance.INVARIANT,
-                ),
+                KaRenderer.withQualifiedNames.renderToString(type),
             )
         )
     }

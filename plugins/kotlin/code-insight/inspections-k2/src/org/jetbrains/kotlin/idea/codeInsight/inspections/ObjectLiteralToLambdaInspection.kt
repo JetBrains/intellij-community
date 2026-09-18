@@ -18,8 +18,8 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.simple
@@ -53,6 +53,8 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.ReturnSaver
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
+import org.jetbrains.kotlin.idea.util.withShortDenotableSubtypes
+import org.jetbrains.kotlin.idea.util.withShortDenotableSupertypes
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -77,7 +79,6 @@ import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
-import org.jetbrains.kotlin.types.Variance
 
 internal class ObjectLiteralToLambdaInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
@@ -333,7 +334,7 @@ private fun extractData(element: KtObjectLiteralExpression): Data? {
                 // TODO: it has to be reconsidered testData/intentions/objectLiteralToLambda/NotJavaSAM.kt
                 if (!origin.isJavaSourceOrLibrary() && !baseClassSymbol.isFun) return null
                 // TODO: it should be WITH_QUALIFIED_NAMES but shortenReferencesInRange does not handle that properly
-                val typeRepresentation = type.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE)
+                val typeRepresentation = KaRenderer.withShortDenotableSupertypes.renderToString(type)
                 Data(typeRef, baseTypeClassId, typeRepresentation, singleFunction)
             }
         }
@@ -348,7 +349,7 @@ private class ContextParametersSaver(function: KtNamedFunction) {
     init {
         function.contextParameters.forEach { param ->
             val paramType = allowAnalysisFromWriteActionInEdt(param) {
-                param.returnType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.IN_VARIANCE)
+                KaRenderer.withShortDenotableSubtypes.renderToString(param.returnType)
             }
             ReferencesSearch.search(param).forEach { ref ->
                 ref.element.putCopyableUserData(CONTEXT_PARAMETER_KEY, paramType)

@@ -9,14 +9,11 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.startOffset
 import com.intellij.util.containers.sequenceOfNotNull
 import kotlinx.serialization.Serializable
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
@@ -53,6 +50,8 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.Weighers.applyWeigh
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleParameterPositionContext
+import org.jetbrains.kotlin.idea.util.withShortNames
+import org.jetbrains.kotlin.idea.util.withoutAnnotations
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -64,7 +63,6 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtParameterList
 import org.jetbrains.kotlin.resolve.DataClassResolver
-import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.yieldIfNotNull
 import kotlin.reflect.KClass
 
@@ -348,12 +346,7 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
     }
 }
 
-@KaExperimentalApi
-private val NoAnnotationsTypeRenderer: KaTypeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES.with {
-    annotationsRenderer = annotationsRenderer.with {
-        annotationFilter = KaRendererAnnotationsFilter.NONE
-    }
-}
+private val NoAnnotationsTypeRenderer: KaRenderer = KaRenderer.withShortNames.copy { withoutAnnotations() }
 
 private const val TailText: @NlsSafe String = " -> "
 
@@ -431,7 +424,4 @@ internal data class CompoundInsertionHandler(
 
 context(_: KaSession)
 private val KaType.text: String
-    get() = render(
-        renderer = NoAnnotationsTypeRenderer,
-        position = Variance.INVARIANT,
-    )
+    get() = NoAnnotationsTypeRenderer.renderToString(this)

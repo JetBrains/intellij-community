@@ -22,7 +22,8 @@ import org.jetbrains.java.generate.element.MethodElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
 import org.jetbrains.kotlin.analysis.api.components.returnType
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
@@ -37,6 +38,7 @@ import org.jetbrains.kotlin.analysis.api.types.isNestedArray
 import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.buildClassTypeWithStarProjections
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClass
@@ -45,7 +47,6 @@ import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.types.Variance
 
 private const val _NO_NAME_PROVIDED_ = "`<no name provided>`"
 
@@ -142,7 +143,7 @@ object KotlinElementFactory {
         val typeSymbol = type.symbol
         element.typeName = typeSymbol?.classId?.shortClassName?.asString()
         element.typeQualifiedName = typeSymbol?.classId?.asFqNameString()
-        element.type = type.render(position = Variance.INVARIANT)
+        element.type = KaRenderer.withQualifiedNames.renderToString(type)
         element.isNotNull = !type.isNullable
 
         element.isArray = type.isArrayOrPrimitiveArray

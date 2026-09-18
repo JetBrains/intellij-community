@@ -3,7 +3,8 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
@@ -18,6 +19,9 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSupertypes
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
@@ -28,7 +32,6 @@ import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
-import org.jetbrains.kotlin.types.Variance
 
 object LambdaToAnonymousFunctionUtil {
     /**
@@ -77,7 +80,7 @@ object LambdaToAnonymousFunctionUtil {
             KtPsiFactory.CallableBuilder(KtPsiFactory.CallableBuilder.Target.FUNCTION).apply {
                 typeParams()
                 functionSymbol.receiverType?.let {
-                    receiver(it.render(position = Variance.INVARIANT))
+                    receiver(KaRenderer.withQualifiedNames.renderToString(it))
                 }
 
                 name(functionName)
@@ -91,7 +94,7 @@ object LambdaToAnonymousFunctionUtil {
 
                 for ((index, parameter) in functionSymbol.valueParameters.withIndex()) {
                     val parameterType = parameter.returnType
-                    val renderType = parameterType.render(position = Variance.IN_VARIANCE)
+                    val renderType = KaRenderer.withQualifiedDenotableSubtypes.renderToString(parameterType)
                     val parameterName = parameter.name
 
                     val nameToUse = when {
@@ -126,7 +129,7 @@ object LambdaToAnonymousFunctionUtil {
                         forceNonNullReturnType && !hasNullableReturn -> it.withNullability(false)
                         else -> it
                     }
-                    returnType(finalReturnType.render(position = Variance.OUT_VARIANCE))
+                    returnType(KaRenderer.withQualifiedDenotableSupertypes.renderToString(finalReturnType))
                 } ?: noReturnType()
                 blockBody(" " + bodyExpressionCopy.text)
             }.asString()

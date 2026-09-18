@@ -16,7 +16,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -42,6 +43,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.IntroduceParameterDescriptor
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.KotlinIntroduceParameterHelper
 import org.jetbrains.kotlin.idea.refactoring.introduce.substringContextOrThis
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
@@ -62,7 +64,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
-import org.jetbrains.kotlin.types.Variance
 
 object K2CreateParameterFromUsageBuilder {
     fun generateCreateParameterAction(element: KtElement): List<IntentionAction>? {
@@ -157,7 +158,7 @@ object K2CreateParameterFromUsageBuilder {
             val originalExpression = originalExprPointer.element ?: return IntentionPreviewInfo.EMPTY
 
             val typeText = analyze(originalExpression) {
-                getExpectedType(originalExpression).render(position = Variance.IN_VARIANCE)
+                KaRenderer.withQualifiedDenotableSubtypes.renderToString(getExpectedType(originalExpression))
             }
             val valVar =
                 if (valVar == CreateParameterUtil.ValVar.VAR) "var " else if (valVar == CreateParameterUtil.ValVar.VAL) "val " else ""

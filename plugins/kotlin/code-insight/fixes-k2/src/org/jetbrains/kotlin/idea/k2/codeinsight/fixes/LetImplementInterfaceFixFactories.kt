@@ -10,8 +10,8 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.util.application
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -29,13 +29,14 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickF
 import org.jetbrains.kotlin.idea.codeinsight.utils.containsStarProjections
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInterface
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
+import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.isObjectLiteral
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
-import org.jetbrains.kotlin.types.Variance
 
 internal object LetImplementInterfaceFixFactories {
 
@@ -106,10 +107,7 @@ internal object LetImplementInterfaceFixFactories {
 
         val expectedTypeName = renderShort(expectedTypeNotNullable)
 
-        val expectedTypeNameSourceCode = expectedTypeNotNullable.render(
-            renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES,
-            position = Variance.INVARIANT
-        )
+        val expectedTypeNameSourceCode = KaRenderer.withQualifiedNames.renderToString(expectedTypeNotNullable)
 
         val verb = if (actualType.isInterface()) KotlinBundle.message("text.extend") else KotlinBundle.message("text.implement")
 
@@ -121,10 +119,7 @@ internal object LetImplementInterfaceFixFactories {
     }
 
     context(session: KaSession)
-    private fun renderShort(type: KaType): String = type.render(
-        renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,
-        position = Variance.INVARIANT
-    )
+    private fun renderShort(type: KaType): String = KaRenderer.withShortNames.renderToString(type)
 
     private data class ElementContext(
         val expectedTypeName: String,

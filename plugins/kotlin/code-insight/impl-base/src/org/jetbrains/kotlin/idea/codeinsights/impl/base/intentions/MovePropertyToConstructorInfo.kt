@@ -6,10 +6,11 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationTarget
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaPiece
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.push
+import org.jetbrains.kotlin.analysis.api.rendering.render
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.resolution.variable
@@ -17,13 +18,12 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.applicableAnnotationTargets
 import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.type
-import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.idea.util.tryResolveSymbolsCallFirst
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtExpression
@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.referenceExpressionRecursiveVisitor
-import org.jetbrains.kotlin.types.Variance
 
 sealed interface MovePropertyToConstructorInfo {
     data class ReplacementParameter(
@@ -60,17 +59,8 @@ sealed interface MovePropertyToConstructorInfo {
         // This is needed to always render the lower bounds for flexible types.
         // Flexible types cannot be represented in Kotlin, so without this renderer,
         // syntax errors might be caused by flexible types.
-        private val LOWER_FLEXIBLE_BOUND_TYPE_RENDERER: KaTypeRenderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
-            flexibleTypeRenderer = object : KaFlexibleTypeRenderer {
-                override fun renderType(
-                    analysisSession: KaSession,
-                    type: KaFlexibleType,
-                    typeRenderer: KaTypeRenderer,
-                    printer: PrettyPrinter
-                ) {
-                    typeRenderer.renderType(analysisSession, type.lowerBound, printer)
-                }
-            }
+        private val LOWER_FLEXIBLE_BOUND_TYPE_RENDERER: KaRenderer = KaRenderer.withQualifiedNames.copy {
+            push(KaPiece.FlexibleType) { render(it.lowerBound, KaPiece.Type) }
         }
 
         context(_: KaSession)
@@ -87,10 +77,9 @@ sealed interface MovePropertyToConstructorInfo {
                     propertyAnnotationsText = propertyAnnotationsText,
                 )
             } else {
-                val typeText = element.typeReference?.text ?: element.symbol.returnType.render(
-                    position = Variance.INVARIANT,
-                    renderer = LOWER_FLEXIBLE_BOUND_TYPE_RENDERER
-                )
+                val typeText = element.typeReference?.text
+                    ?: LOWER_FLEXIBLE_BOUND_TYPE_RENDERER.renderToString(element.symbol.returnType)
+
                 return AdditionalParameter(
                     parameterTypeText = typeText,
                     propertyAnnotationsText = propertyAnnotationsText,

@@ -9,7 +9,7 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.memberPullUp.PullUpProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
@@ -36,6 +36,8 @@ import org.jetbrains.kotlin.idea.refactoring.memberInfo.getChildrenToAnalyze
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.toJavaMemberInfo
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.renderToStringIfPresent
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -51,7 +53,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 internal class K2ExtractSuperRefactoring : KotlinExtractSuperRefactoring {
@@ -110,10 +111,8 @@ private fun computeCreateClassInfo(extractInfo: ExtractSuperInfo): CreateClassIn
         }
     } else null
 
-    val qualifiedTypeRefText = superClassEntry
-        ?.typeReference
-        ?.type
-        ?.render(position = Variance.INVARIANT)
+    val qualifiedTypeRefText = KaRenderer.withQualifiedNames
+        .renderToStringIfPresent(superClassEntry?.typeReference?.type)
 
     return CreateClassInfo(
         typeParameters,

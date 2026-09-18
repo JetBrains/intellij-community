@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ui
 
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.type
@@ -17,16 +17,16 @@ import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ui.KotlinFirExtr
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.Generator
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.validate
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionGeneratorOptions
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTypeCodeFragment
-import org.jetbrains.kotlin.types.Variance
 
 @OptIn(KaAllowAnalysisOnEdt::class)
 internal fun render(type: KaType, context: KtElement): String {
     return allowAnalysisOnEdt {
         analyze(context) {
-            type.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.IN_VARIANCE)
+            KaRenderer.withQualifiedDenotableSubtypes.renderToString(type)
         }
     }
 }

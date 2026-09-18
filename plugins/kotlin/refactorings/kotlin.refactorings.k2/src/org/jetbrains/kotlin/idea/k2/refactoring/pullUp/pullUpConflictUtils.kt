@@ -7,17 +7,12 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaRendererBodyMemberScopeProvider
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KaDeclarationModifiersRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaModifierListRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaPiece
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.pushEmpty
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.signatures.substitute
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -37,7 +32,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.emptySubstitutor
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
-import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.useScope
@@ -51,6 +45,9 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
+import org.jetbrains.kotlin.idea.util.withShortNames
+import org.jetbrains.kotlin.idea.util.withValueParameterTypesOnly
+import org.jetbrains.kotlin.idea.util.withoutModifiers
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
@@ -63,30 +60,18 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
-import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.keysToMap
 
 @Nls
 context(session: KaSession)
 internal fun KaDeclarationSymbol.renderForConflicts(): String = renderForConflict(CallableRenderer)
 
-@KaExperimentalApi
-private val NoModifierListRenderer = object : KaModifierListRenderer {
-    override fun renderModifiers(
-        analysisSession: KaSession,
-        symbol: KaDeclarationSymbol,
-        declarationModifiersRenderer: KaDeclarationModifiersRenderer,
-        printer: PrettyPrinter,
-    ): Unit = Unit
-}
-
-private val CallableRenderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
-    valueParameterRenderer = KaValueParameterSymbolRenderer.TYPE_ONLY
-    modifiersRenderer = modifiersRenderer.with {
-        modifierListRenderer = NoModifierListRenderer
-    }
-    propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
-    bodyMemberScopeProvider = KaRendererBodyMemberScopeProvider.NONE
+private val CallableRenderer: KaRenderer = KaRenderer.withShortNames.copy {
+    withValueParameterTypesOnly()
+    withoutModifiers()
+    pushEmpty(KaPiece.PropertyInitializer)
+    pushEmpty(KaPiece.PropertyAccessors)
+    pushEmpty(KaPiece.ClassBody)
 }
 
 context(session: KaSession)
@@ -157,10 +142,7 @@ context(session: KaSession)
 private fun KaValueParameterSymbol.renderSymbol(): String {
     val keyword = if (isVal) "val" else "var"
     val name = name.asString()
-    val renderedType = returnType.render(
-        renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,
-        position = Variance.INVARIANT,
-    )
+    val renderedType = KaRenderer.withShortNames.renderToString(returnType)
 
     return "$keyword $name: $renderedType"
 }

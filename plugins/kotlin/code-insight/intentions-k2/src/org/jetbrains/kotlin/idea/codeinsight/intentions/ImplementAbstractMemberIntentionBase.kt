@@ -24,7 +24,7 @@ import com.intellij.ui.list.buildTargetPopupWithMultiSelect
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.application
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.asSignature
@@ -288,7 +288,7 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
                 ): KtClassMember = KtClassMember(
                     memberInfo = KtClassMemberInfo.create(
                         symbol = symbolToImplement,
-                        memberText = symbolToImplement.render(KtGenerateMembersHandler.renderer),
+                        memberText = KtGenerateMembersHandler.renderer.renderToString(symbolToImplement),
                     ),
                     bodyType = BodyType.FromTemplate,
                     preferConstructorParameter = preferConstructorParameters,

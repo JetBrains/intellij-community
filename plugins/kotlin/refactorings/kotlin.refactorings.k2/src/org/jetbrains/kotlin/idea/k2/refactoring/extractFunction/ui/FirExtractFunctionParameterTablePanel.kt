@@ -2,20 +2,20 @@
 
 package org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ui
 
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBComboBoxLabel
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent
 import com.intellij.util.ui.AbstractTableCellEditor
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.Parameter
 import org.jetbrains.kotlin.idea.refactoring.introduce.ui.AbstractParameterTablePanel
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.types.Variance
 import java.awt.Component
 import javax.swing.JTable
 import javax.swing.table.DefaultTableCellRenderer
@@ -56,8 +56,11 @@ abstract class FirExtractFunctionParameterTablePanel :
                 override fun getTableCellRendererComponent(
                     table: JTable, value: Any, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int
                 ): Component {
-                    @NlsSafe val renderType =
-                        allowAnalysisOnEdt { analyze(context) { (value as KaType).render(position = Variance.IN_VARIANCE) } }
+                    val renderType = allowAnalysisOnEdt {
+                        analyze(context) {
+                            KaRenderer.withQualifiedDenotableSubtypes.renderToString(value as KaType)
+                        }
+                    }
                     myLabel.text = renderType
                     myLabel.background = if (isSelected) table.selectionBackground else table.background
                     myLabel.foreground = if (isSelected) table.selectionForeground else table.foreground
@@ -83,7 +86,7 @@ abstract class FirExtractFunctionParameterTablePanel :
                     myEditorComponent.setOptions(*info.originalParameter.getParameterTypeCandidates().toTypedArray())
                     myEditorComponent.setDefaultValue(info.type)
                     myEditorComponent.setToString {
-                        analyze(context) { (it as KaType).render(position = Variance.IN_VARIANCE) }
+                        analyze(context) { KaRenderer.withQualifiedDenotableSubtypes.renderToString(it as KaType) }
                     }
 
                     return myEditorComponent

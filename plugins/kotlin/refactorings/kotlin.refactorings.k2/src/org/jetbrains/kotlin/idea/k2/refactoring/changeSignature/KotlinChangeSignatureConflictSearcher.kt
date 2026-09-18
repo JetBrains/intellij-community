@@ -13,8 +13,8 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -45,6 +45,8 @@ import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflic
 import org.jetbrains.kotlin.idea.refactoring.conflicts.registerAlreadyDeclaredConflict
 import org.jetbrains.kotlin.idea.refactoring.conflicts.registerRetargetJobOnPotentialCandidates
 import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUsageInfo
+import org.jetbrains.kotlin.idea.util.renderToStringIfPresent
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtConstructor
@@ -59,7 +61,6 @@ import org.jetbrains.kotlin.psi.KtValueArgumentName
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.isFromCompanionBlock
-import org.jetbrains.kotlin.types.Variance
 import kotlin.math.max
 
 class KotlinChangeSignatureConflictSearcher(
@@ -260,15 +261,15 @@ class KotlinChangeSignatureConflictSearcher(
         val includeClassReceiver = functionClass == null || candidateClass == null
         val newReceiverTypes = buildList {
             if (includeClassReceiver) {
-                functionClass?.defaultType?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)?.let(::add)
+                KaRenderer.withQualifiedNames.renderToStringIfPresent(functionClass?.defaultType)?.let(::add)
             }
             originalInfo.receiverParameterInfo?.currentType?.text?.let(::add)
         }
         val candidateReceiverTypes = buildList {
             if (includeClassReceiver) {
-                candidateClass?.defaultType?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)?.let(::add)
+                KaRenderer.withQualifiedNames.renderToStringIfPresent(candidateClass?.defaultType)?.let(::add)
             }
-            candidateSymbol.receiverType?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)?.let(::add)
+            KaRenderer.withQualifiedNames.renderToStringIfPresent(candidateSymbol.receiverType)?.let(::add)
         }
         if (newReceiverTypes.size != candidateReceiverTypes.size) return false
         if (!newReceiverTypes.zip(candidateReceiverTypes).all { (newType, candidateType) ->
@@ -289,7 +290,7 @@ class KotlinChangeSignatureConflictSearcher(
         // Check if parameters' types match
         val newParameterTypeTexts = originalInfo.getNonReceiverParameters().mapNotNull { it.currentType.text }
         val candidateParameterTypeTexts =
-            functionCandidate.valueParameters.map { it.returnType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT) }
+            functionCandidate.valueParameters.map { KaRenderer.withQualifiedNames.renderToString(it.returnType) }
         if (newParameterTypeTexts.size != candidateParameterTypeTexts.size) return false
         if (!newParameterTypeTexts.zip(candidateParameterTypeTexts)
                 .all { (newTypeText, candidateTypeText) -> areTypesTheSame(newTypeText, candidateTypeText, function) }

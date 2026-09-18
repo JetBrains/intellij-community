@@ -16,4 +16,4 @@ private fun runWithContext(value: Int, block: (Int) -> Unit) {
 
 private fun target(value: Int) {}
 
-// EXISTS: context(context1@Context1\, context2@Context2) runWithContext(Int\, (Int) -> Unit), runWithContext: block.invoke()
+// EXISTS: context(context1: Context1\, context2: Context2) runWithContext(Int\, (Int) -> Unit), runWithContext: block.invoke()

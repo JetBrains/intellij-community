@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -16,8 +16,8 @@ import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.MakeUpperBoundNotNullFix
 import org.jetbrains.kotlin.idea.quickfix.MakeUpperBoundNotNullFix.Kind
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
 import org.jetbrains.kotlin.psi.KtTypeParameter
-import org.jetbrains.kotlin.types.Variance
 
 internal object MakeUpperBoundNotNullFixFactories {
 
@@ -53,8 +53,8 @@ internal object MakeUpperBoundNotNullFixFactories {
                     MakeUpperBoundNotNullFix(
                         typeParameter,
                         Kind.ReplaceExistingUpperBound(
-                            existingBoundType.withNullability(false)
-                                .render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.IN_VARIANCE)
+                            KaRenderer.withQualifiedDenotableSubtypes
+                                .renderToString(existingBoundType.withNullability(false))
                         )
                     )
                 } else {

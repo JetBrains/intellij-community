@@ -2,14 +2,15 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.setCallableTypeReference
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSupertypes
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.types.Variance
 
 fun KtCallableDeclaration.setTypeReference(typeString: String, shortenReferences: Boolean = true) {
     val typeReference = KtPsiFactory(project).createType(typeString)
@@ -22,6 +23,6 @@ fun KtCallableDeclaration.setTypeReference(typeString: String, shortenReferences
 context(_: KaSession)
 fun KtCallableDeclaration.setType(type: KaType, shortenReferences: Boolean = true) {
     if (type is KaErrorType) return
-    val renderedType = type.render(position = Variance.OUT_VARIANCE)
+    val renderedType = KaRenderer.withQualifiedDenotableSupertypes.renderToString(type)
     setTypeReference(renderedType, shortenReferences)
 }

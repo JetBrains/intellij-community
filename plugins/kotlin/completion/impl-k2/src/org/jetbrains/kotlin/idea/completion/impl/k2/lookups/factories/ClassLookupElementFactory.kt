@@ -7,8 +7,8 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource.WITH_SHORT_NAMES
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.signatures.asSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -46,11 +46,12 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.withClassifierSymbol
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.KindWeigher.isConstructorCall
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaWeigher.hasTrailingLambda
 import org.jetbrains.kotlin.idea.util.realName
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
+import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.types.Variance
 
 internal object ClassLookupElementFactory {
 
@@ -88,15 +89,14 @@ internal object ClassLookupElementFactory {
         val renderedFullTypeArgs = typeArguments?.takeIf { hasTypeArguments }?.joinToString(", ", "<", ">") {
             when (it) {
                 is KaStarTypeProjection -> "Any?"
-                is KaTypeArgumentWithVariance -> it.type.upperBoundIfFlexible().render(position = Variance.INVARIANT)
+                is KaTypeArgumentWithVariance -> KaRenderer.withQualifiedNames.renderToString(it.type.upperBoundIfFlexible())
             }
         }
 
         val renderedShortTypeArgs = typeArguments?.takeIf { hasTypeArguments }?.joinToString(", ", "<", ">") {
             when (it) {
                 is KaStarTypeProjection -> "Any?"
-                is KaTypeArgumentWithVariance -> it.type.upperBoundIfFlexible()
-                    .render(renderer = WITH_SHORT_NAMES, position = Variance.INVARIANT)
+                is KaTypeArgumentWithVariance -> KaRenderer.withShortNames.renderToString(it.type.upperBoundIfFlexible())
             }
         }
 
@@ -188,9 +188,7 @@ internal object ClassLookupElementFactory {
             " {...} "
         } else {
             samFunction.valueParameters.joinToString(prefix = " { ", postfix = " -> ... } ") {
-                val renderedType = it.returnType
-                    .lowerBoundIfFlexible()
-                    .render(renderer = WITH_SHORT_NAMES, position = Variance.INVARIANT)
+                val renderedType = KaRenderer.withShortNames.renderToString(it.returnType.lowerBoundIfFlexible())
                 it.realName?.asString() ?: renderedType
             }
         }

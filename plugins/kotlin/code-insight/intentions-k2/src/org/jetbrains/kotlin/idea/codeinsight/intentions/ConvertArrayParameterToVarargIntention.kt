@@ -7,8 +7,9 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -20,13 +21,13 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeProjection
 import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.kotlin.types.Variance
 
 internal class ConvertArrayParameterToVarargIntention :
     KotlinApplicableModCommandAction<KtParameter, KtTypeReference>(KtParameter::class) {
@@ -65,7 +66,7 @@ internal class ConvertArrayParameterToVarargIntention :
     override fun prepareContext(element: KtParameter): KtTypeReference? {
         val symbol = element.symbol as? KaValueParameterSymbol ?: return null
         val elementType = symbol.returnType.arrayElementType ?: return null
-        val newType = elementType.render(position = Variance.IN_VARIANCE)
+        val newType = KaRenderer.withQualifiedDenotableSubtypes.renderToString(elementType)
         return KtPsiFactory(element.project).createType(newType)
     }
 

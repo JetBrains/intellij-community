@@ -12,8 +12,8 @@ import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
@@ -24,13 +24,13 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeIterated
+import org.jetbrains.kotlin.idea.util.withShortDenotableSubtypes
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
-import org.jetbrains.kotlin.types.Variance
 
 internal class IterateExpressionIntention : KotlinApplicableModCommandAction<KtExpression, Unit>(KtExpression::class) {
 
@@ -105,10 +105,7 @@ internal class IterateExpressionIntention : KotlinApplicableModCommandAction<KtE
     ): Presentation? {
         val typePresentation = analyze(element) {
             val expressionType = element.expressionType ?: return null
-            expressionType.render(
-                renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,
-                position = Variance.IN_VARIANCE,
-            )
+            KaRenderer.withShortDenotableSubtypes.renderToString(expressionType)
         }
         return Presentation.of(KotlinBundle.message("iterate.over.0", typePresentation, context))
             .withPriority(PriorityAction.Priority.LOW)

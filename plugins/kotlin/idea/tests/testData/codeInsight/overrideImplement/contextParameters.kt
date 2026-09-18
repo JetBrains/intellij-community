@@ -11,4 +11,4 @@ class Bar: Foo {
     <caret>
 }
 
-// MEMBER: "context(a: String)\n foo(): Unit"
+// MEMBER: "context(a: String)\nfoo(): Unit"

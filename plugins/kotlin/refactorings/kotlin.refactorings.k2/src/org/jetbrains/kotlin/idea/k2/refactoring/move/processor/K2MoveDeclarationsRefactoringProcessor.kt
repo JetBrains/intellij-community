@@ -26,8 +26,8 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
@@ -56,6 +56,8 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.OuterInsta
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringListener
 import org.jetbrains.kotlin.idea.refactoring.pullUp.willBeMoved
 import org.jetbrains.kotlin.idea.util.addAnnotation
+import org.jetbrains.kotlin.idea.util.renderToStringIfPresent
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -84,7 +86,6 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 
 open class K2MoveDeclarationsRefactoringProcessor(
@@ -453,10 +454,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
                         val containingClass = containingClassOrObject ?: return
                         analyze(originalDeclaration) {
                             // Use the fully qualified type because we have not moved it to the new location yet
-                            val type = containingClass.classSymbol?.defaultType?.render(
-                                renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES,
-                                position = Variance.INVARIANT
-                            ) ?: return
+                            val type = KaRenderer.withQualifiedNames.renderToStringIfPresent(containingClass.classSymbol?.defaultType) ?: return
                             val possiblyQuotedName = quoteNameIfNeeded(outerInstanceParameterName)
                             val parameter = KtPsiFactory(project).createParameter("private val $possiblyQuotedName: $type")
                             val constructorParameterList = getOrCreatePrimaryConstructorParameterList()
@@ -469,7 +467,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
                     if (outerInstanceParameterName != null) {
                         val outerInstanceType = analyze(originalDeclaration) {
                             val type = (containingClass?.symbol as? KaClassSymbol)?.defaultType ?: return@analyze null
-                            type.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
+                            KaRenderer.withQualifiedNames.renderToString(type)
                         }
                         if (outerInstanceType == null) return
                         val possiblyQuotedName = quoteNameIfNeeded(outerInstanceParameterName)

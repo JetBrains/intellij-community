@@ -7,7 +7,8 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.idea.base.psi.setCallableTypeReference
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -26,7 +28,6 @@ import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.primaryConstructorVisitor
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
-import org.jetbrains.kotlin.types.Variance
 
 internal class SelfReferenceConstructorParameterInspection :
     KotlinApplicableInspectionBase.Simple<KtPrimaryConstructor, SelfReferenceConstructorParameterInspection.Context>() {
@@ -67,7 +68,7 @@ internal class SelfReferenceConstructorParameterInspection :
 
         return Context(
             parameter.parameterIndex(),
-            type.withNullability(isMarkedNullable = true).render(position = Variance.INVARIANT)
+            KaRenderer.withQualifiedNames.renderToString(type.withNullability(isMarkedNullable = true))
         )
     }
 

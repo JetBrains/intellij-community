@@ -11,8 +11,8 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.KaApplicableCallCandidate
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidate
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -37,6 +37,9 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.parameterInfo.KotlinParameterInfoBase
 import org.jetbrains.kotlin.idea.util.realName
+import org.jetbrains.kotlin.idea.util.withShortDenotableSubtypes
+import org.jetbrains.kotlin.idea.util.withShortDenotableSupertypes
+import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
@@ -56,7 +59,6 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.types.Variance
 import java.awt.Color
 import kotlin.math.min
 import kotlin.reflect.KClass
@@ -79,8 +81,6 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         )
 
         private const val SINGLE_LINE_PARAMETERS_COUNT = 3
-
-        private val typeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES
     }
 
     override fun getActualParameterDelimiterType(): KtSingleValueToken = KtTokens.COMMA
@@ -317,7 +317,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             }
 
             val returnType = parameter.returnType.takeUnless { it is KaErrorType } ?: parameter.symbol.returnType
-            append(returnType.render(typeRenderer, Variance.INVARIANT))
+            append(KaRenderer.withShortNames.renderToString(returnType))
 
             parameter.symbol.defaultValue?.let { defaultValue ->
                 append(" = ")
@@ -341,7 +341,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             val name = parameter.symbol.name.takeIf { !it.isSpecial }?.render() ?: "_"
             append(name)
             append(": ")
-            append(returnType.render(typeRenderer, position = Variance.INVARIANT))
+            append(KaRenderer.withShortNames.renderToString(returnType))
         }
     }
 
@@ -749,7 +749,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             fun createCallStringRepresentation(candidateSignature: KaFunctionSignature<KaFunctionSymbol>): CallStringRepresentation {
                 val beforeParameters = buildString {
                     candidateSignature.receiverType?.let {
-                        append(it.render(typeRenderer, position = Variance.IN_VARIANCE))
+                        append(KaRenderer.withShortDenotableSubtypes.renderToString(it))
                         append(".")
                     }
                     val name = when (val symbol = candidateSignature.symbol) {
@@ -763,7 +763,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                         is KaConstructorSymbol -> {}
                         else -> {
                             append(": ")
-                            append(candidateSignature.returnType.render(typeRenderer, position = Variance.OUT_VARIANCE))
+                            append(KaRenderer.withShortDenotableSupertypes.renderToString(candidateSignature.returnType))
                         }
                     }
                 }

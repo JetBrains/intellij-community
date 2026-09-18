@@ -24,14 +24,16 @@ import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.javaInterop.asKaType
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaDefinitelyNotNullTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeProjectionRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaPiece
+import org.jetbrains.kotlin.analysis.api.rendering.KaPieceRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderingContext
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderingOutput
+import org.jetbrains.kotlin.analysis.api.rendering.KaTextAttribute
+import org.jetbrains.kotlin.analysis.api.rendering.append
+import org.jetbrains.kotlin.analysis.api.rendering.push
+import org.jetbrains.kotlin.analysis.api.rendering.render
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -64,7 +66,6 @@ import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.analysis.api.types.withNullability
-import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObjectToSupertypeOrSelf
@@ -75,6 +76,10 @@ import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
+import org.jetbrains.kotlin.idea.util.withReflectionTypesAsFunctionTypes
+import org.jetbrains.kotlin.idea.util.withShortNames
+import org.jetbrains.kotlin.idea.util.withoutTypeProjectionVariance
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -116,7 +121,6 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.psi.psiUtil.hasInnerModifier
-import org.jetbrains.kotlin.types.Variance
 
 internal data class TypeArgumentInfo(
     val typeParameterName: String,
@@ -403,57 +407,15 @@ object K2CreateFunctionFromUsageUtil {
     private val NAME_SUGGESTER = KotlinNameSuggester()
 
     @KaExperimentalApi
-    val WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS: KaTypeRenderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
-        // Without this, it will render `kotlin.String!` for `kotlin.String`, which causes a syntax error.
-        flexibleTypeRenderer = object : KaFlexibleTypeRenderer {
-            override fun renderType(
-                analysisSession: KaSession,
-                type: KaFlexibleType,
-                typeRenderer: KaTypeRenderer,
-                printer: PrettyPrinter
-            ) {
-                typeRenderer.renderType(analysisSession, type.lowerBound, printer)
-            }
-        }
-        // Without this, it can render `kotlin.String & kotlin.Any`, which causes a syntax error.
-        definitelyNotNullTypeRenderer = object : KaDefinitelyNotNullTypeRenderer {
-            override fun renderType(
-                analysisSession: KaSession,
-                type: KaDefinitelyNotNullType,
-                typeRenderer: KaTypeRenderer,
-                printer: PrettyPrinter
-            ) {
-                typeRenderer.renderType(analysisSession, type.original, printer)
-            }
-        }
+    val WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS: KaRenderer = KaRenderer.withQualifiedNames.copy {
+        // Without this, it would render `kotlin.String!` for `kotlin.String`, which causes a syntax error.
+        push(KaPiece.FlexibleType) { render(it.lowerBound, KaPiece.Type) }
+        // Without this, it could render `kotlin.String & kotlin.Any`, which causes a syntax error.
+        push(KaPiece.DefinitelyNotNullType) { render(it.original, KaPiece.Type) }
         // Listing variances will cause a syntax error.
-        typeProjectionRenderer = KaTypeProjectionRenderer.WITHOUT_VARIANCE
-        functionalTypeRenderer = KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
-        // qualified names except starting with "kotlin."
-        classIdRenderer = object: KaClassTypeQualifierRenderer {
-                override fun renderClassTypeQualifier(
-                    analysisSession: KaSession,
-                    type: KaType,
-                    qualifiers: List<KaClassTypeQualifier>,
-                    typeRenderer: KaTypeRenderer,
-                    printer: PrettyPrinter,
-                ) {
-                    printer {
-                        ".".separated(
-                            {
-                                if (type is KaClassType && type.classId.packageFqName != CallableId.PACKAGE_FQ_NAME_FOR_LOCAL && type.classId.packageFqName.asString() != "kotlin") {
-                                    append(type.classId.packageFqName.render())
-                                }
-                            },
-                            {
-                                WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS_WITHOUT_IMPLEMENTATION_DETAILS
-                                    .renderClassTypeQualifier(analysisSession, type, qualifiers, typeRenderer, printer)
-                            },
-                        )
-                    }
-                }
-            }
-
+        withoutTypeProjectionVariance()
+        push(ClassTypeForCreateElementsRenderer(renderPackage = true))
+        withReflectionTypesAsFunctionTypes()
     }
 
     context(_: KaSession)
@@ -589,7 +551,7 @@ object K2CreateFunctionFromUsageUtil {
             .toSet()
 
         val renderedTypes = typeArguments.mapNotNull {
-            it.typeReference?.type?.render(WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, Variance.INVARIANT)
+            it.typeReference?.type?.let { type -> WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS.renderToString(type) }
         }
 
         val validator = CollectingNameValidator(containerTypeParameters.mapNotNull { it.name })
@@ -608,32 +570,9 @@ object K2CreateFunctionFromUsageUtil {
         return CallTypeParameterInfo(declarations, substitutionMap)
     }
 
-    /**
-     * This renderer is similar to [KaClassTypeQualifierRenderer.WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS],
-     * but filters out implementation detail outer classes of a given class, such as `Line_1_jupyter`.
-     */
     @KaExperimentalApi
-    private val WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS_WITHOUT_IMPLEMENTATION_DETAILS: KaClassTypeQualifierRenderer = object : KaClassTypeQualifierRenderer {
-        override fun renderClassTypeQualifier(
-            analysisSession: KaSession,
-            type: KaType,
-            qualifiers: List<KaClassTypeQualifier>,
-            typeRenderer: KaTypeRenderer,
-            printer: PrettyPrinter,
-        ) {
-            KaClassTypeQualifierRenderer.WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS.renderClassTypeQualifier(
-                analysisSession,
-                type,
-                filterOutImplementationDetailQualifiers(type, qualifiers),
-                typeRenderer,
-                printer
-            )
-        }
-    }
-
-    @KaExperimentalApi
-    val WITH_SHORT_NAMES_FOR_CREATE_ELEMENTS: KaTypeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES.with {
-        classIdRenderer = WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS_WITHOUT_IMPLEMENTATION_DETAILS
+    val WITH_SHORT_NAMES_FOR_CREATE_ELEMENTS: KaRenderer = KaRenderer.withShortNames.copy {
+        push(ClassTypeForCreateElementsRenderer(renderPackage = false))
     }
 
     /**
@@ -653,3 +592,45 @@ object K2CreateFunctionFromUsageUtil {
         }
     }
 }
+
+/**
+ * Renders a class type without the qualifiers which are implementation details of the enclosing generated wrapper, such as the
+ * `Line_1_jupyter` class a notebook snippet is compiled into.
+ *
+ * When [renderPackage] is set, the package is rendered as well, except for `kotlin`, which never needs qualifying.
+ */
+private class ClassTypeForCreateElementsRenderer(private val renderPackage: Boolean) : KaPieceRenderer<KaClassType>(KaPiece.ClassTypeName) {
+    context(session: KaSession, context: KaRenderingContext, output: KaRenderingOutput)
+    override fun render(value: KaClassType, next: () -> Unit): Boolean {
+        if (renderPackage) {
+            val packageFqName = value.classId.packageFqName
+            if (!packageFqName.isRoot &&
+                packageFqName != CallableId.PACKAGE_FQ_NAME_FOR_LOCAL &&
+                packageFqName.asString() != KOTLIN_PACKAGE_NAME
+            ) {
+                render(packageFqName, KaPiece.PackageName)
+                output.append(".", KaTextAttribute.Punctuation)
+            }
+        }
+
+        val qualifiers = K2CreateFunctionFromUsageUtil.filterOutImplementationDetailQualifiers(value, value.qualifiers)
+        if (qualifiers.isEmpty()) {
+            output.append(value.classId.shortClassName.render(), KaTextAttribute.Identifier)
+            if (value.typeArguments.isNotEmpty()) {
+                render(value.typeArguments, KaPiece.TypeArgumentList)
+            }
+        } else {
+            qualifiers.forEachIndexed { index, qualifier ->
+                if (index > 0) output.append(".", KaTextAttribute.Punctuation)
+                output.append(qualifier.name.render(), KaTextAttribute.Identifier)
+                if (qualifier.typeArguments.isNotEmpty()) {
+                    render(qualifier.typeArguments, KaPiece.TypeArgumentList)
+                }
+            }
+        }
+
+        return true
+    }
+}
+
+private const val KOTLIN_PACKAGE_NAME: String = "kotlin"

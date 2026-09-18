@@ -6,7 +6,8 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -23,10 +24,10 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.isDenotable
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
-import org.jetbrains.kotlin.types.Variance
 
 context(_: KaSession)
 fun getRenderedTypeArguments(element: KtCallElement): String? {
@@ -41,7 +42,7 @@ fun getRenderedTypeArguments(element: KtCallElement): String? {
             if (type is KaDefinitelyNotNullType && symbol.isReified) return null
 
             if (type.containsErrorType() || !(type.isDenotable || type is KaFlexibleType)) return null
-            add(type.render(position = Variance.IN_VARIANCE))
+            add(KaRenderer.withQualifiedDenotableSubtypes.renderToString(type))
         }
     }
 

@@ -16,14 +16,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaPiece
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.pushEmpty
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -31,6 +33,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.idea.util.withOnlyModifiers
+import org.jetbrains.kotlin.idea.util.withShortDenotableSupertypes
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -57,11 +61,12 @@ class KotlinPsiElementMemberChooserObject(
     override fun getElement(): KtElement = psiElement as KtElement
 
     companion object {
+        /** Renders the single-line label of a chooser entry, so a declaration contributes its header alone. */
         @KaExperimentalApi
-        private val renderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
-            modifiersRenderer = modifiersRenderer.with {
-                keywordsRenderer = keywordsRenderer.with { keywordFilter = KaRendererKeywordFilter.onlyWith(KtTokens.VARARG_KEYWORD) }
-            }
+        private val renderer: KaRenderer = KaRenderer.withShortDenotableSupertypes.copy {
+            withOnlyModifiers(TokenSet.create(KtTokens.VARARG_KEYWORD))
+            pushEmpty(KaPiece.ClassBody)
+            pushEmpty(KaPiece.PropertyInitializer)
         }
 
         @JvmStatic
@@ -102,7 +107,7 @@ class KotlinPsiElementMemberChooserObject(
             }
 
             if (symbol is KaDeclarationSymbol) {
-                return symbol.render(renderer)
+                return renderer.renderToString(symbol)
             }
 
             return ""

@@ -18,7 +18,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.projectStructure.copyOrigin
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -34,10 +35,11 @@ import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.type
-import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
+import org.jetbrains.kotlin.idea.util.withoutFunctionTypeParameterNames
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -397,8 +399,10 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
             val reasonSuffix = reason.takeIf { it.isNotBlank() }?.let { ": $it" }.orEmpty()
             unknownClassShapes("Cannot resolve $typeDescription$reasonSuffix")
         }
-        return prettyPrint { TYPE_RENDERER.renderType(session, this@renderTypeSignature, this) }
+        return TYPE_RENDERER.renderToString(this)
     }
+
+    private val TYPE_RENDERER: KaRenderer = KaRenderer.withQualifiedNames.copy { withoutFunctionTypeParameterNames() }
 
     context(_: KaSession)
     private fun KaType.findErrorType(): KaErrorType? = when (this) {
@@ -420,8 +424,6 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
 }
 
 private data class SourceInnerClass(val classOrObject: KtClassOrObject, val name: String, val isAnonymous: Boolean)
-
-private val TYPE_RENDERER = KaTypeRendererForSource.WITH_QUALIFIED_NAMES_WITHOUT_PARAMETER_NAMES
 
 private val CLASS_MODIFIERS = arrayOf(
     KtTokens.PUBLIC_KEYWORD,

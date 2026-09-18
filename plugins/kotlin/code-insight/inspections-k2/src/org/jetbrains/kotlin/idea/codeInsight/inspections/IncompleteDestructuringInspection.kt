@@ -8,8 +8,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
@@ -19,12 +19,12 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.utils.extractPrimaryParameters
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.util.withShortDenotableSubtypes
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.destructuringDeclarationVisitor
-import org.jetbrains.kotlin.types.Variance
 
 internal class IncompleteDestructuringInspection :
     KotlinApplicableInspectionBase.Simple<KtDestructuringDeclaration, IncompleteDestructuringInspection.Context>() {
@@ -130,9 +130,6 @@ private fun generateTypesIfNeeded(
     if (element.entries.none { it.typeReference != null }) return emptyList()
 
     return primaryParameters.map {
-        it.returnType.render(
-            renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,
-            position = Variance.IN_VARIANCE,
-        )
+        KaRenderer.withShortDenotableSubtypes.renderToString(it.returnType)
     }
 }

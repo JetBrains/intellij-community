@@ -2,7 +2,8 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.pullUp
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.isDirectSubClassOf
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
@@ -23,7 +25,6 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
-import org.jetbrains.kotlin.types.Variance
 
 context(session: KaSession)
 internal fun createSuperTypeEntryForAddition(
@@ -40,7 +41,7 @@ internal fun createSuperTypeEntryForAddition(
     val typeInTargetClass = substitutor.substitute(referencedType)
     if (typeInTargetClass is KaErrorType) return null
 
-    val renderedType = typeInTargetClass.render(position = Variance.INVARIANT)
+    val renderedType = KaRenderer.withQualifiedNames.renderToString(typeInTargetClass)
     return KtPsiFactory(targetClass.project).createSuperTypeEntry(renderedType)
 }
 
@@ -59,7 +60,7 @@ internal fun computeAndRenderReturnType(
         returnType = substitutor.substitute(returnType)
     }
     return if (copiedDeclaration is KtProperty || returnType.classId != KaStandardTypeClassIds.UNIT) {
-        returnType.render(position = Variance.INVARIANT)
+        KaRenderer.withQualifiedNames.renderToString(returnType)
     } else {
         null
     }

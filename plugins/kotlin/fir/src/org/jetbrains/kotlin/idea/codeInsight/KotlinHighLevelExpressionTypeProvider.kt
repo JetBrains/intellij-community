@@ -5,17 +5,16 @@ package org.jetbrains.kotlin.idea.codeInsight
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.expressionOrReturnType
+import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.types.Variance
 
 class KotlinHighLevelExpressionTypeProvider : KotlinExpressionTypeProvider() {
-    private val renderer: KaTypeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES
+    private val renderer: KaRenderer = KaRenderer.withShortNames
 
     // this method gets called from the non-blocking read action
     override fun getInformationHint(element: KtExpression): String =
@@ -24,16 +23,16 @@ class KotlinHighLevelExpressionTypeProvider : KotlinExpressionTypeProvider() {
             val smartCastInfo = element.smartCastInfo
             if (smartCastInfo == null) {
                 @NlsSafe
-                val rendered = ktType.render(renderer = renderer, position = Variance.INVARIANT)
+                val rendered = renderer.renderToString(ktType)
                 KotlinBundle.message(
                     "type.provider.declared.type",
                     StringUtil.escapeXmlEntities(rendered)
                 )
             } else {
                 @NlsSafe
-                val original = smartCastInfo.originalType.render(renderer = renderer, position = Variance.INVARIANT)
+                val original = renderer.renderToString(smartCastInfo.originalType)
                 @NlsSafe
-                val smartCasted = smartCastInfo.smartCastType.render(renderer = renderer, position = Variance.INVARIANT)
+                val smartCasted = renderer.renderToString(smartCastInfo.smartCastType)
 
                 KotlinBundle.message(
                     "type.provider.expression.smartcast.type",

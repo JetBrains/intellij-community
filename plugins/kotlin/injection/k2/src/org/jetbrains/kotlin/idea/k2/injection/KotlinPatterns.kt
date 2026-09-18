@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.k2.injection
 
 import com.intellij.patterns.StandardPatterns
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -15,9 +15,9 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.injection.KotlinFunctionPatternBase
 import org.jetbrains.kotlin.idea.base.injection.KotlinReceiverPattern
 import org.jetbrains.kotlin.idea.base.injection.KtParameterPatternBase
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.types.Variance
 
 // Methods in this class are used through reflection
 @Suppress("unused")
@@ -33,7 +33,7 @@ internal object KotlinPatterns : StandardPatterns() {
 }
 
 context(_: KaSession)
-private fun KaType.renderFullyQualifiedName() = render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
+private fun KaType.renderFullyQualifiedName() = KaRenderer.withQualifiedNames.renderToString(this)
 
 // Methods in this class are used through reflection during pattern construction
 internal class KotlinFunctionPattern : KotlinFunctionPatternBase() {

@@ -7,7 +7,8 @@ import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
@@ -37,6 +38,9 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.getLambdaExpressionForSamConvers
 import org.jetbrains.kotlin.idea.k2.codeinsight.hasRecursiveSamCall
 import org.jetbrains.kotlin.idea.k2.codeinsight.isSamConversionAliasedWithVariance
 import org.jetbrains.kotlin.idea.k2.refactoring.util.LambdaToAnonymousFunctionUtil
+import org.jetbrains.kotlin.idea.util.renderToStringIfPresent
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSupertypes
 import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
@@ -44,7 +48,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolution.KtResolvable
-import org.jetbrains.kotlin.types.Variance
 
 internal object ConvertToAnonymousObjectFixFactories {
     val fixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InterfaceAsFunction ->
@@ -134,7 +137,7 @@ private fun prepareFunctionText(
             else -> preparedFunction.valueParameters.getOrNull(index)?.name?.quoteIfNeeded() ?: parameter.renderedName(index)
         }
         val parameterType = substitutor.substitute(parameter.returnType)
-        "$parameterName: ${parameterType.render(position = Variance.IN_VARIANCE)}"
+        "$parameterName: ${KaRenderer.withQualifiedDenotableSubtypes.renderToString(parameterType)}"
     }
 
     val returnTypeText = samMethod.returnType
@@ -146,7 +149,7 @@ private fun prepareFunctionText(
             } else {
                 returnType
             }
-            adjustedType.render(position = Variance.OUT_VARIANCE)
+            KaRenderer.withQualifiedDenotableSupertypes.renderToString(adjustedType)
         }
 
     return buildString {
@@ -214,7 +217,7 @@ private fun computeTypeArguments(
             ?: inferTypeArgument(typeParameter, samMethod.returnType, lambdaSymbol.returnType)
     }
     val renderedTypes = actualTypes.mapNotNull { type ->
-        type.takeIf { it !is KaErrorType }?.render(position = Variance.IN_VARIANCE)
+        KaRenderer.withQualifiedDenotableSubtypes.renderToStringIfPresent(type.takeIf { it !is KaErrorType })
     }
     return if (actualTypes.size == declaredTypeParameters.size && renderedTypes.size == declaredTypeParameters.size) {
         TypeArguments(

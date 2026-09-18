@@ -21,7 +21,8 @@ import org.jetbrains.kotlin.analysis.api.components.asPsiType
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.errors
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.simple
@@ -62,6 +63,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterI
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinTypeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.defaultValOrVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -75,7 +77,6 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolution.KtResolvableCall
-import org.jetbrains.kotlin.types.Variance
 
 object ChangeSignatureFixFactory {
 
@@ -345,7 +346,7 @@ object ChangeSignatureFixFactory {
 
                         if (argumentType != null && !argumentType.isSubtypeOf(parameterType)) {
                             changeInfo.newParameters[i + valueParameterOffset].setType(
-                                argumentType.render(position = Variance.IN_VARIANCE)
+                                KaRenderer.withQualifiedDenotableSubtypes.renderToString(argumentType)
                             )
                         }
                     } else {
@@ -560,7 +561,7 @@ object ChangeSignatureFixFactory {
             ?.map {
                 ParameterInfo(
                     KotlinNameSuggester().suggestTypeNames(it).firstOrNull() ?: "param",
-                    it.render(position = Variance.IN_VARIANCE)
+                    KaRenderer.withQualifiedDenotableSubtypes.renderToString(it)
                 )
             }
 

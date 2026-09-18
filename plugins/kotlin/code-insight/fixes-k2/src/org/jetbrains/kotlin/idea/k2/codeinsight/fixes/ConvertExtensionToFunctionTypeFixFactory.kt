@@ -4,39 +4,34 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaAnnotationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.ConvertExtensionToFunctionTypeFix
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
+import org.jetbrains.kotlin.idea.util.withShortNames
+import org.jetbrains.kotlin.idea.util.withoutAnnotations
 import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.kotlin.types.Variance
 
 internal object ConvertExtensionToFunctionTypeFixFactory {
     /**
      * Renders the [functionType] but moves a potential receiver type to be a parameter instead.
      */
     context(session: KaSession)
-    private fun renderFunctionTypeWithoutReceiver(functionType: KaFunctionType, renderer: KaTypeRenderer): String {
+    private fun renderFunctionTypeWithoutReceiver(functionType: KaFunctionType, renderer: KaRenderer): String {
         val renderedParametersList = buildList {
             addIfNotNull(functionType.receiverType)
             addAll(functionType.parameterTypes)
         }.joinToString(", ", "(", ")") {
-            it.render(renderer, Variance.INVARIANT)
+            renderer.renderToString(it)
         }
-        val renderedReturnType = functionType.returnType.render(renderer, Variance.INVARIANT)
+        val renderedReturnType = renderer.renderToString(functionType.returnType)
         return "$renderedParametersList -> $renderedReturnType"
     }
 
-    private val shortNameRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES.with {
-        annotationsRenderer = KaAnnotationRendererForSource.WITH_SHORT_NAMES.with {
-            annotationFilter = KaRendererAnnotationsFilter.NONE
-        }
-    }
+    private val shortNameRenderer: KaRenderer = KaRenderer.withShortNames.copy { withoutAnnotations() }
 
     context(session: KaSession)
     private fun createQuickFix(typeReference: KtTypeReference): ConvertExtensionToFunctionTypeFix? {
@@ -46,7 +41,7 @@ internal object ConvertExtensionToFunctionTypeFixFactory {
         if (type.contextReceivers.isNotEmpty()) return null
 
         val shortName = renderFunctionTypeWithoutReceiver(type, shortNameRenderer)
-        val longName = renderFunctionTypeWithoutReceiver(type, KaTypeRendererForSource.WITH_QUALIFIED_NAMES)
+        val longName = renderFunctionTypeWithoutReceiver(type, KaRenderer.withQualifiedNames)
         return ConvertExtensionToFunctionTypeFix(typeReference, shortName, longName)
     }
 

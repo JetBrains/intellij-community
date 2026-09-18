@@ -6,8 +6,8 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.CallableR
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.CallableReferenceFix.None
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.CallableReferenceFix.SetQualifier
 import org.jetbrains.kotlin.idea.k2.refactoring.util.createReplacementForContextArgument
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
@@ -35,7 +36,6 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.types.Variance
 
 
 internal sealed interface CallableReferenceFix {
@@ -271,7 +271,7 @@ private fun fullyQualifiedReceiverType(changeInfo: KotlinChangeInfoBase): String
     return analyze(typeRef) {
         val type = typeRef.type
         if (!type.isSafeQualifierType()) return@analyze null
-        type.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.INVARIANT)
+        KaRenderer.withQualifiedNames.renderToString(type)
     }
 }
 

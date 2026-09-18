@@ -6,9 +6,10 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.returnType
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaPiece
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.pushEmpty
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -35,6 +36,11 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputVa
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.TypeDescriptor
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.TypeParameter
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.collectRelevantConstraints
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
+import org.jetbrains.kotlin.idea.util.withShortDenotableSupertypes
+import org.jetbrains.kotlin.idea.util.withTypeApproximation
+import org.jetbrains.kotlin.idea.util.withoutFunctionTypeParameterNames
+import org.jetbrains.kotlin.idea.util.withoutPrimaryConstructorPropertyDeclarations
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -44,6 +50,13 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
 import org.jetbrains.kotlin.types.Variance
+
+private val MESSAGE_RENDERER: KaRenderer = KaRenderer.withShortDenotableSupertypes.copy {
+    pushEmpty(KaPiece.ClassBody)
+    pushEmpty(KaPiece.PropertyInitializer)
+    pushEmpty(KaPiece.ValueParameterDefaultValue)
+    withoutPrimaryConstructorPropertyDeclarations()
+}
 
 class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<KaType> {
     override fun KaType.isMeaningful(): Boolean =
@@ -93,7 +106,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
 
     override fun renderForMessage(ktNamedDeclaration: KtNamedDeclaration): String {
         return analyze(data.commonParent) {
-            ktNamedDeclaration.symbol.render(KaDeclarationRendererForSource.WITH_SHORT_NAMES)
+            MESSAGE_RENDERER.renderToString(ktNamedDeclaration.symbol)
         }
     }
 
@@ -107,7 +120,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
 
     override fun renderTypeWithoutApproximation(kotlinType: KaType): String {
         return analyze(data.commonParent) {
-            kotlinType.render(position = Variance.INVARIANT)
+            KaRenderer.withQualifiedNames.renderToString(kotlinType)
         }
     }
 
@@ -120,8 +133,11 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
     override fun renderType(
         type: KaType, isReceiver: Boolean, variance: Variance
     ): String = analyze(data.commonParent) {
-        val renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES_WITHOUT_PARAMETER_NAMES
-        val renderType = type.render(renderer = renderer, position = variance)
+        val renderer = KaRenderer.withQualifiedNames.copy {
+            withTypeApproximation(variance)
+            withoutFunctionTypeParameterNames()
+        }
+        val renderType = renderer.renderToString(type)
         if ((type.isFunctionType || type.isSuspendFunctionType) && isReceiver) "($renderType)" else renderType
     }
 

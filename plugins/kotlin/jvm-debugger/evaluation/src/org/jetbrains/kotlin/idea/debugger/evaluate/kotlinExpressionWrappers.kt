@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.successful
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
@@ -48,6 +49,8 @@ import org.jetbrains.kotlin.idea.util.application.attachmentByPsiFile
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.merge
+import org.jetbrains.kotlin.idea.util.renderToStringIfPresent
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtBlockCodeFragment
@@ -64,7 +67,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.resolution.KtResolvableCall
-import org.jetbrains.kotlin.types.Variance
 
 internal interface KotlinCodeFragmentWrapper {
     fun transformIfNeeded(codeFragment: KtCodeFragment)
@@ -382,7 +384,7 @@ internal class KotlinRuntimeTypeCastWrapper(
         }
 
         val castType = recovered
-            ?: classSymbol.defaultType.replaceTypeParametersWithStarProjections()?.render(position = Variance.INVARIANT)
+            ?: KaRenderer.withQualifiedNames.renderToStringIfPresent(classSymbol.defaultType.replaceTypeParametersWithStarProjections())
             ?: return null
 
         return "(${candidate.receiverText} as $castType).${candidate.selectorText}"
@@ -398,7 +400,7 @@ internal class KotlinRuntimeTypeCastWrapper(
         val fromInitializer = if (useSite != null) null else candidate(initializerTypeOfValReceiver(receiver))
         val chosen = useSite ?: fromInitializer ?: return null
 
-        return chosen.withNullability(false).render(position = Variance.INVARIANT)
+        return KaRenderer.withQualifiedNames.renderToString(chosen.withNullability(false))
     }
 
     context(_: KaSession)

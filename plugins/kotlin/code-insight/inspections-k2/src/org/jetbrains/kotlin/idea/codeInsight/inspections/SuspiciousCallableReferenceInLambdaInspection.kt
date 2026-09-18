@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -33,6 +33,8 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.SuspiciousCallableReferenceInLambdaInspection.Context
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.util.renderToStringIfPresent
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -53,7 +55,6 @@ import org.jetbrains.kotlin.psi.buildValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolution.KtResolvable
-import org.jetbrains.kotlin.types.Variance
 
 class SuspiciousCallableReferenceInLambdaInspection : KotlinApplicableInspectionBase<KtLambdaExpression, Context>() {
 
@@ -225,7 +226,7 @@ private fun buildReferenceText(element: KtLambdaExpression, callableRefExpr: KtC
     val receiverText = if (receiverSymbol is KaValueParameterSymbol && receiverSymbol.containingSymbol == lambdaSymbol) {
         val callableReferenceCall = callableRefExpr.resolveSuccessfulCall()
         val receiverType = callableReferenceCall?.let { it.extensionReceiver?.type ?: it.dispatchReceiver?.type }
-        receiverType?.render(position = Variance.INVARIANT) ?: ""
+        KaRenderer.withQualifiedNames.renderToStringIfPresent(receiverType) ?: ""
     } else {
         receiverExpression.text
     }

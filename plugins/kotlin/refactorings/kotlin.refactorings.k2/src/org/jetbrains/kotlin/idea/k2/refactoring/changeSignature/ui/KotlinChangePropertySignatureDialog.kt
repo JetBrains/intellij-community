@@ -5,8 +5,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiCodeFragment
 import org.jetbrains.kotlin.analysis.api.components.returnType
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -21,10 +20,11 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterI
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinTypeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinBaseChangePropertySignatureDialog
+import org.jetbrains.kotlin.idea.util.renderToStringIfPresent
+import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtTypeCodeFragment
-import org.jetbrains.kotlin.types.Variance
 import javax.swing.DefaultComboBoxModel
 
 class KotlinChangePropertySignatureDialog(project: Project,
@@ -44,7 +44,7 @@ class KotlinChangePropertySignatureDialog(project: Project,
     override fun createReturnTypeCodeFragment(m: KotlinMethodDescriptor): KtTypeCodeFragment {
         val returnPresentableText =
             analyzeInModalWindow(m.method, KotlinBundle.message("fix.change.signature.prepare")) {
-                (m.method as? KtCallableDeclaration)?.returnType?.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+                KaRenderer.withShortNames.renderToStringIfPresent((m.method as? KtCallableDeclaration)?.returnType)
             }
         return kotlinPsiFactory.createTypeCodeFragment(returnPresentableText ?: "", m.method)
     }
@@ -52,7 +52,7 @@ class KotlinChangePropertySignatureDialog(project: Project,
     override fun createReceiverTypeCodeFragment(m: KotlinMethodDescriptor): KtTypeCodeFragment {
         val receiverPresentableType =
             analyzeInModalWindow(m.method, KotlinBundle.message("fix.change.signature.prepare")) {
-                (m.method as? KtCallableDeclaration)?.receiverTypeReference?.type?.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+                KaRenderer.withShortNames.renderToStringIfPresent((m.method as? KtCallableDeclaration)?.receiverTypeReference?.type)
             }
         return kotlinPsiFactory.createTypeCodeFragment(receiverPresentableType ?: "", m.method)
     }

@@ -9,7 +9,8 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility.LOCAL
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.intentions.AddThrowsAnnotationIntention.Context
 import org.jetbrains.kotlin.idea.util.addAnnotation
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.platform.isJs
@@ -45,7 +47,6 @@ import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.KtThrowExpression
 import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
-import org.jetbrains.kotlin.types.Variance.INVARIANT
 
 private val KOTLIN_ARRAY_OF_FQ_NAME = FqName("kotlin.arrayOf")
 
@@ -172,7 +173,7 @@ context(_: KaSession)
 private fun KaType.asAnnotationArgumentText(): String {
     // Account for typealiases: we want to render `RuntimeException` instead of `java.lang.RuntimeException`
     val typeToRender = this.abbreviation ?: this
-    val escapedFqName = typeToRender.render(position = INVARIANT)
+    val escapedFqName = KaRenderer.withQualifiedNames.renderToString(typeToRender)
     return "$escapedFqName::class"
 }
 

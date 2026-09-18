@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -16,10 +16,10 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.types.Variance
 
 internal object CreateContextParameterFromNamedArgumentFixFactory {
 
@@ -38,10 +38,7 @@ internal object CreateContextParameterFromNamedArgumentFixFactory {
 
         val argumentType = argumentExpression.expressionType?.takeIf { it !is KaErrorType }
             ?: builtinTypes.any
-        val renderedType = argumentType.render(
-            renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES,
-            position = Variance.INVARIANT,
-        )
+        val renderedType = KaRenderer.withQualifiedNames.renderToString(argumentType)
 
         if (!targetFunction.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) {
             return@ModCommandBased emptyList()

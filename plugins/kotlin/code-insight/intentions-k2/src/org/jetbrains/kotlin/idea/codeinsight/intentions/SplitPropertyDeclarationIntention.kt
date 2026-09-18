@@ -9,18 +9,19 @@ import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.setPropertyInitializer
 import org.jetbrains.kotlin.idea.base.psi.setPropertyTypeReference
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSupertypes
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
-import org.jetbrains.kotlin.types.Variance
 
 internal class SplitPropertyDeclarationIntention :
     KotlinApplicableModCommandAction<KtProperty, SplitPropertyDeclarationIntention.Context>(KtProperty::class) {
@@ -44,7 +45,7 @@ internal class SplitPropertyDeclarationIntention :
     context(session: KaSession)
     override fun prepareContext(element: KtProperty): Context? {
         val ktType = element.initializer?.expressionType ?: return null
-        return Context(if (ktType is KaErrorType) null else ktType.render(position = Variance.OUT_VARIANCE))
+        return Context(if (ktType is KaErrorType) null else KaRenderer.withQualifiedDenotableSupertypes.renderToString(ktType))
     }
 
     override fun invoke(

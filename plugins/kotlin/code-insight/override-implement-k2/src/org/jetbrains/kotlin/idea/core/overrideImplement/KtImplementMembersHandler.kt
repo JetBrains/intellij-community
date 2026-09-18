@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableImplementationState
@@ -170,7 +171,7 @@ private fun List<KaCallableSymbol>.mapToKtClassMemberInfo(): List<KtClassMemberI
         val fqName = (containingSymbol?.classId?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString())
         KtClassMemberInfo.create(
             symbol = unimplementedMemberSymbol,
-            memberText = renderMemberText(unimplementedMemberSymbol),
+            memberText = KtGenerateMembersHandler.renderer.renderToString(unimplementedMemberSymbol),
             memberIcon = KotlinIconProvider.getIcon(unimplementedMemberSymbol),
             containingSymbolText = fqName,
             containingSymbolIcon = containingSymbol?.let { symbol -> KotlinIconProvider.getIcon(symbol) }

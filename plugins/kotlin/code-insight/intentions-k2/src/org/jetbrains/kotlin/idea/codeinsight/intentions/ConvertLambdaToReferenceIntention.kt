@@ -13,7 +13,8 @@ import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
@@ -54,6 +55,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
 import org.jetbrains.kotlin.idea.k2.refactoring.util.areTypeArgumentsRedundant
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
 import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
 import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
@@ -79,7 +81,6 @@ import org.jetbrains.kotlin.psi.buildValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolution.KtResolvable
-import org.jetbrains.kotlin.types.Variance
 
 internal class ConvertLambdaToReferenceIntention :
     KotlinApplicableModCommandAction<KtLambdaExpression, ConvertLambdaToReferenceIntention.Context>(KtLambdaExpression::class) {
@@ -167,7 +168,7 @@ internal class ConvertLambdaToReferenceIntention :
                 val propertyType = parent.returnType
                 val symbol = element.singleStatementOrNull()?.tryResolveExpressionCall()?.single?.function?.symbol as? KaNamedFunctionSymbol
                 if (symbol != null && symbol.overloadedFunctions(element).size > 1) {
-                    propertyType.render(position = Variance.IN_VARIANCE)
+                    KaRenderer.withQualifiedDenotableSubtypes.renderToString(propertyType)
                 } else null
             } else null
 
@@ -295,7 +296,7 @@ private fun buildReferenceText(lambdaExpression: KtLambdaExpression): String? {
                     val lambdaValueParameters = lambdaExpression.functionLiteral.symbol.valueParameters
                     if (receiverSymbol is KaValueParameterSymbol && receiverSymbol == lambdaValueParameters.firstOrNull()) {
                         val originalReceiverType = receiverSymbol.returnType
-                        val receiverText = originalReceiverType.render(position = Variance.IN_VARIANCE)
+                        val receiverText = KaRenderer.withQualifiedDenotableSubtypes.renderToString(originalReceiverType)
                         buildReferenceText(receiverText, selectorReferenceName, resolvedCall)
                     } else {
                         val receiverName = receiverSymbol.name.render()
@@ -357,7 +358,7 @@ context(_: KaSession)
 private fun KtNameReferenceExpression.renderTargetReceiverType(): String {
     val singleCall = this.resolveSuccessfulCall()
     val receiverType = (singleCall?.dispatchReceiver ?: singleCall?.extensionReceiver)?.type ?: return ""
-    return receiverType.render(position = Variance.IN_VARIANCE)
+    return KaRenderer.withQualifiedDenotableSubtypes.renderToString(receiverType)
 }
 
 context(_: KaSession)

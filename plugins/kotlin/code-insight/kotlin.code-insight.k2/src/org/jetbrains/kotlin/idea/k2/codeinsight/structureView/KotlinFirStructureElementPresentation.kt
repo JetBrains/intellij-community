@@ -11,41 +11,35 @@ import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.util.PsiIconUtil
 import com.intellij.util.ui.StartupUiUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.base.KaContextReceiversOwner
-import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KaContextReceiversRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverListRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaParameterDefaultValueRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderAnnotationsModifiersAndContextReceivers
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KaTypeParametersRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaConstructorSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaNamedFunctionSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KaNamedClassSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesFilter
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaPiece
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaTextAttribute
+import org.jetbrains.kotlin.analysis.api.rendering.append
+import org.jetbrains.kotlin.analysis.api.rendering.output
+import org.jetbrains.kotlin.analysis.api.rendering.push
+import org.jetbrains.kotlin.analysis.api.rendering.pushEmpty
+import org.jetbrains.kotlin.analysis.api.rendering.render
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle
+import org.jetbrains.kotlin.idea.util.renderSymbolName
+import org.jetbrains.kotlin.idea.util.withShortDenotableSupertypes
+import org.jetbrains.kotlin.idea.util.withShortNames
+import org.jetbrains.kotlin.idea.util.withoutAnnotations
+import org.jetbrains.kotlin.idea.util.withoutDeclarationKeywords
+import org.jetbrains.kotlin.idea.util.withoutModifiers
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -67,58 +61,62 @@ internal class KotlinFirStructureElementPresentation(
     pointer: KaSymbolPointer<*>?
 ) : ColoredItemPresentation, LocationPresentation {
     companion object {
-        //todo rewrite after KT-66192 is implemented
-        @KaExperimentalApi
-        private val renderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
-            annotationRenderer = annotationRenderer.with {
-                annotationFilter = KaRendererAnnotationsFilter.NONE
-            }
+        private val renderer: KaRenderer = KaRenderer.withShortDenotableSupertypes.copy {
+            withoutAnnotations()
+            withoutModifiers()
+            withoutDeclarationKeywords()
+            pushEmpty(KaPiece.TypeParameterList)
+            pushEmpty(KaPiece.PropertyInitializer)
 
-            modifiersRenderer = modifiersRenderer.with {
-                keywordsRenderer = keywordsRenderer.with { keywordFilter = KaRendererKeywordFilter.NONE }
-            }
-
-            superTypesFilter = KaSuperTypesFilter.NONE
-            typeParametersRenderer = KaTypeParametersRenderer.NO_TYPE_PARAMETERS
-            keywordsRenderer = KaKeywordsRenderer.AS_WORD.with {
-                keywordFilter = KaRendererKeywordFilter.onlyWith(
-                    KtTokens.CONSTRUCTOR_KEYWORD,
-                    KtTokens.OBJECT_KEYWORD,
-                    KtTokens.COMPANION_KEYWORD
-                )
-            }
-            returnTypeFilter = KaCallableReturnTypeFilter.ALWAYS
-            namedClassRenderer = KaNamedClassSymbolRenderer.AS_SOURCE_WITHOUT_PRIMARY_CONSTRUCTOR
-            parameterDefaultValueRenderer = KaParameterDefaultValueRenderer.NO_DEFAULT_VALUE
-            constructorRenderer = KaConstructorSymbolRenderer.AS_RAW_SIGNATURE
-            namedFunctionRenderer = KaNamedFunctionSymbolRendererAsRawSignature
-
-            typeRenderer = typeRenderer.with {
-                contextReceiversRenderer = contextReceiversRenderer.with {
-                    contextReceiverListRenderer = object : KaContextReceiverListRenderer {
-                        override fun renderContextReceivers(
-                            analysisSession: KaSession,
-                            owner: KaContextReceiversOwner,
-                            contextReceiversRenderer: KaContextReceiversRenderer,
-                            typeRenderer: KaTypeRenderer,
-                            printer: PrettyPrinter
-                        ) {
-                            val contextReceivers = owner.contextReceivers
-                            if (contextReceivers.isEmpty()) return
-
-                            printer {
-                                append("context(")
-                                printCollection(contextReceivers) { contextReceiver ->
-                                    typeRenderer.renderType(analysisSession, contextReceiver.type, printer)
-                                }
-                                append(")")
-                            }
+            push(KaPiece.ValueParameterList) { function ->
+                output.group(KaPiece.ValueParameter) {
+                    output.append("(", KaTextAttribute.Punctuation)
+                    function.valueParameters.forEachIndexed { index, parameter ->
+                        if (index > 0) output.append(", ", KaTextAttribute.Punctuation)
+                        if (parameter.isVararg) {
+                            output.append(KtTokens.VARARG_KEYWORD.value, KaTextAttribute.Keyword)
+                            output.space()
                         }
+                        KaRenderer.withShortNames.render(parameter.returnType, output)
                     }
+                    output.append(")", KaTextAttribute.Punctuation)
                 }
             }
 
-            propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
+            push(KaPiece.ContextParameter) { render(it.returnType, KaPiece.Type) }
+
+            pushEmpty(KaPiece.ValueParameterDefaultValue)
+            pushEmpty(KaPiece.PropertyAccessors)
+
+            push(KaPiece.NamedFunction) { function ->
+                render(function, KaPiece.ContextParameterList)
+                function.receiverParameter?.let { render(it, KaPiece.ReceiverParameter) }
+                render(function, KaPiece.SymbolName)
+                render(function, KaPiece.ValueParameterList)
+                render(function, KaPiece.FunctionReturnType)
+            }
+
+            push(KaPiece.Constructor) { constructor ->
+                output.append(KtTokens.CONSTRUCTOR_KEYWORD.value, KaTextAttribute.Keyword).space()
+                constructor.containingDeclaration?.let { renderSymbolName(it) }
+                render(constructor, KaPiece.ValueParameterList)
+            }
+
+            push(KaPiece.NamedClass) { classSymbol ->
+                val isUnnamedCompanion = classSymbol.classKind == KaClassKind.COMPANION_OBJECT &&
+                        classSymbol.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT
+
+                if (classSymbol.classKind == KaClassKind.COMPANION_OBJECT) {
+                    output.append(KtTokens.COMPANION_KEYWORD.value, KaTextAttribute.Keyword).space()
+                }
+                if (classSymbol.classKind.isObject) {
+                    output.append(KtTokens.OBJECT_KEYWORD.value, KaTextAttribute.Keyword)
+                    if (!isUnnamedCompanion) output.space()
+                }
+                if (!isUnnamedCompanion) {
+                    render(classSymbol, KaPiece.SymbolName)
+                }
+            }
         }
     }
 
@@ -183,7 +181,7 @@ internal class KotlinFirStructureElementPresentation(
             analyze(ktElement) {
                 val symbol = pointer.restoreSymbol()
                 if (symbol is KaDeclarationSymbol) {
-                    return symbol.render(renderer)
+                    return renderer.renderToString(symbol)
                 }
             }
         }
@@ -242,47 +240,5 @@ internal class KotlinFirStructureElementPresentation(
 
     private fun withRightArrow(str: String): String {
         return if (StartupUiUtil.labelFont.canDisplay(rightArrow)) rightArrow + str else "->$str"
-    }
-}
-
-//todo rewrite after KT-66192 is implemented, copy of KaNamedFunctionSymbolRenderer.AS_RAW_SIGNATURE + context parameters
-@KaExperimentalApi
-private object KaNamedFunctionSymbolRendererAsRawSignature : KaNamedFunctionSymbolRenderer {
-    override fun renderSymbol(
-        analysisSession: KaSession,
-        symbol: KaNamedFunctionSymbol,
-        declarationRenderer: KaDeclarationRenderer,
-        printer: PrettyPrinter,
-    ) {
-        printer {
-            " ".separated(
-                {
-                    renderAnnotationsModifiersAndContextReceivers(analysisSession, symbol, declarationRenderer, printer)
-                },
-
-                {
-                    val receiverSymbol = symbol.receiverParameter
-                    if (receiverSymbol != null) {
-                        withSuffix(".") {
-                            declarationRenderer.callableReceiverRenderer
-                                .renderReceiver(analysisSession, receiverSymbol, declarationRenderer, printer)
-                        }
-                    }
-
-                    declarationRenderer.nameRenderer.renderName(analysisSession, symbol, declarationRenderer, printer)
-
-                    printer.printCollection(symbol.valueParameters, prefix = "(", postfix = ")") {
-                        withPrefix(if (it.isVararg) "vararg " else "") {
-                            declarationRenderer.typeRenderer.renderType(analysisSession, it.returnType, printer)
-                        }
-                    }
-
-                    withPrefix(": ") {
-                        declarationRenderer.returnTypeRenderer
-                            .renderReturnType(analysisSession, symbol, declarationRenderer, printer)
-                    }
-                }
-            )
-        }
     }
 }

@@ -9,12 +9,13 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaClassTypeQualification
+import org.jetbrains.kotlin.analysis.api.rendering.KaPiece
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderingOption
+import org.jetbrains.kotlin.analysis.api.rendering.pushEmpty
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -53,6 +54,13 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
+    private companion object {
+        private val RENDERER = KaRenderer.default.copy {
+            pushEmpty(KaPiece.Annotations)
+            set(KaRenderingOption.ClassTypeQualification, KaClassTypeQualification.SIMPLE)
+        }
+    }
+
     override fun processCompanionObjectInternalReferences(
         companionObject: KtObjectDeclaration,
         referenceProcessor: Processor<PsiReference>
@@ -90,22 +98,13 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String {
         return KotlinPsiDeclarationRenderer.render(declaration) ?: analyzeInModalWindow(declaration, KotlinBundle.message(
           "find.usages.prepare.dialog.progress")) {
-            declaration.symbol.render(noAnnotationsShortNameRenderer())
-        }
-    }
-
-    @KaExperimentalApi
-    private fun noAnnotationsShortNameRenderer(): KaDeclarationRenderer {
-        return KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
-            annotationRenderer = annotationRenderer.with {
-                annotationFilter = KaRendererAnnotationsFilter.NONE
-            }
+            RENDERER.renderToString(declaration.symbol)
         }
     }
 
     override fun renderDeclaration(method: KtDeclaration): String {
         return KotlinPsiDeclarationRenderer.render(method) ?: analyzeInModalWindow(method, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-            method.symbol.render(noAnnotationsShortNameRenderer())
+            RENDERER.renderToString(method.symbol)
         }
     }
 

@@ -10,7 +10,8 @@ import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.simple
@@ -53,6 +54,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.collectDescendan
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.toMutable
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -113,7 +115,6 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolution.KtResolvableCall
-import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 class CodeInliner(
@@ -208,7 +209,7 @@ class CodeInliner(
                 explicitArgTypeElement.putCopyableUserData(USER_CODE_KEY, Unit)
                 explicitArgTypeElement
             } else {
-                psiFactory.createType(type.approximateToDenotableSubtypeOrSelf().render(position = Variance.INVARIANT)).typeElement
+                psiFactory.createType(KaRenderer.withQualifiedNames.renderToString(type.approximateToDenotableSubtypeOrSelf())).typeElement
                     ?: continue
             }
 

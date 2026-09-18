@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.arrayElementType
@@ -13,10 +13,10 @@ import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddArrayOfTypeFix
 import org.jetbrains.kotlin.idea.quickfix.WrapWithArrayLiteralFix
+import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.types.Variance
 import java.util.Locale
 
 internal object ArgumentTypeMismatchFactory {
@@ -26,10 +26,7 @@ internal object ArgumentTypeMismatchFactory {
         if (!isQuickFixAvailable(diagnostic)) return@ModCommandBased emptyList()
 
         val prefix = if (diagnostic.expectedType.isPrimitiveArray) {
-            val typeName = diagnostic.expectedType.render(
-                renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,
-                position = Variance.INVARIANT,
-            )
+            val typeName = KaRenderer.withShortNames.renderToString(diagnostic.expectedType)
             "${typeName.replaceFirstChar { it.lowercase(Locale.US) }}Of"
         } else {
             "arrayOf"

@@ -8,13 +8,10 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.ui.RowIcon
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -36,6 +33,7 @@ import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
+import org.jetbrains.kotlin.idea.util.withOnlyModifiers
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -141,7 +139,7 @@ internal class ActualKeywordHandler(
         return buildString {
             append(KtTokens.ACTUAL_KEYWORD.value)
             append(" ")
-            append(symbol.render(renderingOptionsForLookupElementRendering))
+            append(rendererForLookupElementRendering.renderToString(symbol))
 
             if (symbol is KaNamedFunctionSymbol) {
                 append(" {...}")
@@ -187,16 +185,8 @@ internal class ActualKeywordHandler(
         get() = (containingFile as? KtFile)?.packageDirective
 
     companion object {
-        @KaExperimentalApi
-        private val renderingOptionsForLookupElementRendering = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
-            annotationRenderer = annotationRenderer.with {
-                annotationFilter = KaRendererAnnotationsFilter.ALL
-            }
-            modifiersRenderer = modifiersRenderer.with {
-                keywordsRenderer = keywordsRenderer.with {
-                    keywordFilter = KaRendererKeywordFilter.onlyWith(KtTokens.TYPE_MODIFIER_KEYWORDS)
-                }
-            }
+        private val rendererForLookupElementRendering: KaRenderer = KaRenderer.default.copy {
+            withOnlyModifiers(KtTokens.TYPE_MODIFIER_KEYWORDS)
         }
     }
 }

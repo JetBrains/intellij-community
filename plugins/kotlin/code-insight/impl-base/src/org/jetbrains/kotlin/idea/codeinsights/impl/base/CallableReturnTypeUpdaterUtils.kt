@@ -25,8 +25,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.directlyOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.isLocal
@@ -55,6 +55,9 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdate
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.setAndShortenTypeReference
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.setTypeReference
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSupertypes
+import org.jetbrains.kotlin.idea.util.withShortDenotableSupertypes
+import org.jetbrains.kotlin.idea.util.withoutFunctionTypeParameterNames
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtElement
@@ -65,7 +68,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
-import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.bfs
 
 object CallableReturnTypeUpdaterUtils {
@@ -397,12 +399,18 @@ object CallableReturnTypeUpdaterUtils {
                 useTemplate: Boolean = false
             ): TypeInfo = TypeInfo(createTypeByKtType(ktType), otherTypes.map { createTypeByKtType(it) }.toList(), useTemplate)
 
+            private val LONG_TYPE_RENDERER: KaRenderer =
+                KaRenderer.withQualifiedDenotableSupertypes.copy { withoutFunctionTypeParameterNames() }
+
+            private val SHORT_TYPE_RENDERER: KaRenderer =
+                KaRenderer.withShortDenotableSupertypes.copy { withoutFunctionTypeParameterNames() }
+
             context(_: KaSession)
             internal fun createTypeByKtType(ktType: KaType): Type = Type(
                 isUnit = ktType.classId == KaStandardTypeClassIds.UNIT && !ktType.isMarkedNullable,
                 isError = ktType is KaErrorType,
-                longTypeRepresentation = ktType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES_WITHOUT_PARAMETER_NAMES, position = Variance.OUT_VARIANCE),
-                shortTypeRepresentation = ktType.render(KaTypeRendererForSource.WITH_SHORT_NAMES_WITHOUT_PARAMETER_NAMES, position = Variance.OUT_VARIANCE),
+                longTypeRepresentation = LONG_TYPE_RENDERER.renderToString(ktType),
+                shortTypeRepresentation = SHORT_TYPE_RENDERER.renderToString(ktType),
             )
 
             val UNIT: Type = Type(isUnit = true, isError = false, longTypeRepresentation = "kotlin.Unit", shortTypeRepresentation = "Unit")

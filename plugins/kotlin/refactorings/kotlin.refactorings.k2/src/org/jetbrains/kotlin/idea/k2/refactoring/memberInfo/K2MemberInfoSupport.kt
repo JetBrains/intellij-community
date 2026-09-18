@@ -1,30 +1,26 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.memberInfo
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesFilter
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaPiece
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.pushEmpty
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoSupport
+import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 class K2MemberInfoSupport : KotlinMemberInfoSupport {
-    @KaExperimentalApi
-    private val renderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
-        annotationRenderer = annotationRenderer.with {
-            keywordsRenderer = KaKeywordsRenderer.NONE
-            annotationFilter = KaRendererAnnotationsFilter.NONE
-            superTypesFilter = KaSuperTypesFilter.NONE
-            propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
-        }
+    private val renderer: KaRenderer = KaRenderer.withShortNames.copy {
+        pushEmpty(KaPiece.Annotations)
+        pushEmpty(KaPiece.SupertypeList)
+        pushEmpty(KaPiece.ClassBody)
+        pushEmpty(KaPiece.PropertyInitializer)
+        pushEmpty(KaPiece.PropertyAccessors)
     }
 
     override fun getOverrides(member: KtNamedDeclaration): Boolean? {
@@ -39,7 +35,7 @@ class K2MemberInfoSupport : KotlinMemberInfoSupport {
     override fun renderMemberInfo(member: KtNamedDeclaration): String {
         analyze(member) {
             val memberSymbol = member.symbol
-            return memberSymbol.render(renderer)
+            return renderer.renderToString(memberSymbol)
         }
     }
 }

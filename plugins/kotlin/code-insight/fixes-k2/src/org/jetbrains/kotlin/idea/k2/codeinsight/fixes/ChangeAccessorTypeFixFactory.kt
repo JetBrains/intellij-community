@@ -3,16 +3,17 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.ChangeAccessorTypeFix
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
+import org.jetbrains.kotlin.idea.util.withShortDenotableSubtypes
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.types.Variance
 
 internal object ChangeAccessorTypeFixFactory {
 
@@ -31,11 +32,8 @@ internal object ChangeAccessorTypeFixFactory {
             KtProperty::class.java,
         ) ?: return emptyList()
 
-        val typePresentation = expectedType.render(
-            renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,
-            position = Variance.IN_VARIANCE,
-        )
-        val typeSourceCode = expectedType.render(position = Variance.IN_VARIANCE)
+        val typePresentation = KaRenderer.withShortDenotableSubtypes.renderToString(expectedType)
+        val typeSourceCode = KaRenderer.withQualifiedDenotableSubtypes.renderToString(expectedType)
 
         return listOf(
             ChangeAccessorTypeFix(propertyAccessor, typePresentation, typeSourceCode)

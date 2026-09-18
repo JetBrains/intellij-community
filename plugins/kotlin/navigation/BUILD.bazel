@@ -55,6 +55,7 @@ jvm_library(
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
         "//platform/analysis-api:analysis",
         "//plugins/kotlin/base/project-structure",
+        "//plugins/kotlin/base/code-insight",
     ],
 )
 ### auto-generated section `build intellij.kotlin.navigation` end

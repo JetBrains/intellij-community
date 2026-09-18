@@ -62,6 +62,7 @@ jvm_library(
         "@lib//:kotlinc-kotlin-compiler-tests",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//plugins/kotlin/base/code-insight",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
         "//libraries/junit4",
         "//platform/scratch/plugin",

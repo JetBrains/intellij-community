@@ -22,7 +22,8 @@ import com.intellij.refactoring.memberPullUp.PullUpHelper
 import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.util.containers.reverse
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.simple
@@ -95,6 +96,7 @@ import org.jetbrains.kotlin.idea.util.isBackingFieldRequired
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
 import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name.identifier
@@ -136,7 +138,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
 import org.jetbrains.kotlin.resolution.KtResolvableCall
-import org.jetbrains.kotlin.types.Variance
 
 private val MODIFIERS_TO_LIFT_IN_SUPERCLASS = listOf(KtTokens.PRIVATE_KEYWORD)
 private val MODIFIERS_TO_LIFT_IN_INTERFACE = listOf(KtTokens.PRIVATE_KEYWORD, KtTokens.PROTECTED_KEYWORD, KtTokens.INTERNAL_KEYWORD)
@@ -731,9 +732,8 @@ internal class K2PullUpHelper(
 
                     val renderedType = analyze(it) {
                         val originalType = it.symbol.returnType
-                        data.getSourceToTargetClassSubstitutor()
-                            .substitute(originalType)
-                            .render(position = Variance.INVARIANT)
+                        val substitutedType = data.getSourceToTargetClassSubstitutor().substitute(originalType)
+                        KaRenderer.withQualifiedNames.renderToString(substitutedType)
                     }
 
                     newParameter.setParameterTypeReference(KtPsiFactory(newParameter.project).createType(renderedType))
@@ -816,7 +816,7 @@ private fun addSuperTypeEntry(
     val typeInTargetClass = substitutor.substitute(referencedType)
     if (typeInTargetClass is KaErrorType) return
 
-    val renderedType = typeInTargetClass.render(position = Variance.INVARIANT)
+    val renderedType = KaRenderer.withQualifiedNames.renderToString(typeInTargetClass)
     val newSpecifier = KtPsiFactory(targetClass.project).createSuperTypeEntry(renderedType)
     shortenReferences(targetClass.addSuperType(newSpecifier))
 }

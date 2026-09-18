@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
-import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -40,6 +41,8 @@ import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
 import org.jetbrains.kotlin.idea.refactoring.addElement
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSubtypes
+import org.jetbrains.kotlin.idea.util.withQualifiedDenotableSupertypes
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -51,7 +54,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.psi.psiUtil.siblings
-import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
@@ -225,7 +227,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
                 val isVararg = parameter.isVararg
                 val paramName = suggestSafeNameByName(parameter.name.asString(), validator)
                 val typeToUse = parameter.returnType
-                val paramType = substitutor.substitute(typeToUse).render(position = Variance.OUT_VARIANCE)
+                val paramType = KaRenderer.withQualifiedDenotableSupertypes.renderToString(substitutor.substitute(typeToUse))
                 val modifiers = if (isVararg) "vararg " else ""
 
                 parameterList.appendParameter(psiFactory.createParameter("$modifiers$paramName: $paramType"))
@@ -242,7 +244,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
             for (property in propertiesToInitialize) {
                 val propertyName = property.name ?: continue
                 val paramName = suggestSafeNameByName(propertyName, validator)
-                val paramType = property.returnType.render(position = Variance.IN_VARIANCE)
+                val paramType = KaRenderer.withQualifiedDenotableSubtypes.renderToString(property.returnType)
 
                 parameterList.appendParameter(psiFactory.createParameter("$paramName: $paramType"))
                 body.addElement(psiFactory.createExpression("this.${propertyName.quoteIfNeeded()} = $paramName"), true)

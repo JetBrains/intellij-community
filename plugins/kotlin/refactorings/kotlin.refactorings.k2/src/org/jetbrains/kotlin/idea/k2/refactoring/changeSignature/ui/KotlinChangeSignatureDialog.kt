@@ -20,8 +20,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
+import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -44,6 +44,8 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinCallablePa
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinFunctionParameterTableModel
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinPrimaryConstructorParameterTableModel
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinSecondaryConstructorParameterTableModel
+import org.jetbrains.kotlin.idea.util.withQualifiedNames
+import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
@@ -51,7 +53,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtTypeCodeFragment
 import org.jetbrains.kotlin.psi.KtVariableDeclaration
-import org.jetbrains.kotlin.types.Variance
 import java.util.Locale.getDefault
 
 @OptIn(KaAllowAnalysisOnEdt::class)
@@ -311,7 +312,7 @@ internal fun KtTypeCodeFragment.getCanonicalText(forPreview: Boolean): String {
     val contextElement = getContentElement()
     if (contextElement != null && !forPreview) {
         analyze(contextElement) {
-            return contextElement.type.render(position = Variance.INVARIANT)
+            return KaRenderer.withQualifiedNames.renderToString(contextElement.type)
         }
     } else {
         return text
@@ -319,4 +320,4 @@ internal fun KtTypeCodeFragment.getCanonicalText(forPreview: Boolean): String {
 }
 
 context(_: KaSession)
-private fun KaType.getPresentableText(): String = render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+private fun KaType.getPresentableText(): String = KaRenderer.withShortNames.renderToString(this)
