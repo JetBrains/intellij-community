@@ -1275,6 +1275,7 @@ class PluginDetailsPageComponent private constructor(
     errorComponent?.isVisible = false
 
     updateButtons()
+    applyReadOnlyPreparedUpdate()
 
     val descriptorForActions = descriptorForActions!!
     var version = descriptorForActions.version

@@ -178,6 +178,7 @@ Untested: No focused test verifies state isolation across two page sessions.
   )
 
 - After progress ends, the row and details must replace their action controls with one prepared action.
+- The details pane must not show an executable action while it changes to a prepared operation.
 - A prepared operation without restart must show disabled Installed.
 - A prepared operation that needs restart must show enabled Restart IDE.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
