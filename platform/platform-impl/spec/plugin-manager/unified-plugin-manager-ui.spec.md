@@ -138,6 +138,15 @@ This specification covers the page structure, section model, search, source load
     `same id on both sides prefers local presentation and retains remote bundled origin`
   )
 
+- When the page shows local sections, a plugin ID in Installed or Bundled must not appear in a remote section.
+- This exclusion must use the complete local inventory before the page applies query filters.
+- When a source filter hides local sections, the active remote sections can show these plugin IDs.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
+    `local plugins are excluded from Marketplace and repository sections`;
+    `local plugins are excluded from Suggested`;
+    `repository filter shows local plugins when local sections are hidden`
+  )
+
 - Suggested must combine project suggestions before Staff Picks.
 - Suggested must keep one result per plugin ID and prefer the project suggestion.
 - Suggested must publish a completed source before the other source completes.
@@ -652,4 +661,4 @@ The linked tests need no setup beyond the standard module test command.
 ## Open Questions
 
 - Initial selection, selected-item reveal, and filtered-result expansion are not stable contracts.
-- Suggested membership and page-wide duplicate suppression need end-to-end coverage.
+- Duplicate handling between Marketplace and custom repository sections needs a stable contract and end-to-end coverage.

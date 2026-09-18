@@ -342,11 +342,18 @@ private fun projectUnifiedPluginsPageSourceState(
   cancellationCheck()
   val route = query.sourceRoute()
   val effectiveSort = UnifiedPluginsQuery.parse(query.rawQuery).effectiveSort
+  val localPluginIds = if (route.local.eligible) {
+    collectLocalPluginIds(localState.sections, cancellationCheck)
+  }
+  else {
+    emptySet()
+  }
   val marketplaceFamilyId = marketplaceSectionId(query)
   val marketplaceSection = marketplaceState
                              ?.takeIf { it.queryRevision == query.revision && it.section.id == marketplaceFamilyId }
                              ?.section
                            ?: PluginSectionState(marketplaceFamilyId, status = initialMarketplaceSectionStatus(query))
+  val visibleMarketplaceSection = marketplaceSection.withoutPlugins(localPluginIds, cancellationCheck)
   val cachedProjectionApplies = previousCache.query == query
   val localSections = previousCache.localSections.takeIf {
     cachedProjectionApplies && previousCache.localState === localState
@@ -396,6 +403,9 @@ private fun projectUnifiedPluginsPageSourceState(
       section.copy(items = filterRepositoryPluginItems(section.items, route.repositories.query, cancellationCheck))
     }
   }
+  val visibleRepositorySections = repositorySections.map { section ->
+    section.withoutPlugins(localPluginIds, cancellationCheck)
+  }
   cancellationCheck()
   val marketplaceListModelData = marketplaceState?.takeIf { it.queryRevision == query.revision }?.listModelData
                                  ?: PluginListModelData.EMPTY
@@ -409,8 +419,8 @@ private fun projectUnifiedPluginsPageSourceState(
   val sections = buildList {
     addAll(localSections)
     internalSection?.let(::add)
-    add(marketplaceSection)
-    addAll(repositorySections)
+    add(visibleMarketplaceSection)
+    addAll(visibleRepositorySections)
   }
   val projectedState = UnifiedPluginsPageSourceState(
     query = query,
@@ -443,6 +453,31 @@ private fun projectUnifiedPluginsPageSourceState(
       repositorySections = repositorySections,
     ),
   )
+}
+
+private fun collectLocalPluginIds(
+  sections: List<PluginSectionState>,
+  cancellationCheck: () -> Unit,
+): Set<PluginId> = buildSet {
+  sections.forEach { section ->
+    if (section.id != PluginSectionId.Installed && section.id != PluginSectionId.Bundled) return@forEach
+    section.items.forEach { item ->
+      cancellationCheck()
+      add(item.pluginId)
+    }
+  }
+}
+
+private fun PluginSectionState.withoutPlugins(
+  excludedPluginIds: Set<PluginId>,
+  cancellationCheck: () -> Unit,
+): PluginSectionState {
+  if (items.isEmpty() || excludedPluginIds.isEmpty()) return this
+  val visibleItems = items.filter { item ->
+    cancellationCheck()
+    item.pluginId !in excludedPluginIds
+  }
+  return if (visibleItems.size == items.size) this else copy(items = visibleItems)
 }
 
 private data class UnifiedPluginsPageProjection(
