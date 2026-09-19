@@ -6,7 +6,6 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 
 /**
@@ -78,7 +77,7 @@ class PluginVariants private constructor(
  */
 private fun readPluginId(moduleName: String, outputProvider: ModuleOutputProvider): String {
   val module = outputProvider.findModule(moduleName) ?: error("Module $moduleName is missing in output")
-  val descriptor = findFileInModuleSources(module = module, relativePath = "META-INF/plugin.xml", onlyProductionSources = true)
+  val descriptor = outputProvider.findFileInModuleSources(module = module, relativePath = "META-INF/plugin.xml", onlyProductionSources = true)
                    ?: error("Module $module does not declare plugin.xml")
   return parsePluginId(JDOMUtil.load(descriptor)) ?: error("Module $module does not declare a plugin id")
 }

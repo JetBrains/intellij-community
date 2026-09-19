@@ -19,7 +19,6 @@ import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.classPath.resolveAndEmbedContentModuleDescriptor
 import org.jetbrains.intellij.build.classPath.resolveIncludes
-import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.buildProductContentXml
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -39,8 +38,8 @@ internal fun processAndGetProductPluginContentModules(
   val productPluginSourceModuleName = productProperties.applicationInfoModule
   val productPluginSourceModule = outputProvider.findRequiredModule(productPluginSourceModuleName)
   val file = requireNotNull(
-    findFileInModuleSources(productPluginSourceModule, PLUGIN_XML_RELATIVE_PATH)
-    ?: findFileInModuleSources(productPluginSourceModule, "META-INF/${productProperties.platformPrefix}Plugin.xml")
+    outputProvider.findFileInModuleSources(productPluginSourceModule, PLUGIN_XML_RELATIVE_PATH)
+    ?: outputProvider.findFileInModuleSources(productPluginSourceModule, "META-INF/${productProperties.platformPrefix}Plugin.xml")
   ) { "Cannot find product plugin descriptor in '$productPluginSourceModuleName' module" }
 
   val element: Element

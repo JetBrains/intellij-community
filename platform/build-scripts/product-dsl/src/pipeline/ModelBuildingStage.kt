@@ -21,7 +21,6 @@ import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.buildSpan
-import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.resolveDescriptor
 import org.jetbrains.intellij.build.productLayout.ContentModule
@@ -418,7 +417,7 @@ internal object ModelBuildingStage {
       }
 
       scannedModuleCount++
-      val pluginXmlPath = findFileInModuleSources(module = module, relativePath = PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = true)
+      val pluginXmlPath = outputProvider.findFileInModuleSources(module = module, relativePath = PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = true)
       if (pluginXmlPath != null) {
         moduleByPluginXmlPath[pluginXmlPath.normalize()] = moduleName
       }
@@ -1166,9 +1165,9 @@ internal object ModelBuildingStage {
     val testPluginModules = LinkedHashSet<TargetName>()
     val pluginModules = LinkedHashSet<TargetName>()
     for (module in modules) {
-      val prodPluginXml = findFileInModuleSources(module, PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = true)
+      val prodPluginXml = outputProvider.findFileInModuleSources(module, PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = true)
       val testPluginXml = if (prodPluginXml == null) {
-        findFileInModuleSources(module, PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = false)
+        outputProvider.findFileInModuleSources(module, PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = false)
       }
       else {
         null

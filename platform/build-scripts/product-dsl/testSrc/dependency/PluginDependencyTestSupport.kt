@@ -14,7 +14,6 @@ import com.intellij.platform.pluginGraph.contentName
 import com.intellij.platform.pluginGraph.isSlashNotation
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
 import org.jetbrains.intellij.build.productLayout.config.ValidationException
 import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlan
@@ -434,7 +433,7 @@ private fun generateTestDescriptorDependencies(
   }
 
   val jpsModule = outputProvider.findRequiredModule(contentModuleName.value)
-  val descriptorPath = findFileInModuleSources(
+  val descriptorPath = outputProvider.findFileInModuleSources(
     module = jpsModule,
     relativePath = "${contentModuleName.value}._test.xml",
     onlyProductionSources = false,

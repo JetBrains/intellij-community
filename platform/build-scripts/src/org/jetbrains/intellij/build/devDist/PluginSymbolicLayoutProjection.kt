@@ -33,6 +33,9 @@ private fun nativeFingerprint(values: List<String>): String = devDistSignature {
   for (value in values) putString(value)
 }
 
+/** The comment a content module descriptor states to go into the main jar of the plugin. */
+private val PACK_CONTENT_INTO_PLUGIN_JAR_MARKER = Regex("""<!--\s+intellij-build:\s+pack-content-into-plugin-jar\s+-->""")
+
 /**
  * Projects one original layout without reading compiled roots or invoking layout callbacks.
  * The catalogue describes the output provider's selected roots. Descriptor facts describe the prepared descriptor.
@@ -94,11 +97,10 @@ private class SymbolicLayoutProjector(
   private val collectNativeContext: Boolean = false,
   private val nativeContexts: Map<String, String> = emptyMap(),
 ) {
-  private val modules = project.modules.associateBy { it.name }
   private val artifacts = catalogue.artifacts.associateBy { it.id }
   private val preparedRoots = catalogue.artifacts.filter { it.preparationKey != null }.groupBy { it.preparationKey }
   private val libraries = catalogue.libraries.associateBy { it.moduleName to it.libraryName }
-  private val frontend = FrontendCompatibility(descriptors.frontendRoots, modules::get)
+  private val frontend = FrontendCompatibility(descriptors.frontendRoots, project::findModuleByName)
   private val assembly = PluginSymbolicJarAssembly()
   private val copiedFiles = HashSet<Pair<String, String>>()
   private val effects = LinkedHashMap<String, PluginSymbolicPreparedEffect>()
@@ -265,7 +267,7 @@ private class SymbolicLayoutProjector(
       gap("module-descriptor:$name", "The content module descriptor is missing")
       return null
     }
-    val packIntoMain = xml != null && Regex("""<!--\s+intellij-build:\s+pack-content-into-plugin-jar\s+-->""").containsMatchIn(xml)
+    val packIntoMain = xml != null && PACK_CONTENT_INTO_PLUGIN_JAR_MARKER.containsMatchIn(xml)
     if (loading == "embedded") {
       return if (packIntoMain) defaultJar(name) else "$name.jar"
     }
@@ -273,7 +275,7 @@ private class SymbolicLayoutProjector(
     val hasModuleLibraries = name !in layout.getModulesWithExcludedModuleLibraries() &&
                             libraryDependencies(module, withTests = false).any { it.libraryReference.parentReference is JpsModuleReference }
     val separate = !packIntoMain &&
-                   (JDOMUtil.load(requireNotNull(xml)).getAttributeValue("package") == null || hasModuleLibraries ||
+                   (!hasRootXmlAttribute(requireNotNull(xml), "package") || hasModuleLibraries ||
                     frontend.isSplit(layout.mainModule, name))
     return when {
       separate -> "modules/$name.jar"
@@ -695,7 +697,7 @@ private class SymbolicLayoutProjector(
 
   /** Resolves a layout module name. A Product DSL `._test` name resolves to the JPS module it marks. */
   private fun module(name: String): JpsModule? {
-    val module = modules.get(name) ?: modules.get(name.removeSuffix("._test"))
+    val module = project.findModuleByName(name) ?: project.findModuleByName(name.removeSuffix("._test"))
     if (module == null) gap("module:$name", "The JPS module does not exist")
     return module
   }

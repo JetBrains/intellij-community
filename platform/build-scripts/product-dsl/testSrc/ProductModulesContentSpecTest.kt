@@ -475,6 +475,10 @@ private class MockModuleOutputProvider : ModuleOutputProvider {
     throw UnsupportedOperationException("Not available in mock")
   }
 
+  override fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProductionSources: Boolean): Path? {
+    throw UnsupportedOperationException("Not available in mock")
+  }
+
   override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
     throw UnsupportedOperationException("Not available in mock")
   }

@@ -41,7 +41,6 @@ import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.computeAppInfoXml
-import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.findProductModulesFile
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.moduleRepository.MODULE_DESCRIPTORS_COMPACT_PATH
@@ -582,7 +581,7 @@ fun loadRawProductModules(rootModuleName: String, outputProvider: ModuleOutputPr
                            ?: error("Cannot find product-modules.xml file in $rootModuleName")
   val resolver = object : ResourceFileResolver {
     override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
-      return findFileInModuleSources(outputProvider.findRequiredModule(moduleId.name), relativePath)?.inputStream()
+      return outputProvider.findFileInModuleSources(outputProvider.findRequiredModule(moduleId.name), relativePath)?.inputStream()
     }
 
     override fun toString(): String {

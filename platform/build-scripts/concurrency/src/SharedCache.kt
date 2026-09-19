@@ -5,6 +5,7 @@ package com.intellij.platform.buildScripts.concurrency
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 
 /** Shares each load within [owner]. Closing waits for loaders before disposing their successful results. */
@@ -14,7 +15,15 @@ class SharedCache<K : Any, V>(
   private val dispose: (V) -> Unit = {},
 ) : AutoCloseable {
   private val entries = HashMap<K, Entry<V>>()
+
+  /**
+   * The values of the loads that completed. A reader of a loaded value takes no lock, so a probe that asks a cache of
+   * thousands of entries for each of them does not serialize the probes of every thread.
+   */
+  private val completed = ConcurrentHashMap<K, Completed<V>>()
   private val closed = CompletableFuture<Unit>()
+
+  @Volatile
   private var closing: Thread? = null
 
   init {
@@ -23,6 +32,10 @@ class SharedCache<K : Any, V>(
 
   /** A waiter timeout or interruption leaves the shared computation unchanged. */
   fun getOrPut(key: K, timeout: Duration? = null, loader: () -> V): V {
+    completed.get(key)?.let {
+      checkOpen()
+      return it.value
+    }
     val entry = synchronized(entries) {
       checkOpen()
       val existing = entries.get(key)
@@ -37,7 +50,12 @@ class SharedCache<K : Any, V>(
     }
     checkRecursiveSingleFlightAwait(entry.token, "SharedCache entry for key '$key'", entry.computation.result.isDone)
     val value = awaitTask("${owner.name}: $key") { entry.computation.await(timeout) }
-    synchronized(entries) { checkOpen() }
+    synchronized(entries) {
+      checkOpen()
+      if (entries.get(key) === entry) {
+        completed.putIfAbsent(key, Completed(value))
+      }
+    }
     return value
   }
 
@@ -57,6 +75,7 @@ class SharedCache<K : Any, V>(
       if (closing != null) null
       else {
         closing = Thread.currentThread()
+        completed.clear()
         entries.values.toList().also { entries.clear() }
       }
     }
@@ -90,6 +109,8 @@ class SharedCache<K : Any, V>(
   }
 
   private class Entry<T>(val token: Any, val computation: SharedComputation<T>)
+
+  private class Completed<T>(@JvmField val value: T)
 }
 
 /** A value loaded once within an explicit shared owner. */

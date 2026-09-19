@@ -32,6 +32,7 @@ import org.jetbrains.intellij.build.LocalDistFileContent
 import org.jetbrains.intellij.build.MacLibcImpl
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.PluginDistribution
 import org.jetbrains.intellij.build.VmProperties
@@ -40,7 +41,6 @@ import org.jetbrains.intellij.build.add64IfNeeded
 import org.jetbrains.intellij.build.buildSearchableOptionsForAllPlugins
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.executeStep
-import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.findProductModulesFile
 import org.jetbrains.intellij.build.getLibraryFileName
 import org.jetbrains.intellij.build.impl.moduleRepository.MODULE_DESCRIPTORS_COMPACT_PATH
@@ -755,7 +755,7 @@ private fun checkPluginModules(pluginModules: Collection<String>?, fieldName: St
   checkModules(modules = pluginModules, fieldName = fieldName, outputProvider = context.outputProvider)
 
   val unknownBundledPluginModules = pluginModules.filter { name ->
-    context.outputProvider.findModule(name)?.let { findFileInModuleSources(it, "META-INF/plugin.xml") } == null
+    context.outputProvider.findModule(name)?.let { context.outputProvider.findFileInModuleSources(it, PLUGIN_XML_RELATIVE_PATH) } == null
   }
   check(unknownBundledPluginModules.isEmpty()) {
     "The following modules from $fieldName don't contain META-INF/plugin.xml file and aren't specified as optional plugin modules " +

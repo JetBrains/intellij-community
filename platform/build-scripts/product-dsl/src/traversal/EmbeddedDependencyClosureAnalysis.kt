@@ -135,20 +135,75 @@ private fun GraphScope.analyzeProductEmbeddedDependencyClosure(
   moduleName: String?,
   pluginSourceOnly: Boolean,
 ): List<EmbeddedDependencyClosureViolation> {
+  val content = ProductContent(this, product)
   val productName = product.name()
   val violations = ArrayList<EmbeddedDependencyClosureViolation>()
   val roots = collectProductContentModules(product)
     .asSequence()
     .filter { moduleName == null || it.contentName().value == moduleName }
-    .filter { isEmbeddedInProductContent(it, product) }
-    .filter { moduleSetName == null || hasDirectModuleSetSource(it, product, moduleSetName) }
+    .filter { content.isEmbedded(it) }
+    .filter { moduleSetName == null || hasDirectModuleSetSource(it, content, moduleSetName) }
     .sortedBy { it.contentName().value }
     .toList()
 
   for (root in roots) {
-    collectEmbeddedClosureViolations(product, productName, root, pluginSourceOnly, violations)
+    collectEmbeddedClosureViolations(content, productName, root, pluginSourceOnly, violations)
   }
   return violations
+}
+
+/**
+ * What one product makes available, computed once per product.
+ *
+ * The closure walk asks for every dependency of every root whether the product makes it available, and which sources
+ * of the product declare it. Both answers depend on the product and the module alone. A walk over the module sets of
+ * the product per question costs more than the closure walk itself, so the answers are computed once and kept.
+ */
+private class ProductContent(private val scope: GraphScope, val product: ProductNode) {
+  /** The module sets the product includes, directly or through a nested set. */
+  private val moduleSets = HashSet<Int>()
+
+  /** The modules the product makes available, as [GraphScope.containsAvailableContentModule] defines them. */
+  private val availableModules = HashSet<Int>()
+
+  private val nonPluginSources = HashMap<Int, List<EmbeddedDependencySourceInfo>>()
+  private val embedded = HashMap<Int, Boolean>()
+
+  init {
+    with(scope) {
+      val pending = ArrayDeque<ModuleSetNode>()
+      product.includesModuleSet { moduleSet ->
+        if (moduleSets.add(moduleSet.id)) pending.add(moduleSet)
+      }
+      while (pending.isNotEmpty()) {
+        val moduleSet = pending.removeFirst()
+        moduleSet.containsModule { module, _ -> availableModules.add(module.id) }
+        moduleSet.nestedSet { nested ->
+          if (moduleSets.add(nested.id)) pending.add(nested)
+        }
+      }
+      product.containsContent { module, _ -> availableModules.add(module.id) }
+      product.bundles { plugin ->
+        plugin.containsContent { module, _ -> availableModules.add(module.id) }
+      }
+    }
+  }
+
+  fun includesModuleSet(moduleSet: ModuleSetNode): Boolean = moduleSets.contains(moduleSet.id)
+
+  fun containsAvailableContentModule(module: ContentModuleNode): Boolean = availableModules.contains(module.id)
+
+  /** Whether every product and module-set source of [module] in this product embeds it. */
+  fun isEmbedded(module: ContentModuleNode): Boolean {
+    return embedded.getOrPut(module.id) {
+      val sources = nonPluginSources(module)
+      sources.isNotEmpty() && sources.all { it.loading == ModuleLoadingRuleValue.EMBEDDED.name }
+    }
+  }
+
+  fun nonPluginSources(module: ContentModuleNode): List<EmbeddedDependencySourceInfo> {
+    return nonPluginSources.getOrPut(module.id) { scope.collectRelevantNonPluginSourceInfos(module, this) }
+  }
 }
 
 private fun GraphScope.collectProductContentModules(product: ProductNode): List<ContentModuleNode> {
@@ -166,7 +221,7 @@ private data class EmbeddedQueueEntry(
 )
 
 private fun GraphScope.collectEmbeddedClosureViolations(
-  product: ProductNode,
+  content: ProductContent,
   productName: String,
   root: ContentModuleNode,
   pluginSourceOnly: Boolean,
@@ -181,14 +236,14 @@ private fun GraphScope.collectEmbeddedClosureViolations(
   while (queue.isNotEmpty()) {
     val entry = queue.removeFirst()
     entry.module.dependsOn { dep ->
-      if (!product.containsAvailableContentModule(dep)) {
+      if (!content.containsAvailableContentModule(dep)) {
         return@dependsOn
       }
 
       val depName = dep.contentName().value
       val path = entry.path + depName
-      if (!isEmbeddedInProductContent(dep, product)) {
-        val dependencySources = collectRelevantSourceInfos(dep, product)
+      if (!content.isEmbedded(dep)) {
+        val dependencySources = collectRelevantSourceInfos(dep, content)
         if ((!pluginSourceOnly || dependencySources.any { it.kind == "plugin" }) && reported.add(dep.id)) {
           output.add(EmbeddedDependencyClosureViolation(
             product = productName,
@@ -208,25 +263,20 @@ private fun GraphScope.collectEmbeddedClosureViolations(
   }
 }
 
-private fun GraphScope.isEmbeddedInProductContent(module: ContentModuleNode, product: ProductNode): Boolean {
-  val sources = collectRelevantNonPluginSourceInfos(module, product)
-  return sources.isNotEmpty() && sources.all { it.loading == ModuleLoadingRuleValue.EMBEDDED.name }
-}
-
-private fun GraphScope.hasDirectModuleSetSource(module: ContentModuleNode, product: ProductNode, moduleSetName: String): Boolean {
-  return collectRelevantNonPluginSourceInfos(module, product).any { it.kind == "moduleSet" && it.name == moduleSetName }
+private fun hasDirectModuleSetSource(module: ContentModuleNode, content: ProductContent, moduleSetName: String): Boolean {
+  return content.nonPluginSources(module).any { it.kind == "moduleSet" && it.name == moduleSetName }
 }
 
 private fun GraphScope.collectRelevantNonPluginSourceInfos(
   module: ContentModuleNode,
-  product: ProductNode,
+  content: ProductContent,
 ): List<EmbeddedDependencySourceInfo> {
   val result = ArrayList<EmbeddedDependencySourceInfo>()
   module.contentProductionSources { source ->
     when (source.kind) {
       ContentSourceKind.PRODUCT -> {
         val sourceProduct = source.product()
-        if (sourceProduct.id == product.id) {
+        if (sourceProduct.id == content.product.id) {
           result.add(EmbeddedDependencySourceInfo(
             kind = "product",
             name = sourceProduct.name(),
@@ -236,7 +286,7 @@ private fun GraphScope.collectRelevantNonPluginSourceInfos(
       }
       ContentSourceKind.MODULE_SET -> {
         val sourceModuleSet = source.moduleSet()
-        if (product.includesModuleSetRecursive(sourceModuleSet)) {
+        if (content.includesModuleSet(sourceModuleSet)) {
           result.add(EmbeddedDependencySourceInfo(
             kind = "moduleSet",
             name = sourceModuleSet.name(),
@@ -252,8 +302,9 @@ private fun GraphScope.collectRelevantNonPluginSourceInfos(
 
 private fun GraphScope.collectRelevantSourceInfos(
   module: ContentModuleNode,
-  product: ProductNode,
+  content: ProductContent,
 ): List<EmbeddedDependencySourceInfo> {
+  val product = content.product
   val result = ArrayList<EmbeddedDependencySourceInfo>()
   module.contentProductionSources { source ->
     when (source.kind) {
@@ -265,7 +316,7 @@ private fun GraphScope.collectRelevantSourceInfos(
       }
       ContentSourceKind.MODULE_SET -> {
         val sourceModuleSet = source.moduleSet()
-        if (product.includesModuleSetRecursive(sourceModuleSet)) {
+        if (content.includesModuleSet(sourceModuleSet)) {
           result.add(EmbeddedDependencySourceInfo("moduleSet", sourceModuleSet.name(), loadingFromModuleSet(sourceModuleSet, module)?.name))
         }
       }

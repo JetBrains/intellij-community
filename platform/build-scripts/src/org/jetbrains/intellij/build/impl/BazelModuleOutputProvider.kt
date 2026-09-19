@@ -9,9 +9,13 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildLifetime
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isRegularFile
 
@@ -299,6 +303,12 @@ class BazelModuleOutputProviderState(
 
   fun findRequiredModule(name: String): JpsModule = index.findRequiredModule(name)
 
+  fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProductionSources: Boolean): Path? {
+    return index.sourceFiles.find(module = module, relativePath = relativePath, onlyProductionSources = onlyProductionSources)
+  }
+
+  fun findModulesWithSourceFile(relativePath: String): List<JpsModule> = index.sourceFiles.findOwners(relativePath)
+
   fun getModuleImlFile(module: JpsModule): Path = index.getModuleImlFile(module)
 }
 
@@ -329,13 +339,23 @@ internal class BazelModuleOutputProvider(
   private val zipFilePool = ModuleOutputZipFilePool(lifetime)
 
   /**
+   * The declared output roots of a module, by module name and by the output kind. A probe over the whole project asks
+   * every module once per path, and the resolution of a label to a file costs a file system call, so the answer is kept.
+   */
+  private val declaredOutputRoots = ConcurrentHashMap<String, List<Path>>()
+
+  /**
    * Reads through the pool of cached zip file instances.
    *
    * A probe by contract - it returns `null` for a module that does not have the file - so it reads only the module
    * outputs this build declares; see [BazelBuildInputs.resolveIfDeclared].
    */
   override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
-    for (moduleOutput in getModuleOutputRootsImpl(module, forTests, declaredOnly = true)) {
+    val key = if (forTests) module.name + ":test" else module.name
+    val roots = declaredOutputRoots.get(key) ?: getModuleOutputRootsImpl(module, forTests, declaredOnly = true).also {
+      declaredOutputRoots.putIfAbsent(key, it)
+    }
+    for (moduleOutput in roots) {
       zipFilePool.getData(moduleOutput, relativePath)?.let { return it }
     }
     return null
@@ -350,6 +370,12 @@ internal class BazelModuleOutputProvider(
   override fun findModule(name: String): JpsModule? = state.findModule(name)
 
   override fun findRequiredModule(name: String): JpsModule = state.findRequiredModule(name)
+
+  override fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProductionSources: Boolean): Path? {
+    return state.findFileInModuleSources(module = module, relativePath = relativePath, onlyProductionSources = onlyProductionSources)
+  }
+
+  override fun findModulesWithSourceFile(relativePath: String): List<JpsModule> = state.findModulesWithSourceFile(relativePath)
 
   override fun findDeclaredLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
     if (!BazelBuildInputs.isConfigured && !BazelRunfiles.isRunningFromBazel) {
@@ -500,6 +526,10 @@ internal class BazelModuleOutputProvider(
  * Searches for a file across module outputs.
  * If [moduleNamePrefix] is specified, only searches in modules whose name starts with the prefix.
  * If [processedModules] is specified, skips modules already in the set and adds searched modules to it.
+ *
+ * The answer is the first module in the order of [modules] that has the file, or the first failure before it. The
+ * modules are read in chunks on several threads, because a read opens the output of a module, and a search over the
+ * whole project opens thousands of them. A chunk after the first hit is skipped when the hit is known in time.
  */
 internal fun findFileInAnyModuleOutput(
   modules: Iterable<JpsModule>,
@@ -508,6 +538,7 @@ internal fun findFileInAnyModuleOutput(
   moduleNamePrefix: String? = null,
   processedModules: MutableSet<String>? = null,
 ): ByteArray? {
+  val candidates = ArrayList<JpsModule>()
   for (module in modules) {
     val name = module.name
     if (moduleNamePrefix != null && !name.startsWith(moduleNamePrefix)) {
@@ -516,9 +547,39 @@ internal fun findFileInAnyModuleOutput(
     if (processedModules != null && !processedModules.add(name)) {
       continue
     }
-    provider.readFileContentFromModuleOutput(module = module, relativePath = relativePath, forTests = false)?.let {
-      return it
+    candidates.add(module)
+  }
+
+  val chunks = candidates.chunked(ANY_MODULE_OUTPUT_SEARCH_CHUNK)
+  val firstHit = AtomicInteger(Int.MAX_VALUE)
+  val outcomes = chunks.withIndex().toList().mapConcurrent { (index, chunk) ->
+    if (index > firstHit.get()) {
+      return@mapConcurrent null
+    }
+    try {
+      chunk.firstNotNullOfOrNull { module ->
+        provider.readFileContentFromModuleOutput(module = module, relativePath = relativePath, forTests = false)
+      }?.let { data ->
+        firstHit.accumulateAndGet(index, ::minOf)
+        Result.success(data)
+      }
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: InterruptedException) {
+      throw e
+    }
+    catch (e: Exception) {
+      Result.failure(e)
+    }
+  }
+  for (outcome in outcomes) {
+    if (outcome != null) {
+      return outcome.getOrThrow()
     }
   }
   return null
 }
+
+private const val ANY_MODULE_OUTPUT_SEARCH_CHUNK = 64

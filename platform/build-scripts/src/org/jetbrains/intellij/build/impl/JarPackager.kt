@@ -31,7 +31,6 @@ import org.jetbrains.intellij.build.buildJar
 import org.jetbrains.intellij.build.checkForNoDiskSpace
 import org.jetbrains.intellij.build.computeModuleSourcesByContent
 import org.jetbrains.intellij.build.dev.DevDistRecipe
-import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.getLibraryFileName
 import org.jetbrains.intellij.build.getLibraryRoots
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
@@ -335,7 +334,7 @@ class JarPackager private constructor(
       }
       else {
         // is it a product module?
-        findFileInModuleSources(module, "$moduleName.xml")?.let {
+        context.outputProvider.findFileInModuleSources(module, "$moduleName.xml")?.let {
           sources.addAll(searchableOptionSet.createSourceByModule(moduleName))
         }
       }

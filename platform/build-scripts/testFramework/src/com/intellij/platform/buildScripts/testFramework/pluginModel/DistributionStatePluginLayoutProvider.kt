@@ -6,7 +6,6 @@ import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
-import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.getProductionLibraryDependencies
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.DistributionBuilderState
@@ -98,7 +97,7 @@ private fun collectContentModulesByMainModule(
 ): Map<String, List<String>> {
   return mainModules.mapConcurrent { mainModule ->
     val module = outputProvider.findModule(mainModule) ?: return@mapConcurrent null
-    val pluginXml = findFileInModuleSources(module = module, relativePath = PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = true)
+    val pluginXml = outputProvider.findFileInModuleSources(module = module, relativePath = PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = true)
                     ?: return@mapConcurrent null
     val contentModules = LinkedHashSet<String>()
     val visited = HashSet<String>()

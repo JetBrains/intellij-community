@@ -13,6 +13,7 @@ import com.intellij.platform.pluginGraph.PluginModuleId
 import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginGraph.contentName
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.ModuleSourceFileIndex
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
 import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.deps.PluginDependencyPlanOutput
@@ -746,11 +747,16 @@ private fun isTestPluginByName(pluginName: String): Boolean {
 }
 
 internal fun createTestModuleOutputProvider(project: JpsProject): ModuleOutputProvider {
+  val sourceFiles = ModuleSourceFileIndex(project.modules)
   return object : ModuleOutputProvider {
     override fun findModule(name: String): JpsModule? = project.modules.find { it.name == name }
 
     override fun findRequiredModule(name: String): JpsModule {
       return findModule(name) ?: error("Module not found: $name")
+    }
+
+    override fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProductionSources: Boolean): Path? {
+      return sourceFiles.find(module = module, relativePath = relativePath, onlyProductionSources = onlyProductionSources)
     }
 
     override val useTestCompilationOutput: Boolean
@@ -971,6 +977,7 @@ private fun stubModuleOutputProvider(): ModuleOutputProvider {
 
     override fun findModule(name: String): JpsModule? = null
     override fun findRequiredModule(name: String): JpsModule = error("Module not found: $name")
+    override fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProductionSources: Boolean): Path? = null
     override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
       throw UnsupportedOperationException("Stub")
     }

@@ -492,7 +492,7 @@ internal class XIncludeElementResolverImpl(
         // fragment keys.
         val outputProvider = context.outputProvider
         val alreadySearched = searchPath.flatMapTo(HashSet(), DescriptorSearchScope::modules)
-        for (module in outputProvider.getAllModules().sortedBy { it.name }) {
+        for (module in outputProvider.findModulesWithSourceFile(loadPath).sortedBy { it.name }) {
           if (!alreadySearched.add(module.name)) continue
           readDescriptor(
             module = module,

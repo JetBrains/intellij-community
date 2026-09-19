@@ -226,6 +226,8 @@ internal class ArchivedCompilationContextTest {
       return requireNotNull(findModule(name)) { "Unknown module $name" }
     }
 
+    override fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProductionSources: Boolean): Path? = null
+
     override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> = emptyList()
 
     override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {

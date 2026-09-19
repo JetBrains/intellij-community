@@ -8,6 +8,7 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.DescriptorDependencyWalk
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.ModuleSourceFileIndex
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
 import org.jetbrains.intellij.build.productLayout.dependency.jpsProject
 import org.jetbrains.intellij.build.resolveDescriptor
@@ -291,6 +292,8 @@ private class TestOutputProvider(
   private val testOutput: Map<String, String> = emptyMap(),
   private val libraryRoots: Map<String, List<Path>> = emptyMap(),
 ) : ModuleOutputProvider {
+  private val sourceFiles = ModuleSourceFileIndex(project.modules)
+
   override val useTestCompilationOutput: Boolean
     get() = true
 
@@ -299,6 +302,10 @@ private class TestOutputProvider(
   override fun findRequiredModule(name: String): JpsModule = findModule(name) ?: error("Module not found: $name")
 
   override fun getAllModules(): List<JpsModule> = project.modules
+
+  override fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProductionSources: Boolean): Path? {
+    return sourceFiles.find(module = module, relativePath = relativePath, onlyProductionSources = onlyProductionSources)
+  }
 
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> = emptyList()
 

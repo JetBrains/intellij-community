@@ -113,6 +113,8 @@ private object EmptyModuleOutputProvider : ModuleOutputProvider {
 
   override fun findRequiredModule(name: String): JpsModule = error("Not needed")
 
+  override fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProductionSources: Boolean): Path? = null
+
   override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> = emptyList()
 
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> = emptyList()

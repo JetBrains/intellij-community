@@ -26,6 +26,25 @@ interface ModuleOutputProvider {
 
   fun findRequiredModule(name: String): JpsModule
 
+  /**
+   * The file at [relativePath] in the source roots of [module], or `null` when no root holds it.
+   *
+   * The answer is the one [org.jetbrains.intellij.build.findFileInModuleSources] gives. A provider answers from its
+   * index, so a search that asks many modules for one file costs no file system call per module. Build code calls
+   * this method and not the file system function, so every search goes through the same index.
+   */
+  fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProductionSources: Boolean = false): Path?
+
+  /**
+   * The modules whose production sources hold [relativePath], in the order of [getAllModules].
+   *
+   * A search that no declared module answers asks the whole project. This is the one answer to that question, so a
+   * provider can compute it once per path.
+   */
+  fun findModulesWithSourceFile(relativePath: String): List<JpsModule> {
+    return getAllModules().filter { findFileInModuleSources(module = it, relativePath = relativePath, onlyProductionSources = true) != null }
+  }
+
   fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String? = null): List<Path>
 
   /**

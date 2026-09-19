@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.ModuleSourceFileIndex
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
@@ -420,10 +421,15 @@ private class CollectorProductProperties : ProductProperties() {
 }
 
 private class SourceOnlyCollectorOutputProvider(private val project: JpsProject) : ModuleOutputProvider {
+  private val sourceFiles = ModuleSourceFileIndex(project.modules)
+
   override val useTestCompilationOutput: Boolean = false
   override fun getAllModules(): List<JpsModule> = project.modules
   override fun findModule(name: String): JpsModule? = project.findModuleByName(name)
   override fun findRequiredModule(name: String): JpsModule = requireNotNull(findModule(name))
+  override fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProductionSources: Boolean): Path? {
+    return sourceFiles.find(module = module, relativePath = relativePath, onlyProductionSources = onlyProductionSources)
+  }
   override fun getModuleImlFile(module: JpsModule): Path = error("The collector must not read an IML file.")
   override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> = error("The collector must not read a library.")
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> = error("The collector must not read compiled output.")

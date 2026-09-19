@@ -10,7 +10,8 @@ import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ContentModuleFilter
-import org.jetbrains.intellij.build.findFileInModuleSources
+import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactData
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -44,7 +45,7 @@ internal fun TaskScope.createMavenArtifactJob(platformLayout: PlatformLayout, co
       for (plugin in pluginLayouts) {
         plugin.includedModules.mapTo(platformModules) { it.moduleName }
         val mainModule = context.outputProvider.findRequiredModule(plugin.mainModule)
-        platformModules.addAll(readPluginIncompleteContentFromDescriptor(mainModule, contentModuleFilter))
+        platformModules.addAll(readPluginIncompleteContentFromDescriptor(mainModule, contentModuleFilter, context.outputProvider))
       }
     }
 
@@ -85,8 +86,12 @@ internal fun TaskScope.createMavenArtifactJob(platformLayout: PlatformLayout, co
 }
 
 // The x-include is not resolved. If the plugin.xml includes any files, the content from these included files will not be considered.
-private fun readPluginIncompleteContentFromDescriptor(pluginModule: JpsModule, contentModuleFilter: ContentModuleFilter): Sequence<String> {
-  val pluginXml = findFileInModuleSources(pluginModule, "META-INF/plugin.xml") ?: return emptySequence()
+private fun readPluginIncompleteContentFromDescriptor(
+  pluginModule: JpsModule,
+  contentModuleFilter: ContentModuleFilter,
+  outputProvider: ModuleOutputProvider,
+): Sequence<String> {
+  val pluginXml = outputProvider.findFileInModuleSources(pluginModule, PLUGIN_XML_RELATIVE_PATH) ?: return emptySequence()
   return readPluginContentFromDescriptor(readXmlAsModel(pluginXml)).mapNotNull { (moduleName, loadingRule) ->
     if (isOptionalLoadingRule(loadingRule) && !contentModuleFilter.isOptionalModuleIncluded(moduleName, pluginModule.name)) {
       return@mapNotNull null

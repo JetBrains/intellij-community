@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
+import org.jetbrains.intellij.build.ModuleSourceFileIndex
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import java.nio.file.Path
@@ -11,6 +12,8 @@ internal class ModuleOutputProviderIndex(
   @JvmField val modules: List<JpsModule>,
 ) {
   private val nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
+
+  @JvmField val sourceFiles: ModuleSourceFileIndex = ModuleSourceFileIndex(modules)
 
   fun findModule(name: String): JpsModule? = nameToModule.get(name.removeSuffix("._test"))
 

@@ -21,7 +21,6 @@ import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.classPath.descriptorResolveContext
 import org.jetbrains.intellij.build.classPath.resolveIncludes
-import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -39,7 +38,8 @@ private const val CORE_PLUGIN_ID = "com.intellij"
 class PluginDescriptorFile(@JvmField val path: Path, @JvmField val text: CharSequence)
 
 /**
- * The plugin descriptor of a module, or `null` when the module declares no plugin.
+ * The plugin descriptor of a module, or `null` when the module declares no plugin, and the plugin aliases of a content
+ * module.
  *
  * A derivation walks the whole project once per product, and each walk finds and reads the descriptor of every module
  * again. Both answers depend on the module alone, so a derivation of 22 products read the same file 22 times. One
@@ -51,16 +51,39 @@ class PluginDescriptorFile(@JvmField val path: Path, @JvmField val text: CharSeq
 @ApiStatus.Internal
 class PluginDescriptorFileCache(private val outputProvider: ModuleOutputProvider) {
   private val files = ConcurrentHashMap<String, Optional<PluginDescriptorFile>>()
+  private val contentModuleAliases = ConcurrentHashMap<String, Set<String>>()
 
   fun find(moduleName: String): PluginDescriptorFile? {
     return files.computeIfAbsent(moduleName) {
-      val path = findFileInModuleSources(
+      val path = outputProvider.findFileInModuleSources(
         module = outputProvider.findRequiredModule(it),
         relativePath = PLUGIN_XML_RELATIVE_PATH,
         onlyProductionSources = true,
       )
       Optional.ofNullable(path?.let { file -> PluginDescriptorFile(path = file, text = Files.readString(file)) })
     }.orElse(null)
+  }
+
+  /**
+   * The plugin aliases that the descriptor of one content module declares.
+   * The descriptor file is in the production sources of the JPS module that owns the content module.
+   */
+  fun contentModuleAliases(contentModuleName: String): Set<String> {
+    contentModuleAliases.get(contentModuleName)?.let { return it }
+    val result = readContentModuleAliases(contentModuleName)
+    return contentModuleAliases.putIfAbsent(contentModuleName, result) ?: result
+  }
+
+  private fun readContentModuleAliases(contentModuleName: String): Set<String> {
+    val jpsContentModule = outputProvider.findModule(contentModuleName.substringBeforeLast('/')) ?: return emptySet()
+    val moduleFile = outputProvider.findFileInModuleSources(
+      module = jpsContentModule,
+      relativePath = contentModuleNameToDescriptorFileName(contentModuleName),
+      onlyProductionSources = true,
+    ) ?: return emptySet()
+    val result = HashSet<String>()
+    addPluginAliases(JDOMUtil.load(moduleFile), result)
+    return java.util.Set.copyOf(result)
   }
 }
 
@@ -177,7 +200,7 @@ private fun collectBundledLayoutNames(
           continue
         }
 
-        addContentModuleAliases(contentModuleName = contentModuleName, result = result, outputProvider = resolveContext.outputProvider)
+        result.addAll(descriptorFiles.contentModuleAliases(contentModuleName))
         result.add(contentModuleName)
       }
     }
@@ -475,7 +498,7 @@ private fun readPluginDescriptor(
     for (module in content.getChildren("module")) {
       val contentModuleName = module.getAttributeValue("name")
       if (contentModuleName != null && !contentModuleName.isEmpty()) {
-        addContentModuleAliases(contentModuleName = contentModuleName, result = declaredModules, outputProvider = resolveContext.outputProvider)
+        declaredModules.addAll(descriptorFiles.contentModuleAliases(contentModuleName))
         declaredModules.add(contentModuleName)
       }
     }
@@ -532,21 +555,6 @@ private fun addPluginAliases(element: Element, result: MutableSet<String>) {
       result.add(value)
     }
   }
-}
-
-/**
- * Adds the plugin aliases that the descriptor of one content module declares.
- * The descriptor file is in the production sources of the JPS module that owns the content module.
- */
-private fun addContentModuleAliases(contentModuleName: String, result: MutableSet<String>, outputProvider: ModuleOutputProvider) {
-  val jpsModuleName = contentModuleName.substringBeforeLast('/')
-  val jpsContentModule = outputProvider.findModule(jpsModuleName) ?: return
-  val moduleFile = findFileInModuleSources(
-    module = jpsContentModule,
-    relativePath = contentModuleNameToDescriptorFileName(contentModuleName),
-    onlyProductionSources = true,
-  ) ?: return
-  addPluginAliases(JDOMUtil.load(moduleFile), result)
 }
 
 private fun hasPluginAliasThatIndicatesThatItIsAProduct(xml: Element): Boolean {

@@ -12,7 +12,6 @@ import com.intellij.platform.pluginGraph.toDescriptorFileName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.productLayout.debug
 import org.jetbrains.intellij.build.productLayout.model.error.ErrorCategory
 import org.jetbrains.intellij.build.productLayout.model.error.UnsuppressedPipelineError
@@ -89,7 +88,7 @@ internal class ModuleDescriptorCache(
     }
 
     // Search production sources first, fallback to test resources (for test plugin content modules)
-    val descriptorPath = findFileInModuleSources(
+    val descriptorPath = outputProvider.findFileInModuleSources(
       module = jpsModule,
       relativePath = descriptorFileName,
       onlyProductionSources = false,

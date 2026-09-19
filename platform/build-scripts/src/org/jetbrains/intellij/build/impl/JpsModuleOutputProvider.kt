@@ -26,6 +26,12 @@ class JpsModuleOutputProviderState(
 
   fun findRequiredModule(name: String): JpsModule = index.findRequiredModule(name)
 
+  fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProductionSources: Boolean): Path? {
+    return index.sourceFiles.find(module = module, relativePath = relativePath, onlyProductionSources = onlyProductionSources)
+  }
+
+  fun findModulesWithSourceFile(relativePath: String): List<JpsModule> = index.sourceFiles.findOwners(relativePath)
+
   fun getModuleImlFile(module: JpsModule): Path = index.getModuleImlFile(module)
 
   fun createProvider(useTestCompilationOutput: Boolean): ModuleOutputProvider {
@@ -60,6 +66,12 @@ internal class JpsModuleOutputProvider(
   override fun findModule(name: String): JpsModule? = state.findModule(name)
 
   override fun findRequiredModule(name: String): JpsModule = state.findRequiredModule(name)
+
+  override fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProductionSources: Boolean): Path? {
+    return state.findFileInModuleSources(module = module, relativePath = relativePath, onlyProductionSources = onlyProductionSources)
+  }
+
+  override fun findModulesWithSourceFile(relativePath: String): List<JpsModule> = state.findModulesWithSourceFile(relativePath)
 
   override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
     val project = state.project

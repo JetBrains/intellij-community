@@ -383,11 +383,11 @@ class CompilationContextImpl internal constructor(
   }
 
   override fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean): Path? {
-    return org.jetbrains.intellij.build.findFileInModuleSources(module = outputProvider.findRequiredModule(moduleName), relativePath = relativePath)
+    return outputProvider.findFileInModuleSources(module = outputProvider.findRequiredModule(moduleName), relativePath = relativePath)
   }
 
   override fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean): Path? {
-    return org.jetbrains.intellij.build.findFileInModuleSources(module, relativePath)
+    return outputProvider.findFileInModuleSources(module = module, relativePath = relativePath)
   }
 
   override fun notifyArtifactBuilt(artifactPath: Path) {
