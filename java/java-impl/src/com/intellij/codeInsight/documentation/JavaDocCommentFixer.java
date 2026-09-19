@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
-import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInspection.InspectionEngine;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
@@ -13,6 +12,8 @@ import com.intellij.javadoc.JavadocNavigationDelegate;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -81,25 +82,26 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
     PsiFile file = owner.getContainingFile();
     if (file == null) return;
 
-    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> referenceProblems =
-      InspectionEngine.inspectElements(Collections.singletonList(new LocalInspectionToolWrapper(new JavaDocReferenceInspection())), file,
-                                       file.getTextRange(),
-                                       true, false, new DaemonProgressIndicator(), Collections.singletonList(owner), PairProcessor.alwaysTrue());
-
-    List<LocalInspectionToolWrapper> toolWrappers = List.of(
-      new LocalInspectionToolWrapper(getMissingJavadocInspection()), new LocalInspectionToolWrapper(getJavadocDeclarationInspection())
-    );
-    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> commonProblems =
-      InspectionEngine.inspectElements(toolWrappers, file, file.getTextRange(), true, true,
-                                       new DaemonProgressIndicator(), Collections.singletonList(owner), PairProcessor.alwaysTrue());
-
-    if (!referenceProblems.isEmpty()) {
-      fixReferenceProblems(ContainerUtil.flatten(referenceProblems.values()), project);
-    }
     Document document = file.getFileDocument();
-    if (!commonProblems.isEmpty()) {
-      fixCommonProblems(ContainerUtil.flatten(commonProblems.values()), owner, document, project);
-    }
+    ProgressManager.getInstance().runProcess(()->{
+      Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> referenceProblems =
+        InspectionEngine.inspectElements(Collections.singletonList(new LocalInspectionToolWrapper(new JavaDocReferenceInspection())), file,
+                                         file.getTextRange(),
+                                         true, false, Collections.singletonList(owner), PairProcessor.alwaysTrue());
+
+      List<LocalInspectionToolWrapper> toolWrappers = List.of(
+        new LocalInspectionToolWrapper(getMissingJavadocInspection()), new LocalInspectionToolWrapper(getJavadocDeclarationInspection())
+      );
+      Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> commonProblems =
+        InspectionEngine.inspectElements(toolWrappers, file, file.getTextRange(), true, true,
+                                         Collections.singletonList(owner), PairProcessor.alwaysTrue());
+      if (!referenceProblems.isEmpty()) {
+        fixReferenceProblems(ContainerUtil.flatten(referenceProblems.values()), project);
+      }
+      if (!commonProblems.isEmpty()) {
+        fixCommonProblems(ContainerUtil.flatten(commonProblems.values()), owner, document, project);
+      }
+    }, new EmptyProgressIndicator());
 
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
     ensureContentOrdered(Objects.requireNonNull(owner.getDocComment()), document);

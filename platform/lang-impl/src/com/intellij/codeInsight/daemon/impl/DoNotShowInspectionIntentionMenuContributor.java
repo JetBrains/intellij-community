@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectTypeService;
@@ -140,8 +139,8 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
       ContainerUtil.map2Map(intentionTools, wrapper -> Pair.create(wrapper.getShortName(), wrapper.getDisplayName()));
 
     // indicator can be null when run from EDT
-    ConcurrencyUtils.runWithIndicatorOrContextCancellation(DaemonProgressIndicator::new, (progress) -> {
-      collectIntentionsFromDoNotShowLeveledInspectionsWithIndicator(intentionTools, hostFile, progress, toInspect, offset, displayNames, outIntentions);
+    ConcurrencyUtils.runWithIndicatorOrContextCancellation(DaemonProgressIndicator::new, (_) -> {
+      collectIntentionsFromDoNotShowLeveledInspectionsWithIndicator(intentionTools, hostFile, toInspect, offset, displayNames, outIntentions);
       return null;
     });
   }
@@ -149,14 +148,13 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
   private static void collectIntentionsFromDoNotShowLeveledInspectionsWithIndicator(
     @NotNull List<LocalInspectionToolWrapper> intentionTools,
     @NotNull PsiFile hostFile,
-    @NotNull ProgressIndicator progress,
     @NotNull @Unmodifiable List<PsiElement> toInspect,
     int offset,
     @NotNull Map<@NonNls String, @Nls(capitalization = Nls.Capitalization.Sentence) String> displayNames,
     @NotNull ShowIntentionsPass.IntentionsInfo outIntentions
   ) {
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-      InspectionEngine.inspectElements(intentionTools, hostFile, hostFile.getTextRange(), true, true, progress, toInspect, PairProcessor.alwaysTrue());
+      InspectionEngine.inspectElements(intentionTools, hostFile, hostFile.getTextRange(), true, true, toInspect, PairProcessor.alwaysTrue());
 
     for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
       List<ProblemDescriptor> descriptors = entry.getValue();

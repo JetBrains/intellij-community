@@ -4,12 +4,12 @@ package com.intellij.codeInsight.completion.command.commands
 import com.intellij.analysis.AnalysisBundle.message
 import com.intellij.codeInsight.completion.command.CompletionCommand
 import com.intellij.codeInsight.completion.command.HighlightInfoLookup
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler.Companion.availableFor
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.InspectionEngine
-import com.intellij.codeInspection.InspectionEngine.inspectEx
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper
@@ -20,7 +20,6 @@ import com.intellij.concurrency.currentThreadContext
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.jobToIndicator
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
@@ -64,19 +63,18 @@ class DirectInspectionFixCompletionCommand(
         inspectionTools.add(inspectionTool)
       }
       val lineRange = getLineRange(topLevelFile, topLevelTargetOffset)
-      val indicator = EmptyProgressIndicator()
+      val indicator = DaemonProgressIndicator()
       val inspectionResult = readAction {
         jobToIndicator(currentThreadContext().job, indicator) {
           if (!isInjected) {
-            inspectEx(inspectionTools, topLevelFile, lineRange, lineRange, true, false, true,
-                      indicator,
-                      fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
+            InspectionEngine.inspectEx(inspectionTools, topLevelFile, lineRange, lineRange, true, false, true,
+                                       fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
                         return true
                       })
           }
           else {
             val textRange = getLineRange(psiFile, targetOffset)
-            InspectionEngine.inspectElements(inspectionTools, psiFile, textRange, true, true, indicator,
+            InspectionEngine.inspectElements(inspectionTools, psiFile, textRange, true, true,
                                              PsiTreeUtil.collectElements(psiFile) { it.textRange.intersects(textRange) }.toList(), fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
               return true
             })

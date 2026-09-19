@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiAnnotation;
@@ -138,12 +139,11 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
       }
       ((RefManagerImpl)context.getRefManager()).runInsideInspectionReadAction(() -> {
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        if (indicator == null) {
-          indicator = new DaemonProgressIndicator();
-        }
-        Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-          InspectionEngine.inspectEx(toolsCopy, myFile, parent.getTextRange(), myPriorityRange, false, true, false,
-                                     indicator, PairProcessor.alwaysTrue());
+        Computable<Map<LocalInspectionToolWrapper, List<ProblemDescriptor>>> computable =
+          () -> InspectionEngine.inspectEx(toolsCopy, myFile, parent.getTextRange(), myPriorityRange, false, true, false,
+                                       PairProcessor.alwaysTrue());
+
+        Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map = indicator == null ? ProgressManager.getInstance().runProcess(computable, new DaemonProgressIndicator()) : computable.compute();
 
         for (List<ProblemDescriptor> descriptors : map.values()) {
           for (ProblemDescriptor descriptor : descriptors) {

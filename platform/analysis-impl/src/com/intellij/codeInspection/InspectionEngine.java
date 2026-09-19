@@ -25,11 +25,11 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtilsCore;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.TextRange;
@@ -48,6 +48,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -65,7 +66,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 
@@ -99,47 +99,54 @@ public final class InspectionEngine {
     return visitor;
   }
 
-  /**
-   * @deprecated use {@link #inspectEx(List, PsiFile, TextRange, TextRange, boolean, boolean, boolean, ProgressIndicator, PairProcessor)}
-   */
-  @Deprecated(forRemoval = true)
-  // returns map (toolName -> problem descriptors)
-  public static @NotNull @Unmodifiable Map<String, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
-                                                                        @NotNull PsiFile psiFile,
-                                                                        @NotNull InspectionManager iManager,
-                                                                        boolean isOnTheFly,
-                                                                        @NotNull ProgressIndicator indicator) {
-    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-      inspectEx(toolWrappers, psiFile, psiFile.getTextRange(), psiFile.getTextRange(), isOnTheFly, false, true, indicator, PairProcessor.alwaysTrue());
-    return map.entrySet().stream().map(e->Pair.create(e.getKey().getShortName(), e.getValue())).collect(Collectors.toMap(p->p.getFirst(), p->p.getSecond()));
-  }
-
+  @ApiStatus.Internal
+  //@RequiresBackgroundThread
+  @RequiresReadLock
   public static @NotNull @Unmodifiable Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
-                                                                                            @NotNull PsiFile psiFile,
-                                                                                            @NotNull TextRange restrictRange,
-                                                                                            @NotNull TextRange priorityRange,
-                                                                                            boolean isOnTheFly,
-                                                                                            boolean inspectInjectedPsi,
-                                                                                            boolean ignoreSuppressedElements,
-                                                                                            @NotNull ProgressIndicator indicator,
-                                                                                            // when returned true -> add to the holder, false -> do not add to the holder
-                                                                                            @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
-    return inspectEx(toolWrappers, psiFile, restrictRange, priorityRange, isOnTheFly, inspectInjectedPsi, ignoreSuppressedElements, indicator, null, foundDescriptorCallback);
+                                                                                                          @NotNull PsiFile psiFile,
+                                                                                                          @NotNull TextRange restrictRange,
+                                                                                                          @NotNull TextRange priorityRange,
+                                                                                                          boolean isOnTheFly,
+                                                                                                          boolean inspectInjectedPsi,
+                                                                                                          boolean ignoreSuppressedElements,
+                                                                                                          // when returned true -> add to the holder, false -> do not add to the holder
+                                                                                                          @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
+    return inspectEx(toolWrappers, psiFile, restrictRange, priorityRange, null, isOnTheFly, inspectInjectedPsi, ignoreSuppressedElements, foundDescriptorCallback);
   }
 
+  /**
+   * @deprecated use {@link #inspectEx(List, PsiFile, TextRange, TextRange, boolean, boolean, boolean, PairProcessor)}
+   */
+  @Deprecated
+  public static @NotNull @Unmodifiable Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectEx(@NotNull @Unmodifiable List<? extends LocalInspectionToolWrapper> toolWrappers,
+                                                                                                          @NotNull PsiFile psiFile,
+                                                                                                          @NotNull TextRange restrictRange,
+                                                                                                          @NotNull TextRange priorityRange,
+                                                                                                          boolean isOnTheFly,
+                                                                                                          boolean inspectInjectedPsi,
+                                                                                                          boolean ignoreSuppressedElements,
+                                                                                                          ProgressIndicator indicator,
+                                                                                                          // when returned true -> add to the holder, false -> do not add to the holder
+                                                                                                          @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
+    return ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()->
+    inspectEx(toolWrappers, psiFile, restrictRange, priorityRange, isOnTheFly, inspectInjectedPsi, ignoreSuppressedElements, foundDescriptorCallback));
+  }
+
+  //@RequiresBackgroundThread
+  @RequiresReadLock
   @ApiStatus.Internal
   // returns map (tool -> problem descriptors)
   public static @NotNull @Unmodifiable Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                                    @NotNull PsiFile psiFile,
                                                                                    @NotNull TextRange restrictRange,
                                                                                    @NotNull TextRange priorityRange,
+                                                                                   @Nullable UserDataHolderBase userData,
                                                                                    boolean isOnTheFly,
                                                                                    boolean inspectInjectedPsi,
                                                                                    boolean ignoreSuppressedElements,
-                                                                                   @NotNull ProgressIndicator indicator,
-                                                                                   @Nullable UserDataHolderBase userData,
                                                                                    // when returned true -> add to the holder, false -> do not add to the holder
                                                                                    @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
+    assertUnderProgressIndicator();
     if (toolWrappers.isEmpty()) return Collections.emptyMap();
 
     List<Divider.DividedElements> allDivided = new ArrayList<>();
@@ -148,7 +155,8 @@ public final class InspectionEngine {
     List<PsiElement> elements = ContainerUtil.concat(
       ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.inside(), d.outside(), d.parents())));
 
-    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map = inspectElements(toolWrappers, psiFile, restrictRange, ignoreSuppressedElements, isOnTheFly, indicator, elements, userData, foundDescriptorCallback);
+    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map = new HashMap<>(inspectElements(toolWrappers, psiFile, restrictRange, ignoreSuppressedElements, isOnTheFly,
+                                                                                   elements, userData, foundDescriptorCallback));
     if (inspectInjectedPsi) {
       InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
       Set<Pair<PsiFile, PsiElement>> injectedFiles = new HashSet<>();
@@ -163,19 +171,19 @@ public final class InspectionEngine {
           }
         }
       }
-      if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(injectedFiles), indicator, pair -> {
+      if (!JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(injectedFiles), pair -> {
         PsiFile injectedFile = pair.getFirst();
         PsiElement host = pair.getSecond();
         List<PsiElement> injectedElements = new ArrayList<>();
         Set<String> injectedDialects = new HashSet<>();
         getAllElementsAndDialectsFrom(injectedFile, injectedElements, injectedDialects);
         Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> result =
-          inspectElements(toolWrappers, injectedFile, injectedFile.getTextRange(), isOnTheFly, indicator, ignoreSuppressedElements,
+          inspectElements(toolWrappers, injectedFile, injectedFile.getTextRange(), isOnTheFly, ignoreSuppressedElements,
                           injectedElements, injectedDialects, userData, foundDescriptorCallback);
         for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : result.entrySet()) {
           LocalInspectionToolWrapper toolWrapper = entry.getKey();
           List<ProblemDescriptor> descriptors = entry.getValue();
-          List<ProblemDescriptor> filtered = ignoreSuppressedElements ? ContainerUtil.filter(descriptors, descriptor -> !toolWrapper.getTool().isSuppressedFor(host)) : descriptors;
+          List<ProblemDescriptor> filtered = ignoreSuppressedElements ? ContainerUtil.filter(descriptors, _ -> !toolWrapper.getTool().isSuppressedFor(host)) : descriptors;
           // in case two injected fragments contain result of the same inspection, concatenate them
           // assume map is ConcurrentHashMap here, otherwise synchronization would be needed
           map.merge(toolWrapper, filtered, (oldList, newList)->ContainerUtil.concat(oldList, newList));
@@ -231,6 +239,7 @@ public final class InspectionEngine {
     }
   }
 
+  @Deprecated
   // returns map tool -> list of descriptors found
   public static @NotNull @Unmodifiable Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                                                   @NotNull PsiFile psiFile,
@@ -241,23 +250,35 @@ public final class InspectionEngine {
                                                                                                   @NotNull List<? extends PsiElement> elements,
                                                                                                   // when returned true -> add to the holder, false -> do not add to the holder
                                                                                                   @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
-    return inspectElements(toolWrappers, psiFile, restrictRange, isOnTheFly, indicator, ignoreSuppressedElements, elements, calcElementDialectIds(elements),
+    return ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()->inspectElements(toolWrappers, psiFile, restrictRange, isOnTheFly, ignoreSuppressedElements, elements, calcElementDialectIds(elements),
+                           null, foundDescriptorCallback));
+  }
+  @ApiStatus.Internal
+  public static @NotNull @Unmodifiable Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+                                                                                                  @NotNull PsiFile psiFile,
+                                                                                                  @NotNull TextRange restrictRange,
+                                                                                                  boolean ignoreSuppressedElements,
+                                                                                                  boolean isOnTheFly,
+                                                                                                  @NotNull List<? extends PsiElement> elements,
+                                                                                                  // when returned true -> add to the holder, false -> do not add to the holder
+                                                                                                  @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
+    return inspectElements(toolWrappers, psiFile, restrictRange, isOnTheFly, ignoreSuppressedElements, elements, calcElementDialectIds(elements),
                            null, foundDescriptorCallback);
   }
 
   @ApiStatus.Internal
+  //@RequiresBackgroundThread
   // returns map tool -> list of descriptors found
   public static @NotNull @Unmodifiable Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                                                   @NotNull PsiFile psiFile,
                                                                                                   @NotNull TextRange restrictRange,
                                                                                                   boolean ignoreSuppressedElements,
                                                                                                   boolean isOnTheFly,
-                                                                                                  @NotNull ProgressIndicator indicator,
                                                                                                   @NotNull List<? extends PsiElement> elements,
                                                                                                   @Nullable UserDataHolderBase userData,
                                                                                                   // when returned true -> add to the holder, false -> do not add to the holder
                                                                                                   @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
-    return inspectElements(toolWrappers, psiFile, restrictRange, isOnTheFly, indicator, ignoreSuppressedElements, elements, calcElementDialectIds(elements),
+    return inspectElements(toolWrappers, psiFile, restrictRange, isOnTheFly, ignoreSuppressedElements, elements, calcElementDialectIds(elements),
                            userData, foundDescriptorCallback);
   }
 
@@ -302,17 +323,20 @@ public final class InspectionEngine {
     return false;
   }
 
+  //@RequiresBackgroundThread
+  @RequiresReadLock
   private static @NotNull @Unmodifiable Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                                                    @NotNull PsiFile psiFile,
                                                                                                    @NotNull TextRange restrictRange,
                                                                                                    boolean isOnTheFly,
-                                                                                                   @NotNull ProgressIndicator indicator,
                                                                                                    boolean ignoreSuppressedElements,
                                                                                                    @NotNull List<? extends PsiElement> elements,
                                                                                                    @NotNull Set<String> elementDialectIds,
                                                                                                    @Nullable UserDataHolderBase userData,
                                                                                                    // when returned true -> add to the holder, false -> do not add to the holder
                                                                                                    @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
+    assertUnderProgressIndicator();
+
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> resultDescriptors = new ConcurrentHashMap<>();
     withSession(psiFile, restrictRange, restrictRange, HighlightSeverity.INFORMATION, isOnTheFly, userData, session -> {
       List<LocalInspectionToolWrapper> applicableTools = filterToolsApplicableByLanguage(toolWrappers, elementDialectIds, elementDialectIds);
@@ -372,7 +396,7 @@ public final class InspectionEngine {
           if (inspectionListener != null && inspectionWasRun) {
             inspectionListener.inspectionFinished(
               inspectionDuration,
-              Thread.currentThread().getId(),
+              Thread.currentThread().threadId(),
               holder.getResultCount(),
               toolWrapper,
               InspectListener.InspectionKind.LOCAL,
@@ -394,14 +418,14 @@ public final class InspectionEngine {
             LocalInspectionToolWrapper wrapper = getRedirectedToolWrapper(toolWrapper, descriptor, toolWrappers);
             if (wrapper == null) continue;
             if (element == null || !ignoreSuppressedElements || !SuppressionUtil.inspectionResultSuppressed(element, wrapper.getTool())) {
-              resultDescriptors.computeIfAbsent(wrapper, x -> new ArrayList<>()).add(descriptor);
+              resultDescriptors.computeIfAbsent(wrapper, _ -> new ArrayList<>()).add(descriptor);
             }
           }
         }
 
         return true;
       };
-      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(applicableTools, indicator, processor);
+      JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(applicableTools, processor);
     });
 
     return resultDescriptors;
@@ -430,6 +454,8 @@ public final class InspectionEngine {
     return tool;
   }
 
+  //@RequiresBackgroundThread
+  @RequiresReadLock
   public static @NotNull @Unmodifiable List<ProblemDescriptor> runInspectionOnFile(@NotNull PsiFile psiFile,
                                                                                    @NotNull InspectionToolWrapper<?, ?> toolWrapper,
                                                                                    @NotNull GlobalInspectionContext inspectionContext) {
@@ -441,8 +467,9 @@ public final class InspectionEngine {
       try {
         if (toolWrapper instanceof LocalInspectionToolWrapper local) {
           Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> problemDescriptors =
+            ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()->
             inspectEx(Collections.singletonList(local), psiFile, psiFile.getTextRange(), psiFile.getTextRange(),
-                      false, false, true, new EmptyProgressIndicator(), PairProcessor.alwaysTrue());
+                      false, false, true, PairProcessor.alwaysTrue()));
 
           for (List<ProblemDescriptor> group : problemDescriptors.values()) {
             result.addAll(group);

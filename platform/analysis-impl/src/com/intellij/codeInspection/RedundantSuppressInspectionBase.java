@@ -14,7 +14,6 @@ import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -154,8 +153,8 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
             }
             List<ProblemDescriptor> found = Collections.synchronizedList(new ArrayList<>());
             // shouldn't use standard ProblemsHolder because it filters out suppressed elements by default
-            InspectionEngine.inspectEx(wrappers, psiFile, psiFile.getTextRange(), psiFile.getTextRange(), false, true, false, 
-                                       ProgressIndicatorProvider.getGlobalProgressIndicator(), (_, descriptor) -> found.add(descriptor));
+            InspectionEngine.inspectEx(wrappers, psiFile, psiFile.getTextRange(), psiFile.getTextRange(), false, true, false,
+                                       (_, descriptor) -> found.add(descriptor));
             descriptors = new ArrayList<>(found);
           }
           else if (toolWrapper instanceof GlobalInspectionToolWrapper global) {

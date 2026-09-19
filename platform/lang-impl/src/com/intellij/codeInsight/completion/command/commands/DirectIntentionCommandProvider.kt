@@ -274,14 +274,15 @@ internal class DirectIntentionCommandProvider : CommandProvider {
           val indicator = EmptyProgressIndicator()
           val inspectionResult = jobToIndicator(coroutineContext.job, indicator) {
             if (!isInjected) {
-              InspectionEngine.inspectEx(inspectionTools, topLevelFile, lineRange, lineRange, true, false, true, indicator, fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
+              InspectionEngine.inspectEx(inspectionTools, topLevelFile, lineRange, lineRange, true, false, true,
+                                         fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
                 return true
               })
             }
             else {
               val textRange = getLineRange(psiFile, currentOffset)
-              InspectionEngine.inspectElements(inspectionTools, psiFile, textRange, true, true, indicator,
-                                               PsiTreeUtil.collectElements(psiFile) { it.textRange.intersects(textRange) }.toList(), fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
+              InspectionEngine.inspectElements(inspectionTools, psiFile, textRange, true, true,
+                  PsiTreeUtil.collectElements(psiFile) { it.textRange.intersects(textRange) }.toList(), fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
                 return true
               })
             }

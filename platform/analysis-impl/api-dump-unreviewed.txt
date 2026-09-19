@@ -1110,7 +1110,6 @@ f:com.intellij.codeInspection.InspectionEngine
 - s:createVisitor(com.intellij.codeInspection.LocalInspectionTool,com.intellij.codeInspection.ProblemsHolder,Z,com.intellij.codeInspection.LocalInspectionToolSession):com.intellij.psi.PsiElementVisitor
 - s:filterToolsApplicableByLanguage(java.util.Collection,java.util.Set,java.util.Set):java.util.List
 - s:inspectElements(java.util.List,com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,Z,Z,com.intellij.openapi.progress.ProgressIndicator,java.util.List,com.intellij.util.PairProcessor):java.util.Map
-- s:inspectEx(java.util.List,com.intellij.psi.PsiFile,com.intellij.codeInspection.InspectionManager,Z,com.intellij.openapi.progress.ProgressIndicator):java.util.Map
 - s:inspectEx(java.util.List,com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,com.intellij.openapi.util.TextRange,Z,Z,Z,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.PairProcessor):java.util.Map
 - s:runInspectionOnFile(com.intellij.psi.PsiFile,com.intellij.codeInspection.ex.InspectionToolWrapper,com.intellij.codeInspection.GlobalInspectionContext):java.util.List
 a:com.intellij.codeInspection.InspectionManagerBase

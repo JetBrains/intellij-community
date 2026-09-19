@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -125,7 +124,7 @@ public final class CleanupInspectionIntention implements IntentionAction, HighPr
           List<ProblemDescriptor> found = Collections.synchronizedList(new ArrayList<>());
           Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
             InspectionEngine.inspectEx(wrappers, targetFile, targetFile.getTextRange(), targetFile.getTextRange(),
-                                       false, false, true, new EmptyProgressIndicator(), PairProcessor.alwaysTrue());
+                                       false, false, true, PairProcessor.alwaysTrue());
           for (List<ProblemDescriptor> value : map.values()) {
             found.addAll(value);
           }

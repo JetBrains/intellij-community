@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.daemon.impl.IntentionMenuContributor
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
 import com.intellij.codeInspection.LocalInspectionTool
@@ -9,6 +10,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
@@ -41,13 +43,15 @@ class DoNotShowInspectionCancellationTest : BasePlatformTestCase() {
     val offset = editor.caretModel.offset
 
     val future = ApplicationManager.getApplication().executeOnPooledThread<Unit> {
-      ReadAction.computeCancellable<Unit, Nothing> {
-        inspection.readJobRef.set(Cancellation.currentJob())
-        val intentions = ShowIntentionsPass.IntentionsInfo()
-        for (contributor in IntentionMenuContributor.EP_NAME.extensionList) {
-          contributor.collectActions(editor, file, intentions, -1, offset)
-        }
-      }
+      ProgressManager.getInstance().runProcess({
+                                                 ReadAction.computeCancellable<Unit, Nothing> {
+                                                   inspection.readJobRef.set(Cancellation.currentJob())
+                                                   val intentions = ShowIntentionsPass.IntentionsInfo()
+                                                   for (contributor in IntentionMenuContributor.EP_NAME.extensionList) {
+                                                     contributor.collectActions(editor, file, intentions, -1, offset)
+                                                   }
+                                                 }
+                                               }, DaemonProgressIndicator())
     }
     future.get(30, TimeUnit.SECONDS)
 

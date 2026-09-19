@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -36,8 +37,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static org.junit.Assert.assertNotNull;
 
 public class SSBasedInspectionTest extends SSBasedInspectionTestCase {
 
@@ -147,10 +146,10 @@ public class SSBasedInspectionTest extends SSBasedInspectionTestCase {
     final SSBasedInspection inspection = (SSBasedInspection)tools.getTool().getTool();
     final PsiFile file = myFixture.getFile();
     Benchmark.newBenchmark("Chained method call inspection performance",
-                           () -> InspectionEngine.inspectEx(
+                           () -> ProgressManager.getInstance().runProcess(()->InspectionEngine.inspectEx(
                                             Collections.singletonList(new LocalInspectionToolWrapper(inspection)), file,
                                             file.getTextRange(),
-                                            file.getTextRange(), true, false, true, new DaemonProgressIndicator(), PairProcessor.alwaysTrue())).start();
+                                            file.getTextRange(), true, false, true, PairProcessor.alwaysTrue()), new DaemonProgressIndicator())).start();
   }
 
   public void doTest(String pattern, String name) {
