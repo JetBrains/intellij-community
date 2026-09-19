@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.samples.standalone.markdown
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
@@ -18,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import java.awt.Component
 import java.awt.Frame
@@ -36,14 +38,19 @@ import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextArea
 
 @Composable
-internal fun MarkdownEditor(state: TextFieldState, modifier: Modifier = Modifier) {
+internal fun MarkdownEditor(
+    state: TextFieldState,
+    scrollState: ScrollState,
+    onTextLayout: (TextLayoutResult) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier) {
         ControlsRow(
             modifier = Modifier.fillMaxWidth().background(JewelTheme.globalColors.panelBackground).padding(8.dp),
             onLoadMarkdown = { state.edit { replace(0, length, it) } },
         )
         Divider(orientation = Orientation.Horizontal, Modifier.fillMaxWidth())
-        Editor(state = state, modifier = Modifier.fillMaxWidth().weight(1f))
+        Editor(state, scrollState, onTextLayout, modifier = Modifier.fillMaxWidth().weight(1f))
     }
 }
 
@@ -85,7 +92,12 @@ private fun ControlsRow(onLoadMarkdown: (String) -> Unit, modifier: Modifier = M
 }
 
 @Composable
-private fun Editor(state: TextFieldState, modifier: Modifier = Modifier) {
+private fun Editor(
+    state: TextFieldState,
+    scrollState: ScrollState,
+    onTextLayout: (TextLayoutResult) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Box(modifier) {
         TextArea(
             state = state,
@@ -93,6 +105,8 @@ private fun Editor(state: TextFieldState, modifier: Modifier = Modifier) {
             undecorated = true,
             textStyle = JewelTheme.editorTextStyle,
             decorationBoxModifier = Modifier.padding(horizontal = 8.dp),
+            scrollState = scrollState,
+            onTextLayout = { getResult -> getResult()?.let(onTextLayout) },
         )
     }
 }
