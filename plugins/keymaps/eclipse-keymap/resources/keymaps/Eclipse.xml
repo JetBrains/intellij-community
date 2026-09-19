@@ -135,7 +135,9 @@
     <keyboard-shortcut first-keystroke="control F3"/>
     <keyboard-shortcut first-keystroke="control O"/>
   </action>
-  <action id="Find"/>
+  <action id="Find">
+    <keyboard-shortcut first-keystroke="ctrl f" />
+  </action>
   <action id="FindInPath">
     <keyboard-shortcut first-keystroke="control H"/>
   </action>
