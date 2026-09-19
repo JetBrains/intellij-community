@@ -174,8 +174,6 @@ public class LocalFileSystemImpl
     }
   }
 
-  protected void statusRefreshed() { }
-
   private void markDirtyPaths(@NotNull FileWatcher.DirtyPaths dirtyPaths) {
     //TODO RC: this method is sometimes called without RA => it makes some VFS intermediate states visible -- e.g.
     //         the state there file is already marked as removed, but is not yet removed from it's parent.children
@@ -187,14 +185,10 @@ public class LocalFileSystemImpl
     //            now are from _successful_ retries, i.e. the issue was hidden from the client. But .retryUpToN()
     //            is still not 100% a solution.
     //         I'm yet undecided which approach is the optimal choice...
-    var somethingWasMarkedDirty = (
-      markPathsDirty(dirtyPaths.dirtyPaths) |
-      markFlatDirsDirty(dirtyPaths.dirtyDirectories) |
-      markRecursiveDirsDirty(dirtyPaths.dirtyPathsRecursive)
-    );
-    if (somethingWasMarkedDirty) {
-      statusRefreshed();
-    }
+
+    markPathsDirty(dirtyPaths.dirtyPaths);
+    markFlatDirsDirty(dirtyPaths.dirtyDirectories);
+    markRecursiveDirsDirty(dirtyPaths.dirtyPathsRecursive);
   }
 
   private boolean markPathsDirty(Iterable<String> dirtyPaths) {
