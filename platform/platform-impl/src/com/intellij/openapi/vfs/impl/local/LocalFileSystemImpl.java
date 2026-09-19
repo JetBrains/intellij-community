@@ -4,6 +4,8 @@ package com.intellij.openapi.vfs.impl.local;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -31,7 +33,6 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PlatformNioHelper;
 import com.intellij.util.system.OS;
-import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,9 +104,7 @@ public class LocalFileSystemImpl
           var application = ApplicationManager.getApplication();
           try {
             if (application != null && !application.isDisposed()) {
-              ReadAction.runBlocking(() -> {
-                storeRefreshStatusToFiles();
-              });
+              storeRefreshStatusToFilesInNBRA();
             }
           }
           catch (Throwable e) {
@@ -139,33 +138,70 @@ public class LocalFileSystemImpl
 
   private void storeRefreshStatusToFiles() {
     if (myWatcher.isOperational()) {
-      var dirtyPaths = myWatcher.getDirtyPaths();
-      //TODO RC: this method is sometimes called without RA => it makes some VFS intermediate states visible -- e.g.
-      //         the state there file is already marked as removed, but is not yet removed from it's parent.children
-      //         list => causes FileDeletedException during path resolution.
-      //         We should either:
-      //         a) wrap _all_ the calls in RA -- carries an additional overhead
-      //         b) or deal with intermediate states without failing: e.g., FileNavigator.retryUpToN() is an attempt
-      //            in that direction, and it works, at least partially: most (but not all) of the reports in Diogen
-      //            now are from _successful_ retries, i.e. the issue was hidden from the client. But .retryUpToN()
-      //            is still not 100% a solution.
-      //         I'm yet undecided which approach is the optimal choice...
-      var somethingWasMarkedDirty = (
-        markPathsDirty(dirtyPaths.dirtyPaths) |
-        markFlatDirsDirty(dirtyPaths.dirtyDirectories) |
-        markRecursiveDirsDirty(dirtyPaths.dirtyPathsRecursive)
-      );
-      if (somethingWasMarkedDirty) {
-        statusRefreshed();
-      }
+      markDirtyPaths(myWatcher.getDirtyPaths());
+    }
+  }
+
+  /// Logically the same as [storeRefreshStatusToFiles], but wraps [markDirtyPaths] in NBRA which gives retryability
+  /// on cancellation, and WA priority -- so it shouldn't freeze
+  private void storeRefreshStatusToFilesInNBRA() {
+    if (!myWatcher.isOperational()) {
+      return;
+    }
+    // Capture dirty paths once: getDirtyPaths() clears the watcher queue, so we must not call it again on retry.
+    var dirtyPaths = myWatcher.getDirtyPaths();
+    if (dirtyPaths.isEmpty()) {
+      return;
+    }
+    try {
+      // A non-blocking read action:
+      // - lets a pending write action preempt the (potentially deep) recursive dirty-marking
+      //   (VirtualDirectoryImpl.markDirtyRecursivelyInternal) without blocking the EDT;
+      // - also it waits for the write action to finish before retrying;
+      ReadAction.nonBlocking(() -> {
+          //MAYBE RC: NBRA is restarted as a whole, without keeping track of its progress -- so if dirtyPaths is
+          //          large, we could spent quite a lot of time on repeating same work -- up to starvation in worst
+          //          case scenarios. Could be useful to track dirtyPaths that were already processed -- i.e. remove
+          //          the processed paths immediately after they do their job.
+          markDirtyPaths(dirtyPaths);
+          return null;
+        })
+        .expireWith(this)
+        .executeSynchronously();
+    }
+    catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException ignore) {
+      // The file system is being disposed; the still-dirty paths will be re-detected by the watcher on next start
     }
   }
 
   protected void statusRefreshed() { }
 
+  private void markDirtyPaths(@NotNull FileWatcher.DirtyPaths dirtyPaths) {
+    //TODO RC: this method is sometimes called without RA => it makes some VFS intermediate states visible -- e.g.
+    //         the state there file is already marked as removed, but is not yet removed from it's parent.children
+    //         list => causes FileDeletedException during path resolution.
+    //         We should either:
+    //         a) wrap _all_ the calls in RA -- carries an additional overhead
+    //         b) or deal with intermediate states without failing: e.g., FileNavigator.retryUpToN() is an attempt
+    //            in that direction, and it works, at least partially: most (but not all) of the reports in Diogen
+    //            now are from _successful_ retries, i.e. the issue was hidden from the client. But .retryUpToN()
+    //            is still not 100% a solution.
+    //         I'm yet undecided which approach is the optimal choice...
+    var somethingWasMarkedDirty = (
+      markPathsDirty(dirtyPaths.dirtyPaths) |
+      markFlatDirsDirty(dirtyPaths.dirtyDirectories) |
+      markRecursiveDirsDirty(dirtyPaths.dirtyPathsRecursive)
+    );
+    if (somethingWasMarkedDirty) {
+      statusRefreshed();
+    }
+  }
+
   private boolean markPathsDirty(Iterable<String> dirtyPaths) {
     var marked = false;
     for (var dirtyPath : dirtyPaths) {
+      ProgressManager.checkCanceled();
+
       var file = findFileByPathIfCached(dirtyPath);
       if (file instanceof NewVirtualFile nvf) {
         nvf.markDirty();
@@ -178,16 +214,20 @@ public class LocalFileSystemImpl
   private boolean markFlatDirsDirty(Iterable<String> dirtyPaths) {
     var marked = false;
     for (var dirtyPath : dirtyPaths) {
+      ProgressManager.checkCanceled();
+
       var exactOrParent = findCachedFileByPath(this, dirtyPath);
-      if (exactOrParent.first != null) {
-        exactOrParent.first.markDirty();
-        for (var child : exactOrParent.first.getCachedChildren()) {
+      NewVirtualFile exactMatchCached = exactOrParent.first;
+      NewVirtualFile firstCachedParent = exactOrParent.second;
+      if (exactMatchCached != null) {
+        exactMatchCached.markDirty();
+        for (var child : exactMatchCached.getCachedChildren()) {
           ((NewVirtualFile)child).markDirty();
           marked = true;
         }
       }
-      else if (exactOrParent.second != null) {
-        exactOrParent.second.markDirty();
+      else if (firstCachedParent != null) {
+        firstCachedParent.markDirty();
         marked = true;
       }
     }
@@ -197,13 +237,25 @@ public class LocalFileSystemImpl
   private boolean markRecursiveDirsDirty(Iterable<String> dirtyPaths) {
     var marked = false;
     for (var dirtyPath : dirtyPaths) {
+      ProgressManager.checkCanceled();
+
       var exactOrParent = findCachedFileByPath(this, dirtyPath);
-      if (exactOrParent.first != null) {
-        exactOrParent.first.markDirtyRecursively();
+      NewVirtualFile exactMatchCached = exactOrParent.first;
+      NewVirtualFile firstCachedParent = exactOrParent.second;
+      if (exactMatchCached != null) {
+        //MAYBE RC: this is potentially the riskiest call in relation to cancellations -- markDirtyRecursively may go down
+        //          very deeply, and without _any_ cancellation points inside.
+        //          If that is proved to be a real issue, than I suggest NOT adding the cancellation points inside the
+        //          markDirtyRecursive() itself -- because (P)CE from it disrupts other callers. Instead, I suggest
+        //          unrolling the recursion right here, and add (throttled) cancellation points.
+        //          Unrolling the recursion could incur some additional overhead, because some implementation-specific
+        //          optimization are not accessible -- but that is the price to pay. Cancellation points are also incur
+        //          the overhead by themselves, so... anyway, we're eager to sacrifice everything for cancellation, don't we?
+        exactMatchCached.markDirtyRecursively();
         marked = true;
       }
-      else if (exactOrParent.second != null) {
-        exactOrParent.second.markDirty();
+      else if (firstCachedParent != null) {
+        firstCachedParent.markDirty();
         marked = true;
       }
     }
