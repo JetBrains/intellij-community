@@ -31,7 +31,6 @@ import io.netty.util.NetUtil;
 import kotlin.metadata.jvm.JvmMetadataUtil;
 import kotlinx.coroutines.Deferred;
 import net.n3.nanoxml.IXMLBuilder;
-import org.h2.mvstore.MVStore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -176,7 +175,6 @@ public final class ClasspathBootstrap {
     addToClassPath(cp, Caffeine.class);
     // Hashing
     addToClassPath(cp, Hashing.class);
-    addToClassPath(cp, MVStore.class);
 
     addToClassPath(cp, ArtifactRepositoryManager.getClassesFromDependencies());
     addToClassPath(cp, Tracer.class); // tracing infrastructure

@@ -5,11 +5,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
@@ -34,17 +32,14 @@ public final class PathRelativizerService {
   private static final String BUILD_DIR_IDENTIFIER = "$BUILD_DIR$";
 
   private final PathRelativizer[] relativizers;
-  private final @Nullable PathTypeAwareRelativizer typeAwareRelativizer;
   private final Set<String> unhandledPaths = Collections.synchronizedSet(new LinkedHashSet<>());
 
   public PathRelativizerService(@Nullable String projectPath) {
     relativizers = initialize(projectPath, null, null, null);
-    typeAwareRelativizer = null;
   }
 
   public PathRelativizerService(@Nullable String projectPath, @Nullable Boolean projectDirIsCaseSensitive) {
     relativizers = initialize(projectPath, null, projectDirIsCaseSensitive, null);
-    typeAwareRelativizer = null;
   }
 
   public PathRelativizerService(@NotNull JpsProject project) {
@@ -62,24 +57,11 @@ public final class PathRelativizerService {
                               getBuildDirPath(project),
                               projectDirIsCaseSensitive,
                               javaSdks);
-    typeAwareRelativizer = null;
-  }
-
-  @Internal
-  public PathRelativizerService(@NotNull PathRelativizer @NotNull [] relativizers, @NotNull PathTypeAwareRelativizer typeAwareRelativizer) {
-    this.relativizers = relativizers;
-    this.typeAwareRelativizer = typeAwareRelativizer;
   }
 
   @TestOnly
   public PathRelativizerService() {
     relativizers = initialize(null, null, null, null);
-    typeAwareRelativizer = null;
-  }
-
-  @Internal
-  public @Nullable PathTypeAwareRelativizer getTypeAwareRelativizer() {
-    return typeAwareRelativizer;
   }
 
   public @NotNull String toRelative(@NotNull Path path) {

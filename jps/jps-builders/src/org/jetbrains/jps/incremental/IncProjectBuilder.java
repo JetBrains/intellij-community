@@ -280,7 +280,6 @@ public final class IncProjectBuilder {
     LowMemoryWatcher memWatcher = LowMemoryWatcher.register(() -> {
       JavacMain.clearCompilerZipFileCache();
       dataManager.flush(false);
-      dataManager.clearCache();
     });
 
     CompileContextImpl context = null;

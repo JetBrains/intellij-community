@@ -2,7 +2,6 @@
 .DS_Store
 .bazelrc-user.bazelrc
 .gradle
-.jqwik-database
 /.bazelbsp
 /.diff
 /.idea*/gradle_extensions.xml

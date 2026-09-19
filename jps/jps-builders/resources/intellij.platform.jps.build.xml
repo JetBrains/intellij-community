@@ -19,7 +19,6 @@
     <module name="intellij.libraries.kotlin.metadata"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.maven.resolver.provider"/>
-    <module name="intellij.libraries.mvstore"/>
     <module name="intellij.libraries.netty.buffer"/>
     <module name="intellij.libraries.netty.codec.http"/>
     <module name="intellij.libraries.netty.codec.protobuf"/>

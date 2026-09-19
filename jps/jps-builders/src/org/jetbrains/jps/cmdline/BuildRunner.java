@@ -40,7 +40,6 @@ import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetStateManagerImpl;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.storage.StampsStorage;
-import org.jetbrains.jps.incremental.storage.StorageManager;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
@@ -62,8 +61,6 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 import static org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.isCompilerReferenceFSCaseSensitive;
 
 public final class BuildRunner {
-  private static final boolean USE_EXPERIMENTAL_STORAGE = Boolean.getBoolean("jps.use.experimental.storage");
-
   private static final Logger LOG = Logger.getInstance(BuildRunner.class);
   private final JpsModelLoader myModelLoader;
   private List<String> myFilePaths = Collections.emptyList();
@@ -94,10 +91,8 @@ public final class BuildRunner {
     PathRelativizerService relativizer = new PathRelativizerService(jpsModel.getProject(), isCompilerReferenceFSCaseSensitive());
 
     BuildDataManager dataManager = null;
-    StorageManager storageManager = null;
     try {
-      storageManager = createStorageManager(dataStorageRoot);
-      dataManager = new BuildDataManager(dataPaths, new BuildTargetsState(new BuildTargetStateManagerImpl(dataPaths, jpsModel)), relativizer, storageManager);
+      dataManager = BuildDataManager.create(dataPaths, new BuildTargetsState(new BuildTargetStateManagerImpl(dataPaths, jpsModel)), relativizer);
       if (dataManager.versionDiffers()) {
         myForceCleanCaches = true;
         msgHandler.processMessage(new CompilerMessage(
@@ -109,9 +104,6 @@ public final class BuildRunner {
       // second try
       LOG.info(e);
 
-      if (storageManager != null) {
-        storageManager.forceClose();
-      }
       if (dataManager != null) {
         dataManager.close();
       }
@@ -119,7 +111,7 @@ public final class BuildRunner {
       myForceCleanCaches = true;
       FileUtilRt.deleteRecursively(dataStorageRoot);
 
-      dataManager = new BuildDataManager(dataPaths, new BuildTargetsState(new BuildTargetStateManagerImpl(dataPaths, jpsModel)), relativizer, createStorageManager(dataStorageRoot));
+      dataManager = BuildDataManager.create(dataPaths, new BuildTargetsState(new BuildTargetStateManagerImpl(dataPaths, jpsModel)), relativizer);
       // the second attempt succeeded
       msgHandler.processMessage(new CompilerMessage(
         getRootCompilerName(), BuildMessage.Kind.INFO, JpsBuildBundle.message("build.message.project.rebuild.forced.0", e.getMessage()))
@@ -129,17 +121,6 @@ public final class BuildRunner {
     return new ProjectDescriptor(
       jpsModel, fsState, dataManager, BuildLoggingManager.DEFAULT, index, targetIndex, buildRootIndex, ignoredFileIndex
     );
-  }
-
-  private static @Nullable StorageManager createStorageManager(@NotNull Path dataStorageRoot) {
-    if (USE_EXPERIMENTAL_STORAGE) {
-      StorageManager manager = new StorageManager(dataStorageRoot.resolve("jps-portable-cache.db"));
-      manager.open();
-      return manager;
-    }
-    else {
-      return null;
-    }
   }
 
   public static @NotNull @Nls String getRootCompilerName() {

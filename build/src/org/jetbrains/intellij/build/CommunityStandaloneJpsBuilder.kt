@@ -41,7 +41,6 @@ fun buildCommunityStandaloneJpsBuilder(
     "intellij.libraries.caffeine",
     "intellij.libraries.gson",
     "intellij.libraries.fastutil",
-    "intellij.libraries.mvstore",
     "intellij.libraries.commons.lang3",
     "intellij.libraries.commons.logging",
     "intellij.libraries.commons.codec",

@@ -230,8 +230,6 @@ public final class BuildManager implements Disposable {
               Strings.endsWithIgnoreCase(path.getName(), IWS_EXTENSION) ||
               Strings.endsWithIgnoreCase(path.getName(), IPR_EXTENSION));
 
-  private static final String JPS_USE_EXPERIMENTAL_STORAGE = "jps.use.experimental.storage";
-
   private final boolean IS_UNIT_TEST_MODE;
   private final Map<TaskFuture<?>, Project> myAutomakeFutures = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, RequestFuture<?>> myBuildsInProgress = Collections.synchronizedMap(new HashMap<>());
@@ -1484,9 +1482,6 @@ public final class BuildManager implements Disposable {
     }
 
     cmdLine.addParameter("-Djava.awt.headless=true");
-    if (Boolean.getBoolean(JPS_USE_EXPERIMENTAL_STORAGE)) {
-      cmdLine.addParameter("-D" + JPS_USE_EXPERIMENTAL_STORAGE + "=true");
-    }
 
     attachJnaBootLibraryIfNeeded(project, cmdLine);
     if (Registry.is("jps.build.use.workspace.model")) {
