@@ -1299,9 +1299,10 @@ class PyDB(object):
         pydevd_vars.add_additional_frame_by_id(thread_id, frames_byid)
         exctype, value, tb = arg
         tb = pydevd_utils.get_top_level_trace_in_project_scope(tb)
-        if sys.excepthook != dummy_excepthook:
-            original_excepthook(exctype, value, tb)
-        disable_excepthook()  # Avoid printing the exception for the second time.
+        if not sys.flags.inspect:
+            if sys.excepthook != dummy_excepthook:
+                original_excepthook(exctype, value, tb)
+            disable_excepthook()  # Avoid printing the exception for the second time.
         try:
             try:
                 add_exception_to_frame(frame, arg)
