@@ -1,4 +1,12 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.http.client` start
+content_module_jar(
+    libraries = ["@lib//:libraries-http-client-http-client"],
+    module = ":http-client",
+)
+### auto-generated section `dev intellij.libraries.http.client` end
 
 ### auto-generated section `build intellij.libraries.http.client` start
 jvm_library(

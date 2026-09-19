@@ -118,6 +118,31 @@ class PlatformJarDerivationTest {
   }
 
   @Test
+  fun `a fixed jar declares its layout-placed project libraries and merges only module libraries`() {
+    val project = JpsElementFactory.getInstance().createModel().project
+    val first = project.addModule("intellij.platform.util.first", JpsJavaModuleType.INSTANCE)
+    first.addProjectLibrary(project, "b-lib")
+    val second = project.addModule("intellij.platform.util.second", JpsJavaModuleType.INSTANCE)
+    second.dependenciesList.addLibraryDependency(second.libraryCollection.addLibrary("local", JpsJavaLibraryType.INSTANCE)).setScope(JpsJavaDependencyScope.COMPILE)
+
+    val layout = PlatformLayout()
+    layout.withModules(sequenceOf(
+      ModuleItem("intellij.platform.util.first", "util.jar", "addModule"),
+      ModuleItem("intellij.platform.util.second", "util.jar", "addModule"),
+    ))
+    layout.withProjectLibraries(sequenceOf("b-lib", "A-lib"), outPath = "util.jar")
+
+    val rows = derivePlatformJars(product = "demo", layout = layout, findModule = { requireNotNull(project.findModuleByName(it)) })
+
+    assertThat(rows.jars.single().relativeOutputFile).isEqualTo("util.jar")
+    assertThat(rows.jars.single().members).containsExactly("intellij.platform.util.first", "intellij.platform.util.second")
+    // The layout places both libraries in the jar itself, so they are declared rows with the jar path and not merged rows.
+    assertThat(rows.libraries.map { Triple(it.library, it.relativeOutputFile, it.moduleName) })
+      .containsExactly(Triple("b-lib", "util.jar", null), Triple("A-lib", "util.jar", null))
+    assertThat(rows.mergedLibraries.map { it.library to it.relativeOutputFile }).containsExactly("local" to "util.jar")
+  }
+
+  @Test
   fun `a product module jar merges its module libraries and its own project libraries`() {
     val project = JpsElementFactory.getInstance().createModel().project
     val group = project.addModule("intellij.demo", JpsJavaModuleType.INSTANCE)
