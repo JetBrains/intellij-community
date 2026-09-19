@@ -1,4 +1,5 @@
 # kotlin-derivation: the Kotlin preparer's materialization, golden-2026-09-18, recorded by pluginpack_test -record-kotlin-goldens.
+# The assets.json row of the first fixture follows the module-name contract of the asset table: the artifact of an independent asset is the module name, not a label. The packed files are as recorded.
 # fixture	path	kind (directory, file, symlink, or a jar entry when the jar order follows the host)	mode	sha256 or link target
 jars, ownership rows, and the classpath order	bin	directory	0755	-
 jars, ownership rows, and the classpath order	bin/current	symlink	-	./tool
@@ -19,7 +20,7 @@ jars, ownership rows, and the classpath order	lib/rt-exec.jar!META-INF/MANIFEST.
 jars, ownership rows, and the classpath order	lib/rt-exec.jar!demo/rt/Main.class	entry	-	c04a901a97c5e0958577ed993fd746367aa2b7d5fc749063a59c94f480c662ab
 jars, ownership rows, and the classpath order	lib/side.jar!META-INF/MANIFEST.MF	entry	-	3bcf18ff8c1ff79d62179f7f9f929510b519cacc903f45ae7dbe76586d8c11ca
 jars, ownership rows, and the classpath order	lib/side.jar!demo/side/Main.class	entry	-	511ecf5c75b50a3df1914cd980838b13d19ae86924756facd5d6a7d71abed5f7
-jars, ownership rows, and the classpath order	assets.json	json	-	10e64a344090b86a3863d840488b92390dbff7b43aa71c7042804855a07e0fc9
+jars, ownership rows, and the classpath order	assets.json	json	-	fff6ed88780f683c4fffff6854317826e73e556cbb47c0bcab1807669b198ca0
 jars, ownership rows, and the classpath order	plugin-classpath.txt	file	-	54227bd45ce9a03df06d4647131540539f810cddb337b448a617b66d6bbfe2b4
 layout-assets tree and entries beside a raw copy-tree	lib	directory	0755	-
 layout-assets tree and entries beside a raw copy-tree	lib/localization.jar!demo/l10n/Main.class	entry	-	b374ca8874dbe9957576b38ca722ac3d4d33f621cd6a88af221e98766875776f

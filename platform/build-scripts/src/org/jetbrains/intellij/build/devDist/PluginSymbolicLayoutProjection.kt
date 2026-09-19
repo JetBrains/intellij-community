@@ -100,6 +100,10 @@ private class SymbolicLayoutProjector(
   private val artifacts = catalogue.artifacts.associateBy { it.id }
   private val preparedRoots = catalogue.artifacts.filter { it.preparationKey != null }.groupBy { it.preparationKey }
   private val libraries = catalogue.libraries.associateBy { it.moduleName to it.libraryName }
+  private val libraryFileCounts = catalogue.libraries.filter { it.id != null }.associate { requireNotNull(it.id) to it.files.size }
+
+  /** The container id of a library with one member, by that member. A native effect may read the container in place of the member. */
+  private val singleMemberLibraries = catalogue.libraries.filter { it.id != null && it.files.size == 1 }.associate { it.files.single() to requireNotNull(it.id) }
   private val frontend = FrontendCompatibility(descriptors.frontendRoots, project::findModuleByName)
   private val assembly = PluginSymbolicJarAssembly()
   private val copiedFiles = HashSet<Pair<String, String>>()
@@ -160,17 +164,17 @@ private class SymbolicLayoutProjector(
     }
     val reportGap: (PluginSymbolicLayoutGap) -> Unit = { gap(it.key, it.detail) }
     val assets = buildList {
-      addAll(assembly.assets(preparationFacts.preparedSourceManifests, reportGap))
+      addAll(assembly.assets(preparationFacts.preparedSourceManifests, libraryFileCounts, reportGap))
       for ((key, effect) in effects) {
         val resource = key.startsWith("resource:") || key.startsWith("resource-generator:") || key.startsWith("platform-resource-generator:")
         effect.assets.mapTo(this) {
-          resolvePluginSymbolicManifest(if (resource) it.copy(classPath = false) else it, preparationFacts.preparedSourceManifests, reportGap)
+          resolvePluginSymbolicManifest(if (resource) it.copy(classPath = false) else it, preparationFacts.preparedSourceManifests, libraryFileCounts, reportGap)
         }
       }
       for ((key, declared) in declaredAssets) {
         val resource = key.startsWith("resource:") || key.startsWith("resource-generator:") || key.startsWith("platform-resource-generator:")
         declared.mapTo(this) {
-          resolvePluginSymbolicManifest(if (resource) it.copy(classPath = false) else it, preparationFacts.preparedSourceManifests, reportGap)
+          resolvePluginSymbolicManifest(if (resource) it.copy(classPath = false) else it, preparationFacts.preparedSourceManifests, libraryFileCounts, reportGap)
         }
       }
     }
@@ -517,7 +521,7 @@ private class SymbolicLayoutProjector(
       val artifact = artifacts.getValue(it)
       artifact.kind == "archive" && artifact.preparationKey == null
     }) {
-      PluginSymbolicLibraryGroup(JarSourceRecipe(record.id, "library", "library-v1", expansion = files))
+      PluginSymbolicLibraryGroup(JarSourceRecipe(record.id, "library", "library-v1"), files)
     }
     else null
     return files.map { input ->
@@ -575,8 +579,7 @@ private class SymbolicLayoutProjector(
       val contributions = effect.sourceContributions.get(input) ?: effect.sources
       signature.add(contributions.size.toString())
       for (source in contributions) {
-        signature.addAll(listOf(source.input, source.kind, source.filter, source.entry, source.expansion.size.toString()))
-        signature.addAll(source.expansion)
+        signature.addAll(listOf(source.input, source.kind, source.filter, source.entry))
         signature.add(source.options.size.toString())
         signature.addAll(source.options)
       }
@@ -617,7 +620,6 @@ private class SymbolicLayoutProjector(
       return invalid("A native occurrence requires distinct prepared contributions from its declared effect outputs")
     }
     val required = LinkedHashSet<String>()
-    required.add(occurrence.input)
     for (key in use.preparationKeys) {
       val generic = preparationFacts.effects.get(key) ?: return invalid("The combined native preparation lacks '$key'")
       val contributions = generic.sourceContributions.get(occurrence.input) ?: generic.sources
@@ -627,7 +629,10 @@ private class SymbolicLayoutProjector(
       required.addAll(contributions.map { it.input })
     }
     val closure = nativeInputClosure(native.preparation, occurrence) ?: return emptyList()
-    if (!closure.containsAll(required)) return invalid("The native effect must consume this raw input and all preceding generic or Java-filter outputs: $required")
+    val consumesSource = occurrence.input in closure || singleMemberLibraries.get(occurrence.input)?.let { it in closure } == true
+    if (!consumesSource || !closure.containsAll(required)) {
+      return invalid("The native effect must consume this raw input, or its library, and all preceding generic or Java-filter outputs: ${listOf(occurrence.input) + required}")
+    }
     if (original.isEmpty()) return invalid("The native effect lacks the original source's complete preparation")
     effects.putIfAbsent(binding.effectKey, native)
     return recordNativeSources(use, native.sources)

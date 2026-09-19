@@ -16,12 +16,11 @@ import org.jetbrains.annotations.ApiStatus
  *
  * A module's own jar is the commonest asset by far: one `module-v1` source, the dev-distribution writer, the module as
  * the one input, and `lib/modules/<module>.jar` as the destination. The compact form states it as `{"module": "<m>"}`.
- * A reusable artifact with that recipe states its label and the module. Any other asset leaves `inputs` out when the
- * list repeats the recipe sources. The full form stays readable, and a decoded projection equals the encoded one, so
- * the layout signature, which hashes the objects, does not change.
+ * Any other asset leaves `inputs` out when the list repeats the recipe sources. The full form stays readable, and a
+ * decoded projection equals the encoded one, so the layout signature, which hashes the objects, does not change.
  *
- * Only the two lists of `PluginPackingProjection` use this codec. A library layout recipe embeds the same classes, and
- * keeps the full form, so the recipe text and every signature over it stay as they are.
+ * Only `PluginPackingProjection.assets` uses this codec. A library layout recipe embeds the same classes, and keeps
+ * the full form, so the recipe text and every signature over it stay as they are.
  */
 
 /** The recipe of a module's own jar. */
@@ -113,40 +112,6 @@ private object CompactAssetSerializer : KSerializer<PluginPackingAsset> {
   }
 }
 
-@Serializable
-private class CompactReusableArtifact(
-  @JvmField val label: String,
-  @JvmField val module: String? = null,
-  @JvmField val recipe: CanonicalJarRecipe? = null,
-  @JvmField val mode: Int = 420,
-)
-
-private object CompactReusableArtifactSerializer : KSerializer<ReusableJarArtifact> {
-  override val descriptor: SerialDescriptor = SerialDescriptor("org.jetbrains.intellij.build.devDist.CompactReusableJarArtifact", CompactReusableArtifact.serializer().descriptor)
-
-  override fun serialize(encoder: Encoder, value: ReusableJarArtifact) {
-    val module = moduleOf(value.recipe)
-    val compact = if (module != null) {
-      CompactReusableArtifact(label = value.label, module = module, mode = value.mode)
-    }
-    else {
-      CompactReusableArtifact(label = value.label, recipe = value.recipe, mode = value.mode)
-    }
-    encoder.encodeSerializableValue(CompactReusableArtifact.serializer(), compact)
-  }
-
-  override fun deserialize(decoder: Decoder): ReusableJarArtifact {
-    val compact = decoder.decodeSerializableValue(CompactReusableArtifact.serializer())
-    require((compact.module == null) != (compact.recipe == null)) { "A reusable artifact states a module or a recipe: ${compact.label}" }
-    val recipe = compact.recipe ?: moduleJarRecipe(requireNotNull(compact.module))
-    return ReusableJarArtifact(label = compact.label, recipe = recipe, mode = compact.mode)
-  }
-}
-
 /** The codec of `PluginPackingProjection.assets`. */
 @ApiStatus.Internal
 object CompactPluginPackingAssetsSerializer : KSerializer<List<PluginPackingAsset>> by ListSerializer(CompactAssetSerializer)
-
-/** The codec of `PluginPackingProjection.reusableArtifacts`. */
-@ApiStatus.Internal
-object CompactReusableJarArtifactsSerializer : KSerializer<List<ReusableJarArtifact>> by ListSerializer(CompactReusableArtifactSerializer)

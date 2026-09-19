@@ -444,9 +444,6 @@ func TestPlanRejectsInvalidContracts(t *testing.T) {
 		}, "unresolved input"},
 		{"missing catalogue input", func(_ *Recipe, catalogue *Catalogue) { catalogue.Artifacts = nil }, "unresolved input"},
 		{"undeclared catalogue input", func(_ *Recipe, catalogue *Catalogue) { catalogue.Artifacts[0].ID = "other" }, "unresolved input"},
-		{"independent catalogue input", func(_ *Recipe, catalogue *Catalogue) {
-			catalogue.Artifacts = append(catalogue.Artifacts, Artifact{ID: "packed-separate", Kind: "file", Root: "/must-not-open.jar"})
-		}, "independent"},
 		{"unused input", func(_ *Recipe, catalogue *Catalogue) {
 			catalogue.Artifacts = append(catalogue.Artifacts, Artifact{ID: "unused", Kind: "file", Root: "/unused.jar"})
 		}, "unused inputs"},
@@ -498,6 +495,20 @@ func TestPlanRejectsInvalidContracts(t *testing.T) {
 				t.Fatalf("expected %q, got %v", test.want, err)
 			}
 		})
+	}
+}
+
+// TestPlanReadsTheModuleOfAReusedJarAsAPlainInput pins the two namespaces: the artifact of an independent asset is the
+// module name of its reused jar, and the same module output can be a catalogue input of the remainder.
+func TestPlanReadsTheModuleOfAReusedJarAsAPlainInput(t *testing.T) {
+	recipe, catalogue := samplePlan(t.TempDir())
+	recipe.Assets[0].Artifact = "module"
+	execution, err := Plan(recipe, catalogue)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(execution.Inputs(), catalogue.Artifacts) {
+		t.Fatalf("unexpected action inputs: %#v", execution.Inputs())
 	}
 }
 

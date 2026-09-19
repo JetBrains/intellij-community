@@ -18,7 +18,6 @@ type (
 	KotlinJarWriter        = kotlinJarWriter
 	KotlinPreparation      = kotlinPreparation
 	KotlinPreparedManifest = kotlinPreparedManifest
-	KotlinReusableArtifact = kotlinReusableArtifact
 )
 
 var (

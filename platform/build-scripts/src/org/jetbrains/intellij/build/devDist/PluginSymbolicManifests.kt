@@ -26,9 +26,14 @@ data class PluginSymbolicPreparedSourceManifest(
   }
 }
 
+/**
+ * [libraryFileCounts] is the member count of each library by its id. A `library` source counts one meaningful source per
+ * member, the way the packer counts the member files the catalogue lists.
+ */
 internal fun resolvePluginSymbolicManifest(
   asset: PluginPackingAsset,
   preparedSourceManifests: Map<String, PluginSymbolicPreparedSourceManifest>,
+  libraryFileCounts: Map<String, Int>,
   reportGap: (PluginSymbolicLayoutGap) -> Unit,
 ): PluginPackingAsset {
   val recipe = asset.recipe ?: return asset
@@ -46,7 +51,7 @@ internal fun resolvePluginSymbolicManifest(
       source.kind == "prepared" -> preparedSourceManifests.get(source.input)?.originalMeaningfulSourceCount
       "lib-module" in source.options ||
       (source.kind in setOf("module", "directory") && source.input.startsWith(LIB_MODULE_PREFIX)) -> 0
-      source.kind == "library" -> source.expansion.size.takeIf { it > 0 }
+      source.kind == "library" -> libraryFileCounts.get(source.input)?.takeIf { it > 0 }
       source.kind in setOf("module", "archive", "zip", "directory", "file") -> 1
       else -> null
     }

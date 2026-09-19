@@ -1,6 +1,7 @@
 """Focused provider wiring tests for generated plugin components."""
 
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
+load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "content_module_jar", "content_module_jar_target_name")
 load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_plugin_descriptor", "dev_dist_plugin_descriptor_target_name", "dev_dist_product_info", "dev_dist_product_info_transition")
@@ -21,6 +22,19 @@ _fixture_module = rule(
     implementation = _fixture_module_impl,
     attrs = {"module_name": attr.string(mandatory = True)},
     outputs = {"jar": "%{name}.jar"},
+)
+
+def _fixture_library_impl(ctx):
+    jars = ctx.files.jars
+    return [
+        DefaultInfo(files = depset(jars)),
+        java_common.merge([JavaInfo(output_jar = jar, compile_jar = jar) for jar in jars]),
+    ]
+
+_fixture_library = rule(
+    implementation = _fixture_library_impl,
+    attrs = {"jars": attr.label_list(allow_files = [".jar"])},
+    doc = "A library container: the shape the library generator emits for a multi-jar library.",
 )
 
 def _file_impl(ctx):
@@ -182,6 +196,26 @@ def _source_tree_catalogue_test_impl(ctx):
 _source_tree_catalogue_test = analysistest.make(
     _source_tree_catalogue_test_impl,
     attrs = {"graph": attr.label(mandatory = True, providers = [DevPluginGraphInfo])},
+)
+
+def _library_catalogue_test_impl(ctx):
+    """The catalogue expands a library container to one member row per jar, in the container's order, under
+    `<library ID>/<jar basename>`. A jar two libraries share is one row, under the ID of the first library."""
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    catalogue = target[DevPluginArtifactCatalogueInfo]
+    jars = ctx.files.jars
+    members = ["@lib//:two/" + jar.basename for jar in jars]
+    asserts.equals(env, {"@lib//:two": members, "@lib//:shared": [members[0]]}, catalogue.libraries)
+    asserts.equals(env, ["raw"] + members, catalogue.artifacts.keys())
+    for member, jar in zip(members, jars):
+        asserts.equals(env, jar.short_path, catalogue.artifacts[member].short_path)
+    asserts.equals(env, [catalogue.catalogue], target[DefaultInfo].files.to_list())
+    return analysistest.end(env)
+
+_library_catalogue_test = analysistest.make(
+    _library_catalogue_test_impl,
+    attrs = {"jars": attr.label_list(mandatory = True, allow_files = [".jar"], doc = "The member jars in container order.")},
 )
 
 def _expected_failure_test_impl(ctx):
@@ -457,6 +491,13 @@ def _reused_component_test_impl(ctx):
     asserts.true(env, remainder.directory in payload)
     asserts.true(env, content.jar.short_path in [file.short_path for file in payload])
     asserts.equals(env, [content.jar.short_path], [file.short_path for file in remainder.independent_artifacts.to_list()])
+
+    # The module name is the key of the reused jar: the component writes it as the artifact of the collection row.
+    spec_actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "FileWrite"]
+    asserts.equals(env, 1, len(spec_actions))
+    spec = json.decode(spec_actions[0].content)
+    asserts.equals(env, [content.module_name], [row["artifact"] for row in spec["independent"]])
+    asserts.equals(env, [content.jar.path], [row["source"] for row in spec["independent"]])
     return analysistest.end(env)
 
 _reused_component_test = analysistest.make(
@@ -465,6 +506,24 @@ _reused_component_test = analysistest.make(
         "remainder": attr.label(mandatory = True, providers = [DevPluginRemainderInfo]),
         "content_jar": attr.label(mandatory = True, providers = [ContentModuleJarInfo]),
     },
+)
+
+def _reused_remainder_test_impl(ctx):
+    """The remainder action names each reused module to the packer, and no other input of it overlaps the reused jar."""
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    content = ctx.attr.content_jar[ContentModuleJarInfo]
+    remainder = target[DevPluginRemainderInfo]
+    asserts.equals(env, [content.jar.short_path], [file.short_path for file in remainder.independent_artifacts.to_list()])
+    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "PackDevPluginRemainder"]
+    asserts.equals(env, 1, len(actions))
+    asserts.equals(env, ["--independent-module=" + content.module_name], [argument for argument in actions[0].argv if argument.startswith("--independent-module=")])
+    asserts.false(env, content.jar.short_path in [file.short_path for file in actions[0].inputs.to_list()])
+    return analysistest.end(env)
+
+_reused_remainder_test = analysistest.make(
+    _reused_remainder_test_impl,
+    attrs = {"content_jar": attr.label(mandatory = True, providers = [ContentModuleJarInfo])},
 )
 
 def dev_plugin_remainder_test_suite(name):
@@ -591,6 +650,29 @@ def dev_plugin_remainder_test_suite(name):
         name = source_tree_catalogue_test,
         target_under_test = ":" + source_tree_catalogue,
         graph = ":" + source_tree_graph,
+    )
+
+    # A library reaches the catalogue as its version-free container. The rule expands it to its member jars.
+    library_first = name + "_library_first"
+    library_second = name + "_library_second"
+    for jar in [library_first, library_second]:
+        _fixture_module(name = jar, module_name = "test." + jar)
+    _fixture_library(name = name + "_two_library", jars = [":" + library_second, ":" + library_first])
+    _fixture_library(name = name + "_shared_library", jars = [":" + library_second])
+    library_catalogue = name + "_library_catalogue"
+    dev_plugin_artifact_catalogue(
+        name = library_catalogue,
+        resource_inputs = {":" + raw: "raw"},
+        libraries = {
+            ":" + name + "_two_library": "@lib//:two",
+            ":" + name + "_shared_library": "@lib//:shared",
+        },
+    )
+    library_catalogue_test = library_catalogue + "_test"
+    _library_catalogue_test(
+        name = library_catalogue_test,
+        target_under_test = ":" + library_catalogue,
+        jars = [":" + library_second, ":" + library_first],
     )
     unsafe_source_tree_graph = name + "_unsafe_source_tree_graph"
     dev_plugin_file_graph(
@@ -729,6 +811,12 @@ def dev_plugin_remainder_test_suite(name):
         name = complex_component_test,
         target_under_test = ":" + complex + "_component",
         remainder = ":" + complex + "_remainder",
+        content_jar = ":" + content_jar,
+    )
+    complex_remainder_test = complex + "_remainder_test"
+    _reused_remainder_test(
+        name = complex_remainder_test,
+        target_under_test = ":" + complex + "_remainder",
         content_jar = ":" + content_jar,
     )
 
@@ -960,12 +1048,14 @@ def dev_plugin_remainder_test_suite(name):
             root_source_tree_graph_test,
             shared_source_tree_graph_test,
             source_tree_catalogue_test,
+            library_catalogue_test,
             unsafe_source_tree_graph_test,
         ] + remainder_tests + [
             component_test,
             neutral_component_test,
             complex_graph_test,
             complex_component_test,
+            complex_remainder_test,
             plan_chain_graph_test,
             plan_chain_remainder_test,
             plan_chain_component_test,

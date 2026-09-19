@@ -3,9 +3,11 @@ package planfile
 import (
 	"bytes"
 	"encoding/json"
+	"maps"
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -71,8 +73,6 @@ func TestReadExpandsTheCompactForms(t *testing.T) {
 	file := mustReadPlan(t, plan(1, `{"module": "demo.content"}, {"module": "demo.other", "mode": 420, "classPath": true},
 		{"destination": "lib/demo.jar", "recipe": {"sources": [{"input": "demo.main", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true}}},
 		{"destination": "bin/tool", "inputs": ["native"], "mode": 493, "classPath": false, "scope": "distribution"}`,
-		`"reusableArtifacts": [{"label": "//demo:content.jar", "module": "demo.content"}, {"label": "//demo:other.jar", "module": "demo.other"},
-		{"label": "//demo:demo.jar", "recipe": {"sources": [{"input": "demo.main", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true}}, "mode": 493}]`,
 		`"operations": [{"id": "filter", "input": {"artifact": "raw"}, "output": "filtered", "manifest": "keep"}]`))
 	content := moduleJarAsset("demo.content")
 	if !reflect.DeepEqual(file.Assets[0], content) || !reflect.DeepEqual(file.Assets[1], moduleJarAsset("demo.other")) {
@@ -90,10 +90,6 @@ func TestReadExpandsTheCompactForms(t *testing.T) {
 	if !equalStrings(tool.Inputs, "native") || tool.Mode != 0o755 || tool.ClassPath || tool.Scope != pluginpack.DistributionScope || tool.Recipe != nil {
 		t.Fatalf("an explicit asset: %+v", tool)
 	}
-	if file.ReusableArtifacts[0].Mode != DefaultMode || !reflect.DeepEqual(file.ReusableArtifacts[0].Recipe, moduleJarRecipe("demo.content")) ||
-		file.ReusableArtifacts[2].Mode != 0o755 || file.ReusableArtifacts[2].Recipe.Sources[0].Input != "demo.main" {
-		t.Fatalf("reusable artifacts: %+v", file.ReusableArtifacts)
-	}
 	if operation := file.Operations[0]; operation.Kind != moduleFilterKind || operation.Input.Artifact != "raw" || operation.Manifest != "keep" || len(operation.Excludes) != 0 {
 		t.Fatalf("the default operation kind: %+v", operation)
 	}
@@ -110,8 +106,9 @@ func TestReadRefusesMalformedForms(t *testing.T) {
 		"an asset without destination":       plan(1, `{"inputs": ["x"]}`),
 		"an asset without inputs and recipe": plan(1, `{"destination": "bin/tool"}`),
 		"an unknown asset field":             plan(1, `{"destination": "bin/tool", "inputs": ["x"], "producer": "remainder"}`),
-		"a reusable artifact with both":      plan(1, `{"module": "m"}`, `"reusableArtifacts": [{"label": "l", "module": "m", "recipe": {"sources": [{"input": "m", "kind": "module", "filter": "module-v1"}]}}]`),
+		"a reusable artifact":                plan(1, `{"module": "m"}`, `"reusableArtifacts": [{"label": "l", "module": "m"}]`),
 		"a recipe without sources":           plan(1, `{"destination": "lib/x.jar", "recipe": {"sources": []}}`),
+		"a library source with an expansion": plan(1, `{"destination": "lib/x.jar", "recipe": {"sources": [{"input": "l", "kind": "library", "filter": "library-v1", "expansion": ["l/a.jar"]}]}}`),
 		"a prepared manifest off a prepared source": plan(1, `{"destination": "lib/x.jar", "recipe": {"sources": [{"input": "m", "kind": "module", "filter": "module-v1",
 			"preparedManifest": {"sourceManifestPolicies": ["keep"]}}]}}`),
 		"a Kotlin operation kind":             plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "native-archive", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "filter": "library"}]`),
@@ -202,14 +199,14 @@ func TestDeriveCompilesNativeSelectFromTheVariant(t *testing.T) {
 	}
 }
 
-func derive(t *testing.T, text string, inputs pluginpack.Catalogue, version int) (*Derivation, error) {
+func derive(t *testing.T, text string, inputs pluginpack.Catalogue, version int, independentModules ...string) (*Derivation, error) {
 	t.Helper()
-	return Derive(mustReadPlan(t, text), inputs, "plugins/demo", []byte("<idea-plugin/>"), version)
+	return Derive(mustReadPlan(t, text), inputs, "plugins/demo", []byte("<idea-plugin/>"), version, independentModules)
 }
 
-func mustDerive(t *testing.T, text string, inputs pluginpack.Catalogue, version int) *Derivation {
+func mustDerive(t *testing.T, text string, inputs pluginpack.Catalogue, version int, independentModules ...string) *Derivation {
 	t.Helper()
-	derivation, err := derive(t, text, inputs, version)
+	derivation, err := derive(t, text, inputs, version, independentModules...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -221,26 +218,45 @@ func mustDerive(t *testing.T, text string, inputs pluginpack.Catalogue, version 
 
 const rtRecipe = `{"sources": [{"input": "demo.rt", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true}}`
 
+// TestDeriveMatchesOwnershipByRecipeAndMode pins the reuse rule: the chain names the reused modules, and the asset
+// whose recipe and mode are the plain module jar of one is independent, under the module name. A jar at another
+// destination with the same recipe is independent too. A jar at another mode, or with another writer, is remainder.
 func TestDeriveMatchesOwnershipByRecipeAndMode(t *testing.T) {
-	derivation := mustDerive(t, plan(1, `{"module": "demo.content"}, {"destination": "lib/rt.jar", "recipe": `+rtRecipe+`},
-		{"destination": "lib/rt-exec.jar", "recipe": `+rtRecipe+`, "mode": 493}, {"destination": "lib/rt-explicit.jar", "inputs": ["demo.rt"], "recipe": `+rtRecipe+`}`,
-		`"reusableArtifacts": [{"label": "//demo:content.jar", "module": "demo.content"}, {"label": "//demo:rt.jar", "recipe": `+rtRecipe+`}]`),
-		catalogue(fileArtifact("demo.rt")), 1)
+	derivation, err := derive(t, plan(1, `{"module": "demo.content"}, {"destination": "lib/rt.jar", "recipe": `+rtRecipe+`},
+		{"destination": "lib/rt-exec.jar", "recipe": `+rtRecipe+`, "mode": 493}, {"destination": "lib/rt-explicit.jar", "inputs": ["demo.rt"], "recipe": `+rtRecipe+`},
+		{"destination": "lib/rt-kept.jar", "recipe": {"sources": [{"input": "demo.rt", "kind": "module", "filter": "module-v1"}], "writer": {"manifest": "keep", "mergeEntities": true}}}`),
+		catalogue(fileArtifact("demo.rt")), 1, "demo.content", "demo.rt")
+	if err != nil {
+		t.Fatal(err)
+	}
 	want := []pluginpack.Asset{
-		{Destination: "lib/modules/demo.content.jar", Producer: "independent", Artifact: "//demo:content.jar"},
-		{Destination: "lib/rt.jar", Producer: "independent", Artifact: "//demo:rt.jar"},
+		{Destination: "lib/modules/demo.content.jar", Producer: "independent", Artifact: "demo.content"},
+		{Destination: "lib/rt.jar", Producer: "independent", Artifact: "demo.rt"},
 		{Destination: "lib/rt-exec.jar", Producer: "remainder"},
-		{Destination: "lib/rt-explicit.jar", Producer: "independent", Artifact: "//demo:rt.jar"},
+		{Destination: "lib/rt-explicit.jar", Producer: "independent", Artifact: "demo.rt"},
+		{Destination: "lib/rt-kept.jar", Producer: "remainder"},
 	}
 	if !reflect.DeepEqual(derivation.Assets, want) || !reflect.DeepEqual(derivation.Recipe.Assets, want) {
 		t.Fatalf("asset rows: %+v", derivation.Assets)
 	}
-	if len(derivation.Recipe.Operations) != 1 || derivation.Recipe.Operations[0].Destination != "lib/rt-exec.jar" || derivation.Recipe.Operations[0].Mode != 0o755 {
+	if len(derivation.Recipe.Operations) != 2 || derivation.Recipe.Operations[0].Destination != "lib/rt-exec.jar" || derivation.Recipe.Operations[0].Mode != 0o755 {
 		t.Fatalf("operations: %+v", derivation.Recipe.Operations)
 	}
-	if _, err := derive(t, plan(1, `{"destination": "lib/rt.jar", "recipe": `+rtRecipe+`, "mode": 493}`,
-		`"reusableArtifacts": [{"label": "//demo:rt.jar", "recipe": `+rtRecipe+`}]`), catalogue(fileArtifact("demo.rt")), 1); err == nil || !strings.Contains(err.Error(), "unused reusable artifacts") {
-		t.Fatalf("an artifact at another mode must stay unused: %v", err)
+	for name, scenario := range map[string]struct {
+		assets  string
+		modules []string
+		message string
+	}{
+		"a module at another mode":  {`{"destination": "lib/rt.jar", "recipe": ` + rtRecipe + `, "mode": 493}`, []string{"demo.rt"}, `independent module "demo.rt" matches no plain module jar asset`},
+		"a module without an asset": {`{"module": "demo.content"}`, []string{"demo.rt"}, `independent module "demo.rt" matches no plain module jar asset`},
+		"a module named twice":      {`{"module": "demo.content"}`, []string{"demo.content", "demo.content"}, `independent module "demo.content" is named twice`},
+		"an empty module":           {`{"module": "demo.content"}`, []string{""}, "an independent module requires a name"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, err := derive(t, plan(1, scenario.assets), catalogue(fileArtifact("demo.rt")), 1, scenario.modules...); err == nil || !strings.Contains(err.Error(), scenario.message) {
+				t.Fatalf("expected %q, got %v", scenario.message, err)
+			}
+		})
 	}
 }
 
@@ -294,7 +310,7 @@ func jarManifests(t *testing.T, derivation *Derivation, destination string) []st
 func TestDeriveCountsMeaningfulSourcesForTheManifest(t *testing.T) {
 	inputs := catalogue(fileArtifact("demo.main"), fileArtifact("intellij.libraries.foo"), fileArtifact("@lib//:two/a.jar"), fileArtifact("@lib//:two/b.jar"), fileArtifact("raw"))
 	inputs.Libraries = []pluginpack.Library{{ID: "@lib//:two", Files: []pluginpack.Reference{{Artifact: "@lib//:two/a.jar"}, {Artifact: "@lib//:two/b.jar"}}}}
-	two := `{"input": "@lib//:two", "kind": "library", "filter": "library-v1", "expansion": ["@lib//:two/a.jar", "@lib//:two/b.jar"]}`
+	two := `{"input": "@lib//:two", "kind": "library", "filter": "library-v1"}`
 	derivation := mustDerive(t, plan(1,
 		`{"destination": "lib/one.jar", "recipe": {"sources": [{"input": "demo.main", "kind": "module", "filter": "module-v1"}]}},
 		{"destination": "lib/library.jar", "recipe": {"sources": [`+two+`]}},
@@ -322,6 +338,62 @@ func TestDeriveCountsMeaningfulSourcesForTheManifest(t *testing.T) {
 	}
 	if len(derivation.Catalogue.Libraries) != 0 || len(derivation.Catalogue.Artifacts) != len(inputs.Artifacts) {
 		t.Fatalf("the remainder catalogue keeps the artifacts and drops the libraries: %+v", derivation.Catalogue)
+	}
+}
+
+// libraryCatalogue is a catalogue of one library per name with the given member files. The member IDs follow the
+// Starlark catalogue rule: `<library id>/<jar basename>`.
+func libraryCatalogue(libraries map[string][]string) pluginpack.Catalogue {
+	inputs := catalogue()
+	for _, id := range slices.Sorted(maps.Keys(libraries)) {
+		library := pluginpack.Library{ID: id}
+		for _, member := range libraries[id] {
+			inputs.Artifacts = append(inputs.Artifacts, fileArtifact(id+"/"+member))
+			library.Files = append(library.Files, pluginpack.Reference{Artifact: id + "/" + member})
+		}
+		inputs.Libraries = append(inputs.Libraries, library)
+	}
+	return inputs
+}
+
+// TestDeriveResolvesALibraryInputToItsMembers pins the version-free operation input: the plan names the library, and
+// the derivation reads the member files from the catalogue. A layout input stands for every member, and the asset
+// sources follow the expanded positions. The primary input of a module filter names one file.
+func TestDeriveResolvesALibraryInputToItsMembers(t *testing.T) {
+	entries := `"preparations": [{"id": "entries", "inputs": ["@lib//:one", "raw"], "outputs": ["entries:output"], "modelSignature": "e"}],
+		"operations": [{"id": "entries", "kind": "layout-assets", "inputs": [{"artifact": "@lib//:one"}, {"artifact": "raw"}], "output": "entries:output", "manifest": "keep",
+			"layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [1, 0], "transform": {"kind": "gzip-xml-archive"}}]}}]`
+	jar := `{"destination": "lib/x.jar", "recipe": {"sources": [{"input": "entries:output", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "keep"}}}`
+	transform := &pluginpack.LayoutTransform{Kind: "gzip-xml-archive"}
+	for name, scenario := range map[string]struct {
+		members []string
+		inputs  []pluginpack.Reference
+		sources []int
+	}{
+		"one member":  {[]string{"one-1.0.jar"}, []pluginpack.Reference{{Artifact: "@lib//:one/one-1.0.jar"}, {Artifact: "raw"}}, []int{1, 0}},
+		"two members": {[]string{"one-1.0.jar", "one-api-1.0.jar"}, []pluginpack.Reference{{Artifact: "@lib//:one/one-1.0.jar"}, {Artifact: "@lib//:one/one-api-1.0.jar"}, {Artifact: "raw"}}, []int{2, 0, 1}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			inputs := libraryCatalogue(map[string][]string{"@lib//:one": scenario.members})
+			inputs.Artifacts = append(inputs.Artifacts, fileArtifact("raw"))
+			derivation := mustDerive(t, plan(1, jar, entries), inputs, 1)
+			want := []pluginpack.Operation{{Kind: "jar", Destination: "lib/x.jar", Mode: DefaultMode, Options: &pluginpack.JarOptions{Directories: "none"}, Sources: []pluginpack.Source{
+				{Kind: "layout", Manifest: "keep", Layout: &pluginpack.LayoutAssets{Inputs: scenario.inputs, Assets: []pluginpack.LayoutAsset{{Sources: scenario.sources, Transform: transform}}}}}}}
+			if got, expected := mustJSON(t, derivation.Recipe.Operations), mustJSON(t, want); got != expected {
+				t.Fatalf("operations differ:\n%s\n%s", got, expected)
+			}
+		})
+	}
+
+	filter := `"preparations": [{"id": "filter", "inputs": ["@lib//:one"], "outputs": ["filtered"], "modelSignature": "x"}],
+		"operations": [{"id": "filter", "input": {"artifact": "@lib//:one"}, "output": "filtered", "manifest": "drop", "excludes": ["drop/**"]}]`
+	derivation := mustDerive(t, plan(1, filteredJar, filter), libraryCatalogue(map[string][]string{"@lib//:one": {"one-1.0.jar"}}), 1)
+	if source := derivation.Recipe.Operations[0].Sources[0]; source.Kind != "archive" || source.Input.Artifact != "@lib//:one/one-1.0.jar" {
+		t.Fatalf("the primary input of a module filter: %+v", source)
+	}
+	two := libraryCatalogue(map[string][]string{"@lib//:one": {"one-1.0.jar", "one-api-1.0.jar"}})
+	if _, err := derive(t, plan(1, filteredJar, filter), two, 1); err == nil || !strings.Contains(err.Error(), `library "@lib//:one" has 2 members; the primary input names one file`) {
+		t.Fatalf("a module-filter input of a two-member library: %v", err)
 	}
 }
 
@@ -400,8 +472,7 @@ func TestDeriveWritesThePlanScopeClassPath(t *testing.T) {
 		{"destination": "lib/hidden.jar", "recipe": {"sources": [{"input": "demo.main", "kind": "module", "filter": "module-v1"}]}, "classPath": false},
 		{"destination": "lib/data.txt", "inputs": ["run"]},
 		{"destination": "bin/run", "inputs": ["run"], "mode": 493, "classPath": false, "scope": "distribution"},
-		{"module": "demo.content"}`,
-		`"reusableArtifacts": [{"label": "//demo:content.jar", "module": "demo.content"}]`), inputs, 3)
+		{"module": "demo.content"}`), inputs, 3, "demo.content")
 	want, err := pluginclasspath.Record("demo", []byte("<idea-plugin/>"), []string{"lib/util.jar", "lib/demo.jar"})
 	if err != nil {
 		t.Fatal(err)
@@ -460,9 +531,6 @@ func TestDeriveRefusesWhatTheGoPackerDoesNotExecute(t *testing.T) {
 			moduleFilterSection), filterInputs, "explicit manifest policy"},
 		"stale prepared manifest policies": {plan(1, `{"destination": "lib/main.jar", "recipe": {"sources": [{"input": "filtered", "kind": "prepared", "filter": "prepared",
 			"preparedManifest": {"sourceManifestPolicies": ["keep"]}}]}}`, moduleFilterSection), filterInputs, "stale manifest policies"},
-		"a stale library expansion": {plan(1, `{"destination": "lib/x.jar", "recipe": {"sources": [{"input": "lib", "kind": "library", "filter": "library-v1", "expansion": ["b", "a"]}]}}`),
-			pluginpack.Catalogue{Version: 1, Artifacts: []pluginpack.Artifact{fileArtifact("a"), fileArtifact("b")}, Libraries: []pluginpack.Library{{ID: "lib", Files: []pluginpack.Reference{{Artifact: "a"}, {Artifact: "b"}}}}},
-			"stale file order"},
 		"a tree at another mode": {plan(2, `{"destination": "tree", "inputs": ["source"], "kind": "tree", "classPath": false, "mode": 493}`), catalogue(directoryArtifact("source")), "no mode override"},
 		"a link that escapes":    {plan(1, `{"destination": "bin/current", "inputs": [], "symlinkTarget": "../../tool"}`), catalogue(), "escapes the plugin"},
 	} {

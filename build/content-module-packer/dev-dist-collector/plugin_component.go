@@ -48,6 +48,8 @@ type pluginComponentRemainder struct {
 	Metadata  string `json:"metadata"`
 }
 
+// pluginComponentIndependent is one reused jar. Artifact is the module name of its content_module_jar target, the
+// key the asset rows of the remainder use for the same jar.
 type pluginComponentIndependent struct {
 	Artifact     string `json:"artifact"`
 	Source       string `json:"source"`

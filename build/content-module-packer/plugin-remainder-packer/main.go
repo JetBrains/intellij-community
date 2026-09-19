@@ -19,14 +19,27 @@ import (
 var projectionOptions = []string{"--projection", "--input-catalogue", "--classpath-descriptor", "--plugin-directory", "--execution-version",
 	"--output-dir", "--inventory", "--assets", "--classpath"}
 
+// independentModuleOption names one module whose plain module jar the chain reuses. It repeats once per module and
+// may be absent.
+const independentModuleOption = "--independent-module"
+
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
 }
 
 func run(arguments []string, output, errors io.Writer) int {
 	options := make(map[string]string)
+	var independentModules []string
 	for _, argument := range arguments {
 		name, value, present := strings.Cut(argument, "=")
+		if name == independentModuleOption {
+			if !present || value == "" {
+				fmt.Fprintf(errors, "ERROR: expected a nonempty %s=value option\n", name)
+				return 2
+			}
+			independentModules = append(independentModules, value)
+			continue
+		}
 		if !slices.Contains(projectionOptions, name) {
 			fmt.Fprintf(errors, "ERROR: unknown option %q\n", name)
 			return 2
@@ -43,13 +56,13 @@ func run(arguments []string, output, errors io.Writer) int {
 			return 2
 		}
 	}
-	return runProjection(options, output, errors)
+	return runProjection(options, independentModules, output, errors)
 }
 
 // runProjection derives the recipe from the plan file, packs it against the Starlark input catalogue, then writes
 // the asset rows and the plugin classpath record. A refusal happens before any write. Only an I/O failure after
 // Execution.Write can leave the plugin directory behind, and Bazel discards the outputs of a failed action.
-func runProjection(options map[string]string, output, errors io.Writer) int {
+func runProjection(options map[string]string, independentModules []string, output, errors io.Writer) int {
 	version, err := strconv.Atoi(options["--execution-version"])
 	if err != nil || version < pluginpack.Version || version > pluginpack.ScopedVersion {
 		fmt.Fprintln(errors, "ERROR: --execution-version must be 1, 2, or 3")
@@ -66,7 +79,7 @@ func runProjection(options map[string]string, output, errors io.Writer) int {
 	}
 	var derivation *planfile.Derivation
 	if err == nil {
-		derivation, err = planfile.Derive(file, catalogue, options["--plugin-directory"], descriptor, version)
+		derivation, err = planfile.Derive(file, catalogue, options["--plugin-directory"], descriptor, version, independentModules)
 	}
 	var execution *pluginpack.Execution
 	if err == nil {

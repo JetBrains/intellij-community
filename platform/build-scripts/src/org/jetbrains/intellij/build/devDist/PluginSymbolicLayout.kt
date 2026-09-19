@@ -17,7 +17,8 @@ data class PluginSymbolicArtifact(
 
 /**
  * The files of one JPS library in the order returned by the output provider.
- * [id] is the canonical container label. A complete unchanged library keeps this identity and its ordered expansion in the recipe.
+ * [id] is the canonical container label. A complete unchanged library keeps this identity in the recipe, and the plan
+ * names the container only. [files] serve the generator: the catalogue rule expands the container to its members.
  */
 @ApiStatus.Internal
 data class PluginSymbolicLibrary(
@@ -140,7 +141,11 @@ class PluginSymbolicLayout internal constructor(
   @JvmField val gaps: List<PluginSymbolicLayoutGap>,
   @JvmField val nativeRequirements: List<PluginSymbolicNativeUse> = emptyList(),
 ) {
-  fun projection(artifacts: Collection<ReusableJarArtifact> = emptyList()): PluginPackingProjection {
+  /**
+   * The plan file content and the reuse decision. [artifacts] are the jars the plugin may reuse; the result names the
+   * ones an asset matches, in asset order. The projection itself states no reuse.
+   */
+  fun projection(artifacts: Collection<ReusableJarArtifact> = emptyList()): PluginSymbolicProjection {
     check(gaps.isEmpty()) {
       "Plugin '$plugin' lacks symbolic facts: ${gaps.joinToString { "${it.key}: ${it.detail}" }}"
     }
@@ -152,7 +157,7 @@ class PluginSymbolicLayout internal constructor(
       preparationRoots = preparationRoots,
       artifacts = artifacts,
     )
-    return PluginPackingProjection(
+    val projection = PluginPackingProjection(
       version = pluginPackingExecutionVersion(assets),
       plugin = plugin,
       variant = variant,
@@ -160,10 +165,17 @@ class PluginSymbolicLayout internal constructor(
       assets = assets,
       preparations = preparations,
       preparationRoots = preparationRoots,
-      reusableArtifacts = plan.assets.mapNotNull { it.artifact }.distinct(),
     )
+    return PluginSymbolicProjection(projection, plan.assets.mapNotNull { it.artifact }.distinct())
   }
 }
+
+/** The plan file content of one plugin variant and the reused jars its assets match. */
+@ApiStatus.Internal
+class PluginSymbolicProjection(
+  @JvmField val projection: PluginPackingProjection,
+  @JvmField val reusableArtifacts: List<ReusableJarArtifact>,
+)
 
 internal class PluginSymbolicJarSource(
   @JvmField val identity: Any,
@@ -177,7 +189,8 @@ internal class PluginSymbolicJarSource(
   override fun hashCode(): Int = identity.hashCode()
 }
 
-internal class PluginSymbolicLibraryGroup(@JvmField val recipe: JarSourceRecipe)
+/** One complete library as a jar source. [files] are the member ids the group stands for, in their order. */
+internal class PluginSymbolicLibraryGroup(@JvmField val recipe: JarSourceRecipe, @JvmField val files: List<String>)
 
 internal data class PluginSymbolicLibrarySourceIdentity(
   @JvmField val input: String,
@@ -219,6 +232,7 @@ class PluginSymbolicJarAssembly {
 
   fun assets(
     preparedSourceManifests: Map<String, PluginSymbolicPreparedSourceManifest> = emptyMap(),
+    libraryFileCounts: Map<String, Int> = emptyMap(),
     reportGap: (PluginSymbolicLayoutGap) -> Unit = { error("${it.key}: ${it.detail}") },
   ): List<PluginPackingAsset> {
     return jars.mapNotNull { (destination, jar) ->
@@ -247,7 +261,7 @@ class PluginSymbolicJarAssembly {
           inputs = sources.map { it.input }.distinct(),
           recipe = CanonicalJarRecipe(sources = sources, writer = JarWriterRecipe(mergeEntities = true, directoryEntries = jar.testOutput)),
         )
-        resolvePluginSymbolicManifest(asset, preparedSourceManifests, reportGap)
+        resolvePluginSymbolicManifest(asset, preparedSourceManifests, libraryFileCounts, reportGap)
       }
     }
   }
@@ -270,8 +284,8 @@ class PluginSymbolicJarAssembly {
         count++
         index++
       }
-      val expansion = group.recipe.expansion
-      if (count == expansion.size && resolved == expansion.map { JarSourceRecipe(it, "archive", "library-v1") }) {
+      val files = group.files
+      if (count == files.size && resolved == files.map { JarSourceRecipe(it, "archive", "library-v1") }) {
         result.add(group.recipe)
       }
       else {

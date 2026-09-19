@@ -187,14 +187,14 @@ func Plan(recipe Recipe, catalogue Catalogue) (*Execution, error) {
 	if err != nil {
 		return nil, err
 	}
-	independent := make(map[string]bool)
+	// The artifact of an independent asset is the module name of its reused jar. The module output can be a catalogue
+	// input of the same chain under that name, so the two namespaces are not compared.
 	for _, asset := range recipe.Assets {
 		switch asset.Producer {
 		case "independent":
 			if !validID(asset.Artifact) || assetKind(asset) != "file" {
 				return nil, fmt.Errorf("independent asset %q requires an artifact ID", asset.Destination)
 			}
-			independent[asset.Artifact] = true
 		case "remainder":
 			if asset.Artifact != "" {
 				return nil, fmt.Errorf("remainder asset %q must not name an independent artifact", asset.Destination)
@@ -222,8 +222,8 @@ func Plan(recipe Recipe, catalogue Catalogue) (*Execution, error) {
 	roots := make(map[string]bool)
 	for _, artifact := range catalogue.Artifacts {
 		artifact = cloneTreeArtifact(artifact)
-		if _, exists := execution.artifacts[artifact.ID]; exists || !validID(artifact.ID) || independent[artifact.ID] {
-			return nil, fmt.Errorf("invalid, duplicate, or independent catalogue input %q", artifact.ID)
+		if _, exists := execution.artifacts[artifact.ID]; exists || !validID(artifact.ID) {
+			return nil, fmt.Errorf("invalid or duplicate catalogue input %q", artifact.ID)
 		}
 		if artifact.Kind != "file" && artifact.Kind != "directory" {
 			return nil, fmt.Errorf("unknown root kind %q", artifact.Kind)
@@ -245,7 +245,7 @@ func Plan(recipe Recipe, catalogue Catalogue) (*Execution, error) {
 		execution.inputs = append(execution.inputs, artifact)
 	}
 	for _, library := range catalogue.Libraries {
-		if _, exists := execution.libraries[library.ID]; exists || !validID(library.ID) || independent[library.ID] || len(library.Files) == 0 {
+		if _, exists := execution.libraries[library.ID]; exists || !validID(library.ID) || len(library.Files) == 0 {
 			return nil, fmt.Errorf("invalid or duplicate library %q", library.ID)
 		}
 		seen := make(map[Reference]bool)

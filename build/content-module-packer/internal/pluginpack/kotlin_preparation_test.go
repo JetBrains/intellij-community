@@ -38,15 +38,14 @@ var sqliteNativeJar = flag.String("sqlite-native-jar", "", "The org.sqlite:nativ
 // plugin-model-tool --check would accept. A zero Mode is the default 420. An asset with a Module is the compact
 // form of a module's own jar.
 type kotlinPlanFile struct {
-	Version           int                      `json:"version"`
-	Plugin            string                   `json:"plugin"`
-	Variant           string                   `json:"variant"`
-	LayoutSignature   string                   `json:"layoutSignature"`
-	Assets            []kotlinPlanAsset        `json:"assets"`
-	Preparations      []kotlinPreparation      `json:"preparations,omitempty"`
-	PreparationRoots  []string                 `json:"preparationRoots,omitempty"`
-	ReusableArtifacts []kotlinReusableArtifact `json:"reusableArtifacts,omitempty"`
-	Operations        []json.RawMessage        `json:"operations,omitempty"`
+	Version          int                 `json:"version"`
+	Plugin           string              `json:"plugin"`
+	Variant          string              `json:"variant"`
+	LayoutSignature  string              `json:"layoutSignature"`
+	Assets           []kotlinPlanAsset   `json:"assets"`
+	Preparations     []kotlinPreparation `json:"preparations,omitempty"`
+	PreparationRoots []string            `json:"preparationRoots,omitempty"`
+	Operations       []json.RawMessage   `json:"operations,omitempty"`
 }
 
 type kotlinPlanAsset struct {
@@ -72,7 +71,6 @@ type kotlinJarSource struct {
 	Kind             string                  `json:"kind"`
 	Filter           string                  `json:"filter"`
 	Entry            string                  `json:"entry,omitempty"`
-	Expansion        []string                `json:"expansion,omitempty"`
 	Options          []string                `json:"options,omitempty"`
 	PreparedManifest *kotlinPreparedManifest `json:"preparedManifest,omitempty"`
 }
@@ -97,14 +95,6 @@ type kotlinPreparation struct {
 	Outputs        []string `json:"outputs"`
 	ModelSignature string   `json:"modelSignature"`
 	AlwaysRun      bool     `json:"alwaysRun,omitempty"`
-}
-
-// kotlinReusableArtifact states a module, the compact form, or a recipe. A zero Mode is the default 420.
-type kotlinReusableArtifact struct {
-	Label  string           `json:"label"`
-	Module string           `json:"module,omitempty"`
-	Recipe *kotlinJarRecipe `json:"recipe,omitempty"`
-	Mode   int              `json:"mode,omitempty"`
 }
 
 // expanded returns the full form of an asset: the compact module form becomes the module jar asset, nil inputs are
@@ -320,7 +310,6 @@ func kotlinLayoutSignature(plan kotlinPlanFile) string {
 				writeText(source.Kind)
 				writeText(source.Filter)
 				writeText(source.Entry)
-				writeTexts(source.Expansion)
 				writeTexts(source.Options)
 				if preparedManifests {
 					writeBool(source.PreparedManifest != nil)
@@ -367,7 +356,7 @@ func TestKotlinSignatureHelpersReproduceTheFixtureConstants(t *testing.T) {
 		Assets: []kotlinPlanAsset{{Destination: "lib/main.jar", Inputs: []string{"filtered"}, Recipe: &kotlinJarRecipe{
 			Sources: []kotlinJarSource{{Input: "filtered", Kind: "prepared", Filter: "prepared"}}, Writer: kotlinJarWriter{Manifest: "drop"}}}},
 		Preparations: []kotlinPreparation{{ID: "filter", Inputs: []string{"raw"}, Outputs: []string{"filtered"}, ModelSignature: kotlinModelSignature(filter)}}}
-	if got := kotlinLayoutSignature(filtered); got != "c6yx54cclyu91esyjhzd6z0xe" {
+	if got := kotlinLayoutSignature(filtered); got != "ardmbz5a2oe6vf6br6theud68" {
 		t.Fatalf("layout signature of the filtered projection differs: %s", got)
 	}
 }

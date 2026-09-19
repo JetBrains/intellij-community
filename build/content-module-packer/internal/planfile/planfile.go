@@ -26,17 +26,17 @@ const (
 	libraryPrefix    = "intellij.libraries."
 )
 
-// File is one decoded plan file in its full form.
+// File is one decoded plan file in its full form. A reused jar is one of its module assets; the chain names the
+// reused modules to the packer, and the plan states no label for them.
 type File struct {
-	Version           int
-	Plugin            string
-	Variant           string
-	LayoutSignature   string
-	Assets            []Asset
-	Preparations      []Preparation
-	PreparationRoots  []string
-	ReusableArtifacts []ReusableArtifact
-	Operations        []Operation
+	Version          int
+	Plugin           string
+	Variant          string
+	LayoutSignature  string
+	Assets           []Asset
+	Preparations     []Preparation
+	PreparationRoots []string
+	Operations       []Operation
 }
 
 // Asset is one plan asset. Kind is file, directory, or tree. Scope is plugin or distribution.
@@ -52,7 +52,8 @@ type Asset struct {
 	Scope              string
 }
 
-// JarRecipe is the canonical recipe of one jar. Two assets with equal recipes and modes share one reusable artifact.
+// JarRecipe is the canonical recipe of one jar. An asset whose recipe and mode are the plain module jar of a reused
+// module is independent.
 type JarRecipe struct {
 	Sources []JarSource
 	Writer  JarWriter
@@ -64,7 +65,6 @@ type JarSource struct {
 	Kind             string
 	Filter           string
 	Entry            string
-	Expansion        []string
 	Options          []string
 	PreparedManifest *PreparedManifest
 }
@@ -82,13 +82,6 @@ type JarWriter struct {
 	DirectoryEntries     bool
 	RewriteBootClassPath bool
 	OutputName           string
-}
-
-// ReusableArtifact is one Bazel-packed jar the plan may reuse in place of a remainder operation.
-type ReusableArtifact struct {
-	Label  string
-	Recipe JarRecipe
-	Mode   uint32
 }
 
 // Preparation is one preparation definition. Its operation is in File.Operations under the same ID.
@@ -124,15 +117,14 @@ type LayoutAssetPreparation struct {
 }
 
 type rawFile struct {
-	Version           *int                  `json:"version"`
-	Plugin            *string               `json:"plugin"`
-	Variant           *string               `json:"variant"`
-	LayoutSignature   *string               `json:"layoutSignature"`
-	Assets            *[]rawAsset           `json:"assets"`
-	Preparations      []rawPreparation      `json:"preparations"`
-	PreparationRoots  []string              `json:"preparationRoots"`
-	ReusableArtifacts []rawReusableArtifact `json:"reusableArtifacts"`
-	Operations        []rawOperation        `json:"operations"`
+	Version          *int             `json:"version"`
+	Plugin           *string          `json:"plugin"`
+	Variant          *string          `json:"variant"`
+	LayoutSignature  *string          `json:"layoutSignature"`
+	Assets           *[]rawAsset      `json:"assets"`
+	Preparations     []rawPreparation `json:"preparations"`
+	PreparationRoots []string         `json:"preparationRoots"`
+	Operations       []rawOperation   `json:"operations"`
 }
 
 type rawAsset struct {
@@ -158,7 +150,6 @@ type rawJarSource struct {
 	Kind             *string              `json:"kind"`
 	Filter           *string              `json:"filter"`
 	Entry            *string              `json:"entry"`
-	Expansion        []string             `json:"expansion"`
 	Options          []string             `json:"options"`
 	PreparedManifest *rawPreparedManifest `json:"preparedManifest"`
 }
@@ -175,13 +166,6 @@ type rawJarWriter struct {
 	DirectoryEntries     *bool   `json:"directoryEntries"`
 	RewriteBootClassPath *bool   `json:"rewriteBootClassPath"`
 	OutputName           *string `json:"outputName"`
-}
-
-type rawReusableArtifact struct {
-	Label  *string       `json:"label"`
-	Module *string       `json:"module"`
-	Recipe *rawJarRecipe `json:"recipe"`
-	Mode   *uint32       `json:"mode"`
 }
 
 type rawPreparation struct {
@@ -254,13 +238,6 @@ func (raw *rawFile) decode() (*File, error) {
 		}
 		file.Preparations = append(file.Preparations, Preparation{ID: *preparation.ID, Inputs: *preparation.Inputs, Outputs: *preparation.Outputs,
 			ModelSignature: *preparation.ModelSignature, AlwaysRun: preparation.AlwaysRun != nil && *preparation.AlwaysRun})
-	}
-	for index, artifact := range raw.ReusableArtifacts {
-		decoded, err := artifact.decode()
-		if err != nil {
-			return nil, fmt.Errorf("reusable artifact %d: %w", index, err)
-		}
-		file.ReusableArtifacts = append(file.ReusableArtifacts, decoded)
 	}
 	for index, operation := range raw.Operations {
 		decoded, err := operation.decode()
@@ -358,7 +335,7 @@ func (raw *rawJarRecipe) decode() (JarRecipe, error) {
 		if raw.Input == nil || raw.Kind == nil || raw.Filter == nil || *raw.Input == "" || *raw.Kind == "" || *raw.Filter == "" {
 			return JarRecipe{}, fmt.Errorf("a jar source requires an input, a root kind, and a filter")
 		}
-		source := JarSource{Input: *raw.Input, Kind: *raw.Kind, Filter: *raw.Filter, Expansion: raw.Expansion, Options: raw.Options}
+		source := JarSource{Input: *raw.Input, Kind: *raw.Kind, Filter: *raw.Filter, Options: raw.Options}
 		if raw.Entry != nil {
 			source.Entry = *raw.Entry
 		}
@@ -379,7 +356,7 @@ func (raw *rawJarRecipe) decode() (JarRecipe, error) {
 			if decoded.OriginalMeaningfulSourceCount == nil && !slices.Equal(decoded.SourceManifestPolicies, []string{"keep"}) {
 				return JarRecipe{}, fmt.Errorf("module patches require the keep policy")
 			}
-			if source.Kind != "prepared" || source.Filter != "prepared" || source.Entry != "" || len(source.Expansion) != 0 || len(source.Options) != 0 {
+			if source.Kind != "prepared" || source.Filter != "prepared" || source.Entry != "" || len(source.Options) != 0 {
 				return JarRecipe{}, fmt.Errorf("only a symbolic prepared source can declare a prepared manifest recipe")
 			}
 			source.PreparedManifest = decoded
@@ -395,29 +372,6 @@ func (raw *rawJarRecipe) decode() (JarRecipe, error) {
 		}
 	}
 	return recipe, nil
-}
-
-func (raw *rawReusableArtifact) decode() (ReusableArtifact, error) {
-	if raw.Label == nil {
-		return ReusableArtifact{}, fmt.Errorf("a reusable artifact requires a label")
-	}
-	if (raw.Module == nil) == (raw.Recipe == nil) {
-		return ReusableArtifact{}, fmt.Errorf("a reusable artifact states a module or a recipe: %s", *raw.Label)
-	}
-	artifact := ReusableArtifact{Label: *raw.Label, Mode: DefaultMode}
-	if raw.Mode != nil {
-		artifact.Mode = *raw.Mode
-	}
-	if raw.Module != nil {
-		artifact.Recipe = moduleJarRecipe(*raw.Module)
-		return artifact, nil
-	}
-	recipe, err := raw.Recipe.decode()
-	if err != nil {
-		return ReusableArtifact{}, fmt.Errorf("%s: %w", artifact.Label, err)
-	}
-	artifact.Recipe = recipe
-	return artifact, nil
 }
 
 func (raw *rawOperation) decode() (Operation, error) {

@@ -13,12 +13,12 @@ import (
 	"jetbrains.com/content-module-packer/internal/pluginpack"
 )
 
-// TestArguments refuses an unknown option, a malformed option, a repeated option, a missing option, and a version
-// outside the range. The deleted recipe options are unknown options.
+// TestArguments refuses an unknown option, a malformed option, a repeated option, a missing option, an empty
+// independent module, and a version outside the range. The deleted recipe options are unknown options.
 func TestArguments(t *testing.T) {
 	for _, arguments := range [][]string{
 		nil, {"--unknown=value"}, {"--projection"}, {"--projection="}, {"--projection=one", "--projection=two"},
-		{"--projection=plan.json"},
+		{"--projection=plan.json"}, {"--independent-module"}, {"--independent-module="},
 		{"--recipe=recipe.json", "--catalogue=catalogue.json", "--output-dir=out", "--inventory=inventory.json"},
 		{"--projection=plan.json", "--input-catalogue=catalogue.json", "--classpath-descriptor=descriptor.xml", "--plugin-directory=plugins/x",
 			"--execution-version=1", "--output-dir=out", "--inventory=inventory.json", "--assets=assets.json", "--classpath=classpath.txt", "--catalogue=c.json"},
@@ -38,15 +38,15 @@ func TestArguments(t *testing.T) {
 	}
 }
 
-// projectionPlan is a plan file with one remainder jar, one independent module jar, and one raw file copy.
+// projectionPlan is a plan file with one remainder jar, one module jar the chain reuses, and one raw file copy.
+// The chain names the reused module with `--independent-module`; the plan states it as a module asset only.
 const projectionPlan = `{
   "version": 1, "plugin": "example", "variant": "", "layoutSignature": "signature",
   "assets": [
     {"destination": "lib/example.jar", "recipe": {"sources": [{"input": "example.main", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true}}},
     {"module": "example.content"},
     {"destination": "bin/tool", "inputs": ["tool"], "mode": 493, "classPath": false}
-  ],
-  "reusableArtifacts": [{"label": "//example:content.jar", "module": "example.content"}]
+  ]
 }`
 
 func writeProjectionFixture(t *testing.T, root, plan string) []string {
@@ -79,7 +79,8 @@ func writeProjectionFixture(t *testing.T, root, plan string) []string {
 	return []string{"--projection=" + filepath.Join(root, "plan.json"), "--input-catalogue=" + filepath.Join(root, "catalogue.json"),
 		"--classpath-descriptor=" + filepath.Join(root, "descriptor.xml"), "--plugin-directory=plugins/example", "--execution-version=1",
 		"--output-dir=" + filepath.Join(root, "payload"), "--inventory=" + filepath.Join(root, "inventory.json"),
-		"--assets=" + filepath.Join(root, "assets.json"), "--classpath=" + filepath.Join(root, "plugin-classpath.txt")}
+		"--assets=" + filepath.Join(root, "assets.json"), "--classpath=" + filepath.Join(root, "plugin-classpath.txt"),
+		"--independent-module=example.content"}
 }
 
 func TestProjectionRunWritesThePluginTheAssetsAndTheClassPath(t *testing.T) {
@@ -108,7 +109,7 @@ func TestProjectionRunWritesThePluginTheAssetsAndTheClassPath(t *testing.T) {
 	}
 	excluded := false
 	want := []pluginpack.Asset{{Destination: "lib/example.jar", Producer: "remainder"},
-		{Destination: "lib/modules/example.content.jar", Producer: "independent", Artifact: "//example:content.jar"},
+		{Destination: "lib/modules/example.content.jar", Producer: "independent", Artifact: "example.content"},
 		{Destination: "bin/tool", Producer: "remainder", ClassPath: &excluded}}
 	if got, expected := mustJSON(t, rows), mustJSON(t, want); got != expected {
 		t.Fatalf("asset rows differ:\n%s\n%s", got, expected)
@@ -126,23 +127,35 @@ func TestProjectionRunWritesThePluginTheAssetsAndTheClassPath(t *testing.T) {
 	}
 }
 
+// TestProjectionRunRefusesAKotlinPreparationAndAStaleVersion also refuses a reused module the plan has no plain module
+// jar for, and a plan that still states `reusableArtifacts`. Every refusal happens before any write.
 func TestProjectionRunRefusesAKotlinPreparationAndAStaleVersion(t *testing.T) {
-	kotlinPlan := strings.Replace(projectionPlan, `"reusableArtifacts"`, `"preparations": [{"id": "native", "inputs": ["tool"], "outputs": ["native:output"], "modelSignature": "x"}],
-  "operations": [{"id": "native", "kind": "library-layout-patches", "input": {"artifact": "tool"}, "output": "native:output", "manifest": "keep", "libraryLayout": {"any": 1}}],
-  "reusableArtifacts"`, 1)
+	kotlinPlan := strings.Replace(projectionPlan, `  ]
+}`, `  ],
+  "preparations": [{"id": "native", "inputs": ["tool"], "outputs": ["native:output"], "modelSignature": "x"}],
+  "operations": [{"id": "native", "kind": "library-layout-patches", "input": {"artifact": "tool"}, "output": "native:output", "manifest": "keep", "libraryLayout": {"any": 1}}]
+}`, 1)
 	kotlinPlan = strings.Replace(kotlinPlan, `"inputs": ["tool"], "mode": 493`, `"inputs": ["native:output"], "mode": 493`, 1)
+	stalePlan := strings.Replace(projectionPlan, `  ]
+}`, `  ],
+  "reusableArtifacts": [{"label": "//example:content.jar", "module": "example.content"}]
+}`, 1)
 	for name, scenario := range map[string]struct {
 		plan    string
 		version string
+		module  string
 		message string
 	}{
-		"a Kotlin operation kind": {kotlinPlan, "1", "does not execute"},
-		"a stale version":         {projectionPlan, "2", "stale execution version"},
+		"a Kotlin operation kind":      {kotlinPlan, "1", "example.content", "does not execute"},
+		"a stale version":              {projectionPlan, "2", "example.content", "stale execution version"},
+		"a module without a plain jar": {projectionPlan, "1", "example.other", `independent module "example.other" matches no plain module jar asset`},
+		"a plan with reusableArtifacts": {stalePlan, "1", "example.content", "reusableArtifacts"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			root := t.TempDir()
 			arguments := writeProjectionFixture(t, root, scenario.plan)
 			arguments[4] = "--execution-version=" + scenario.version
+			arguments[len(arguments)-1] = "--independent-module=" + scenario.module
 			var output, errors bytes.Buffer
 			if code := run(arguments, &output, &errors); code != 1 || !strings.Contains(errors.String(), scenario.message) || output.Len() != 0 {
 				t.Fatalf("code=%d, output=%q, errors=%q", code, &output, &errors)

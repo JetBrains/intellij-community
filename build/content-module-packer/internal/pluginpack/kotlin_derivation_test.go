@@ -18,10 +18,12 @@ import (
 )
 
 // derivationFixture is one plan file with its raw inputs on disk. inputs is the Starlark-shaped input catalogue,
-// libraries included. present lists the output paths the fixture exists for.
+// libraries included. reused names the modules whose plain module jar the chain reuses, the way the remainder rule
+// passes them. present lists the output paths the fixture exists for.
 type derivationFixture struct {
 	plan    pluginpack.KotlinPlanFile
 	inputs  pluginpack.Catalogue
+	reused  []string
 	present []string
 }
 
@@ -86,7 +88,7 @@ func moduleFilterFixture(t *testing.T, inputs, manifest string, preparedManifest
 }
 
 // derivationFixtures cover the plan-file shapes the Go derivation compiles: module-v1 and library sources, a patch
-// descriptor, a reusable artifact and a same-recipe asset at another mode, a directory and a link asset, the
+// descriptor, a reused module jar and a same-recipe asset at another mode, a directory and a link asset, the
 // module-filter manifests, a layout-assets tree and entries operation, a raw copy-tree and a version-3 asset.
 var derivationFixtures = []struct {
 	name  string
@@ -101,23 +103,23 @@ var derivationFixtures = []struct {
 		plan := pluginpack.KotlinPlanFile{Version: pluginpack.Version, Plugin: "demo", Assets: []pluginpack.KotlinPlanAsset{
 			{Module: "demo.content"},
 			{Destination: "lib/demo.jar", Recipe: &pluginpack.KotlinJarRecipe{Sources: []pluginpack.KotlinJarSource{
-				{Input: "@lib//:two", Kind: "library", Filter: "library-v1", Expansion: []string{"@lib//:two/a.jar", "@lib//:two/b.jar"}},
+				{Input: "@lib//:two", Kind: "library", Filter: "library-v1"},
 				moduleSource("demo.main"),
 				{Input: "descriptor", Kind: "file", Filter: "none", Entry: "META-INF/plugin.xml", Options: []string{"patch"}}},
 				Writer: pluginpack.KotlinJarWriter{MergeEntities: true}}},
 			{Destination: "lib/rt.jar", Recipe: rt},
 			{Destination: "lib/rt-exec.jar", Recipe: rt, Mode: 0o755},
 			{Destination: "lib/intellij.libraries.foo.jar", Recipe: &pluginpack.KotlinJarRecipe{Sources: []pluginpack.KotlinJarSource{
-				{Input: "@lib//:one", Kind: "library", Filter: "library-v1", Expansion: []string{"@lib//:one/a.jar"}},
+				{Input: "@lib//:one", Kind: "library", Filter: "library-v1"},
 				moduleSource("intellij.libraries.foo")}, Writer: pluginpack.KotlinJarWriter{MergeEntities: true}}},
 			{Destination: "lib/side.jar", Recipe: &pluginpack.KotlinJarRecipe{Sources: []pluginpack.KotlinJarSource{moduleSource("demo.side")}}, ClassPath: &excluded},
 			{Destination: "lib/nested/inner.jar", Recipe: &pluginpack.KotlinJarRecipe{Sources: []pluginpack.KotlinJarSource{moduleSource("demo.main")}}},
 			{Destination: "bin/tool", Inputs: []string{"native"}, Mode: 0o755},
 			{Destination: "bin/current", Inputs: []string{}, SymlinkTarget: &current},
 			{Destination: "lib/empty", Inputs: []string{}, Kind: "directory"},
-		}, ReusableArtifacts: []pluginpack.KotlinReusableArtifact{{Label: "//demo:content.jar", Module: "demo.content"}, {Label: "//demo:rt.jar", Recipe: rt}}}
+		}}
 		plan = signedPlan(t, plan)
-		return derivationFixture{plan: plan,
+		return derivationFixture{plan: plan, reused: []string{"demo.content", "demo.rt"},
 			inputs: pluginpack.Catalogue{Version: pluginpack.Version, Artifacts: []pluginpack.Artifact{
 				moduleJar(t, inputs, "demo.main"), moduleJar(t, inputs, "demo.rt"), moduleJar(t, inputs, "intellij.libraries.foo"), moduleJar(t, inputs, "demo.side"),
 				libraryJar(t, inputs, "@lib//:two/a.jar", "two-a.jar"), libraryJar(t, inputs, "@lib//:two/b.jar", "two-b.jar"), libraryJar(t, inputs, "@lib//:one/a.jar", "one-a.jar"),
@@ -203,7 +205,7 @@ type projectionOutput struct {
 }
 
 // runProjectionPacker runs the Go packer in its projection mode on the plan file.
-func runProjectionPacker(t *testing.T, plan string, inputs pluginpack.Catalogue, descriptor []byte, plugin string, version int) projectionOutput {
+func runProjectionPacker(t *testing.T, plan string, inputs pluginpack.Catalogue, descriptor []byte, plugin string, version int, reused []string) projectionOutput {
 	t.Helper()
 	executable := pluginpack.PluginRemainderPackerExecutable(t)
 	root := t.TempDir()
@@ -212,10 +214,14 @@ func runProjectionPacker(t *testing.T, plan string, inputs pluginpack.Catalogue,
 	output := projectionOutput{directory: filepath.Join(root, "plugin")}
 	commandContext, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
-	command := exec.CommandContext(commandContext, executable, "--projection="+plan, "--input-catalogue="+filepath.Join(root, "catalogue.json"),
-		"--classpath-descriptor="+filepath.Join(root, "descriptor.xml"), "--plugin-directory="+filepath.Join("plugins", plugin),
-		fmt.Sprintf("--execution-version=%d", version), "--output-dir="+output.directory, "--inventory="+filepath.Join(root, "inventory.json"),
-		"--assets="+filepath.Join(root, "assets.json"), "--classpath="+filepath.Join(root, "plugin-classpath.txt"))
+	arguments := []string{"--projection=" + plan, "--input-catalogue=" + filepath.Join(root, "catalogue.json"),
+		"--classpath-descriptor=" + filepath.Join(root, "descriptor.xml"), "--plugin-directory=" + filepath.Join("plugins", plugin),
+		fmt.Sprintf("--execution-version=%d", version), "--output-dir=" + output.directory, "--inventory=" + filepath.Join(root, "inventory.json"),
+		"--assets=" + filepath.Join(root, "assets.json"), "--classpath=" + filepath.Join(root, "plugin-classpath.txt")}
+	for _, module := range reused {
+		arguments = append(arguments, "--independent-module="+module)
+	}
+	command := exec.CommandContext(commandContext, executable, arguments...)
 	command.Dir = root
 	if combined, err := command.CombinedOutput(); err != nil {
 		t.Fatalf("plugin-remainder-packer --projection failed: %v\n%s", err, combined)
@@ -268,7 +274,7 @@ func TestGoPlanDerivationMatchesKotlinPreparer(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			derivation, err := planfile.Derive(file, fixture.inputs, filepath.Join("plugins", plan.Plugin), descriptor, plan.Version)
+			derivation, err := planfile.Derive(file, fixture.inputs, filepath.Join("plugins", plan.Plugin), descriptor, plan.Version, fixture.reused)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -278,7 +284,7 @@ func TestGoPlanDerivationMatchesKotlinPreparer(t *testing.T) {
 			pluginpack.RequireRecordedPaths(t, record, fixture.present)
 			golden.Check(t, definition.name, derivationRecord(t, goOutput, derivation.Assets, derivation.ClassPath))
 
-			packed := runProjectionPacker(t, planPath, fixture.inputs, descriptor, plan.Plugin, plan.Version)
+			packed := runProjectionPacker(t, planPath, fixture.inputs, descriptor, plan.Plugin, plan.Version, fixture.reused)
 			pluginpack.RequireEqualRecords(t, "the packer's projection mode against the in-process derivation", record, pluginpack.MaterializationRecord(t, packed.directory))
 			if !reflect.DeepEqual(inventory, packed.inventory) {
 				t.Fatalf("the packer's inventory differs:\n%+v\n%+v", inventory, packed.inventory)

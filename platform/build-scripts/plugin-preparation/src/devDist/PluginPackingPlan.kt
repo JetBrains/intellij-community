@@ -39,12 +39,11 @@ data class JarSourceRecipe(
   @JvmField val kind: String,
   @JvmField val filter: String,
   @JvmField val entry: String = "",
-  @JvmField val expansion: List<String> = emptyList(),
   @JvmField val options: List<String> = emptyList(),
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val preparedManifest: PreparedSourceManifestRecipe? = null,
 ) {
   init {
-    require(preparedManifest == null || (kind == "prepared" && filter == "prepared" && entry.isEmpty() && expansion.isEmpty() && options.isEmpty())) {
+    require(preparedManifest == null || (kind == "prepared" && filter == "prepared" && entry.isEmpty() && options.isEmpty())) {
       "Only a symbolic prepared source can declare a prepared manifest recipe"
     }
   }
@@ -78,10 +77,14 @@ data class CanonicalJarRecipe(
   }
 }
 
+/**
+ * The `content_module_jar` output of [module], which a plan reuses in place of a remainder operation. The plan file
+ * states no such row: the chain hands the reused module names to the packer, and the generator matches an asset to
+ * the jar by [recipe] and [mode].
+ */
 @ApiStatus.Internal
-@Serializable
 data class ReusableJarArtifact(
-  @JvmField val label: String,
+  @JvmField val module: String,
   @JvmField val recipe: CanonicalJarRecipe,
   @JvmField val mode: Int = 420,
 )
@@ -222,13 +225,13 @@ fun planPluginPacking(
     }
   }
   val recipes = LinkedHashMap<Pair<CanonicalJarRecipe, Int>, ReusableJarArtifact>()
-  val artifactLabels = HashMap<String, Pair<CanonicalJarRecipe, Int>>()
+  val artifactModules = HashMap<String, Pair<CanonicalJarRecipe, Int>>()
   for (artifact in artifacts) {
-    require(artifact.label.isNotEmpty()) { "A reusable artifact requires a label" }
-    require(artifact.mode in 1..511) { "Artifact '${artifact.label}' has an unsupported mode" }
+    require(artifact.module.isNotEmpty()) { "A reusable artifact requires a module" }
+    require(artifact.mode in 1..511) { "Artifact '${artifact.module}' has an unsupported mode" }
     val key = artifact.recipe to artifact.mode
-    val previous = artifactLabels.putIfAbsent(artifact.label, key)
-    require(previous == null || previous == key) { "Artifact '${artifact.label}' has conflicting recipes" }
+    val previous = artifactModules.putIfAbsent(artifact.module, key)
+    require(previous == null || previous == key) { "Artifact '${artifact.module}' has conflicting recipes" }
     recipes.putIfAbsent(key, artifact)
   }
   val planned = assets.map { asset ->
@@ -333,7 +336,6 @@ fun pluginPackingLayoutSignature(
           putString(source.kind)
           putString(source.filter)
           putString(source.entry)
-          texts(source.expansion)
           texts(source.options)
           if (preparedManifests) {
             val manifest = source.preparedManifest

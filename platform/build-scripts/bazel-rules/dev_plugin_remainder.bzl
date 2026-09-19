@@ -1,9 +1,10 @@
 """The execution chain of one complex plugin: the graph, the catalogue, the packed remainder and the component."""
 
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
+load("@rules_java//java:defs.bzl", "JavaInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load("//build:dev_launch_dependencies.bzl", "HOST_PLATFORMS", "platform_parts")
-load(":content_module_jar.bzl", "ContentModuleJarInfo", "module_output_jar")
+load(":content_module_jar.bzl", "ContentModuleJarInfo", "library_entries", "module_output_jar")
 load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_neutral_product_transition", "dev_dist_product_info_transition")
 load(":dev_plugin.bzl", "dev_dist_plugin_directory")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo")
@@ -44,8 +45,8 @@ DevPluginArtifactCatalogueInfo = provider(
     doc = "Execution roots bound to generated stable IDs without reading their files.",
     fields = {
         "catalogue": "File containing the versioned artifact catalogue.",
-        "artifacts": "Dictionary from stable artifact IDs to declared Files.",
-        "libraries": "Dictionary from stable library IDs to ordered artifact IDs.",
+        "artifacts": "Dictionary from stable artifact IDs to declared Files. A library member is `<library ID>/<jar basename>`.",
+        "libraries": "Dictionary from stable library IDs to the ordered member artifact IDs the rule expanded from the container.",
     },
 )
 
@@ -407,18 +408,25 @@ def _transitioned_target(value, attribute, optional = False):
     return value[0]
 
 _CompiledArtifactInputsInfo = provider(
-    doc = "Resolved compiled inputs in the neutral product configuration.",
-    fields = {"inputs": "The resolved artifact_inputs dictionary."},
+    doc = "Resolved compiled inputs and library containers in the neutral product configuration.",
+    fields = {
+        "inputs": "The resolved artifact_inputs dictionary.",
+        "libraries": "The resolved libraries dictionary: one library container target per library ID.",
+    },
 )
 
 def _compiled_artifact_inputs_impl(ctx):
-    return [DefaultInfo(files = depset()), _CompiledArtifactInputsInfo(inputs = ctx.attr.artifact_inputs)]
+    return [DefaultInfo(files = depset()), _CompiledArtifactInputsInfo(inputs = ctx.attr.artifact_inputs, libraries = ctx.attr.libraries)]
 
 _compiled_artifact_inputs = rule(
     implementation = _compiled_artifact_inputs_impl,
     cfg = _module_transition,
     attrs = {
         "artifact_inputs": attr.label_keyed_string_dict(allow_files = True),
+        "libraries": attr.label_keyed_string_dict(
+            providers = [JavaInfo],
+            doc = "Library containers mapped to stable library IDs. The catalogue expands each to its member jars.",
+        ),
         "_allowlist_function_transition": attr.label(default = "@bazel_tools//tools/allowlists/function_transition_allowlist"),
     },
 )
@@ -480,10 +488,35 @@ def _validate_catalogue_root(file, artifacts):
         if _overlapping_artifacts(file, existing):
             fail("overlapping catalogue roots: %s and %s" % (file.path, existing.path))
 
+def _library_members(ctx, identifier, target, artifacts, libraries, members_by_path):
+    """Registers the member jars of one library container and returns their artifact IDs in merge order.
+
+    `library_entries()` expands the container the way `content_module_jar` does, so a complex plugin merges the same
+    jars in the same order. A member ID is `<library ID>/<jar basename>`: the plan file never states it, and the Go
+    packer reads it from the catalogue only. Two libraries can share a jar. The jar is one artifact then, under the ID
+    of the library that named it first, and both member lists name that ID.
+    """
+    if identifier in artifacts or identifier in libraries:
+        fail("duplicate catalogue ID: %s" % identifier)
+    members = []
+    for jar in library_entries(ctx, [target], attr_name = "libraries")[0].jars:
+        member = members_by_path.get(jar.path)
+        if member == None:
+            member = _catalogue_id(identifier + "/" + jar.basename)
+            if member in artifacts or member in libraries:
+                fail("duplicate catalogue ID: %s" % member)
+            if jar.is_directory:
+                fail("library %s requires jar files, got directory %s" % (identifier, jar.path))
+            _validate_catalogue_root(jar, artifacts)
+            artifacts[member] = jar
+            members_by_path[jar.path] = member
+        members.append(member)
+    return members
+
 def _dev_plugin_artifact_catalogue_impl(ctx):
     artifacts = {}
-    compiled_inputs = ctx.attr.compiled_inputs[_CompiledArtifactInputsInfo].inputs
-    for attribute, inputs in [("artifact_inputs", compiled_inputs), ("resource_inputs", ctx.attr.resource_inputs)]:
+    compiled = ctx.attr.compiled_inputs[_CompiledArtifactInputsInfo]
+    for attribute, inputs in [("artifact_inputs", compiled.inputs), ("resource_inputs", ctx.attr.resource_inputs)]:
         for target, identifier in inputs.items():
             identifier = _catalogue_id(identifier)
             if identifier in artifacts:
@@ -503,18 +536,11 @@ def _dev_plugin_artifact_catalogue_impl(ctx):
                 fail("source tree %s must be a directory File" % identifier)
             _validate_catalogue_root(file, artifacts)
             artifacts[identifier] = file
-    libraries = ctx.attr.library_inputs
-    for identifier, members in libraries.items():
-        _catalogue_id(identifier)
-        if identifier in artifacts:
-            fail("duplicate catalogue ID: %s" % identifier)
-        if not members or len(members) != len({member: True for member in members}):
-            fail("library %s must list distinct artifact IDs in source order" % identifier)
-        for member in members:
-            if member not in artifacts:
-                fail("library %s references unknown artifact ID %s" % (identifier, member))
-            if artifacts[member].is_directory:
-                fail("library %s requires a file artifact, got directory %s" % (identifier, member))
+    libraries = {}
+    members_by_path = {}
+    for target, identifier in compiled.libraries.items():
+        identifier = _catalogue_id(identifier)
+        libraries[identifier] = _library_members(ctx, identifier, target, artifacts, libraries, members_by_path)
     catalogue = _write_catalogue(ctx, artifacts, libraries)
     return [
         DefaultInfo(files = depset([catalogue])),
@@ -538,17 +564,18 @@ _dev_plugin_artifact_catalogue = rule(
             providers = [DevPluginGraphInfo],
             doc = "Optional graph target whose normalized source directories become resource artifacts.",
         ),
-        "library_inputs": attr.string_list_dict(),
         "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
     },
 )
 
-def dev_plugin_artifact_catalogue(name, artifact_inputs = {}, tags = [], **kwargs):
-    """Binds neutral compiled inputs and product-scoped resources to the catalogue.
+def dev_plugin_artifact_catalogue(name, artifact_inputs = {}, libraries = {}, tags = [], **kwargs):
+    """Binds neutral compiled inputs, library containers and product-scoped resources to the catalogue.
 
     Args:
         name: The target name.
         artifact_inputs: Compiled targets mapped to stable artifact IDs.
+        libraries: Library container targets mapped to stable library IDs. The catalogue expands each to its member
+            jars, so no label here carries a version.
         tags: Additional tags for the catalogue target.
         **kwargs: Product-scoped catalogue rule attributes.
     """
@@ -557,6 +584,7 @@ def dev_plugin_artifact_catalogue(name, artifact_inputs = {}, tags = [], **kwarg
     _compiled_artifact_inputs(
         name = compiled_inputs,
         artifact_inputs = artifact_inputs,
+        libraries = libraries,
         tags = ["manual"],
         visibility = ["//visibility:private"],
         target_compatible_with = kwargs.get("target_compatible_with", []),
@@ -569,11 +597,23 @@ def dev_plugin_artifact_catalogue(name, artifact_inputs = {}, tags = [], **kwarg
         **kwargs
     )
 
-def _catalogue_binding(ctx, artifact_catalogue):
+def _reused_jars(ctx):
+    """The reused jars of the chain, keyed by their module name. A module named twice fails."""
+    jars = {}
+    for target in ctx.attr.independent_artifacts:
+        info = target[ContentModuleJarInfo]
+        if type(info.jar) != "File" or info.jar.is_directory:
+            fail("independent artifact %s requires a regular jar file" % target.label)
+        if info.module_name in jars:
+            fail("independent module %s is named twice" % info.module_name)
+        jars[info.module_name] = info.jar
+    return jars
+
+def _catalogue_binding(ctx, artifact_catalogue, reused_jars):
     """The catalogue provider, after the check that no catalogue artifact overlaps a reused jar."""
     binding = artifact_catalogue[DevPluginArtifactCatalogueInfo]
     for identifier, file in binding.artifacts.items():
-        for independent in ctx.files.independent_artifacts:
+        for independent in reused_jars.values():
             if _overlapping_artifacts(file, independent):
                 fail("catalogue artifact %s overlaps independent artifact %s" % (identifier, independent.path))
     return binding
@@ -615,9 +655,10 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
     execution_version = graph.execution_version
     artifact_catalogue = _transitioned_target(ctx.attr.artifact_catalogue, "artifact_catalogue")
     descriptor_target = _transitioned_target(ctx.attr.descriptor, "descriptor")
-    binding = _catalogue_binding(ctx, artifact_catalogue)
+    reused_jars = _reused_jars(ctx)
+    binding = _catalogue_binding(ctx, artifact_catalogue, reused_jars)
     classpath_descriptor = _descriptor_classpath_file(descriptor_target)
-    independent_artifacts = depset(ctx.files.independent_artifacts)
+    independent_artifacts = depset(reused_jars.values())
     inputs = depset([projection, binding.catalogue, classpath_descriptor], transitive = [depset(binding.artifacts.values())])
     for source in inputs.to_list():
         for artifact in independent_artifacts.to_list():
@@ -638,6 +679,7 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
     arguments.add(metadata, format = "--inventory=%s")
     arguments.add(assets, format = "--assets=%s")
     arguments.add(classpath, format = "--classpath=%s")
+    arguments.add_all(reused_jars.keys(), format_each = "--independent-module=%s")
     ctx.actions.run(
         mnemonic = "PackDevPluginRemainder",
         executable = ctx.executable._packer,
@@ -672,11 +714,12 @@ prepared directory exist as a file.""",
         ),
         "product_info": attr.label(mandatory = True, providers = [DevDistProductInfo]),
         "independent_artifacts": attr.label_list(
-            allow_files = True,
+            providers = [ContentModuleJarInfo],
             cfg = _module_transition,
-            doc = """The content module jars the plugin reuses. Reset to the neutral product configuration like every compiled
-input: without the reset, the product configuration reaches each jar's module and compiles it a second time. No input
-of the action may overlap a reused jar.""",
+            doc = """The `content_module_jar` targets whose jar the plugin reuses. The action receives each module name as
+`--independent-module`, and the packer marks the asset with the plain module jar recipe of that module as independent.
+Reset to the neutral product configuration like every compiled input: without the reset, the product configuration
+reaches each jar's module and compiles it a second time. No input of the action may overlap a reused jar.""",
         ),
         "_packer": _PACKER,
         "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
@@ -694,14 +737,12 @@ def _dev_plugin_component_impl(ctx):
     identifiers = {}
     declared = {file: True for file in remainder.independent_artifacts.to_list()}
     bound = {}
-    if len(ctx.attr.independent_artifacts) != len(ctx.attr.independent_artifact_ids):
-        fail("independent_artifact_ids must name every independent artifact once, in order", attr = "independent_artifact_ids")
-    for target, identifier in zip(ctx.attr.independent_artifacts, ctx.attr.independent_artifact_ids):
-        identifier = _catalogue_id(identifier)
+    for target in ctx.attr.independent_artifacts:
+        info = target[ContentModuleJarInfo]
+        identifier = _catalogue_id(info.module_name)
         if identifier in identifiers:
             fail("duplicate independent artifact ID: %s" % identifier)
         identifiers[identifier] = True
-        info = target[ContentModuleJarInfo]
         jar = info.jar
         metadata = info.metadata
         if type(jar) != "File" or jar.is_directory or type(metadata) != "File" or metadata.is_directory:
@@ -797,10 +838,9 @@ dev_plugin_component = rule(
         "independent_artifacts": attr.label_list(
             providers = [ContentModuleJarInfo],
             cfg = _module_transition,
-            doc = "The same reset as `dev_plugin_remainder_from_plan.independent_artifacts`, so both rules see one `File` per reused jar.",
-        ),
-        "independent_artifact_ids": attr.string_list(
-            doc = "The catalogue ID of each `independent_artifacts` entry, in the same order. A list beside a list, because a transition cannot sit on a label-keyed dict.",
+            doc = """The same targets and the same reset as `dev_plugin_remainder_from_plan.independent_artifacts`, so both rules
+see one `File` per reused jar. The module name of each target is its artifact ID, the key the asset rows of the
+remainder use.""",
         ),
         "plugin_directory": attr.string(mandatory = True),
         "component_name": attr.string(mandatory = True),
@@ -887,7 +927,7 @@ def dev_dist_complex_plugin(
         directory_name = "",
         artifact_inputs = {},
         resource_inputs = {},
-        library_inputs = {},
+        libraries = {},
         source_tree_targets = {},
         source_tree_prefixes = {},
         independent_artifacts = [],
@@ -920,7 +960,8 @@ def dev_dist_complex_plugin(
         directory_name: The layout's explicit directory name, or empty for the one derived from the main module.
         artifact_inputs: Compiled targets mapped to stable artifact IDs.
         resource_inputs: Resource targets mapped to stable artifact IDs, without the descriptor.
-        library_inputs: Ordered member IDs keyed by library ID.
+        libraries: Library container targets mapped to stable library IDs. The catalogue expands each to its member
+            jars.
         source_tree_targets: Declared source targets keyed by the artifact ID of each normalized directory.
         source_tree_prefixes: Repository-relative source prefix keyed by the source tree artifact ID.
         independent_artifacts: The `content_module_jar` targets whose jar the plugin reuses.
@@ -961,10 +1002,7 @@ def dev_dist_complex_plugin(
             source_tree_prefixes = _dict_for_platform(source_tree_prefixes, platform, "source_tree_prefixes"),
             artifact_inputs = _dict_for_platform(artifact_inputs, platform, "artifact_inputs"),
             resource_inputs = chain_resources,
-            library_inputs = {
-                _for_platform(library, platform): [_for_platform(member, platform) for member in members]
-                for library, members in library_inputs.items()
-            },
+            libraries = _dict_for_platform(libraries, platform, "libraries"),
             independent_artifacts = [_for_platform(label, platform) for label in independent_artifacts],
             tags = tags,
         )
@@ -984,7 +1022,7 @@ def dev_dist_complex_plugin_variant(
         source_tree_prefixes = {},
         artifact_inputs = {},
         resource_inputs = {},
-        library_inputs = {},
+        libraries = {},
         independent_artifacts = [],
         tags = []):
     """Declares the execution chain of one complex plugin variant, every argument stated.
@@ -1012,9 +1050,9 @@ def dev_dist_complex_plugin_variant(
         source_tree_prefixes: Repository-relative source prefix keyed by the source tree artifact ID.
         artifact_inputs: Compiled targets mapped to stable artifact IDs.
         resource_inputs: Resource and descriptor targets mapped to stable artifact IDs.
-        library_inputs: Ordered member IDs keyed by library ID.
-        independent_artifacts: The `content_module_jar` targets whose jar the plugin reuses. The jar is the target
-            label plus `.production.jar`, and that label is also its artifact ID.
+        libraries: Library container targets mapped to stable library IDs.
+        independent_artifacts: The `content_module_jar` targets whose jar the plugin reuses. Both rules read the jar
+            and the module name from `ContentModuleJarInfo`; the module name is the artifact ID of the reused jar.
         tags: Tags for every target of the chain.
     """
     graph = name + "_graph"
@@ -1035,10 +1073,9 @@ def dev_dist_complex_plugin_variant(
         artifact_inputs = artifact_inputs,
         resource_inputs = resource_inputs,
         source_tree_graph = ":" + graph if source_tree_targets else None,
-        library_inputs = library_inputs,
+        libraries = libraries,
         tags = tags,
     )
-    independent_jars = [label + ".production.jar" for label in independent_artifacts]
     dev_plugin_remainder_from_plan(
         name = remainder,
         graph = ":" + graph,
@@ -1046,14 +1083,13 @@ def dev_dist_complex_plugin_variant(
         descriptor = descriptor,
         plugin_directory = plugin_directory,
         product_info = product_info,
-        independent_artifacts = independent_jars,
+        independent_artifacts = independent_artifacts,
         tags = tags,
     )
     dev_plugin_component(
         name = name + "_component",
         remainder = ":" + remainder,
         independent_artifacts = independent_artifacts,
-        independent_artifact_ids = independent_jars,
         plugin_directory = plugin_directory,
         component_name = component_name,
         platform_prefix = platform_prefix,

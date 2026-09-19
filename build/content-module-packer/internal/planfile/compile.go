@@ -37,21 +37,23 @@ type plannedAsset struct {
 
 // compiler holds the plan file, the ownership rows and the catalogue index of one derivation.
 type compiler struct {
-	file        *File
-	assets      []plannedAsset
-	required    []Preparation
-	producers   map[string]Preparation
-	requiredRaw []string
-	artifacts   map[string]pluginpack.Artifact
-	libraries   map[string]pluginpack.Library
-	goExecuted  map[string]*Operation
-	independent map[string]bool
+	file               *File
+	independentModules []string
+	assets             []plannedAsset
+	required           []Preparation
+	producers          map[string]Preparation
+	requiredRaw        []string
+	artifacts          map[string]pluginpack.Artifact
+	libraries          map[string]pluginpack.Library
+	goExecuted         map[string]*Operation
 }
 
 // Derive compiles the plan file for the Go packer. catalogue is the Starlark input catalogue of the chain.
 // pluginDirectory is `plugins/<name>`; descriptor is the classpath descriptor in its final byte form.
 // executionVersion is the version the chain declares; it must equal the version of the file and of its assets.
-func Derive(file *File, catalogue pluginpack.Catalogue, pluginDirectory string, descriptor []byte, executionVersion int) (*Derivation, error) {
+// independentModules names the modules whose plain module jar the chain reuses from a content_module_jar target. The
+// asset with that recipe at the default mode is independent, and its artifact is the module name.
+func Derive(file *File, catalogue pluginpack.Catalogue, pluginDirectory string, descriptor []byte, executionVersion int, independentModules []string) (*Derivation, error) {
 	pluginDirName := path.Base(filepath.ToSlash(filepath.Clean(pluginDirectory)))
 	if pluginDirName == "" || pluginDirName == "." || pluginDirName == ".." || pluginDirName == "/" {
 		return nil, fmt.Errorf("invalid plugin directory %q", pluginDirectory)
@@ -61,7 +63,7 @@ func Derive(file *File, catalogue pluginpack.Catalogue, pluginDirectory string, 
 		return nil, fmt.Errorf("plugin %q has a stale execution version: file=%d declared=%d required=%d; regenerate the dev distribution declarations",
 			file.Plugin, file.Version, executionVersion, version)
 	}
-	c := &compiler{file: file, goExecuted: make(map[string]*Operation), independent: make(map[string]bool)}
+	c := &compiler{file: file, independentModules: independentModules, goExecuted: make(map[string]*Operation)}
 	if err := c.plan(); err != nil {
 		return nil, fmt.Errorf("plugin %q: %w", file.Plugin, err)
 	}
@@ -69,6 +71,9 @@ func Derive(file *File, catalogue pluginpack.Catalogue, pluginDirectory string, 
 		return nil, fmt.Errorf("plugin %q: %w", file.Plugin, err)
 	}
 	if err := c.indexCatalogue(catalogue); err != nil {
+		return nil, fmt.Errorf("plugin %q: %w", file.Plugin, err)
+	}
+	if err := c.resolveOperationInputs(); err != nil {
 		return nil, fmt.Errorf("plugin %q: %w", file.Plugin, err)
 	}
 	assets := c.assetRows()
@@ -100,16 +105,16 @@ func executionVersionOf(assets []Asset) int {
 	}
 }
 
-// recipeKey is the equality of CanonicalJarRecipe with its mode: the key a reusable artifact is matched by.
+// recipeKey is the equality of CanonicalJarRecipe with its mode: the key a reused module jar is matched by.
 func recipeKey(recipe JarRecipe, mode uint32) string {
 	type source struct {
 		Input, Kind, Filter, Entry string
-		Expansion, Options         []string
+		Options                    []string
 		Manifest                   *PreparedManifest
 	}
 	sources := make([]source, 0, len(recipe.Sources))
 	for _, item := range recipe.Sources {
-		sources = append(sources, source{item.Input, item.Kind, item.Filter, item.Entry, orEmpty(item.Expansion), orEmpty(item.Options), item.PreparedManifest})
+		sources = append(sources, source{item.Input, item.Kind, item.Filter, item.Entry, orEmpty(item.Options), item.PreparedManifest})
 	}
 	key, err := json.Marshal(struct {
 		Sources []source
@@ -140,23 +145,16 @@ func (c *compiler) plan() error {
 			return err
 		}
 	}
-	recipes := make(map[string]string)
-	labels := make(map[string]string)
-	for _, artifact := range file.ReusableArtifacts {
-		if artifact.Label == "" {
-			return fmt.Errorf("a reusable artifact requires a label")
+	recipes := make(map[string]string, len(c.independentModules))
+	for _, module := range c.independentModules {
+		if module == "" {
+			return fmt.Errorf("an independent module requires a name")
 		}
-		if artifact.Mode < 1 || artifact.Mode > 0o777 {
-			return fmt.Errorf("artifact %q has an unsupported mode", artifact.Label)
+		key := recipeKey(moduleJarRecipe(module), DefaultMode)
+		if _, exists := recipes[key]; exists {
+			return fmt.Errorf("independent module %q is named twice", module)
 		}
-		key := recipeKey(artifact.Recipe, artifact.Mode)
-		if previous, exists := labels[artifact.Label]; exists && previous != key {
-			return fmt.Errorf("artifact %q has conflicting recipes", artifact.Label)
-		}
-		labels[artifact.Label] = key
-		if _, exists := recipes[key]; !exists {
-			recipes[key] = artifact.Label
-		}
+		recipes[key] = module
 	}
 	used := make(map[string]bool)
 	for _, asset := range file.Assets {
@@ -176,12 +174,15 @@ func (c *compiler) plan() error {
 		}
 		if planned.artifact != "" {
 			used[planned.artifact] = true
-			c.independent[planned.artifact] = true
 		}
 		c.assets = append(c.assets, planned)
 	}
-	if len(used) != len(file.ReusableArtifacts) || len(labels) != len(file.ReusableArtifacts) {
-		return fmt.Errorf("duplicate or unused reusable artifacts; regenerate the dev distribution declarations")
+	if len(used) != len(c.independentModules) {
+		for _, module := range c.independentModules {
+			if !used[module] {
+				return fmt.Errorf("independent module %q matches no plain module jar asset; regenerate the dev distribution declarations", module)
+			}
+		}
 	}
 	c.producers = make(map[string]Preparation)
 	seen := make(map[string]bool, len(file.Preparations))
@@ -468,11 +469,6 @@ func (c *compiler) indexCatalogue(catalogue pluginpack.Catalogue) error {
 			}
 		}
 	}
-	for label := range c.independent {
-		if raw[label] {
-			return fmt.Errorf("independent artifact %q must not be a preparation input", label)
-		}
-	}
 	expected := make(map[string]bool)
 	for _, input := range c.requiredRaw {
 		if library, isLibrary := c.libraries[input]; isLibrary {
@@ -503,6 +499,74 @@ func (c *compiler) indexCatalogue(catalogue pluginpack.Catalogue) error {
 
 func validID(value string) bool {
 	return value != "" && strings.TrimSpace(value) == value && !strings.ContainsAny(value, "\x00\r\n")
+}
+
+// resolveOperationInputs replaces a library ID in the inputs of every Go-executed operation with the references of
+// its member files. The plan names the version-free library; the catalogue names its files. The primary input of a
+// module-filter or native-select names one file, so a library there has one member. A layout-assets input stands for
+// every member in catalogue order, and the sources of each layout asset follow the expanded positions. The resolved
+// copies replace the plan operations in goExecuted, so the plan file keeps its text.
+func (c *compiler) resolveOperationInputs() error {
+	for output, operation := range c.goExecuted {
+		resolved := *operation
+		if operation.Input != nil {
+			members, err := c.resolveReference(*operation.Input)
+			if err != nil {
+				return fmt.Errorf("operation %q: %w", operation.ID, err)
+			}
+			if len(members) != 1 {
+				return fmt.Errorf("operation %q: library %q has %d members; the primary input names one file", operation.ID, operation.Input.Artifact, len(members))
+			}
+			resolved.Input = &members[0]
+		}
+		if len(operation.Inputs) != 0 {
+			positions := make([][]int, len(operation.Inputs))
+			resolved.Inputs = nil
+			for index, reference := range operation.Inputs {
+				members, err := c.resolveReference(reference)
+				if err != nil {
+					return fmt.Errorf("operation %q: %w", operation.ID, err)
+				}
+				for _, member := range members {
+					positions[index] = append(positions[index], len(resolved.Inputs))
+					resolved.Inputs = append(resolved.Inputs, member)
+				}
+			}
+			if layout := operation.LayoutAssets; layout != nil {
+				expanded := *layout
+				expanded.Assets = make([]pluginpack.LayoutAsset, len(layout.Assets))
+				for index, asset := range layout.Assets {
+					if len(asset.Sources) != 0 {
+						sources := make([]int, 0, len(asset.Sources))
+						for _, source := range asset.Sources {
+							if source < 0 || source >= len(positions) {
+								return fmt.Errorf("operation %q: layout asset %q names the input %d, which the operation lacks", operation.ID, asset.Destination, source)
+							}
+							sources = append(sources, positions[source]...)
+						}
+						asset.Sources = sources
+					}
+					expanded.Assets[index] = asset
+				}
+				resolved.LayoutAssets = &expanded
+			}
+		}
+		c.goExecuted[output] = &resolved
+	}
+	return nil
+}
+
+// resolveReference is the references of the member files of a library in catalogue order, or the reference itself
+// when it names no library.
+func (c *compiler) resolveReference(reference pluginpack.Reference) ([]pluginpack.Reference, error) {
+	library, isLibrary := c.libraries[reference.Artifact]
+	if !isLibrary {
+		return []pluginpack.Reference{reference}, nil
+	}
+	if reference.Path != "" {
+		return nil, fmt.Errorf("library %q is not a directory: the input names the path %q in it", reference.Artifact, reference.Path)
+	}
+	return library.Files, nil
 }
 
 // assetRows is deriveDevPluginExecutionAssets: the producer of every asset in plan order. A default is left empty,
@@ -719,7 +783,7 @@ func (c *compiler) compileSources(recipe *JarRecipe, destination string) ([]plug
 			return nil, fmt.Errorf("source %q has conflicting manifest policies", source.Input)
 		}
 		if source.Kind == "prepared" {
-			if len(source.Options) != 0 || len(source.Expansion) != 0 || source.Entry != "" || source.Filter != "prepared" {
+			if len(source.Options) != 0 || source.Entry != "" || source.Filter != "prepared" {
 				return nil, fmt.Errorf("prepared source %q must materialize its options", source.Input)
 			}
 			operation, executed := c.goExecuted[source.Input]
@@ -749,8 +813,11 @@ func (c *compiler) compileSources(recipe *JarRecipe, destination string) ([]plug
 		patch := slices.Contains(source.Options, "patch")
 		switch source.Kind {
 		case "zip", "archive", "module":
-			if len(source.Expansion) != 0 || source.Entry != "" || patch {
-				return nil, fmt.Errorf("archive source %q contains entry or expansion options", source.Input)
+			if source.Entry != "" || patch {
+				return nil, fmt.Errorf("archive source %q contains entry options", source.Input)
+			}
+			if _, isLibrary := c.libraries[source.Input]; isLibrary {
+				return nil, fmt.Errorf("archive source %q names a library; a library source merges its members", source.Input)
 			}
 			compiled, err := c.archiveSource(recipe, pluginpack.Reference{Artifact: source.Input}, filter, sourceManifest)
 			if err != nil {
@@ -765,17 +832,6 @@ func (c *compiler) compileSources(recipe *JarRecipe, destination string) ([]plug
 			if !exists {
 				return nil, fmt.Errorf("unknown library %q", source.Input)
 			}
-			expansion := make([]string, 0, len(library.Files))
-			for _, reference := range library.Files {
-				if reference.Path == "" {
-					expansion = append(expansion, reference.Artifact)
-				} else {
-					expansion = append(expansion, reference.Artifact+"/"+reference.Path)
-				}
-			}
-			if !slices.Equal(source.Expansion, expansion) {
-				return nil, fmt.Errorf("library %q has stale file order: expected=%v, actual=%v", source.Input, source.Expansion, expansion)
-			}
 			for _, reference := range library.Files {
 				compiled, err := c.archiveSource(recipe, reference, filter, sourceManifest)
 				if err != nil {
@@ -784,8 +840,8 @@ func (c *compiler) compileSources(recipe *JarRecipe, destination string) ([]plug
 				sources = append(sources, compiled)
 			}
 		case "file":
-			if len(source.Expansion) != 0 || filter != "all" {
-				return nil, fmt.Errorf("file source %q contains filter or expansion options", source.Input)
+			if filter != "all" {
+				return nil, fmt.Errorf("file source %q contains filter options", source.Input)
 			}
 			kind := "file"
 			if patch {
