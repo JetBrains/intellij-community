@@ -3,10 +3,13 @@
 package jarpack
 
 import (
+	"errors"
 	"fmt"
 	"hash/crc32"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"jetbrains.com/content-module-packer/internal/nativelib"
 )
@@ -19,8 +22,9 @@ import (
 // written, and the platform's files land under `lib/<lib>/`. A jar packed this way is byte-identical to the one
 // JarPackager writes, and the tree is what the distribution loads the natives from.
 type NativeSpec struct {
-	// Tree is the directory the selected files are written into. It is created, never cleaned; a platform with no
-	// matching entry leaves it empty.
+	// Tree is the directory the selected files are written into. It is absent or empty before the pack, and a tree
+	// that already holds a file is refused: the collector trusts the inventory of the tree, so every file in it must be
+	// one this pack wrote. A platform with no matching entry leaves it empty.
 	Tree string
 	// Family and Arch are the target platform, read from `native-variant=` by nativelib.ParseVariant.
 	Family nativelib.Family
@@ -34,7 +38,21 @@ func (spec *NativeSpec) validate(output string) error {
 	if spec.Tree == "" || spec.LibName == "" || !nativelib.ValidFamily(spec.Family) || !nativelib.ValidArch(spec.Arch) {
 		return fmt.Errorf("%s: incomplete native tree specification", output)
 	}
+	entries, err := os.ReadDir(spec.Tree)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("%s: %w", output, err)
+	}
+	if len(entries) != 0 {
+		return fmt.Errorf("%s: the native tree %s is not empty: %s", output, spec.Tree, entries[0].Name())
+	}
 	return nil
+}
+
+// plannedNativeFile is one selected entry after every check: where it goes under the tree and with which mode.
+type plannedNativeFile struct {
+	entry        Entry
+	relativePath string
+	mode         os.FileMode
 }
 
 // nativeSourceIndex is the position of the one `library=` source of the native library. Zero or two are an error,
@@ -108,7 +126,9 @@ func (s MergeSpec) writeNativeTree(natives *nativeMerge) error {
 	if err != nil {
 		return fmt.Errorf("%s: %w", sourcePath, err)
 	}
+	// Every check runs before the first write, so a refused selection leaves the tree as it was: empty.
 	claimed := make(map[string]string, len(matches))
+	planned := make([]plannedNativeFile, 0, len(matches))
 	for _, match := range matches {
 		relativePath, err := nativelib.RelativePath(spec.LibName, match.Arch, match.FileName(), match.Path)
 		if err != nil {
@@ -123,27 +143,34 @@ func (s MergeSpec) writeNativeTree(natives *nativeMerge) error {
 			return fmt.Errorf("%s: two native entries select %q: %s and %s", sourcePath, relativePath, previous, match.PathWithPrefix)
 		}
 		claimed[relativePath] = match.PathWithPrefix
-		e := byName[match.PathWithPrefix]
-		data, err := natives.jar.Data(e)
+		mode := os.FileMode(0o644)
+		if nativelib.IsExecutable(match.Family, match.FileName()) {
+			// The tree is inventoried by mode, and a Windows host records no executable bit, so the composer would place
+			// the file non-executable.
+			if runtime.GOOS == "windows" {
+				return fmt.Errorf("%s: %s: an executable native file cannot be written on a Windows host", sourcePath, match.PathWithPrefix)
+			}
+			mode = 0o755
+		}
+		planned = append(planned, plannedNativeFile{entry: byName[match.PathWithPrefix], relativePath: relativePath, mode: mode})
+	}
+	for _, file := range planned {
+		data, err := natives.jar.Data(file.entry)
 		if err != nil {
 			return fmt.Errorf("%s: %w", sourcePath, err)
 		}
-		if s.VerifyCRC && crc32.ChecksumIEEE(data) != e.CRC {
-			return fmt.Errorf("%s: %s: source CRC does not match", sourcePath, e.Name)
+		if s.VerifyCRC && crc32.ChecksumIEEE(data) != file.entry.CRC {
+			return fmt.Errorf("%s: %s: source CRC does not match", sourcePath, file.entry.Name)
 		}
-		mode := os.FileMode(0o644)
-		if nativelib.IsExecutable(match.Family, match.FileName()) {
-			mode = 0o755
-		}
-		target := filepath.Join(spec.Tree, filepath.FromSlash(relativePath))
+		target := filepath.Join(spec.Tree, filepath.FromSlash(file.relativePath))
 		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 			return err
 		}
-		if err := os.WriteFile(target, data, mode); err != nil {
+		if err := os.WriteFile(target, data, file.mode); err != nil {
 			return err
 		}
 		// WriteFile's mode is subject to the umask, and the tree is inventoried by mode.
-		if err := os.Chmod(target, mode); err != nil {
+		if err := os.Chmod(target, file.mode); err != nil {
 			return err
 		}
 	}

@@ -291,7 +291,6 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "-Dintellij.platform.root.module=${getRootFrontendModule().name}",
       "-Dintellij.platform.product.mode=${ProductMode.FRONTEND.id}",
       "-Dintellij.platform.full.ide.product.code=${build.productCode}",
-      "-Dintellij.platform.load.app.info.from.resources=true",
       "-Dsplash=true",
     )
     vmParametersList.addAll(jetBrainsClientOptions)

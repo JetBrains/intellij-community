@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
-import com.intellij.idea.AppMode;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.xml.dom.XmlDomReader;
@@ -9,16 +8,23 @@ import com.intellij.util.xml.dom.XmlElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
 
 public final class ApplicationNamesInfo {
+  /**
+   * The path of an application info file that replaces the {@code idea/<prefix>ApplicationInfo.xml} resource.
+   * Only a product with the {@link PlatformUtils#GATEWAY_PREFIX} prefix reads it.
+   * {@code GatewayStarter} is the only producer: it stamps the file when it starts Gateway from another IDE.
+   * Every other product ignores the property, because the application info holds licensing inputs.
+   */
+  @ApiStatus.Internal
+  public static final String APPLICATION_INFO_FILE_PROPERTY = "idea.application.info.value";
+
   private final String myProductName;
   private final String myFullProductName;
   private final String myEditionName;
@@ -26,71 +32,43 @@ public final class ApplicationNamesInfo {
   private final String myMotto;
 
   private static volatile ApplicationNamesInfo instance;
+  private static volatile XmlElement rawData;
 
-  private static @NotNull XmlElement loadData() {
+  /**
+   * Reads the application info by the current platform prefix on every call.
+   * Production code must use {@link #initAndGetRawData()}, which caches the result.
+   */
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static @NotNull XmlElement loadData() {
+    XmlElement data;
     String prefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "");
-    String appInfoData = getAppInfoData();
-
-    if (AppMode.isRunningFromDevBuild() && appInfoData.isEmpty()) {
-      String module = null;
-      if (prefix.isEmpty() || prefix.equals(PlatformUtils.IDEA_PREFIX)) {
-        module = "intellij.idea.ultimate.customization";
+    String file = prefix.equals(PlatformUtils.GATEWAY_PREFIX) ? System.getProperty(APPLICATION_INFO_FILE_PROPERTY) : null;
+    if (file != null) {
+      try {
+        data = XmlDomReader.readXmlAsModel(Files.newInputStream(Paths.get(file)));
       }
-      else if (prefix.equals(PlatformUtils.WEB_PREFIX)) {
-        module = "intellij.webstorm";
-      }
-
-      if (module != null) {
-        String resource = (prefix.equals("idea") ? "" : prefix) + "ApplicationInfo.xml";
-        Path file = PathManager.getHomeDir().resolve("out/classes/production/" + module + "/idea/" + resource);
-        try {
-          return XmlDomReader.readXmlAsModel(Files.newInputStream(file));
-        }
-        catch (NoSuchFileException ignore) { }
-        catch (Exception e) {
-          throw new RuntimeException("Cannot load " + file, e);
-        }
+      catch (Exception e) {
+        throw new RuntimeException("Cannot load custom application info file " + file, e);
       }
     }
     else {
-      // Gateway started from another IntelliJ-based IDE; same for Qodana
-      if (prefix.equals(PlatformUtils.GATEWAY_PREFIX)) {
-        String customAppInfo = System.getProperty("idea.application.info.value");
-        if (customAppInfo != null) {
-          try {
-            Path file = Paths.get(customAppInfo);
-            return XmlDomReader.readXmlAsModel(Files.newInputStream(file));
-          }
-          catch (Exception e) {
-            throw new RuntimeException("Cannot load custom application info file " + customAppInfo, e);
-          }
-        }
+      String resource = "idea/" + (prefix.equals(PlatformUtils.IDEA_PREFIX) ? "" : prefix) + "ApplicationInfo.xml";
+      InputStream stream = ApplicationNamesInfo.class.getClassLoader().getResourceAsStream(resource);
+      if (stream == null) {
+        throw new RuntimeException("Resource not found: " + resource);
       }
-
-      // this property is used when a product is started from distribution of another product
-      boolean forceLoadingFromResources = "true".equals(System.getProperty("intellij.platform.load.app.info.from.resources"));
-      if (!forceLoadingFromResources && !appInfoData.isEmpty()) {
-        return XmlDomReader.readXmlAsModel(appInfoData.getBytes(StandardCharsets.UTF_8));
+      try {
+        data = XmlDomReader.readXmlAsModel(stream);
+      }
+      catch (Exception e) {
+        throw new RuntimeException("Cannot load resource: " + resource, e);
       }
     }
-
-    // from sources or from another product
-    String resource = "idea/" + (prefix.equals("idea") ? "" : prefix) + "ApplicationInfo.xml";
-    InputStream stream = ApplicationNamesInfo.class.getClassLoader().getResourceAsStream(resource);
-    if (stream == null) {
-      throw new RuntimeException("Resource not found: " + resource);
+    if (PlatformUtils.isQodana()) {
+      setQodanaProductAttributes(data);
     }
-
-    try {
-      XmlElement data = XmlDomReader.readXmlAsModel(stream);
-      if (PlatformUtils.isQodana()) {
-        setQodanaProductAttributes(data);
-      }
-      return data;
-    }
-    catch (Exception e) {
-      throw new RuntimeException("Cannot load resource: " + resource, e);
-    }
+    return data;
   }
 
   private static void setQodanaProductAttributes(XmlElement data) {
@@ -110,22 +88,38 @@ public final class ApplicationNamesInfo {
     versionNode.attributes.put("eap", qodanaEap);
   }
 
-  @ApiStatus.Internal
-  public static String getAppInfoData() {
-    // not easy to inject a byte array using ASM - it is not constant value
-    return "";
+  private static @NotNull XmlElement getRawData() {
+    XmlElement result = rawData;
+    if (result == null) {
+      //noinspection SynchronizeOnThis
+      synchronized (ApplicationNamesInfo.class) {
+        result = rawData;
+        if (result == null) {
+          result = loadData();
+          rawData = result;
+        }
+      }
+    }
+    return result;
   }
 
+  /**
+   * Returns the raw application info and initializes {@link #getInstance()} from it.
+   * The first call resolves the resource by the platform prefix.
+   * Every later call returns the same element, so a later prefix change has no effect.
+   */
   @ApiStatus.Internal
   public static @NotNull XmlElement initAndGetRawData() {
-    //noinspection SynchronizeOnThis
-    synchronized (ApplicationNamesInfo.class) {
-      XmlElement data = loadData();
-      if (instance == null) {
-        instance = new ApplicationNamesInfo(data);
+    XmlElement data = getRawData();
+    if (instance == null) {
+      //noinspection SynchronizeOnThis
+      synchronized (ApplicationNamesInfo.class) {
+        if (instance == null) {
+          instance = new ApplicationNamesInfo(data);
+        }
       }
-      return data;
     }
+    return data;
   }
 
   public static @NotNull ApplicationNamesInfo getInstance() {
@@ -135,7 +129,7 @@ public final class ApplicationNamesInfo {
       synchronized (ApplicationNamesInfo.class) {
         result = instance;
         if (result == null) {
-          result = new ApplicationNamesInfo(loadData());
+          result = new ApplicationNamesInfo(getRawData());
           instance = result;
         }
       }

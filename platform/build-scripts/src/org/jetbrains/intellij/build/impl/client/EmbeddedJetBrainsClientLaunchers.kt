@@ -6,9 +6,7 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.impl.locateIcnsForFrontendMacApp
 
 internal fun getAdditionalEmbeddedClientVmOptions(os: OsFamily, ideContext: BuildContext): List<String> {
-  val result = mutableListOf(
-    "-Dintellij.platform.load.app.info.from.resources=true",
-  )
+  val result = mutableListOf<String>()
   if (os == OsFamily.MACOS && locateIcnsForFrontendMacApp(ideContext) != null) {
     result.add($$"-Dapple.awt.application.icon=$APP_PACKAGE/Contents/Resources/frontend.icns")
   }

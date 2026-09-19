@@ -8,7 +8,6 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.idea.AppMode
 import com.intellij.idea.WellKnownCommand
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
@@ -242,7 +241,7 @@ internal suspend fun loadSplashImage(appInfo: ApplicationInfo): BufferedImage? {
   val isJreHiDPIEnabled = JreHiDpiUtil.isJreHiDPIEnabled()
   val scale = if (isJreHiDPIEnabled) JBUIScale.sysScale() * JBUIScale.scale(1f) else JBUIScale.scale(1f)
   val file = try {
-    getCacheFile(scale = scale, appInfo = appInfo, path = splashImagePath)
+    getCacheFile(scale = scale, path = splashImagePath, build = appInfo.build.asString())
   }
   catch (e: Throwable) {
     logger<Splash>().warn(e)
@@ -306,33 +305,23 @@ private suspend fun loadImageFromCache(file: Path, scale: Float, isJreHiDPIEnabl
   return null
 }
 
-private fun getCacheFile(scale: Float, appInfo: ApplicationInfo, path: String): Path {
-  val appInfoData = ApplicationNamesInfo.getAppInfoData()
-  if (appInfoData.isEmpty()) {
-    val hasher = Hashing.komihash5_0().hashStream()
-    try {
-      hasher.putInt(Splash::class.java.classLoader.getResourceAsStream(path)?.use { it.available() } ?: 0)
-    }
-    catch (e: Throwable) {
-      logger<Splash>().warn("Failed to read splash image", e)
-    }
-
-    hasher.putChars(path)
-
-    val fileName = java.lang.Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX) +
-                   Integer.toUnsignedString(scale.toBits(), Character.MAX_RADIX) +
-                   ".v2.ij"
-    return Path.of(PathManager.getSystemPath(), "splash", fileName)
+/** The key holds the build number, the image path, the image size and the scale. */
+private fun getCacheFile(scale: Float, path: String, build: String): Path {
+  val hasher = Hashing.komihash5_0().hashStream()
+  hasher.putChars(build)
+  try {
+    hasher.putInt(Splash::class.java.classLoader.getResourceAsStream(path)?.use { it.available() } ?: 0)
   }
-  else {
-    val fileName = java.lang.Long.toUnsignedString(appInfo.buildTime.toEpochSecond(), Character.MAX_RADIX) +
-                   "-" +
-                   Integer.toUnsignedString(path.hashCode(), Character.MAX_RADIX) +
-                   "-" +
-                   Integer.toUnsignedString(scale.toBits(), Character.MAX_RADIX) +
-                   ".ij"
-    return Path.of(PathManager.getSystemPath(), "splash", fileName)
+  catch (e: Throwable) {
+    logger<Splash>().warn("Failed to read splash image", e)
   }
+
+  hasher.putChars(path)
+
+  val fileName = java.lang.Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX) +
+                 Integer.toUnsignedString(scale.toBits(), Character.MAX_RADIX) +
+                 ".v2.ij"
+  return Path.of(PathManager.getSystemPath(), "splash", fileName)
 }
 
 private suspend fun readImage(file: Path, scale: Float, isJreHiDPIEnabled: Boolean): BufferedImage? {

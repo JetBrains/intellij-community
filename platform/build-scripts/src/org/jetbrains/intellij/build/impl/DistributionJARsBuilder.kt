@@ -40,7 +40,6 @@ import org.jetbrains.intellij.build.impl.plugins.writeBundledPluginInfoAfterScra
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.getIncludedModules
-import org.jetbrains.intellij.build.injectAppInfo
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
@@ -626,27 +625,29 @@ internal fun layoutPlatformDistribution(
           patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher, context)
         }
       }
-      if (selectedModuleNames.contains("intellij.platform.core")) fork("write patched app info") {
-        spanBuilder("write patched app info").use {
-          val moduleName = "intellij.platform.core"
-          val module = context.outputProvider.findRequiredModule(moduleName)
-          val relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
-          val sourceBytes = context.outputProvider.readFileContentFromModuleOutput(module, relativePath) ?: error("app info not found")
-          val patchedBytes = injectAppInfo(inFileBytes = sourceBytes, newFieldValue = context.appInfoXml)
-          moduleOutputPatcher.patchModuleOutput(moduleName = moduleName, path = relativePath, content = patchedBytes)
-
-          // keep the packaged descriptor in sync with the baked constant, so it isn't shipped with raw placeholders
-          val appInfoModuleName = context.productProperties.applicationInfoModule
-          val appInfoResourcePath = "idea/${context.productProperties.platformPrefix ?: ""}ApplicationInfo.xml"
-          val appInfoModule = context.outputProvider.findRequiredModule(appInfoModuleName)
-          if (context.outputProvider.readFileContentFromModuleOutput(appInfoModule, appInfoResourcePath) != null) {
-            moduleOutputPatcher.patchModuleOutput(
-              moduleName = appInfoModuleName,
-              path = appInfoResourcePath,
-              content = context.appInfoXml,
-              overwrite = PatchOverwriteMode.TRUE,
-            )
+      // The stamped resource is the only application-info source at run time. See ApplicationNamesInfo.loadData.
+      val appInfoModuleName = context.productProperties.applicationInfoModule
+      if (selectedModuleNames.contains(appInfoModuleName)) fork("write application info resource") {
+        spanBuilder("write application info resource").use {
+          val appInfoResourcePath = applicationInfoResourcePath(context)
+          val outputProvider = context.outputProvider
+          checkApplicationInfoResourceOwner(
+            platformModules = platform.includedModules.mapTo(LinkedHashSet(), ModuleItem::moduleName),
+            applicationInfoModule = appInfoModuleName,
+            resourcePath = appInfoResourcePath,
+          ) { moduleName ->
+            val module = outputProvider.findRequiredModule(moduleName)
+            outputProvider.findFileInModuleSources(module = module, relativePath = appInfoResourcePath, onlyProductionSources = true) != null
           }
+          val appInfoModule = outputProvider.findRequiredModule(appInfoModuleName)
+          outputProvider.readFileContentFromModuleOutput(appInfoModule, appInfoResourcePath)
+            ?: error("'$appInfoResourcePath' is not in the output of '$appInfoModuleName'")
+          moduleOutputPatcher.patchModuleOutput(
+            moduleName = appInfoModuleName,
+            path = appInfoResourcePath,
+            content = context.appInfoXml,
+            overwrite = PatchOverwriteMode.TRUE,
+          )
         }
       }
       join()
@@ -669,6 +670,32 @@ internal fun layoutPlatformDistribution(
         context = context,
       ).first
     }
+}
+
+/** The resource `ApplicationNamesInfo.loadData` reads at run time. [layoutPlatformDistribution] stamps it. */
+internal fun applicationInfoResourcePath(context: BuildContext): String {
+  return "idea/${context.productProperties.platformPrefix ?: ""}ApplicationInfo.xml"
+}
+
+/**
+ * Fails when a platform module other than [applicationInfoModule] holds [resourcePath].
+ *
+ * The IDE reads the first resource in classpath order, so a second owner in `lib/` would replace the stamped
+ * application info silently. [holdsResource] answers for one module name. The check asks the platform modules only,
+ * so a library jar that holds the resource is not covered.
+ */
+@VisibleForTesting
+fun checkApplicationInfoResourceOwner(
+  platformModules: Collection<String>,
+  applicationInfoModule: String,
+  resourcePath: String,
+  holdsResource: (String) -> Boolean,
+) {
+  val otherOwners = platformModules.filter { it != applicationInfoModule && holdsResource(it) }
+  check(otherOwners.isEmpty()) {
+    "The resource '$resourcePath' must be in the application-info module '$applicationInfoModule' only, " +
+    "but the platform also packs it from: ${otherOwners.joinToString()}"
+  }
 }
 
 private fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher: ModuleOutputPatcher, context: BuildContext) {

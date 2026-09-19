@@ -227,19 +227,87 @@ func TestNativesModeWritesAnEmptyTreeForAPlatformWithoutANative(t *testing.T) {
 	}
 }
 
-func TestNativesModeKeepsWhatIsAlreadyInTheTree(t *testing.T) {
+func TestNativesModeAcceptsAnExistingEmptyTree(t *testing.T) {
 	library := nativeLibrarySource(t)
 	native := nativeSpec(t, "linux_x64", "foo")
 	if err := os.MkdirAll(native.Tree, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(native.Tree, "unrelated"), []byte("kept"), 0o644); err != nil {
+	pack(t, MergeSpec{Output: "intellij.libraries.foo.jar", Native: native, Sources: []Source{{Path: library, Filter: LibraryNameFilter, Library: true}}})
+	if got := treeFiles(t, native.Tree); len(got) != 1 || got["linux-x86-64/libfoo.so"] == 0 {
+		t.Errorf("tree holds %v, want the linux x64 native alone", got)
+	}
+}
+
+func TestNativesModeRefusesANonEmptyTree(t *testing.T) {
+	// The collector inventories the tree as the pack's output, so a file the pack did not write must not be there.
+	library := nativeLibrarySource(t)
+	native := nativeSpec(t, "linux_x64", "foo")
+	if err := os.MkdirAll(native.Tree, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	pack(t, MergeSpec{Output: "intellij.libraries.foo.jar", Native: native, Sources: []Source{{Path: library, Filter: LibraryNameFilter, Library: true}}})
-	got := treeFiles(t, native.Tree)
-	if len(got) != 2 || got["unrelated"] == 0 || got["linux-x86-64/libfoo.so"] == 0 {
-		t.Errorf("tree holds %v, want the existing file kept beside the native", got)
+	if err := os.WriteFile(filepath.Join(native.Tree, "stale"), []byte("stale"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	output := filepath.Join(t.TempDir(), "out.jar")
+	spec := MergeSpec{Output: output, Native: native, Sources: []Source{{Path: library, Filter: LibraryNameFilter, Library: true}}}
+	if _, err := spec.Pack(); err == nil || !strings.Contains(err.Error(), "is not empty: stale") {
+		t.Fatalf("error = %v, want the stale tree refused", err)
+	}
+	// Refused before the jar, so a tree never has a jar it does not belong to.
+	if _, err := os.Stat(output); !os.IsNotExist(err) {
+		t.Errorf("the jar was written although the tree was refused: %v", err)
+	}
+	if got := treeFiles(t, native.Tree); len(got) != 1 || got["stale"] == 0 {
+		t.Errorf("tree holds %v, want the stale file alone", got)
+	}
+}
+
+func TestNativesModeRefusesAnUnsafeNativeEntryName(t *testing.T) {
+	// The merge does not validate entry names on the flag-file path, so the native path is checked where it becomes a
+	// file path. For a library without a layout rule the relative path is the entry name after the common prefix.
+	library := writeZipJar(t, "foo-1.2.3.jar",
+		sourceEntry{name: "com/x/Foo.class", data: "class"},
+		sourceEntry{name: "com/x/linux-x86-64/../../evil.so", data: "escapes the tree"},
+	)
+	native := nativeSpec(t, "linux_x64", "foo")
+	spec := MergeSpec{Output: filepath.Join(t.TempDir(), "out.jar"), Native: native, Sources: []Source{{Path: library, Filter: LibraryNameFilter, Library: true}}}
+	_, err := spec.Pack()
+	if err == nil || !strings.Contains(err.Error(), "unsafe entry name") {
+		t.Fatalf("error = %v, want the traversal refused", err)
+	}
+	if got := treeFiles(t, native.Tree); len(got) != 0 {
+		t.Errorf("tree holds %v, want nothing written", got)
+	}
+	if _, err := os.Stat(filepath.Join(filepath.Dir(native.Tree), "evil.so")); !os.IsNotExist(err) {
+		t.Errorf("a file escaped the tree: %v", err)
+	}
+}
+
+func TestNativesModeRefusesAnExecutableOnAWindowsHost(t *testing.T) {
+	// A Windows host records no executable bit, and the collector reads the mode from the tree.
+	pty4j := writeZipJar(t, "pty4j-0.13.4.jar",
+		sourceEntry{name: "com/pty4j/PtyProcess.class", data: "class"},
+		sourceEntry{name: "resources/com/pty4j/native/linux/x86-64/libpty.so", data: "lib"},
+		sourceEntry{name: "resources/com/pty4j/native/linux/x86-64/pty4j-unix-spawn-helper", data: "helper"},
+	)
+	native := nativeSpec(t, "linux_x64", "pty4j")
+	spec := MergeSpec{Output: filepath.Join(t.TempDir(), "out.jar"), Native: native, Sources: []Source{{Path: pty4j, Filter: LibraryNameFilter, Library: true}}}
+	_, err := spec.Pack()
+	if runtime.GOOS != "windows" {
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := treeFiles(t, native.Tree); got["linux/x86-64/pty4j-unix-spawn-helper"] != 0o755 {
+			t.Errorf("tree modes are %v, want the helper executable", got)
+		}
+		return
+	}
+	if err == nil || !strings.Contains(err.Error(), "executable native file cannot be written on a Windows host") {
+		t.Fatalf("error = %v, want the executable refused", err)
+	}
+	if got := treeFiles(t, native.Tree); len(got) != 0 {
+		t.Errorf("tree holds %v, want nothing written", got)
 	}
 }
 

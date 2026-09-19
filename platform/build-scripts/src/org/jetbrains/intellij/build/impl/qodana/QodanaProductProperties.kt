@@ -5,7 +5,6 @@ import org.jetbrains.intellij.build.BuildContext
 
 private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Dqodana.application=true",
-  "-Dintellij.platform.load.app.info.from.resources=true",
   "-Dfus.internal.reduce.initial.delay=true",
   "-Didea.headless.statistics.max.files.to.send=5000",
   "-Djava.awt.headless=true",
