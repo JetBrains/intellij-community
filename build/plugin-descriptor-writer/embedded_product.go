@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"jetbrains.com/plugin-descriptor-patcher/internal/descriptorxml"
-	"jetbrains.com/plugin-descriptor-patcher/internal/structural"
+	"jetbrains.com/plugin-descriptor-writer/internal/descriptorxml"
+	"jetbrains.com/plugin-descriptor-writer/internal/structural"
 )
 
 // embeddedProductRequest contains the declared inputs of dev_dist_embedded_product_descriptor.

@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"strings"
 
-	"jetbrains.com/plugin-descriptor-patcher/internal/descriptorxml"
+	"jetbrains.com/plugin-descriptor-writer/internal/descriptorxml"
 )
 
 // XIncludeNamespace is `JDOMUtil.XINCLUDE_NAMESPACE`

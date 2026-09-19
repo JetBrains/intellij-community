@@ -9,7 +9,7 @@ go_library(
         "tree.go",
         "write.go",
     ],
-    importpath = "jetbrains.com/plugin-descriptor-patcher/internal/descriptorxml",
+    importpath = "jetbrains.com/plugin-descriptor-writer/internal/descriptorxml",
     visibility = ["//visibility:public"],
 )
 

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"jetbrains.com/plugin-descriptor-patcher/internal/markers"
+	"jetbrains.com/plugin-descriptor-writer/internal/markers"
 )
 
 const placeholder = "<!-- OS/ARCH-DEPENDENCY-PLACEHOLDER -->"

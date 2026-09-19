@@ -5,7 +5,7 @@ package stamps_test
 import (
 	"testing"
 
-	"jetbrains.com/plugin-descriptor-patcher/internal/stamps"
+	"jetbrains.com/plugin-descriptor-writer/internal/stamps"
 )
 
 // The two scalars this binary computes rather than receives. The assembly computes them with

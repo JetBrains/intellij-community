@@ -1,4 +1,4 @@
-# plugin-descriptor-patcher
+# plugin-descriptor-writer
 
 Writes plugin descriptors, embedded product descriptors, and application info for the embedded JetBrains Client.
 
@@ -37,7 +37,7 @@ A required descriptor without a declared input fails the action. The failure nam
 One plugin reads a descriptor no production source root holds: the Kotlin compiler ships
 `META-INF/analysis-api/analysis-api-fir.xml` and five more inside library jars. The plan names the library container
 that groups those jars, and it states the entry. The container's jars are the declared inputs, and the request holds one
-`--plugin-descriptor-in-jar` row for each entry and jar, in the container's own jar order. The patcher seeds the cache
+`--plugin-descriptor-in-jar` row for each entry and jar, in the container's own jar order. The writer seeds the cache
 from those rows and take the first jar that answers. A container whose jars all miss fails the action, and the failure
 names every jar it asked. The load path is also the entry, because `toLoadPath` strips the leading `/`.
 
@@ -76,7 +76,7 @@ wrong produces the wrong bytes for every plugin.
 
 ## The gates
 
-    bazel test @community//build/plugin-descriptor-patcher/... --test_arg=-test.v
+    bazel test @community//build/plugin-descriptor-writer/... --test_arg=-test.v
 
 The curated cases are the committed gate. Every expectation in them is a text the platform produced on a real
 classpath, one construct a case.

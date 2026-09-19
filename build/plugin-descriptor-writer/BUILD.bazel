@@ -9,8 +9,11 @@ load(":descriptor_rules_test.bzl", "descriptor_action_test")
 
 # Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
 
+# The name must not contain `patch`, `setup`, `install` or `update`. Windows Installer Detection treats an exe with
+# such a name and no manifest as an installer and asks for elevation (CreateProcess error 740). A pure Go binary has
+# no manifest, so the name alone is what keeps a Bazel action on Windows from failing.
 go_binary(
-    name = "plugin-descriptor-patcher",
+    name = "plugin-descriptor-writer",
     srcs = [
         "application_info.go",
         "embedded_product.go",
@@ -22,16 +25,16 @@ go_binary(
         "-s",
         "-w",
     ],
-    importpath = "jetbrains.com/plugin-descriptor-patcher",
+    importpath = "jetbrains.com/plugin-descriptor-writer",
     # pure disables cgo, so the Go-internal linker is used: the hermetic LLVM toolchain links PIE executables, which
     # is incompatible with the non-PIC objects produced by the Go compiler.
     pure = "on",
     visibility = ["//visibility:public"],
     deps = [
-        "//build/plugin-descriptor-patcher/internal/descriptorxml",
-        "//build/plugin-descriptor-patcher/internal/markers",
-        "//build/plugin-descriptor-patcher/internal/stamps",
-        "//build/plugin-descriptor-patcher/internal/structural",
+        "//build/plugin-descriptor-writer/internal/descriptorxml",
+        "//build/plugin-descriptor-writer/internal/markers",
+        "//build/plugin-descriptor-writer/internal/stamps",
+        "//build/plugin-descriptor-writer/internal/structural",
     ],
 )
 
@@ -182,7 +185,7 @@ test_suite(
 # The binary and the tests list the same sources, as in `//build/content-module-packer`.
 # These tests cover the requests and compare the XML bytes with Kotlin output.
 go_test(
-    name = "plugin-descriptor-patcher_test",
+    name = "plugin-descriptor-writer_test",
     srcs = [
         "application_info.go",
         "application_info_test.go",
@@ -194,9 +197,9 @@ go_test(
     data = glob(["testdata/**"]),
     pure = "on",
     deps = [
-        "//build/plugin-descriptor-patcher/internal/descriptorxml",
-        "//build/plugin-descriptor-patcher/internal/markers",
-        "//build/plugin-descriptor-patcher/internal/stamps",
-        "//build/plugin-descriptor-patcher/internal/structural",
+        "//build/plugin-descriptor-writer/internal/descriptorxml",
+        "//build/plugin-descriptor-writer/internal/markers",
+        "//build/plugin-descriptor-writer/internal/stamps",
+        "//build/plugin-descriptor-writer/internal/structural",
     ],
 )

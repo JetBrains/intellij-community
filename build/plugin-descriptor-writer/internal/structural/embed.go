@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"jetbrains.com/plugin-descriptor-patcher/internal/descriptorxml"
+	"jetbrains.com/plugin-descriptor-writer/internal/descriptorxml"
 )
 
 // ContentRequest is the plan's statement about one plugin's content modules.

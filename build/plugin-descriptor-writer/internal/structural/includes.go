@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"jetbrains.com/plugin-descriptor-patcher/internal/descriptorxml"
+	"jetbrains.com/plugin-descriptor-writer/internal/descriptorxml"
 )
 
 // xPointerPattern is `JDOMUtil.XPOINTER_PATTERN`

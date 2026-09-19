@@ -40,7 +40,7 @@ object SnapshotBuildNumber {
  * when the result is a nightly.
  *
  * `BuildContextImpl.pluginBuildNumber` is the one Kotlin reader. The Go patcher (`internal/stamps` of
- * `community/build/plugin-descriptor-patcher`) ports this rule, and its curated cases guard the version string.
+ * `community/build/plugin-descriptor-writer`) ports this rule, and its curated cases guard the version string.
  */
 internal fun computePluginBuildNumber(buildNumber: String): String {
   var value = buildNumber

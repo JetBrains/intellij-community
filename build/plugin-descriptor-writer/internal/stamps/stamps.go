@@ -23,7 +23,7 @@ package stamps
 import (
 	"strings"
 
-	"jetbrains.com/plugin-descriptor-patcher/internal/descriptorxml"
+	"jetbrains.com/plugin-descriptor-writer/internal/descriptorxml"
 )
 
 // Request is every fact the stamps stage reads, and nothing else.

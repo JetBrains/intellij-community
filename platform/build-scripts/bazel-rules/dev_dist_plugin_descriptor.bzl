@@ -2,7 +2,7 @@
 
 The rule runs one action per plugin. Its declared inputs are the descriptors the patch reads. Its output is the text
 the plugin's main jar receives. Every fragment of the product reads that output instead of computing it inside the
-assembly that evaluates the whole product layout. The Go patcher is the one producer of the text.
+assembly that evaluates the whole product layout. The Go writer is the one producer of the text.
 
 Modelled on two neighbours, each for what it already settled. `ij_plugin` for the per-plugin grain and for the build
 number arriving as a declared file. `content_module_jar` for the provider, for the `manual` tag and for a packer named
@@ -587,7 +587,7 @@ def _dev_dist_plugin_descriptor_impl(ctx):
         ctx,
         request,
         descriptor,
-        ctx.attr._patcher,
+        ctx.attr._writer,
         # One mnemonic for every plugin descriptor, so a strategy or an execution-info override reaches all of them.
         mnemonic = "DevDistPluginDescriptor",
         progress_message = "Patching the plugin descriptor of %{label}",
@@ -605,7 +605,7 @@ def _dev_dist_plugin_descriptor_impl(ctx):
             ctx,
             classpath_request,
             classpath_descriptor,
-            ctx.attr._patcher,
+            ctx.attr._writer,
             mnemonic = "DevDistPluginClasspathDescriptor",
             progress_message = "Embedding the classpath descriptor of %{label}",
         ))
@@ -767,12 +767,12 @@ port is field for field and a scope is what the platform's own resolver takes.""
             default = Label("@community//:build.txt"),
             doc = "Exactly `ij_plugin._default_ide_build_number_file`: the build number is a declared file, never a path a tool computes.",
         ),
-        "_patcher": attr.label(
+        "_writer": attr.label(
             doc = """The Go executor.
 
 ADR 0006 puts the executors in Go, and a descriptor feeds every plugin main jar, so a JVM action for it sits on the
 build's critical path.""",
-            default = Label("//build/plugin-descriptor-patcher:plugin-descriptor-patcher"),
+            default = Label("//build/plugin-descriptor-writer:plugin-descriptor-writer"),
             executable = True,
             cfg = "exec",
         ),

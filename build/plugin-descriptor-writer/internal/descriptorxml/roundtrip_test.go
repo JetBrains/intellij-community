@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"jetbrains.com/plugin-descriptor-patcher/internal/descriptorxml"
+	"jetbrains.com/plugin-descriptor-writer/internal/descriptorxml"
 )
 
 // The curated round-trip cases: one construct each, and every expectation is the text the platform wrote.

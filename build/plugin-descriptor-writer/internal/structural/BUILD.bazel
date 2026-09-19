@@ -9,9 +9,9 @@ go_library(
         "includes.go",
         "resolver.go",
     ],
-    importpath = "jetbrains.com/plugin-descriptor-patcher/internal/structural",
+    importpath = "jetbrains.com/plugin-descriptor-writer/internal/structural",
     visibility = ["//visibility:public"],
-    deps = ["//build/plugin-descriptor-patcher/internal/descriptorxml"],
+    deps = ["//build/plugin-descriptor-writer/internal/descriptorxml"],
 )
 
 # The curated cases, one branch of the two structural stages each, with a negative control per branch. The population
@@ -26,6 +26,6 @@ go_test(
     pure = "on",
     deps = [
         ":structural",
-        "//build/plugin-descriptor-patcher/internal/descriptorxml",
+        "//build/plugin-descriptor-writer/internal/descriptorxml",
     ],
 )

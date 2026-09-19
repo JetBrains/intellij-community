@@ -63,7 +63,7 @@ _dev_dist_frontend_application_info = rule(
             doc = "The branch name to stamp. Empty for none.",
         ),
         "_resolver": attr.label(
-            default = "//build/plugin-descriptor-patcher",
+            default = "//build/plugin-descriptor-writer",
             executable = True,
             cfg = "exec",
         ),

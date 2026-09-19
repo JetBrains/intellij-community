@@ -5,8 +5,8 @@ package stamps_test
 import (
 	"testing"
 
-	"jetbrains.com/plugin-descriptor-patcher/internal/descriptorxml"
-	"jetbrains.com/plugin-descriptor-patcher/internal/stamps"
+	"jetbrains.com/plugin-descriptor-writer/internal/descriptorxml"
+	"jetbrains.com/plugin-descriptor-writer/internal/stamps"
 )
 
 // The curated stamps cases. Every `want` is the text `doPatchPluginXml` produced on a real classpath, over the same

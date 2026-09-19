@@ -9,7 +9,7 @@ def _descriptor_action_test_impl(ctx):
     asserts.equals(env, 1, len(actions))
     if actions:
         action = actions[0]
-        asserts.equals(env, ctx.executable._patcher.path, action.argv[0])
+        asserts.equals(env, ctx.executable._writer.path, action.argv[0])
         asserts.equals(env, ctx.attr.mode, action.argv[1])
         outputs = target[DefaultInfo].files.to_list()
         asserts.equals(env, [target.label.name + ".xml"], [file.basename for file in outputs])
@@ -22,8 +22,8 @@ descriptor_action_test = analysistest.make(
     attrs = {
         "mnemonic": attr.string(mandatory = True),
         "mode": attr.string(mandatory = True),
-        "_patcher": attr.label(
-            default = "//build/plugin-descriptor-patcher",
+        "_writer": attr.label(
+            default = "//build/plugin-descriptor-writer",
             executable = True,
             cfg = "exec",
         ),

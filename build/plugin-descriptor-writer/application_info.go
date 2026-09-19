@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"jetbrains.com/plugin-descriptor-patcher/internal/descriptorxml"
+	"jetbrains.com/plugin-descriptor-writer/internal/descriptorxml"
 )
 
 const applicationInfoNamespace = "http://jetbrains.org/intellij/schema/application-info"

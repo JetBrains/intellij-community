@@ -41,7 +41,7 @@ test_suite(
     name = "bazel_rules_tests",
     tests = [
         ":dev_dist_content_tests",
-        "//build/plugin-descriptor-patcher:descriptor_rule_tests",
+        "//build/plugin-descriptor-writer:descriptor_rule_tests",
         "//platform/build-scripts/bazel-rules/dev-plugin-remainder-tests:dev_plugin_remainder_tests",
         "//platform/build-scripts/bazel-rules/dev-plugin-tests:dev_plugin_tests",
         "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests:ij-plugin-packager-tests",

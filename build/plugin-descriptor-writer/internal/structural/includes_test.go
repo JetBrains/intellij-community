@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"jetbrains.com/plugin-descriptor-patcher/internal/descriptorxml"
-	"jetbrains.com/plugin-descriptor-patcher/internal/structural"
+	"jetbrains.com/plugin-descriptor-writer/internal/descriptorxml"
+	"jetbrains.com/plugin-descriptor-writer/internal/structural"
 )
 
 // The curated cases of the includes stage, one branch of `resolveXIncludeElement` each.

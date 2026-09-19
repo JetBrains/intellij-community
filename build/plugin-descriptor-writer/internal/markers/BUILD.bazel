@@ -5,7 +5,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "markers",
     srcs = ["markers.go"],
-    importpath = "jetbrains.com/plugin-descriptor-patcher/internal/markers",
+    importpath = "jetbrains.com/plugin-descriptor-writer/internal/markers",
     visibility = ["//visibility:public"],
 )
 

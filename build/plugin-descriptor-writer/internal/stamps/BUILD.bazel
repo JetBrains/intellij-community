@@ -8,9 +8,9 @@ go_library(
         "stamps.go",
         "version.go",
     ],
-    importpath = "jetbrains.com/plugin-descriptor-patcher/internal/stamps",
+    importpath = "jetbrains.com/plugin-descriptor-writer/internal/stamps",
     visibility = ["//visibility:public"],
-    deps = ["//build/plugin-descriptor-patcher/internal/descriptorxml"],
+    deps = ["//build/plugin-descriptor-writer/internal/descriptorxml"],
 )
 
 # `stamps_test.go` holds the curated cases, each an output the platform's `doPatchPluginXml` produced.
@@ -23,6 +23,6 @@ go_test(
     pure = "on",
     deps = [
         ":stamps",
-        "//build/plugin-descriptor-patcher/internal/descriptorxml",
+        "//build/plugin-descriptor-writer/internal/descriptorxml",
     ],
 )

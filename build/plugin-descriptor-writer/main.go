@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-// Command plugin-descriptor-patcher writes the `META-INF/plugin.xml` a plugin's main jar receives.
+// Command plugin-descriptor-writer writes the `META-INF/plugin.xml` a plugin's main jar receives.
 //
 // The --embedded-product mode resolves includes and embeds content modules without plugin stamps.
 // The --application-info mode produces the application info of the embedded JetBrains Client.
@@ -39,10 +39,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"jetbrains.com/plugin-descriptor-patcher/internal/descriptorxml"
-	"jetbrains.com/plugin-descriptor-patcher/internal/markers"
-	"jetbrains.com/plugin-descriptor-patcher/internal/stamps"
-	"jetbrains.com/plugin-descriptor-patcher/internal/structural"
+	"jetbrains.com/plugin-descriptor-writer/internal/descriptorxml"
+	"jetbrains.com/plugin-descriptor-writer/internal/markers"
+	"jetbrains.com/plugin-descriptor-writer/internal/stamps"
+	"jetbrains.com/plugin-descriptor-writer/internal/structural"
 )
 
 func main() {
@@ -280,7 +280,7 @@ func readSeed(files map[string]string) (*structural.Cache, error) {
 // seedFromJars puts a descriptor that lives inside a declared library container into the cache.
 //
 // The assembly uses findFileInModuleLibraryDependencies in moduleContentUtil.kt to check each library jar for the load path.
-// The rule declares the container. The patcher checks its jars in order and uses the first matching entry.
+// The rule declares the container. The writer checks its jars in order and uses the first matching entry.
 // If no jar has the entry, the action fails and names every jar it checked.
 func seedFromJars(cache *structural.Cache, candidates map[string][]string) error {
 	for loadPath, jars := range candidates {
