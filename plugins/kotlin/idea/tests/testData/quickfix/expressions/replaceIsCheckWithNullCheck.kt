@@ -1,0 +1,12 @@
+// "Replace 'is' check with null check" "true"
+open class A
+class B
+
+fun test(obj: Any?) {
+    if (obj is A?) {
+        if (<caret>obj is B?) {
+        }
+    }
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceIsCheckWithNullCheckFix

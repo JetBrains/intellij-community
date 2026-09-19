@@ -423,6 +423,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(UselessIsCheckFactories.impossibleIsCheckErrorFactory)
         registerFactory(UselessIsCheckFactories.impossibleIsCheckDeprecationWarningFactory)
         registerFactory(UselessIsCheckFactories.impossibleIsCheckDeprecationErrorFactory)
+        registerFactory(UselessIsCheckFactories.impossibleIsCheckRelyingOnNullWarningFactory)
+        registerFactory(UselessIsCheckFactories.impossibleIsCheckRelyingOnNullErrorFactory)
         registerFactory(UselessIsCheckFactories.uselessWhenCheckFactory)
         registerFactory(UselessIsCheckFactories.impossibleWhenCheckWarningFactory)
         registerFactory(UselessIsCheckFactories.impossibleWhenCheckErrorFactory)
