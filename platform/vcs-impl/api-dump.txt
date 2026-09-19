@@ -4156,19 +4156,6 @@ f:com.intellij.vcs.log.util.StopWatch
 - report(com.intellij.openapi.diagnostic.Logger):V
 - rootCompleted(com.intellij.openapi.vfs.VirtualFile):V
 - s:start(java.lang.String):com.intellij.vcs.log.util.StopWatch
-c:com.intellij.vcs.ui.ProgressStripe
-- com.intellij.ui.components.JBPanel
-- p:myDecorator:com.intellij.vcs.ui.ProgressStripe$DisposableLoadingDecorator
-- <init>(javax.swing.JComponent,com.intellij.openapi.Disposable):V
-- <init>(javax.swing.JComponent,com.intellij.openapi.Disposable,I):V
-- startLoading():V
-- startLoadingImmediately():V
-- stopLoading():V
-- updateUI():V
-f:com.intellij.vcs.ui.ProgressStripe$DisposableLoadingDecorator
-- com.intellij.openapi.ui.LoadingDecorator
-- getDisposable():com.intellij.openapi.Disposable
-- startLoadingImmediately():V
 f:com.intellij.vcsUtil.Delegates
 - sf:INSTANCE:com.intellij.vcsUtil.Delegates
 - f:equalVetoingObservable(java.lang.Object,kotlin.jvm.functions.Function1):kotlin.properties.ObservableProperty

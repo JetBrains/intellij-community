@@ -796,3 +796,16 @@ c:com.intellij.vcs.log.util.VcsUserUtil$VcsUserHashingStrategy
 - <init>():V
 - equals(com.intellij.vcs.log.VcsUser,com.intellij.vcs.log.VcsUser):Z
 - hashCode(com.intellij.vcs.log.VcsUser):I
+c:com.intellij.vcs.ui.ProgressStripe
+- com.intellij.ui.components.JBPanel
+- p:myDecorator:com.intellij.vcs.ui.ProgressStripe$DisposableLoadingDecorator
+- <init>(javax.swing.JComponent,com.intellij.openapi.Disposable):V
+- <init>(javax.swing.JComponent,com.intellij.openapi.Disposable,I):V
+- startLoading():V
+- startLoadingImmediately():V
+- stopLoading():V
+- updateUI():V
+f:com.intellij.vcs.ui.ProgressStripe$DisposableLoadingDecorator
+- com.intellij.openapi.ui.LoadingDecorator
+- getDisposable():com.intellij.openapi.Disposable
+- startLoadingImmediately():V
