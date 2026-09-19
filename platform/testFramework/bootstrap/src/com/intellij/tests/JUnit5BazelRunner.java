@@ -626,11 +626,14 @@ public final class JUnit5BazelRunner {
   }
 
   private static Boolean isBazelTestRun() {
+    // SELF_LOCATION is set by the POSIX test wrapper and RUNFILES_MANIFEST_ONLY only in manifest mode, so on
+    // Windows with --enable_runfiles neither is present. TEST_SRCDIR is set for every Bazel test on every
+    // platform, which keeps the "are we really under Bazel?" intent without rejecting that combination.
     return Stream.of(bazelEnvTestTmpDir, bazelEnvRunFilesDir, bazelEnvJavaRunFilesDir)
       .allMatch(bazelTestEnv -> {
         var bazelTestEnvValue = System.getenv(bazelTestEnv);
         return bazelTestEnvValue != null && !bazelTestEnvValue.isBlank();
-      }) && Stream.of(bazelEnvSelfLocation, bazelEnvRunfilesManifestOnly).anyMatch(bazelTestEnv -> {
+      }) && Stream.of(bazelEnvSelfLocation, bazelEnvRunfilesManifestOnly, bazelEnvTestSrcDir).anyMatch(bazelTestEnv -> {
         var bazelTestEnvValue = System.getenv(bazelTestEnv);
         return bazelTestEnvValue != null && !bazelTestEnvValue.isBlank();
       });
@@ -725,19 +728,122 @@ public final class JUnit5BazelRunner {
     // Fallback to hardcoded workspace names for backward compatibility
     Path ultimateMarkerFile = workDirPath.resolve("community+").resolve(communityMarkerFileName);
     Path communityMarkerFile = workDirPath.resolve("_main").resolve(communityMarkerFileName);
+    // When runfiles are materialized as copies rather than symlinks, `toRealPath` stays inside the runfiles
+    // tree and the derived root is the runfiles directory, not the checkout. Only then is the manifest
+    // consulted, so runs where symlinks do resolve keep behaving exactly as before.
+    Path realWorkDirPath = workDirPath.toRealPath();
     if (Files.exists(ultimateMarkerFile)) {
       // we are in the ultimate context run
-      Path realUltimatePath = ultimateMarkerFile.toRealPath().getParent().getParent();
+      Path realUltimateMarkerFile = ultimateMarkerFile.toRealPath();
+      if (realUltimateMarkerFile.startsWith(realWorkDirPath)) {
+        Path fromManifest = resolveWorkspaceDirFromManifest(testWorkspace, communityMarkerFileName, workDirPath);
+        if (fromManifest != null) {
+          return fromManifest;
+        }
+      }
+      Path realUltimatePath = realUltimateMarkerFile.getParent().getParent();
       if (!Files.exists(realUltimatePath.resolve(".ultimate.root.marker"))) {
         throw new RuntimeException("Missing .ultimate.root.marker file in " + realUltimatePath + " directory candidate");
       }
       return realUltimatePath;
     } else if (Files.exists(communityMarkerFile)) {
       //we are in the community context run
-      return communityMarkerFile.toRealPath().getParent();
+      Path realCommunityMarkerFile = communityMarkerFile.toRealPath();
+      if (realCommunityMarkerFile.startsWith(realWorkDirPath)) {
+        Path fromManifest = resolveWorkspaceDirFromManifest(testWorkspace, communityMarkerFileName, workDirPath);
+        if (fromManifest != null) {
+          return fromManifest;
+        }
+        throw new RuntimeException(
+          "The runfiles copy of " + communityMarkerFileName + " does not resolve outside " + realWorkDirPath +
+          " and no runfiles manifest maps it back to the checkout, so the workspace directory cannot be determined.");
+      }
+      return realCommunityMarkerFile.getParent();
     } else {
       throw new RuntimeException("Cannot find marker files " + ultimateMarkerFile + " either " + communityMarkerFile);
     }
+  }
+
+  /**
+   * Maps the community marker file back to its place in the real checkout through the runfiles manifest.
+   *
+   * <p>Needed whenever Bazel materializes runfiles as copies rather than symlinks, which is what happens on
+   * Windows without symlink support. {@link Path#toRealPath} then cannot escape the runfiles tree, so the
+   * directory derived from it is the runfiles directory instead of the checkout, and everything downstream
+   * that resolves against {@code idea.home.path} looks for checkout files that were never copied there.
+   * The manifest maps each runfiles path to the real file, so it still points into the checkout.
+   *
+   * @return the workspace directory, or {@code null} when no manifest is available or none has an entry.
+   */
+  private static Path resolveWorkspaceDirFromManifest(String testWorkspace, String communityMarkerFileName, Path workDirPath) {
+    List<Path> manifestCandidates = new ArrayList<>();
+    String runfilesManifestFile = System.getenv("RUNFILES_MANIFEST_FILE");
+    if (runfilesManifestFile != null && !runfilesManifestFile.isBlank()) {
+      manifestCandidates.add(Path.of(runfilesManifestFile));
+    }
+    // Bazel also drops a MANIFEST next to a materialized tree, which is what a copy-mode run has.
+    manifestCandidates.add(workDirPath.resolve("MANIFEST"));
+
+    // Order matters: the Ultimate-context keys are tried first, exactly as the manifest-only branch does.
+    List<String> searchKeys = new ArrayList<>();
+    if (testWorkspace != null && !testWorkspace.isBlank()) {
+      searchKeys.add(testWorkspace + "/external/community+/" + communityMarkerFileName);
+      searchKeys.add(testWorkspace + "/" + communityMarkerFileName);
+    }
+    searchKeys.add("community+/" + communityMarkerFileName);
+    searchKeys.add("_main/" + communityMarkerFileName);
+
+    for (Path manifestPath : manifestCandidates) {
+      if (!Files.exists(manifestPath)) {
+        continue;
+      }
+      // Parsed by the shared reader rather than by hand: Bazel escapes an entry whose path contains a space.
+      Map<String, String> entries;
+      try {
+        entries = new BazelRunfilesManifest(manifestPath.toString()).getEntries();
+      }
+      catch (RuntimeException e) {
+        continue;
+      }
+      for (String searchKey : searchKeys) {
+        String realPath = entries.get(searchKey);
+        if (realPath == null) {
+          continue;
+        }
+
+        Path realMarkerFile;
+        try {
+          realMarkerFile = Path.of(realPath).toRealPath();
+        }
+        catch (IOException e) {
+          continue;
+        }
+
+        Path communityRoot = realMarkerFile.getParent();
+        if (communityRoot == null) {
+          continue;
+        }
+
+        // Which key matched says which workspace layout this is, and that is the only reliable signal.
+        // Inferring it instead from an `.ultimate.root.marker` sitting above the community directory gets
+        // the community-workspace-inside-an-Ultimate-checkout case wrong: the marker is there, but the
+        // right answer is still the community directory. This mirrors how the two branches below decide.
+        boolean ultimateContext = searchKey.contains("community+/");
+        if (!ultimateContext) {
+          return communityRoot;
+        }
+
+        Path ultimateRoot = communityRoot.getParent();
+        if (ultimateRoot == null || !Files.exists(ultimateRoot.resolve(".ultimate.root.marker"))) {
+          throw new RuntimeException(
+            "Manifest key '" + searchKey + "' points at an Ultimate layout, but no .ultimate.root.marker exists in " +
+            ultimateRoot + " (resolved from " + realMarkerFile + ")");
+        }
+        return ultimateRoot;
+      }
+    }
+
+    return null;
   }
 
   private static void setSandboxPath(String property, Path path) throws IOException {

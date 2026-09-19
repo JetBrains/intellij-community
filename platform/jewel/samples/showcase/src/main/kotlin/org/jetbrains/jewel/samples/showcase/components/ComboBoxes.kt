@@ -21,12 +21,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.samples.showcase.ShowcaseIcons
+import org.jetbrains.jewel.samples.showcase.ShowcaseTestTags
 import org.jetbrains.jewel.ui.component.ComboBox
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.EditableComboBox
@@ -111,7 +113,8 @@ private fun ListComboBoxes() {
                 items = stringItems,
                 selectedIndex = selectedIndex,
                 onSelectedItemChange = { index -> selectedIndex = index },
-                modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
+                modifier =
+                    Modifier.widthIn(max = 200.dp).fillMaxWidth().testTag(ShowcaseTestTags.STRING_LIST_COMBO_BOX),
                 itemKeys = { _, item -> item },
             )
         }

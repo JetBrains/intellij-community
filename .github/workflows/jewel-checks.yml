@@ -326,6 +326,58 @@ jobs:
       - uses: actions/checkout@v7.0.1
         name: Check out repository
 
+      # The IDE end-to-end test loads the JPS module graph, which includes the android modules.
+      - uses: actions/checkout@v7.0.1
+        name: Checkout JetBrains/android submodule
+        with:
+          repository: JetBrains/android
+          path: android
+          ref: master
+
+      # The IDE end-to-end test builds a dev IDE from every community module. Same preparation as the API check.
+      - name: Free disk space
+        # language=bash
+        run: |
+          echo "Disk space before cleanup:"
+          df -h /
+          # Pre-installed toolchains these tests don't need.
+          sudo rm -rf \
+            /usr/share/dotnet \
+            /usr/share/swift \
+            /usr/share/miniconda \
+            /usr/local/lib/android \
+            /usr/local/share/boost \
+            /usr/local/share/powershell \
+            /usr/local/share/chromium \
+            /usr/local/lib/node_modules \
+            /opt/ghc \
+            /opt/hostedtoolcache/CodeQL \
+            /opt/hostedtoolcache/Ruby \
+            /opt/hostedtoolcache/PyPy \
+            /opt/hostedtoolcache/go \
+            /opt/microsoft \
+            /opt/google \
+            /imagegeneration \
+            /var/cache/apt/archives
+          sudo apt-get -y clean
+          docker image prune --all --force || true
+          docker builder prune --all --force || true
+          echo "Disk space after cleanup:"
+          df -h /
+
+      - name: Expand swap
+        # language=bash
+        run: |
+          # Bazel's JVM workers may hit OOM (exit 137) with the default 16 GB RAM and 4 GB swap.
+          # /mnt on hosted runners has ~70 GB free, so move swap there and grow it.
+          sudo swapoff -a || true
+          sudo rm -f /mnt/swapfile /swapfile
+          sudo fallocate -l 30G /mnt/swapfile
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+          free -h
+
       - name: Install Xvfb
         # libxrandr2 and libxinerama1 are dlopened, so nothing reports them missing.
         # language=bash
@@ -373,12 +425,29 @@ jobs:
       - uses: actions/checkout@v7.0.1
         name: Check out repository
 
+      # The IDE end-to-end test loads the JPS module graph, which includes the android modules.
+      - uses: actions/checkout@v7.0.1
+        name: Checkout JetBrains/android submodule
+        with:
+          repository: JetBrains/android
+          path: android
+          ref: master
+
+      # The IDE end-to-end test copies every community module into its runfiles, which does not fit on C:.
+      - name: Put Bazel's output on the larger drive
+        shell: pwsh
+        run: |
+          "startup --output_user_root=D:/b`ncommon --disk_cache=D:/bc" | Out-File -Encoding ascii .bazelrc-user.bazelrc
+          Get-PSDrive C, D | Format-Table Name, Used, Free
+
       - name: Run the Spectre headful UI tests
         # Not redundant: JDialogRenderer uses RenderSettings.SwingGraphics on Windows.
+        # --enable_runfiles is for the IDE test. See platform/jewel/docs/e2e-tests.md.
         run: >
           ./bazel.cmd test //platform/jewel/...
           --build_tests_only
           --test_tag_filters=requires-display
+          --enable_runfiles
           --test_output=errors
 
       - name: Upload Bazel test logs
