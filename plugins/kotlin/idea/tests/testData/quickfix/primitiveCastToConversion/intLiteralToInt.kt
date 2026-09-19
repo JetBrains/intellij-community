@@ -5,4 +5,4 @@
 fun foo() {
     val a = 1 as<caret> Int
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplacePrimitiveCastWithNumberConversionFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplacePrimitiveCastWithNumberConversionFix

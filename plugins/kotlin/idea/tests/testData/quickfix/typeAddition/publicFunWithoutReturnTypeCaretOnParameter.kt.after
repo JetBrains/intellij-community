@@ -5,4 +5,4 @@ class A() {
     public fun foo(p: String): String<caret> = "a"
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.intentions.SpecifyTypeExplicitlyIntention
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.intentions.SpecifyTypeExplicitlyIntention

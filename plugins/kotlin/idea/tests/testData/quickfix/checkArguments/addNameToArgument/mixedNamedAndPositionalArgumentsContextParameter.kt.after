@@ -15,4 +15,4 @@ fun foo(a: String, b: String): String = x + a + b
 fun main() {
     foo(b = "World", a = "Hello", "ctx")
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddNameToArgumentFixFactory$AddNameToArgumentFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddNameToArgumentFixFactory$AddNameToArgumentFix

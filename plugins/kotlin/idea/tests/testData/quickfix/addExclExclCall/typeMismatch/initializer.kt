@@ -3,4 +3,4 @@
 fun test(s: String?) {
     val z: String = <caret>s
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

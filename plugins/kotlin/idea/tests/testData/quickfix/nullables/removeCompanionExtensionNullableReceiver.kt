@@ -4,4 +4,4 @@
 class C
 
 companion fun C<caret>?.incorrect7() {}
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveNullableFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveNullableFix

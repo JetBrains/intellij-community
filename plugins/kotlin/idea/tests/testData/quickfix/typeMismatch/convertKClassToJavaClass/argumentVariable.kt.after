@@ -10,4 +10,4 @@ fun main() {
 
 fun acceptClass(cls: Class<*>) = Unit
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertKClassToClassFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertKClassToClassFix

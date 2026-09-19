@@ -8,4 +8,4 @@ fun foo(b: A) {
     var a: A? = A()
     a = a?.plus(b)
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceInfixOrOperatorCallFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceInfixOrOperatorCallFix

@@ -2,4 +2,4 @@
 interface I
 fun <caret>foo() = if (false) object : I {} else null
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.intentions.SpecifyTypeExplicitlyIntention
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.intentions.SpecifyTypeExplicitlyIntention

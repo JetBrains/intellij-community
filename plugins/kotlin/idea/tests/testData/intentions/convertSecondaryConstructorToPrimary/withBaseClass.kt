@@ -4,4 +4,4 @@ abstract class Base(val x: String)
 class Derived : Base {
     constructor(x: String<caret>): super(x)
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertSecondaryConstructorToPrimaryInspection$createQuickFix$1
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertSecondaryConstructorToPrimaryInspection$createQuickFix$1

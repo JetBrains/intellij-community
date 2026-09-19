@@ -7,4 +7,4 @@ fun main() {
 }
 
 fun foo() = mapOf(1 to "a")
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.collections.ChangeToMutableCollectionFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.collections.ChangeToMutableCollectionFix

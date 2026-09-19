@@ -3,4 +3,4 @@ public fun foo(a: Any?) {
     a as Map<*, Int>?<caret>
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix

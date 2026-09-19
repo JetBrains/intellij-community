@@ -5,4 +5,4 @@ fun foo(x: String?) {
         4
     }
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddIfElseBranchFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddIfElseBranchFix

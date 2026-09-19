@@ -5,4 +5,4 @@
 // K2_ERROR: DATA_CLASS_WITHOUT_PARAMETERS
 
 data class Some @JvmOverloads constructor<caret>
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MissingConstructorBracketsFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MissingConstructorBracketsFix

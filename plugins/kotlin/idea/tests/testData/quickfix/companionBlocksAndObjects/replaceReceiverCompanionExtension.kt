@@ -8,4 +8,4 @@ companion fun Example.baz() {}
 fun m(e: Example) {
     e.b<caret>az()
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ReplaceInstanceReceiverWithClassNameFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ReplaceInstanceReceiverWithClassNameFix

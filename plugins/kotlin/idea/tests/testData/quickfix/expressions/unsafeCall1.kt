@@ -3,4 +3,4 @@
 fun foo(a: Int?) {
     a<caret>.plus(1)
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithSafeCallFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithSafeCallFix

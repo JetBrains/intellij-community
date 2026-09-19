@@ -7,4 +7,4 @@ fun callIt(p: Any) {
     callMe(<caret>p as String?)
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

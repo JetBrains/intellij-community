@@ -6,4 +6,4 @@ fun test() {
     val <caret>_ = someUnitFunction()
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.RemoveUnnamedPropertyFixFactory$RemoveUnnamedPropertyFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.RemoveUnnamedPropertyFixFactory$RemoveUnnamedPropertyFix

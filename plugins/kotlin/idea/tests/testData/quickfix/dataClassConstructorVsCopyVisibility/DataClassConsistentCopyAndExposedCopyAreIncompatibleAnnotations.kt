@@ -5,4 +5,4 @@
 @ConsistentCopyVisibility<caret>
 @ExposedCopyVisibility
 data class Foo private constructor(val x: Int)
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix

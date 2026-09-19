@@ -24,4 +24,4 @@ fun useEca() {
     println(ECA.EcaObject.ecaObjectFun())
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.ObjectInheritsExceptionInspection$ChangeObjectToClassQuickFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.ObjectInheritsExceptionInspection$ChangeObjectToClassQuickFix

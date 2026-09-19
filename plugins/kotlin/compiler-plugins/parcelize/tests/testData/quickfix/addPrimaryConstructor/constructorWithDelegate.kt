@@ -12,4 +12,4 @@ class <caret>Test : Parcelable {
     constructor(s: String)
     constructor(s: String, i: Int) : this(s)
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelizeAddPrimaryConstructorQuickFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelizeAddPrimaryConstructorQuickFix

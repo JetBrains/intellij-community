@@ -3,4 +3,4 @@
 interface Foo<out E> {
     fun bar(e: E<caret>)
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddAnnotationFix

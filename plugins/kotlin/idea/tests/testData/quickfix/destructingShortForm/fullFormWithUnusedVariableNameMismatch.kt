@@ -7,4 +7,4 @@ fun test(product: Product) {
     val (<caret>myId, _) = product
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.DestructuringFormFactory$ConvertNameBasedDestructuringToFullFormFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.DestructuringFormFactory$ConvertNameBasedDestructuringToFullFormFix

@@ -6,4 +6,4 @@ data class Foo(val name: String)
 fun test(foo: Foo?) {
     val s: String? = foo?.name?.toString()<caret>
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveRedundantCallsOfConversionMethodsFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveRedundantCallsOfConversionMethodsFix

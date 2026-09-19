@@ -8,4 +8,4 @@ fun test() {
         println("$i: $element")
     }
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.declarations.ConvertNameBasedDestructuringShortFormToPositionalFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.declarations.ConvertNameBasedDestructuringShortFormToPositionalFix

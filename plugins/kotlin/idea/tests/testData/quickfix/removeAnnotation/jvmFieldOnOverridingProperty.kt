@@ -6,4 +6,4 @@ interface I {
 }
 
 class C1 : I { <caret>@JvmField override val x: Int = 1 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix

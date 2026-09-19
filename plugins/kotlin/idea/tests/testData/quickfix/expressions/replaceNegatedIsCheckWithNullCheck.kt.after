@@ -8,4 +8,4 @@ fun test(a: A?) {
 }
 
 // K2_ERROR: IMPOSSIBLE_IS_CHECK_RELYING_ON_NULL_ERROR
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceIsCheckWithNullCheckFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceIsCheckWithNullCheckFix

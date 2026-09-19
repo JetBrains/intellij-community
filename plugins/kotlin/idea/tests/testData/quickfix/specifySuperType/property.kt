@@ -17,4 +17,4 @@ class Test : X, Z, Y() {
         get() = <caret>super.bar
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SpecifySuperTypeFixFactory$SpecifySuperTypeQuickFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SpecifySuperTypeFixFactory$SpecifySuperTypeQuickFix

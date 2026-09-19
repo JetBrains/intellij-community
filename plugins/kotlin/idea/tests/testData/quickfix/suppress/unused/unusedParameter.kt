@@ -3,4 +3,4 @@
 class X {
     fun foo(<caret>value: Int) {}
 }
-// FUS_K2_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix

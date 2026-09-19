@@ -2,4 +2,4 @@
 // SHOULD_BE_AVAILABLE_AFTER_EXECUTION
 
 open class <caret>Base<T : Any, L : List<T>>
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.intentions.CreateKotlinSubClassIntention
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.intentions.CreateKotlinSubClassIntention

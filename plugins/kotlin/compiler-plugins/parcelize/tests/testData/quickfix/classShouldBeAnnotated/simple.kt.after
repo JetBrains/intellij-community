@@ -16,4 +16,4 @@ object StringParceler : Parceler<String> {
 
 @Parcelize
 class Foo(@<caret>TypeParceler<String, StringParceler> val a: String)
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.AnnotateWithParcelizeQuickFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.AnnotateWithParcelizeQuickFix

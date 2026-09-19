@@ -3,7 +3,7 @@
 // K2_ERROR: Unresolved reference 'foo' on receiver of type 'A<Int>'.
 // K2_ERROR: Unresolved reference 's'.
 // K2_AFTER_ERROR: Unresolved reference 's'.
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
 
 class A<T>(val n: T) {
     fun foo(s: Any, t: T): T {

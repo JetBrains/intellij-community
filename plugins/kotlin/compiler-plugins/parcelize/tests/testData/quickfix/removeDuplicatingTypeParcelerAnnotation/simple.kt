@@ -15,4 +15,4 @@ object StringParceler : Parceler<String> {
 @Parcelize
 @TypeParceler<String, StringParceler>
 class Foo(@<caret>TypeParceler<String, StringParceler> val a: String) : Parcelable
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelizeRemoveDuplicatingTypeParcelerAnnotationQuickFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelizeRemoveDuplicatingTypeParcelerAnnotationQuickFix

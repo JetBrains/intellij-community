@@ -37,4 +37,4 @@ class Foo(val a: String) : Parcelable {
     }
 
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelRemoveCustomCreatorProperty
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelRemoveCustomCreatorProperty

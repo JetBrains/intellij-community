@@ -5,4 +5,4 @@ fun foo() {
     bar = 42
     println(bar)
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.diagnosticBased.VariableInitializerIsRedundantInspection$createQuickFix$1
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.diagnosticBased.VariableInitializerIsRedundantInspection$createQuickFix$1

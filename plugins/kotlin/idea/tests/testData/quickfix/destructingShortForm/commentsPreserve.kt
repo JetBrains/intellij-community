@@ -7,4 +7,4 @@ fun foo(product: Product) {
     val (id, n<caret>ame/*some comment*/) = product // warning on "name"
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertNameBasedDestructuringShortFormToFullFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertNameBasedDestructuringShortFormToFullFix

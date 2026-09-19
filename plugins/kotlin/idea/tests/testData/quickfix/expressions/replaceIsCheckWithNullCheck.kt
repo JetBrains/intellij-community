@@ -9,4 +9,4 @@ fun test(obj: Any?) {
     }
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceIsCheckWithNullCheckFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceIsCheckWithNullCheckFix

@@ -2,4 +2,4 @@
 <caret>public class C {
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.diagnosticBased.RedundantVisibilityModifierInspection$createQuickFix$1
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.diagnosticBased.RedundantVisibilityModifierInspection$createQuickFix$1

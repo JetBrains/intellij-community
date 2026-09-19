@@ -4,4 +4,4 @@ fun foo(w: Int = 0, x: Int, y: Int = 0, z: (Int) -> String) {
     foo(0, 1) {<caret>}
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeParameterTypeFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeParameterTypeFix

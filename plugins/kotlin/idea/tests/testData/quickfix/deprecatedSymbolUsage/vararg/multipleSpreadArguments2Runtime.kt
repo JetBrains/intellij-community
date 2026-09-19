@@ -12,4 +12,4 @@ fun foo(list1: List<Int>,list2: List<Int>) {
     <caret>oldFun(*list1.toIntArray(), 0, *list2.toIntArray())
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

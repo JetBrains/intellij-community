@@ -10,4 +10,4 @@ fun foo(names: List<String>, name: String) {
     val name1 = ""
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.intentions.IterateExpressionIntention
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.intentions.IterateExpressionIntention

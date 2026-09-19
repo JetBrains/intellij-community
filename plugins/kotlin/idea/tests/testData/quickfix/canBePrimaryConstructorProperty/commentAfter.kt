@@ -2,4 +2,4 @@
 class Complex(x: Int, y: Double, z: String) {
     val <caret>y: Double = y // Duplicating
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.intentions.MovePropertyToConstructorIntention
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.intentions.MovePropertyToConstructorIntention

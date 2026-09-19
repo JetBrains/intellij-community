@@ -4,5 +4,5 @@ interface Tr {
     fun foo(value: String, b: String) = ""
     fun bar() = foo(<caret>value, b)
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateParameterFromUsageBuilder$CreateParameterFromUsageAction
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateParameterFromUsageBuilder$CreateParameterFromUsageAction
 // TEST_PREVIEW: value: kotlin.String

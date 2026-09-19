@@ -8,4 +8,4 @@ fun test(person: Person) {
     val (one , two) = person
 }
 
-// FUS_K2_QUICKFIX_NAME: com.intellij.codeInspection.actions.CleanupInspectionIntention
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.actions.CleanupInspectionIntention

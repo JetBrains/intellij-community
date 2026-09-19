@@ -2,4 +2,4 @@
 fun <<caret>T : Cloneable> foo() where T : Comparable<*> {
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveTypeParameterConstraintFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveTypeParameterConstraintFix

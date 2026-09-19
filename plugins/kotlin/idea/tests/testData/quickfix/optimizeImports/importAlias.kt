@@ -9,4 +9,4 @@ fun foo() {
     B()
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.KotlinOptimizeImportsQuickFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.KotlinOptimizeImportsQuickFix

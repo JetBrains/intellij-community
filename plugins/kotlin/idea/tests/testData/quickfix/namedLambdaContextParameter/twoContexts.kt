@@ -5,4 +5,4 @@
 fun foo(bar: context(Int, c2: <caret>String)() -> Unit) {
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveParameterNameFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveParameterNameFix

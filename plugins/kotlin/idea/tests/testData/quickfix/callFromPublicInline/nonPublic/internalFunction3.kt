@@ -9,4 +9,4 @@ class C {
         }
     }
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeModifiersFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeModifiersFix

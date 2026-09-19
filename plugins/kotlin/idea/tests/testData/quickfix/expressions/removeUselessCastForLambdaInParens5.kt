@@ -5,4 +5,4 @@ fun test() {
     class B : A()
     ({ "" } as<caret> () -> String)
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUselessCastFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUselessCastFix

@@ -8,4 +8,4 @@ class Container {
     }
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.intentions.CreateKotlinSubClassIntention
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.intentions.CreateKotlinSubClassIntention

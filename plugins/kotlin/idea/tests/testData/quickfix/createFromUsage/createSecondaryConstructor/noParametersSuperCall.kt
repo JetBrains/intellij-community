@@ -10,4 +10,4 @@ class Creation: Base {
     constructor(f: Int): super(f)
 }
 val v = Creation(<caret>)
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.AddConstructorFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.AddConstructorFix

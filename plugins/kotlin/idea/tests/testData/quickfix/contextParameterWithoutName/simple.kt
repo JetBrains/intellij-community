@@ -5,4 +5,4 @@
 context(<caret>String)
 fun foo() = Unit
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ContextParameterWithoutNameFixFactory$AddUnderscoreToContextParameterFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ContextParameterWithoutNameFixFactory$AddUnderscoreToContextParameterFix

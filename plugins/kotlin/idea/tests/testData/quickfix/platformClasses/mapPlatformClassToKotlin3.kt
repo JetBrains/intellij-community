@@ -26,4 +26,4 @@ fun e() : Comparable<String>? {
     throw Exception()
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.MapPlatformClassToKotlinFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.MapPlatformClassToKotlinFix

@@ -8,4 +8,4 @@ fun test() = Foo(abc = 1, ghi = A(2), def = "s")
 class Foo(abc: Int, ghi: A, def: String) {
 
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinClassAction
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinClassAction

@@ -2,5 +2,5 @@
 // K2_ERROR: UNRESOLVED_REFERENCE
 fun expressionBody(foo: Any) = fo<caret>o
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateParameterFromUsageBuilder$CreateParameterFromUsageAction
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateParameterFromUsageBuilder$CreateParameterFromUsageAction
 // TEST_PREVIEW: foo: kotlin.Any

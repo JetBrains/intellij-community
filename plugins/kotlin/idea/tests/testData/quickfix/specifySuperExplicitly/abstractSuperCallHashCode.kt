@@ -25,4 +25,4 @@ class B : A(), I {
 
 
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.UpdateToCorrectMethodFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.UpdateToCorrectMethodFix

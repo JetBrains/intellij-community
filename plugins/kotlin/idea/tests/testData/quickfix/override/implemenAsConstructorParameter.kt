@@ -6,4 +6,4 @@ interface I {
 
 <caret>class A : I
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementAsConstructorParameterQuickfix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementAsConstructorParameterQuickfix

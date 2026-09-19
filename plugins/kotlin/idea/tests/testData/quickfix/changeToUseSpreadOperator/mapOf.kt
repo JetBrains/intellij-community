@@ -9,4 +9,4 @@ fun <K, V> yourMapOf(vararg pairs: Pair<K, V>) {}
 fun myMapOf(vararg pairs: Pair<String,String>) {
     val myMap = yourMapOf(<caret>pairs)
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToUseSpreadOperatorFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToUseSpreadOperatorFix

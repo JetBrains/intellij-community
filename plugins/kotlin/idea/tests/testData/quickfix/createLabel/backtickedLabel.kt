@@ -7,4 +7,4 @@ fun test() {
     1.bar { if (it == 2) return@`foo bar`<caret> }
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CreateLabelFix$ForLambda
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CreateLabelFix$ForLambda

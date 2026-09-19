@@ -5,4 +5,4 @@ fun foo() {
     val l: Int
     l = "1".toLong()<caret>
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

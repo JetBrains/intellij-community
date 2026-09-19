@@ -6,4 +6,4 @@ fun foo(vararg x: String) {}
 
 fun bar(vararg y: Int) = foo(<caret>y)
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToUseSpreadOperatorFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToUseSpreadOperatorFix

@@ -9,4 +9,4 @@ fun base(base: () -> Base) {}
 
 open class Base {}
 class Leaf : Base()
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithLambdaForTypeMismatchFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithLambdaForTypeMismatchFix

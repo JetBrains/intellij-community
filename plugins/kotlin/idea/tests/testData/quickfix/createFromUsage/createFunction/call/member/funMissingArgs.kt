@@ -8,7 +8,7 @@
 // K2_ACTIONS_LIST: Create extension function 'A<Int>.foo'
 // K2_ACTIONS_LIST: Remove parameter 's'
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
 
 class A<T>(val n: T) {
     fun foo(i: Int, s: String): A<T> = throw Exception()

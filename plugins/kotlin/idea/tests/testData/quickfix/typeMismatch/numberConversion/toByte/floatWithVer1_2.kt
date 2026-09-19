@@ -6,4 +6,4 @@ fun byte(x: Byte) {}
 fun test(f: Float) {
     byte(<caret>f)
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

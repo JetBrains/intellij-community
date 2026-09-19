@@ -10,4 +10,4 @@ fun fdemo() {
     f1(ctx = Ctx())
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.CreateContextParameterFix$ForCalledFunction
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.CreateContextParameterFix$ForCalledFunction

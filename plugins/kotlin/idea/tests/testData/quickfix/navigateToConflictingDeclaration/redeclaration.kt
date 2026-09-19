@@ -10,4 +10,4 @@ package test
 val myProperty<caret>: Int = 42
 
 val myProperty: String = "hello"
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ShowConflictingDeclarationsAction
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ShowConflictingDeclarationsAction

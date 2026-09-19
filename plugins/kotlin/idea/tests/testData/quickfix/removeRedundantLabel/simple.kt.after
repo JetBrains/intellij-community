@@ -5,4 +5,4 @@ fun foo() {
 }
 
 fun bar() {}
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.RedundantLabelInspection$createQuickFix$1
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.RedundantLabelInspection$createQuickFix$1

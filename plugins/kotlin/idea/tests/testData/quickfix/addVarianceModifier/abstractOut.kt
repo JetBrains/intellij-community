@@ -3,4 +3,4 @@ abstract class AbstractOut<<caret>T> {
     abstract val foo: T
     private var bar = foo
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.AddVarianceModifierInspection$AddVarianceFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.AddVarianceModifierInspection$AddVarianceFix

@@ -4,4 +4,4 @@
 // COMPILER_ARGUMENTS: -XXLanguage:+FullValueClasses
 sealed value class Sealed(<caret>val x: Int)
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveValVarFromParameterFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveValVarFromParameterFix

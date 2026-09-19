@@ -8,4 +8,4 @@ fun foo() {
     A() xyz<caret>zy 5
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ModifierRequiredFixFactoriesKt$createFixIfAvailable$1
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ModifierRequiredFixFactoriesKt$createFixIfAvailable$1

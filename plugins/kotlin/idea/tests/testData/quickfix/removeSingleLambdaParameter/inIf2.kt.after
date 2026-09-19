@@ -4,4 +4,4 @@ fun test(i: Int) {
     val p: (String) -> Boolean =
         if (i == 1) { { true } } else { s -> false }
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.RemoveUnusedVariableFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.RemoveUnusedVariableFix

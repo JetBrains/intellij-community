@@ -2,4 +2,4 @@
 class UsedInProperty(<caret>var x: Int) {
     var y = x
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.RemoveValVarFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.RemoveValVarFix

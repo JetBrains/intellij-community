@@ -7,4 +7,4 @@ fun foo(a: Sequence<String>) {
 }
 
 fun bar(a: List<String>) {}
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertCollectionFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertCollectionFix

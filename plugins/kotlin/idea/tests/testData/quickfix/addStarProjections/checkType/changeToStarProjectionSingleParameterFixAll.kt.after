@@ -5,4 +5,4 @@
 fun isStringList(list: Any?) = list is (List<*>)
 fun isIntList(list: Any?) = list is (List<*>)
 
-// FUS_K2_QUICKFIX_NAME: com.intellij.codeInsight.daemon.impl.actions.FixAllHighlightingProblems
+// FUS_QUICKFIX_NAME: com.intellij.codeInsight.daemon.impl.actions.FixAllHighlightingProblems

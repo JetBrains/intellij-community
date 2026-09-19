@@ -6,4 +6,4 @@ fun foo(a: Sequence<String>) {
     val strings: List<String> = a<caret>
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertCollectionFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertCollectionFix

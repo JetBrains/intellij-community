@@ -7,4 +7,4 @@ fun test() {
     foo<caret>()
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.intentions.SpecifyAllRemainingArgumentsByNameIntention
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.intentions.SpecifyAllRemainingArgumentsByNameIntention

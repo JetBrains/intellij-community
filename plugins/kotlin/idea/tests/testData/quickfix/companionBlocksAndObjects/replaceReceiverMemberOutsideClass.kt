@@ -10,4 +10,4 @@ class Example {
 fun m(e: Example) {
     e.te<caret>st()
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ReplaceInstanceReceiverWithClassNameFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ReplaceInstanceReceiverWithClassNameFix

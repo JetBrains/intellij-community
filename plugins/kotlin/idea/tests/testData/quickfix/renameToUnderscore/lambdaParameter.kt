@@ -10,4 +10,4 @@ fun bar() {
     }
 }
 
-// FUS_K2_QUICKFIX_NAME: com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix
+// FUS_QUICKFIX_NAME: com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix

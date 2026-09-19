@@ -8,4 +8,4 @@ val greeting: String = "hello"
 
 val result = context(1, greeting) { bar() }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterToExistingContextFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterToExistingContextFix

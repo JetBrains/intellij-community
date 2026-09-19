@@ -23,4 +23,4 @@ val foo: MockLibrary = MockLibrary();
     fun bar(test: MockLibrary<caret>){
     }
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix

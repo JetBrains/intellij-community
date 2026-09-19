@@ -8,4 +8,4 @@ fun test(a: Boolean, b: Boolean, c: Boolean) {
     }
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CommaInWhenConditionWithoutArgumentFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CommaInWhenConditionWithoutArgumentFix

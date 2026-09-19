@@ -6,4 +6,4 @@ annotation class XXX
 @XXX
 class <caret>UnusedClass
 
-// FUS_K2_QUICKFIX_NAME: com.intellij.codeInspection.ex.EntryPointsManagerBase$AddAnnotation
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.ex.EntryPointsManagerBase$AddAnnotation

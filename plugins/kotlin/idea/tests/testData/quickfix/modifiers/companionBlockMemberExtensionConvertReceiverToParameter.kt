@@ -6,4 +6,4 @@ class Example {
         fun <caret>String.foo(): Int = length
     }
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.CompanionBlockMemberExtensionFixFactory$ConvertReceiverToParameterFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.CompanionBlockMemberExtensionFixFactory$ConvertReceiverToParameterFix

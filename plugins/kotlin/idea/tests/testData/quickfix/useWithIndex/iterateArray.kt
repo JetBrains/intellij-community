@@ -9,4 +9,4 @@ fun foo(array: Array<String>): Int? {
     }
     return null
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.UseWithIndexInspection$createQuickFix$1
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.UseWithIndexInspection$createQuickFix$1

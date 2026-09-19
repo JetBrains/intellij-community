@@ -1,6 +1,6 @@
 // "Create extension function 'A.foo'" "true"
 // WITH_STDLIB
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
 fun bar(b: Boolean) {
 
 }

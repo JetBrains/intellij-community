@@ -30,4 +30,4 @@ class Foo(val a: String) : Parcelable {
     }
 
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelRemoveCustomWriteToParcel
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelRemoveCustomWriteToParcel

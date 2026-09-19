@@ -30,4 +30,4 @@ fun useG(a: Vec, b: Vec) {
     shout()
 }
 
-// FUS_K2_QUICKFIX_NAME: com.intellij.codeInsight.daemon.impl.actions.FixAllHighlightingProblems
+// FUS_QUICKFIX_NAME: com.intellij.codeInsight.daemon.impl.actions.FixAllHighlightingProblems

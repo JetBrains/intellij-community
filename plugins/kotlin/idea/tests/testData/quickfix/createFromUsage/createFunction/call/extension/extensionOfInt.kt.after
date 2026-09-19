@@ -5,7 +5,7 @@
 // K2_ACTIONS_LIST: Rename reference
 // K2_ACTIONS_LIST: Create annotation 'toMyText2'
 // K2_ACTIONS_LIST: Create extension function 'Int.toMyText2'
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
 // K2_ERROR: UNRESOLVED_REFERENCE
 
 fun Int.foo(): String {

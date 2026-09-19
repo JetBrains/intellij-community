@@ -10,4 +10,4 @@ sealed class <caret>Base {
         override fun foo() = throw UnsupportedOperationException()
     }
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.intentions.CreateKotlinSubClassIntention
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.intentions.CreateKotlinSubClassIntention

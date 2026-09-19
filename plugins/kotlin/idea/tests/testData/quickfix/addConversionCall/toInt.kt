@@ -7,4 +7,4 @@ fun foo(v: Long) {
     val v2 = v + 1
     takeInt(v2<caret>)
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

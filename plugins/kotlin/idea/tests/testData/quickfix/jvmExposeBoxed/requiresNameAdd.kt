@@ -5,4 +5,4 @@
 
 @JvmE<caret>xposeBoxed fun foo(): UInt = 1u
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddJvmExposeBoxedNameFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddJvmExposeBoxedNameFix

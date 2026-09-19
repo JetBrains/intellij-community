@@ -13,4 +13,4 @@ typealias TypeAlias<TT> = WithGenerics<Cell<TT>>
 // in K1 Mode, explicit type would be fully expanded
 val <caret>list = TypeAlias(Cell(MyClass()))
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.intentions.SpecifyTypeExplicitlyIntention
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.intentions.SpecifyTypeExplicitlyIntention

@@ -6,4 +6,4 @@ fun f(a: Int, b: String = "b", c: String = "c") {}
 fun g() {
     f(a = 10, c = "BAR", <caret>"FOO")
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddNameToArgumentFixFactory$AddNameToArgumentFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddNameToArgumentFixFactory$AddNameToArgumentFix

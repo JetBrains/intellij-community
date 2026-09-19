@@ -167,7 +167,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         //multiple, when chooser is provided
         val calledId = calledEventIds.firstOrNull() as? String ?: error("single `called` event is expected: $calledEventIds")
 
-        val fusDirectiveName = "FUS_K2_QUICKFIX_NAME"
+        val fusDirectiveName = "FUS_QUICKFIX_NAME"
         val quickFixName = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $fusDirectiveName:")
         if (quickFixName.isNullOrEmpty()) {
             val expected = """

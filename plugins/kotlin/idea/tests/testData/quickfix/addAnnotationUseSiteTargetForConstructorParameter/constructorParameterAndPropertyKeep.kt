@@ -10,4 +10,4 @@ internal annotation class Anno
 
 class MyClass(<caret>@Anno val foo: String)
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.WrongAnnotationTargetFixFactories$AddAnnotationUseSiteTargetFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.WrongAnnotationTargetFixFactories$AddAnnotationUseSiteTargetFix
