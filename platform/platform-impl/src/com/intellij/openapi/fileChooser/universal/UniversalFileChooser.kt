@@ -111,7 +111,6 @@ import java.awt.event.MouseEvent
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.BooleanSupplier
 import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -911,7 +910,18 @@ object UniversalFileChooser {
       /** Completed when the first [loadRoots] pass ends. After a load error, [roots] stays empty. */
       val rootsLoaded: CompletableDeferred<Unit> = CompletableDeferred()
 
-      internal val pathTextField: NioPathTextField = NioPathTextField(scope, descriptor.isChooseFiles, descriptor.isChooseJarContents)
+      internal val pathTextField: NioPathTextField = NioPathTextField(
+        scope,
+        chooseFiles = descriptor.isChooseFiles,
+        chooseArchives = descriptor.isChooseJarContents,
+        showHidden = { fileTree.areHiddensShown() },
+        pathParser = ::parseOwnedPath,
+      )
+
+      private fun parseOwnedPath(text: String): Path? =
+        contributor.parsePresentablePath(text)?.takeIf { parsed ->
+          runCatching { contributor.ownsPath(parsed) }.getOrDefault(false)
+        }
 
       /**
        * One-shot flag (EDT only): when set, the next non-empty path-field update selects the whole
@@ -1017,8 +1027,6 @@ object UniversalFileChooser {
         }, disposable)
         val scrollPane = ScrollPaneFactory.createScrollPane(fileTree.getTree())
 
-        pathTextField.showHiddenSupplier = BooleanSupplier { fileTree.areHiddensShown() }
-        pathTextField.pathParser = contributor::parsePresentablePath
         ComponentValidator(disposable)
           .withValidator(Supplier<ValidationInfo?> {
             if (pathTextFieldInvalid)
