@@ -733,6 +733,19 @@ class AnalysisIgnoreTest {
   }
 
   @Test
+  fun `a double asterisk between two slashes takes one directory or none`() = runBlocking {
+    val wrapperProperties = file("projectRoot/gradle/wrapper/gradle-wrapper.properties")
+    val wrapperJar = file("projectRoot/gradle/wrapper/gradle-wrapper.jar")
+    val dbYml = file("projectRoot/k8s/db.yml")
+    val petclinicYml = file("projectRoot/k8s/petclinic.yml")
+    val excludeFile = writeAnalysisIgnoreFile("projectRoot", "gradle/**/gradle-wrapper.properties", "k8s/**/db.yml")
+
+    discover(excludeFile)
+
+    assertEquals(setOf(wrapperProperties.url, dbYml.url), outOfContent(wrapperProperties, wrapperJar, dbYml, petclinicYml))
+  }
+
+  @Test
   fun `a name is compared by its id first and by its letters on a case-insensitive file system`() {
     val build = dir("projectRoot/build")
     val capitalBuild = dir("projectRoot/other/Build")
