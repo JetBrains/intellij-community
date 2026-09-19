@@ -69,8 +69,6 @@
     <orderEntry type="module" module-name="intellij.libraries.jps.javac.extension" />
     <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
     <orderEntry type="module" module-name="intellij.libraries.winp" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
     <orderEntry type="module" module-name="intellij.libraries.kryo5" />

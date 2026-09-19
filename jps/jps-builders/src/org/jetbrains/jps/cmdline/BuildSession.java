@@ -35,7 +35,6 @@ import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.builders.ModuleInducedTargetType;
 import org.jetbrains.jps.builders.PreloadedDataExtension;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
-import org.jetbrains.jps.cache.loader.JpsOutputLoaderManager;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.RebuildRequestedException;
 import org.jetbrains.jps.incremental.TargetTypeRegistry;
@@ -50,7 +49,6 @@ import org.jetbrains.jps.incremental.messages.DoneSomethingNotification;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.incremental.storage.StampsStorage;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.CannotLoadJpsModelException;
@@ -99,8 +97,6 @@ final class BuildSession implements Runnable, CanceledStatus {
   private final BuildType myBuildType;
   private final List<TargetTypeBuildScope> myScopes;
   private final boolean myLoadUnloadedModules;
-  private @Nullable JpsOutputLoaderManager myCacheLoadManager;
-  private final @Nullable CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings myCacheDownloadSettings;
 
   BuildSession(UUID sessionId,
                Channel channel,
@@ -116,7 +112,6 @@ final class BuildSession implements Runnable, CanceledStatus {
     String globalOptionsPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
     myBuildType = convertCompileType(params.getBuildType());
     myScopes = params.getScopeList();
-    myCacheDownloadSettings = params.hasCacheDownloadSettings() ? params.getCacheDownloadSettings() : null;
     List<String> filePaths = params.getFilePathList();
     final Map<String, String> builderParams = new HashMap<>();
     for (CmdlineRemoteProto.Message.KeyValuePair pair : params.getBuilderParameterList()) {
@@ -211,32 +206,6 @@ final class BuildSession implements Runnable, CanceledStatus {
         //noinspection CallToPrintStackTrace
         t.printStackTrace();
         profilingHelper = null;
-      }
-
-      myCacheLoadManager = null;
-      if (ProjectStamps.PORTABLE_CACHES && myCacheDownloadSettings != null) {
-        LOG.info("Cache download settings: disableDownload=" + myCacheDownloadSettings.getDisableDownload() +
-                 "; forceUpdate=" + myCacheDownloadSettings.getForceDownload() +
-                 "; cleanupAsynchronously=" + myCacheDownloadSettings.getCleanupAsynchronously());
-        if (myCacheDownloadSettings.getDisableDownload()) {
-          LOG.info("Cache download is disabled");
-        } else {
-          LOG.info("Trying to download JPS caches before build");
-          myCacheLoadManager = new JpsOutputLoaderManager(myBuildRunner.loadModelAndGetJpsProject(), this, myProjectPath, myChannel,
-                                                          mySessionId, myCacheDownloadSettings);
-          myCacheLoadManager.load(myBuildRunner, true, myScopes, () -> {
-            if (myPreloadedData != null) {
-              LOG.info("Releasing old project description...");
-              ProjectDescriptor projectDescriptor = myPreloadedData.getProjectDescriptor();
-              if (projectDescriptor != null) {
-                projectDescriptor.release();
-                myPreloadedData.setProjectDescriptor(null);
-              }
-              JpsServiceManager.getInstance().getExtensions(PreloadedDataExtension.class).forEach(ext -> ext.discardPreloadedData(myPreloadedData));
-              myPreloadedData = null;
-            }
-          });
-        }
       }
 
       runBuild(new MessageHandler() {
@@ -412,9 +381,6 @@ final class BuildSession implements Runnable, CanceledStatus {
         }
       }
       myProjectDescriptor = pd;
-      if (myCacheLoadManager != null) {
-        myCacheLoadManager.updateBuildStatistic(myProjectDescriptor);
-      }
 
       myLastEventOrdinal.set(myInitialFSDelta != null? myInitialFSDelta.getOrdinal() : 0L);
 
@@ -715,9 +681,6 @@ final class BuildSession implements Runnable, CanceledStatus {
         }
         else if (!doneSomething){
           status = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.UP_TO_DATE;
-        }
-        if (ProjectStamps.PORTABLE_CACHES) {
-          JpsOutputLoaderManager.saveLatestBuiltCommitId(status, myChannel, mySessionId);
         }
         lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createBuildCompletedEvent("build completed", status));
       }

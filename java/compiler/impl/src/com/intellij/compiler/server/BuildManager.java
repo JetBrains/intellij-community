@@ -5,8 +5,6 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.YourKitProfilerService;
-import com.intellij.compiler.cache.CompilerCacheConfigurator;
-import com.intellij.compiler.cache.CompilerCacheStartupActivity;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
@@ -153,7 +151,6 @@ import org.jetbrains.jps.api.TaskFutureAdapter;
 import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
-import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.javac.ExternalJavacProcess;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jetbrains.jps.util.Iterators;
@@ -973,15 +970,14 @@ public final class BuildManager implements Disposable {
         var mappedPaths = ContainerUtil.map(paths, pathMapper::apply);
         CmdlineRemoteProto.Message.ControllerMessage params;
         if (isRebuild) {
-          params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, List.of(), userData, globals, null, null);
+          params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, List.of(), userData, globals, null);
         }
         else if (onlyCheckUpToDate) {
           params = CmdlineProtoUtil.createUpToDateCheckRequest(mappedProjectPath, scopes, mappedPaths, userData, globals, currentFSChanges);
         }
         else {
           var pathsToMake = isMake ? List.<String>of() : mappedPaths;
-          var cacheSettings = isMake ? CompilerCacheConfigurator.getCacheDownloadSettings(project) : null;
-          params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, pathsToMake, userData, globals, currentFSChanges, cacheSettings);
+          params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, pathsToMake, userData, globals, currentFSChanges);
         }
         if (!usingPreloadedProcess) {
           myMessageDispatcher.registerBuildMessageHandler(future, params);
@@ -1633,13 +1629,6 @@ public final class BuildManager implements Disposable {
       // Both formats "<host>:<port>" and "<port>" are accepted.
       // https://docs.oracle.com/en/java/javase/11/docs/specs/jpda/conninv.html#socket-transport
       cmdLine.addParameter("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + debugPort);
-    }
-
-    // portable caches
-    if (RegistryManager.getInstance().is("compiler.process.use.portable.caches") &&
-        CompilerCacheConfigurator.isServerUrlConfigured(project) &&
-        CompilerCacheStartupActivity.isLineEndingsConfiguredCorrectly()) {
-      cmdLine.addParameter("-D" + ProjectStamps.PORTABLE_CACHES_PROPERTY + "=true");
     }
 
     // DepGraph-based IC implementation

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
-import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
@@ -19,7 +18,6 @@ import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -126,21 +124,11 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
 
   private int pathHashCode(@NotNull String path) {
     String relativePath = relativizer.toRelative(path);
-    if (ProjectStamps.PORTABLE_CACHES) {
-      return Hashing.xxh3_64().hashBytesToInt(relativePath.getBytes(StandardCharsets.UTF_8));
-    }
-    else {
-      return FileUtilRt.pathHashCode(relativePath);
-    }
+    return FileUtilRt.pathHashCode(relativePath);
   }
 
   private int pathHashCode(@NotNull Path path) {
     String relativePath = relativizer.toRelative(path);
-    if (ProjectStamps.PORTABLE_CACHES) {
-      return Hashing.xxh3_64().hashBytesToInt(relativePath.getBytes(StandardCharsets.UTF_8));
-    }
-    else {
-      return FileUtilRt.pathHashCode(relativePath);
-    }
+    return FileUtilRt.pathHashCode(relativePath);
   }
 }

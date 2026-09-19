@@ -291,9 +291,6 @@ public class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescri
     if (!isTests()) {
       enumerator = enumerator.productionOnly();
     }
-    if (ProjectStamps.PORTABLE_CACHES) {
-      enumerator = enumerator.withoutSdk();
-    }
     if (JavaBuilderUtil.isTrackLibraryDependenciesEnabled()) {
       // when enabled, library roots will be tracked by DepGraph
       for (JpsLibrary library : enumerator.getLibraries()) {

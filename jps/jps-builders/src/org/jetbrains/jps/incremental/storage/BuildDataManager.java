@@ -104,7 +104,7 @@ public final class BuildDataManager {
          targetsState,
          relativizer,
          storageManager == null ? null : new ExperimentalBuildDataManager(storageManager, relativizer),
-         storageManager != null || ProjectStamps.PORTABLE_CACHES ? null : new ProjectStamps(dataPaths.getDataStorageDir(), targetsState.impl),
+         storageManager != null ? null : new ProjectStamps(dataPaths.getDataStorageDir(), targetsState.impl),
          null);
   }
 

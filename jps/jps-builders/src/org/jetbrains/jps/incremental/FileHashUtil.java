@@ -8,7 +8,6 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.incremental.storage.ProjectStamps;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -27,7 +26,7 @@ public final class FileHashUtil {
     if (length == 0) {
       hash.putInt(0);
     }
-    else if (ProjectStamps.PORTABLE_CACHES || SystemInfoRt.isFileSystemCaseSensitive) {
+    else if (SystemInfoRt.isFileSystemCaseSensitive) {
       hash.putString(path);
     }
     else {

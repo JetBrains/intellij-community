@@ -13,9 +13,6 @@
     <!--read by intellij.java.execution.impl and intellij.gradle.java-->
     <registryKey key="java.test.enable.tree.live.time" defaultValue="true"
                  description="Enable live time for tests" restartRequired="true"/>
-    <!--read by intellij.java.compiler.impl and kotlin.jvm.shared-->
-    <registryKey key="compiler.process.use.portable.caches" defaultValue="false"
-                 description="Warning: for Intellij project only! \nTurn on to download compilation caches to reduce build time."/>
     <!--read by intellij.java.compiler.impl and intellij.java.indexing.impl; also a JPS builder id in intellij.platform.jps.build-->
     <registryKey key="compiler.ref.index" defaultValue="true" description="Enables Find Usages using references from compiler indices"
                  restartRequired="true"/>

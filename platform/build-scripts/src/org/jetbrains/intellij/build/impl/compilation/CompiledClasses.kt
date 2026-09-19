@@ -18,7 +18,6 @@ import org.jetbrains.intellij.build.productionClassesOutputDirectory
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.api.CanceledStatus
-import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Path
 import java.util.concurrent.TimeoutException
 import kotlin.io.path.exists
@@ -85,9 +84,6 @@ internal fun checkCompilationOptions(context: CompilationContext) {
   }
   if (options.forceRebuild && pathToCompiledClassArchiveMetadata != null) {
     messages.logErrorAndThrow("Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' options are specified")
-  }
-  if (options.isInDevelopmentMode && ProjectStamps.PORTABLE_CACHES && !System.getProperty("jps.cache.test").toBoolean()) {
-    messages.logErrorAndThrow("${ProjectStamps.PORTABLE_CACHES_PROPERTY} is not expected to be enabled in development mode due to performance penalty")
   }
   if (!options.useCompiledClassesFromProjectOutput) {
     Span.current().addEvent("incremental compilation", Attributes.of(AttributeKey.booleanKey("options.incrementalCompilation"), options.incrementalCompilation))

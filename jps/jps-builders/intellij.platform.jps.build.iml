@@ -74,7 +74,6 @@
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.libraries.mvstore" />
-    <orderEntry type="module" module-name="intellij.libraries.http.client" />
     <orderEntry type="module" module-name="intellij.libraries.maven.resolver.provider" />
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.protobuf" />
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />

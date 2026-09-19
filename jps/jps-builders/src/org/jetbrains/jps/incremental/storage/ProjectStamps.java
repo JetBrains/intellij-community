@@ -10,9 +10,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public final class ProjectStamps implements StorageOwner {
-  public static final String PORTABLE_CACHES_PROPERTY = "org.jetbrains.jps.portable.caches";
-  public static final boolean PORTABLE_CACHES = Boolean.getBoolean(PORTABLE_CACHES_PROPERTY);
-
   public static final String TRACK_LIBRARY_CONTENT_PROPERTY = "org.jetbrains.jps.track.library.content";
   public static final boolean TRACK_LIBRARY_CONTENT = Boolean.getBoolean(TRACK_LIBRARY_CONTENT_PROPERTY);
 

@@ -14,22 +14,12 @@ internal class PerTargetMapManager(
   outputToTargetMapping: Supplier<ExperimentalOutputToTargetMapping>,
 ) {
   @JvmField
-  val stamp: StampsStorage<*> = if (ProjectStamps.PORTABLE_CACHES) {
-    HashStampStorage.createSourceToStampMap(
-      storageManager = storageManager,
-      relativizer = relativizer,
-      targetId = target.id,
-      targetTypeId = target.targetType.typeId,
-    )
-  }
-  else {
-    ExperimentalTimeStampStorage.createSourceToStampMap(
-      storageManager = storageManager,
-      relativizer = relativizer,
-      targetId = target.id,
-      targetTypeId = target.targetType.typeId,
-    )
-  }
+  val stamp: StampsStorage<*> = ExperimentalTimeStampStorage.createSourceToStampMap(
+    storageManager = storageManager,
+    relativizer = relativizer,
+    targetId = target.id,
+    targetTypeId = target.targetType.typeId,
+  )
 
   val sourceToOutputMapping: SourceToOutputMapping by lazy {
     ExperimentalSourceToOutputMapping.createSourceToOutputMap(

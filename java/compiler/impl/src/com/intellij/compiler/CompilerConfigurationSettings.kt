@@ -15,13 +15,8 @@ class CompilerConfigurationSettings : SimplePersistentStateComponent<CompilerCon
     return state.parallelCompilation
   }
 
-  fun getCacheServerUrl(): String? {
-    return state.cacheServerUrl
-  }
-
   class State : BaseState() {
     var parallelCompilation by property(false)
-    var cacheServerUrl by string()
   }
 
   companion object {

@@ -4,7 +4,6 @@ package org.jetbrains.ether;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
@@ -198,11 +197,6 @@ public class CommonTest extends IncrementalTestCase {
 
   public void testIntegrateOnNonIncrementalMake() {
     PlatformTestUtil.withSystemProperty(BuildDataManager.PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, String.valueOf(true), () -> doTest());
-  }
-
-  public void testNothingChanged() {
-    if (!ProjectStamps.PORTABLE_CACHES) return;
-    doTest();
   }
 
   public void testConflictingClasses() {

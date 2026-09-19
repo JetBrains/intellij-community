@@ -13,7 +13,6 @@
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.gson"/>
     <module name="intellij.libraries.hash4j"/>
-    <module name="intellij.libraries.http.client"/>
     <module name="intellij.libraries.javax.annotation"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.jps.javac.extension"/>

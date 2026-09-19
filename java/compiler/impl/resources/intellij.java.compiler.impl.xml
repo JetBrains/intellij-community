@@ -2,7 +2,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.java-capable"/>
-    <module name="intellij.platform.externalSystem"/>
     <module name="intellij.platform.jps.build.javac.rt"/>
     <module name="intellij.java.compiler.instrumentationUtil"/>
     <module name="intellij.platform.backend"/>
@@ -17,8 +16,6 @@
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.guava"/>
-    <module name="intellij.libraries.jackson3"/>
-    <module name="intellij.libraries.jackson3.databind"/>
     <module name="intellij.libraries.jps.javac.extension"/>
     <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
@@ -48,6 +45,7 @@
     <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.externalSystem"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
@@ -109,8 +107,6 @@
                     interface="com.intellij.compiler.impl.javaCompiler.BackendCompiler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.compiler.updateResourcesBuildContributor"
                     interface="com.intellij.compiler.impl.UpdateResourcesBuildContributor" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.jpsServerAuthExtension"
-                    interface="com.intellij.compiler.cache.client.JpsServerAuthExtension" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlExtensionRegistration -->
@@ -124,7 +120,6 @@
                      key="inspection.frequently.used.inheritor.inspection.display.name" bundle="messages.JavaBundle"/>
     <!--suppress PluginXmlValidity -->
     <postStartupActivity implementation="com.intellij.compiler.server.BuildManager$BuildManagerStartupActivity"/>
-    <backgroundPostStartupActivity implementation="com.intellij.compiler.cache.CompilerCacheStartupActivity"/>
 
     <!--suppress PluginXmlExtensionRegistration -->
     <projectService serviceInterface="com.intellij.compiler.CompilerConfiguration"
@@ -177,10 +172,6 @@
       <configurable instance="com.intellij.compiler.options.RmicConfigurable" id="reference.projectsettings.compiler.rmicompiler"
                     key="rmi.compiler.description" bundle="messages.JavaCompilerBundle"/>
     </projectConfigurable>
-
-    <projectConfigurable provider="com.intellij.compiler.cache.ui.CompilerCacheConfigurableProvider"
-                         id="reference.projectsettings.compiler.compilercache"
-                         key="compiler.cache.description" bundle="messages.JavaCompilerBundle" parentId="project.propCompiler"/>
 
     <actionOnSaveInfoProvider id="BuildOnSaveInfoProvider"
                               implementation="com.intellij.compiler.options.BuildOnSaveInfo$BuildOnSaveInfoProvider"

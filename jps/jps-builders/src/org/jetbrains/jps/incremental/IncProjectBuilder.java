@@ -61,7 +61,6 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.messages.UnprocessedFSChangesNotification;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
-import org.jetbrains.jps.incremental.storage.BuildTargetSourcesState;
 import org.jetbrains.jps.incremental.storage.BuildTargetStateManager;
 import org.jetbrains.jps.incremental.storage.OneToManyPathMapping;
 import org.jetbrains.jps.incremental.storage.OutputToTargetMapping;
@@ -285,29 +284,20 @@ public final class IncProjectBuilder {
     });
 
     CompileContextImpl context = null;
-    BuildTargetSourcesState sourcesState = null;
     try {
       context = createContext(scope);
-      sourcesState = new BuildTargetSourcesState(context);
-      // clear source state report if force clean or rebuild
-      if (forceCleanCaches || JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
-        sourcesState.clearSourcesState();
-      }
 
       Tracer.Span buildSpan = Tracer.start("IncProjectBuilder.runBuild");
       runBuild(context, forceCleanCaches);
       buildSpan.complete();
       dataManager.saveVersion();
       dataManager.reportUnhandledRelativizerPaths();
-      sourcesState.reportSourcesState();
       reportRebuiltModules(context);
       reportUnprocessedChanges(context);
     }
     catch (StopBuildException e) {
       reportRebuiltModules(context);
       reportUnprocessedChanges(context);
-      // if build was canceled for some reason, e.g., compilation error, we should report built modules
-      sourcesState.reportSourcesState();
       // some builder decided to stop the build, report an optional progress message if any
       String message = e.getMessage();
       if (message != null && !message.isBlank()) {

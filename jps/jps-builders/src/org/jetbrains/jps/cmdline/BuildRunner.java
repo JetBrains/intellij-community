@@ -39,14 +39,12 @@ import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetStateManagerImpl;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
-import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.incremental.storage.StampsStorage;
 import org.jetbrains.jps.incremental.storage.StorageManager;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
 import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.JpsProject;
 
 import java.io.File;
 import java.io.IOException;
@@ -82,10 +80,6 @@ public final class BuildRunner {
 
   public void setBuilderParams(@Nullable Map<String, String> builderParams) {
     myBuilderParams = builderParams == null ? Collections.emptyMap() : builderParams;
-  }
-
-  public @NotNull JpsProject loadModelAndGetJpsProject() throws IOException {
-    return myModelLoader.loadModel().getProject();
   }
 
   public ProjectDescriptor load(@NotNull MessageHandler msgHandler, @NotNull Path dataStorageRoot, @NotNull BuildFSState fsState) throws IOException {
@@ -138,7 +132,7 @@ public final class BuildRunner {
   }
 
   private static @Nullable StorageManager createStorageManager(@NotNull Path dataStorageRoot) {
-    if (USE_EXPERIMENTAL_STORAGE || ProjectStamps.PORTABLE_CACHES) {
+    if (USE_EXPERIMENTAL_STORAGE) {
       StorageManager manager = new StorageManager(dataStorageRoot.resolve("jps-portable-cache.db"));
       manager.open();
       return manager;

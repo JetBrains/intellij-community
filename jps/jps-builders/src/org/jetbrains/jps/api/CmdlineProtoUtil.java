@@ -34,7 +34,7 @@ public final class CmdlineProtoUtil {
                                                                                         final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
                                                                                         final @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
     return createBuildParametersMessage(
-      CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.UP_TO_DATE_CHECK, project, scopes, userData, paths, globals, event, null
+      CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.UP_TO_DATE_CHECK, project, scopes, userData, paths, globals, event
     );
   }
 
@@ -43,10 +43,9 @@ public final class CmdlineProtoUtil {
                                                                                 Collection<String> paths,
                                                                                 final Map<String, String> userData,
                                                                                 final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
-                                                                                final @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event,
-                                                                                final @Nullable CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings cacheDownloadSettings) {
+                                                                                final @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
     return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.BUILD, project, scopes,
-                                        userData, paths, globals, event, cacheDownloadSettings);
+                                        userData, paths, globals, event);
   }
 
   public static List<TargetTypeBuildScope> createAllModulesScopes(final boolean forceBuild) {
@@ -78,8 +77,7 @@ public final class CmdlineProtoUtil {
                                                                                           Map<String, String> userData,
                                                                                           Collection<String> paths,
                                                                                           final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
-                                                                                          @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent initialEvent,
-                                                                                          @Nullable CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings cacheDownloadSettings) {
+                                                                                          @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent initialEvent) {
     final CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Builder
       builder = CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.newBuilder();
     builder.setGlobalSettings(globals);
@@ -101,9 +99,6 @@ public final class CmdlineProtoUtil {
     final CmdlineRemoteProto.Message.ControllerMessage.Builder controlMessageBuilder = CmdlineRemoteProto.Message.ControllerMessage.newBuilder();
     if (initialEvent != null) {
       controlMessageBuilder.setFsEvent(initialEvent);
-    }
-    if (cacheDownloadSettings != null) {
-      builder.setCacheDownloadSettings(cacheDownloadSettings);
     }
     return controlMessageBuilder.setType(CmdlineRemoteProto.Message.ControllerMessage.Type.BUILD_PARAMETERS).setParamsMessage(builder.build()).build();
   }
@@ -130,37 +125,6 @@ public final class CmdlineProtoUtil {
       }
     }
     return builder.build();
-  }
-
-  public static BuilderMessage createSaveDownloadStatisticMessage(@NotNull String latestDownloadCommit, long decompressionSpeed,
-                                                                  long deletionSpeed) {
-    BuilderMessage.CommitAndDownloadStatistics.Builder downloadStatisticsBuilder = BuilderMessage.CommitAndDownloadStatistics.newBuilder();
-    downloadStatisticsBuilder.setCommit(latestDownloadCommit);
-    downloadStatisticsBuilder.setDecompressionSpeed(decompressionSpeed);
-    downloadStatisticsBuilder.setDeletionSpeed(deletionSpeed);
-    BuilderMessage.Builder newBuilder = BuilderMessage.newBuilder();
-    newBuilder.setType(BuilderMessage.Type.SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE);
-    newBuilder.setCommitAndDownloadStatistics(downloadStatisticsBuilder.build());
-    return newBuilder.build();
-  }
-
-  public static BuilderMessage createCacheDownloadMessage(String text) {
-    BuilderMessage.CacheDownloadMessage.Builder cacheDownloadMessageBuilder = BuilderMessage.CacheDownloadMessage.newBuilder();
-    cacheDownloadMessageBuilder.setDescriptionText(text);
-    BuilderMessage.Builder newBuilder = BuilderMessage.newBuilder();
-    newBuilder.setType(BuilderMessage.Type.CACHE_DOWNLOAD_MESSAGE);
-    newBuilder.setCacheDownloadMessage(cacheDownloadMessageBuilder.build());
-    return newBuilder.build();
-  }
-
-  public static BuilderMessage createCacheDownloadMessageWithProgress(String text, float progress) {
-    BuilderMessage.CacheDownloadMessage.Builder cacheDownloadMessageBuilder = BuilderMessage.CacheDownloadMessage.newBuilder();
-    cacheDownloadMessageBuilder.setDescriptionText(text);
-    cacheDownloadMessageBuilder.setDone(progress);
-    BuilderMessage.Builder newBuilder = BuilderMessage.newBuilder();
-    newBuilder.setType(BuilderMessage.Type.CACHE_DOWNLOAD_MESSAGE);
-    newBuilder.setCacheDownloadMessage(cacheDownloadMessageBuilder.build());
-    return newBuilder.build();
   }
 
   public static CmdlineRemoteProto.Message.ControllerMessage createCancelCommand() {
@@ -280,10 +244,6 @@ public final class CmdlineProtoUtil {
 
   public static BuilderMessage createParamRequest() {
     return BuilderMessage.newBuilder().setType(BuilderMessage.Type.PARAM_REQUEST).build();
-  }
-
-  public static BuilderMessage createSaveLatestBuiltCommitMessage() {
-    return BuilderMessage.newBuilder().setType(BuilderMessage.Type.SAVE_LATEST_BUILT_COMMIT_MESSAGE).build();
   }
 
   public static CmdlineRemoteProto.Message toMessage(UUID sessionId, BuilderMessage builderMessage) {
