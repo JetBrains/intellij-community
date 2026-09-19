@@ -60,6 +60,16 @@ class PlatformJarDerivationTest {
   }
 
   @Test
+  fun `optional retained jars are checked only when present`() {
+    val optional = mapOf("ext/main.jar" to listOf("starter"))
+    validatePlatformContentOwnership(emptyList(), emptyMap(), optionalRetainedJars = optional)
+    validatePlatformContentOwnership(listOf(ModuleItem("starter", "ext/main.jar", "addModule")), emptyMap(), optionalRetainedJars = optional)
+    assertThatThrownBy {
+      validatePlatformContentOwnership(listOf(ModuleItem("other", "ext/main.jar", "<- root")), emptyMap(), optionalRetainedJars = optional)
+    }.hasMessageContaining("Changed retained jar ext/main.jar")
+  }
+
+  @Test
   fun `content modules cannot have duplicate or explicit ownership`() {
     val content = ModuleItem("content", "content.jar", ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES)
     validatePlatformContentOwnership(listOf(content), emptyMap())

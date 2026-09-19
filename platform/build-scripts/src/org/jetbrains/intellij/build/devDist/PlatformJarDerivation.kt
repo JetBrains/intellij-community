@@ -80,14 +80,20 @@ fun derivePlatformJars(product: String, productProperties: ProductProperties, ou
   return derivePlatformJars(product, createPlatformLayout(productProperties, outputProvider), outputProvider::findRequiredModule)
 }
 
-/** Requires content ownership except for the exact ordered members of [retainedJars]. */
+/**
+ * Requires content ownership except for the exact ordered members of [retainedJars].
+ * A jar in [optionalRetainedJars] counts as retained only when [modules] places a module in it.
+ */
 @Internal
 @Suppress("ReplaceGetOrSet")
 fun validatePlatformContentOwnership(
   modules: Collection<ModuleItem>,
   retainedJars: Map<String, List<String>>,
   explicitModuleNames: Collection<String> = emptyList(),
+  optionalRetainedJars: Map<String, List<String>> = emptyMap(),
 ) {
+  val presentJars = modules.mapTo(HashSet()) { it.relativeOutputFile }
+  val effectiveRetainedJars = retainedJars + optionalRetainedJars.filterKeys { it in presentJars }
   val errors = ArrayList<String>()
   for ((name, owners) in modules.groupBy { it.moduleName }) {
     if (owners.size > 1) {
@@ -102,13 +108,13 @@ fun validatePlatformContentOwnership(
   }
   val nonContentModules = modules.filterNot { ModuleIncludeReasons.isProductModule(it.reason) }
   for (item in nonContentModules) {
-    if (retainedJars.get(item.relativeOutputFile)?.contains(item.moduleName) != true) {
+    if (effectiveRetainedJars.get(item.relativeOutputFile)?.contains(item.moduleName) != true) {
       errors.add("Missing content ownership: ${item.moduleName} in ${item.relativeOutputFile}; ${item.reason}")
     }
   }
   val actualJars = modules.groupBy({ it.relativeOutputFile }, { it.moduleName })
   val nonContentJars = nonContentModules.groupBy({ it.relativeOutputFile }, { it.moduleName })
-  for ((path, members) in retainedJars) {
+  for ((path, members) in effectiveRetainedJars) {
     for (name in members) {
       if (name !in nonContentJars.get(path).orEmpty()) {
         errors.add("Stale content ownership exception: $name in $path")

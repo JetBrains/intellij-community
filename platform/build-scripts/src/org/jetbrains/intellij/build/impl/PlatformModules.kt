@@ -72,6 +72,10 @@ val PLATFORM_FIXED_JAR_MODULES: Map<String, List<String>> = mapOf(
   "external-system-rt.jar" to listOf("intellij.platform.externalSystem.rt", "intellij.platform.objectSerializer.annotations"),
 )
 
+/** The jar that carries the platform starter when the embedded frontend is enabled and no other jar owns it. */
+@ApiStatus.Internal
+val PLATFORM_MAIN_JAR_MODULES: Map<String, List<String>> = mapOf("ext/platform-main.jar" to listOf("intellij.platform.starter"))
+
 private fun addModule(relativeJarPath: String, productLayout: ProductModulesLayout, layout: PlatformLayout) {
   layout.withModules(
     PLATFORM_FIXED_JAR_MODULES.getValue(relativeJarPath).asSequence()
@@ -277,11 +281,12 @@ private fun createPlatformLayout(
       .sortedBy { it.moduleName },
   )
 
-  val platformMainModule = "intellij.platform.starter"
+  val (platformMainJar, platformMainModules) = PLATFORM_MAIN_JAR_MODULES.entries.single()
+  val platformMainModule = platformMainModules.single()
   if (isEmbeddedFrontendEnabled && layout.includedModules.none { it.moduleName == platformMainModule }) {
     /* this module is used by JetBrains Client, but it isn't packed in commercial IDEs, so let's put it in a separate JAR which won't be
        loaded when the IDE is started in the regular mode */
-    layout.withModule(platformMainModule, "ext/platform-main.jar")
+    layout.withModule(platformMainModule, platformMainJar)
   }
 
   productProperties.validateLayout(layout)
