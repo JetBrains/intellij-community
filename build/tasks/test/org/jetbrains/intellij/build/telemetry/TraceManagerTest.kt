@@ -1,11 +1,9 @@
 package org.jetbrains.intellij.build.telemetry
 
-import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
-import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter
+import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.data.SpanData
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.runBlocking
+import io.opentelemetry.sdk.trace.export.SpanExporter
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -23,7 +21,7 @@ class TraceManagerTest {
   @Test
   fun `the trace file is complete when the block returns`(@TempDir directory: Path) {
     val file = directory.resolve("trace.json")
-    val result = withSpanProcessor(listOf(JaegerJsonSpanExporter(file = file, serviceName = "test"))) { processor ->
+    val result = withSpanProcessor(listOf(TraceFileSpanExporter(file = file, serviceName = "test"))) { processor ->
       SdkTracerProvider.builder().addSpanProcessor(processor).build().use { provider ->
         provider.get("test").spanBuilder("root span").startSpan().end()
       }
@@ -38,11 +36,14 @@ class TraceManagerTest {
   @Test
   fun `an empty block still closes its exporter`() {
     val closed = AtomicInteger()
-    val exporter = object : AsyncSpanExporter {
-      override suspend fun export(spans: Collection<SpanData>) {}
+    val exporter = object : SpanExporter {
+      override fun export(spans: Collection<SpanData>): CompletableResultCode = CompletableResultCode.ofSuccess()
 
-      override suspend fun shutdown() {
+      override fun flush(): CompletableResultCode = CompletableResultCode.ofSuccess()
+
+      override fun shutdown(): CompletableResultCode {
         closed.incrementAndGet()
+        return CompletableResultCode.ofSuccess()
       }
     }
     repeat(100) {
@@ -54,10 +55,13 @@ class TraceManagerTest {
   @Test
   fun `an interrupted caller still closes the trace file`(@TempDir directory: Path) {
     val file = directory.resolve("trace.json")
-    val exporter = JaegerJsonSpanExporter(file = file, serviceName = "test")
+    val exporter = TraceFileSpanExporter(file = file, serviceName = "test")
     try {
       Thread.currentThread().interrupt()
-      runTelemetryCleanup { runBlocking { exporter.shutdown() } }
+      runTelemetryCleanup {
+        val result = exporter.shutdown().join(5, TimeUnit.SECONDS)
+        assertThat(result.isSuccess).isTrue()
+      }
       assertThat(Thread.currentThread().isInterrupted).isTrue()
     }
     finally {
@@ -104,17 +108,20 @@ class TraceManagerTest {
   @Test
   fun `shutdown waits for exporters and preserves the build failure and interrupts`() {
     val closing = CountDownLatch(1)
-    val release = CompletableDeferred<Unit>()
+    val release = CountDownLatch(1)
     val closed = AtomicInteger()
     val failure = IllegalStateException("The build failed")
     val result = CompletableFuture<Pair<Throwable?, Boolean>>()
-    val exporter = object : AsyncSpanExporter {
-      override suspend fun export(spans: Collection<SpanData>) {}
+    val exporter = object : SpanExporter {
+      override fun export(spans: Collection<SpanData>): CompletableResultCode = CompletableResultCode.ofSuccess()
 
-      override suspend fun shutdown() {
+      override fun flush(): CompletableResultCode = CompletableResultCode.ofSuccess()
+
+      override fun shutdown(): CompletableResultCode {
         closing.countDown()
         release.await()
         closed.incrementAndGet()
+        return CompletableResultCode.ofSuccess()
       }
     }
     val worker = Thread.ofVirtual().start {
@@ -133,7 +140,7 @@ class TraceManagerTest {
       assertThat(closed.get()).isZero()
     }
     finally {
-      release.complete(Unit)
+      release.countDown()
       worker.join(5000)
     }
     val actual = result.get(5, TimeUnit.SECONDS)

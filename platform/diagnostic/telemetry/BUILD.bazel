@@ -169,6 +169,8 @@ jvm_library(
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//platform/diagnostic/telemetry.exporters",
         "//platform/diagnostic/telemetry.exporters:telemetry.exporters_test_lib",
+        "//libraries/jackson3/jackson:libraries-jackson3",
+        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.tests` end

@@ -3,36 +3,43 @@
 
 package org.jetbrains.intellij.build.telemetry
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.platform.buildScripts.concurrency.awaitUninterruptibly
-import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration.getTraceEndpoint
-import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter
-import com.intellij.platform.diagnostic.telemetry.exporters.OtlpSpanExporter
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
+import io.opentelemetry.exporter.otlp.http.trace.OtlpHttpSpanExporter
 import io.opentelemetry.sdk.OpenTelemetrySdk
+import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.data.SpanData
-import kotlinx.coroutines.runBlocking
+import io.opentelemetry.sdk.trace.export.SpanExporter
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
+import java.lang.System.Logger
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
-// don't use JaegerJsonSpanExporter - not needed for clients, should be enabled only if needed to avoid writing a ~500KB JSON file
+/** The longest wait for the shutdown of one exporter. */
+private val exporterShutdownTimeout: Duration = 30.seconds
+
+// don't use TraceFileSpanExporter - not needed for clients, should be enabled only if needed to avoid writing a ~500KB JSON file
 fun <T> withTracer(serviceName: String, traceFile: Path? = null, block: () -> T): T {
   @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-  val exporters = if (traceFile == null) {
+  val exporters: List<SpanExporter> = if (traceFile == null) {
     java.util.List.of(ConsoleSpanExporter())
   }
   else {
-    java.util.List.of(ConsoleSpanExporter(), JaegerJsonSpanExporter(file = traceFile, serviceName = serviceName))
+    java.util.List.of(ConsoleSpanExporter(), TraceFileSpanExporter(file = traceFile, serviceName = serviceName))
   }
   try {
     return withSpanProcessor(exporters) { spanProcessor ->
@@ -58,7 +65,7 @@ fun <T> withTracer(serviceName: String, traceFile: Path? = null, block: () -> T)
 }
 
 /** Runs [block] with a span processor of its own, and closes the processor when the block returns. */
-internal fun <T> withSpanProcessor(exporters: List<AsyncSpanExporter>, block: (BuildSpanProcessor) -> T): T {
+internal fun <T> withSpanProcessor(exporters: List<SpanExporter>, block: (BuildSpanProcessor) -> T): T {
   return BuildSpanProcessor(spanExporters = exporters, scheduleDelay = 10.seconds).use(block)
 }
 
@@ -191,52 +198,70 @@ object TraceManager {
 }
 
 object JaegerJsonSpanExporterManager {
+  private val logger: Logger = System.getLogger(JaegerJsonSpanExporterManager::class.java.name)
   private val shutdownHookAdded = AtomicBoolean()
-  private val jaegerJsonSpanExporter = AtomicReference<JaegerJsonSpanExporter?>()
+  private val traceFileSpanExporter = AtomicReference<TraceFileSpanExporter?>()
 
-  internal val spanExporterProvider: List<AsyncSpanExporter> by lazy {
+  internal val spanExporterProvider: List<SpanExporter> by lazy {
     buildList {
       add(ConsoleSpanExporter())
-      add(object : AsyncSpanExporter {
-        override suspend fun export(spans: Collection<SpanData>) {
-          jaegerJsonSpanExporter.get()?.export(spans)
+      // the trace file changes with `setOutput`, so the processor holds this delegate and never the file exporter
+      add(object : SpanExporter {
+        override fun export(spans: Collection<SpanData>): CompletableResultCode {
+          return traceFileSpanExporter.get()?.export(spans) ?: CompletableResultCode.ofSuccess()
         }
 
-        override suspend fun flush() {
-          jaegerJsonSpanExporter.get()?.flush()
+        override fun flush(): CompletableResultCode {
+          return traceFileSpanExporter.get()?.flush() ?: CompletableResultCode.ofSuccess()
         }
 
-        override suspend fun shutdown() {
-          jaegerJsonSpanExporter.getAndSet(null)?.shutdown()
+        override fun shutdown(): CompletableResultCode {
+          return traceFileSpanExporter.getAndSet(null)?.shutdown() ?: CompletableResultCode.ofSuccess()
         }
       })
       val otlpEndPoint = getTraceEndpoint()
       if (otlpEndPoint != null) {
-        add(OtlpSpanExporter(otlpEndPoint))
+        createOtlpExporter(otlpEndPoint)?.let(::add)
       }
+    }
+  }
+
+  /** The sender comes from `ServiceLoader`, so a missing sender library is a warning and no OTLP export. */
+  private fun createOtlpExporter(endpoint: String): SpanExporter? {
+    try {
+      return OtlpHttpSpanExporter.builder()
+        .setEndpoint(endpoint)
+        .setConnectTimeout(10.seconds.toJavaDuration())
+        .setTimeout(30.seconds.toJavaDuration())
+        .build()
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      logger.log(Logger.Level.WARNING, "Failed to create the OTLP span exporter for $endpoint", e)
+      return null
     }
   }
 
   /** Closes the current trace file. The span processor stays alive, and a later span goes to no file. */
   fun closeOutput() {
-    shutdownExporter(jaegerJsonSpanExporter.getAndSet(null))
+    shutdownExporter(traceFileSpanExporter.getAndSet(null))
   }
 
   fun setOutput(file: Path, addShutDownHook: Boolean = true) {
-    shutdownExporter(jaegerJsonSpanExporter.getAndSet(JaegerJsonSpanExporter(file = file, serviceName = "build")))
+    shutdownExporter(traceFileSpanExporter.getAndSet(TraceFileSpanExporter(file = file, serviceName = "build")))
     if (addShutDownHook && shutdownHookAdded.compareAndSet(false, true)) {
       Runtime.getRuntime().addShutdownHook(Thread({ TraceManager.shutdown() }, "close tracer"))
     }
   }
 
-  private fun shutdownExporter(exporter: JaegerJsonSpanExporter?) {
+  private fun shutdownExporter(exporter: TraceFileSpanExporter?) {
     if (exporter == null) {
       return
     }
-    // the exporter of the platform is a coroutine API, so the shutdown enters coroutines here
     runTelemetryCleanup {
-      runBlocking {
-        exporter.shutdown()
+      val result = exporter.shutdown().join(exporterShutdownTimeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+      if (!result.isSuccess) {
+        logger.log(Logger.Level.WARNING, "Failed to close the trace file", result.failureThrowable)
       }
     }
   }

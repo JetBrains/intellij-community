@@ -27,6 +27,7 @@ jvm_library(
         "@lib//:slf4j-api",
         "@lib//:slf4j-jdk14",
         "//libraries/bouncy-castle-provider",
+        "//libraries/opentelemetry-exporter-sender-jdk",
     ],
     deps = [
         # do not sort,
@@ -56,6 +57,7 @@ jvm_library(
         "//libraries/opentelemetry-extension-kotlin",
         "@community//build:zip",
         "//platform/build-scripts/plugin-preparation",
+        "//libraries/opentelemetry-exporter-otlp",
     ],
 )
 
@@ -107,6 +109,8 @@ jvm_library(
         "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
         "@community//build:zip_test_lib",
         "//platform/build-scripts/plugin-preparation:plugin-preparation_test_lib",
+        "//libraries/opentelemetry-exporter-otlp:opentelemetry-exporter-otlp_test_lib",
+        "//libraries/opentelemetry-exporter-sender-jdk:opentelemetry-exporter-sender-jdk_test_lib",
     ],
 )
 ### auto-generated section `build intellij.idea.community.build.tasks` end

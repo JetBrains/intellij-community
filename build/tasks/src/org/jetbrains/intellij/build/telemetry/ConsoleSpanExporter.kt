@@ -3,11 +3,12 @@
 
 package org.jetbrains.intellij.build.telemetry
 
-import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.StatusCode
+import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.data.SpanData
+import io.opentelemetry.sdk.trace.export.SpanExporter
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.longs.LongArrayList
 import org.jetbrains.annotations.Contract
@@ -30,7 +31,8 @@ private fun createPathList(dir: Path): List<String> {
   return if (s1 == s2) java.util.List.of(s1) else java.util.List.of(s1, s2)
 }
 
-class ConsoleSpanExporter : AsyncSpanExporter {
+/** Prints the ended spans to the console, or to a temporary file. Every call blocks on the calling thread. */
+class ConsoleSpanExporter : SpanExporter {
 
   companion object {
     const val IS_ENABLED_PROPERTY: String = "intellij.build.console.exporter.enabled"
@@ -79,16 +81,24 @@ class ConsoleSpanExporter : AsyncSpanExporter {
     }
   }
 
-  override suspend fun export(spans: Collection<SpanData>) {
-    if (!isEnabled) return
-    val sb = StringBuilder()
-    for (span in spans) {
-      writeSpan(sb, span, span.endEpochNanos - span.startEpochNanos, span.endEpochNanos)
+  override fun export(spans: Collection<SpanData>): CompletableResultCode {
+    if (!isEnabled) {
+      return CompletableResultCode.ofSuccess()
     }
-    if (sb.isNotEmpty()) {
-      appendSpans(sb)
+    return resultOf {
+      val sb = StringBuilder()
+      for (span in spans) {
+        writeSpan(sb, span, span.endEpochNanos - span.startEpochNanos, span.endEpochNanos)
+      }
+      if (sb.isNotEmpty()) {
+        appendSpans(sb)
+      }
     }
   }
+
+  override fun flush(): CompletableResultCode = CompletableResultCode.ofSuccess()
+
+  override fun shutdown(): CompletableResultCode = CompletableResultCode.ofSuccess()
 }
 
 private val EXCLUDED_EVENTS_FROM_CONSOLE = setOf("include module outputs")

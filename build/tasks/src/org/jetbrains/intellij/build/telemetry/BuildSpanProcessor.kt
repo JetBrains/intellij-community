@@ -3,16 +3,13 @@ package org.jetbrains.intellij.build.telemetry
 
 import com.intellij.platform.buildScripts.concurrency.TaskSignal
 import com.intellij.platform.buildScripts.concurrency.awaitUninterruptibly
-import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.ReadWriteSpan
 import io.opentelemetry.sdk.trace.ReadableSpan
 import io.opentelemetry.sdk.trace.SpanProcessor
 import io.opentelemetry.sdk.trace.data.SpanData
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.withTimeoutOrNull
+import io.opentelemetry.sdk.trace.export.SpanExporter
 import org.jetbrains.annotations.ApiStatus
 import java.lang.System.Logger
 import java.util.concurrent.CompletableFuture
@@ -28,17 +25,22 @@ import kotlin.time.Duration.Companion.seconds
  *
  * The platform `BatchSpanProcessor` runs its loop as a coroutine on a dispatcher thread. A platform thread that
  * loads a class beside the build workers can take part in the deadlock of JDK-8369019, so the build uses a virtual
- * thread instead. The exporters keep the platform suspend API, and this worker is the one place where the build
- * telemetry enters coroutines.
+ * thread instead. The exporters are blocking [SpanExporter]s, and the worker calls them directly. The worker waits
+ * at most [exportTimeout] for the result of one exporter call.
  *
- * [onEnd] never blocks. [flush] waits for the export of the spans that ended before the call. [close] exports the
- * pending spans, shuts the exporters down and returns when the worker has ended, also for an interrupted caller.
+ * A failed exporter call is a warning. The worker logs it and goes on with the next batch. The build does not fail
+ * because of a lost span.
+ *
+ * [onEnd] never blocks. [flush] waits for the export of the spans that ended before the call, and returns when the
+ * worker has ended. [close] exports the pending spans, shuts the exporters down and returns when the worker has
+ * ended, also for an interrupted caller.
  */
 @ApiStatus.Internal
 class BuildSpanProcessor(
-  private val spanExporters: List<AsyncSpanExporter>,
+  private val spanExporters: List<SpanExporter>,
   private val scheduleDelay: Duration = 1.minutes,
   private val maxExportBatchSize: Int = 512,
+  private val exportTimeout: Duration = 30.seconds,
 ) : SpanProcessor, AutoCloseable {
   private val queue = LinkedBlockingDeque<Any>()
   private val closed = AtomicBoolean()
@@ -58,48 +60,66 @@ class BuildSpanProcessor(
 
   private fun run() {
     val batch = ArrayList<SpanData>(maxExportBatchSize)
+    var exportersShutDown = false
     try {
       while (true) {
-        when (val item = queue.poll(scheduleDelay.inWholeNanoseconds, TimeUnit.NANOSECONDS)) {
-          null -> {
-            if (exportBatch(batch)) {
-              flushExporters()
-            }
-          }
-          is ReadableSpan -> {
-            batch.add(item.toSpanData())
-            if (batch.size >= maxExportBatchSize) {
-              exportBatch(batch)
-            }
-          }
-          is FlushRequest -> {
-            try {
-              drainQueue(batch)
-              exportBatch(batch)
-              if (!item.exportOnly) {
+        val item = queue.poll(scheduleDelay.inWholeNanoseconds, TimeUnit.NANOSECONDS)
+        try {
+          when (item) {
+            null -> {
+              if (exportBatch(batch)) {
                 flushExporters()
               }
             }
-            finally {
-              item.done.complete(Unit)
+            is ReadableSpan -> {
+              batch.add(item.toSpanData())
+              if (batch.size >= maxExportBatchSize) {
+                exportBatch(batch)
+              }
+            }
+            is FlushRequest -> {
+              try {
+                drainQueue(batch)
+                exportBatch(batch)
+                if (!item.exportOnly) {
+                  flushExporters()
+                }
+              }
+              finally {
+                item.done.complete(Unit)
+              }
+            }
+            Shutdown -> {
+              try {
+                drainQueue(batch)
+                exportBatch(batch)
+              }
+              finally {
+                exportersShutDown = true
+                shutdownExporters()
+              }
+              return
             }
           }
-          Shutdown -> {
-            try {
-              drainQueue(batch)
-              exportBatch(batch)
-            }
-            finally {
-              shutdownExporters()
-            }
-            return
-          }
+        }
+        catch (e: Throwable) {
+          logger.log(Logger.Level.WARNING, "Failed to process the span queue", e)
         }
       }
     }
     finally {
-      completePendingFlushRequests()
-      finished.complete(Unit)
+      // the order matters for `flush`: a caller that sees `finished` done also sees `closed` set,
+      // and the queue drain below runs after `finished` is done
+      closed.set(true)
+      try {
+        if (!exportersShutDown) {
+          shutdownExporters()
+        }
+      }
+      finally {
+        finished.complete(Unit)
+        completePendingFlushRequests()
+      }
     }
   }
 
@@ -139,16 +159,9 @@ class BuildSpanProcessor(
       return false
     }
     try {
-      runBlocking {
-        for (spanExporter in spanExporters) {
-          withTimeoutOrNull(30.seconds) {
-            spanExporter.export(batch)
-          }
-        }
+      for (spanExporter in spanExporters) {
+        callExporter("export spans", spanExporter) { it.export(batch) }
       }
-    }
-    catch (e: Throwable) {
-      logger.log(Logger.Level.ERROR, "Failed to export spans", e)
     }
     finally {
       batch.clear()
@@ -158,29 +171,29 @@ class BuildSpanProcessor(
 
   private fun flushExporters() {
     for (spanExporter in spanExporters) {
-      try {
-        runBlocking {
-          withTimeout(10.seconds) {
-            spanExporter.flush()
-          }
-        }
-      }
-      catch (e: Throwable) {
-        logger.log(Logger.Level.ERROR, "Failed to flush spans", e)
-      }
+      callExporter("flush spans", spanExporter) { it.flush() }
     }
   }
 
   private fun shutdownExporters() {
     for (spanExporter in spanExporters) {
-      try {
-        runBlocking {
-          spanExporter.shutdown()
-        }
+      callExporter("shut a span exporter down", spanExporter) { it.shutdown() }
+    }
+  }
+
+  /** Waits at most [exportTimeout] for the result. A failure, a timeout or a thrown error is a warning. */
+  private inline fun callExporter(action: String, exporter: SpanExporter, call: (SpanExporter) -> CompletableResultCode) {
+    try {
+      val result = call(exporter).join(exportTimeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+      if (!result.isDone) {
+        logger.log(Logger.Level.WARNING, "Failed to $action: $exporter did not complete in $exportTimeout")
       }
-      catch (e: Throwable) {
-        logger.log(Logger.Level.ERROR, "Failed to shutdown a span exporter", e)
+      else if (!result.isSuccess) {
+        logger.log(Logger.Level.WARNING, "Failed to $action: $exporter reported a failure", result.failureThrowable)
       }
+    }
+    catch (e: Throwable) {
+      logger.log(Logger.Level.WARNING, "Failed to $action: $exporter threw an error", e)
     }
   }
 
@@ -198,13 +211,22 @@ class BuildSpanProcessor(
 
   override fun isEndRequired(): Boolean = true
 
-  /** Exports the spans that ended before the call, flushes the exporters, and blocks until both are done. */
+  /**
+   * Exports the spans that ended before the call, flushes the exporters, and blocks until both are done.
+   *
+   * The call returns when the worker has ended, also for a request that the worker did not see any more.
+   */
   fun flush() {
-    val request = FlushRequest(exportOnly = false)
     if (closed.get()) {
       return
     }
+    val request = FlushRequest(exportOnly = false)
     queue.add(request)
+    // the worker completes `finished` before it drains the queue, so a request that
+    // the worker cannot see any more is drained here
+    if (finished.isDone) {
+      completePendingFlushRequests()
+    }
     request.done.await()
   }
 

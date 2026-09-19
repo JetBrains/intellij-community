@@ -63,5 +63,7 @@
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry.extension.kotlin" />
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.pluginPreparation" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry.exporter.otlp" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry.exporter.sender.jdk" scope="RUNTIME" />
   </component>
 </module>
