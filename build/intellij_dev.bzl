@@ -118,10 +118,18 @@ def _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_pat
     if platform_prefix:
         all_jvm_flags = all_jvm_flags + ["-Didea.platform.prefix=" + platform_prefix]
 
-    return all_jvm_flags + [
+    all_jvm_flags = all_jvm_flags + [
         "-Didea.config.path=" + effective_config_path,
         "-Didea.system.path=" + effective_system_path,
     ]
+
+    # On Windows the java stub folds a long classpath into one jar with a `Class-Path` manifest attribute.
+    # `PathClassLoader` is the system class loader and expands that jar only with this flag.
+    # https://github.com/bazelbuild/bazel/blob/93cde47ab3236b3b7124b41824f843f3659064de/src/tools/launcher/java_launcher.cc#L385
+    return all_jvm_flags + select({
+        "@bazel_tools//src/conditions:windows": ["-Didea.reset.classpath.from.manifest=true"],
+        "//conditions:default": [],
+    })
 
 def intellij_dev_binary(
         name,
@@ -142,13 +150,6 @@ def intellij_dev_binary(
     all_jvm_flags = _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_path) + [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % bazel_targets_json,
     ]
-
-    # Allow to reset classpath from META-INF/MANIFEST.MF if classpath .jar due to classpath length limitations on Windows
-    # https://github.com/bazelbuild/bazel/blob/93cde47ab3236b3b7124b41824f843f3659064de/src/tools/launcher/java_launcher.cc#L385
-    all_jvm_flags += select({
-        "@bazel_tools//src/conditions:windows": ["-Didea.reset.classpath.from.manifest=true"],
-        "//conditions:default": [],
-    })
 
     if additional_modules:
         all_jvm_flags = all_jvm_flags + ["-Dadditional.modules=\"" + additional_modules + "\""]
