@@ -21,6 +21,20 @@ load(
 
 _EMPTY_JAR = "PK\005\006" + ("\000" * 18)
 _TRACE_SPANS = str(Label("//platform/build-scripts/bazel-rules:trace_spans"))
+_ZIPPER = attr.label(default = "@bazel_tools//tools/zip:zipper", executable = True, cfg = "exec")
+
+# Materializes an empty tree artifact. A shell action needs bash, which a Windows build agent does not have, so the
+# tree is an empty archive that the zipper extracts.
+def _empty_tree(ctx, tree):
+    archive = ctx.actions.declare_file(ctx.label.name + ".empty.zip")
+    ctx.actions.write(archive, _EMPTY_JAR)
+    ctx.actions.run(
+        executable = ctx.executable._zipper,
+        arguments = ["x", archive.path, "-d", tree.path],
+        inputs = [archive],
+        outputs = [tree],
+        mnemonic = "DevDistContentTestEmptyTree",
+    )
 
 def _fake_module_impl(ctx):
     jar = ctx.actions.declare_file(ctx.label.name + ".jar")
@@ -96,7 +110,7 @@ def _fake_platform_jar_impl(ctx):
     native_tree = None
     if ctx.attr.native_lib_dir:
         native_tree = ctx.actions.declare_directory(ctx.label.name + "/native")
-        ctx.actions.run_shell(outputs = [native_tree], arguments = [native_tree.path], command = "mkdir -p \"$1\"")
+        _empty_tree(ctx, native_tree)
     return [
         DefaultInfo(files = depset([jar] + ([native_tree] if native_tree else []))),
         DevDistPlatformJarInfo(
@@ -116,6 +130,7 @@ _fake_platform_jar = rule(
     attrs = {
         "destination": attr.string(mandatory = True),
         "native_lib_dir": attr.string(),
+        "_zipper": _ZIPPER,
     },
 )
 
@@ -221,7 +236,7 @@ def _tool_fixture_impl(ctx):
     tree = ctx.actions.declare_directory(ctx.label.name + ".tree")
     ctx.actions.write(executable, "#!/bin/sh\nexit 0\n", is_executable = True)
     ctx.actions.write(ctx.outputs.data, "fixture")
-    ctx.actions.run_shell(outputs = [tree], arguments = [tree.path], command = "mkdir -p \"$1\"")
+    _empty_tree(ctx, tree)
     return [
         DefaultInfo(files = depset([executable, ctx.outputs.data]), executable = executable),
         IntellijProjectModelTreeInfo(tree = tree),
@@ -229,6 +244,7 @@ def _tool_fixture_impl(ctx):
 
 _tool_fixture = rule(
     implementation = _tool_fixture_impl,
+    attrs = {"_zipper": _ZIPPER},
     executable = True,
     outputs = {"data": "%{name}.data"},
 )

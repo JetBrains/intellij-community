@@ -154,10 +154,15 @@ def _dev_jupyter_frontend_impl(ctx):
     if ctx.attr.skip:
         if resources == None:
             return [DefaultInfo(files = depset())]
-        ctx.actions.run_shell(
+
+        # An empty archive extracted by the zipper, not a shell `mkdir`: a Windows build agent has no bash.
+        archive = ctx.actions.declare_file(ctx.label.name + ".omitted.zip")
+        ctx.actions.write(archive, "PK\005\006" + ("\000" * 18))
+        ctx.actions.run(
+            executable = ctx.executable._zipper,
+            arguments = ["x", archive.path, "-d", resources.path],
+            inputs = [archive],
             outputs = [resources],
-            command = 'mkdir -p "$1"',
-            arguments = [resources.path],
             mnemonic = "JupyterFrontendOmitted",
         )
         return [DefaultInfo(files = depset([resources]))]
