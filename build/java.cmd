@@ -290,6 +290,7 @@ finally { ^
 
 "%POWERSHELL%" -nologo -noprofile -Command %DOWNLOAD_AND_EXTRACT_JVM_PS1%
 if errorlevel 1 goto fail
+goto continueWithJvm
 
 :continueWithForcedJvm
 set "JAVA_HOME=%FORCED_JAVA_HOME%"
