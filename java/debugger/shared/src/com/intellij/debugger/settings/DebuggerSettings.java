@@ -97,7 +97,7 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
   public volatile boolean WATCH_RETURN_VALUES = false;
   public volatile boolean AUTO_VARIABLES_MODE = false;
 
-  public volatile boolean KILL_PROCESS_IMMEDIATELY = false;
+  public volatile boolean KILL_PROCESS_IMMEDIATELY = true;
   public volatile boolean ALWAYS_DEBUG = true;
 
   public String EVALUATE_FINALLY_ON_POP_FRAME = EVALUATE_FINALLY_ASK;
