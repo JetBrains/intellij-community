@@ -410,7 +410,10 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
   @Internal
   @Override
   public final void invalidateCachedMappings() {
-    myCache.invalidateAll();
+    // It is enough to have readLock for flushing the data because
+    // 1) underlying storage has its own lock, and
+    // 2) ValueContainers are only read-accessed during flushing
+    withReadLock(() -> myCache.invalidateAll());
   }
 
   @Contract("_ -> fail")

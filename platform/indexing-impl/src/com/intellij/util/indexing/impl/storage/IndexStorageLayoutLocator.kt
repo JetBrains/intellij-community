@@ -15,7 +15,7 @@ import java.io.IOException
 
 
 /**
- * Encapsulates finding a appropriate [IndexStorageLayout] ([VfsAwareIndexStorageLayout] really) for a [IndexExtension]
+ * Encapsulates finding an appropriate [com.intellij.util.indexing.impl.IndexStorageLayout] ([VfsAwareIndexStorageLayout] really) for a [IndexExtension]
  * See [getLayout] method for a details of lookup algo.
  */
 @Internal
