@@ -29,6 +29,7 @@ import org.jetbrains.annotations.ApiStatus
  * or be registered in a corresponding customization plugin which is not required for the main plugin.
  *
  * This class is a backend part, for UI see `WelcomeScreenFeatureUI`.
+ * A feature that needs no backend registers `WelcomeScreenFeatureFrontend` instead.
  */
 @ApiStatus.Internal
 abstract class WelcomeScreenFeatureBackend {

@@ -18,7 +18,7 @@
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
-    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.rpc.lite"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
@@ -32,6 +32,8 @@
                     interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightCustomTabProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenFeatureUi"
                     interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureUI" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenFeatureFrontend"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureFrontend" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenRightTabBannerProvider"
                     interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabBannerProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenAccessProvider"

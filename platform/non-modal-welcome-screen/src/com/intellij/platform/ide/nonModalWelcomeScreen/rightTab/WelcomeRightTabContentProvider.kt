@@ -73,9 +73,9 @@ interface WelcomeRightTabContentProvider {
   }
 
   /**
-   * Base feature button model. Use for frontend-only features.
-   * For backend-based features, use [FeatureButtonModelWithBackend] and
-   * register a `WelcomeScreenFeatureBackend` implementation.
+   * Base feature button model. Use for a button that handles its click itself.
+   * For a feature with a key, use [FeatureButtonModelWithBackend] and
+   * register a [WelcomeScreenFeatureFrontend] or a `WelcomeScreenFeatureBackend` implementation.
    */
   open class FeatureButtonModel(
     @NlsSafe val text: String,
@@ -85,7 +85,8 @@ interface WelcomeRightTabContentProvider {
   )
 
   /**
-   * Feature button backed by a `WelcomeScreenFeatureBackend` implementation.
+   * Feature button backed by a [WelcomeScreenFeatureFrontend] or a `WelcomeScreenFeatureBackend` implementation.
+   * The tab shows the button only when one of them registers the [featureKey], unless [isAlwaysAvailable] is set.
    */
   class FeatureButtonModelWithBackend(
     val featureKey: String,

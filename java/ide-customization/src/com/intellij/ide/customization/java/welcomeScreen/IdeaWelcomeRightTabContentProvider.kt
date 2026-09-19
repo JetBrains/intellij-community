@@ -59,9 +59,9 @@ internal class IdeaWelcomeRightTabContentProvider(override val coroutineScope: C
   /**
    * Builds a button for a feature a plugin owns, or returns `null` when the plugin ships no button.
    *
-   * The plugin supplies the icon and the label, so its own message bundle keeps the wording. The backend half gates
+   * The plugin supplies the icon and the label, so its own message bundle keeps the wording. The handler half gates
    * the button too: the welcome right tab drops a [WelcomeRightTabContentProvider.FeatureButtonModelWithBackend]
-   * whose `welcomeScreenFeatureBackend` no loaded plugin registers.
+   * whose `welcomeScreenFeatureFrontend` or `welcomeScreenFeatureBackend` no loaded plugin registers.
    */
   private fun pluginProvidedFeatureButtonModel(featureKey: String): WelcomeRightTabContentProvider.FeatureButtonModel? {
     val feature = WelcomeScreenFeatureUI.getForFeatureKey(featureKey) ?: return null

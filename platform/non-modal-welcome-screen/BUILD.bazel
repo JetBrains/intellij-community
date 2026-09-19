@@ -34,7 +34,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "//platform/kernel/rpc",
+        "//platform/kernel/rpc.lite",
         "//platform/analysis-api:analysis",
         "//platform/editor-ui-api:editor-ui",
         "//platform/project-frame",
@@ -72,7 +72,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":non-modal-welcome-screen",
-        "//platform/kernel/rpc:rpc_test_lib",
+        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/project-frame:project-frame_test_lib",

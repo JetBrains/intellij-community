@@ -245,8 +245,8 @@ internal class WelcomeScreenRightTabImpl(
     val generation = contentGeneration
     contentProvider.coroutineScope.launch {
       try {
-        val backendFeatureIds = WelcomeScreenFeatureApi.getInstance().getAvailableFeatureIds().toSet()
-        val contents = createFeatureContents(backendFeatureIds)
+        val availableFeatureIds = WelcomeScreenFeatureApi.getInstance().getAvailableFeatureIds().toSet()
+        val contents = createFeatureContents(availableFeatureIds)
 
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           disposeSingleBanner()
@@ -257,7 +257,7 @@ internal class WelcomeScreenRightTabImpl(
             disposeContents(contents)
             return@withContext
           }
-          createDefaultContent(backendFeatureIds, contents, finish)
+          createDefaultContent(availableFeatureIds, contents, finish)
         }
       }
       catch (e: CancellationException) {
@@ -272,9 +272,9 @@ internal class WelcomeScreenRightTabImpl(
   /**
    * Asks each available feature for its section. A feature that fails does not stop the other features.
    */
-  private suspend fun createFeatureContents(backendFeatureIds: Set<String>): List<WelcomeScreenFeatureUI.Content> {
+  private suspend fun createFeatureContents(availableFeatureIds: Set<String>): List<WelcomeScreenFeatureUI.Content> {
     return WelcomeScreenFeatureUI.features()
-      .filter { it.featureKey in backendFeatureIds }
+      .filter { it.featureKey in availableFeatureIds }
       .sortedBy { it.contentOrder }
       .mapNotNull { feature ->
         try {
@@ -291,12 +291,12 @@ internal class WelcomeScreenRightTabImpl(
   }
 
   private fun createDefaultContent(
-    backendFeatureIds: Set<String>,
+    availableFeatureIds: Set<String>,
     contents: List<WelcomeScreenFeatureUI.Content>,
     finish: () -> Unit,
   ) {
     if (contents.isEmpty()) {
-      createDefaultContent(contentPanel, backendFeatureIds, false)
+      createDefaultContent(contentPanel, availableFeatureIds, false)
     }
     else {
       val contentsPanel = JPanel(VerticalLayout(0))
@@ -307,7 +307,7 @@ internal class WelcomeScreenRightTabImpl(
 
       val bottomPanel = BorderLayoutPanel()
       bottomPanel.isOpaque = false
-      createDefaultContent(bottomPanel, backendFeatureIds, true)
+      createDefaultContent(bottomPanel, availableFeatureIds, true)
       contentPanel.addToBottom(bottomPanel)
     }
 
@@ -321,8 +321,8 @@ internal class WelcomeScreenRightTabImpl(
     }
   }
 
-  private fun createDefaultContent(parentPanel: BorderLayoutPanel, backendFeatureIds: Set<String>, extraContent: Boolean) {
-    parentPanel.addToCenter(createFeatureGrid(backendFeatureIds, extraContent))
+  private fun createDefaultContent(parentPanel: BorderLayoutPanel, availableFeatureIds: Set<String>, extraContent: Boolean) {
+    parentPanel.addToCenter(createFeatureGrid(availableFeatureIds, extraContent))
 
     val additionalPanel = JPanel(VerticalLayout(0))
     additionalPanel.isOpaque = false
@@ -335,10 +335,10 @@ internal class WelcomeScreenRightTabImpl(
     }
   }
 
-  private fun createFeatureGrid(backendFeatureIds: Set<String>, extraContent: Boolean): JPanel {
-    // Show only available backend features (and all non-backend features)
+  private fun createFeatureGrid(availableFeatureIds: Set<String>, extraContent: Boolean): JPanel {
+    // Show only the features a frontend or a backend handler registers, and every button without a feature key
     val featureModels = contentProvider.getFeatureButtonModels(project).filter {
-      it !is WelcomeRightTabContentProvider.FeatureButtonModelWithBackend || it.isAlwaysAvailable || it.featureKey in backendFeatureIds
+      it !is WelcomeRightTabContentProvider.FeatureButtonModelWithBackend || it.isAlwaysAvailable || it.featureKey in availableFeatureIds
     }
 
     val buttonPanel = JPanel(GridLayout())
