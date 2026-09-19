@@ -197,6 +197,9 @@ func validateTraceDestination(traceFile string, specs []jarpack.MergeSpec) error
 		if traceFile == spec.MetadataFile {
 			return fmt.Errorf("trace destination is a metadata output: %s", traceFile)
 		}
+		if spec.Native != nil && traceFile == spec.Native.Tree {
+			return fmt.Errorf("trace destination is a native tree output: %s", traceFile)
+		}
 		for _, source := range spec.Sources {
 			if traceFile == source.Path {
 				return fmt.Errorf("trace destination is an input: %s", traceFile)
@@ -280,14 +283,7 @@ func packOne(ctx context.Context, spec jarpack.MergeSpec, verifyCRC bool, tracer
 	duplicates, err := spec.Pack()
 	if err == nil && spec.MetadataFile != "" {
 		inventory := tracer.Start("inventory packing output", jar)
-		var entry filemetadata.Entry
-		entry, err = filemetadata.Inspect(spec.Output, filepath.Base(spec.Output))
-		if err == nil {
-			err = filemetadata.Write(spec.MetadataFile, []filemetadata.Entry{entry})
-			inventory.SetInt("fileCount", 1)
-			inventory.SetInt("hashedFileCount", 1)
-			inventory.SetInt("byteCount", entry.Size)
-		}
+		err = inventoryPackingOutput(spec, inventory)
 		if err != nil {
 			inventory.Fail(err)
 		}
@@ -320,6 +316,50 @@ func packOne(ctx context.Context, spec jarpack.MergeSpec, verifyCRC bool, tracer
 			filepath.Base(spec.Output), len(duplicates), plural(len(duplicates)), strings.Join(shown, ", "))
 	}
 	return err
+}
+
+// inventoryPackingOutput writes the metadata of what the spec packed. That is the jar, and in natives mode the native
+// tree as well: its root directory, keyed by the directory's name, and every file and directory under it. The collector
+// places the tree's files from this inventory alone, so it carries the hash, size and mode of each.
+func inventoryPackingOutput(spec jarpack.MergeSpec, inventory *span.Span) error {
+	entry, err := filemetadata.Inspect(spec.Output, filepath.Base(spec.Output))
+	if err != nil {
+		return err
+	}
+	entries := []filemetadata.Entry{entry}
+	hashed, byteCount := int64(1), entry.Size
+	nativeFiles := int64(0)
+	if spec.Native != nil {
+		base := filepath.Base(spec.Native.Tree)
+		root, err := filemetadata.Inspect(spec.Native.Tree, base)
+		if err != nil {
+			return err
+		}
+		tree, err := filemetadata.Inventory(spec.Native.Tree)
+		if err != nil {
+			return err
+		}
+		entries = append(entries, root)
+		for _, item := range tree {
+			item.RelativePath = base + "/" + item.RelativePath
+			entries = append(entries, item)
+			if item.Type == "file" {
+				nativeFiles++
+				hashed++
+				byteCount += item.Size
+			}
+		}
+	}
+	if err := filemetadata.Write(spec.MetadataFile, entries); err != nil {
+		return err
+	}
+	inventory.SetInt("fileCount", int64(len(entries)))
+	inventory.SetInt("hashedFileCount", hashed)
+	inventory.SetInt("byteCount", byteCount)
+	if spec.Native != nil {
+		inventory.SetInt("nativeFileCount", nativeFiles)
+	}
+	return nil
 }
 
 func plural(n int) string {

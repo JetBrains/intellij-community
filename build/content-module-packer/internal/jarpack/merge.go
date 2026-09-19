@@ -12,6 +12,8 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"jetbrains.com/content-module-packer/internal/nativelib"
 )
 
 // Source is one input of a merge: a jar and which of its entries belong in the result, or one file and the name it
@@ -34,6 +36,8 @@ type Source struct {
 	Reserve        bool
 	Manifest       ManifestMode
 	EntryOverrides map[string]EntryOverride
+	// Library marks a `library=` source, the only kind a natives-mode group takes its native entries from.
+	Library bool
 }
 
 // ManifestMode sets the policy for one source. The empty value uses the merge policy.
@@ -94,6 +98,15 @@ func (s MergeSpec) Merge() ([]string, error) {
 	if err := s.validateSources(); err != nil {
 		return nil, err
 	}
+	// Nil outside natives mode, and every natives-mode step below asks for it.
+	var natives *nativeMerge
+	if s.Native != nil {
+		index, err := s.nativeSourceIndex()
+		if err != nil {
+			return nil, err
+		}
+		natives = &nativeMerge{index: index}
+	}
 	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 		return nil, err
 	}
@@ -124,9 +137,12 @@ func (s MergeSpec) Merge() ([]string, error) {
 	var duplicates []string
 	var entities []string
 
-	for _, source := range sources {
+	for i, source := range sources {
 		keepManifest, rewriteBootClassPath, _ := source.manifestPolicy(s)
 		if source.Name != "" {
+			if natives != nil && nativelib.IsNativeEntry(source.Name) {
+				return nil, fmt.Errorf("%s contains native entry %s outside the native library %s", source.Path, source.Name, s.Native.LibName)
+			}
 			if s.MergeEntities && source.Name == "META-INF/listOfEntities.txt" && !source.Patch && !source.Reserve {
 				data, err := os.ReadFile(source.Path)
 				if err != nil {
@@ -150,6 +166,12 @@ func (s MergeSpec) Merge() ([]string, error) {
 			return nil, err
 		}
 		opened = append(opened, jar)
+		if natives != nil && i == natives.index {
+			// source is this iteration's copy, so the reservations never reach the caller's slice.
+			if err := natives.reserve(jar, &source); err != nil {
+				return nil, err
+			}
+		}
 		unmatched := make(map[string]struct{}, len(source.EntryOverrides))
 		for name := range source.EntryOverrides {
 			unmatched[name] = struct{}{}
@@ -186,6 +208,11 @@ func (s MergeSpec) Merge() ([]string, error) {
 					return nil, fmt.Errorf("%s: override of excluded entry %s", source.Path, e.Name)
 				}
 				continue
+			}
+			// Before the duplicate check: a second copy of a native is an error in natives mode, not a collision to
+			// report, because the tree is written from the native library alone.
+			if natives != nil && i != natives.index && nativelib.IsNativeEntry(e.Name) {
+				return nil, fmt.Errorf("%s contains native entry %s outside the native library %s", source.Path, e.Name, s.Native.LibName)
 			}
 			if _, dup := seen[e.Name]; dup {
 				// Cloned because this escapes to the caller, which reports it after the mappings are gone.
@@ -244,12 +271,30 @@ func (s MergeSpec) Merge() ([]string, error) {
 	if err := writer.Close(); err != nil {
 		return nil, err
 	}
-	return duplicates, out.Close()
+	if err := out.Close(); err != nil {
+		return nil, err
+	}
+	// After the jar, so a tree never exists without its jar. The native jar is still mapped: it is closed with the
+	// others when this returns.
+	if natives != nil {
+		if err := s.writeNativeTree(natives); err != nil {
+			return nil, err
+		}
+	}
+	return duplicates, nil
 }
 
 func (s MergeSpec) validateSources() error {
 	if !s.DirectoryMode.valid() {
 		return fmt.Errorf("unknown directory mode %q", s.DirectoryMode)
+	}
+	if s.Native != nil {
+		if err := s.Native.validate(s.Output); err != nil {
+			return err
+		}
+		if s.RejectNativeEntries {
+			return fmt.Errorf("%s: a native tree and rejected native entries cannot be combined", s.Output)
+		}
 	}
 	for _, source := range s.Sources {
 		if _, _, err := source.manifestPolicy(s); err != nil {
@@ -359,6 +404,9 @@ type MergeSpec struct {
 	MetadataFile        string
 	DirectoryMode       DirectoryMode
 	ValidateEntryNames  bool
+	// Native is set for a natives-mode group, whose jar is packed without one library's native entries and whose
+	// platform's natives are written under a tree instead; see NativeSpec. Nil for every other group.
+	Native *NativeSpec
 	// TraceFile is where the *run* writes its spans, and nothing about packing reads it. It arrives in the flag file
 	// because that is a worker's only per-request channel; see ParseFlagFile.
 	TraceFile string

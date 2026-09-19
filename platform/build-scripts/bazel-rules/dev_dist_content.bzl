@@ -24,7 +24,11 @@ DevDistPlatformPayloadInfo = provider(
     doc = "What a product's `lib/`-owning payload contains, split by which producer packs each jar.",
     fields = {
         "packed_jars": "depset of File: the `lib/<module>.jar`s a `content_module_jar` target packed.",
-        "packed_metadata": "depset of struct(jar, metadata, relative_path): the metadata and the destination of each packed jar.",
+        # Jars only in `packed_jars`, because the byte gate reads it as the set of jars to compare. The native tree a
+        # platform jar writes beside itself travels in the record, and the packed-jars component places it from there.
+        "packed_metadata": """depset of struct(jar, metadata, relative_path, native_tree, native_lib_dir): the metadata
+        and the destination of each packed jar, and its native tree with the `lib/` subdirectory the tree goes to.
+        `None` and empty for a jar without one.""",
         "packed_jar_names": """list of string: their destinations within `lib/`, sorted - the jar-name exclusion set.
 
         A destination, not a file name: a platform jar can name a subdirectory of `lib/`, and the fragment that must not
@@ -44,11 +48,29 @@ def _dev_dist_platform_payload_impl(ctx):
     packed_member_names = []
     packed_library_jars = []
     packed_destinations = []
+    native_dir_owners = {}
     for target in ctx.attr.packed:
         info = target[ContentModuleJarInfo] if ContentModuleJarInfo in target else target[DevDistPlatformJarInfo]
         packed_jars.append(info.jar)
         packed_destinations.append(struct(destination = info.relative_path, jar = info.jar))
-        packed_metadata.append(struct(jar = info.jar, metadata = info.metadata, relative_path = info.relative_path))
+
+        # `getattr`, because only a platform jar can carry a native tree and `ContentModuleJarInfo` has no such field.
+        native_tree = getattr(info, "native_tree", None)
+        native_lib_dir = getattr(info, "native_lib_dir", "") if native_tree != None else ""
+        if native_tree != None:
+            # One owner per `lib/<dir>/`, like one owner per jar destination below: two trees in one directory would
+            # be two producers of whichever files they share.
+            previous = native_dir_owners.get(native_lib_dir)
+            if previous != None:
+                fail("%s: lib/%s/ receives the native tree of both %s and %s" % (ctx.label, native_lib_dir, previous.owner, info.jar.owner))
+            native_dir_owners[native_lib_dir] = info.jar
+        packed_metadata.append(struct(
+            jar = info.jar,
+            metadata = info.metadata,
+            relative_path = info.relative_path,
+            native_tree = native_tree,
+            native_lib_dir = native_lib_dir,
+        ))
         packed_member_jars.extend(info.member_jars)
         packed_member_names.extend(info.member_modules)
         packed_library_jars.extend(info.library_jars)

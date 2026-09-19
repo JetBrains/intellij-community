@@ -10,6 +10,7 @@ import com.intellij.util.lang.ZipFile
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.plus
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
@@ -332,7 +333,9 @@ internal fun nativeLibraryRelativePath(libName: String, arch: JvmArchitecture?, 
   }
 }
 
-internal fun getLibNameBySourceFile(sourceFile: Path): String {
+/** The Maven artifact name of a library file: the dash-separated parts of the file name before the first part with a dot. */
+@ApiStatus.Internal
+fun getLibNameBySourceFile(sourceFile: Path): String {
   val fileName = sourceFile.fileName.toString()
   return fileName.split('-').takeWhile { !it.contains('.') }.joinToString(separator = "-")
 }

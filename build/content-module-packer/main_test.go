@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -117,6 +118,179 @@ func TestPackingProducesMetadataOutsideThePayload(t *testing.T) {
 	files, err := os.ReadDir(filepath.Join(baseDir, "out"))
 	if err != nil || len(files) != 1 || files[0].Name() != "example.jar" {
 		t.Fatalf("payload contains metadata: %v, error = %v", files, err)
+	}
+}
+
+// packOneNativeJar writes a jna-like library and a natives-mode recipe under a fresh directory, the way the platform
+// jar rule declares them: the tree is a directory named `native` beside the jar, and the variant is macOS on arm. The
+// spawn helper is pty4j's, borrowed because it is the one extension-less name nativelib knows as a native.
+func packOneNativeJar(t *testing.T) string {
+	t.Helper()
+	baseDir := t.TempDir()
+	handle, err := os.Create(filepath.Join(baseDir, "jna-5.14.0.jar"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	writer := zip.NewWriter(handle)
+	for name, content := range map[string]string{
+		"com/sun/jna/Native.class":                           "\xca\xfe\xba\xbenot really a class",
+		"com/sun/jna/darwin-aarch64/libjnidispatch.jnilib":   "arm dispatch",
+		"com/sun/jna/darwin-x86-64/libjnidispatch.jnilib":    "intel dispatch",
+		"com/sun/jna/linux-x86-64/libjnidispatch.so":         "linux dispatch",
+		"com/sun/jna/darwin-aarch64/pty4j-unix-spawn-helper": "an executable",
+	} {
+		entry, err := writer.Create(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := entry.Write([]byte(content)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := handle.Close(); err != nil {
+		t.Fatal(err)
+	}
+	recipe := "output=out/intellij.libraries.jna.jar\nmetadata-file=jna.metadata.json\ntrace-file=jna.spans.json\n" +
+		"native-tree=out/native\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=jna-5.14.0.jar\n"
+	if err := os.WriteFile(filepath.Join(baseDir, "recipe.txt"), []byte(recipe), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return baseDir
+}
+
+func TestNativesModeInventoriesTheJarAndTheTree(t *testing.T) {
+	baseDir := packOneNativeJar(t)
+	var out strings.Builder
+	if code := pack(context.Background(), []string{"--flagfile=" + filepath.Join(baseDir, "recipe.txt")}, baseDir, &out); code != 0 {
+		t.Fatalf("exit %d: %s", code, out.String())
+	}
+	entries, err := filemetadata.Read(filepath.Join(baseDir, "jna.metadata.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	byPath := make(map[string]filemetadata.Entry, len(entries))
+	var keys []string
+	for _, entry := range entries {
+		byPath[entry.RelativePath] = entry
+		keys = append(keys, entry.RelativePath)
+	}
+	// The jar, the tree root by the directory's name, and every directory and file under it; nothing of the other
+	// platforms, which the jar has lost all the same.
+	want := []string{"intellij.libraries.jna.jar", "native", "native/aarch64", "native/aarch64/libjnidispatch.jnilib", "native/aarch64/pty4j-unix-spawn-helper"}
+	if !reflect.DeepEqual(keys, want) {
+		t.Fatalf("inventory keys are %v, want %v", keys, want)
+	}
+	if byPath["native"].Type != "directory" || byPath["native/aarch64"].Type != "directory" {
+		t.Errorf("tree directories are not directories: %#v", byPath)
+	}
+	library := byPath["native/aarch64/libjnidispatch.jnilib"]
+	expected, err := filemetadata.Inspect(filepath.Join(baseDir, "out/native/aarch64/libjnidispatch.jnilib"), library.RelativePath)
+	if err != nil || library != expected || library.Type != "file" || library.Executable || library.Size != int64(len("arm dispatch")) {
+		t.Errorf("library metadata = %#v, expected %#v, error = %v", library, expected, err)
+	}
+	if helper := byPath["native/aarch64/pty4j-unix-spawn-helper"]; runtime.GOOS != "windows" && (!helper.Executable || helper.Mode != 0o755) {
+		t.Errorf("helper metadata = %#v, want an executable of mode 0755", helper)
+	}
+	if runtime.GOOS != "windows" && library.Mode != 0o644 {
+		t.Errorf("library mode is %o, want 0644", library.Mode)
+	}
+	jar, err := filemetadata.Inspect(filepath.Join(baseDir, "out/intellij.libraries.jna.jar"), "intellij.libraries.jna.jar")
+	if err != nil || byPath["intellij.libraries.jna.jar"] != jar {
+		t.Errorf("jar metadata = %#v, expected %#v, error = %v", byPath["intellij.libraries.jna.jar"], jar, err)
+	}
+	// The jar itself carries the class alone.
+	reader, err := zip.OpenReader(filepath.Join(baseDir, "out/intellij.libraries.jna.jar"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reader.Close()
+	var names []string
+	for _, file := range reader.File {
+		names = append(names, file.Name)
+	}
+	if !reflect.DeepEqual(names, []string{"com/sun/jna/Native.class", "__index__"}) {
+		t.Errorf("jar entries are %v, want the class and the index alone", names)
+	}
+	// The inventory span keeps its shape and states how many native files it counted.
+	content, err := os.ReadFile(filepath.Join(baseDir, "jna.spans.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var document struct {
+		Data []struct {
+			Spans []struct {
+				OperationName string `json:"operationName"`
+				Tags          []struct {
+					Key   string `json:"key"`
+					Value string `json:"value"`
+				} `json:"tags"`
+			} `json:"spans"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(content, &document); err != nil {
+		t.Fatal(err)
+	}
+	if len(document.Data) != 1 || len(document.Data[0].Spans) != 3 || document.Data[0].Spans[2].OperationName != "inventory packing output" {
+		t.Fatalf("missing producer inventory span: %s", content)
+	}
+	tags := make(map[string]string)
+	for _, tag := range document.Data[0].Spans[2].Tags {
+		tags[tag.Key] = tag.Value
+	}
+	if tags["fileCount"] != "5" || tags["hashedFileCount"] != "3" || tags["nativeFileCount"] != "2" ||
+		tags["byteCount"] != strconv.FormatInt(jar.Size+library.Size+byPath["native/aarch64/pty4j-unix-spawn-helper"].Size, 10) {
+		t.Fatalf("producer inventory counters = %v", tags)
+	}
+}
+
+func TestNativesModeInventoriesAnEmptyTree(t *testing.T) {
+	// The linux jar has no macOS native: the inventory names the empty tree root and the jar, and nothing else.
+	baseDir := packOneNativeJar(t)
+	recipe := "output=out/intellij.libraries.jna.jar\nmetadata-file=jna.metadata.json\n" +
+		"native-tree=out/native\nnative-variant=windows_aarch64\nnative-lib=jna\nlibrary=jna-5.14.0.jar\n"
+	if err := os.WriteFile(filepath.Join(baseDir, "recipe.txt"), []byte(recipe), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var out strings.Builder
+	if code := pack(context.Background(), []string{"--flagfile=" + filepath.Join(baseDir, "recipe.txt")}, baseDir, &out); code != 0 {
+		t.Fatalf("exit %d: %s", code, out.String())
+	}
+	entries, err := filemetadata.Read(filepath.Join(baseDir, "jna.metadata.json"))
+	if err != nil || len(entries) != 2 || entries[0].RelativePath != "intellij.libraries.jna.jar" || entries[1].RelativePath != "native" || entries[1].Type != "directory" {
+		t.Fatalf("entries = %#v, error = %v", entries, err)
+	}
+}
+
+func TestNativesModeRefusesATraceDestinationInsideTheTree(t *testing.T) {
+	baseDir := packOneNativeJar(t)
+	before := packingFileSnapshot(t, baseDir)
+	var out strings.Builder
+	arguments := []string{"--flagfile=" + filepath.Join(baseDir, "recipe.txt"), "--trace-file=out/native"}
+	if code := pack(context.Background(), arguments, baseDir, &out); code != 3 || !strings.Contains(out.String(), "native tree output") {
+		t.Fatalf("exit %d: %s", code, out.String())
+	}
+	if after := packingFileSnapshot(t, baseDir); !reflect.DeepEqual(before, after) {
+		t.Error("a rejected trace destination changed the packing files")
+	}
+}
+
+func TestNativesModeFailsBeforeWritingWhenTheRecipeIsIncomplete(t *testing.T) {
+	baseDir := packOneNativeJar(t)
+	recipe := "output=out/intellij.libraries.jna.jar\nmetadata-file=jna.metadata.json\n" +
+		"native-tree=out/native\nnative-lib=jna\nlibrary=jna-5.14.0.jar\n"
+	if err := os.WriteFile(filepath.Join(baseDir, "recipe.txt"), []byte(recipe), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	before := packingFileSnapshot(t, baseDir)
+	var out strings.Builder
+	if code := pack(context.Background(), []string{"--flagfile=" + filepath.Join(baseDir, "recipe.txt")}, baseDir, &out); code != 3 || !strings.Contains(out.String(), "required together") {
+		t.Fatalf("exit %d: %s", code, out.String())
+	}
+	if after := packingFileSnapshot(t, baseDir); !reflect.DeepEqual(before, after) {
+		t.Error("an incomplete natives recipe changed the packing files")
 	}
 }
 

@@ -128,10 +128,37 @@ def _platform_jar_test_impl(ctx):
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
     info = target[DevDistPlatformJarInfo]
+    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "PackContentModuleJar"]
+    asserts.equals(env, 1, len(actions))
+    action = actions[0]
     asserts.equals(env, ctx.attr.destination, info.relative_path)
-    asserts.equals(env, [info.jar], target[DefaultInfo].files.to_list())
     asserts.true(env, info.jar.path.endswith("/" + target.label.name + "/" + ctx.attr.destination), info.jar.path)
     asserts.equals(env, ctx.attr.member_modules, list(info.member_modules))
+
+    # The flag file in grammar order. The fixture merges one meaningful source, so the manifest is kept. Without natives
+    # the jar rejects a native entry. With them the same action writes the tree beside the jar, and the three lines
+    # name it. The rejection is absent then, because the packer refuses the pair.
+    expected = ["output=" + info.jar.path, "metadata-file=" + info.metadata.path, "keep-manifest=true", "merge-entities=true"]
+    outputs = [info.jar, info.metadata]
+    if ctx.attr.native_lib:
+        asserts.true(env, info.native_tree.is_directory)
+        asserts.equals(env, "native", info.native_tree.basename)
+        asserts.true(env, info.native_tree.path.endswith("/" + target.label.name + "/native"), info.native_tree.path)
+        asserts.equals(env, ctx.attr.native_lib_dir, info.native_lib_dir)
+        expected += [
+            "native-tree=" + info.native_tree.path,
+            "native-variant=" + ctx.attr.native_platform,
+            "native-lib=" + ctx.attr.native_lib,
+        ]
+        outputs.append(info.native_tree)
+    else:
+        asserts.equals(env, None, info.native_tree)
+        asserts.equals(env, "", info.native_lib_dir)
+        expected.append("reject-native-entries=true")
+    expected += ["module=" + jar.path for jar in info.member_jars]
+    asserts.equals(env, expected, action.argv[1:])
+    asserts.equals(env, outputs, action.outputs.to_list())
+    asserts.equals(env, [info.jar] + ([info.native_tree] if ctx.attr.native_lib else []), target[DefaultInfo].files.to_list())
     return analysistest.end(env)
 
 _platform_jar_test = analysistest.make(
@@ -139,7 +166,22 @@ _platform_jar_test = analysistest.make(
     attrs = {
         "destination": attr.string(mandatory = True),
         "member_modules": attr.string_list(),
+        "native_lib": attr.string(),
+        "native_lib_dir": attr.string(),
+        "native_platform": attr.string(),
     },
+    config_settings = {_TRACE_SPANS: False},
+)
+
+def _platform_jar_failure_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    asserts.expect_failure(env, ctx.attr.expected_message)
+    return analysistest.end(env)
+
+_platform_jar_failure_test = analysistest.make(
+    _platform_jar_failure_test_impl,
+    expect_failure = True,
+    attrs = {"expected_message": attr.string(mandatory = True)},
 )
 
 def content_module_jar_test_suite(name):
@@ -209,13 +251,21 @@ def content_module_jar_test_suite(name):
 
     # A platform jar states its own destination, and it may name a subdirectory of the plugin's `lib/`. The three
     # residual jars of `idea` do - `ext/platform-main.jar` and the two `frontend-split/` jars - so the destination must
-    # survive both the rule and the provider rather than collapsing to the jar's own name.
-    for case, destination in [("flat", "platform-flat.jar"), ("nested", "ext/platform-nested.jar")]:
+    # survive both the rule and the provider rather than collapsing to the jar's own name. The `natives` case is a jar
+    # whose presigned library carries native files: the same action writes the tree, and the provider carries it.
+    for case, destination, native_lib, native_lib_dir, native_platform in [
+        ("flat", "platform-flat.jar", "", "", ""),
+        ("nested", "ext/platform-nested.jar", "", "", ""),
+        ("natives", "platform-natives.jar", "jna", "jna", "linux_x64"),
+    ]:
         platform_jar = name + "_platform_" + case
         dev_dist_platform_jar(
             name = platform_jar,
             relative_output_file = destination,
             modules = [":" + first],
+            native_lib = native_lib,
+            native_lib_dir = native_lib_dir,
+            native_platform = native_platform,
             tags = ["manual"],
         )
         _platform_jar_test(
@@ -223,6 +273,33 @@ def content_module_jar_test_suite(name):
             target_under_test = ":" + platform_jar,
             destination = destination,
             member_modules = ["test." + first],
+            native_lib = native_lib,
+            native_lib_dir = native_lib_dir,
+            native_platform = native_platform,
+        )
+        tests.append(platform_jar + "_test")
+
+    # The natives mode is all three attributes or none, the platform is a `HOST_PLATFORMS` token and the directory is
+    # one name under `lib/`. Each is refused at analysis, where the jar is still named, rather than in a distribution.
+    for case, native_lib, native_lib_dir, native_platform, expected_message in [
+        ("partial", "jna", "", "", "native_lib_dir, native_platform"),
+        ("bad_platform", "jna", "jna", "linux_riscv", "'linux_riscv' is not one of"),
+        ("bad_dir", "jna", "jna/x64", "linux_x64", "is not one directory name"),
+    ]:
+        platform_jar = name + "_platform_natives_" + case
+        dev_dist_platform_jar(
+            name = platform_jar,
+            relative_output_file = "platform-natives.jar",
+            modules = [":" + first],
+            native_lib = native_lib,
+            native_lib_dir = native_lib_dir,
+            native_platform = native_platform,
+            tags = ["manual"],
+        )
+        _platform_jar_failure_test(
+            name = platform_jar + "_test",
+            target_under_test = ":" + platform_jar,
+            expected_message = expected_message,
         )
         tests.append(platform_jar + "_test")
     native.test_suite(name = name, tests = tests)

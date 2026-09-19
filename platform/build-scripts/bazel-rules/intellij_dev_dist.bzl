@@ -628,22 +628,35 @@ def _collect_component(ctx, files, collection_args, inputs, mnemonic, progress_m
         ),
     ]
 
+def _packed_sources(record):
+    """The files one packed record places: the jar, and the native tree beside it when the jar has one.
+
+    A jar entry keeps the shape it had before a tree could stand beside one, with no `tree` key. A tree entry says
+    `tree`, because the collector and the composer place a directory by its members.
+    """
+    sources = [struct(file = record.jar, tree = False)]
+    if record.native_tree:
+        sources.append(struct(file = record.native_tree, tree = True))
+    return sources
+
 def _metadata_catalogue(ctx, records):
     catalogue = ctx.actions.declare_file(ctx.label.name + ".metadata-catalogue.json")
     by_source = {}
     for record in records:
-        previous = by_source.get(record.jar.path)
-        if previous != None and previous.metadata != record.metadata:
-            fail("%s: conflicting metadata for %s" % (ctx.label, record.jar.path))
-        by_source[record.jar.path] = record
+        for source in _packed_sources(record):
+            previous = by_source.get(source.file.path)
+            if previous != None and previous.metadata != record.metadata:
+                fail("%s: conflicting metadata for %s" % (ctx.label, source.file.path))
+            by_source[source.file.path] = struct(file = source.file, metadata = record.metadata, tree = source.tree)
     ctx.actions.write(catalogue, json.encode([
         {
             "source": source,
             "metadata": by_source[source].metadata.path,
-            # The jar's own file name, and not the destination the jar declares. This is the key of the packing
-            # action's inventory, which `content-module-packer` writes under the output file's base name.
-            "relativePath": by_source[source].jar.basename,
-        }
+            # The source's own base name, and not the destination the jar declares. This is the key of the packing
+            # action's inventory, which `content-module-packer` writes under the output's base name. For the tree that
+            # is `native`, and its inventory shares the jar's metadata file.
+            "relativePath": by_source[source].file.basename,
+        } | ({"tree": True} if by_source[source].tree else {})
         for source in sorted(by_source.keys())
     ]))
     return catalogue
@@ -651,18 +664,19 @@ def _metadata_catalogue(ctx, records):
 def _jar_destinations(ctx, records):
     """Where each packed jar goes within the plugin's `lib/`, which its own file name states only when it is flat.
 
-    Sorted by source, so the file the action reads is the same file for the same set of jars.
+    A native tree goes to `lib/<native_lib_dir>/`, as a `tree` entry. Sorted by source, so the file the action reads is
+    the same file for the same set of jars.
     """
     by_source = {}
     for record in records:
-        previous = by_source.get(record.jar.path)
-        if previous != None and previous != record.relative_path:
-            fail("%s: %s is placed at both %s and %s" % (ctx.label, record.jar.path, previous, record.relative_path))
-        by_source[record.jar.path] = record.relative_path
-    return [
-        {"source": source, "relativePath": by_source[source]}
-        for source in sorted(by_source.keys())
-    ]
+        for source in _packed_sources(record):
+            relative_path = record.native_lib_dir if source.tree else record.relative_path
+            entry = {"source": source.file.path, "relativePath": relative_path} | ({"tree": True} if source.tree else {})
+            previous = by_source.get(source.file.path)
+            if previous != None and previous != entry:
+                fail("%s: %s is placed at both %s and %s" % (ctx.label, source.file.path, previous["relativePath"], relative_path))
+            by_source[source.file.path] = entry
+    return [by_source[source] for source in sorted(by_source.keys())]
 
 def _packed_jars_component_impl(ctx):
     if ctx.attr.platform_payload:
@@ -670,6 +684,7 @@ def _packed_jars_component_impl(ctx):
             fail("%s: files and executable_files cannot be combined with platform_payload" % ctx.label)
         jars = ctx.attr.platform_payload[DevDistPlatformPayloadInfo].packed_jars.to_list()
         records = ctx.attr.platform_payload[DevDistPlatformPayloadInfo].packed_metadata.to_list()
+        trees = [record.native_tree for record in records if record.native_tree]
         catalogue = _metadata_catalogue(ctx, records)
         jar_list = ctx.actions.declare_file(ctx.label.name + ".jars.json")
         ctx.actions.write(jar_list, json.encode(_jar_destinations(ctx, records)))
@@ -678,11 +693,13 @@ def _packed_jars_component_impl(ctx):
         args.add("--jars-file=" + jar_list.path)
         return _collect_component(
             ctx,
-            files = jars,
+            # The trees with the jars, so they reach the payload the composer places. Neither is an input of the
+            # collector, which reads the metadata and nothing else.
+            files = jars + trees,
             collection_args = [args],
             inputs = [catalogue, jar_list] + [record.metadata for record in records],
             mnemonic = "IntellijDevPackedJars",
-            progress_message = "Naming %d packed %s jars for %%{label}" % (len(jars), ctx.attr.platform_prefix),
+            progress_message = "Naming %d packed %s jars and %d native trees for %%{label}" % (len(jars), ctx.attr.platform_prefix, len(trees)),
         )
 
     if not ctx.attr.files and not ctx.attr.executable_files:
@@ -720,10 +737,10 @@ def _packed_jars_component_impl(ctx):
 intellij_dev_packed_jars_component = rule(
     doc = """Collect packed platform jars or explicitly placed files into a distribution component.
 
-    Set platform_payload to collect its packed jars at lib/<filename>. Alternatively, set files and executable_files
-    to map source labels to distribution paths; the composer gives a file of executable_files the executable bit. The
-    modes cannot be combined. The action reads only these sources and writes one manifest. The composer copies the
-    files directly from their sources.
+    Set platform_payload to collect its packed jars at lib/<filename>, and the native tree of a platform jar at
+    lib/<native_lib_dir>/. Alternatively, set files and executable_files to map source labels to distribution paths;
+    the composer gives a file of executable_files the executable bit. The modes cannot be combined. The action reads
+    only these sources and writes one manifest. The composer copies the files directly from their sources.
     """,
     implementation = _packed_jars_component_impl,
     attrs = _COLLECTOR_ATTRS | {

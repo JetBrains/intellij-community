@@ -9,6 +9,7 @@ go_library(
         "flagfile.go",
         "index.go",
         "merge.go",
+        "natives.go",
         "reader.go",
         "writer.go",
     ],
@@ -16,6 +17,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//build/content-module-packer/internal/mmapfile",
+        "//build/content-module-packer/internal/nativelib",
         "//build/content-module-packer/internal/xxh3",
     ],
 )
@@ -31,6 +33,7 @@ go_test(
         "golden_test.go",
         "index_test.go",
         "merge_test.go",
+        "natives_test.go",
         "reader_test.go",
         "testjar_test.go",
         "writer_test.go",

@@ -25,6 +25,9 @@ type sourcedFile struct {
 	metadata     *filemetadata.Entry
 	mode         *uint32
 	classPath    bool
+	// tree marks a directory record, which attachMetadata replaces with one file per inventory entry under it. It
+	// never reaches the manifest: the composer creates the directories a file needs.
+	tree bool
 }
 
 func collect(opts options, tracer *span.Tracer, parent *span.Span) (files []sourcedFile, err error) {
@@ -40,13 +43,15 @@ func collect(opts options, tracer *span.Tracer, parent *span.Span) (files []sour
 	default:
 		files, err = collectFiles(opts.filesFile)
 	}
-	if err == nil {
-		err = validateDestinations(files)
-	}
 	if err == nil && opts.metadataCatalogue != "" {
-		err = attachMetadata(files, opts.metadataCatalogue)
+		files, err = attachMetadata(files, opts.metadataCatalogue)
 	} else if err == nil && opts.filesFile == "" {
 		err = fmt.Errorf("packed jars require --metadata-catalogue; payload inventories belong to the packing action")
+	}
+	// After the metadata, because a tree record is a directory until its inventory names the files under it, and
+	// the destinations to check are theirs.
+	if err == nil {
+		err = validateDestinations(files)
 	}
 	if err != nil {
 		activity.Fail(err)
@@ -77,12 +82,13 @@ func collectPlatformJars(file string) ([]sourcedFile, error) {
 			return nil, fmt.Errorf("%s: record %d states executable, which a packed jar never is", file, index+1)
 		}
 		// The destination the jar declares, not the name of the file that holds it: a platform jar can name a
-		// subdirectory of the plugin's `lib/`, and the two agree only when the destination is flat.
+		// subdirectory of the plugin's `lib/`, and the two agree only when the destination is flat. A tree record
+		// names the library's directory under `lib/`, the way the Kotlin packer places `lib/jna/`.
 		relativePath, err := normalizedRelativePath(record.RelativePath)
 		if err != nil {
 			return nil, fmt.Errorf("%s: record %d escapes the distribution: %s", file, index+1, record.RelativePath)
 		}
-		files = append(files, sourcedFile{Source: record.Source, RelativePath: "lib/" + relativePath})
+		files = append(files, sourcedFile{Source: record.Source, RelativePath: "lib/" + relativePath, tree: record.Tree})
 	}
 	if len(files) == 0 {
 		return nil, fmt.Errorf("%s names no jar, so this component would contribute nothing", file)
@@ -91,10 +97,12 @@ func collectPlatformJars(file string) ([]sourcedFile, error) {
 }
 
 // One record shape for both collection modes. A jar record leaves `executable` unstated, and a file record states it.
+// A jar record may state `tree`, and then names a native tree directory rather than a jar; see sourcedFile.
 type collectedRecord struct {
 	Source       string `json:"source"`
 	RelativePath string `json:"relativePath"`
 	Executable   *bool  `json:"executable"`
+	Tree         bool   `json:"tree"`
 }
 
 // decodeRecords reads the records of one collection mode, and refuses a file that is not exactly an array of them.
@@ -131,6 +139,9 @@ func collectFiles(file string) ([]sourcedFile, error) {
 	for index, record := range records {
 		if isBlank(record.Source) || isBlank(record.RelativePath) || record.Executable == nil {
 			return nil, fmt.Errorf("%s: record %d requires source, relativePath and executable", file, index+1)
+		}
+		if record.Tree {
+			return nil, fmt.Errorf("%s: record %d states tree, which only a packed jar record can", file, index+1)
 		}
 		relativePath, err := normalizedRelativePath(record.RelativePath)
 		if err != nil {

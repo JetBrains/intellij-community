@@ -74,6 +74,24 @@ func TestPlatformJars(t *testing.T) {
 	writeText(t, "jars.json", "[]")
 	_, err = collectPlatformJars("jars.json")
 	requireError(t, err, "names no jar")
+	// A tree record is the library's directory under `lib/`, kept apart from the jars until the metadata expands it.
+	writeText(t, "jars.json", `[
+  {"source":"inputs/intellij.libraries.jna.jar", "relativePath":"intellij.libraries.jna.jar"},
+  {"source":"inputs/native", "relativePath":"jna", "tree":true},
+  {"source":"inputs/other.jar", "relativePath":"other.jar", "tree":false}
+]`)
+	actual, err = collectPlatformJars("jars.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected = []sourcedFile{
+		{Source: "inputs/intellij.libraries.jna.jar", RelativePath: "lib/intellij.libraries.jna.jar"},
+		{Source: "inputs/native", RelativePath: "lib/jna", tree: true},
+		{Source: "inputs/other.jar", RelativePath: "lib/other.jar"},
+	}
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("files = %#v, want %#v", actual, expected)
+	}
 }
 
 func TestInvalidPlatformJars(t *testing.T) {
@@ -82,6 +100,9 @@ func TestInvalidPlatformJars(t *testing.T) {
 		{`[{"relativePath":"a.jar"}]`, "requires source and relativePath"},
 		{`[{"source":"in","relativePath":" "}]`, "requires source and relativePath"},
 		{`[{"source":"in","relativePath":"a.jar","executable":true}]`, "states executable"},
+		{`[{"source":"in","relativePath":"jna","tree":true,"executable":false}]`, "states executable"},
+		{`[{"source":"in","relativePath":"../jna","tree":true}]`, "escapes the distribution"},
+		{`[{"source":"in","relativePath":"jna","tree":"true"}]`, "cannot unmarshal"},
 		{`[{"source":"in","relativePath":"../a.jar"}]`, "escapes the distribution"},
 		{`[{"source":"in","relativePath":"/a.jar"}]`, "escapes the distribution"},
 		{`[{"source":"in","relativePath":"a.jar","extra":1}]`, "unknown field"},
@@ -142,6 +163,7 @@ func TestInvalidFiles(t *testing.T) {
 		{`[{"source":"in","relativePath":"/out","executable":true}]`, "escapes the distribution"},
 		{`[{"source":"in","relativePath":"bin/../out","executable":true}]`, "escapes the distribution"},
 		{`[{"source":"in","relativePath":"out","executable":true,"extra":1}]`, "unknown field"},
+		{`[{"source":"in","relativePath":"out","executable":true,"tree":true}]`, "states tree"},
 		{`[{"source":"in","relativePath":"out","executable":"true"}]`, "cannot unmarshal"},
 		{`[] []`, "unexpected data"},
 		{`[{"source":"in","relativePath":"out","executable":true},{"source":"other","relativePath":"out","executable":false}]`, "duplicate destination"},

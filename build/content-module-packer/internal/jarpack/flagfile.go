@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"jetbrains.com/content-module-packer/internal/nativelib"
 )
 
 // ParseFlagFile reads the packer's argument grammar: one `output=` line per jar, followed by the `module=`, `library=`
@@ -21,6 +23,10 @@ import (
 // worker spawn's arguments at the param file, so anything before it belongs to the worker *process* and to its
 // `WorkerKey`. A per-action path there would start a fresh worker for each of the ~2 500 packing actions. Inside the
 // file it is per *request*, which is what an action is.
+//
+// `native-tree=`, `native-variant=` and `native-lib=` together put a group in natives mode; see NativeSpec. They come
+// as three lines rather than one because each is a different kind of value: an output path, a platform token and a
+// library name. Two of the three is a recipe that says one thing and packs another, so it is refused.
 func ParseFlagFile(path string, baseDir string) ([]MergeSpec, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -29,10 +35,19 @@ func ParseFlagFile(path string, baseDir string) ([]MergeSpec, error) {
 
 	var specs []MergeSpec
 	var current *MergeSpec
-	flush := func() {
-		if current != nil {
-			specs = append(specs, *current)
+	var natives nativeLines
+	flush := func() error {
+		if current == nil {
+			return nil
 		}
+		native, err := natives.spec()
+		if err != nil {
+			return fmt.Errorf("%s: %w", current.Output, err)
+		}
+		current.Native = native
+		specs = append(specs, *current)
+		natives = nativeLines{}
+		return nil
 	}
 	resolve := func(p string) string {
 		if filepath.IsAbs(p) {
@@ -55,7 +70,9 @@ func ParseFlagFile(path string, baseDir string) ([]MergeSpec, error) {
 		}
 		switch option {
 		case "output":
-			flush()
+			if err := flush(); err != nil {
+				return nil, err
+			}
 			current = &MergeSpec{Output: resolve(value)}
 		case "keep-manifest":
 			if current.KeepManifest, err = parseStrictBool(value); err != nil {
@@ -76,10 +93,20 @@ func ParseFlagFile(path string, baseDir string) ([]MergeSpec, error) {
 			if current.RejectNativeEntries, err = parseStrictBool(value); err != nil {
 				return nil, err
 			}
+		case "native-tree", "native-variant", "native-lib":
+			if value == "" {
+				return nil, fmt.Errorf("expected a nonempty `%s=`", option)
+			}
+			if option == "native-tree" {
+				value = resolve(value)
+			}
+			if err := natives.set(option, value); err != nil {
+				return nil, err
+			}
 		case "module":
 			current.Sources = append(current.Sources, Source{Path: resolve(value), Filter: ModuleOutputNameFilter})
 		case "library":
-			current.Sources = append(current.Sources, Source{Path: resolve(value), Filter: LibraryNameFilter})
+			current.Sources = append(current.Sources, Source{Path: resolve(value), Filter: LibraryNameFilter, Library: true})
 		case "source-manifest":
 			if len(current.Sources) == 0 {
 				return nil, fmt.Errorf("`source-manifest=` requires a preceding archive source")
@@ -109,7 +136,9 @@ func ParseFlagFile(path string, baseDir string) ([]MergeSpec, error) {
 			return nil, fmt.Errorf("unknown option %q in %q", option, line)
 		}
 	}
-	flush()
+	if err := flush(); err != nil {
+		return nil, err
+	}
 
 	seen := make(map[string]int, len(specs))
 	trace := ""
@@ -145,14 +174,69 @@ func ParseFlagFile(path string, baseDir string) ([]MergeSpec, error) {
 		}
 		metadataPaths[spec.MetadataFile] = true
 	}
+	nativeTrees := make(map[string]bool)
+	for _, spec := range specs {
+		if spec.Native == nil {
+			continue
+		}
+		if spec.RejectNativeEntries {
+			return nil, fmt.Errorf("%s: `reject-native-entries=true` cannot be combined with a native tree", spec.Output)
+		}
+		tree := spec.Native.Tree
+		_, outputConflict := seen[tree]
+		if outputConflict || metadataPaths[tree] || nativeTrees[tree] || tree == trace {
+			return nil, fmt.Errorf("conflicting native tree destination: %s", tree)
+		}
+		nativeTrees[tree] = true
+	}
 	for _, spec := range specs {
 		for _, source := range spec.Sources {
 			if metadataPaths[source.Path] {
 				return nil, fmt.Errorf("metadata destination is an input: %s", source.Path)
 			}
+			if nativeTrees[source.Path] {
+				return nil, fmt.Errorf("native tree destination is an input: %s", source.Path)
+			}
 		}
 	}
 	return specs, nil
+}
+
+// nativeLines collects the three natives-mode lines of one group until `output=` or the end of the file closes it.
+type nativeLines struct {
+	tree, variant, lib string
+}
+
+func (lines *nativeLines) set(option, value string) error {
+	var slot *string
+	switch option {
+	case "native-tree":
+		slot = &lines.tree
+	case "native-variant":
+		slot = &lines.variant
+	case "native-lib":
+		slot = &lines.lib
+	}
+	if *slot != "" {
+		return fmt.Errorf("expected one `%s=` per output", option)
+	}
+	*slot = value
+	return nil
+}
+
+// spec is the group's NativeSpec, or nil for a group with none of the three lines.
+func (lines nativeLines) spec() (*NativeSpec, error) {
+	if lines.tree == "" && lines.variant == "" && lines.lib == "" {
+		return nil, nil
+	}
+	if lines.tree == "" || lines.variant == "" || lines.lib == "" {
+		return nil, fmt.Errorf("`native-tree=`, `native-variant=` and `native-lib=` are required together")
+	}
+	family, arch, err := nativelib.ParseVariant(lines.variant)
+	if err != nil {
+		return nil, err
+	}
+	return &NativeSpec{Tree: lines.tree, Family: family, Arch: arch, LibName: lines.lib}, nil
 }
 
 // parseStrictBool matches Kotlin's toBooleanStrict: only the two exact spellings, so a typo is an error rather than a
