@@ -752,7 +752,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       return null; //do not inspect binary files
     }
 
-    if (myViewClosed && !headlessEnvironment) {
+    if (myViewClosed && !headlessEnvironment && !isExportRun()) {
       throw new ProcessCanceledException();
     }
 
@@ -981,7 +981,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   @Override
   public void close(boolean noSuspiciousCodeFound) {
     if (!noSuspiciousCodeFound) {
-      if (myView.isRerun()) {
+      InspectionResultsView view = myView;
+      if (view != null && view.isRerun()) {
         myViewClosed = true;
         myView = null;
       }
@@ -1300,9 +1301,21 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     return myViewClosed;
   }
 
+  /**
+   * Runs started via {@link #performInspectionsWithProgressAndExportResults} or {@link #launchInspectionsOffline} write their results
+   * to the output directory and never create an {@link InspectionResultsView}, so there is no view for the user to close
+   * and nothing to show in the tool window.
+   */
+  private boolean isExportRun() {
+    return getOutputPath() != null;
+  }
+
   private void addProblemsToView(@NotNull List<? extends Tools> tools) {
     //noinspection TestOnlyProblems
     if (ApplicationManager.getApplication().isHeadlessEnvironment() && !TESTING_VIEW) {
+      return;
+    }
+    if (isExportRun()) {
       return;
     }
     if (myView == null && !InspectionResultsView.hasProblems(tools, this, new InspectionRVContentProviderImpl())) {
