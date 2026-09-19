@@ -9,15 +9,18 @@ load(":descriptor_rules_test.bzl", "descriptor_action_test")
 
 # Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
 
-# The name must not contain `patch`, `setup`, `install` or `update`. Windows Installer Detection treats an exe with
-# such a name and no manifest as an installer and asks for elevation (CreateProcess error 740). A pure Go binary has
-# no manifest, so the name alone is what keeps a Bazel action on Windows from failing.
+# The `.syso` objects embed a Windows manifest with `requestedExecutionLevel level="asInvoker"` (see `manifest.xml`).
+# The manifest disables Windows Installer Detection, which otherwise asks for elevation (CreateProcess error 740) for
+# an exe whose name contains `patch`, `setup`, `install` or `update`. The name avoids these words as a second guard.
+# The `_windows_<arch>` suffix keeps the objects out of the Linux and macOS builds.
 go_binary(
     name = "plugin-descriptor-writer",
     srcs = [
         "application_info.go",
         "embedded_product.go",
         "main.go",
+        "manifest_windows_amd64.syso",
+        "manifest_windows_arm64.syso",
     ],
     # Strip the symbol table and DWARF. A panic trace keeps its function names and line numbers either way, because
     # those come from the runtime's own pclntab.
@@ -193,6 +196,8 @@ go_test(
         "embedded_product_test.go",
         "main.go",
         "main_test.go",
+        "manifest_windows_amd64.syso",
+        "manifest_windows_arm64.syso",
     ],
     data = glob(["testdata/**"]),
     pure = "on",

@@ -58,6 +58,22 @@ This binary executes three Bazel rules:
 Each operation accepts direct arguments or a multiline `--flagfile`. The rules keep their arguments, output names, and action mnemonics.
 The Kotlin executable is removed. There is no second producer.
 
+## Windows manifest
+
+The Windows exe embeds an application manifest with `requestedExecutionLevel level="asInvoker"`. Without a manifest,
+Windows Installer Detection treats an exe whose name contains `patch`, `setup`, `install` or `update` as an installer
+and demands elevation. A non-elevated Bazel action then fails with `CreateProcess` error 740. The manifest tells Windows
+that the exe runs with the token of its parent, so the heuristic does not run and the name no longer matters. The name
+still avoids the four words as a second guard.
+
+`manifest.xml` is the source of truth. `manifest_windows_amd64.syso` and `manifest_windows_arm64.syso` are the COFF
+resource objects the Go linker embeds. The `_windows_<arch>` suffix is a Go build constraint, so the Linux and macOS
+builds do not see them. Regenerate both after a change to `manifest.xml`:
+
+    cd community/build/plugin-descriptor-writer
+    ../../tools/go.cmd run github.com/akavel/rsrc@v0.10.2 -manifest manifest.xml -arch amd64 -o manifest_windows_amd64.syso
+    ../../tools/go.cmd run github.com/akavel/rsrc@v0.10.2 -manifest manifest.xml -arch arm64 -o manifest_windows_arm64.syso
+
 ## Why the round trip is the load-bearing half
 
 The platform reads a descriptor with `JDOMUtil.load` and writes each stage with `JDOMUtil.write`. That pair rewrites
