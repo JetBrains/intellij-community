@@ -22,4 +22,11 @@ internal class WindowsFileLocksTest {
       process.waitFor()
     }
   }
+
+  /** The query opens the file itself, so a caller must know that the answer holds no own process. */
+  @Test
+  fun `does not name the calling process`() {
+    val pids = WindowsFileLocks.processesUsingPath(systemCmdExecutable()).getOrThrow().map { it.pid() }
+    assertThat(pids).doesNotContain(ProcessHandle.current().pid())
+  }
 }

@@ -46,7 +46,10 @@ import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
 import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.PomManager
 import com.intellij.project.stateStore
@@ -64,6 +67,8 @@ import com.intellij.ui.docking.DockManager
 import com.intellij.util.application
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
+import com.intellij.util.system.WindowsFileLocks
+import com.intellij.util.system.WindowsProcessInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -71,6 +76,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
+import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -114,18 +120,23 @@ fun tempPathFixture(root: Path? = null, prefix: String = "IJ", subdirName: Strin
     tempDir = tempDir.resolve(subdirName).createDirectory()
   }
   val realTempDir = tempDir.toRealPath()
+  val localWin = realTempDir.getEelDescriptor().run { this is LocalEelDescriptor && osFamily.isWindows }
   initialized(realTempDir) {
     withContext(Dispatchers.IO) {
       //If files were loaded into VFS, there could be pending updates for them: apply them before deleting the files
       ManagingFS.getInstanceOrNull()?.flushPendingUpdates()
-      repeat(10) {
+      repeat(DELETE_ATTEMPTS) { attempt ->
         try {
           // This method might throw DirectoryNotEmptyException due to races, hence retry
           realTempDir.delete(recursively = true)
           return@withContext
         }
         catch (e: IOException) {
-          fileLogger().warn("Can't delete $realTempDir", e)
+          fileLogger.warn("Can't delete $realTempDir", e)
+          // Only the last attempt reports the locks, because each report needs a kernel call per path.
+          if (localWin && e is FileSystemException && attempt == DELETE_ATTEMPTS - 1) {
+            reportWindowsLocks(e.file?.let { file -> Path(file) } ?: realTempDir)
+          }
           Thread.sleep(100)
         }
       }
@@ -377,12 +388,11 @@ fun TestFixture<Module>.sourceRootFixture(
 private suspend fun doBestDeletingDirectory(directory: Path): Unit = withContext(Dispatchers.IO) {
   for (i in (0..10)) {
     try {
-      @OptIn(ExperimentalPathApi::class)
-      directory.deleteRecursively()
+      @OptIn(ExperimentalPathApi::class) directory.deleteRecursively()
       break
     }
     catch (e: IOException) {
-      fileLogger().warn("Can't delete $directory try $i", e)
+      fileLogger.warn("Can't delete $directory try $i", e)
       delay(500.milliseconds)
     }
   }
@@ -587,3 +597,26 @@ private fun <T : Any> replacedServiceFixtureInner(
     Disposer.dispose(disposable)
   }
 }
+
+/** The number of times [tempPathFixture] tries to delete its directory before it gives up. */
+private const val DELETE_ATTEMPTS = 10
+
+/**
+ * Writes the processes that hold [path] open to the log. Windows only.
+ *
+ * Windows does not delete a file that a process holds open, so these processes are the reason the delete failed.
+ */
+private fun reportWindowsLocks(path: Path) {
+  WindowsFileLocks.processesUsingPath(path).fold(
+    onSuccess = { processes ->
+      for (handle in processes) {
+        // The kernel gives the command line only to a reader with enough rights, so fall back to the JVM view.
+        val info = WindowsProcessInfo.get(handle.pid()).getOrElse { handle.info() }
+        fileLogger.warn("Path $path is locked by $info")
+      }
+    },
+    onFailure = { fileLogger.warn("Can't read the locks of $path", it) },
+  )
+}
+
+private val fileLogger = fileLogger()

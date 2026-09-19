@@ -22,8 +22,9 @@ import kotlin.io.path.Path
 /**
  * The command line, the image path and the parent of a local process. See [get].
  */
+@ConsistentCopyVisibility
 @ApiStatus.Internal
-class WindowsProcessInfo private constructor(
+data class WindowsProcessInfo private constructor(
   val pid: Long,
   val commandLine: @NlsSafe String,
   val executable: Path,
@@ -84,10 +85,6 @@ class WindowsProcessInfo private constructor(
         }
       }
     }
-  }
-
-  override fun toString(): String {
-    return "WindowsProcessInfo(pid=$pid, commandLine='$commandLine', executable=$executable, parentId=$parentId)"
   }
 }
 
