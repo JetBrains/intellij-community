@@ -116,19 +116,14 @@
   "$comment_deny": [
     "`grep` and `find` are denied outright, in every pipeline position: pipe into",
     "`{{TOOLS_DIR}}/rg.cmd` instead, which reads stdin. Expressing \"denied only as the first stage\"",
-    "took a whole argv-parsing hook; the flat rule is what lets both harnesses do this natively.",
-    "",
-    "`sed -i` is a speed bump against bulk in-place rewrites (the Edit tool is the documented path),",
-    "not a boundary: an `awk` print target or a shell redirect can still write a file."
+    "took a whole argv-parsing hook; the flat rule is what lets both harnesses do this natively."
   ],
   "deny": [
     ["bazel", "clean"],
     ["./bazel.cmd", "clean"],
     ["./bazel-clean-caches.cmd"],
     ["grep"],
-    ["find"],
-    ["sed", "-i"],
-    ["sed", "--in-place"]
+    ["find"]
   ],
 
   "$comment_denyTools": [
