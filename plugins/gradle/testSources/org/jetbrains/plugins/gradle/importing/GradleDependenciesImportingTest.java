@@ -1409,7 +1409,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDeps("project.project2.main", ArrayUtilRt.EMPTY_STRING_ARRAY);
     assertModuleLibDeps("project.project2.main", ArrayUtilRt.EMPTY_STRING_ARRAY);
     if (isGradleOlderThan("7.0")) {
-      assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.main", "project.project1.test");
+      assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.test", "project.project1.main");
       assertModuleModuleDepScope("project.project2.test", "project.project1.main", DependencyScope.COMPILE);
     }
     else {
