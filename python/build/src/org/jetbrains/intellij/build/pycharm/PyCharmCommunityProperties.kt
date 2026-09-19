@@ -72,6 +72,7 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
 
     // Module sets
     moduleSet(CommunityModuleSets.ideCommon())
+    moduleSet(CommunityModuleSets.platformResourceDefaults())
     moduleSet(CommunityModuleSets.rdCommon())
 
     // PyCharm Core fragment (includes platformLangBaseFragment, module aliases, and pycharm-core.xml)

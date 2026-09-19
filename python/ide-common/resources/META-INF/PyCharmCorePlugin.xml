@@ -14,6 +14,7 @@
 
   <xi:include href="/META-INF/pycharm-core.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.platform.resources.defaults.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>
   <!-- region additional -->
   <content namespace="jetbrains">

@@ -1,0 +1,46 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.resources.applicationInfo` start
+content_module_jar(module = ":resources-applicationInfo")
+### auto-generated section `dev intellij.platform.resources.applicationInfo` end
+
+### auto-generated section `build intellij.platform.resources.applicationInfo` start
+jvm_library(
+    name = "resources-applicationInfo",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.resources.applicationInfo",
+    resource_strip_prefix = "src",
+    resources = glob(
+        ["src/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "resources-applicationInfo_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.resources.applicationInfo",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":resources-applicationInfo"],
+)
+### auto-generated section `build intellij.platform.resources.applicationInfo` end
+
+### auto-generated section `iml intellij.platform.resources.applicationInfo` start
+exports_files(
+    [
+        "intellij.platform.resources.applicationInfo.iml",
+        "src/idea/PlatformApplicationInfo.xml",
+        "src/idea/PlatformLangXmlApplicationInfo.xml",
+        "src/intellij.platform.resources.applicationInfo.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.resources.applicationInfo` end

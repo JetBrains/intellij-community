@@ -31,7 +31,7 @@ public class PluginXmlExtensionRegistrationInspectionTest extends JavaCodeInsigh
     moduleBuilder.addLibrary("platform-core-impl", PathUtil.getJarPathForClass(PsiReferenceContributorEP.class));
     moduleBuilder.addLibrary("platform-analysis", PathUtil.getJarPathForClass(IntentionActionBean.class));
     moduleBuilder.addLibrary("platform-util-base", PathUtil.getJarPathForClass(IncorrectOperationException.class));
-    moduleBuilder.addLibrary("platform-resources", PathManager.getResourceRoot(LocalInspectionEP.class, "/defaultFileTypes.xml"));
+    moduleBuilder.addLibrary("platform-resources", PathManager.getResourceRoot(LocalInspectionEP.class, "/intellij.platform.resources.xml"));
   }
 
   @Override

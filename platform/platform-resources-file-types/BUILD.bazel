@@ -1,0 +1,45 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.resources.fileTypes` start
+content_module_jar(module = ":resources-fileTypes")
+### auto-generated section `dev intellij.platform.resources.fileTypes` end
+
+### auto-generated section `build intellij.platform.resources.fileTypes` start
+jvm_library(
+    name = "resources-fileTypes",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.resources.fileTypes",
+    resource_strip_prefix = "src",
+    resources = glob(
+        ["src/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "resources-fileTypes_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.resources.fileTypes",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":resources-fileTypes"],
+)
+### auto-generated section `build intellij.platform.resources.fileTypes` end
+
+### auto-generated section `iml intellij.platform.resources.fileTypes` start
+exports_files(
+    [
+        "intellij.platform.resources.fileTypes.iml",
+        "src/defaultFileTypes.xml",
+        "src/intellij.platform.resources.fileTypes.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.resources.fileTypes` end

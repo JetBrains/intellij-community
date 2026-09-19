@@ -933,7 +933,10 @@ platform/platform-impl/ui-inspector
 platform/platform-impl/update-checker
 platform/platform-impl/update-checker/backend
 platform/platform-resources
+platform/platform-resources-application-info
 platform/platform-resources-en
+platform/platform-resources-en-file-templates
+platform/platform-resources-file-types
 platform/platform-tests
 platform/platform-tests/benchmarks
 platform/platform-tests/durability

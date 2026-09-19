@@ -234,6 +234,7 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
   }
 
   moduleSet(CommunityModuleSets.ideCommon())
+  moduleSet(CommunityModuleSets.platformResourceDefaults())
   moduleSet(CommunityModuleSets.rdCommon())
 
   embeddedModule("intellij.idea.community.ide.customization")

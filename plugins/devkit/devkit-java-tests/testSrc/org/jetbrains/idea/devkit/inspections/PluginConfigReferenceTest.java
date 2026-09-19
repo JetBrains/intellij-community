@@ -44,7 +44,7 @@ public class PluginConfigReferenceTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("platform-util-base", PathUtil.getJarPathForClass(IncorrectOperationException.class));
     moduleBuilder.addLibrary("platform-util", PathUtil.getJarPathForClass(Iconable.class));
     moduleBuilder.addLibrary("platform-analysis", PathUtil.getJarPathForClass(LocalInspectionEP.class));
-    moduleBuilder.addLibrary("platform-resources", PathManager.getResourceRoot(LocalInspectionEP.class, "/defaultFileTypes.xml"));
+    moduleBuilder.addLibrary("platform-resources", PathManager.getResourceRoot(LocalInspectionEP.class, "/intellij.platform.resources.xml"));
     moduleBuilder.addLibrary("platform-ide-core", PathUtil.getJarPathForClass(Configurable.class));
     moduleBuilder.addLibrary("platform-ide-core-impl", PathUtil.getJarPathForClass(NotificationGroupEP.class));
     moduleBuilder.addLibrary("platform-editor", PathUtil.getJarPathForClass(AdvancedSettings.class));

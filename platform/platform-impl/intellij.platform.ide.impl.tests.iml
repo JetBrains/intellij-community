@@ -155,6 +155,8 @@
     <orderEntry type="module" module-name="intellij.libraries.bouncy.castle.provider" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.resources.en" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.resources.fileTypes" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.resources.en.fileTemplates" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.buildData" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.syntax" scope="RUNTIME" />

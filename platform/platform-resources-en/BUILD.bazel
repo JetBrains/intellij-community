@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.resources.en` start
+content_module_jar(module = ":resources-en")
+### auto-generated section `dev intellij.platform.resources.en` end
 
 ### auto-generated section `build intellij.platform.resources.en` start
 jvm_library(

@@ -28,7 +28,7 @@ public class PluginXmlI18nInspectionTest extends JavaCodeInsightFixtureTestCase 
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addLibrary("core-api", PathUtil.getJarPathForClass(LanguageExtensionPoint.class));
     moduleBuilder.addLibrary("analysis-api", PathUtil.getJarPathForClass(LocalInspectionEP.class));
-    moduleBuilder.addLibrary("platform-resources", PathManager.getResourceRoot(LocalInspectionEP.class, "/defaultFileTypes.xml"));
+    moduleBuilder.addLibrary("platform-resources", PathManager.getResourceRoot(LocalInspectionEP.class, "/intellij.platform.resources.xml"));
     moduleBuilder.addLibrary("ide-core", PathUtil.getJarPathForClass(Configurable.class));
     moduleBuilder.addLibrary("ide-core-impl", PathUtil.getJarPathForClass(NotificationGroupEP.class));
   }

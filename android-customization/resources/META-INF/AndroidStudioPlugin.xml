@@ -19,6 +19,7 @@
   </xi:include>
   <xi:include href="/META-INF/intellij.moduleSets.jsp.base.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.platform.resources.defaults.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>
   <!-- region additional -->
   <content namespace="jetbrains">

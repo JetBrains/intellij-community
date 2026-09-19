@@ -265,6 +265,23 @@ object CommunityModuleSets {
   }
 
   /**
+   * The platform resources a product can leave out: the default file types, the platform application-info fixtures,
+   * and the default file templates.
+   *
+   * [CoreModuleSets.coreIde] does not nest this set. CLion, WebStorm and AppCode ship no default file types, GoLand
+   * ships no platform application-info fixtures, and DataGrip ships none of the three. A product that ships a subset
+   * names the modules it ships. Every other product adds this set.
+   *
+   * The modules are embedded: `FileTypeManagerImpl` and `ApplicationNamesInfo` read the resources through the core
+   * classloader, and `FileTemplatesLoader` scans the core classpath for `fileTemplates/`.
+   */
+  fun platformResourceDefaults(): ModuleSet = moduleSet("platform.resources.defaults") {
+    embeddedModule("intellij.platform.resources.fileTypes")
+    embeddedModule("intellij.platform.resources.applicationInfo")
+    embeddedModule("intellij.platform.resources.en.fileTemplates")
+  }
+
+  /**
    * Process elevation support (for operations requiring elevated privileges).
    */
   fun elevation(): ModuleSet = moduleSet("elevation") {

@@ -1056,7 +1056,6 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CommentMacro$AnyCommentStart"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CommentMacro$AnyCommentEnd"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.EnumMacro"/>
-    <internalFileTemplate name="HTML File" id="html"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.id.IdIndexImpl"/>
     <fileBasedIndex implementation="com.intellij.psi.search.FileTypeIndexImpl"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.include.FileIncludeIndex"/>

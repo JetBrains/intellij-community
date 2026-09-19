@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.resources.en.fileTemplates` start
+content_module_jar(module = ":resources-en-fileTemplates")
+### auto-generated section `dev intellij.platform.resources.en.fileTemplates` end
+
+### auto-generated section `build intellij.platform.resources.en.fileTemplates` start
+jvm_library(
+    name = "resources-en-fileTemplates",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.resources.en.fileTemplates",
+    resource_strip_prefix = "src",
+    resources = glob(
+        ["src/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/lang-impl"],
+)
+
+jvm_library(
+    name = "resources-en-fileTemplates_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.resources.en.fileTemplates",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":resources-en-fileTemplates",
+        "//platform/lang-impl:lang-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.resources.en.fileTemplates` end
+
+### auto-generated section `iml intellij.platform.resources.en.fileTemplates` start
+exports_files(
+    [
+        "intellij.platform.resources.en.fileTemplates.iml",
+        "src/intellij.platform.resources.en.fileTemplates.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.resources.en.fileTemplates` end

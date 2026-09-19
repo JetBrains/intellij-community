@@ -191,6 +191,7 @@ class MPSProperties : JetBrainsProductProperties() {
         include(CommunityProductFragments.platformCoreFragment())
 
         moduleSet(CommunityModuleSets.ideCommon())
+        moduleSet(CommunityModuleSets.platformResourceDefaults())
 
         // JSP base modules — the Java plugin's intellij.jsp/intellij.jsp.spi content modules depend on
         // intellij.jsp.base, which java-capable products provide (see CommunityProductFragments.javaIdeBaseFragment).

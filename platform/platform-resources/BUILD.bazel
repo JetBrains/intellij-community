@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.resources` start
+content_module_jar(module = ":resources")
+### auto-generated section `dev intellij.platform.resources` end
 
 ### auto-generated section `build intellij.platform.resources` start
 resourcegroup(
@@ -65,6 +70,7 @@ exports_files(
         "generated/META-INF/intellij.moduleSets.libraries.platform.xml",
         "generated/META-INF/intellij.moduleSets.lsp.xml",
         "generated/META-INF/intellij.moduleSets.ml.xml",
+        "generated/META-INF/intellij.moduleSets.platform.resources.defaults.xml",
         "generated/META-INF/intellij.moduleSets.platform.testFrameworks.core.xml",
         "generated/META-INF/intellij.moduleSets.platform.testFrameworks.junit5.xml",
         "generated/META-INF/intellij.moduleSets.rd.common.xml",
@@ -78,11 +84,8 @@ exports_files(
         "generated/META-INF/intellij.moduleSets.xml.without.structureView.xml",
         "src/DefaultColorSchemesManager.xml",
         "src/PageSizes.xml",
-        "src/defaultFileTypes.xml",
         "src/idea/DefaultKeymap.xml",
         "src/idea/FindViewColorsScheme.xml",
-        "src/idea/PlatformApplicationInfo.xml",
-        "src/idea/PlatformLangXmlApplicationInfo.xml",
         "src/intellij.platform.resources.xml",
         "src/keymaps/$default.xml",
         "src/keymaps/Default for GNOME.xml",
