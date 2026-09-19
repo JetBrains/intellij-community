@@ -24,6 +24,11 @@ dev_dist_plugin(
     ],
     main_module = "intellij.terminal",
 )
+
+exports_files(
+    ["intellij.terminal.dev-plan.json"],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `dev intellij.terminal` end
 
 ### auto-generated section `build intellij.terminal` start

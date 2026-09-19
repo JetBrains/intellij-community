@@ -396,11 +396,11 @@ _remainder_from_plan_test = analysistest.make(
     },
 )
 
-def _check_chain_shape(chain):
+def _check_chain_shape(chain, component_visibility = ["//visibility:public"]):
     """Fails at load time when the targets of a chain differ from the one chain shape.
 
     A chain has four targets: the graph, the catalogue, a `dev_plugin_remainder_from_plan` and the component. No chain
-    declares a preparation target.
+    declares a preparation target. The component states `component_visibility`, public unless the call names another.
     """
     expected = {
         "graph": "dev_plugin_file_graph",
@@ -415,6 +415,11 @@ def _check_chain_shape(chain):
             fail("chain %s declares %s_%s as %s; expected %s" % (chain, chain, suffix, rule["kind"] if rule else None, kind))
     if native.existing_rule(chain + "_preparation") != None:
         fail("chain %s declares a preparation target" % chain)
+
+    # `existing_rule` reports a canonical label, `@@//visibility:public`. The comparison drops the repository.
+    visibility = ["//" + label.split("//", 1)[1] for label in native.existing_rule(chain + "_component").get("visibility", [])]
+    if visibility != component_visibility:
+        fail("chain %s declares %s_component with the visibility %s; expected %s" % (chain, chain, visibility, component_visibility))
 
 def _plan(variant, layout_signature, destination):
     """The plan file of a fixture: one jar packed from a module-filter operation over the raw input. An analysis test
@@ -773,7 +778,8 @@ def dev_plugin_remainder_test_suite(name):
         neutral = True,
     )
 
-    # The explicit form declares the four targets of a chain under the generator's names.
+    # The explicit form declares the four targets of a chain under the generator's names. The component takes the
+    # visibility the call states.
     member = name + "_member"
     _fixture_module(name = member, module_name = "test.%s.member" % name)
     content_module_jar(module = ":" + member)
@@ -795,8 +801,9 @@ def dev_plugin_remainder_test_suite(name):
         },
         independent_artifacts = [":" + content_jar],
         tags = ["manual"],
+        visibility = ["//visibility:private"],
     )
-    _check_chain_shape(complex)
+    _check_chain_shape(complex, component_visibility = ["//visibility:private"])
     complex_graph_test = complex + "_graph_test"
     _graph_resolution_test(
         name = complex_graph_test,
@@ -866,13 +873,13 @@ def dev_plugin_remainder_test_suite(name):
         remainder = ":" + plan_chain + "_remainder",
     )
 
-    # The derived form: one call, one chain per platform, the plan label and the descriptor entry derived, and the
-    # platform token substituted in a label.
+    # The derived form: one call, one chain per platform, the plan label `<main module>.<platform>.dev-plan.json` in
+    # the package of the call and the descriptor entry derived, and the platform token substituted in a label.
     derived_module = "test.%s.derived" % name
     derived_platforms = ["linux_x64", "darwin_aarch64"]
     for platform in derived_platforms:
         _file(name = name + "_derived_raw_" + platform)
-        _file(name = "plugin-plans/" + derived_module + "." + platform + ".json")
+        _file(name = derived_module + "." + platform + ".dev-plan.json")
     dev_dist_complex_plugin(
         main_module = derived_module,
         product = "idea",
@@ -898,6 +905,46 @@ def dev_plugin_remainder_test_suite(name):
             plugin_directory = "plugins/" + derived_module.replace(".", "-"),
         )
         derived_tests.append(derived_test)
+        derived_graph_test = stem + "_graph_test"
+        _graph_resolution_test(
+            name = derived_graph_test,
+            target_under_test = ":" + stem + "_graph",
+            projection = ":" + derived_module + "." + platform + ".dev-plan.json",
+            platform = platform,
+            execution_version = 1,
+            consumer = ":" + stem + "_remainder",
+        )
+        derived_tests.append(derived_graph_test)
+
+    # The homed form: `plan_package` names the package that holds the plan file, and the chain stays in the package of
+    # the call. The plan home exports the file, as the community section of a cross-half plugin does.
+    plan_home_module = "test.%s.plan_home" % name
+    plan_home_package = "//" + native.package_name() + "/plan-home"
+    plan_home_projection = plan_home_package + ":" + plan_home_module + ".linux_x64.dev-plan.json"
+    plan_home_raw = name + "_plan_home_raw"
+    _file(name = plan_home_raw)
+    dev_dist_complex_plugin(
+        main_module = plan_home_module,
+        product = "idea",
+        plan_package = plan_home_package,
+        product_info = ":" + product_info,
+        descriptor = ":" + normal_descriptor,
+        execution_version = 1,
+        platforms = ["linux_x64"],
+        resource_inputs = {":" + plan_home_raw: "raw"},
+        tags = ["manual"],
+    )
+    plan_home_stem = "idea_linux_x64_" + plan_home_module
+    _check_chain_shape(plan_home_stem)
+    plan_home_test = plan_home_stem + "_graph_test"
+    _graph_resolution_test(
+        name = plan_home_test,
+        target_under_test = ":" + plan_home_stem + "_graph",
+        projection = plan_home_projection,
+        platform = "linux_x64",
+        execution_version = 1,
+        consumer = ":" + plan_home_stem + "_remainder",
+    )
 
     # The folded form: one call, one plan file with tokens, one chain per platform, and the values of each platform on
     # the call. The graph of each chain resolves the plan file, and the from-plan remainder reads the resolved file.
@@ -908,7 +955,7 @@ def dev_plugin_remainder_test_suite(name):
         "darwin_aarch64": {"destination": "lib/darwin-aarch64/test.jar", "layoutSignature": "2" * 64},
     }
     _check_platform_values_refusals(folded_module)
-    folded_projection = "plugin-plans/" + folded_module + ".json"
+    folded_projection = folded_module + ".dev-plan.json"
     _file(name = folded_projection, content = _FOLDED_PLAN)
     for platform in folded_platforms:
         _file(name = name + "_folded_raw_" + platform)
@@ -946,7 +993,7 @@ def dev_plugin_remainder_test_suite(name):
     product_platforms = ["linux_x64", "darwin_aarch64"]
     for platform in product_platforms:
         _file(name = name + "_product_raw_" + platform)
-        _file(name = "plugin-plans/" + product_module + ".idea." + platform + ".json")
+        _file(name = product_module + ".idea." + platform + ".dev-plan.json")
     dev_dist_complex_plugin(
         main_module = product_module,
         product = "idea",
@@ -966,7 +1013,7 @@ def dev_plugin_remainder_test_suite(name):
         _graph_resolution_test(
             name = product_graph_test,
             target_under_test = ":" + stem + "_graph",
-            projection = ":plugin-plans/" + product_module + ".idea." + platform + ".json",
+            projection = ":" + product_module + ".idea." + platform + ".dev-plan.json",
             platform = platform,
             execution_version = 1,
             consumer = ":" + stem + "_remainder",
@@ -984,7 +1031,7 @@ def dev_plugin_remainder_test_suite(name):
         )
         product_tests.append(product_remainder_test)
     product_folded_module = "test.%s.product_folded" % name
-    product_folded_projection = "plugin-plans/" + product_folded_module + ".idea.json"
+    product_folded_projection = product_folded_module + ".idea.dev-plan.json"
     _file(name = product_folded_projection, content = _FOLDED_PLAN)
     for platform in product_platforms:
         _file(name = name + "_product_folded_raw_" + platform)
@@ -1059,5 +1106,6 @@ def dev_plugin_remainder_test_suite(name):
             plan_chain_graph_test,
             plan_chain_remainder_test,
             plan_chain_component_test,
+            plan_home_test,
         ] + derived_tests + folded_tests + product_tests + refused_graph_tests,
     )

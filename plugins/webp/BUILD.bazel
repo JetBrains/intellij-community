@@ -6,6 +6,11 @@ dev_dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     main_module = "intellij.webp",
 )
+
+exports_files(
+    ["intellij.webp.dev-plan.json"],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `dev intellij.webp` end
 
 ### auto-generated section `build intellij.webp` start

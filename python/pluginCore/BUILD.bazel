@@ -208,6 +208,11 @@ dev_dist_plugin(
     main_jar_name = "python-ce.jar",
     main_module = "intellij.python.community.plugin",
 )
+
+exports_files(
+    ["intellij.python.community.plugin.dev-plan.json"],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `dev intellij.python.community.plugin` end
 
 ### auto-generated section `build intellij.python.community.plugin` start

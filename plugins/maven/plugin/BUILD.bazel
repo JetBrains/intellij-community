@@ -29,6 +29,11 @@ dev_dist_plugin(
     ],
     main_module = "intellij.maven.plugin",
 )
+
+exports_files(
+    ["intellij.maven.plugin.dev-plan.json"],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `dev intellij.maven.plugin` end
 
 ### auto-generated section `build intellij.maven.plugin` start

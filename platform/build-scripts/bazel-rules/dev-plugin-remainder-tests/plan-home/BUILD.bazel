@@ -1,0 +1,3 @@
+# The plan home of the `plan_package` case of `//platform/build-scripts/bazel-rules/dev-plugin-remainder-tests`. The
+# chain sits in that package and reads the plan file from this one. The file name follows the suite name.
+exports_files(["test.dev_plugin_remainder_tests.plan_home.linux_x64.dev-plan.json"])

@@ -30,6 +30,11 @@ dev_dist_plugin(
     ],
     main_module = "intellij.groovy",
 )
+
+exports_files(
+    ["intellij.groovy.dev-plan.json"],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `dev intellij.groovy` end
 
 ### auto-generated section `build intellij.groovy` start

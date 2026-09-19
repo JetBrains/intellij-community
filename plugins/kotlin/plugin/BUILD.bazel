@@ -179,6 +179,11 @@ dev_dist_plugin(
     ],
     main_module = "intellij.kotlin.plugin",
 )
+
+exports_files(
+    ["intellij.kotlin.plugin.dev-plan.json"],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `dev intellij.kotlin.plugin` end
 
 ### auto-generated section `build intellij.kotlin.plugin` start

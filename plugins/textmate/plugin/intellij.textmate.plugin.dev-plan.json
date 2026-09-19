@@ -1,0 +1,78 @@
+{
+    "version": 2,
+    "plugin": "intellij.textmate.plugin",
+    "variant": "",
+    "layoutSignature": "2w1vi29nakq2oskuuowukpsxp",
+    "assets": [
+        {
+            "module": "intellij.textmate"
+        },
+        {
+            "module": "intellij.textmate.common"
+        },
+        {
+            "module": "intellij.textmate.core"
+        },
+        {
+            "module": "intellij.textmate.joni"
+        },
+        {
+            "module": "intellij.textmate.backend"
+        },
+        {
+            "module": "intellij.textmate.frontend.split"
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.joni.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.joni",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-joni-joni",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/textmate-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.textmate.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.textmate.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/bundles",
+            "inputs": [
+                "module-resource:0:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ]
+}

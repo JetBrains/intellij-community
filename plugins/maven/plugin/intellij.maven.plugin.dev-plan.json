@@ -1,0 +1,555 @@
+{
+    "version": 2,
+    "plugin": "intellij.maven.plugin",
+    "variant": "",
+    "layoutSignature": "4u1sp4akqif9y7ioz5q3kbzv1",
+    "assets": [
+        {
+            "destination": "lib/intellij.maven.model.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.maven.model",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.maven.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.maven",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:maven-plexus-archiver",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/maven-indexer-api-rt.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@lib//:maven-jetbrains-idea-maven-indexer-api-rt",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.maven.profiler"
+        },
+        {
+            "module": "intellij.maven.proofreading"
+        },
+        {
+            "module": "intellij.maven.performanceTesting"
+        },
+        {
+            "module": "intellij.maven.errorProne.compiler"
+        },
+        {
+            "module": "intellij.maven.groovy"
+        },
+        {
+            "module": "intellij.maven.completion"
+        },
+        {
+            "module": "intellij.maven.delegation.junit"
+        },
+        {
+            "module": "intellij.maven.delegation.testng"
+        },
+        {
+            "module": "intellij.maven.completion.ex"
+        },
+        {
+            "module": "intellij.maven.jps"
+        },
+        {
+            "module": "intellij.maven.jps.ide"
+        },
+        {
+            "destination": "lib/intellij.maven.server3/maven3-server-common.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.maven.server.m3.common",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.maven.server3/maven3-server.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.maven.server.m3.impl",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.maven.server3/maven-server-telemetry.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.maven.server.telemetry",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.maven.server36/maven36-server.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.maven.server.m36.impl",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.maven.server4/maven40-server.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.maven.server.m40",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.maven.server4/maven-server-telemetry.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.maven.server.telemetry",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.maven.rt/maven-event-listener.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.maven.server.eventListener",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.maven.server.indexer/maven-server-indexer.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.maven.server.indexer",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/maven-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.maven.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.maven.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.idea.community.build.dependencies",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/artifact-resolver-m31.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.maven.artifactResolver.m31",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.maven.artifactResolver.common",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/maven-server.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.maven.server",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.maven.server.indexer/apache.maven.core-3.8.3.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@lib//:maven-server-indexer-apache-maven-core-3-8-3",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.maven.server.indexer/apache.maven.wagon.provider.api-3.5.2.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@lib//:maven-server-indexer-apache-maven-wagon-provider-api-3-5-2",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.maven.server.indexer/apache.maven.archetype.common-no-trans-3.2.1.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@lib//:maven-server-indexer-apache-maven-archetype-common-no-trans-3-2-1",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.maven.server.indexer/apache.maven.archetype.catalog-no-trans-321.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@lib//:maven-server-indexer-apache-maven-archetype-catalog-no-trans-321",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/maven3",
+            "inputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "lib/intellij.maven.server3",
+            "inputs": [
+                "layout-assets:resource-generator:1:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "lib/intellij.maven.server4",
+            "inputs": [
+                "layout-assets:resource-generator:2:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "inputs": [
+                "layout-source:resource-generator:0:0"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "modelSignature": "f0jofcdnnci0hvknayv0bs6yq"
+        },
+        {
+            "id": "layout-assets:resource-generator:1",
+            "inputs": [
+                "layout-source:resource-generator:1:0"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:1:output"
+            ],
+            "modelSignature": "cvx4e8gr0psk61lfc6vx7wb0t"
+        },
+        {
+            "id": "layout-assets:resource-generator:2",
+            "inputs": [
+                "layout-source:resource-generator:2:0"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:2:output"
+            ],
+            "modelSignature": "epi21rm6ryqe5llz2861xelsg"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "layout-source:resource-generator:0:0",
+                    "path": "apache-maven-3.9.16-bin.zip"
+                }
+            ],
+            "output": "layout-assets:resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "lib/maven3",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "stripComponents": 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "layout-assets:resource-generator:1",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "layout-source:resource-generator:1:0",
+                    "path": "archetype-common-2.2.jar"
+                },
+                {
+                    "artifact": "layout-source:resource-generator:1:0",
+                    "path": "archetype-catalog-2.2.jar"
+                },
+                {
+                    "artifact": "layout-source:resource-generator:1:0",
+                    "path": "archetype-descriptor-2.2.jar"
+                },
+                {
+                    "artifact": "layout-source:resource-generator:1:0",
+                    "path": "maven-dependency-tree-1.2.jar"
+                },
+                {
+                    "artifact": "layout-source:resource-generator:1:0",
+                    "path": "nexus-indexer-3.0.4.jar"
+                },
+                {
+                    "artifact": "layout-source:resource-generator:1:0",
+                    "path": "nexus-indexer-artifact-1.0.1.jar"
+                },
+                {
+                    "artifact": "layout-source:resource-generator:1:0",
+                    "path": "lucene-core-2.4.1.jar"
+                },
+                {
+                    "artifact": "layout-source:resource-generator:1:0",
+                    "path": "jackson-core-2.16.0.jar"
+                }
+            ],
+            "output": "layout-assets:resource-generator:1:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "lib/intellij.maven.server3",
+                "assets": [
+                    {
+                        "destination": "archetype-common-2.2.jar",
+                        "sources": [
+                            0
+                        ],
+                        "mode": 420
+                    },
+                    {
+                        "destination": "archetype-catalog-2.2.jar",
+                        "sources": [
+                            1
+                        ],
+                        "mode": 420
+                    },
+                    {
+                        "destination": "archetype-descriptor-2.2.jar",
+                        "sources": [
+                            2
+                        ],
+                        "mode": 420
+                    },
+                    {
+                        "destination": "maven-dependency-tree-1.2.jar",
+                        "sources": [
+                            3
+                        ],
+                        "mode": 420
+                    },
+                    {
+                        "destination": "nexus-indexer-3.0.4.jar",
+                        "sources": [
+                            4
+                        ],
+                        "mode": 420
+                    },
+                    {
+                        "destination": "nexus-indexer-artifact-1.0.1.jar",
+                        "sources": [
+                            5
+                        ],
+                        "mode": 420
+                    },
+                    {
+                        "destination": "lucene-core-2.4.1.jar",
+                        "sources": [
+                            6
+                        ],
+                        "mode": 420
+                    },
+                    {
+                        "destination": "jackson-core-2.16.0.jar",
+                        "sources": [
+                            7
+                        ],
+                        "mode": 420
+                    }
+                ]
+            }
+        },
+        {
+            "id": "layout-assets:resource-generator:2",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "layout-source:resource-generator:2:0"
+                }
+            ],
+            "output": "layout-assets:resource-generator:2:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "lib/intellij.maven.server4",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "tree-map",
+                            "mappings": [
+                                {
+                                    "pattern": "jackson-core-*.jar"
+                                }
+                            ]
+                        },
+                        "mode": 420
+                    }
+                ]
+            }
+        }
+    ]
+}

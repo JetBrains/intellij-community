@@ -924,6 +924,7 @@ def dev_dist_complex_plugin(
         platforms = None,
         platform_values = {},
         plan_product = "",
+        plan_package = "",
         directory_name = "",
         artifact_inputs = {},
         resource_inputs = {},
@@ -931,23 +932,26 @@ def dev_dist_complex_plugin(
         source_tree_targets = {},
         source_tree_prefixes = {},
         independent_artifacts = [],
-        tags = []):
+        tags = [],
+        visibility = ["//visibility:public"]):
     """Declares the execution chains of one complex plugin: one chain per platform it is bundled on, or one for all.
 
     The generator states the facts that vary per plugin. The macro derives everything that follows from them: the chain
-    stem `<product>[_<platform>]_<main module>`, the component name, the plan file label under `plugin-plans/`, the
-    plugin directory, and the descriptor's catalogue entry `descriptor:<main module>`, which every product shares. A
-    `{platform}` token in a label or an ID is replaced by the chain's platform, so a plugin whose platform layouts differ
-    only in that token is one call. A plan file holds the same token and `{platform:<name>}` slots as whole string
-    leaves. The graph of each chain resolves them from `platform_values`. Each chain is one
-    `dev_dist_complex_plugin_variant`.
+    stem `<product>[_<platform>]_<main module>`, the component name, the plan file label
+    `<plan_package>:<main module>[.<plan_product>][.<platform>].dev-plan.json`, the plugin directory, and the
+    descriptor's catalogue entry `descriptor:<main module>`, which every product shares. A `{platform}` token in a
+    label or an ID is replaced by the chain's platform, so a plugin whose platform layouts differ only in that token is
+    one call. A plan file holds the same token and `{platform:<name>}` slots as whole string leaves. The graph of each
+    chain resolves them from `platform_values`. Each chain is one `dev_dist_complex_plugin_variant`.
 
     Args:
         main_module: The plugin's main module. It is the component name and the plan file stem.
         product: The product's platform prefix, the first element of every chain stem.
-        plan_product: The product in the plan file name, `plugin-plans/<main module>.<plan_product>[.<platform>].json`,
+        plan_product: The product in the plan file name, `<main module>.<plan_product>[.<platform>].dev-plan.json`,
             for a product whose plan text differs from the baseline product's. Empty for a plan file the product shares
             with the baseline product.
+        plan_package: The package that holds the plan file, as an absolute label such as
+            `@community//plugins/kotlin/plugin`. Empty for a plan file in the package of the call.
         product_info: The product info target that configures the descriptor and the catalogue.
         descriptor: The produced descriptor target. It may hold the platform token.
         execution_version: The execution version derived from the projection assets.
@@ -955,8 +959,8 @@ def dev_dist_complex_plugin(
             that serves every platform.
         platform_values: The value of each plan file slot per platform, `{platform: {slot name: value}}`. A non-empty
             dict needs `platforms`, names every one of them, states the same slot names on each, and names the plan
-            file `plugin-plans/<main module>[.<plan_product>].json`. An empty dict with `platforms` names one plan file
-            per chain, `plugin-plans/<main module>[.<plan_product>].<platform>.json`.
+            file `<main module>[.<plan_product>].dev-plan.json`. An empty dict with `platforms` names one plan file
+            per chain, `<main module>[.<plan_product>].<platform>.dev-plan.json`.
         directory_name: The layout's explicit directory name, or empty for the one derived from the main module.
         artifact_inputs: Compiled targets mapped to stable artifact IDs.
         resource_inputs: Resource targets mapped to stable artifact IDs, without the descriptor.
@@ -966,6 +970,8 @@ def dev_dist_complex_plugin(
         source_tree_prefixes: Repository-relative source prefix keyed by the source tree artifact ID.
         independent_artifacts: The `content_module_jar` targets whose jar the plugin reuses.
         tags: Tags for every target of every chain.
+        visibility: The visibility of every component. Public by default, because the product's dist is in another
+            package. The other targets of a chain keep the package default.
     """
     if platforms == []:
         fail("%s states no platform; state None for a plugin that serves every platform" % main_module)
@@ -979,9 +985,9 @@ def dev_dist_complex_plugin(
     if error:
         fail(error)
     descriptor_id = "descriptor:" + main_module
-    plan_stem = ":plugin-plans/" + main_module + ("." + plan_product if plan_product else "")
+    plan_stem = plan_package + ":" + main_module + ("." + plan_product if plan_product else "")
     for platform in platforms or [None]:
-        stem = plan_stem + ("." + platform if platform and not platform_values else "")
+        projection = plan_stem + ("." + platform if platform and not platform_values else "") + ".dev-plan.json"
         chain_descriptor = _for_platform(descriptor, platform)
         chain_resources = _dict_for_platform(resource_inputs, platform, "resource_inputs")
         if chain_descriptor in chain_resources:
@@ -989,7 +995,7 @@ def dev_dist_complex_plugin(
         chain_resources[chain_descriptor] = descriptor_id
         dev_dist_complex_plugin_variant(
             name = "_".join([product] + ([platform] if platform else []) + [main_module]),
-            projection = stem + ".json",
+            projection = projection,
             execution_version = execution_version,
             descriptor = chain_descriptor,
             plugin_directory = dev_dist_plugin_directory(main_module, directory_name),
@@ -1005,6 +1011,7 @@ def dev_dist_complex_plugin(
             libraries = _dict_for_platform(libraries, platform, "libraries"),
             independent_artifacts = [_for_platform(label, platform) for label in independent_artifacts],
             tags = tags,
+            visibility = visibility,
         )
 
 def dev_dist_complex_plugin_variant(
@@ -1024,7 +1031,8 @@ def dev_dist_complex_plugin_variant(
         resource_inputs = {},
         libraries = {},
         independent_artifacts = [],
-        tags = []):
+        tags = [],
+        visibility = ["//visibility:public"]):
     """Declares the execution chain of one complex plugin variant, every argument stated.
 
     `dev_dist_complex_plugin` derives these arguments; this form is for a test that pins one of them. A chain is four
@@ -1035,7 +1043,8 @@ def dev_dist_complex_plugin_variant(
 
     Args:
         name: The chain stem, `<product>[_<platform>]_<main module>`.
-        projection: The plan file. The graph resolves it for `target_platform`.
+        projection: The plan file label, in this package or in another one. The graph resolves it for
+            `target_platform`.
         execution_version: The execution version derived from the projection assets.
         descriptor: The produced descriptor target.
         plugin_directory: The plugin directory in the distribution, `plugins/<directory name>`.
@@ -1054,6 +1063,8 @@ def dev_dist_complex_plugin_variant(
         independent_artifacts: The `content_module_jar` targets whose jar the plugin reuses. Both rules read the jar
             and the module name from `ContentModuleJarInfo`; the module name is the artifact ID of the reused jar.
         tags: Tags for every target of the chain.
+        visibility: The visibility of `<name>_component`. The graph, the catalogue and the remainder keep the package
+            default.
     """
     graph = name + "_graph"
     catalogue = name + "_catalogue"
@@ -1095,4 +1106,5 @@ def dev_dist_complex_plugin_variant(
         platform_prefix = platform_prefix,
         target_platform = target_platform,
         tags = tags,
+        visibility = visibility,
     )
