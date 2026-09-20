@@ -78,6 +78,9 @@ interface PyreflyLsp4jServer : Lsp4jServer {
     /** Bit 0 of `TypeFlags`. Set when the type is a class object, not an instance. */
     const val INSTANTIABLE_FLAG: Int = 0x1
 
+    /** Bit 2 of `TypeFlags`. Set when the type is a callable, such as the result of `dataclass(slots=True)`. */
+    const val CALLABLE_FLAG: Int = 0x4
+
     /** Bit 3 of `TypeFlags` — set when the type wraps a literal value. */
     const val LITERAL_FLAG: Int = 0x8
   }

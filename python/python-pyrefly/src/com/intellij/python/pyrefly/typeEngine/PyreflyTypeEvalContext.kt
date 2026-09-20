@@ -251,6 +251,11 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     val declaration = tspType.declaration ?: return null
     val defNode = declaration.node
     if (defNode == null || defNode.uri.isEmpty()) {
+      // A callable with no declaration of its own, such as the result of `dataclass(slots=True)`.
+      // Pyrefly marks it `CALLABLE` and sends the signature in `specializedTypes`.
+      if (tspType.isCallable()) {
+        buildSynthesizedCallableType(pyElement, tspType)?.let { return it }
+      }
       // Pyrefly wraps class/type references in a Function envelope whose top-level
       // declaration is a Synthesized stub. The real symbol lives on `returnType`.
       val returnType = tspType.returnType
@@ -274,6 +279,14 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     }
     thisLogger().info("Pyrefly TSP: built PyFunctionType for ${callable.name} at ${defNode.uri}:${defNode.range.start}")
     return Ref.create(buildFunctionType(pyElement, callable, tspType))
+  }
+
+  private fun buildSynthesizedCallableType(pyElement: PyTypedElement, tspType: PyreflyLsp4jServer.TspType): Ref<PyType?>? {
+    val signature = tspType.specializedTypes ?: return null
+    val parameters = signature.parameterTypes.orEmpty().map { PyCallableParameterImpl.nonPsi(buildPyType(pyElement, it)?.get()) }
+    val returnType = (signature.returnType ?: tspType.returnType)?.let { buildPyType(pyElement, it)?.get() }
+    thisLogger().info("Pyrefly TSP: built PyCallableType with ${parameters.size} parameters")
+    return Ref.create(PyCallableTypeImpl(parameters, returnType))
   }
 
   private fun buildBuiltinFunctionType(pyElement: PyTypedElement, name: String?, tspType: PyreflyLsp4jServer.TspType): Ref<PyType?>? {
@@ -317,7 +330,14 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     return Ref.create(PyModuleType(moduleFile))
   }
 
+  /** The `INSTANTIABLE` flag on a type variable stands for `type[T]`, such as the parameter of `dataclass(slots=True)`. */
   private fun buildPyTypeVarType(pyElement: PyTypedElement, tspType: PyreflyLsp4jServer.TspType): Ref<PyType?>? {
+    val instance = buildPyTypeVarInstanceType(pyElement, tspType) ?: return null
+    val typeVar = instance.get() as? PyTypeVarType ?: return instance
+    return if (tspType.isInstantiable() && !typeVar.isDefinition) Ref.create(typeVar.toClass()) else instance
+  }
+
+  private fun buildPyTypeVarInstanceType(pyElement: PyTypedElement, tspType: PyreflyLsp4jServer.TspType): Ref<PyType?>? {
     val declaration = tspType.declaration ?: return null
     val name = declaration.name
     if (name.isNullOrEmpty()) return null
@@ -330,7 +350,8 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     if (target != null) {
       val context = TypeEvalContext.codeAnalysis(pyElement.project, target.containingFile)
 
-      val typeParameter = PsiTreeUtil.getParentOfType(target, PyTypeParameter::class.java)
+      // Not strict: the declaration range can be the element itself.
+      val typeParameter = PsiTreeUtil.getParentOfType(target, PyTypeParameter::class.java, false)
       if (typeParameter != null) {
         val pep695Type = PyTypingTypeProvider.getTypeParameterTypeFromTypeParameter(typeParameter, context)
         if (pep695Type is PyTypeVarType) {
@@ -339,13 +360,16 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
         }
       }
 
-      val targetExpression = PsiTreeUtil.getParentOfType(target, PyTargetExpression::class.java)
+      val targetExpression = PsiTreeUtil.getParentOfType(target, PyTargetExpression::class.java, false)
       if (targetExpression != null) {
-        val assignedType = context.getType(targetExpression)
-        if (assignedType is PyTypeVarType) {
-          thisLogger().info("Pyrefly TSP: built PyTypeVarType for $name from PyTargetExpression at ${defNode.uri}:${defNode.range.start}")
-          return Ref.create(assignedType)
-        }
+        // The typing provider reads the declaration `TypeVar("_T", bound=...)`: the bound, the
+        // constraints, and the variance. It anchors the declaration element to a type-hint
+        // reference, and there is none here, so the target is set afterwards. The renderer shows
+        // its qualified name. Asking the engine for the target would come back to this method.
+        val declaredType = targetExpression.findAssignedValue()?.let { PyTypingTypeProvider.getType(it, context)?.get() }
+        val typeVar = (declaredType as? PyTypeVarTypeImpl ?: PyTypeVarTypeImpl(name, null)).withDeclarationElement(targetExpression)
+        thisLogger().info("Pyrefly TSP: built PyTypeVarType for $name from the declaration ${targetExpression.qualifiedName} (bound=${typeVar.bound})")
+        return Ref.create(typeVar)
       }
     }
     thisLogger().info("Pyrefly TSP: fell back to minimal PyTypeVarType for $name")
@@ -401,6 +425,9 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
   /** True for a class object. A server that sends no `flags` reports an instance. */
   private fun PyreflyLsp4jServer.TspType.isInstantiable(): Boolean =
     flags?.and(PyreflyLsp4jServer.INSTANTIABLE_FLAG) != 0
+
+  private fun PyreflyLsp4jServer.TspType.isCallable(): Boolean =
+    flags?.let { it and PyreflyLsp4jServer.CALLABLE_FLAG != 0 } == true
 
   private fun PyClassLikeType.asDefinitionIf(isDefinition: Boolean): PyClassLikeType =
     if (isDefinition && !this.isDefinition) toClass() else this
