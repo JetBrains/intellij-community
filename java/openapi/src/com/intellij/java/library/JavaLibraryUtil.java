@@ -17,9 +17,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.util.CachedValue;
@@ -30,11 +28,13 @@ import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.Interner;
+import com.intellij.util.io.URLUtil;
 import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -232,12 +232,12 @@ public final class JavaLibraryUtil {
         VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
         for (VirtualFile libraryFile : libraryFiles) {
           if (matchLibraryName(sanitizeLibraryName(libraryFile.getNameWithoutExtension()), name)) {
-            VirtualFile jarFile = JarFileSystem.getInstance().getVirtualFileForJar(libraryFile);
+            File jarFile = localJarFile(libraryFile);
             if (jarFile == null) continue;
 
-            String version = JarUtil.getJarAttribute(VfsUtilCore.virtualToIoFile(jarFile), Attributes.Name.IMPLEMENTATION_VERSION);
+            String version = JarUtil.getJarAttribute(jarFile, Attributes.Name.IMPLEMENTATION_VERSION);
             if (version == null && versionAttribute != null) {
-              version = JarUtil.getJarAttribute(VfsUtilCore.virtualToIoFile(jarFile), versionAttribute);
+              version = JarUtil.getJarAttribute(jarFile, versionAttribute);
             }
             if (version != null) {
               result.set(version);
@@ -307,6 +307,18 @@ public final class JavaLibraryUtil {
       });
 
     return new Libraries(Set.copyOf(allMavenCoords), Map.copyOf(jarLibrariesIndex));
+  }
+
+  /**
+   * Returns the local jar behind a {@code jar://} classes root, or {@code null} for a directory root.
+   * The lookup goes through the path, because the {@code jar} file system is not a {@link com.intellij.openapi.vfs.JarFileSystem}
+   * in every host.
+   */
+  private static @Nullable File localJarFile(@NotNull VirtualFile libraryFile) {
+    if (!libraryFile.getFileSystem().getProtocol().equals(StandardFileSystems.JAR_PROTOCOL)) return null;
+    String path = libraryFile.getPath();
+    int separator = path.indexOf(URLUtil.JAR_SEPARATOR);
+    return separator < 0 ? null : new File(path.substring(0, separator));
   }
 
   private static void collectFiles(@NotNull Library library,
