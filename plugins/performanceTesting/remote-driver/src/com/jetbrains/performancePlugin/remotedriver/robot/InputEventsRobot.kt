@@ -100,6 +100,12 @@ internal class InputEventsRobot(
     postInputEvent(KeyEvent(waitForFocusOwner(), KeyEvent.KEY_RELEASED, System.currentTimeMillis(), currentModifiers(), keyCode, KeyEvent.CHAR_UNDEFINED))
   }
 
+  override fun doublePressKeyAndHold(key: Int) {
+    pressKey(key)
+    releaseKey(key)
+    pressKey(key)
+  }
+
   /**
    * Types one character as a keyboard does: pressed, typed, released.
    *
