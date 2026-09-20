@@ -48,6 +48,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.util.PsiAwareObject
 import com.intellij.util.Processor
 import com.intellij.util.containers.map2Array
 import com.intellij.util.indexing.FindSymbolParameters
@@ -500,6 +501,7 @@ abstract class AbstractGotoSEContributor @ApiStatus.Internal protected construct
         is PsiElement -> element
         is DataProvider -> element.getData(CommonDataKeys.PSI_ELEMENT.name) as? PsiElement
         is PsiElementNavigationItem -> element.targetElement
+        is PsiAwareObject -> element.findElement(myProject)
         else -> null
       }
     }
