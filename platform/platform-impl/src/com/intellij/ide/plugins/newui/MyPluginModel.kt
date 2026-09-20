@@ -601,7 +601,7 @@ open class MyPluginModel @JvmOverloads constructor(
     forEachDetailPanelSuspending { panel ->
       if (panel.isShowingPlugin(descriptor.pluginId)) {
         panel.setPlugin(installedDescriptor)
-        panel.finishInstall(success, restartRequired, descriptor.pluginId, installedDescriptor)
+        panel.finishInstall(success, restartRequired, installedDescriptor)
       }
     }
 
@@ -1258,19 +1258,18 @@ open class MyPluginModel @JvmOverloads constructor(
   fun updateUiAfterUpdateSourceChange(
     pluginId: PluginId,
     pluginUpdateSource: PluginUpdateSourceId?,
-    providedInstalledPluginForMarketplace: PluginUiModel? = null,
   ) {
     forEachDetailPanel { pageComponent ->
       if (pageComponent.isShowingPlugin(pluginId)) {
-        pageComponent.updatePluginUpdateSourceUI(pluginUpdateSource, providedInstalledPluginForMarketplace)
+        pageComponent.updatePluginUpdateSourceUI(pluginUpdateSource)
       }
     }
     val isUnknown = pluginUpdateSource == null
     myInstalledPluginComponentMap[pluginId]?.forEach { listComponent ->
-      listComponent.updateUnknownUpdateSourceWarning(isUnknown, providedInstalledPluginForMarketplace)
+      listComponent.updateUnknownUpdateSourceWarning(isUnknown)
     }
     myMarketplacePluginComponentMap[pluginId]?.forEach { listComponent ->
-      listComponent.updateUnknownUpdateSourceWarning(isUnknown, providedInstalledPluginForMarketplace)
+      listComponent.updateUnknownUpdateSourceWarning(isUnknown)
     }
   }
 

@@ -902,15 +902,15 @@ class ListPluginComponent private constructor(
 
     myLayout.addLineComponent(pane)
     myUnknownUpdateSourceWarningPane = pane
-    updateUnknownUpdateSourceWarning(pluginUpdateSource == null, null)
+    updateUnknownUpdateSourceWarning(pluginUpdateSource == null)
   }
 
-  internal fun updateUnknownUpdateSourceWarning(isUnknown: Boolean, providedInstalledPluginForMarketplace: PluginUiModel?) {
+  internal fun updateUnknownUpdateSourceWarning(isUnknown: Boolean) {
     val isVisible = when {
       !UiPluginManager.getInstance().isMissingUpdateSourceWarningEnabled() -> false
       !isUnknown -> false
       !myPlugin.isUpdateable -> false
-      myMarketplace && providedInstalledPluginForMarketplace == null && myInstalledDescriptorForMarketplace == null -> false
+      myMarketplace && myInstalledDescriptorForMarketplace == null -> false
       else -> true
     }
     myUnknownUpdateSourceWarningPane?.isVisible = isVisible

@@ -1400,7 +1400,7 @@ class PluginDetailsPageComponent private constructor(
   private suspend fun refreshPluginUpdateSourceUI() {
     val pluginId = plugin?.pluginId
     if (pluginId == null) {
-      updatePluginUpdateSourceUI(null, null, true)
+      updatePluginUpdateSourceUI(null, true)
       return
     }
     val source = withContext(Dispatchers.IO) {
@@ -1411,7 +1411,6 @@ class PluginDetailsPageComponent private constructor(
 
   internal fun updatePluginUpdateSourceUI(
     pluginUpdateSource: PluginUpdateSourceId?,
-    installedPluginForMarketplace: PluginUiModel? = null,
     forceHideUpdateSourceUi: Boolean = false,
   ) {
     val currentPlugin = plugin
@@ -1424,8 +1423,7 @@ class PluginDetailsPageComponent private constructor(
 
     setPluginUpdateSource(pluginUpdateSource, myPluginUpdateSourceId)
 
-    val isPluginUpdateSourceVisible: Boolean = (!isMarketplace && currentPlugin.isUpdateable) ||
-                                               installedPluginForMarketplace != null || installedDescriptorForMarketplace != null
+    val isPluginUpdateSourceVisible: Boolean = (!isMarketplace && currentPlugin.isUpdateable) || installedDescriptorForMarketplace != null
     myPluginUpdateSourcePanel?.isVisible = isPluginUpdateSourceVisible
     unknownUpdateSourceBanner?.isVisible = isPluginUpdateSourceVisible &&
                                            pluginUpdateSource == null &&
@@ -1908,14 +1906,8 @@ class PluginDetailsPageComponent private constructor(
   suspend fun finishInstall(
     success: Boolean,
     restartRequired: Boolean,
-    pluginId: PluginId? = null,
     installedPlugin: PluginUiModel? = null,
   ) {
-    if (pluginId != null) {
-      val source = pluginModel.getPendingPluginUpdateSource(pluginId)
-      pluginModel.getModel().updateUiAfterUpdateSourceChange(pluginId, source, installedPlugin)
-    }
-
     if (pluginManagerCustomizer != null) {
       updateButtonsAndApplyCustomization()
     }
