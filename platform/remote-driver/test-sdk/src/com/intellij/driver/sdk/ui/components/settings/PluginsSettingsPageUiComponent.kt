@@ -9,7 +9,6 @@ import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.accessibleName
-import com.intellij.driver.sdk.ui.boundsOnScreen
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UIComponentsList
 import com.intellij.driver.sdk.ui.components.UiComponent
@@ -193,7 +192,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
         }
       }
       else searchPluginTextField.run {
-        val bounds = boundsOnScreen
+        val bounds = getBounds()
         click(Point(bounds.width - 20, bounds.height / 2))
       }
     }
