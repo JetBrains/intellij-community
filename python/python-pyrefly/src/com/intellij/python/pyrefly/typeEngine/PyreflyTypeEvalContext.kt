@@ -18,6 +18,7 @@ import com.intellij.python.lsp.core.type.LspTypeEvalContext
 import com.intellij.python.lsp.core.type.PyStringTypeResolver
 import com.intellij.python.pyrefly.PyreflyUsageCollector
 import com.intellij.python.pyrefly.lsp.PyreflyLsp4jServer
+import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.PyCallable
@@ -186,6 +187,10 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     val target = findElement(defNode)
     val pyClass = target?.let { PsiTreeUtil.getParentOfType(it, PyClass::class.java) }
     if (pyClass == null) {
+      // A `typing` special form such as `Generic` is an assignment in typeshed, not a class. Pyrefly
+      // points its declaration at that assignment, so no `PyClass` is found. PyCharm models the form
+      // with a dedicated type.
+      buildSpecialFormType(pyElement, declaration.name, isDefinition)?.let { return it }
       // Pyrefly emits a sentinel `range=(0,0)` for builtin instances (e.g. `int` for the literal
       // default value `5`). The offset points to the start of `builtins.pyi`, so PSI gives us no
       // class — fall back to looking up the class by `declaration.name` in the builtin cache.
@@ -207,6 +212,25 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     val classType = instanceType.asDefinitionIf(isDefinition)
     thisLogger().info("Pyrefly TSP: built PyClassType for ${pyClass.qualifiedName ?: pyClass.name} at ${defNode.uri}:${defNode.range.start} (typeArgs=${typeArgs?.size ?: 0}, isDefinition=$isDefinition)")
     return Ref.create(classType)
+  }
+
+  /**
+   * The type PyCharm uses for the `typing` special form [name]. Pyrefly reports the form as a class
+   * object, so the result is a definition type unless the server says otherwise.
+   */
+  private fun buildSpecialFormType(pyElement: PyTypedElement, name: String?, isDefinition: Boolean): Ref<PyType?>? {
+    val builtins = PyBuiltinCache.getInstance(pyElement)
+    val classObjectType: PyType = when (name) {
+      "Generic" -> PyCustomType(PyTypingTypeProvider.GENERIC, null, false, true, builtins.objectType)
+      "Protocol" -> PyCustomType(PyTypingTypeProvider.PROTOCOL, null, false, true, builtins.objectType)
+      "TypedDict" -> PyCustomType(PyTypingTypeProvider.TYPED_DICT, null, false, true, builtins.dictType)
+      "Callable" -> PyTypingTypeProvider.createTypingCallableType(pyElement)
+      "Literal" -> PyClassTypeImpl.createTypeByQName(pyElement, PyTypingTypeProvider.SPECIAL_FORM, false) ?: return null
+      else -> return null
+    }
+    val type = if (!isDefinition && classObjectType is PyClassLikeType) classObjectType.toInstance() else classObjectType
+    thisLogger().info("Pyrefly TSP: built special form type for typing.$name (isDefinition=$isDefinition)")
+    return Ref.create(type)
   }
 
   private fun buildBuiltinClassType(pyElement: PyTypedElement, name: String?, isDefinition: Boolean): Ref<PyType?>? {
