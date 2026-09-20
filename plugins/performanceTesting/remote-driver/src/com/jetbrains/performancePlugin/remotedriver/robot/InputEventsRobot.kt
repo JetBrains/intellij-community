@@ -145,9 +145,9 @@ internal class InputEventsRobot(
     val toScreenPos = if (toWindow === fromWindow) fromScreenPos else performOnEdt { toWindow.locationOnScreen }!!
 
     @Suppress("DEPRECATION")
-    val pressModifiers = currentModifiers() or InputEvent.BUTTON1_DOWN_MASK or InputEvent.BUTTON1_MASK
+    val pressModifiers = currentModifiers() or InputEvent.BUTTON1_DOWN_MASK
     @Suppress("DEPRECATION")
-    val releaseModifiers = currentModifiers() or InputEvent.BUTTON1_MASK
+    val releaseModifiers = currentModifiers()
 
     postInputEvent(MouseEvent(fromWindow, MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), currentModifiers(), fromRel.x, fromRel.y, fromScreenPos.x + fromRel.x, fromScreenPos.y + fromRel.y, 0, false, MouseEvent.NOBUTTON))
     postInputEvent(MouseEvent(fromWindow, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), pressModifiers, fromRel.x, fromRel.y, fromScreenPos.x + fromRel.x, fromScreenPos.y + fromRel.y, 1, false, MouseEvent.BUTTON1))
