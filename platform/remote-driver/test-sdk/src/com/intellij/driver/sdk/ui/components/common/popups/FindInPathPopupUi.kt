@@ -67,7 +67,7 @@ open class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
   val openInFindWindowButton = x { byAccessibleName("Open in Find Window") }
 
   fun focus() {
-    x { or(byAccessibleName("Find in Files"), byAccessibleName("Replace in Files")) }.click()
+    searchTextField.click()
   }
 
   fun showFilterResultsPopup() {
