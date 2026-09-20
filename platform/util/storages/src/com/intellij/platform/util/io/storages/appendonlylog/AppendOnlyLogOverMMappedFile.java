@@ -509,7 +509,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
     HeaderLayout.USER_FIELD.setVolatile(headerPageSegment(), 0L, (long)fieldNo, headerFieldValue);
   }
 
-  /** @return true if the log wasn't properly closed and did some compensating recovery measured on open */
+  /** @return true if the log wasn't properly closed and did some compensating recovery measures on open */
   public boolean wasRecoveryNeeded() {
     return startOfRecoveredRegion >= 0 && endOfRecoveredRegion > startOfRecoveredRegion;
   }

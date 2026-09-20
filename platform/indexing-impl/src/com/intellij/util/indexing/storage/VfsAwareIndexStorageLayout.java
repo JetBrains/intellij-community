@@ -23,5 +23,7 @@ public interface VfsAwareIndexStorageLayout<Key, Value> extends IndexStorageLayo
   //         an override reduces the need of class-cast also. But currently it is treated as API-breaking override, so
   //         I postpone this refactoring
 
+  //TODO RC: make it throw IOException, as it should -- currently it breaks an (internal) API which is used in index-viewer
+  //         so we must update it, too.
   void clearIndexData();
 }
