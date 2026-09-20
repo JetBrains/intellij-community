@@ -98,6 +98,12 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
   abstract suspend fun init(force: Boolean): VcsLogManager?
 
   /**
+   * Disposes the [logManager] if it is initialized and keeps the persistent caches.
+   */
+  @Internal
+  abstract fun disposeLogAsync(): Deferred<Unit>
+
+  /**
    * Disposes the [logManager] if it is initialized, clears the caches, and then recreates the manager.
    */
   internal abstract suspend fun invalidateCaches()

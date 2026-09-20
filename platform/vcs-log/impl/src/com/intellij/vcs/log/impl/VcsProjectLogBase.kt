@@ -150,7 +150,7 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
       }
     }
 
-  private fun disposeAsync() =
+  final override fun disposeLogAsync(): Deferred<Unit> =
     coroutineScope.asyncWithAnyModality {
       mutex.withLock {
         disposeLogManager()
@@ -289,7 +289,7 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
       if (hasLogExtensions(pluginDescriptor)) {
         affectedPlugins.add(pluginDescriptor.pluginId)
         LOG.debug { "Disposing Vcs Log before unloading ${pluginDescriptor.pluginId}" }
-        disposeAsync()
+        disposeLogAsync()
       }
     }
 
