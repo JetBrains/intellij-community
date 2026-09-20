@@ -39,12 +39,16 @@ fun <K, V> openOrResetMap(
   return store.openMap(name, mapBuilder)
 }
 
+/**
+ * Opens the store at [file], or recreates it when it is corrupt.
+ * [cacheSizeMb] sizes the on-heap page cache of the store.
+ */
 @Internal
-fun createOrResetMvStore(file: Path?, readOnly: Boolean = false, logSupplier: () -> Logger): MVStore {
+fun createOrResetMvStore(file: Path?, readOnly: Boolean = false, cacheSizeMb: Int = 8, logSupplier: () -> Logger): MVStore {
   // If read-only and DB does not yet exist, create an in-memory DB
   if (file == null || (readOnly && Files.notExists(file))) {
     // in-memory
-    return tryOpenMvStore(file = null, readOnly = readOnly, logSupplier = logSupplier)
+    return tryOpenMvStore(file = null, readOnly = readOnly, cacheSizeMb = cacheSizeMb, logSupplier = logSupplier)
   }
 
   val markerFile = getInvalidateMarkerFile(file)
@@ -55,31 +59,31 @@ fun createOrResetMvStore(file: Path?, readOnly: Boolean = false, logSupplier: ()
 
   file.parent?.let { Files.createDirectories(it) }
   try {
-    return tryOpenMvStore(file, readOnly, logSupplier)
+    return tryOpenMvStore(file, readOnly, cacheSizeMb, logSupplier)
   }
   catch (e: Throwable) {
     logSupplier().warn("Cannot open cache state storage, will be recreated", e)
   }
   if (readOnly) {
     // in read-only mode the store won't load without a file, so use in-memory store in such a case
-    return tryOpenMvStore(file = null, readOnly, logSupplier)
+    return tryOpenMvStore(file = null, readOnly, cacheSizeMb, logSupplier)
   }
 
   Files.deleteIfExists(file)
-  return tryOpenMvStore(file, readOnly, logSupplier)
+  return tryOpenMvStore(file, readOnly, cacheSizeMb, logSupplier)
 }
 
 private fun getInvalidateMarkerFile(file: Path): Path = file.resolveSibling("${file.fileName}.invalidated")
 
-private fun tryOpenMvStore(file: Path?, readOnly: Boolean, logSupplier: () -> Logger): MVStore {
+private fun tryOpenMvStore(file: Path?, readOnly: Boolean, cacheSizeMb: Int, logSupplier: () -> Logger): MVStore {
   val storeErrorHandler = StoreErrorHandler(file, logSupplier)
   val store = MVStore.Builder()
     .fileName(file?.toAbsolutePath()?.toString())
     .backgroundExceptionHandler(storeErrorHandler)
     // avoid extra thread - db maintainer should use coroutines
     .autoCommitDisabled()
-    // default cache size is 16MB
-    .cacheSize(8)
+    // the page cache is on-heap; the caller sizes it per store (the MVStore default is 16 MB)
+    .cacheSize(cacheSizeMb)
     .let {
       if (readOnly) it.readOnly() else it
     }
