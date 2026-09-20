@@ -1,5 +1,6 @@
 package com.intellij.python.pyrefly.typeEngine
 
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -54,9 +55,13 @@ import kotlin.time.measureTimedValue
 
 open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient, psiFile: PsiFile) : LspTypeEvalContext(psiFile) {
 
-  private val snapshot: Int? by lazy {
-    lspClient.sendRequestSync { (it as PyreflyLsp4jServer).getSnapshot() }
-  }
+  /**
+   * The last snapshot the server reported. The server moves its snapshot forward when it analyzes an
+   * opened file, and it rejects a request that names an older one. This context lives as long as the
+   * PSI of its file, and a library context longer, so the value goes stale. See [requestComputedType].
+   */
+  @Volatile
+  private var snapshot: Int? = null
 
   override fun provideType(element: PyTypedElement, isUserInitiated: Boolean): Ref<PyType?>? {
     if (element is PsiFile) return null
@@ -72,15 +77,34 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     val position = getLsp4jPosition(document, offsetDetector.offset)
     val node = PyreflyLsp4jServer.TspNode(sourceUri, Range(position, position))
 
-    val snapshot = snapshot ?: return null
-    val tspType = lspClient.sendRequestSync {
-      (it as PyreflyLsp4jServer).getComputedType(PyreflyLsp4jServer.GetComputedTypeParams(arg = node, snapshot = snapshot))
-    } ?: return null
-
-    //logTypeDefinition(node, tspType)
+    val tspType = requestComputedType(node)
+    thisLogger().debug { "Pyrefly TSP: answer for '${element.text.take(60)}' at ${position.line}:${position.character}: $tspType" }
+    if (tspType == null) return null
 
     return buildPyType(element, tspType)
   }
+
+  /**
+   * Asks the server for the type at [node] with the known snapshot. A rejected request comes back as
+   * `null`. Then the snapshot is read again, and the request repeats one time when the server moved
+   * on. A request that fails with the current snapshot stays `null`.
+   */
+  private fun requestComputedType(node: PyreflyLsp4jServer.TspNode): PyreflyLsp4jServer.TspType? {
+    val known = snapshot ?: fetchSnapshot() ?: return null
+    getComputedType(node, known)?.let { return it }
+    val fresh = fetchSnapshot() ?: return null
+    if (fresh == known) return null
+    thisLogger().info("Pyrefly TSP: snapshot moved from $known to $fresh, repeating the request")
+    return getComputedType(node, fresh)
+  }
+
+  private fun fetchSnapshot(): Int? =
+    lspClient.sendRequestSync { (it as PyreflyLsp4jServer).getSnapshot() }?.also { snapshot = it }
+
+  private fun getComputedType(node: PyreflyLsp4jServer.TspNode, snapshot: Int): PyreflyLsp4jServer.TspType? =
+    lspClient.sendRequestSync {
+      (it as PyreflyLsp4jServer).getComputedType(PyreflyLsp4jServer.GetComputedTypeParams(arg = node, snapshot = snapshot))
+    }
 
   private fun buildPyType(pyElement: PyTypedElement, tspType: PyreflyLsp4jServer.TspType): Ref<PyType?>? {
     // Pyrefly marks `Literal[...]` types via the LITERAL bit (0x8) of TypeFlags and stores
