@@ -2,8 +2,10 @@
 package org.jetbrains.kotlin.idea.core.script.statistics
 
 import org.jetbrains.kotlin.idea.core.script.definitions.KotlinScriptDefinitionsProviderId
-import org.jetbrains.kotlin.idea.core.script.definitions.SCRIPT_DEFINITIONS_PROVIDER_ID
+import org.jetbrains.kotlin.idea.core.script.definitions.providerId
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ide
 
 internal const val OTHER_PROVIDER_ID: String = "other"
 internal const val BUNDLED_DEFAULT_ID: String = "BundledDefault"
@@ -18,5 +20,6 @@ internal val REPORTED_PROVIDER_IDS: List<String> = buildList {
 
 internal fun ScriptDefinition.reportedProviderId(): String = when {
     isDefault -> BUNDLED_DEFAULT_ID
-    else -> getUserData(SCRIPT_DEFINITIONS_PROVIDER_ID)?.takeIf { it in BUNDLED_PROVIDER_IDS } ?: OTHER_PROVIDER_ID
+    else -> compilationConfiguration[ScriptCompilationConfiguration.ide.providerId]
+        ?.takeIf { it in BUNDLED_PROVIDER_IDS } ?: OTHER_PROVIDER_ID
 }

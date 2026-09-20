@@ -95,10 +95,10 @@ fun loadDefinitionsFromTemplates(
                 scriptingInfoLog("Loaded definition=${it.name}}")
                 yield(it)
             }
-        } catch (e: ClassNotFoundException) {
-            // Assuming that direct ClassNotFoundException is the result of versions mismatch and missing subsystems, e.g. gradle
-            // so, it only results in warning, while other errors are severe misconfigurations, resulting it user-visible error
-            scriptingWarnLog("Cannot load script definition class $templateClassName", e)
+        } catch (_: ClassNotFoundException) {
+            // A class name that the classpath does not hold is a normal outcome.
+            // Every other error is a misconfiguration, and stays a user-visible error.
+            scriptingWarnLog("Cannot load script definition class $templateClassName")
         } catch (e: Throwable) {
             rethrowControlFlowException(e)
 

@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.configurations
 
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleId
@@ -8,6 +10,7 @@ import com.intellij.testFramework.registerExtension
 import com.intellij.testFramework.workspaceModel.update
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
+import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionsModificationTracker
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntityProvider
@@ -229,6 +232,56 @@ class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
             tracker.modificationCount > countBefore
         )
     }
+
+    fun `test scheduleReloadOpenScripts replaces the cached definitions`() = runBlocking {
+        var provided = definitionFor("first.kts")
+        project.registerExtension(
+            ScriptDefinitionsProvider.EP_NAME,
+            object : ScriptDefinitionsProvider {
+                override val id: String = "KotlinScriptServiceTestMutable"
+                override fun provideDefinitions(
+                    baseHostConfiguration: ScriptingHostConfiguration,
+                    loadedScriptDefinitions: List<ScriptDefinition>,
+                ): Iterable<ScriptDefinition> = listOf(provided)
+            },
+            testRootDisposable,
+        )
+        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
+        assertTrue("first.kts must be provided before the reload", providedExtensions().contains("first.kts"))
+
+        provided = definitionFor("second.kts")
+        KotlinScriptService.getInstance(project).scheduleReloadOpenScripts().join()
+
+        val after = providedExtensions()
+        assertFalse("first.kts must be gone after the reload", after.contains("first.kts"))
+        assertTrue("second.kts must be provided after the reload", after.contains("second.kts"))
+    }
+
+    fun `test reload refreshes the definition cache when no script is open`() = runBlocking {
+        val openScripts = readAction {
+            FileEditorManager.getInstance(project).openFiles.filter { it.name.endsWith(".kts") }
+        }
+        assertEmpty("This test needs a fixture with no open script", openScripts)
+
+        val provider = ScriptDefinitionProviderImpl.getInstance(project)
+        val before = provider.cachedProvidedDefinitions
+
+        KotlinScriptService.getInstance(project).scheduleReloadOpenScripts().join()
+
+        assertNotSame("The definition cache must be rebuilt even with no open script", before, provider.cachedProvidedDefinitions)
+    }
+
+    private fun providedExtensions(): List<String> =
+        ScriptDefinitionProviderImpl.getInstance(project).cachedProvidedDefinitions.map { it.fileExtension }
+
+    private fun definitionFor(extension: String): ScriptDefinition = createScriptDefinitionFromTemplate(
+        KotlinType(ScriptTemplateWithArgs::class),
+        defaultJvmScriptingHostConfiguration,
+        compilation = {
+            fileExtension(extension)
+            ide { acceptedLocations(ScriptAcceptedLocation.Everywhere) }
+        },
+    )
 
     private fun registerCircularImportScriptDefinition() {
         registerScriptDefinition(

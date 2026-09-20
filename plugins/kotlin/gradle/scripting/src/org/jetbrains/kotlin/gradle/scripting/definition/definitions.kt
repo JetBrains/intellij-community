@@ -25,10 +25,6 @@ open class GradleScriptDefinition(
     private val _externalProjectPath: String? = null,
 ) : ScriptDefinition.FromConfigurationsBase() {
 
-    init {
-        order = Int.MIN_VALUE
-    }
-
     override val canDefinitionBeSwitchedOff: Boolean = false
 
     override val compilationConfiguration: ScriptCompilationConfiguration by lazy {

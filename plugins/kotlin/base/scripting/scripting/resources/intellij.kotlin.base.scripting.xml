@@ -119,6 +119,8 @@
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesResolveScopeProvider"/>
 
     <codeInsight.daemonBoundCodeVisionProvider implementation="org.jetbrains.kotlin.idea.core.script.definitions.KotlinScriptDefinitionCodeVisionProvider"/>
+    <codeInsight.lineMarkerProvider language="kotlin"
+                                    implementationClass="org.jetbrains.kotlin.idea.core.script.definitions.KotlinScriptDefinitionLineMarkerProvider"/>
     <config.codeVisionGroupSettingProvider implementation="org.jetbrains.kotlin.idea.core.script.definitions.KotlinScriptingGroupSettingProvider"/>
 
     <projectConfigurable groupId="language"

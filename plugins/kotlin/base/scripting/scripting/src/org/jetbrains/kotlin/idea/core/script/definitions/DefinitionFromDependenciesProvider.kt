@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.LibraryOrSdkOrderEntry
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
@@ -27,7 +28,19 @@ import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 
 data class DefinitionTemplates(
     val fqns: List<String>,
-    val classpath: List<String>
+    val classpath: List<String>,
+    /** Maps a discovered definition FQN to the marker file that declared it. */
+    val markerOrigins: Map<String, ScriptTemplateMarkerOrigin> = emptyMap(),
+)
+
+/**
+ * Where a marker file declared a definition.
+ *
+ * [rootName] names the JAR or the class directory, and [jarPath] is its whole path.
+ */
+data class ScriptTemplateMarkerOrigin(
+    val rootName: String? = null,
+    val jarPath: String? = null,
 )
 
 private const val MAIN_KTS = "org.jetbrains.kotlin.mainKts.MainKtsScript.classname"
@@ -39,6 +52,10 @@ class DefinitionFromDependenciesProvider(val project: Project) : ScriptDefinitio
 
     // markers are resolved through the index by ScriptTemplatesFromDependenciesCache, not by classpath scanning
     override fun useDiscovery(): Boolean = false
+
+    /** Where the marker file of [definitionId] lives, or null when no marker declared it. */
+    internal fun markerOriginFor(definitionId: String): ScriptTemplateMarkerOrigin? =
+        ScriptTemplatesFromDependenciesCache.getOrDiscover(project).markerOrigins[definitionId]
 
     fun definitionClasses(): List<String> {
         val explicitFqns = KotlinScriptingSettings.getInstance(project).state.parsedClassNames
@@ -82,6 +99,7 @@ internal object ScriptTemplatesFromDependenciesCache {
     fun getOrDiscover(project: Project): DefinitionTemplates = project.cacheByClass(
         ScriptTemplatesFromDependenciesCache::class.java,
         ScriptDefinitionsModificationTracker.getInstance(project),
+        ProjectRootModificationTracker.getInstance(project),
     ) {
         runReadActionBlocking {
             val templatesFolders =
@@ -108,6 +126,7 @@ internal object ScriptTemplatesFromDependenciesCache {
         }
 
         val templates = linkedSetOf<String>()
+        val markerOrigins = linkedMapOf<String, ScriptTemplateMarkerOrigin>()
         val classpath = linkedSetOf<Path>()
 
         rootDirToTemplates.forEach { (root, templateFiles) ->
@@ -117,8 +136,13 @@ internal object ScriptTemplatesFromDependenciesCache {
                 it is LibraryOrSdkOrderEntry && it.getRootFiles(OrderRootType.CLASSES).contains(root)
             }.takeIf { it.isNotEmpty() } ?: return@forEach
 
+            val jarPath = root.presentableUrl
+            val rootName = root.name
+
             for (virtualFile in templateFiles) {
-                templates.add(virtualFile.name.removeSuffix(SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT))
+                val fqn = virtualFile.name.removeSuffix(SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT)
+                templates.add(fqn)
+                markerOrigins.putIfAbsent(fqn, ScriptTemplateMarkerOrigin(rootName, jarPath))
             }
 
             // assuming that all libraries are placed into classes roots
@@ -134,6 +158,6 @@ internal object ScriptTemplatesFromDependenciesCache {
             }
         }
 
-        return DefinitionTemplates(templates.toList(), classpath.map { it.absolutePathString() })
+        return DefinitionTemplates(templates.toList(), classpath.map { it.absolutePathString() }, markerOrigins)
     }
 }

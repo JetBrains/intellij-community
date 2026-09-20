@@ -140,6 +140,8 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
      * Drops all entities contributed under [KotlinScriptEntitySource], then rebuilds only the currently open `.kts` files.
      * Precise owner-specific entities survive because they use a different entity source.
      * Closed generic scripts are restored lazily on the next editor-driven load.
+     *
+     * The returned job waits, but does not rethrow a failure.
      */
     fun scheduleReloadOpenScripts(): Job = coroutineScope.launchTracked {
         invalidateAll()

@@ -376,6 +376,8 @@ jvm_library(
         "//plugins/kotlin/preferences:preferences_test_lib",
         "//platform/util/zip",
         "//platform/util/zip:zip_test_lib",
+        "//platform/util:util-ui",
+        "//platform/util:util-ui_test_lib",
         "//plugins/kotlin/base/scripting/scripting.main.kts",
         "//plugins/kotlin/base/scripting/scripting.main.kts:scripting.main.kts_test_lib",
         "//plugins/repository-search/completion",

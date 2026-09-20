@@ -6,6 +6,9 @@ import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TestMetadata
+import kotlin.io.path.pathString
+
+private const val IN_JAR: String = "testData/script/templatesFromDependencies/inJar/"
 
 @TestRoot("base/scripting/scripting")
 @TestDataPath($$"$CONTENT_ROOT")
@@ -43,6 +46,51 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
         assertEquals("Repeated discovery on unchanged project state must return equal FQNs", firstFqns, secondFqns)
         assertEquals("Repeated discovery on unchanged project state must return equal classpath", firstClasspath, secondClasspath)
         assertFalse("Discovery should have found at least one template", firstFqns.isEmpty())
+    }
+
+    fun testMarkerOriginIsRecordedForEachDiscoveredFqn() {
+        runTest(IN_JAR)
+
+        val provider = DefinitionFromDependenciesProvider(project)
+
+        assertEquals("A marker-only FQN must be discovered", listOf("MyTemplate1"), provider.definitionClasses())
+        assertEquals("A marker origin must name the root that holds it", "templates.jar", provider.markerOriginFor("MyTemplate1")?.rootName)
+    }
+
+    fun testExplicitFqnWithoutMarkerReportsNoMarkerFile() {
+        runTest(IN_JAR)
+        KotlinScriptingSettings.getInstance(project).update { it.copy(explicitTemplateClassNames = "com.example.Explicit") }
+
+        val provider = DefinitionFromDependenciesProvider(project)
+
+        assertTrue("An explicit FQN must be included", provider.definitionClasses().contains("com.example.Explicit"))
+        assertNull("An explicit FQN with no marker must report no marker file", provider.markerOriginFor("com.example.Explicit"))
+    }
+
+    fun testFqnPresentInBothSourcesAppearsOnceAndKeepsItsMarker() {
+        runTest(IN_JAR)
+        KotlinScriptingSettings.getInstance(project).update { it.copy(explicitTemplateClassNames = "MyTemplate1") }
+
+        val provider = DefinitionFromDependenciesProvider(project)
+
+        assertEquals("An FQN in both sources must appear once", listOf("MyTemplate1"), provider.definitionClasses())
+        assertNotNull(
+            "A marker is the more specific origin, so it must win over the explicit entry",
+            provider.markerOriginFor("MyTemplate1"),
+        )
+    }
+
+    fun testExplicitAndDiscoveredClasspathsAreDeduplicated() {
+        runTest(IN_JAR)
+
+        val discovered = DefinitionFromDependenciesProvider(project).getTemplateClasspath().map { it.pathString }
+        assertFalse("Discovery must find at least one classpath entry", discovered.isEmpty())
+
+        KotlinScriptingSettings.getInstance(project).update { it.copy(explicitTemplateClasspath = discovered.joinToString("\n")) }
+        val merged = DefinitionFromDependenciesProvider(project).getTemplateClasspath().map { it.pathString }
+
+        assertEquals("An entry present in both sources must appear once", merged.distinct(), merged)
+        assertEquals(discovered.toSet(), merged.toSet())
     }
 
     fun testSettingsUpdateBumpsModificationTracker() {

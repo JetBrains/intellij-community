@@ -63,11 +63,19 @@ internal fun KotlinScriptingSettings.State.isScriptDefinitionEnabled(scriptDefin
 
 internal val explicitTemplateDelimiters: Array<String> = arrayOf(":", ",", ";", "\n", "\t", " ")
 
+/** A class name holds no delimiter, so every delimiter is safe here. */
 internal fun parseExplicitTemplateInput(text: String): List<String> =
     text.split(*explicitTemplateDelimiters).map { it.trim() }.filter { it.isNotEmpty() }
+
+/**
+ * A path can hold a space or a Windows drive letter, so only a line break separates two entries.
+ * A value that an older build wrote with another delimiter reads as one entry.
+ */
+internal fun parseClasspathInput(text: String): List<String> =
+    text.split('\n').map { it.trim() }.filter { it.isNotEmpty() }
 
 internal val KotlinScriptingSettings.State.parsedClassNames: List<String>
     get() = parseExplicitTemplateInput(explicitTemplateClassNames)
 
 internal val KotlinScriptingSettings.State.parsedClasspath: List<String>
-    get() = parseExplicitTemplateInput(explicitTemplateClasspath)
+    get() = parseClasspathInput(explicitTemplateClasspath)

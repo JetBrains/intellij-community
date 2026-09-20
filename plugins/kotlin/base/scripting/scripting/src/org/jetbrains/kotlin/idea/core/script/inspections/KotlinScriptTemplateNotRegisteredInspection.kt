@@ -7,33 +7,27 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtil
-import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
-import org.jetbrains.kotlin.idea.core.script.definitions.ScriptTemplatesFromDependenciesCache
+import org.jetbrains.kotlin.idea.core.script.definitions.KOTLIN_SCRIPT_ANNOTATION_FQ_NAME
+import org.jetbrains.kotlin.idea.core.script.definitions.createAndReportScriptTemplateMarkerFile
+import org.jetbrains.kotlin.idea.core.script.definitions.findScriptTemplateMarkerFile
+import org.jetbrains.kotlin.idea.core.script.definitions.hasKotlinScriptAnnotation
+import org.jetbrains.kotlin.idea.core.script.definitions.isScriptTemplateActive
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.idea.core.script.settings.parseClasspathInput
 import org.jetbrains.kotlin.idea.core.script.settings.parseExplicitTemplateInput
-import org.jetbrains.kotlin.idea.core.script.settings.parsedClassNames
 import org.jetbrains.kotlin.idea.core.script.KotlinBaseScriptingBundle
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import kotlin.io.path.absolutePathString
-
-private val KOTLIN_SCRIPT_ANNOTATION_FQN = FqName("kotlin.script.experimental.annotations.KotlinScript")
-
-private const val MARKER_RELATIVE_DIR = "META-INF/kotlin/script/templates"
 
 internal class KotlinScriptTemplateNotRegisteredInspection :
     KotlinApplicableInspectionBase<KtClass, KotlinScriptTemplateNotRegisteredInspection.Context>() {
@@ -46,23 +40,21 @@ internal class KotlinScriptTemplateNotRegisteredInspection :
         }
     }
 
-    override fun isApplicableByPsi(element: KtClass): Boolean = element.annotationEntries.any {
-        it.shortName == Name.identifier("KotlinScript")
-    }
+    override fun isApplicableByPsi(element: KtClass): Boolean = hasKotlinScriptAnnotation(element)
 
     override fun getApplicableRanges(element: KtClass): List<TextRange> = ApplicabilityRange.single(element) { it.nameIdentifier }
 
     context(session: KaSession)
     override fun prepareContext(element: KtClass): Context? {
         if (element.symbol.annotations.none {
-            it.classId?.asSingleFqName() == KOTLIN_SCRIPT_ANNOTATION_FQN
+            it.classId?.asSingleFqName() == KOTLIN_SCRIPT_ANNOTATION_FQ_NAME
         }) return null
 
         val fqName = element.fqName?.asString() ?: return null
 
-        val needsRegister = !isActive(element.project, fqName)
+        val needsRegister = !isScriptTemplateActive(element.project, fqName)
         val module = ModuleUtilCore.findModuleForPsiElement(element)
-        val needsMarker = module != null && !markerFileExists(module, fqName)
+        val needsMarker = module != null && findScriptTemplateMarkerFile(module, fqName) == null
         if (!needsRegister && !needsMarker) return null
         return Context(fqName, needsRegister, needsMarker)
     }
@@ -93,17 +85,6 @@ internal class KotlinScriptTemplateNotRegisteredInspection :
         )
     }
 
-    private fun isActive(project: Project, fqName: String): Boolean {
-        val state = KotlinScriptingSettings.getInstance(project).state
-        if (fqName in state.parsedClassNames) return true
-        if (fqName in ScriptTemplatesFromDependenciesCache.getOrDiscover(project).fqns) return true
-        return false
-    }
-
-    private fun markerFileExists(module: Module, fqn: String): Boolean =
-        ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE).any { resourceRoot ->
-            resourceRoot.findFileByRelativePath("$MARKER_RELATIVE_DIR/$fqn.classname") != null
-        }
 }
 
 private class RegisterScriptDefinitionFix(private val fqn: String) : LocalQuickFix {
@@ -125,7 +106,7 @@ private class RegisterScriptDefinitionFix(private val fqn: String) : LocalQuickF
         KotlinScriptingSettings.getInstance(project).update { state ->
             val mergedFqns = (parseExplicitTemplateInput(state.explicitTemplateClassNames) + fqn).distinct().joinToString("\n")
             val mergedClasspath =
-                (parseExplicitTemplateInput(state.explicitTemplateClasspath) + moduleClasspath).distinct().joinToString("\n")
+                (parseClasspathInput(state.explicitTemplateClasspath) + moduleClasspath).distinct().joinToString("\n")
             state.copy(
                 explicitTemplateClassNames = mergedFqns, explicitTemplateClasspath = mergedClasspath
             )
@@ -145,13 +126,6 @@ private class CreateMarkerFileFix(private val fqn: String) : LocalQuickFix {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val module = ModuleUtilCore.findModuleForPsiElement(descriptor.psiElement) ?: return
-        val resourceRoot = ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE).firstOrNull() ?: return
-        WriteAction.run<RuntimeException> {
-            val templatesDir = VfsUtil.createDirectoryIfMissing(resourceRoot, MARKER_RELATIVE_DIR) ?: return@run
-            val markerName = "$fqn.classname"
-            if (templatesDir.findChild(markerName) == null) {
-                templatesDir.createChildData(this, markerName)
-            }
-        }
+        createAndReportScriptTemplateMarkerFile(project, module, fqn)
     }
 }

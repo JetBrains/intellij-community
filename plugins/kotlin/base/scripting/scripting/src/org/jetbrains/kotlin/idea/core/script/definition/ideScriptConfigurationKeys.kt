@@ -45,7 +45,7 @@ val IdeScriptCompilationConfigurationKeys.moduleSupplier: Key<(Project, VirtualF
     }
 )
 
-val IdeScriptCompilationConfigurationKeys.kotlinScriptDefinitionInlayHint: Key<((ScriptCompilationConfiguration) -> String)?>
+val IdeScriptCompilationConfigurationKeys.kotlinScriptDefinitionInlayHint: Key<((ScriptCompilationConfiguration) -> @Nls String)?>
         by PropertiesCollection.key({ configuration ->
             val title = configuration[ScriptCompilationConfiguration.ide.kotlinScriptTemplate]?.title
             val displayName = title ?: ".${configuration[ScriptCompilationConfiguration.fileExtension] ?: "kts"}"
