@@ -2,11 +2,11 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.dnd.SmoothAutoScroller
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.treeStructure.Tree
 import java.awt.Component
 import java.awt.Point
 import java.awt.dnd.DnDConstants
-import java.awt.dnd.DropTarget
 import java.awt.dnd.DropTargetDragEvent
 import java.awt.dnd.DropTargetEvent
 import java.awt.event.MouseEvent
@@ -16,13 +16,23 @@ import javax.swing.ToolTipManager
 import javax.swing.TransferHandler
 import javax.swing.UIManager
 
+private val LOG = Logger.getInstance("com.intellij.openapi.wm.impl.SwingLeakFixes")
 
 internal fun fixSwingLeaks() {
-  fixDragRecognitionSupportLeak()
-  fixDropHandlerLeak()
-  fixSmoothAutoScrollerDragListenerLeak()
-  fixTooltipManagerLeak()
-  fixTreeUiBaselineComponentLeak()
+  fixSwingLeak(::fixDragRecognitionSupportLeak)
+  fixSwingLeak(::fixDropHandlerLeak)
+  fixSwingLeak(::fixSmoothAutoScrollerDragListenerLeak)
+  fixSwingLeak(::fixTooltipManagerLeak)
+  fixSwingLeak(::fixTreeUiBaselineComponentLeak)
+}
+
+private fun fixSwingLeak(fix: () -> Unit) {
+  try {
+    fix()
+  }
+  catch (e: Throwable) {
+    LOG.warn(e)
+  }
 }
 
 private fun fixDragRecognitionSupportLeak() {
@@ -89,4 +99,3 @@ private fun mouseEvent(source: Component, id: Int) = MouseEvent(
   false,
   MouseEvent.BUTTON1
 )
-

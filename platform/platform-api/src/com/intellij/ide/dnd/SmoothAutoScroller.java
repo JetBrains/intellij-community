@@ -104,9 +104,9 @@ public final class SmoothAutoScroller {
 
     private void createListener() {
       try {
-        listener = (DropTargetListener)MethodHandles.privateLookupIn(TransferHandler.class, MethodHandles.lookup())
-          .findStatic(TransferHandler.class, "getDropTargetListener", MethodType.methodType(DropTargetListener.class))
-          .invokeExact();
+        var listenerFactory = MethodHandles.privateLookupIn(TransferHandler.class, MethodHandles.lookup())
+          .findStatic(TransferHandler.class, "getDropTargetListener", MethodType.methodType(DropTargetListener.class));
+        listener = (DropTargetListener)listenerFactory.invoke();
       }
       catch (Throwable e) {
         throw new InternalError("Unexpected JDK: " + JAVA_VERSION, e);
