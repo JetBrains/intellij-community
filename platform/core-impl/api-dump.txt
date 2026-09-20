@@ -1371,8 +1371,6 @@ c:com.intellij.psi.tree.OuterLanguageElementType
 - com.intellij.psi.tree.ILeafElementType
 com.intellij.psi.tree.RoleFinder
 - a:findChild(com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
-com.intellij.psi.util.PsiAwareObject
-- a:findElement(com.intellij.openapi.project.Project):com.intellij.psi.PsiElement
 com.intellij.refactoring.rename.BindablePsiReference
 - com.intellij.psi.PsiReference
 a:com.intellij.util.CachedValueBase
