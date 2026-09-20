@@ -35,7 +35,7 @@ internal class InputEventsRobot(
 
   init {
     settings().apply {
-      delayBetweenEvents(400) // slow down input events so the UI can keep up (reduces test flakiness)
+      delayBetweenEvents(500) // slow down input events so the UI can keep up (reduces test flakiness)
       simpleWaitForIdle(true)
       timeoutToFindPopup(1000)
     }
