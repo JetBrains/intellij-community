@@ -49,6 +49,7 @@ jvm_library(
         "//plugins/git4idea/hosting",
         "//plugins/git4idea/shared",
         "//plugins/gitlab/gitlab-core:vcs-gitlab-backend",
+        "//plugins/gitlab/shared",
     ],
 )
 ### auto-generated section `build intellij.vcs.gitlab.git` end

@@ -33,5 +33,6 @@
     <orderEntry type="module" module-name="intellij.vcs.git.hosting" />
     <orderEntry type="module" module-name="intellij.vcs.git.shared" />
     <orderEntry type="module" module-name="intellij.vcs.gitlab.backend" />
+    <orderEntry type="module" module-name="intellij.vcs.gitlab.shared" />
   </component>
 </module>
