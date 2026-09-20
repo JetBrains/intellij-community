@@ -25,6 +25,7 @@ import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollect
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginHomepage
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginReviewNoteUrl
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginWriteReviewUrl
+import com.intellij.ide.plugins.newui.ListPluginComponent.Companion.shouldHidePluginUpdateSourceUI
 import com.intellij.ide.plugins.newui.PluginsViewCustomizer.PluginDetailsCustomizer
 import com.intellij.ide.plugins.newui.SelectionBasedPluginModelAction.OptionButtonController
 import com.intellij.ide.plugins.newui.buttons.InstallOptionButton
@@ -1403,6 +1404,14 @@ class PluginDetailsPageComponent private constructor(
       updatePluginUpdateSourceUI(null, true)
       return
     }
+    val installationState = withContext(Dispatchers.IO) {
+      UiPluginManager.getInstance().getPluginInstallationState(plugin!!.pluginId)
+    }
+    if (shouldHidePluginUpdateSourceUI(installationState)) {
+      updatePluginUpdateSourceUI(null, true)
+      return
+    }
+
     val source = withContext(Dispatchers.IO) {
       pluginModel.getPendingPluginUpdateSource(pluginId)
     }

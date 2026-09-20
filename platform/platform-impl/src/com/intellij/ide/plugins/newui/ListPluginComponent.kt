@@ -326,7 +326,7 @@ class ListPluginComponent private constructor(
       updateErrors(listModel.errors.getOrDefault(pluginId, Collections.emptyList()))
     }
 
-    createUnknownUpdateSourceWarningPanel(listModel.updateSources[pluginId])
+    createUnknownUpdateSourceWarningPanel(listModel.updateSources[pluginId], pluginInstallationState)
 
     if (myModelFacade.isPluginInstallingOrUpdating(pluginUiModel)) {
       showProgress(false)
@@ -887,7 +887,14 @@ class ListPluginComponent private constructor(
     }
   }
 
-  private fun createUnknownUpdateSourceWarningPanel(pluginUpdateSource: PluginUpdateSourceId?) {
+  private fun createUnknownUpdateSourceWarningPanel(
+    pluginUpdateSource: PluginUpdateSourceId?,
+    installationState: PluginInstallationState?,
+  ) {
+    if (shouldHidePluginUpdateSourceUI(installationState)) {
+      return
+    }
+
     val pane = JBTextArea(IdeBundle.message("plugins.configurable.plugin.list.unknown.update.source.warning")).apply {
       lineWrap = true
       wrapStyleWord = true
@@ -2031,6 +2038,7 @@ class ListPluginComponent private constructor(
     ): PluginRowRenderKey {
       val compatible = !plugin.isIncompatibleWithCurrentPlatform
       val available = (compatible || installationState.fullyInstalled && pluginEnabled) && plugin.canBeEnabled
+
       @Suppress("HardCodedStringLiteral")
       val firstTag = if (restrictedByProduct) {
         if (PlatformUtils.isPyCharmPro()) Tags.Pro.name else Tags.Ultimate.name
@@ -2040,7 +2048,8 @@ class ListPluginComponent private constructor(
       }
       val versionModel = if (marketplace) installedPlugin else plugin
       val version = versionModel?.version?.takeUnless(StringUtil::isEmptyOrSpaces)
-      val vendor = if (plugin.isBundled) null else {
+      val vendor = if (plugin.isBundled) null
+      else {
         StringUtil.defaultIfEmpty(Strings.trim(plugin.vendor), Strings.trim(plugin.organization))
           ?.takeUnless(StringUtil::isEmptyOrSpaces)
       }
@@ -2165,6 +2174,12 @@ class ListPluginComponent private constructor(
       }
       panel.add(if (tiny) PluginManagerConfigurable.setTinyFont(label) else label, constraints)
       return label
+    }
+
+    internal fun shouldHidePluginUpdateSourceUI(installationState: PluginInstallationState?): Boolean {
+      return installationState == null ||
+             !installationState.fullyInstalled ||
+             installationState.status == PluginStatus.UNINSTALLED_WITHOUT_RESTART
     }
   }
 }
