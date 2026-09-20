@@ -91,13 +91,13 @@ internal class InputEventsRobot(
   }
 
   override fun pressKey(keyCode: Int) {
-    postInputEvent(KeyEvent(waitForFocusOwner(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), currentModifiers(), keyCode, KeyEvent.CHAR_UNDEFINED))
     pressedModifiers.add(keyCode)
+    postInputEvent(KeyEvent(waitForFocusOwner(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), currentModifiers(), keyCode, KeyEvent.CHAR_UNDEFINED))
   }
 
   override fun releaseKey(keyCode: Int) {
-    postInputEvent(KeyEvent(waitForFocusOwner(), KeyEvent.KEY_RELEASED, System.currentTimeMillis(), currentModifiers(), keyCode, KeyEvent.CHAR_UNDEFINED))
     pressedModifiers.remove(keyCode)
+    postInputEvent(KeyEvent(waitForFocusOwner(), KeyEvent.KEY_RELEASED, System.currentTimeMillis(), currentModifiers(), keyCode, KeyEvent.CHAR_UNDEFINED))
   }
 
   /**
