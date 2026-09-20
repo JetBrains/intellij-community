@@ -122,6 +122,8 @@ class GraphCommitCellRenderer(
   private fun prepareTemplateComponent(row: Int, cell: GraphCommitCell.RealCommit) {
     templateComponent.customize(cell, graphTable.isRowSelected(row), graphTable.hasFocus(),
                                 row, getInstance().getModelIndex(Commit))
+    // The template component is never painted, so it does not need the print elements after the widths are known.
+    templateComponent.releasePrintElements()
   }
 
   private val columnWidth: Int
@@ -201,6 +203,15 @@ class GraphCommitCellRenderer(
         referencePainter.paint(g2d, graphWidth, 0, height)
       }
       painter.paint(g2d, commitStyle, printElements)
+      releasePrintElements()
+    }
+
+    /**
+     * Drops the print elements of the last painted row, so the renderer does not pin a stale graph.
+     * [customize] sets them again before the next paint.
+     */
+    fun releasePrintElements() {
+      printElements = emptyList()
     }
 
     fun customize(cell: GraphCommitCell.RealCommit, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
@@ -350,6 +361,8 @@ class GraphCommitCellRenderer(
       val g2d = (InternalUICustomization.getInstance()?.preserveGraphics(g) ?: g) as Graphics2D
       super.paintComponent(g)
       painter.paint(g2d, commitStyle, printElements)
+      // Drop the print elements of the last painted row, so the renderer does not pin a stale graph.
+      printElements = emptyList()
     }
   }
 
