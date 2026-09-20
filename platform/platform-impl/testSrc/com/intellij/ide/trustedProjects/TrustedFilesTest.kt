@@ -7,6 +7,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -18,6 +19,7 @@ import com.intellij.util.ThreeState
 import com.intellij.util.application
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -26,6 +28,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicBoolean
 
 @TestApplication
 @SystemProperty("idea.trust.headless.disabled", "false")
@@ -198,6 +202,51 @@ class TrustedFilesTest {
     // the settings page fires the trust event itself after it applies the list change
     val locatedFile = TrustedProjectsLocator.locateProject(outsideFile, project = null)
     application.messageBus.syncPublisher(TrustedProjectsListener.TOPIC).onProjectUntrusted(locatedFile)
+    assertFalse(TrustedFiles.isTrusted(file, project))
+  }
+
+  @Test
+  fun `a verdict computed before a trust revocation is not cached`(): Unit = timeoutRunBlocking {
+    Registry.get(TrustedFiles.SAFE_MODE_REGISTRY_KEY).setValue(true, asDisposable())
+    val project = projectFixture.get()
+
+    val outsideFile = tempPath.resolve("stale.txt")
+    Files.writeString(outsideFile, "text")
+    val file = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(outsideFile))
+    TrustedFiles.markExternallyOpened(file)
+    TrustedProjects.setProjectTrusted(outsideFile, true)
+
+    // while armed, the locator holds the trust check open and then reports the file inside the project roots,
+    // so the held check computes a trusted verdict after the test has revoked the trust
+    val armed = AtomicBoolean()
+    val entered = CountDownLatch(1)
+    val proceed = CountDownLatch(1)
+    TrustedProjectsLocator.EP_NAME.point.registerExtension(object : TrustedProjectsLocator {
+      override fun getProjectRoots(project: Project): List<Path> {
+        if (!armed.get()) {
+          return emptyList()
+        }
+        entered.countDown()
+        proceed.await()
+        return listOf(tempPath)
+      }
+
+      override fun getProjectRoots(projectRoot: Path, project: Project?): List<Path> = emptyList()
+    }, asDisposable())
+
+    armed.set(true)
+    val staleCheck = async(Dispatchers.IO) { TrustedFiles.isTrusted(file, project) }
+    withContext(Dispatchers.IO) { entered.await() }
+    armed.set(false)
+
+    val trustedPaths = TrustedPaths.getInstance()
+    trustedPaths.setExplicitlyTrustedPaths(trustedPaths.getExplicitlyTrustedPaths() - outsideFile.toString())
+    val locatedFile = TrustedProjectsLocator.locateProject(outsideFile, project = null)
+    application.messageBus.syncPublisher(TrustedProjectsListener.TOPIC).onProjectUntrusted(locatedFile)
+
+    // the check started before the revocation may still answer with the old verdict, but must not cache it
+    proceed.countDown()
+    assertTrue(staleCheck.await())
     assertFalse(TrustedFiles.isTrusted(file, project))
   }
 

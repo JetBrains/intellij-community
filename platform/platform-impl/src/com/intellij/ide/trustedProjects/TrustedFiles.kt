@@ -21,11 +21,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.ThreeState
 import com.intellij.util.application
+import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.ConcurrentHashMap
+import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Per-file trust: whether [a file][VirtualFile] opened in a project may use the full IDE functionality,
@@ -130,7 +132,19 @@ internal class TrustedFilesCache(private val project: Project, private val scope
     fun getInstance(project: Project): TrustedFilesCache = project.service()
   }
 
-  private val verdicts = ConcurrentHashMap<VirtualFile, Boolean>()
+  /**
+   * The keys are weak, so the cache does not keep a file alive.
+   * A file in use stays reachable through the VFS, so its verdict stays cached.
+   * Only a local file enters the map, see [isTrusted].
+   * A write and an invalidation are ordered by [invalidations], see [invalidate].
+   */
+  private val verdicts = CollectionFactory.createConcurrentWeakMap<VirtualFile, Boolean>()
+
+  /**
+   * Counts the invalidations. A verdict computed before an invalidation is stale, so [isTrusted]
+   * does not cache it. The weak map has no atomic `computeIfAbsent`, so the counter takes its place.
+   */
+  private val invalidations = AtomicLong()
 
   init {
     application.messageBus.connect(this).subscribe(TrustedProjectsListener.TOPIC, object : TrustedProjectsListener {
@@ -140,17 +154,48 @@ internal class TrustedFilesCache(private val project: Project, private val scope
     // the trusted roots may change when projects are linked or unlinked
     project.messageBus.connect(this).subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
-        verdicts.clear()
+        invalidate(file = null)
       }
     })
     Registry.get(TrustedFiles.SAFE_MODE_REGISTRY_KEY).addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
-        verdicts.clear()
+        invalidate(file = null)
       }
     }, this)
   }
 
-  fun isTrusted(file: VirtualFile): Boolean = verdicts.computeIfAbsent(file) { computeTrusted(it) }
+  fun isTrusted(file: VirtualFile): Boolean {
+    // a non-local file (remote, injected, a diff preview, a light file) keeps the project-level trust model;
+    // it never enters the map, so the cache does not pin it
+    val nioPath = file.fileSystem.getNioPath(file) ?: return true
+    verdicts[file]?.let { return it }
+    val invalidation = invalidations.get()
+    val trusted = computeTrusted(nioPath)
+    synchronized(verdicts) {
+      if (invalidation == invalidations.get()) {
+        verdicts.putIfAbsent(file, trusted)
+      }
+    }
+    return trusted
+  }
+
+  /**
+   * Drops the cached verdict of [file], or every verdict when [file] is `null`.
+   * Returns the dropped verdict of [file].
+   *
+   * The counter bump and the drop happen under the same lock as the write in [isTrusted],
+   * so a verdict computed before this call never lands in the map after it.
+   */
+  private fun invalidate(file: VirtualFile?): Boolean? {
+    synchronized(verdicts) {
+      invalidations.incrementAndGet()
+      if (file == null) {
+        verdicts.clear()
+        return null
+      }
+      return verdicts.remove(file)
+    }
+  }
 
   /**
    * Drops the cached verdict of [file] after [TrustedFiles.markExternallyOpened]:
@@ -158,14 +203,12 @@ internal class TrustedFilesCache(private val project: Project, private val scope
    * When the mark downgrades the verdict, the open editor is reopened in the safe mode.
    */
   fun dropVerdict(file: VirtualFile) {
-    if (verdicts.remove(file) == true && !isTrusted(file)) {
+    if (invalidate(file) == true && !isTrusted(file)) {
       scheduleEditorRefresh(listOf(file))
     }
   }
 
-  private fun computeTrusted(file: VirtualFile): Boolean {
-    // non-local files (remote, injected, diff previews, etc.) keep the project-level trust model
-    val nioPath = file.fileSystem.getNioPath(file) ?: return true
+  private fun computeTrusted(nioPath: Path): Boolean {
     // only a file opened from an external source is a safe-mode candidate;
     // an IDE-internal file (a scratch, a console, the custom VM options file) stays trusted
     if (!ExternallyOpenedFiles.getInstance().isMarked(nioPath)) {
@@ -180,7 +223,7 @@ internal class TrustedFilesCache(private val project: Project, private val scope
   /** Recomputes every cached verdict and reopens the editors of files that became trusted. */
   fun resetVerdicts() {
     val wasUntrusted = verdicts.entries.mapNotNull { (file, trusted) -> file.takeIf { !trusted } }
-    verdicts.clear()
+    invalidate(file = null)
     val upgraded = wasUntrusted.filter { it.isValid && isTrusted(it) }
     if (upgraded.isNotEmpty()) {
       scheduleEditorRefresh(upgraded)
