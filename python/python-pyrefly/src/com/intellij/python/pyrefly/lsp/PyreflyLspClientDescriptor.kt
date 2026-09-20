@@ -87,6 +87,7 @@ class PyreflyLspClientDescriptor(
     }
   }
 
+  /** The `pyrefly` of the environment runs as a plain LSP tool. */
   override fun lspArguments(): List<String> = listOf("lsp")
 
   override val usesSourceRoots: Boolean = true
@@ -103,9 +104,12 @@ class PyreflyLspClientDescriptor(
       throw ExecutionException(PyreflyBundle.message("pyrefly.executable.unavailable", executable))
     }
     val workingDirectory = module.asPyProject()?.baseDir
+    // The type engine sends `typeServer/*` requests, and only the TSP server answers them. That server
+    // answers the LSP requests too, so one connection serves the tool and the engine. The `lsp` server
+    // rejects `typeServer/*` with `Unknown request`, and every type is then `Any`.
     return GeneralCommandLine(executable.toString())
       .withWorkingDirectory(workingDirectory)
-      .withParameters(*lspArguments().toTypedArray())
+      .withParameters(TSP_SERVER_ARGUMENT)
   }
 
   override fun createInitializationOptions(): Map<String, Any>? {
@@ -215,6 +219,7 @@ class PyreflyLspClientDescriptor(
   }
 
   private companion object {
+    const val TSP_SERVER_ARGUMENT = "tsp"
     const val PYTHON_CORE_PLUGIN_ID = "PythonCore"
     const val PYREFLY_BINARY_NAME = "pyrefly"
     const val PYREFLY_BINARY_PATH_PROPERTY = "pyrefly.binary.path"
