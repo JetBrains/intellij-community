@@ -67,18 +67,18 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     if (element is PsiFile) return null
     val file = psiFile.virtualFile ?: return null
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
-    val sourceUri = lspClient.getDocumentIdentifier(file).uri
 
     val textRange = element.textRange
     if (textRange.isEmpty) return null
 
     val offsetDetector = PyreflyOffsetDetectorVisitor()
     element.accept(offsetDetector)
-    val position = getLsp4jPosition(document, offsetDetector.offset)
-    val node = PyreflyLsp4jServer.TspNode(sourceUri, Range(position, position))
+    // A notebook cell is its own document for the server, so the offset maps to the cell and its URI.
+    val request = getDocumentPosition(file, document, offsetDetector.offset)
+    val node = PyreflyLsp4jServer.TspNode(request.textDocument.uri, Range(request.position, request.position))
 
     val tspType = requestComputedType(node)
-    thisLogger().debug { "Pyrefly TSP: answer for '${element.text.take(60)}' at ${position.line}:${position.character}: $tspType" }
+    thisLogger().debug { "Pyrefly TSP: answer for '${element.text.take(60)}' at ${request.position.line}:${request.position.character}: $tspType" }
     if (tspType == null) return null
 
     return buildPyType(element, tspType)
