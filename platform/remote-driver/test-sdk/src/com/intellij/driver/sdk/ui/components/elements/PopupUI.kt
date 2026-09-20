@@ -1,6 +1,8 @@
 package com.intellij.driver.sdk.ui.components.elements
 
 import com.intellij.driver.client.Remote
+import com.intellij.driver.client.utility
+import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
@@ -8,6 +10,7 @@ import com.intellij.driver.sdk.ui.components.UIComponentsList
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.Icon
 import com.intellij.driver.sdk.ui.remote.Component
+import com.intellij.driver.sdk.ui.remote.Window
 import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitForOne
 import org.intellij.lang.annotations.Language
@@ -70,7 +73,25 @@ class PopupMenuUiComponent(data: ComponentData) : UiComponent(data) {
 }
 
 open class PopupUiComponent(data: ComponentData) : WindowUiComponent(data) {
-  fun close() = dispose()
+  fun close() {
+    val popup = driver.utility<PopupUtil>().getPopupFor(driver.cast(component, Window::class))
+    if (popup != null) {
+      driver.withContext(OnDispatcher.EDT) { popup.cancel() }
+    }
+    else {
+      dispose()
+    }
+  }
+
+  @Remote("com.intellij.openapi.ui.popup.util.PopupUtil")
+  private interface PopupUtil {
+    fun getPopupFor(window: Window): JBPopup?
+  }
+
+  @Remote("com.intellij.openapi.ui.popup.JBPopup")
+  private interface JBPopup {
+    fun cancel()
+  }
 }
 
 @Remote("com.intellij.openapi.actionSystem.impl.ActionMenuItem")
