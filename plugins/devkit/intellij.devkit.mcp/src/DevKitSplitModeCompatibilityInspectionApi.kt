@@ -11,7 +11,6 @@ import com.intellij.mcpserver.project
 import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
@@ -140,7 +139,6 @@ private fun inspectSplitModeCompatibilityFile(
     false,
     true,
     true,
-    EmptyProgressIndicator(),
     PairProcessor.alwaysTrue(),
   )
 
