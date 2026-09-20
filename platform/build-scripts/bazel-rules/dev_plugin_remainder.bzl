@@ -7,6 +7,7 @@ load("//build:dev_launch_dependencies.bzl", "HOST_PLATFORMS", "platform_parts")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "library_entries", "module_output_jar")
 load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_neutral_product_transition", "dev_dist_product_info_transition")
 load(":dev_plugin.bzl", "dev_dist_plugin_directory")
+load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo")
 
 def _graph_info_init(**_kwargs):
@@ -50,40 +51,6 @@ DevPluginArtifactCatalogueInfo = provider(
     },
 )
 
-def _strip_external_workspace_prefix(path):
-    if path.startswith("../") or path.startswith("external/"):
-        parts = path.split("/")
-        if len(parts) < 3:
-            fail("invalid external source path: %s" % path)
-        return "/".join(parts[2:])
-    return path
-
-def _source_tree_prefix(value, identifier):
-    if value == "":
-        return value
-    if (
-        value.startswith("/") or "\\" in value or ":" in value or "\000" in value or
-        any([part in ["", ".", ".."] for part in value.split("/")])
-    ):
-        fail("source tree %s has an unsafe repository-relative prefix: %r" % (identifier, value))
-    return value
-
-def _source_tree_entry(file, prefix):
-    path = _strip_external_workspace_prefix(file.short_path)
-    if prefix:
-        prefix_with_separator = prefix + "/"
-        if not path.startswith(prefix_with_separator):
-            return None
-        result = path[len(prefix_with_separator):]
-    else:
-        result = path
-    if (
-        not result or result.startswith("/") or "\\" in result or ":" in result or "\000" in result or "=" in result or
-        any([part in ["", ".", ".."] for part in result.split("/")])
-    ):
-        fail("source tree entry is unsafe after stripping %s: %s" % (prefix, path))
-    return result
-
 def _declare_source_trees(ctx):
     by_id = {}
     for identifier, target in ctx.attr.source_tree_targets.items():
@@ -97,25 +64,8 @@ def _declare_source_trees(ctx):
     result = {}
     for index, identifier in enumerate(sorted(by_id.keys())):
         target = by_id[identifier]
-        prefix = _source_tree_prefix(ctx.attr.source_tree_prefixes[identifier], identifier)
-        entries = {}
-        for file in target[DefaultInfo].files.to_list():
-            if file.is_directory:
-                fail("source tree %s accepts regular declared Files only, got directory %s" % (identifier, file.path))
-            entry = _source_tree_entry(file, prefix)
-            if entry == None:
-                continue
-            if entry in entries:
-                fail("source tree %s has conflicting entry %s from %s and %s" % (identifier, entry, entries[entry].path, file.path))
-            entries[entry] = file
-        if not entries:
-            fail("source tree %s has no declared File below %s in %s" % (identifier, prefix, target.label))
-        for entry in sorted(entries.keys()):
-            parts = entry.split("/")
-            for size in range(1, len(parts)):
-                ancestor = "/".join(parts[:size])
-                if ancestor in entries:
-                    fail("source tree %s has conflicting file entries %s and %s" % (identifier, ancestor, entry))
+        prefix = source_tree_prefix(ctx.attr.source_tree_prefixes[identifier], identifier)
+        entries = source_tree_entries(target[DefaultInfo].files.to_list(), prefix, identifier, target.label)
 
         archive = ctx.actions.declare_file(ctx.label.name + ".source-tree-%d.zip" % index)
         directory = ctx.actions.declare_directory(ctx.label.name + ".source-tree-%d" % index)

@@ -62,6 +62,9 @@ def dev_dist_plugin(
         jars = {},
         module_jar_paths = {},
         classpath_jars = [],
+        files = {},
+        file_prefixes = {},
+        executable_files = [],
         **descriptor_attrs):
     """Declare plugin modules and derive their build targets.
 
@@ -82,6 +85,14 @@ def dev_dist_plugin(
             keyed by module name.
         classpath_jars: The classpath order of every jar of a simple plugin, when the default order is not the plan's
             order. The default order is the `jars` keys, then the reused content module jars in `content_modules` order.
+        files: The plain copies of a simple plugin, keyed by destination relative to the plugin directory and valued by
+            the label of the source: a source file, the package's `:dev_dist_resources` filegroup or another target that
+            produces regular files. A destination `file_prefixes` names copies every file of the label below the prefix
+            to `<destination>/<relative path>`; any other destination copies the one file the label produces. A copied
+            file is not on the plugin classpath. Requires `jars`.
+        file_prefixes: The repository-relative prefix of each directory copy in `files`, keyed by destination.
+        executable_files: The single-file destinations of `files` the distribution marks executable. This is the mode
+            `withResource*` gives a file.
         embedded_descriptor_source: The direct label of an embedded product descriptor.
         embedded_descriptor: The embedded product descriptor path inside its module's package.
         embedded_descriptor_module: The JPS module that owns the embedded product descriptor.
@@ -115,6 +126,16 @@ def dev_dist_plugin(
         fail("dev_dist_plugin: %s states jars and layout variants, and a packed plugin has one layout" % main_module)
     if jars and not descriptor:
         fail("dev_dist_plugin: %s states jars and no descriptor" % main_module)
+    if (files or file_prefixes or executable_files) and not jars:
+        fail("dev_dist_plugin: %s states copied files and no jars, and a copy belongs to a packed plugin" % main_module)
+    for destination in file_prefixes:
+        if destination not in files:
+            fail("dev_dist_plugin: %s states a file prefix for '%s', which `files` does not copy" % (main_module, destination))
+    for destination in executable_files:
+        if destination not in files:
+            fail("dev_dist_plugin: %s marks '%s' executable, which `files` does not copy" % (main_module, destination))
+        if destination in file_prefixes:
+            fail("dev_dist_plugin: %s marks the directory copy '%s' executable, and only a single file has a stated mode" % (main_module, destination))
 
     if not descriptor:
         if variants or descriptor_attrs or descriptor_modules:
@@ -194,6 +215,9 @@ def dev_dist_plugin(
             jars = jars,
             module_jar_paths = module_jar_paths,
             classpath_jars = classpath_jars,
+            files = files,
+            file_prefixes = file_prefixes,
+            executable_files = executable_files,
             visibility = ["//visibility:public"],
         )
     if embedded_descriptor_source or embedded_owner != None:

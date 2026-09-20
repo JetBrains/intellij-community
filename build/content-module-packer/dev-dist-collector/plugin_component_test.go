@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -815,6 +816,10 @@ func packedPluginComponentFixture(test *testing.T) pluginComponentSpec {
 			{Destination: "lib/json.jar", Source: "payload/intellij.json.jar", Metadata: "metadata/main.json"},
 			{Destination: "lib/modules/intellij.json.split.jar", Source: "payload/intellij.json.split.jar", Metadata: "metadata/split.json"},
 		},
+		Files: []pluginComponentFile{
+			{Destination: "bin/helper.sh", Source: "resources/helper.sh", Executable: true},
+			{Destination: "openui/renderer.zip", Source: "resources/renderer.zip"},
+		},
 	}
 	for index, entry := range []filemetadata.Entry{
 		{RelativePath: "json-rpc-1.0.jar", Type: "file", Hash: 30, Size: 15, Mode: 0644},
@@ -826,9 +831,14 @@ func packedPluginComponentFixture(test *testing.T) pluginComponentSpec {
 		}
 	}
 	writeText(test, spec.Descriptor, "<idea-plugin/>\n")
+	writeText(test, spec.Files[0].Source, packedPluginCopiedFileText)
+	writeText(test, spec.Files[1].Source, packedPluginCopiedFileText)
 	writePluginJSON(test, "component-spec.json", spec)
 	return spec
 }
+
+// The copied files of packedPluginComponentFixture share this content, so the collector hashes it once.
+const packedPluginCopiedFileText = "#!/bin/sh\n"
 
 func TestPackedPluginComponentWritesManifestAndClassPath(test *testing.T) {
 	test.Chdir(test.TempDir())
@@ -841,24 +851,30 @@ func TestPackedPluginComponentWritesManifestAndClassPath(test *testing.T) {
 	if err := readPluginMetadata("component.json", &manifest); err != nil {
 		test.Fatal(err)
 	}
-	if manifest.Version != 9 || manifest.PluginCount != 1 || manifest.OS != "linux" || manifest.Arch != "x64" || len(manifest.Entries) != 3 {
+	if manifest.Version != 9 || manifest.PluginCount != 1 || manifest.OS != "linux" || manifest.Arch != "x64" || len(manifest.Entries) != 5 {
 		test.Fatalf("incomplete component manifest: %#v", manifest)
 	}
 	entries := make(map[string]componentEntry)
 	for _, entry := range manifest.Entries {
 		entries[entry.RelativePath] = entry
 	}
+	copiedHash, err := filemetadata.HashFile("resources/helper.sh")
+	if err != nil || copiedHash == 0 {
+		test.Fatalf("hash = %d: %v", copiedHash, err)
+	}
 	mode := uint32(0600)
 	for _, expected := range []componentEntry{
 		{RelativePath: "plugins/json/lib/json-rpc-1.0.jar", Type: "component-file", Hash: 30, Source: "payload/json-rpc-1.0.jar"},
 		{RelativePath: "plugins/json/lib/json.jar", Type: "component-file", Hash: 10, Source: "payload/intellij.json.jar", Mode: &mode},
 		{RelativePath: "plugins/json/lib/modules/intellij.json.split.jar", Type: "component-file", Hash: 20, Source: "payload/intellij.json.split.jar"},
+		{RelativePath: "plugins/json/bin/helper.sh", Type: "component-file", Hash: copiedHash, Executable: true, Source: "resources/helper.sh"},
+		{RelativePath: "plugins/json/openui/renderer.zip", Type: "component-file", Hash: copiedHash, Source: "resources/renderer.zip"},
 	} {
 		if actual := entries[expected.RelativePath]; !reflect.DeepEqual(actual, expected) {
 			test.Fatalf("entry = %#v, want %#v", actual, expected)
 		}
 	}
-	// the main jar first by the plugin name, the versioned library last, the `lib/modules` jar absent
+	// the main jar first by the plugin name, the versioned library last, the `lib/modules` jar and the copied files absent
 	actual, err := os.ReadFile("component.plugin-classpath-part")
 	if err != nil {
 		test.Fatal(err)
@@ -868,6 +884,38 @@ func TestPackedPluginComponentWritesManifestAndClassPath(test *testing.T) {
 	}
 	if _, err := os.Lstat("payload"); !os.IsNotExist(err) {
 		test.Fatalf("collector read or wrote payloads: %v", err)
+	}
+	// The jar payloads stay unread. The inventory hashes the two copied files, which share one content.
+	copiedBytes := strconv.Itoa(2 * len(packedPluginCopiedFileText))
+	for _, activity := range readTrace(test, "component.spans.json").Data[0].Spans {
+		expected := "0"
+		if activity.OperationName == "inventory dev build component" {
+			expected = copiedBytes
+		}
+		if activity.tag("byteCount") != expected {
+			test.Fatalf("byteCount = %s, want %s: %#v", activity.tag("byteCount"), expected, activity)
+		}
+	}
+	if !strings.Contains(output.String(), "named 5 plugin files") {
+		test.Fatalf("stdout = %s", &output)
+	}
+}
+
+func TestPackedPluginComponentWritesJarsOnly(test *testing.T) {
+	test.Chdir(test.TempDir())
+	spec := packedPluginComponentFixture(test)
+	spec.Files = nil
+	writePluginJSON(test, "component-spec.json", spec)
+	var output, errors bytes.Buffer
+	if code := run(append(pluginComponentArgs(), "--trace-file=component.spans.json"), &output, &errors); code != 0 {
+		test.Fatalf("exit %d: %s", code, &errors)
+	}
+	var manifest componentManifest
+	if err := readPluginMetadata("component.json", &manifest); err != nil {
+		test.Fatal(err)
+	}
+	if len(manifest.Entries) != 3 {
+		test.Fatalf("manifest lists more than the jars: %#v", manifest)
 	}
 	for _, activity := range readTrace(test, "component.spans.json").Data[0].Spans {
 		if activity.tag("byteCount") != "0" {
@@ -947,9 +995,10 @@ func TestPackedPluginComponentRejectsStaleInputs(test *testing.T) {
 		want   string
 	}{
 		{"version", func(spec *pluginComponentSpec) { spec.Version = 2 }, "unsupported packed plugin component version"},
-		{"mixed shape", func(spec *pluginComponentSpec) { spec.Classpath = "metadata/plugin-classpath.txt" }, "names only its descriptor and jars"},
-		{"mixed remainder", func(spec *pluginComponentSpec) { spec.Remainder.Directory = "payload/remainder" }, "names only its descriptor and jars"},
+		{"mixed shape", func(spec *pluginComponentSpec) { spec.Classpath = "metadata/plugin-classpath.txt" }, "names only its descriptor, jars and files"},
+		{"mixed remainder", func(spec *pluginComponentSpec) { spec.Remainder.Directory = "payload/remainder" }, "names only its descriptor, jars and files"},
 		{"no jars", func(spec *pluginComponentSpec) { spec.Jars = []pluginComponentJar{} }, "at least one jar"},
+		{"files without jars", func(spec *pluginComponentSpec) { spec.Jars = nil }, "names no copied files"},
 		{"plugin escape", func(spec *pluginComponentSpec) { spec.PluginDirectory = "plugins/../outside" }, "pluginDirectory"},
 		{"escaping destination", func(spec *pluginComponentSpec) { spec.Jars[0].Destination = "../outside.jar" }, "invalid relative path"},
 		{"case collision", func(spec *pluginComponentSpec) { spec.Jars[0].Destination = "lib/JSON.jar" }, "conflicting plugin destinations"},
@@ -959,6 +1008,16 @@ func TestPackedPluginComponentRejectsStaleInputs(test *testing.T) {
 		{"descriptor in payload", func(spec *pluginComponentSpec) { spec.Descriptor = "payload/intellij.json.jar" }, "overlaps payload"},
 		{"empty descriptor", func(spec *pluginComponentSpec) { spec.Descriptor = "" }, "invalid declared artifact path"},
 		{"empty source", func(spec *pluginComponentSpec) { spec.Jars[0].Source = "" }, "invalid declared artifact path"},
+		{"file at a jar destination", func(spec *pluginComponentSpec) { spec.Files[0].Destination = "lib/json.jar" }, "conflicting plugin destinations: lib/json.jar and lib/json.jar"},
+		{"file case collision", func(spec *pluginComponentSpec) { spec.Files[1].Destination = "bin/Helper.sh" }, "conflicting plugin destinations"},
+		{"file under a jar", func(spec *pluginComponentSpec) { spec.Files[0].Destination = "lib/json.jar/helper.sh" }, "lib/json.jar contains lib/json.jar/helper.sh"},
+		{"jar under a file", func(spec *pluginComponentSpec) { spec.Files[0].Destination = "lib" }, "lib contains lib/json-rpc-1.0.jar"},
+		{"file directory spelled twice", func(spec *pluginComponentSpec) { spec.Files[1].Destination = "Bin/renderer.zip" }, "conflicting plugin destinations: bin and Bin"},
+		{"escaping file destination", func(spec *pluginComponentSpec) { spec.Files[0].Destination = "../helper.sh" }, "invalid relative path"},
+		{"empty file source", func(spec *pluginComponentSpec) { spec.Files[0].Source = "" }, "invalid declared artifact path"},
+		{"missing file source", func(spec *pluginComponentSpec) { spec.Files[0].Source = "resources/missing.sh" }, "is not a regular file: resources/missing.sh"},
+		{"directory file source", func(spec *pluginComponentSpec) { spec.Files[0].Source = "resources" }, "is not a regular file: resources"},
+		{"file source is the descriptor", func(spec *pluginComponentSpec) { spec.Files[0].Source = spec.Descriptor }, "overlaps payload"},
 	} {
 		test.Run(scenario.name, func(test *testing.T) {
 			test.Chdir(test.TempDir())

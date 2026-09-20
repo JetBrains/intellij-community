@@ -4,7 +4,7 @@ load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts", "unittest")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "content_module_jar", "content_module_jar_target_name")
-load(":dev_dist_plugin.bzl", "dev_dist_plugin")
+load(":dev_dist_plugin.bzl", "dev_dist_plugin", "dev_dist_plugin_component_target_name")
 load(":dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor", "dev_dist_plugin_descriptor_target_name", "dev_dist_product_info")
 load(":dev_plugin.bzl", "dev_plugin")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo")
@@ -59,6 +59,23 @@ def _fixture_xml_impl(ctx):
 
 _fixture_xml = rule(implementation = _fixture_xml_impl, outputs = {"xml": "%{name}.xml"})
 
+def _fixture_script_impl(ctx):
+    ctx.actions.write(ctx.outputs.script, "#!/bin/sh\n")
+    return [DefaultInfo(files = depset([ctx.outputs.script]))]
+
+_fixture_script = rule(implementation = _fixture_script_impl, outputs = {"script": "%{name}.sh"})
+
+def _fixture_resources_impl(ctx):
+    """Two files below `<name>.source-root`, the directory a copy takes, and one outside it."""
+    first = ctx.actions.declare_file(ctx.label.name + ".source-root/first.txt")
+    second = ctx.actions.declare_file(ctx.label.name + ".source-root/nested/second.txt")
+    outside = ctx.actions.declare_file(ctx.label.name + ".outside.txt")
+    for output in [first, second, outside]:
+        ctx.actions.write(output, output.basename + "\n")
+    return [DefaultInfo(files = depset([first, second, outside]))]
+
+_fixture_resources = rule(implementation = _fixture_resources_impl)
+
 def _with_short_path(argument, inputs):
     """A `library=` or `module=` flag with the file's short path, so two configurations of one jar compare equal."""
     if not argument.startswith("library=") and not argument.startswith("module="):
@@ -98,15 +115,23 @@ def _dev_plugin_test_impl(ctx):
     asserts.equals(env, 3, len(groups.file_metadata.to_list()))
     asserts.equals(env, 3 if ctx.attr.spans else 0, len(groups.trace_spans.to_list()))
 
-    # The payload holds the two packed jars and the reused content module jar.
+    # The payload holds the two packed jars, the reused content module jar, the copied script and the two files of the
+    # copied directory. The file outside the prefix is not copied.
     # Files are compared by short path: the test's own attributes are configured with the test, and the component's
     # inputs with the reset, so the same jar arrives as two `File` objects.
     payload = fragment.payload.to_list()
+    payload_paths = [file.short_path for file in payload]
     content = ctx.attr.content_jar[ContentModuleJarInfo]
-    asserts.equals(env, 3, len(payload))
-    asserts.true(env, content.jar.short_path in [jar.short_path for jar in payload])
-    for jar in payload:
-        asserts.true(env, jar in collect.inputs.to_list(), jar.path)
+    asserts.equals(env, 6, len(payload))
+    asserts.true(env, content.jar.short_path in payload_paths)
+    helper = ctx.file.helper
+    asserts.true(env, helper.short_path in payload_paths)
+    resources = {file.basename: file for file in ctx.attr.resources[DefaultInfo].files.to_list()}
+    asserts.true(env, resources["first.txt"].short_path in payload_paths)
+    asserts.true(env, resources["second.txt"].short_path in payload_paths)
+    asserts.false(env, resources[ctx.attr.resources.label.name + ".outside.txt"].short_path in payload_paths)
+    for file in payload:
+        asserts.true(env, file in collect.inputs.to_list(), file.path)
 
     # The main jar's flag file: the patch, the modules in order, then the library, as `JarPackager` orders the jar.
     main = _pack_action(packs, "dev-plugin.jar")
@@ -145,6 +170,9 @@ def _dev_plugin_test_impl(ctx):
     reused = [jar for jar in payload if jar.short_path == content.jar.short_path]
     asserts.equals(env, 1, len(reused))
     asserts.false(env, component_root == reused[0].root.path, reused[0].path)
+    copied_helper = [file for file in payload if file.short_path == helper.short_path]
+    asserts.equals(env, 1, len(copied_helper))
+    asserts.false(env, component_root == copied_helper[0].root.path, copied_helper[0].path)
 
     # The collector spec names every jar with its destination and the ready classpath descriptor. The jars come in
     # `classpath_jars` order, which puts the reused jar first here.
@@ -161,12 +189,23 @@ def _dev_plugin_test_impl(ctx):
     # external repository: its `short_path` starts with `../community+/`, while `path` holds `external/community+/`.
     metadata_tail = content.metadata.short_path.removeprefix("../")
     asserts.true(env, spec["jars"][0]["metadata"].endswith("/" + metadata_tail), spec["jars"][0]["metadata"])
+
+    # The copies come sorted by destination. The directory copy expands to one record per file below the prefix, and
+    # only the single file `executable_files` names is executable. No action copies a byte: the source is the file itself.
+    asserts.equals(env, ["bin/helper.sh", "helpers/first.txt", "helpers/nested/second.txt"], [copy["destination"] for copy in spec["files"]])
+    asserts.equals(env, [True, False, False], [copy["executable"] for copy in spec["files"]])
+    asserts.equals(env, copied_helper[0].path, spec["files"][0]["source"])
+    asserts.true(env, spec["files"][1]["source"].endswith("/" + resources["first.txt"].short_path.removeprefix("../")), spec["files"][1]["source"])
+    asserts.true(env, spec["files"][2]["source"].endswith("/" + resources["second.txt"].short_path.removeprefix("../")), spec["files"][2]["source"])
+    asserts.equals(env, [], [action for action in actions if action.mnemonic not in ["PackDevPluginJar", "CollectDevPluginComponent", "FileWrite"]])
     return analysistest.end(env)
 
 _DEV_PLUGIN_ATTRS = {
     "content_jar": attr.label(mandatory = True, providers = [ContentModuleJarInfo]),
     "library": attr.label(mandatory = True, providers = [JavaInfo]),
     "modules": attr.label_list(mandatory = True, providers = [_KtJvmInfo]),
+    "helper": attr.label(mandatory = True, allow_single_file = True),
+    "resources": attr.label(mandatory = True),
     "spans": attr.bool(),
 }
 
@@ -245,6 +284,34 @@ def _stale_macro_test(name):
     )
     return test
 
+def _copies_macro_test(name, helper_token, resources_token, resources_prefix):
+    """`dev_dist_plugin` forwards `files`, `file_prefixes` and `executable_files` to the component it declares."""
+    main_module = "intellij.test.copied"
+    copied_owner = name + "_copied_owner"
+    copied_source = name + "_copied_descriptor"
+    _fixture_module(name = copied_owner, module_name = main_module)
+    _fixture_xml(name = copied_source)
+    files = {"bin/helper.sh": helper_token, "helpers": resources_token}
+    file_prefixes = {"helpers": resources_prefix}
+    executable_files = ["bin/helper.sh"]
+    dev_dist_plugin(
+        main_module = main_module,
+        module_targets = {main_module: [":" + copied_owner + ".jar"]},
+        descriptor = copied_source,
+        jars = {"lib/test-copied.jar": [main_module]},
+        files = files,
+        file_prefixes = file_prefixes,
+        executable_files = executable_files,
+    )
+    component = native.existing_rule(dev_dist_plugin_component_target_name(main_module))
+    test = name + "_copies_macro_test"
+    _declaration_test(
+        name = test,
+        actual = json.encode([component["files"], component["file_prefixes"], component["executable_files"]]),
+        expected = json.encode([files, file_prefixes, executable_files]),
+    )
+    return test
+
 def dev_plugin_test_suite(name):
     """Declares the packed plugin component tests.
 
@@ -293,6 +360,18 @@ def dev_plugin_test_suite(name):
     descriptor = ":" + dev_dist_plugin_descriptor_target_name(_MAIN_MODULE)
     modules = {":" + owner: _MAIN_MODULE, ":" + split: _SPLIT_MODULE}
 
+    # A single file copy and a directory copy. The filegroup stands for the package's `:dev_dist_resources`, and the
+    # prefix is the repository-relative directory the copy takes, as `source_tree_prefixes` of the chain states it.
+    helper = name + "_helper"
+    _fixture_script(name = helper)
+    helper_token = _PACKAGE + ":" + helper + ".sh"
+    resource_files = name + "_resource_files"
+    _fixture_resources(name = resource_files)
+    resources = name + "_resources"
+    native.filegroup(name = resources, srcs = [":" + resource_files])
+    resources_token = _PACKAGE + ":" + resources
+    resources_prefix = native.package_name() + "/" + resource_files + ".source-root"
+
     component = name + "_component"
     dev_plugin(
         name = component,
@@ -308,6 +387,12 @@ def dev_plugin_test_suite(name):
         },
         module_jar_paths = {_MEMBER_MODULE: "lib/member.jar"},
         classpath_jars = ["lib/member.jar", "lib/dev-plugin.jar", "lib/foo.jar"],
+        files = {
+            "bin/helper.sh": helper_token,
+            "helpers": resources_token,
+        },
+        file_prefixes = {"helpers": resources_prefix},
+        executable_files = ["bin/helper.sh"],
     )
     tests = []
     for suffix, test_rule, spans in [("_test", _dev_plugin_test, False), ("_spans_test", _dev_plugin_spans_test, True)]:
@@ -318,6 +403,8 @@ def dev_plugin_test_suite(name):
             content_jar = ":" + content_jar,
             library = ":" + library,
             modules = [":" + owner, ":" + split],
+            helper = ":" + helper + ".sh",
+            resources = ":" + resource_files,
             spans = spans,
         )
 
@@ -343,5 +430,33 @@ def dev_plugin_test_suite(name):
         tests.append(failing + "_test")
         test_rule(name = tests[-1], target_under_test = ":" + failing, expected_message = message)
 
+    # A copy is refused when it meets a jar or another copy, when a single-file destination has two sources, when a
+    # directory copy is empty, and when `executable_files` names anything but a copied single file.
+    for case, files, file_prefixes, executable_files, message in [
+        ("many_files", {"bin/helper": resources_token}, {}, [], "copies one file"),
+        ("jar_collision", {"lib/x.jar": helper_token}, {}, [], "is both stated in `jars` and copied by `files`"),
+        ("unknown_executable", {"bin/helper.sh": helper_token}, {}, ["bin/none"], "executable_files names 'bin/none', which `files` does not copy"),
+        ("directory_executable", {"helpers": resources_token}, {"helpers": resources_prefix}, ["helpers"], "which is a directory copy"),
+        ("empty_directory", {"helpers": resources_token}, {"helpers": "nowhere/at/all"}, [], "has no declared File below nowhere/at/all"),
+        ("file_under_directory", {"helpers": resources_token, "helpers/extra.txt": helper_token}, {"helpers": resources_prefix}, [], "is below 'helpers', which `file_prefixes` copies as a whole"),
+        ("directory_over_jar", {"lib": resources_token}, {"lib": resources_prefix}, [], "'lib' is a directory of another destination"),
+        ("unknown_prefix", {"bin/helper.sh": helper_token}, {"helpers": resources_prefix}, [], "file_prefixes names 'helpers', which `files` does not copy"),
+    ]:
+        failing = name + "_failing_" + case
+        dev_plugin(
+            name = failing,
+            main_module = _MAIN_MODULE,
+            descriptor = descriptor,
+            plugin_directory = "plugins/dev-plugin",
+            modules = modules,
+            jars = {"lib/x.jar": [_MAIN_MODULE]},
+            files = files,
+            file_prefixes = file_prefixes,
+            executable_files = executable_files,
+        )
+        tests.append(failing + "_test")
+        _failure_test(name = tests[-1], target_under_test = ":" + failing, expected_message = message)
+
     tests.append(_stale_macro_test(name))
+    tests.append(_copies_macro_test(name, helper_token, resources_token, resources_prefix))
     native.test_suite(name = name, tests = tests)

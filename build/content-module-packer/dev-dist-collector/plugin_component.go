@@ -20,8 +20,8 @@ import (
 )
 
 // pluginComponentSpec has two shapes. The prepared shape names a remainder, an asset list and a ready classpath record.
-// The packed shape names the final descriptor and the jars Bazel packed; a top-level `jars` key selects it, and the
-// collector then writes the classpath record itself.
+// The packed shape names the final descriptor, the jars Bazel packed and the files the plugin copies verbatim; a
+// top-level `jars` key selects it, and the collector then writes the classpath record itself.
 type pluginComponentSpec struct {
 	Version         int                          `json:"version"`
 	PluginDirectory string                       `json:"pluginDirectory"`
@@ -31,12 +31,21 @@ type pluginComponentSpec struct {
 	Independent     []pluginComponentIndependent `json:"independent"`
 	Descriptor      string                       `json:"descriptor"`
 	Jars            []pluginComponentJar         `json:"jars"`
+	Files           []pluginComponentFile        `json:"files"`
 }
 
 type pluginComponentJar struct {
 	Destination string `json:"destination"`
 	Source      string `json:"source"`
 	Metadata    string `json:"metadata"`
+}
+
+// pluginComponentFile is one file a packed plugin copies verbatim. No packer writes metadata for it, so the collector
+// hashes the source itself and takes the executable bit from the record.
+type pluginComponentFile struct {
+	Destination string `json:"destination"`
+	Source      string `json:"source"`
+	Executable  bool   `json:"executable"`
 }
 
 func (spec pluginComponentSpec) packed() bool {
@@ -161,6 +170,9 @@ func validatePluginComponentSpec(opts options, spec pluginComponentSpec) error {
 	if err := validatePluginDirectory(spec.PluginDirectory); err != nil {
 		return err
 	}
+	if len(spec.Files) != 0 {
+		return fmt.Errorf("a prepared plugin component names no copied files")
+	}
 	metadata := []string{opts.pluginComponent, spec.Assets, spec.Classpath, spec.Remainder.Metadata}
 	payload := []string{spec.Remainder.Directory}
 	identifiers := make(map[string]bool)
@@ -194,27 +206,59 @@ func validatePackedPluginComponentSpec(opts options, spec pluginComponentSpec) e
 		return err
 	}
 	if spec.Remainder != (pluginComponentRemainder{}) || spec.Assets != "" || spec.Classpath != "" || len(spec.Independent) != 0 {
-		return fmt.Errorf("a packed plugin component names only its descriptor and jars")
+		return fmt.Errorf("a packed plugin component names only its descriptor, jars and files")
 	}
 	if len(spec.Jars) == 0 {
 		return fmt.Errorf("a packed plugin component requires at least one jar")
 	}
 	metadata := []string{opts.pluginComponent, spec.Descriptor}
-	payload := make([]string, 0, len(spec.Jars))
-	destinations := make(map[string]string, len(spec.Jars))
+	payload := make([]string, 0, len(spec.Jars)+len(spec.Files))
+	destinations := make([]string, 0, len(spec.Jars)+len(spec.Files))
 	for _, jar := range spec.Jars {
-		if err := filemetadata.ValidatePath(jar.Destination); err != nil {
-			return err
-		}
-		identity := filemetadata.PathIdentity(jar.Destination)
-		if previous, exists := destinations[identity]; exists {
-			return fmt.Errorf("conflicting plugin destinations: %s and %s", previous, jar.Destination)
-		}
-		destinations[identity] = jar.Destination
+		destinations = append(destinations, jar.Destination)
 		metadata = append(metadata, jar.Metadata)
 		payload = append(payload, jar.Source)
 	}
+	for _, file := range spec.Files {
+		destinations = append(destinations, file.Destination)
+		payload = append(payload, file.Source)
+	}
+	if err := validatePackedPluginDestinations(destinations); err != nil {
+		return err
+	}
 	return validatePluginArtifactPaths(opts, metadata, payload)
+}
+
+// validatePackedPluginDestinations refuses two destinations with one identity, two spellings of one directory, and a
+// destination below another. Every destination of a packed plugin names a file, so an ancestor is always a conflict.
+func validatePackedPluginDestinations(destinations []string) error {
+	owned := make(map[string]bool, len(destinations))
+	spellings := make(map[string]string, len(destinations))
+	for _, destination := range destinations {
+		if err := filemetadata.ValidatePath(destination); err != nil {
+			return err
+		}
+		identity := filemetadata.PathIdentity(destination)
+		if owned[identity] {
+			return fmt.Errorf("conflicting plugin destinations: %s and %s", spellings[identity], destination)
+		}
+		owned[identity] = true
+		for prefix := destination; prefix != "."; prefix = path.Dir(prefix) {
+			identity := filemetadata.PathIdentity(prefix)
+			if previous, exists := spellings[identity]; exists && previous != prefix {
+				return fmt.Errorf("conflicting plugin destinations: %s and %s", previous, prefix)
+			}
+			spellings[identity] = prefix
+		}
+	}
+	for _, destination := range destinations {
+		for parent := path.Dir(destination); parent != "."; parent = path.Dir(parent) {
+			if owned[filemetadata.PathIdentity(parent)] {
+				return fmt.Errorf("conflicting plugin destinations: %s contains %s", parent, destination)
+			}
+		}
+	}
+	return nil
 }
 
 func validatePluginDirectory(pluginDirectory string) error {
@@ -492,7 +536,8 @@ func collectPluginComponent(spec pluginComponentSpec, tracer *span.Tracer, paren
 	return files, nil
 }
 
-// collectPackedPluginComponent lists the jars of a packed plugin in their declared order. It reads only metadata.
+// collectPackedPluginComponent lists the jars of a packed plugin in their declared order, then its copied files. It
+// reads only jar metadata. A copied file carries no metadata, so inventory hashes its source.
 func collectPackedPluginComponent(spec pluginComponentSpec, tracer *span.Tracer, parent *span.Span) (files []sourcedFile, err error) {
 	activity := tracer.Start("collect packed plugin jars", parent)
 	activity.SetInt("byteCount", 0)
@@ -521,6 +566,13 @@ func collectPackedPluginComponent(spec pluginComponentSpec, tracer *span.Tracer,
 	}
 	if _, err := filemetadata.Merge(entries); err != nil {
 		return nil, err
+	}
+	for _, file := range spec.Files {
+		files = append(files, sourcedFile{
+			Source:       file.Source,
+			RelativePath: spec.PluginDirectory + "/" + file.Destination,
+			Executable:   file.Executable,
+		})
 	}
 	activity.SetInt("fileCount", int64(len(files)))
 	return files, nil
