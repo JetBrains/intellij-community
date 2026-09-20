@@ -178,9 +178,9 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     val isDefinition = tspType.isInstantiable()
     if (defNode == null || defNode.uri.isEmpty()) {
       // Pyrefly emits a synthesized stub class with `typeArgs` for built-in generic instances
-      // such as `tuple[...]`. Recover the element types from `typeArgs`.
-      if (!tspType.typeArgs.isNullOrEmpty()) {
-        buildPyTupleType(pyElement, tspType.typeArgs, isDefinition)?.let { return it }
+      // such as `tuple[...]`. Recover the element types from `typeArgs`. An empty list is `tuple[()]`.
+      tspType.typeArgs?.let { typeArgs ->
+        buildPyTupleType(pyElement, typeArgs, isDefinition)?.let { return it }
       }
       return buildBuiltinClassType(pyElement, declaration.name, isDefinition)
     }
@@ -241,7 +241,6 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
   }
 
   private fun buildPyTupleType(pyElement: PyTypedElement, typeArgs: List<PyreflyLsp4jServer.TspType>, isDefinition: Boolean): Ref<PyType?>? {
-    if (typeArgs.isEmpty()) return null
     val elementTypes = typeArgs.map { buildPyType(pyElement, it)?.get() }
     val tupleType = PyTupleType.create(pyElement, elementTypes) ?: return null
     thisLogger().info("Pyrefly TSP: built PyTupleType with ${elementTypes.size} elements (isDefinition=$isDefinition)")
