@@ -40,9 +40,9 @@ internal class GitRewordAction : GitSingleCommitEditingAction() {
         getShortPresentation(commit.author)
       )
     )
+    val repository = commitEditingData.repository
     dialog.show { newMessage ->
-      commitEditingData.repository.project.service<GitRewordService>()
-        .launchReword(commitEditingData.repository, commit, newMessage)
+      repository.project.service<GitRewordService>().launchReword(repository, commit, newMessage)
     }
   }
 

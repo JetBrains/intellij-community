@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.table.size
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.rebase.log.InMemoryRebaseOperations
@@ -17,6 +19,7 @@ import git4idea.rebase.log.executeInMemoryWithFallback
 import git4idea.rebase.log.focusCommitWhenReady
 import git4idea.rebase.log.getOrLoadDetails
 import git4idea.rebase.log.notifySuccess
+import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -36,22 +39,28 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
       dialogLabel = GitBundle.message("rebase.log.squash.new.message.dialog.label")
     )
 
+    // The closure must not capture commitEditingData. Its selection holds the visible log graph, and the dialog outlives the action.
+    val repository = commitEditingData.repository
+    val logData = commitEditingData.logData
+    val logUiEx = commitEditingData.logUiEx
     dialog.show { newMessage ->
-      squashInBackground(scope, commitEditingData, selectedCommitDetails, newMessage)
+      squashInBackground(scope, repository, logData, logUiEx, selectedCommitDetails, newMessage)
     }
   }
 
   private fun squashInBackground(
     scope: CoroutineScope,
-    commitEditingData: MultipleCommitEditingData,
+    repository: GitRepository,
+    logData: VcsLogData,
+    logUiEx: VcsLogUiEx?,
     selectedCommitsDetails: List<VcsCommitMetadata>,
     newMessage: String,
   ) {
     scope.launch {
-      val operationResult = executeSquashOperation(commitEditingData, selectedCommitsDetails, newMessage)
+      val operationResult = executeSquashOperation(repository, logData, selectedCommitsDetails, newMessage)
 
       if (operationResult is GitCommitEditingOperationResult.Complete) {
-        commitEditingData.logUiEx?.focusCommitWhenReady(commitEditingData.repository, operationResult.commitToFocus)
+        logUiEx?.focusCommitWhenReady(repository, operationResult.commitToFocus)
         operationResult.notifySuccess(
           GitBundle.message("rebase.log.squash.success.notification.title"),
           null,
@@ -64,18 +73,19 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
   }
 
   private suspend fun executeSquashOperation(
-    commitEditingData: MultipleCommitEditingData,
+    repository: GitRepository,
+    logData: VcsLogData,
     commitsToSquash: List<VcsCommitMetadata>,
     newMessage: String,
   ): GitCommitEditingOperationResult {
-    return withBackgroundProgress(commitEditingData.project, GitBundle.message("rebase.log.squash.progress.indicator.title")) {
+    return withBackgroundProgress(repository.project, GitBundle.message("rebase.log.squash.progress.indicator.title")) {
       executeInMemoryWithFallback(
         inMemoryOperation = {
-          InMemoryRebaseOperations.squash(commitEditingData.repository, commitsToSquash, newMessage, RebaseEntriesSource.LogData(commitEditingData.logData))
+          InMemoryRebaseOperations.squash(repository, commitsToSquash, newMessage, RebaseEntriesSource.LogData(logData))
         },
         fallbackOperation = {
           coroutineToIndicator {
-            GitSquashOperation(commitEditingData.repository).execute(commitsToSquash, newMessage)
+            GitSquashOperation(repository).execute(commitsToSquash, newMessage)
           }
         }
       )

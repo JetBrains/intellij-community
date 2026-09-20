@@ -44,6 +44,11 @@ internal class GitNewCommitMessageActionDialog(
   private var onOk: (String) -> Unit = {}
   private var onClose: () -> Unit = {}
   private var repositoryValidationResult: ValidationInfo? = null
+  private val messageListener = object : DocumentListener {
+    override fun documentChanged(e: DocumentEvent) {
+      updateOkButtonState()
+    }
+  }
 
   constructor(
     commitEditingData: GitCommitEditingActionBase.MultipleCommitEditingData,
@@ -53,17 +58,10 @@ internal class GitNewCommitMessageActionDialog(
   ) : this(commitEditingData.project,
            originMessage,
            commitEditingData.selectedChanges,
-           {
-             validateCommitsEditable(
-               commitEditingData.logData,
-               commitEditingData.repository,
-               commitEditingData.selection.commits.map { it.hash },
-               commitEditingData.repository.info.currentRevision
-             )
-           },
+           createCommitsEditableValidator(commitEditingData),
            title,
            dialogLabel,
-           commitIds = commitEditingData.selection.ids,
+           commitIds = commitEditingData.selection.ids.toList(),
            logData = commitEditingData.logData)
 
   init {
@@ -73,11 +71,7 @@ internal class GitNewCommitMessageActionDialog(
     isModal = false
     this.title = title
 
-    commitEditor.editorField.addDocumentListener(object : DocumentListener {
-      override fun documentChanged(e: DocumentEvent) {
-        updateOkButtonState()
-      }
-    })
+    commitEditor.editorField.addDocumentListener(messageListener)
     updateOkButtonState()
   }
 
@@ -125,9 +119,12 @@ internal class GitNewCommitMessageActionDialog(
   }
 
   override fun doOKAction() {
+    // The close disposes the dialog, and dispose() resets the callback. Capture both first.
+    val onOk = onOk
+    val newMessage = commitEditor.comment
     super.doOKAction()
 
-    onOk(commitEditor.comment)
+    onOk(newMessage)
   }
 
   override fun doCancelAction() {
@@ -140,6 +137,10 @@ internal class GitNewCommitMessageActionDialog(
       VcsConfiguration.getInstance(project).saveCommitMessage(commitEditor.comment)
     }
 
+    // The callbacks capture the log UI. A closed dialog must not keep it reachable.
+    commitEditor.editorField.removeDocumentListener(messageListener)
+    onOk = {}
+    onClose = {}
     super.dispose()
   }
 
@@ -148,6 +149,19 @@ internal class GitNewCommitMessageActionDialog(
   }
 
   companion object {
+    /**
+     * Reads the commit hashes and the current HEAD once.
+     * The returned lambda does not hold [GitCommitEditingActionBase.MultipleCommitEditingData] or its selection.
+     * The selection references the visible log graph, and the dialog must not keep the graph alive.
+     */
+    private fun createCommitsEditableValidator(commitEditingData: GitCommitEditingActionBase.MultipleCommitEditingData): () -> ValidationInfo? {
+      val logData = commitEditingData.logData
+      val repository = commitEditingData.repository
+      val hashes = commitEditingData.selection.commits.map { it.hash }
+      val originalHEAD = repository.info.currentRevision
+      return { validateCommitsEditable(logData, repository, hashes, originalHEAD) }
+    }
+
     fun validateCommitsEditable(
       logData: VcsLogData,
       repository: GitRepository,
