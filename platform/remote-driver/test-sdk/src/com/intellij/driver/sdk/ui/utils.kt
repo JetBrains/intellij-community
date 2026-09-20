@@ -65,15 +65,6 @@ val UiComponent.boundsOnScreen
     Rectangle(locationOnScreen.x, locationOnScreen.y, c.width, c.height)
   }
 
-/**
- * Converts a point in screen coordinates into coordinates relative to [component],
- * so that it can be passed to [UiComponent.click] and friends.
- */
-fun Point.relativeTo(component: UiComponent): Point {
-  val location = component.component.getLocationOnScreen()
-  return Point(x - location.x, y - location.y)
-}
-
 val UiComponent.boundsInWindow
   get() = component.let { c ->
     val utils = driver.utility<ComponentUtil>()

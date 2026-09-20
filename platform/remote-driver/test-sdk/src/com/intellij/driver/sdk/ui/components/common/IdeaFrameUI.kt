@@ -20,7 +20,6 @@ import com.intellij.driver.sdk.ui.components.common.dialogs.ideStatusBar
 import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowLeftToolbarUi
 import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowRightToolbarUi
 import com.intellij.driver.sdk.ui.components.elements.WindowUiComponent
-import com.intellij.driver.sdk.ui.relativeTo
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.Window
 import com.intellij.driver.sdk.ui.ui
@@ -182,6 +181,12 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
     }
   }
 
+  fun unmaximize() {
+    driver.withContext(OnDispatcher.EDT) {
+      ideaFrameComponent.setExtendedState(ideaFrameComponent.getExtendedState() and JFrame.MAXIMIZED_BOTH.inv())
+    }
+  }
+
   fun resize(width: Int, height: Int) {
     driver.withContext(OnDispatcher.EDT) {
       ideaFrameComponent.setSize(width, height)
@@ -194,19 +199,12 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
     }
   }
 
-  fun doubleClickEmptyToolbarArea() {
-    // On Linux the window manager can take the first click to activate the frame.
-    // Then the IDE gets one click only, and the header never toggles the maximized state.
-    toFront()
-    toolbar.doubleClick(emptyMainToolbarAreaPointOnScreen().relativeTo(toolbar))
-  }
-
   override fun toFront() {
     super.toFront()
     // Click empty toolbar space to raise and focus the frame, falling back to the toolbar center when no suitable gap can be found
-    val freePoint = if (mainToolbar.present()) emptyMainToolbarAreaPointOnScreenOrNull() else null
+    val freePoint = if (mainToolbar.present()) mainToolbar.emptyAreaPointOrNull() else null
     if (freePoint != null) {
-      toolbar.click(freePoint.relativeTo(toolbar))
+      mainToolbar.click(freePoint)
     }
     else {
       click(Point(component.width / 2, 0))
