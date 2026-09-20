@@ -35,6 +35,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.listeners.RefactoringElementAdapter
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.util.PathUtil
+import com.intellij.util.lang.JavaVersion
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle
@@ -183,8 +184,9 @@ private class ScriptCommandLineState(
         val virtualFile = StandardFileSystems.local().findFileByPath(File(filePath).absolutePath)
             ?: throw CantRunException(KotlinRunConfigurationsBundle.message("dialog.message.script.file.was.not.found.in.project"))
 
-        params.classPath.add(KotlinArtifacts.kotlinCompiler)
+        params.classPath.add(KotlinArtifacts.kotlinCompilerPath)
         params.mainClass = "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
+        params.silenceCompilerJdkWarnings()
 
         ScriptDefinitionProvider.getInstance(environment.project)?.findDefinition(VirtualFileScriptSource(virtualFile))?.let {
             params.programParametersList.prepend("plugin:kotlin.scripting:script-definitions=${it.baseClassType.typeName}")
@@ -233,6 +235,17 @@ private class ScriptCommandLineState(
         params.setUseDynamicParameters(params.isArgFile)
         params.setUseDynamicVMOptions(params.isArgFile)
         return params
+    }
+}
+
+/**
+ * `jansi` calls a restricted native method, and the fast jar reader calls `sun.misc.Unsafe`.
+ * JDK 24 starts both warnings, and it accepts both options. An older JDK keeps the warnings.
+ */
+private fun JavaParameters.silenceCompilerJdkWarnings() {
+    val feature = JavaVersion.tryParse(jdk?.versionString)?.feature ?: return
+    if (feature >= 24) {
+        vmParametersList.addAll("--enable-native-access=ALL-UNNAMED", "--sun-misc-unsafe-memory-access=allow")
     }
 }
 
