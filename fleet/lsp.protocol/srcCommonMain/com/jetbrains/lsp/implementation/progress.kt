@@ -36,13 +36,14 @@ fun interface ProgressReporter {
 suspend fun <T> LspClient.withProgress(
     token: ProgressToken?,
     beginTitle: String,
+    cancellable: Boolean = false,
     body: suspend CoroutineScope.(ProgressReporter) -> T,
 ): T =
     coroutineScope {
         when (token) {
             null -> body(ProgressReporter.NOOP)
             else -> {
-                val beginProgress = WorkDoneProgress.Begin(title = beginTitle)
+                val beginProgress = WorkDoneProgress.Begin(title = beginTitle, cancellable = cancellable)
                 notify(
                     LSP.ProgressNotificationType,
                     ProgressParams(token, LSP.json.encodeToJsonElement(WorkDoneProgress.serializer(), beginProgress)),
@@ -113,7 +114,7 @@ fun LspHandlersBuilder.serverInitiatedProgresses(
                             cancellableJobs[token] = coroutineContext.job
                         }
                         try {
-                            client.withProgress(token, title) { reporter ->
+                            client.withProgress(token, title, cancellable) { reporter ->
                                 body(reporter)
                             }
                         } finally {
