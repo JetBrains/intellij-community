@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyElementVisitor
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyLambdaExpression
+import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PyPrefixExpression
 import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PySubscriptionExpression
@@ -50,6 +51,15 @@ class PyreflyOffsetDetectorVisitor : PyElementVisitor() {
 
   override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
     offset = node.endOffset
+  }
+
+  /**
+   * The parentheses add no type of their own. The default end offset points at `)`, and the server
+   * answers with the type of the last element there, so the contained expression picks the offset.
+   */
+  override fun visitPyParenthesizedExpression(node: PyParenthesizedExpression) {
+    val contained = node.containedExpression
+    if (contained != null) contained.accept(this) else offset = node.endOffset - 1
   }
 
   override fun visitPyPrefixExpression(node: PyPrefixExpression) {
