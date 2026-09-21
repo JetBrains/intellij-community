@@ -139,6 +139,8 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
     val document = editor.getDocument()
     DaemonCodeAnalyzerEx.processHighlights(document, project, null, 0, document.textLength,
                                            Processors.cancelableCollectProcessor(allInfos))
+    allInfos.sortBy { it.description }
+    allInfos.sortBy { it.startOffset }
     return allInfos
   }
 
