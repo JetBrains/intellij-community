@@ -44,6 +44,11 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     return true;
   }
 
+  @Override
+  public boolean isAlwaysShowPlus() {
+    return true;
+  }
+
   protected abstract @NotNull AbstractTreeNode createModuleNode(@NotNull Module module) throws
                                                                       InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException;
   protected abstract @NotNull ModuleGroupNode createModuleGroupNode(@NotNull ModuleGroup moduleGroup);

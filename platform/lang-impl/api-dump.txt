@@ -3394,6 +3394,7 @@ a:com.intellij.ide.projectView.impl.nodes.ModuleGroupNode
 - getRoots():java.util.Collection
 - getSortOrder(com.intellij.ide.projectView.NodeSortSettings):com.intellij.ide.projectView.NodeSortOrder
 - getTestPresentation():java.lang.String
+- isAlwaysShowPlus():Z
 - shouldBeInitiallyExpanded():Z
 - update(com.intellij.ide.projectView.PresentationData):V
 - validate():Z

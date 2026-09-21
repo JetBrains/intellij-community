@@ -59,6 +59,10 @@ private data class TreeStructureProjectViewNodeImpl(
   fun isDirectory(): Boolean {
     return elementDescriptor is PsiDirectoryNode || elementDescriptor is AbstractModuleNode
   }
+  
+  fun isNeverLeaf(): Boolean {
+    return (elementDescriptor as? AbstractTreeNode<*>)?.isAlwaysShowPlus == true
+  }
 
   fun isExpandOnDoubleClick(): Boolean {
     return elementDescriptor.expandOnDoubleClick()
@@ -171,6 +175,7 @@ class TreeStructureProjectViewNodeProvider(
   private fun computeFastIsLeaf(validNode: TreeStructureProjectViewNodeImpl): Boolean {
     return when {
       validNode.isRoot -> false // the root is never leaf
+      validNode.isNeverLeaf() -> false
       else -> !validNode.isDirectory()
     }
   }

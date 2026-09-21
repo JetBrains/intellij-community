@@ -6,8 +6,10 @@ import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.ide.util.treeView.DefaultTreeModelWithCachedPresentation
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.popup.HintUpdateSupply
+import com.intellij.ui.tree.ui.DefaultTreeUI
 
 internal class FrontendProjectViewTree(treeModel: DefaultTreeModelWithCachedPresentation) : DnDAwareTree(treeModel) {
   init {
@@ -15,5 +17,6 @@ internal class FrontendProjectViewTree(treeModel: DefaultTreeModelWithCachedPres
     CustomizationUtil.installPopupHandler(this, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.PROJECT_VIEW_POPUP)
     TreeUIHelper.getInstance().installTreeSpeedSearch(this)
     HintUpdateSupply.installDataContextHintUpdateSupply(this)
+    ClientProperty.put(this, DefaultTreeUI.AUTO_EXPAND_ALLOWED, true)
   }
 }
