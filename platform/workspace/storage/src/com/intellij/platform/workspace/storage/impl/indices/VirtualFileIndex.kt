@@ -390,8 +390,16 @@ public open class VirtualFileIndex internal constructor(
         LOG.error("The record for $id <=> ${vfu} should be available in both maps")
         return
       }
+      val compositeKey = getCompositeKey(id, propertyName)
+      if (!urlsWithMutableInnerMap.contains(vfu)) {
+        if (!existing.contains(compositeKey)) return
+        if (existing.size == 1) {
+          vfu2EntityId.remove(vfu)
+          return
+        }
+      }
       val property2EntityId = makeInnerMapMutable(vfu, existing)
-      property2EntityId.removeLong(getCompositeKey(id, propertyName))
+      property2EntityId.removeLong(compositeKey)
       if (property2EntityId.isEmpty()) {
         vfu2EntityId.remove(vfu)
         urlsWithMutableInnerMap.remove(vfu)
