@@ -5,8 +5,8 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
-import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService
 import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
+import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService
 import org.jetbrains.kotlin.idea.inspections.AbstractInspectionTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -16,7 +16,6 @@ import kotlin.io.path.Path
 
 abstract class AbstractK2InspectionTest : AbstractInspectionTest() {
 
-    override fun inspectionClassDirective() = "// K2_INSPECTION_CLASS:"
     override fun registerGradlePlugin() {}
 
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {

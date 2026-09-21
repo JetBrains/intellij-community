@@ -1,3 +1,3 @@
-// K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.EnumValuesSoftDeprecateInspection
+// INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.EnumValuesSoftDeprecateInspection
 // API_VERSION: 1.8
 // WITH_STDLIB

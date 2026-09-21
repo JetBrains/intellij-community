@@ -1,2 +1,2 @@
-// K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.CanConvertToMultiDollarStringInspection
+// INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.CanConvertToMultiDollarStringInspection
 // COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation

@@ -1,2 +1,2 @@
-// K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.RemoveExplicitTypeArgumentsInspection
+// INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.RemoveExplicitTypeArgumentsInspection
 // WITH_STDLIB

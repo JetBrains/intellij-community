@@ -1,1 +1,1 @@
-// K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.DataClassPrivateConstructorInspection
+// INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.DataClassPrivateConstructorInspection
