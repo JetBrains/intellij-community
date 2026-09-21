@@ -78,6 +78,14 @@ internal class ActionTracker(
   }
 
   fun hasAnythingHappened(): Boolean {
+    // This tracker outlives the project it was created for. Its phase is application level state, and the reset in
+    // CompletionServiceImpl.projectClosing is conditional on the current indicator, so a phase of a closed project can stay the current
+    // one. It is expired, and saying so here is also what keeps the lookup below from asking a disposed project for DumbService: that
+    // throws AlreadyDisposedException, a ProcessCanceledException, which silently drops the character being typed - in any editor in the
+    // IDE, because the stale phase is inspected on every keystroke until something replaces it.
+    if (myProject.isDisposed) {
+      return true
+    }
     val hasDocumentOrCaretChanged = myStartDocStamp != docStamp() || myCaretOffsets != caretOffsets()
     return myActionsHappened ||
            myIsDumb != DumbService.getInstance(myProject).isDumb ||
@@ -88,6 +96,9 @@ internal class ActionTracker(
 
 
   fun describeChangeEvent(): String = when {
+    myProject.isDisposed -> {
+      "Project was disposed"
+    }
     myActionsHappened -> {
       if (LOG.isTraceEnabled) {
         """The following actions were performed: $happenedActions"""
