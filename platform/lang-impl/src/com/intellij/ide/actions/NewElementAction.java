@@ -69,9 +69,7 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
   }
 
   private static boolean isProjectView(@NotNull AnActionEvent e) {
-    var toolWindow = e.getData(PlatformDataKeys.TOOL_WINDOW);
-    if (toolWindow == null) return false;
-    return ToolWindowId.PROJECT_VIEW.equals(toolWindow.getId());
+    return ToolWindowId.PROJECT_VIEW.equals(e.getData(PlatformDataKeys.TOOL_WINDOW_ID));
   }
 
   protected @Nullable JBPopupFactory.ActionSelectionAid getActionSelectionAid() {
