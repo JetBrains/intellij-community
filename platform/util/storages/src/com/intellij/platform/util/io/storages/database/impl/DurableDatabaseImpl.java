@@ -4,6 +4,10 @@ package com.intellij.platform.util.io.storages.database.impl;
 import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.database.DurableDatabase;
+import com.intellij.platform.util.io.storages.database.impl.housekeeping.DatabaseHousekeepingCoordinator;
+import com.intellij.platform.util.io.storages.database.impl.housekeeping.DatabaseHousekeepingScheduler;
+import com.intellij.platform.util.io.storages.database.impl.housekeeping.HousekeepingRegistration;
+import com.intellij.platform.util.io.storages.database.spi.housekeeping.Housekeeper;
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabase;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapOverBlocks;
 import com.intellij.platform.util.io.storages.durablemap.DefaultEntryExternalizer;
@@ -18,11 +22,14 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
 
 /// Provides named durable maps over a block database
 @ApiStatus.Internal
 public final class DurableDatabaseImpl implements DurableDatabase {
   private final @NotNull BlocksDatabase blocksDatabase;
+  private final @NotNull DatabaseHousekeepingCoordinator housekeepingCoordinator = new DatabaseHousekeepingCoordinator();
 
   private final transient Object lock = new Object();
   /// It is either [DurableMap], or [PatchableDurableMap].
@@ -36,6 +43,15 @@ public final class DurableDatabaseImpl implements DurableDatabase {
   /// Creates a facade that owns the specified block database
   public DurableDatabaseImpl(@NotNull BlocksDatabase blocksDatabase) {
     this.blocksDatabase = blocksDatabase;
+  }
+
+  @NotNull HousekeepingRegistration registerHousekeeper(@NotNull Housekeeper housekeeper) {
+    return housekeepingCoordinator.register(housekeeper);
+  }
+
+  @NotNull DatabaseHousekeepingScheduler startHousekeeping(@NotNull ScheduledExecutorService scheduler,
+                                                           @NotNull Executor executor) {
+    return housekeepingCoordinator.startScheduling(scheduler, executor);
   }
 
   @Override
@@ -142,35 +158,50 @@ public final class DurableDatabaseImpl implements DurableDatabase {
       mapsToClose = List.copyOf(openedMapsByName.values());
     }
 
-    IOException failure = null;
+    Throwable failure = null;
+    try {
+      housekeepingCoordinator.close();
+    }
+    catch (IOException | RuntimeException | Error e) {
+      failure = e;
+    }
+
     for (var map : mapsToClose) {
       try {
         map.close();
       }
-      catch (IOException e) {
-        if (failure == null) {
-          failure = e;
-        }
-        else {
-          failure.addSuppressed(e);
-        }
+      catch (IOException | RuntimeException | Error e) {
+        failure = collectFailure(failure, e);
       }
     }
 
     try {
       blocksDatabase.close();
     }
-    catch (IOException e) {
-      if (failure == null) {
-        failure = e;
-      }
-      else {
-        failure.addSuppressed(e);
-      }
+    catch (IOException | RuntimeException | Error e) {
+      failure = collectFailure(failure, e);
     }
 
-    if (failure != null) {
-      throw failure;
+    throwFailure(failure);
+  }
+
+  private static @NotNull Throwable collectFailure(@Nullable Throwable failure, @NotNull Throwable nextFailure) {
+    if (failure == null) {
+      return nextFailure;
+    }
+    failure.addSuppressed(nextFailure);
+    return failure;
+  }
+
+  private static void throwFailure(@Nullable Throwable failure) throws IOException {
+    if (failure instanceof IOException e) {
+      throw e;
+    }
+    if (failure instanceof RuntimeException e) {
+      throw e;
+    }
+    if (failure instanceof Error e) {
+      throw e;
     }
   }
 

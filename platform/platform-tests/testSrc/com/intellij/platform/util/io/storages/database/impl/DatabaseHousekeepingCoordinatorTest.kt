@@ -1,22 +1,31 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.database.impl
 
+import com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8
+import com.intellij.platform.util.io.storages.database.DurableDatabaseFactory
 import com.intellij.platform.util.io.storages.database.impl.housekeeping.DatabaseHousekeepingCoordinator
 import com.intellij.platform.util.io.storages.database.impl.housekeeping.HousekeepingRegistration
+import com.intellij.platform.util.io.storages.database.spi.BlocksDatabase
+import com.intellij.platform.util.io.storages.database.spi.BlocksStore
 import com.intellij.platform.util.io.storages.database.spi.housekeeping.Housekeeper
 import com.intellij.util.ConcurrencyUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.io.IOException
+import java.nio.file.Path
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.function.BooleanSupplier
 
+@Suppress("SuspiciousPackagePrivateAccess")
 class DatabaseHousekeepingCoordinatorTest {
   @Test
   fun `runs a housekeeper`() {
@@ -180,6 +189,135 @@ class DatabaseHousekeepingCoordinatorTest {
     }
   }
 
+  @Test
+  fun `scheduler uses each housekeeper delay without owning its executors`() {
+    val blocksDatabase = TrackingBlocksDatabase()
+    val database = DurableDatabaseImpl(blocksDatabase)
+    val fastRuns = CountDownLatch(2)
+    val slowRun = CountDownLatch(1)
+    var slowRunCount = 0
+    database.registerHousekeeper(Housekeeper {
+      fastRuns.countDown()
+      Duration.ofMillis(1)
+    })
+
+    Executors.newSingleThreadScheduledExecutor(ConcurrencyUtil.newNamedThreadFactory("Housekeeping scheduler")).use { scheduler ->
+      Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("Housekeeping worker")).use { worker ->
+        database.startHousekeeping(scheduler, worker).use {
+          database.registerHousekeeper(Housekeeper {
+            slowRunCount++
+            slowRun.countDown()
+            TEST_DELAY
+          })
+          assertTrue(slowRun.await(10, TimeUnit.SECONDS), "The scheduler must run each new registration")
+          assertTrue(fastRuns.await(10, TimeUnit.SECONDS), "The scheduler must use the returned delay")
+          assertEquals(1, slowRunCount, "A long delay must prevent a second slow run")
+        }
+        assertFalse(scheduler.isShutdown, "The database scheduler must not own the scheduling executor")
+        assertFalse(worker.isShutdown, "The database scheduler must not own the housekeeping executor")
+        database.close()
+      }
+    }
+  }
+
+  @Test
+  fun `factory wrapper delegates database operations and leaves its executors open`(@TempDir directory: Path) {
+    Executors.newSingleThreadScheduledExecutor(ConcurrencyUtil.newNamedThreadFactory("Housekeeping scheduler")).use { scheduler ->
+      Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("Housekeeping worker")).use { worker ->
+        val factory = DurableDatabaseFactory(1024 * 1024)
+          .housekeeping(scheduler, worker)
+        val reconfiguredFactory = factory.fsyncOnClose(false)
+        assertSame(factory.housekeepingConfiguration(), reconfiguredFactory.housekeepingConfiguration(),
+                   "Other factory settings must preserve housekeeping")
+        val database = reconfiguredFactory.open(directory)
+        database.use {
+          val descriptor = stringAsUTF8()
+          val map = database.openMap("map", 1, descriptor, descriptor)
+          map.put("key", "value")
+          assertEquals("value", map.get("key"))
+        }
+
+        assertTrue(database.isClosed, "Closing the wrapper must close the database")
+        assertFalse(scheduler.isShutdown, "The wrapper must not own the scheduling executor")
+        assertFalse(worker.isShutdown, "The wrapper must not own the housekeeping executor")
+      }
+    }
+  }
+
+  @Test
+  fun `database releases its lock before a housekeeping round starts`() {
+    val blocksDatabase = TrackingBlocksDatabase()
+    val database = DurableDatabaseImpl(blocksDatabase)
+    Executors.newSingleThreadScheduledExecutor(ConcurrencyUtil.newNamedThreadFactory("Housekeeping scheduler")).use { scheduler ->
+      Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("Database lock observer")).use { observer ->
+        database.startHousekeeping(scheduler, Executor { it.run() }).use {
+          val completed = CountDownLatch(1)
+          database.registerHousekeeper(Housekeeper {
+            observer.submit { database.mapNames() }.get(10, TimeUnit.SECONDS)
+            completed.countDown()
+            TEST_DELAY
+          })
+          assertTrue(completed.await(10, TimeUnit.SECONDS), "Housekeeping must run without the database lock")
+        }
+      }
+    }
+    database.close()
+  }
+
+  @Test
+  fun `database close waits for housekeeping before closing blocks`() {
+    val blocksDatabase = TrackingBlocksDatabase()
+    val database = DurableDatabaseImpl(blocksDatabase)
+    val housekeeper = BlockingHousekeeper()
+
+    Executors.newFixedThreadPool(2, ConcurrencyUtil.newNamedThreadFactory("Housekeeping test worker")).use { executor ->
+      Executors.newSingleThreadScheduledExecutor(ConcurrencyUtil.newNamedThreadFactory("Housekeeping scheduler")).use { scheduler ->
+        database.startHousekeeping(scheduler, executor)
+        database.registerHousekeeper(housekeeper)
+        assertTrue(housekeeper.started.await(10, TimeUnit.SECONDS), "Housekeeping must start before database close")
+
+        val close = executor.submit { database.close() }
+        assertTrue(housekeeper.cancelled.await(10, TimeUnit.SECONDS), "Database close must cancel housekeeping")
+        assertFalse(blocksDatabase.closed, "The block database must stay open while housekeeping stops")
+
+        housekeeper.release.countDown()
+        close.get(10, TimeUnit.SECONDS)
+        assertTrue(blocksDatabase.closed, "The block database must close after housekeeping stops")
+      }
+    }
+  }
+
+  @Test
+  fun `database close reports a block close failure after housekeeping stops`() {
+    val blocksFailure = IOException("Expected block database close failure")
+    val blocksDatabase = TrackingBlocksDatabase(blocksFailure)
+    val database = DurableDatabaseImpl(blocksDatabase)
+    val housekeeper = BlockingHousekeeper()
+
+    Executors.newFixedThreadPool(2, ConcurrencyUtil.newNamedThreadFactory("Housekeeping test worker")).use { executor ->
+      Executors.newSingleThreadScheduledExecutor(ConcurrencyUtil.newNamedThreadFactory("Housekeeping scheduler")).use { scheduler ->
+        database.startHousekeeping(scheduler, executor)
+        database.registerHousekeeper(housekeeper)
+        assertTrue(housekeeper.started.await(10, TimeUnit.SECONDS), "Housekeeping must start before database close")
+
+        val close = executor.submit<IOException?> {
+          try {
+            database.close()
+            null
+          }
+          catch (failure: IOException) {
+            failure
+          }
+        }
+        assertTrue(housekeeper.cancelled.await(10, TimeUnit.SECONDS), "Database close must cancel housekeeping")
+        housekeeper.release.countDown()
+
+        assertSame(blocksFailure, close.get(10, TimeUnit.SECONDS), "Database close must report the block close failure")
+        assertTrue(blocksDatabase.closed, "The block database must close after housekeeping stops")
+      }
+    }
+  }
+
   private class BlockingHousekeeper(private val failureOnCancellation: IOException? = null) : Housekeeper {
     val started = CountDownLatch(1)
     val cancelled = CountDownLatch(1)
@@ -205,5 +343,28 @@ class DatabaseHousekeepingCoordinatorTest {
 
   companion object {
     private val TEST_DELAY: Duration = Duration.ofDays(1)
+  }
+
+  private class TrackingBlocksDatabase(private val closeFailure: IOException? = null) : BlocksDatabase {
+    @Volatile
+    var closed = false
+      private set
+
+    override fun openStore(name: String, dataVersion: Int): BlocksStore = error("The test must not open a store")
+
+    override fun findStore(name: String): BlocksStore? = null
+
+    override fun storeNames(): List<String> = emptyList()
+
+    override fun isDirty(): Boolean = false
+
+    override fun flush() = Unit
+
+    override fun isClosed(): Boolean = closed
+
+    override fun close() {
+      closed = true
+      closeFailure?.let { throw it }
+    }
   }
 }

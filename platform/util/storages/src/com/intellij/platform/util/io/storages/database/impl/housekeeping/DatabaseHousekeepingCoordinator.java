@@ -11,10 +11,13 @@ import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadLocalRandom;
 
 /// Manages [Housekeeper]'s registration and lifecycle.
 ///
-///Currently, [#runHousekeeping] runs [Housekeeper]s on the calling thread.
+/// Currently, [#runHousekeeping] runs [Housekeeper]s on the calling thread.
 @ApiStatus.Internal
 public final class DatabaseHousekeepingCoordinator implements AutoCloseable {
   private static final Duration INITIAL_HOUSEKEEPER_DELAY_AFTER_REGISTRATION = Duration.ofMillis(10);
@@ -26,16 +29,50 @@ public final class DatabaseHousekeepingCoordinator implements AutoCloseable {
 
   private final @NotNull Set<HousekeepingRegistration> registrations = new HashSet<>();
   private boolean closed;
+  private @Nullable DatabaseHousekeepingScheduler scheduler;
 
   public @NotNull HousekeepingRegistration register(@NotNull Housekeeper housekeeper) {
+    HousekeepingRegistration registration;
+    DatabaseHousekeepingScheduler currentScheduler;
     synchronized (lock) {
       if (closed) {
         throw new IllegalStateException("The housekeeping coordinator is already closed");
       }
-      var registration = new HousekeepingRegistration(this, housekeeper);
+      registration = new HousekeepingRegistration(this, housekeeper);
       registrations.add(registration);
-      return registration;
+      currentScheduler = scheduler;
     }
+    if (currentScheduler != null) {
+      currentScheduler.register(registration, INITIAL_HOUSEKEEPER_DELAY_AFTER_REGISTRATION);
+    }
+    return registration;
+  }
+
+  /// Starts independent scheduling for each registration
+  public @NotNull DatabaseHousekeepingScheduler startScheduling(@NotNull ScheduledExecutorService schedulingExecutor,
+                                                                @NotNull Executor housekeepingExecutor) {
+    DatabaseHousekeepingScheduler newScheduler;
+    List<HousekeepingRegistration> registrationsToSchedule;
+    synchronized (lock) {
+      if (closed) {
+        throw new IllegalStateException("The housekeeping coordinator is already closed");
+      }
+      if (scheduler != null) {
+        throw new IllegalStateException("Housekeeping is already scheduled");
+      }
+      newScheduler = new DatabaseHousekeepingScheduler(this, schedulingExecutor, housekeepingExecutor);
+      scheduler = newScheduler;
+      registrationsToSchedule = List.copyOf(registrations);
+    }
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    registrationsToSchedule.forEach(
+      registration -> {
+        //avoid running all housekeepers at once on startup: spread them randomly in 5 sec
+        Duration randomDelay = Duration.ofMillis(rnd.nextInt(1, STARTUP_HOUSEKEEPERS_SPREADING_MS));
+        newScheduler.register(registration, randomDelay);
+      }
+    );
+    return newScheduler;
   }
 
   /// Runs each registered housekeeper on the calling thread
@@ -79,20 +116,39 @@ public final class DatabaseHousekeepingCoordinator implements AutoCloseable {
   }
 
   void unregister(@NotNull HousekeepingRegistration registration) {
+    DatabaseHousekeepingScheduler currentScheduler;
     synchronized (lock) {
       registrations.remove(registration);
+      currentScheduler = scheduler;
+    }
+    if (currentScheduler != null) {
+      currentScheduler.unregister(registration);
+    }
+  }
+
+  void stopScheduling(@NotNull DatabaseHousekeepingScheduler schedulerToStop) {
+    synchronized (lock) {
+      if (scheduler == schedulerToStop) {
+        scheduler = null;
+      }
     }
   }
 
   @Override
   public void close() throws IOException {
     List<HousekeepingRegistration> registrationsToClose;
+    DatabaseHousekeepingScheduler schedulerToClose;
     synchronized (lock) {
       if (closed) {
         return;
       }
       closed = true;
+      schedulerToClose = scheduler;
+      scheduler = null;
       registrationsToClose = List.copyOf(registrations);
+    }
+    if (schedulerToClose != null) {
+      schedulerToClose.close();
     }
     registrationsToClose.forEach(HousekeepingRegistration::close);
   }
