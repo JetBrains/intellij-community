@@ -166,7 +166,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
 
   private val ijentProcessScope = IjentSessionMediatorUtils.createProcessScope(parentScope, ijentLabel)
 
-  private val myContext: SafeDeferred<ShellSession> = ijentProcessScope.s.async(currentDispatcher, start = CoroutineStart.LAZY) {
+  private val myContext: SafeDeferred<ShellSession> = parentScope.s.async(currentDispatcher, start = CoroutineStart.LAZY) {
     val processFacade = createShellProcessFacade(ijentProcessScope)
     val mediator = IjentSessionProcessMediator.create(
       parentScope = parentScope,
@@ -270,9 +270,10 @@ abstract class IjentDeployingOverShellProcessStrategy(
     }
 
   final override fun close() {
+    // TODO Everything below should be replaced with deinitialization via coroutines.
+    //  Like `launch { try { awaitCancellation() } finally { ... } }`
     if (!closed.compareAndSet(false, true)) return
 
-    myContext.cancel()
     createdShellProcess?.close()
     createdShellProcess = null
   }
