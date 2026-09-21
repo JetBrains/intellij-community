@@ -6,6 +6,7 @@
   <vendor>JetBrains</vendor>
   <category>UI</category>
 
+  <incompatible-with>com.intellij.classic.ui</incompatible-with>
   <dependencies>
     <module name="intellij.platform.frontend"/>
   </dependencies>
