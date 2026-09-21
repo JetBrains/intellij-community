@@ -52,6 +52,7 @@ enum class ErrorCategory {
   MISSING_PLUGIN_ID,
   /** [DuplicateDslTestPluginIdError] - hard failure, not suppressible */
   DUPLICATE_DSL_TEST_PLUGIN_ID,
+  DEV_MODE_TEST_PLUGIN_RUNNER,
 
   // File-level
   /** [FileDiff] - reported when commitChanges=false and files out of sync */
@@ -152,5 +153,6 @@ fun ValidationError.errorId(): String {
     is MissingLibraryLicenseError -> "missing-library-license:$context"
     is PlatformLibraryCopyError -> "platform-library-copy:$context"
     is ModuleInMultiplePluginsError -> "module-in-multiple-plugins:$context"
+    is SyntheticTestPluginRunnerError -> "dev-mode-runner:$context"
   }
 }

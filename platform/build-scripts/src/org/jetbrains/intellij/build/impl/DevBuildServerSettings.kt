@@ -8,6 +8,7 @@ import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
 import tools.jackson.dataformat.yaml.YAMLFactory
+import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 
@@ -27,8 +28,12 @@ data class DevBuildServerSettings(
       if (!intellijYaml.exists()) {
         intellijYaml = COMMUNITY_ROOT.communityRoot.resolve("intellij.yaml")
       }
+      readRunners(intellijYaml)
+    }
+
+    fun readRunners(intellijYaml: Path): List<DevBuildServerSettings> {
       if (!intellijYaml.exists()) {
-        return@lazy emptyList()
+        return emptyList()
       }
       val yamlRoot = ObjectMapper(YAMLFactory()).readTree(intellijYaml.readText())
       val result = mutableListOf<DevBuildServerSettings>()
@@ -45,7 +50,7 @@ data class DevBuildServerSettings(
           )
         )
       }
-      result
+      return result
     }
 
     fun readDevBuildServerSettingsFromIntellijYaml(moduleName: String): DevBuildServerSettings? {

@@ -62,6 +62,14 @@ internal fun validateDslTestPluginOwnedDependency(
     return
   }
 
+  // a synthetic test plugin has no `allowedMissingPluginIds`: the dev build copies the module when it is test code and fails otherwise
+  if (testPluginSpec.devBuildSynthetic) {
+    println(
+      "synthetic test plugin '${testPluginSpec.pluginId.value}' in product '$productName': module '${depName.value}' (needed by '${moduleName.value}')" +
+      " is content of ${disallowedOwners.joinToString { "'${it.name.value}' (${it.pluginId.value})" }}, which the product does not bundle"
+    )
+    return
+  }
   val dependencySource = DslTestPluginDependencySource(
     fromModule = moduleName,
     scope = scopeName,

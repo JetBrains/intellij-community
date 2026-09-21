@@ -179,7 +179,10 @@ internal fun devModePluginCandidates(request: BuildRequest, context: BuildContex
   }
   val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)
   // The candidate set is the product's whole bundled set: the one assembly that owns plugins owns every one of them.
-  val owned = getPluginLayoutsByJpsModuleNames(bundledMainModuleNames, context.productProperties.productLayout)
+  val syntheticTestPluginModuleName = syntheticTestPluginModuleName()?.takeIf { it in request.additionalModules }
+  val owned = getPluginLayoutsByJpsModuleNames(bundledMainModuleNames - setOfNotNull(syntheticTestPluginModuleName), context.productProperties.productLayout)
+  // the synthetic test plugin has no layout in the product
+  syntheticTestPluginModuleName?.let { owned.add(PluginLayout.plugin(it)) }
 
   // One plugin reaches this point as one variant for each supported (os, arch): see `NATIVE_DEBUG_ALL_LAYOUTS` and
   // `rustPluginOsSpecificLayouts`. A distribution holds one of them, so the target platform selects a variant rather

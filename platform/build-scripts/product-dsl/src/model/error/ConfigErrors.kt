@@ -180,3 +180,17 @@ data class InvalidSuppressionConfigKeyError(
     appendLine()
   }
 }
+
+/** A dev-mode runner of `intellij.yaml` the generator cannot turn into synthetic test plugins. */
+data class SyntheticTestPluginRunnerError(
+  override val context: String,
+  @JvmField val runnerName: String,
+  @JvmField val message: String,
+  override val ruleName: String = "SyntheticTestPluginRunner",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.DEV_MODE_TEST_PLUGIN_RUNNER
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Dev-mode runner '$runnerName' in intellij.yaml: $message${s.reset}")
+  }
+}

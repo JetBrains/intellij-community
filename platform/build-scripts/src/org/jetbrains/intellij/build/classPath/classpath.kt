@@ -287,14 +287,17 @@ internal fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
   contentModuleFilter: ContentModuleFilter,
   sourceOnly: Boolean,
 ): Set<String> {
-  val pluginModule = outputProvider.findRequiredModule(pluginMainModule)
-  val pluginXmlBytes = cacheContainer?.getCachedFileData(PLUGIN_XML_RELATIVE_PATH) ?: if (sourceOnly) {
-    requireNotNull(readDescriptor(pluginModule, PLUGIN_XML_RELATIVE_PATH, outputProvider, DescriptorSearchPass.PRODUCTION_SOURCES)) {
-      "Cannot find the source plugin descriptor in $pluginMainModule"
+  // the main module of a synthetic test plugin is not in the project: the cache holds its patched descriptor
+  val pluginXmlBytes = cacheContainer?.getCachedFileData(PLUGIN_XML_RELATIVE_PATH) ?: run {
+    val pluginModule = outputProvider.findRequiredModule(pluginMainModule)
+    if (sourceOnly) {
+      requireNotNull(readDescriptor(pluginModule, PLUGIN_XML_RELATIVE_PATH, outputProvider, DescriptorSearchPass.PRODUCTION_SOURCES)) {
+        "Cannot find the source plugin descriptor in $pluginMainModule"
+      }
     }
-  }
-  else {
-    getUnprocessedPluginXmlContent(pluginModule, outputProvider)
+    else {
+      getUnprocessedPluginXmlContent(pluginModule, outputProvider)
+    }
   }
   val pluginXmlContent = pluginXmlBytes.decodeToString()
   val rootElement = JDOMUtil.load(pluginXmlContent)

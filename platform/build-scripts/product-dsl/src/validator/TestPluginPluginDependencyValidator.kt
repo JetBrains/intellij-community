@@ -59,15 +59,16 @@ internal object TestPluginPluginDependencyValidator : PipelineNode {
       if (specs.isEmpty()) continue
       for (spec in specs) {
         val plan = plansByPluginId[spec.pluginId] ?: continue
-        val declaredPluginDeps = readDeclaredPluginDependencies(model.fileUpdater.getDiffs(), model.projectRoot, spec)
+        // a synthetic test plugin has no plugin.xml and declares no plugin dependency
+        val declaredPluginDeps = if (spec.devBuildSynthetic) null else readDeclaredPluginDependencies(model.fileUpdater.getDiffs(), model.projectRoot, spec)
         val contentData = buildContentBlocksAndChainMapping(spec.spec, collectModuleSetAliases = false)
         val allowedMissingByModule = buildAllowedMissingByModule(contentData)
         val dependencyChains = model.dslTestPluginDependencyChains.get(spec.pluginId) ?: emptyMap()
         val globalAllowedMissing = spec.allowedMissingPluginIds.toSet()
 
         val missingByPlugin = LinkedHashMap<PluginId, LinkedHashSet<ContentModuleName>>()
-        for ((pluginId, modules) in plan.requiredByPlugin) {
-          if (pluginId in declaredPluginDeps) continue
+        val undeclaredRequiredByPlugin = if (declaredPluginDeps == null) emptyMap() else plan.requiredByPlugin.filterKeys { it !in declaredPluginDeps }
+        for ((pluginId, modules) in undeclaredRequiredByPlugin) {
           val missingModules = LinkedHashSet<ContentModuleName>()
           for (moduleName in modules) {
             val moduleAllowedMissing = resolveAllowedMissingPluginIds(
@@ -125,6 +126,13 @@ private fun buildUnresolvedDependencyErrors(
   globalAllowedMissing: Set<PluginId>,
 ): List<ValidationError> {
   if (plan.unresolvedDependencies.isEmpty()) return emptyList()
+  if (spec.devBuildSynthetic) {
+    // the dev build copies an unresolved module when it is test code and fails otherwise
+    for (dependency in plan.unresolvedDependencies) {
+      println("synthetic test plugin '${spec.pluginId.value}' in product '$productName': unresolved dependency $dependency")
+    }
+    return emptyList()
+  }
 
   val errors = ArrayList<ValidationError>()
   for (dependency in plan.unresolvedDependencies) {

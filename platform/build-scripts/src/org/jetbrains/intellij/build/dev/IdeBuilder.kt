@@ -433,7 +433,8 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
             fork("generate runtime repository") {
               val contentReport = ContentReport(
                 platform = platformFileEntries,
-                bundledPlugins = pluginDistributionEntries.pluginEntries,
+                // the synthetic test plugin has no module in the project
+                bundledPlugins = pluginDistributionEntries.pluginEntries.filter { it.mainModule != syntheticTestPluginModuleName() },
                 nonBundledPlugins = emptyList()
               )
               checkNotNull(pluginClasspathJob).await() //this is necessary to have full data in DescriptorCacheContainer
@@ -982,7 +983,8 @@ private fun generateRuntimeModuleRepositoryFragment(
     generateRuntimeModuleRepositoryForDevBuild(
       contentReport = ContentReport(
         platform = platformEntries,
-        bundledPlugins = pluginEntries,
+        // the synthetic test plugin has no module in the project
+        bundledPlugins = pluginEntries.filter { it.mainModule != syntheticTestPluginModuleName() },
         nonBundledPlugins = emptyList(),
       ),
       targetDirectory = runDir,

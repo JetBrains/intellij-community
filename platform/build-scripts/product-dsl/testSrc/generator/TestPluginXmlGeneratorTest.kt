@@ -97,6 +97,61 @@ class TestPluginXmlGeneratorTest {
   }
 
   @Test
+  fun `writes no plugin xml for a test plugin the dev build makes`(@TempDir tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+      val graph = pluginGraph {
+        product("TestProduct") { bundlesPlugin("intellij.target.plugin") }
+        testPlugin("intellij.consumer.tests._test_plugin") {
+          pluginId("intellij.consumer.tests._test_plugin")
+          content("intellij.consumer.tests")
+        }
+        plugin("intellij.target.plugin") {
+          pluginId("intellij.target.plugin")
+        }
+        target("intellij.consumer.tests._test_plugin") {
+          dependsOn("intellij.target.plugin")
+        }
+        linkPluginMainTarget("intellij.consumer.tests._test_plugin")
+      }
+
+      val spec = TestPluginSpec(
+        pluginId = PluginId("intellij.consumer.tests._test_plugin"),
+        name = "Consumer Tests",
+        pluginXmlPath = "",
+        spec = productModules {
+          module("intellij.consumer.tests")
+        },
+        devBuildSynthetic = true,
+      )
+
+      val fileUpdater = DeferredFileUpdater(tempDir)
+      val baseModel = testGenerationModel(graph, fileUpdater = fileUpdater, owner = owner)
+      val discovery = baseModel.discovery.copy(
+        products = listOf(
+          DiscoveredProduct(
+            name = "TestProduct",
+            config = ProductConfiguration(modules = emptyList(), className = "TestProduct"),
+            properties = null,
+            spec = null,
+            pluginXmlPath = null,
+          )
+        )
+      )
+      val model = baseModel.copy(
+        discovery = discovery,
+        projectRoot = tempDir,
+        fileUpdater = fileUpdater,
+        dslTestPluginsByProduct = mapOf("TestProduct" to listOf(spec)),
+      )
+
+      val ctx = ComputeContextImpl(model)
+      runPlannerAndGenerator(ctx)
+
+      assertThat(fileUpdater.getDiffs()).isEmpty()
+    }
+  }
+
+  @Test
   fun `does not render module dependency already declared as DSL test plugin content`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {

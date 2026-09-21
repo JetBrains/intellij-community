@@ -403,7 +403,7 @@ private fun hasProductionContentSource(graph: PluginGraph, contentModuleName: Co
   }
 }
 
-private fun isTestSupportContentModule(moduleName: ContentModuleName, descriptorPath: Path): Boolean {
+fun isTestSupportContentModule(moduleName: ContentModuleName, descriptorPath: Path): Boolean {
   val name = moduleName.value
   return name.endsWith(".testFramework") ||
          name.contains(".testFramework.") ||

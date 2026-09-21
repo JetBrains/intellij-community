@@ -78,7 +78,7 @@ internal object TestPluginDependencyPlanner : PipelineNode {
         depsByModule = depsByModule,
         pluginTargetNamesByPluginId = pluginTargetNamesByPluginId,
         pluginIdByTargetName = pluginIdByTargetName,
-        existingPluginDependencies = readExistingTestPluginDependencies(model.projectRoot.resolve(spec.pluginXmlPath)).pluginDependencies,
+        existingPluginDependencies = if (spec.devBuildSynthetic) emptySet() else readExistingTestPluginDependencies(model.projectRoot.resolve(spec.pluginXmlPath)).pluginDependencies,
         dependencyChains = model.dslTestPluginDependencyChains[spec.pluginId].orEmpty(),
       )
     }
