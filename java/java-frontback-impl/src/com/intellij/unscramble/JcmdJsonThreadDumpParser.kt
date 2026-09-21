@@ -3,11 +3,17 @@ package com.intellij.unscramble
 
 import com.intellij.threadDumpParser.ThreadDumpParser
 import com.intellij.threadDumpParser.ThreadState
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.annotations.ApiStatus
 
 private val jcmdJson = Json { ignoreUnknownKeys = true }
@@ -167,8 +173,6 @@ private data class PlatformThreadMetadata(
 )
 
 private fun JcmdThread.toThreadState(containerId: Long?): ThreadState {
-  val tidText = tid.scalarText().orEmpty()
-  val carrierText = carrier.scalarText()
   val threadState = ThreadState(name, state)
   threadState.javaThreadState = state
 
@@ -179,9 +183,10 @@ private fun JcmdThread.toThreadState(containerId: Long?): ThreadState {
   threadState.isVirtual = virtual ?: false
 
   val stackTrace = buildString {
-    append("\"$name\" tid=$tidText")
+    append("\"$name\"")
+    tid?.let { append(" tid=$it") }
     if (threadState.isVirtual) {
-      val carrierInfo = if (carrierText != null) "carrierId=$carrierText" else "unmounted"
+      val carrierInfo = carrier?.let { "carrierId=$it" } ?: "unmounted"
       append(" virtual $carrierInfo")
     }
     append(" $state")
@@ -191,9 +196,8 @@ private fun JcmdThread.toThreadState(containerId: Long?): ThreadState {
 
   threadState.setStackTrace(stackTrace, rawStackTrace.isEmpty())
 
-  val tidLong = tidText.toLongOrNull()
-  if (tidLong != null) {
-    threadState.uniqueId = tidLong
+  tid?.toLongOrNull()?.let {
+    threadState.uniqueId = it
   }
   threadState.threadContainerUniqueId = containerId
 
@@ -204,7 +208,7 @@ private fun JcmdThread.toThreadState(containerId: Long?): ThreadState {
 
 private fun JcmdContainer.toJavaThreadContainerDesc(containerNameToId: Map<String, Long>): JavaThreadContainerDesc? {
   val containerId = containerNameToId[container] ?: return null
-  val parentId = owner.scalarText()?.toLongOrNull() ?: parent?.let { containerNameToId[parent] }
+  val parentId = owner?.toLongOrNull() ?: parent?.let { containerNameToId[parent] }
   return JavaThreadContainerDesc(
     name = container,
     containerId = containerId,
@@ -255,16 +259,16 @@ private data class JcmdThreadDump(
 private data class JcmdContainer(
   val container: String = "",
   val parent: String? = null,
-  val owner: JsonPrimitive? = null,
+  val owner: @Serializable(with = IdSerializer::class) String? = null,
   val threads: List<JcmdThread> = emptyList(),
 )
 
 @Serializable
 private data class JcmdThread(
   val name: String = "",
-  val tid: JsonPrimitive? = null,
+  val tid: @Serializable(with = IdSerializer::class) String? = null,
   val virtual: Boolean? = null,
-  val carrier: JsonPrimitive? = null,
+  val carrier: @Serializable(with = IdSerializer::class) String? = null,
   val stack: List<String> = emptyList(),
   val state: String = "unknown",
   val blockedOn: String? = null,
@@ -284,4 +288,17 @@ private data class JcmdMonitorInfo(
   val locks: List<String> = emptyList(),
 )
 
-private fun JsonPrimitive?.scalarText(): String? = this?.contentOrNull
+/**
+ * Thread IDs used to be strings, but now they are integers. Serializer is used to parse them uniformly.
+ */
+private object IdSerializer : KSerializer<String> {
+  override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("ThreadID", PrimitiveKind.STRING)
+
+  override fun deserialize(decoder: Decoder): String {
+    return (decoder as JsonDecoder).decodeJsonElement().jsonPrimitive.content
+  }
+
+  override fun serialize(encoder: Encoder, value: String) {
+    encoder.encodeString(value)
+  }
+}
