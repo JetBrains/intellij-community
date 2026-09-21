@@ -2,6 +2,7 @@
 package com.intellij.terminal.frontend.session.ghostty
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
@@ -312,7 +313,9 @@ class GhosttyTerminalSession internal constructor(
           var responses: List<ByteArray> = emptyList()
           lock.withLock {
             if (disposed) break
-            emulator.write(String(buffer, 0, count))
+            val input = String(buffer, 0, count)
+            LOG.trace { "Writing to emulator: ${input.escapeControlCharactersForLog()}" }
+            emulator.write(input)
             changedSinceLastProjection = true
             responses = takeResponsesLocked()
           }
@@ -747,6 +750,29 @@ private val OUTPUT_POLL_INTERVAL: Duration = 20.milliseconds
 private val CLEAR_BUFFER_SEQUENCE: ByteArray = "\u001B[2J\u001B[3J".encodeToByteArray()
 
 private val CTRL_L_BYTE: ByteArray = byteArrayOf(0x0C)
+
+/** Escapes control characters (e.g. `\e` for ESC) so raw PTY output is readable in the log. */
+private fun String.escapeControlCharactersForLog(): String {
+  if (none { it.code < 0x20 || it.code == 0x7F }) return this
+  return buildString(length) {
+    for (ch in this@escapeControlCharactersForLog) {
+      when (ch) {
+        '\u001B' -> append("\\e")
+        '\n' -> append("\\n")
+        '\r' -> append("\\r")
+        '\t' -> append("\\t")
+        '\b' -> append("\\b")
+        '\u000C' -> append("\\f")
+        else -> {
+          if (ch.code < 0x20 || ch.code == 0x7F) {
+            append("\\x").append(ch.code.toString(16).padStart(2, '0'))
+          }
+          else append(ch)
+        }
+      }
+    }
+  }
+}
 
 internal fun createGhosttyTerminalSession(
   project: Project?,
