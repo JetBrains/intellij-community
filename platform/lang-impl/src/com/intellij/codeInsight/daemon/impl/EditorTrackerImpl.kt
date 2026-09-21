@@ -3,9 +3,7 @@
 
 package com.intellij.codeInsight.daemon.impl
 
-import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -174,18 +172,8 @@ open class EditorTrackerImpl(@JvmField protected val project: Project) : EditorT
 
     localActiveEditors = editors
     if (!project.isDisposed) {
-      if (LOG.isDebugEnabled) {
-        LOG.debug("active editors changed: " + editors.joinToString(separator = "\n    ") {
-          WriteIntentReadAction.compute<String> {
-            EditorContextManager.getPsiFileForEditor(it, project).toString()
-          }
-        })
-
-      }
-      //maybe readaction
-      WriteIntentReadAction.run {
-        project.messageBus.syncPublisher(EditorTrackerListener.TOPIC).activeEditorsChanged(editors)
-      }
+      LOG.debug { "active editors changed: " + editors.joinToString(separator = "\n    ") }
+      project.messageBus.syncPublisher(EditorTrackerListener.TOPIC).activeEditorsChanged(editors)
     }
   }
 

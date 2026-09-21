@@ -8,6 +8,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -78,6 +79,21 @@ class DaemonCodeAnalyzerTest {
       ) {
         document.setText("txet")
       }
+    }
+  }
+
+  /**
+   * An editor added to a hierarchy on `Dispatchers.UI` reaches `EditorTrackerImpl.updateLocalActiveEditors` from a Swing `ancestor` event.
+   * A headless test cannot create a `Window`, so it reaches the same path through `setActiveEditorsInTests`.
+   */
+  @Test
+  fun `active editors change on Dispatchers UI takes no lock`(): Unit = timeoutRunBlocking {
+    highlighting.get() // init DaemonListeners, the platform subscriber
+    val editor = localEditor.get()
+    val tracker = EditorTracker.getInstance(project.get())
+    withContext(Dispatchers.UI) {
+      tracker.setActiveEditorsInTests(listOf(editor))
+      tracker.setActiveEditorsInTests(emptyList())
     }
   }
 

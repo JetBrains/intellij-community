@@ -35,5 +35,11 @@ interface EditorTrackerListener : EventListener {
     val TOPIC: Topic<EditorTrackerListener> = Topic(EditorTrackerListener::class.java, Topic.BroadcastDirection.NONE, true)
   }
 
+  /**
+   * Reports the editors of the focused window that are showing.
+   *
+   * The call comes on the EDT without the RW lock. It can come from a Swing hierarchy event on `Dispatchers.UI`.
+   * A listener that reads PSI or VFS takes its own read action, or moves that work to a coroutine.
+   */
   fun activeEditorsChanged(activeEditors: List<Editor>)
 }
