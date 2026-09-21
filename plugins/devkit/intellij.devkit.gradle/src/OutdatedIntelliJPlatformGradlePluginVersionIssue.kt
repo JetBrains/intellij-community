@@ -1,17 +1,25 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.gradle
 
+import com.intellij.build.issue.BuildIssueQuickFix
+import com.intellij.build.issue.ConfigurableBuildIssue
+import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.project.Project
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.issue.ConfigurableGradleBuildIssue
+import org.jetbrains.plugins.gradle.util.GradleBundle
+import java.util.concurrent.CompletableFuture
 
-class OutdatedIntelliJPlatformGradlePluginVersionIssue(
+internal class OutdatedIntelliJPlatformGradlePluginVersionIssue(
   projectPath: String,
-  private val currentVersion: GradleVersion,
-  private val latestVersion: GradleVersion,
-) : ConfigurableGradleBuildIssue() {
+  currentVersion: GradleVersion,
+  latestVersion: GradleVersion,
+) : ConfigurableBuildIssue() {
 
   init {
     setTitle(DevKitGradleBundle.message("intellij.platform.gradle.plugin.outdated.version.title"))
+    @Suppress("DialogTitleCapitalization")
     addDescription(
       DevKitGradleBundle.message(
         "intellij.platform.gradle.plugin.outdated.version.description",
@@ -19,6 +27,33 @@ class OutdatedIntelliJPlatformGradlePluginVersionIssue(
       )
     )
 
-    // TODO: Add a quick fix to update the plugin version, see [OutdatedGradleVersionIssue]
+    addIntelliJPlatformGradlePluginVersionQuickFix(projectPath, currentVersion, latestVersion)
+  }
+
+  private fun addIntelliJPlatformGradlePluginVersionQuickFix(
+    projectPath: String,
+    currentVersion: GradleVersion,
+    latestVersion: GradleVersion,
+  ) {
+    val quickFix = IntelliJPlatformGradlePluginVersionQuickFix(projectPath, currentVersion.version, latestVersion.version)
+    val hyperlinkReference = addQuickFix(quickFix)
+
+    @Suppress("DialogTitleCapitalization")
+    addQuickFixPrompt(DevKitGradleBundle.message("intellij.platform.gradle.plugin.outdated.version.quick.fix", hyperlinkReference))
+  }
+
+  fun addOpenInspectionSettingsQuickFix(inspectionShortName: String) {
+    val hyperlinkReference = addQuickFix(OpenInspectionSettingsFix(inspectionShortName))
+    addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.edit.inspection.settings", hyperlinkReference))
+  }
+
+  private class OpenInspectionSettingsFix(private val inspectionShortName: String) : BuildIssueQuickFix {
+    override val id: String = "open_inspection_settings"
+
+    override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
+      val inspectionProfile = InspectionProjectProfileManager.getInstance(project).currentProfile
+      EditInspectionToolsSettingsAction.editToolSettings(project, inspectionProfile, inspectionShortName)
+      return CompletableFuture.completedFuture(null)
+    }
   }
 }

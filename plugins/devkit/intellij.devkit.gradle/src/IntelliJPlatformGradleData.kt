@@ -35,6 +35,9 @@ internal fun IntelliJPlatformGradleModel.toIntelliJPlatformGradleData() = Intell
   latestPluginVersion = latestPluginVersion,
 )
 
+internal fun IntelliJPlatformGradleData.hasUsableData(): Boolean =
+  productReleases.isNotEmpty() || dependencyHelperProductCodes.isNotEmpty() || currentPluginVersion != "0.0.0"
+
 /** Reads `product-code<TAB>version<TAB>channel` records written by the Gradle task. */
 internal fun String?.readProductReleases(): Map<String, List<IntelliJPlatformProductRelease>> {
   val file = this?.let { Path.of(it) }?.takeIf { it.isRegularFile() } ?: return emptyMap()

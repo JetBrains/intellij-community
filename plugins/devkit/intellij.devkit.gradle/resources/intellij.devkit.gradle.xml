@@ -16,7 +16,6 @@
     <frameworkSupport implementation="org.jetbrains.idea.devkit.gradle.GradleIntellijPluginFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="org.jetbrains.idea.devkit.gradle.KdslGradleIntellijPluginFrameworkSupportProvider"/>
     <projectResolve implementation="org.jetbrains.idea.devkit.gradle.DevKitGradleProjectResolverExtension"/>
-    <executionChecker implementation="org.jetbrains.idea.devkit.gradle.OutdatedIntelliJPlatformGradlePluginVersionChecker"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -26,6 +25,14 @@
                             implementationClass="org.jetbrains.idea.devkit.gradle.IntelliJPlatformVersionsCompletionContributor"/>
     <projectService serviceInterface="org.jetbrains.idea.devkit.gradle.IntelliJPlatformGradleModelProvider"
                     serviceImplementation="org.jetbrains.idea.devkit.gradle.IntelliJPlatformGradleModelProviderImpl"/>
+    <!--suppress PluginXmlCapitalization -->
+    <localInspection language="" shortName="OutdatedIntelliJPlatformGradlePluginVersion"
+                     bundle="messages.DevKitGradleBundle"
+                     groupBundle="messages.DevKitBundle"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.gradle.OutdatedIntelliJPlatformGradlePluginVersionInspection"
+                     key="inspection.intellij.platform.gradle.plugin.outdated.version.name"/>
   </extensions>
 
   <applicationListeners>

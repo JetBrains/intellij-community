@@ -66,7 +66,7 @@ public final class IntelliJPlatformModelBuilder extends AbstractModelBuilderServ
       @NotNull Map<String, String> dependencyHelperProductCodes = loadDependencyHelperProductCodes(extension.getClass());
       @Nullable String productReleasesFile = dumpTask == null ? null : dumpTask.getOutputs().getFiles().getSingleFile().getAbsolutePath();
       @NotNull String currentPluginVersion = readProvider(initializeTask, "getPluginVersion");
-      @NotNull String latestPluginVersion = readProvider(initializeTask, "getLatestPluginVersion");
+      @NotNull String latestPluginVersion = readLatestPluginVersion(initializeTask, currentPluginVersion);
 
       return new IntelliJPlatformGradleModelImpl(
         dependencyHelperProductCodes,
@@ -86,11 +86,24 @@ public final class IntelliJPlatformModelBuilder extends AbstractModelBuilderServ
     if (!(value instanceof Provider<?>)) {
       throw new IllegalStateException(getterName + " did not return a Gradle provider");
     }
-    Object resolvedValue = ((Provider<?>)value).get();
+    Object resolvedValue = ((Provider<?>)value).getOrNull();
     if (resolvedValue == null) {
       throw new IllegalStateException(getterName + " returned a provider without a value");
     }
     return resolvedValue.toString();
+  }
+
+  /**
+   * The plugin resolves the latest version from a remote repository.
+   * A failure must not drop the whole model, so the current version is used instead.
+   */
+  private static @NotNull String readLatestPluginVersion(@NotNull Task task, @NotNull String currentPluginVersion) {
+    try {
+      return readProvider(task, "getLatestPluginVersion");
+    }
+    catch (ReflectiveOperationException | RuntimeException exception) {
+      return currentPluginVersion;
+    }
   }
 
   @Override
