@@ -26,12 +26,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.ContentIterator
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.getPathMatcher
@@ -712,19 +711,17 @@ private fun computeCommonDirectory(patterns: List<String>): Path? {
 }
 
 /**
- * Collects excluded roots declared on module content entries.
+ * Excluded roots as the platform enumerates them: module exclude folders, legacy exclude policies, and every root a
+ * `WorkspaceFileIndexContributor` registered as excluded, which is how IDEs without modules exclude their build output.
+ * Exclusion patterns and conditions have no URL and are not covered. Only roots present in the VFS are returned, without
+ * roots nested under another root; resolving a root URL records at most the root itself.
  */
 private suspend fun collectExcludedRoots(project: Project): List<VirtualFile> {
-  val moduleManager = project.serviceAsync<ModuleManager>()
-  return readAction {
-    val roots = LinkedHashSet<VirtualFile>()
-    for (module in moduleManager.modules) {
-      for (entry in ModuleRootManager.getInstance(module).contentEntries) {
-        roots.addAll(entry.excludeFolderFiles)
-      }
-    }
-    roots.toList()
-  }
+  val excludedUrls = readAction { ProjectManagerEx.getInstanceEx().getAllExcludedUrls(project) }
+  @Suppress("SplitModeApiUsage") // the module already resolves VFS files in every toolset
+  val virtualFileManager = VirtualFileManager.getInstance()
+  val roots = excludedUrls.mapNotNull { url -> virtualFileManager.findFileByUrl(url) }.distinct()
+  return roots.filter { root -> roots.none { other -> other != root && VfsUtilCore.isAncestor(other, root, true) } }
 }
 
 /**

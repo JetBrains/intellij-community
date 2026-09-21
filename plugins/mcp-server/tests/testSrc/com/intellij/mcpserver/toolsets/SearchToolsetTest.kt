@@ -31,6 +31,8 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.pathInProjectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.junit5.fixture.virtualFileFixture
+import com.intellij.util.indexing.testEntities.ExcludedKindFileSetTestContributor
+import com.intellij.util.indexing.testEntities.ExcludedTestEntity
 import com.intellij.util.indexing.testEntities.NonIndexableKindFileSetTestContributor
 import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
@@ -460,6 +462,53 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
     finally {
       NioFiles.deleteRecursively(outsideDir)
     }
+  }
+
+  @Test
+  fun search_file_excluded_walk_covers_workspace_index_excluded_roots() = runBlocking(Dispatchers.Default) {
+    // IDEs without modules exclude folders through a WorkspaceFileIndexContributor, not through module exclude folders.
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(ExcludedKindFileSetTestContributor(), testDisposable)
+    val excludedDirName = "se_wsm_excluded_dir_9a2c"
+    val fileName = "se_wsm_excluded_file_9a2c.txt"
+    val rootDir = sourceRootFixture.get().virtualFile
+    val excludedDirPath = rootDir.toNioPath().resolve(excludedDirName)
+    Files.createDirectories(excludedDirPath)
+    Files.writeString(excludedDirPath.resolve(fileName), "Workspace-index excluded file content 9a2c")
+    val workspaceModel = project.workspaceModel
+    val excludedUrl = workspaceModel.getVirtualFileUrlManager().getOrCreateFromUrl("${rootDir.url}/$excludedDirName")
+    workspaceModel.update("add workspace-index excluded root") { storage ->
+      storage.addEntity(ExcludedTestEntity(excludedUrl, NonPersistentEntitySource))
+    }
+    val excludedDir = edtWriteAction {
+      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(excludedDirPath)
+      ?: error("Excluded directory is not visible to the VFS: $excludedDirPath")
+    }
+    DumbService.getInstance(project).waitForSmartMode()
+    assertChildrenNotCached(excludedDir)
+
+    testMcpTool(
+      SearchToolset::search_file.name,
+      buildJsonObject {
+        put("q", JsonPrimitive("**/$fileName"))
+      }
+    ) { actualResult ->
+      val filePaths = parseResult(actualResult.textContent.text).filePaths()
+      assertThat(filePaths).noneMatch { it.contains(fileName) }
+    }
+
+    testMcpTool(
+      SearchToolset::search_file.name,
+      buildJsonObject {
+        put("q", JsonPrimitive("**/$fileName"))
+        put("includeExcluded", JsonPrimitive(true))
+      }
+    ) { actualResult ->
+      val filePaths = parseResult(actualResult.textContent.text).filePaths()
+      assertThat(filePaths).anyMatch { it.endsWith("$excludedDirName/$fileName") }
+    }
+
+    assertNotCached(excludedDirPath.resolve(fileName))
+    assertChildrenNotCached(excludedDir)
   }
 
   @Test
