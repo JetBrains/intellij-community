@@ -207,12 +207,12 @@ object LibraryModuleSets {
    *
    * Kept as a dedicated module set so that `librariesPlatform()` stays focused on truly universal utilities.
    *
-   * Only `intellij.libraries.jackson.annotations` is embedded, because no other embedded platform module uses Jackson 2.
+   * No module of this set is embedded. `intellij.libraries.jackson.annotations` lives in `librariesJackson3()`,
+   * because both Jackson stacks use it.
    *
    * Included transitively by `librariesPlatform()`.
    */
   fun librariesJackson2(): ModuleSet = moduleSet("libraries.jackson2") {
-    embeddedModule("intellij.libraries.jackson.annotations")
     module("intellij.libraries.jackson")
     module("intellij.libraries.jackson.jr.objects")
     module("intellij.libraries.jackson.databind")
@@ -232,9 +232,12 @@ object LibraryModuleSets {
    *
    * Kept as a dedicated module set so that `librariesPlatform()` stays focused on truly universal utilities.
    *
+   * `intellij.libraries.jackson.annotations` is here because Jackson 3 still uses the Jackson 2 annotations artifact.
+   *
    * Included transitively by `librariesPlatform()`.
    */
   fun librariesJackson3(): ModuleSet = moduleSet("libraries.jackson3") {
+    embeddedModule("intellij.libraries.jackson.annotations")
     embeddedModule("intellij.libraries.jackson3")
     embeddedModule("intellij.libraries.jackson3.jr.objects")
     embeddedModule("intellij.libraries.jackson3.databind")

@@ -6,7 +6,6 @@
   <content namespace="jetbrains">
     <!-- region nested: libraries.platform -->
     <!-- region nested: libraries.platform > libraries.jackson2 -->
-    <module name="intellij.libraries.jackson.annotations" loading="embedded"/>
     <module name="intellij.libraries.jackson"/>
     <module name="intellij.libraries.jackson.jr.objects"/>
     <module name="intellij.libraries.jackson.databind"/>
@@ -19,6 +18,7 @@
     <!-- endregion -->
 
     <!-- region nested: libraries.platform > libraries.jackson3 -->
+    <module name="intellij.libraries.jackson.annotations" loading="embedded"/>
     <module name="intellij.libraries.jackson3" loading="embedded"/>
     <module name="intellij.libraries.jackson3.jr.objects" loading="embedded"/>
     <module name="intellij.libraries.jackson3.databind" loading="embedded"/>

@@ -10,7 +10,6 @@
     <!-- region nested: essential.minimal > core.lang > core.ide > core.platform -->
     <!-- region nested: essential.minimal > core.lang > core.ide > core.platform > libraries.platform -->
     <!-- region nested: essential.minimal > core.lang > core.ide > core.platform > libraries.platform > libraries.jackson2 -->
-    <module name="intellij.libraries.jackson.annotations" loading="embedded"/>
     <module name="intellij.libraries.jackson"/>
     <module name="intellij.libraries.jackson.jr.objects"/>
     <module name="intellij.libraries.jackson.databind"/>
@@ -23,6 +22,7 @@
     <!-- endregion -->
 
     <!-- region nested: essential.minimal > core.lang > core.ide > core.platform > libraries.platform > libraries.jackson3 -->
+    <module name="intellij.libraries.jackson.annotations" loading="embedded"/>
     <module name="intellij.libraries.jackson3" loading="embedded"/>
     <module name="intellij.libraries.jackson3.jr.objects" loading="embedded"/>
     <module name="intellij.libraries.jackson3.databind" loading="embedded"/>
