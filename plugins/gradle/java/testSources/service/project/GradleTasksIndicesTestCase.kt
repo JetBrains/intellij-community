@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project
 
 import com.intellij.openapi.util.io.FileUtil
@@ -16,6 +16,8 @@ abstract class GradleTasksIndicesTestCase : GradleImportingTestCase() {
   fun List<GradleTaskData>.assertTasks(vararg expectedTasks: String) {
     assertEquals(expectedTasks.toSet(), map { it.getFqnTaskName() }.toSet())
   }
+
+  override fun assumeGradleVersion() {}
 
   companion object {
     @Parameterized.Parameters(name = "with Gradle-{0}")

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -53,6 +53,8 @@ class GradleConnectorServiceIntegrationTest : GradleImportingTestCase() {
     )
     return GradleExecutionHelper.execute(context) { it }
   }
+
+  override fun assumeGradleVersion() {}
 
   companion object {
     /** It's sufficient to run the test against single gradle version. */

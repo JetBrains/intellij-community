@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
+import org.junit.Assume
 import org.junit.Test
 import org.junit.runners.Parameterized
 
@@ -26,6 +27,23 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
           assertNode("finished")
       }
     }
+  }
+
+  override fun assumeGradleVersion() {
+    val gradleVersionsToRunProp = System.getProperty("gradle.versions.to.run")
+
+    val gradleVersionsToRun = if (gradleVersionsToRunProp == "FIRST_LAST") {
+      setOf(OLD_GRADLE_VERSIONS.first(), VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS.last())
+    }
+    else if (gradleVersionsToRunProp.startsWith("LAST:")) {
+      val numberOfLastVersions = gradleVersionsToRunProp.removePrefix("LAST:").toInt()
+      VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS.takeLast(numberOfLastVersions)
+    }
+    else {
+      return
+    }
+
+    Assume.assumeTrue(gradleVersion in gradleVersionsToRun)
   }
 
   companion object {

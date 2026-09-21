@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.openapi.application.ReadAction;
@@ -49,6 +49,9 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
   }
+
+  @Override
+  public void assumeGradleVersion() { }
 
   @Test
   public void testBuildSrcClassesUsages() throws Exception {
