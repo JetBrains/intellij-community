@@ -658,6 +658,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/java-decompiler/engine/intellij.java.decompiler.engine.tests.iml" filepath="$PROJECT_DIR$/plugins/java-decompiler/engine/intellij.java.decompiler.engine.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/java-decompiler/plugin/intellij.java.decompiler.tests.iml" filepath="$PROJECT_DIR$/plugins/java-decompiler/plugin/intellij.java.decompiler.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/dev/intellij.java.dev/intellij.java.dev.iml" filepath="$PROJECT_DIR$/plugins/dev/intellij.java.dev/intellij.java.dev.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/java-dumb-completion-tests/intellij.java.dumb.completion.tests.iml" filepath="$PROJECT_DIR$/java/java-dumb-completion-tests/intellij.java.dumb.completion.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/openapi/intellij.java.execution.iml" filepath="$PROJECT_DIR$/java/execution/openapi/intellij.java.execution.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/impl/intellij.java.execution.impl.iml" filepath="$PROJECT_DIR$/java/execution/impl/intellij.java.execution.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/backend/intellij.java.execution.impl.backend.iml" filepath="$PROJECT_DIR$/java/execution/backend/intellij.java.execution.impl.backend.iml" />

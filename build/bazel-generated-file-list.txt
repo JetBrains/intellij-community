@@ -323,6 +323,7 @@ java/java-backend
 java/java-bookmarks
 java/java-completion-tests
 java/java-copyright
+java/java-dumb-completion-tests
 java/java-features-trainer
 java/java-frontback-impl
 java/java-frontback-psi-api

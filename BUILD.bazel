@@ -595,6 +595,8 @@ jvm_library(
         "//:main_test_lib",
         "//java/java-tests:tests",
         "//java/java-tests:tests_test_lib",
+        "//java/java-dumb-completion-tests:dumb-completion-tests",
+        "//java/java-dumb-completion-tests:dumb-completion-tests_test_lib",
         "//java/idea-ui:ui-tests",
         "//java/idea-ui:ui-tests_test_lib",
         "//plugins/junit/java-tests",
