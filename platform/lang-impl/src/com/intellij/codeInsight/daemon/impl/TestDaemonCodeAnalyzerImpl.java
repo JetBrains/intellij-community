@@ -196,7 +196,8 @@ public final class TestDaemonCodeAnalyzerImpl {
       CodeInsightContext context = EditorContextManager.getEditorContext(editor, myProject);
       PsiFile psiFile = TextEditorBackgroundHighlighter.renewFile(myProject, document, context);
       FileASTNode fileNode = psiFile.getNode();
-      ProgressIndicator progress = daemonCodeAnalyzer.queuePassesCreation(textEditor, virtualFile, passesToIgnore, new ConcurrentHashMap<>());
+      ProgressIndicator progress = daemonCodeAnalyzer.queuePassesCreation(textEditor, virtualFile, passesToIgnore, new ConcurrentHashMap<>(),
+                                                                          textEditor.getBackgroundHighlighter());
       if (progress == null) {
         DaemonCodeAnalyzerImpl.LOG.error("Can't create session for " + textEditor + " (" + textEditor.getClass() + ")," +
           "; fileEditor.getBackgroundHighlighter()=" + textEditor.getBackgroundHighlighter() +

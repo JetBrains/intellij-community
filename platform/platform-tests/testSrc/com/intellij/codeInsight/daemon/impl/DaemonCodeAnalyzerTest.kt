@@ -17,13 +17,23 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorPolicy
+import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.AbstractFileViewProvider
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.editorFixture
@@ -40,7 +50,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Test
+import java.beans.PropertyChangeListener
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.swing.JComponent
+import javax.swing.JPanel
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 
@@ -126,6 +139,40 @@ class DaemonCodeAnalyzerTest {
   }
 
   @Test
+  fun `non-highlightable editor does not restart daemon`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    val virtualFile = nonAwtFile.get()
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.point.registerExtension(object : FileEditorProvider, DumbAware {
+      override fun accept(project: Project, file: VirtualFile): Boolean = file == virtualFile
+
+      override fun createEditor(project: Project, file: VirtualFile): FileEditor = NonHighlightableFileEditor(file)
+
+      override fun getEditorTypeId(): String = "non-highlightable-editor"
+
+      override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
+    }, disposable)
+
+    val analyzer = assertIs<DaemonCodeAnalyzerImpl>(DaemonCodeAnalyzer.getInstance(project.get()))
+    val fileEditorManager = FileEditorManager.getInstance(project.get())
+    withContext(Dispatchers.EDT) {
+      fileEditorManager.openFile(virtualFile, true)
+      analyzer.restart("Non-highlightable editor opened")
+    }
+    try {
+      waitUntil("the daemon must stop after it skips the non-highlightable editor") {
+        withContext(Dispatchers.EDT) {
+          !analyzer.isRunningOrPending
+        }
+      }
+    }
+    finally {
+      withContext(Dispatchers.EDT) {
+        fileEditorManager.closeFile(virtualFile)
+        EditorHistoryManager.getInstance(project.get()).removeFile(virtualFile)
+      }
+    }
+  }
+
+  @Test
   fun `highlighting gets canceled on pending write action`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     val analyzer = highlighting.get()
     val listenerInvoked = AtomicBoolean(false)
@@ -145,4 +192,28 @@ class DaemonCodeAnalyzerTest {
     UIUtil.dispatchAllInvocationEvents()
     assertFalse(listenerInvoked.get())
   }
+}
+
+private class NonHighlightableFileEditor(private val virtualFile: VirtualFile) : UserDataHolderBase(), FileEditor {
+  private val component: JPanel = JPanel()
+
+  override fun getComponent(): JComponent = component
+
+  override fun getPreferredFocusedComponent(): JComponent? = null
+
+  override fun getName(): String = "Non-Highlightable Editor"
+
+  override fun setState(state: FileEditorState) { }
+
+  override fun isModified(): Boolean = false
+
+  override fun isValid(): Boolean = virtualFile.isValid
+
+  override fun addPropertyChangeListener(listener: PropertyChangeListener) { }
+
+  override fun removePropertyChangeListener(listener: PropertyChangeListener) { }
+
+  override fun getFile(): VirtualFile = virtualFile
+
+  override fun dispose() { }
 }
