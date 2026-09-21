@@ -41,6 +41,7 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.stripe.ErrorStripe
 import com.intellij.ui.stripe.ErrorStripePainter
 import com.intellij.ui.stripe.TreeUpdater
+import com.intellij.ui.tree.RestoreSelectionListener
 import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
@@ -201,6 +202,7 @@ internal class TreeBasedFrontendProjectViewPane(
         tree.selectionPath = tree.getPathForRow(0)
       }
     }
+    tree.addTreeSelectionListener(RestoreSelectionListener())
     enableDnD(tree, paneTreeModel)
   }
 
