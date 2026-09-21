@@ -199,10 +199,10 @@ object PluginUpdateSourceInitializer {
       return
     }
 
-    val singleCustomRepoUpdateSource = customPluginUpdateSources.singleEquivalentOrNull()
+    val singleCustomRepoUpdateSource = customPluginUpdateSources.singleCompatibleSourceOrNull()
     val newUpdateSourceId = when {
       singleCustomRepoUpdateSource != null -> {
-        singleCustomRepoUpdateSource
+        PluginUpdateSourceServiceImpl.getImplInstance().allowUpdateFromMarketplaceWhenApplicable(singleCustomRepoUpdateSource, plugin, safePluginIdList)
       }
       customPluginUpdateSources.isNotEmpty() -> {
         thisLogger().info("Plugin $pluginId is found in multiple custom repositories: $customPluginUpdateSources")
@@ -222,8 +222,8 @@ object PluginUpdateSourceInitializer {
     }
   }
 
-  private fun List<PluginUpdateSourceId>.singleEquivalentOrNull(): PluginUpdateSourceId? {
+  private fun List<PluginUpdateSourceId>.singleCompatibleSourceOrNull(): PluginUpdateSourceId? {
     val firstSource = firstOrNull() ?: return null
-    return firstSource.takeIf { all { source -> firstSource.isEquivalent(source) } }
+    return firstSource.takeIf { all { source -> firstSource.canInstallUpdatesFrom(source) } }
   }
 }

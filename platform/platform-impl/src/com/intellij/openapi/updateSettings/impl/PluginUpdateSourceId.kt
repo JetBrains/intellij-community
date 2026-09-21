@@ -20,11 +20,11 @@ sealed interface PluginUpdateSourceId {
   val isMarketplace: Boolean
 
   /**
-   * Is symmetric: `first.isEquivalent(second) == second.isEquivalent(first)`
+   * This check is symmetrical, but not transitive.
    *
    * @return if a plugin with this update source may have updates from [other] update source
    */
-  fun isEquivalent(other: PluginUpdateSourceId): Boolean
+  fun canInstallUpdatesFrom(other: PluginUpdateSourceId): Boolean
 }
 
 @ApiStatus.Internal

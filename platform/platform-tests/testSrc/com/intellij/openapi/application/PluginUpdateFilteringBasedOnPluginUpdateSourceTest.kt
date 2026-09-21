@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
+import com.intellij.openapi.updateSettings.impl.createNightlyAndMarketplacePluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.createNightlyPluginUpdateSourceId
 import com.intellij.testFramework.PlatformTestUtil.withSystemProperty
 import com.intellij.testFramework.junit5.RegistryKey
@@ -144,38 +145,47 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
   }
 
   @Test
-  fun `plugins installed from nightly servers are updated from current nightly servers only`() {
-    val oldNightlyServer = createTestServer()
-    val firstNightlyServer = createTestServer()
-    val secondNightlyServer = createTestServer()
+  fun `plugins from nightly servers are updated from current nightly servers, and from Marketplace if added to source`() {
+    val oldNightlyServer = createTestServer("old-nightly-server")
+    val firstNightlyServer = createTestServer("first-nightly-server")
+    val secondNightlyServer = createTestServer("second-nightly-server")
 
-    setInstalledPluginMocks(installedPlugin(NIGHTLY_SOURCE_PLUGIN))
+    setInstalledPluginMocks(installedPlugin(NIGHTLY_AND_MARKETPLACE_SOURCE_PLUGIN),
+                            installedPlugin(NIGHTLY_SOURCE_PLUGIN))
+
+    setCustomRepositoryPlugins(oldNightlyServer, listOf(CustomRepositoryPlugin(NIGHTLY_AND_MARKETPLACE_SOURCE_PLUGIN, "4.0"),
+                                                        CustomRepositoryPlugin(NIGHTLY_SOURCE_PLUGIN, "5.0")))
+    setCustomRepositoryPlugins(firstNightlyServer, listOf(CustomRepositoryPlugin(NIGHTLY_AND_MARKETPLACE_SOURCE_PLUGIN, "2.0"),
+                                                          CustomRepositoryPlugin(NIGHTLY_SOURCE_PLUGIN, "7.0")))
+    setCustomRepositoryPlugins(secondNightlyServer, listOf(CustomRepositoryPlugin(NIGHTLY_AND_MARKETPLACE_SOURCE_PLUGIN, "3.0"),
+                                                           CustomRepositoryPlugin(NIGHTLY_SOURCE_PLUGIN, "3.5")))
+    setMarketplacePlugins(listOf(RepositoryPluginMock(NIGHTLY_AND_MARKETPLACE_SOURCE_PLUGIN, "701", "301", "9.0"),
+                                 RepositoryPluginMock(NIGHTLY_SOURCE_PLUGIN, "702", "302", "9.0")),
+                          listOf(NIGHTLY_AND_MARKETPLACE_SOURCE_PLUGIN, NIGHTLY_SOURCE_PLUGIN))
+
+
+    PluginUpdateSourceService.getInstance()
+      .setPluginUpdateSourceId(PluginId.getId(NIGHTLY_AND_MARKETPLACE_SOURCE_PLUGIN), createNightlyAndMarketplacePluginUpdateSourceId())
+    PluginUpdateSourceService.getInstance()
+      .setPluginUpdateSourceId(PluginId.getId(NIGHTLY_SOURCE_PLUGIN), createNightlyPluginUpdateSourceId())
+
     installedPluginsFacade.setHosts(listOf(oldNightlyServer.url, firstNightlyServer.url, secondNightlyServer.url))
-
-    setCustomRepositoryPlugins(oldNightlyServer, listOf(CustomRepositoryPlugin(NIGHTLY_SOURCE_PLUGIN, "9.0")))
-    setCustomRepositoryPlugins(firstNightlyServer, listOf(CustomRepositoryPlugin(NIGHTLY_SOURCE_PLUGIN, "2.0")))
-    setCustomRepositoryPlugins(secondNightlyServer, listOf(CustomRepositoryPlugin(NIGHTLY_SOURCE_PLUGIN, "3.0")))
-
-    withSystemProperty<RuntimeException>(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY, oldNightlyServer.url) {
-      setPluginUpdateSources(PluginUpdateSourceService.getInstance().createCustomRepositoryPluginUpdateSourceId(oldNightlyServer.url),
-                             NIGHTLY_SOURCE_PLUGIN)
-    }
-
     withSystemProperty<RuntimeException>(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY,
-                                         "${firstNightlyServer.url},${secondNightlyServer.url}") {
+                                         listOf(firstNightlyServer.url, secondNightlyServer.url).joinToString(",")) {
       val internalResult = UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates()
       assertEquals(emptyMap<String?, Exception>(), internalResult.errors)
       val result = internalResult.pluginUpdates
 
       val updatesById = result.allEnabled.associateBy { it.id.idString }
-      assertEquals(setOf(NIGHTLY_SOURCE_PLUGIN), updatesById.keys)
-      assertEquals("3.0", updatesById.getValue(NIGHTLY_SOURCE_PLUGIN).pluginVersion)
+      assertEquals(setOf(NIGHTLY_AND_MARKETPLACE_SOURCE_PLUGIN, NIGHTLY_SOURCE_PLUGIN), updatesById.keys)
+      assertEquals("9.0", updatesById.getValue(NIGHTLY_AND_MARKETPLACE_SOURCE_PLUGIN).pluginVersion)
+      assertEquals("7.0", updatesById.getValue(NIGHTLY_SOURCE_PLUGIN).pluginVersion)
       assertTrue(result.allDisabled.isEmpty())
     }
   }
 
   @Test
-  fun `plugin update sources match by source type`() {
+  fun `plugin update sources allow updates from compatible source type`() {
     val service = PluginUpdateSourceService.getInstance()
     val firstMarketplace = service.createMarketplacePluginUpdateSourceId()
     val secondMarketplace = service.createMarketplacePluginUpdateSourceId()
@@ -191,27 +201,37 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
       val secondCustomRepository = service.createCustomRepositoryPluginUpdateSourceId("https://custom2.example.com")
       val nightlyRepo = createNightlyPluginUpdateSourceId()
 
-      assertInterchangeableOnlyWithinLists(
+      assertCanInstallUpdatesFromSymmetricallyOnlyWithinLists(
         listOf(firstMarketplace, secondMarketplace),
         listOf(firstNightlyRepository, secondNightlyRepository, nightlyRepo),
         listOf(firstCustomRepository, sameFirstCustomRepository),
         listOf(secondCustomRepository),
       )
+
+      val nightlyAndMarketplaceSource = createNightlyAndMarketplacePluginUpdateSourceId()
+      for (source in listOf(firstNightlyRepository, secondNightlyRepository, nightlyRepo, firstMarketplace, secondMarketplace)) {
+        assertCanInstallUpdatesFrom(nightlyAndMarketplaceSource, source, true)
+      }
+
+      for (source in listOf(firstCustomRepository, sameFirstCustomRepository, secondCustomRepository)) {
+        assertCanInstallUpdatesFrom(nightlyAndMarketplaceSource, source, false)
+      }
     }
   }
 
-  private fun assertInterchangeableOnlyWithinLists(vararg lists: List<PluginUpdateSourceId>) {
-    fun assertIsInterchangeable(first: PluginUpdateSourceId, second: PluginUpdateSourceId, interchangeable: Boolean) {
-      val message = "Should ${if (interchangeable) "" else "not "}be interchangeable: $first and $second"
-      assertEquals(interchangeable, first.isEquivalent(second), message)
-    }
+  private fun assertCanInstallUpdatesFrom(first: PluginUpdateSourceId, second: PluginUpdateSourceId, canInstallUpdates: Boolean) {
+    val message = "Should ${if (canInstallUpdates) "" else "not "}be able to install updates: $first from $second"
+    assertEquals(canInstallUpdates, first.canInstallUpdatesFrom(second), message)
+  }
+
+  private fun assertCanInstallUpdatesFromSymmetricallyOnlyWithinLists(vararg lists: List<PluginUpdateSourceId>) {
     for (list in lists) {
       for (firstIndex in list.indices) {
         for (secondIndex in firstIndex + 1 until list.size) {
           val first = list[firstIndex]
           val second = list[secondIndex]
-          assertIsInterchangeable(first, second, true)
-          assertIsInterchangeable(second, first, true)
+          assertCanInstallUpdatesFrom(first, second, true)
+          assertCanInstallUpdatesFrom(second, first, true)
         }
       }
     }
@@ -220,8 +240,8 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
       for (secondListIndex in firstListIndex + 1 until lists.size) {
         for (first in lists[firstListIndex]) {
           for (second in lists[secondListIndex]) {
-            assertIsInterchangeable(first, second, false)
-            assertIsInterchangeable(second, first, false)
+            assertCanInstallUpdatesFrom(first, second, false)
+            assertCanInstallUpdatesFrom(second, first, false)
           }
         }
       }
@@ -289,6 +309,8 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
     const val UPDATEABLE_BUNDLED_NOT_JETBRAINS = "test.updateable.bundled.not.jetbrains"
     const val NON_UPDATEABLE_BUNDLED_JETBRAINS = "test.non.updateable.bundled.jetbrains"
     const val NON_UPDATEABLE_BUNDLED_NOT_JETBRAINS = "test.non.updateable.bundled.not.jetbrains"
+
+    const val NIGHTLY_AND_MARKETPLACE_SOURCE_PLUGIN = "test.nightly.and.marketplace.source"
     const val NIGHTLY_SOURCE_PLUGIN = "test.nightly.source"
   }
 }

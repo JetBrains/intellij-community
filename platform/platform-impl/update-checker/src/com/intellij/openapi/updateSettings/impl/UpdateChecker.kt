@@ -386,16 +386,22 @@ object UpdateChecker {
           val backendUpdateSource = getMatchingPluginUpdateSource(backend)
           val relevantPluginIds = updates.getAllPluginIds().filter { pluginId ->
             val updateSourceFromSettings = PluginUpdateSourceService.getInstance().getPluginUpdateSourceId(pluginId)
-            updateSourceFromSettings?.isEquivalent(backendUpdateSource) == true
+            updateSourceFromSettings?.canInstallUpdatesFrom(backendUpdateSource) == true
           }
           updates.filterByPluginIds(relevantPluginIds)
         }
         else {
           updates
         }
-        pluginModels.putAll(relevantUpdates.models)
 
-        categorizedDownloaders.putAll(relevantUpdates.categorizedDownloaders)
+        /*
+         * With special treatment of bundled JetBrains plugins available in nightly repos
+         * plugins again may have valid updates from multiple sources.
+         * It's a new case, so we can choose the newest update without breaking existing behavior
+        */
+        CategorizedDownloaders.putAllWithHigherVersions(pluginModels, relevantUpdates.models) { model -> model.version }
+        categorizedDownloaders.putAllDownloadersWithHigherVersion(relevantUpdates.categorizedDownloaders)
+
         for (updatePluginId in relevantUpdates.categorizedDownloaders.allPluginsUpdatingToHigherVersion()) {
           if (!PluginUpdateSourceService.isPluginUpdateFilteredAgainstPluginUpdateSource()) {
             updateable.remove(updatePluginId)
@@ -628,7 +634,8 @@ object UpdateChecker {
     get() = disabledToUpdate.mapTo(TreeSet()) { it.idString }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated(message = "Use PluginUpdateCheckService instead", replaceWith = ReplaceWith("PluginUpdateCheckService.getInstance().getPluginUpdate(pluginId, indicator)"))
+  @Deprecated(message = "Use PluginUpdateCheckService instead",
+              replaceWith = ReplaceWith("PluginUpdateCheckService.getInstance().getPluginUpdate(pluginId, indicator)"))
   @JvmStatic
   fun getPluginUpdates(): Collection<PluginDownloader>? = null
 
@@ -636,7 +643,8 @@ object UpdateChecker {
   @JvmOverloads
   @JvmStatic
   @ApiStatus.Internal
-  @Deprecated(message = "Use PluginUpdateCheckService instead", replaceWith = ReplaceWith("PluginUpdateCheckService.getInstance().getPluginUpdate(pluginId, indicator)"))
+  @Deprecated(message = "Use PluginUpdateCheckService instead",
+              replaceWith = ReplaceWith("PluginUpdateCheckService.getInstance().getPluginUpdate(pluginId, indicator)"))
   fun getInternalPluginUpdates(
     buildNumber: BuildNumber? = null,
     indicator: ProgressIndicator? = null,
@@ -748,7 +756,7 @@ private suspend fun doUpdateAndShowResult(
 
   // "Remind Me Later" mutes the IDE announcement
   val announcedUpdate = if (userInitiated || !IdeUpdateWidgetState.isRemindLaterActive()) platformUpdates as? PlatformUpdates.Loaded
-                        else null
+  else null
   val apiVersion = announcedUpdate?.newBuild?.apiVersion
   val updatesModel = PluginUpdateHandler.getInstance().loadAndStorePluginUpdates(apiVersion?.asString(), indicator = indicator)
   val updatesForPlugins = updatesModel.pluginUpdates
@@ -800,7 +808,10 @@ private suspend fun doUpdateAndShowResult(
 
   if (!showResults) {
     if (announcedUpdate != null) {
-      UpdateSettingsEntryPointActionProvider.newPlatformUpdate(announcedUpdate, updatesForPlugins, incompatiblePluginNames, notIgnoredDownloaders)
+      UpdateSettingsEntryPointActionProvider.newPlatformUpdate(announcedUpdate,
+                                                               updatesForPlugins,
+                                                               incompatiblePluginNames,
+                                                               notIgnoredDownloaders)
     }
     else {
       UpdateSettingsEntryPointActionProvider.newPluginUpdates(updatesForPlugins, customRepoPlugins)
@@ -994,7 +1005,10 @@ private fun showResults(
     showUpdateDialog()
   }
   else {
-    UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatesForPlugins.map { it.uiModel }, incompatiblePluginNames, updatesForPlugins)
+    UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates,
+                                                             updatesForPlugins.map { it.uiModel },
+                                                             incompatiblePluginNames,
+                                                             updatesForPlugins)
 
     // Disable notification when IdeUpdateWidgetState
     if (showNotification && !IdeUpdateWidgetState.isWidgetShown()) {

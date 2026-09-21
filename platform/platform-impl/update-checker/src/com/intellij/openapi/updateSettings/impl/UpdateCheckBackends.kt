@@ -102,12 +102,35 @@ internal class CategorizedDownloaders {
     category(type, status)[downloader.id] = downloader
   }
 
-  fun putAll(updates: CategorizedDownloaders) {
-    forAll { type, status -> category(type, status).putAll(updates.category(type, status)) }
+  fun putAllDownloadersWithHigherVersion(updates: CategorizedDownloaders) {
+    forAll { type, status ->
+      val category = category(type, status)
+      val toAdd = updates.category(type, status)
+      putAllWithHigherVersions(category, toAdd) { downloader -> downloader.pluginVersion }
+      for ((pluginId, downloader) in toAdd) {
+        val existingDownloader = category[pluginId]
+        if (existingDownloader == null ||
+            VersionComparatorUtil.compare(downloader.pluginVersion, existingDownloader.pluginVersion) > 0) {
+          category[pluginId] = downloader
+        }
+      }
+    }
   }
 
   fun removeAllUpdatesWithLowerVersion(updatePluginId: PluginId) {
     return PluginStatus.entries.forEach { status -> category(UpdateType.LowerVersion, status).remove(updatePluginId) }
+  }
+
+  companion object {
+    fun <T> putAllWithHigherVersions(existingMap: MutableMap<PluginId, T>, mapToPut: Map<PluginId, T>, versionGetter: (T) -> String?) {
+      for ((pluginId, value) in mapToPut) {
+        val existingValue = existingMap[pluginId]
+        if (existingValue == null ||
+            VersionComparatorUtil.compare(versionGetter(value), versionGetter(existingValue)) > 0) {
+          existingMap[pluginId] = value
+        }
+      }
+    }
   }
 }
 
