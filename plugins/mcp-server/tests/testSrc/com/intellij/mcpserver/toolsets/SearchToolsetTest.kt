@@ -19,7 +19,11 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.testFramework.DumbModeTestUtils
@@ -41,7 +45,9 @@ import kotlinx.serialization.json.buildJsonObject
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.time.Duration
 
 class SearchToolsetTest : GeneralMcpToolsetTestBase() {
@@ -152,6 +158,45 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
       listOf(excludedDir.url)
     )
     excludedFile
+  }
+
+  /**
+   * Creates an excluded directory the way a real `out/` folder appears: on disk, with [populate] adding its content before
+   * the VFS learns about it, registered as an excluded folder by URL, and only then resolved through a non-recursive refresh
+   * of the parent. The result is a VFS record whose children are not cached. That is the only state in which the excluded walk
+   * lists the disk instead of the cached children, so the "leaves no VFS records" assertions are meaningful.
+   *
+   * The order matters. A directory created through the VFS (see [createExcludedFile]) is marked as fully loaded. A directory
+   * discovered by a refresh under an indexable root gets its whole subtree preloaded and marked complete by
+   * `TransientChildScanner`; the scanner skips a directory that is already excluded, which keeps the record shallow.
+   */
+  private suspend fun createExcludedDirOnDisk(excludedDirName: String, populate: (Path) -> Unit): VirtualFile {
+    val rootDir = sourceRootFixture.get().virtualFile
+    val excludedDirPath = rootDir.toNioPath().resolve(excludedDirName)
+    Files.createDirectories(excludedDirPath)
+    populate(excludedDirPath)
+    return edtWriteAction {
+      ModuleRootModificationUtil.updateExcludedFolders(
+        moduleFixture.get(),
+        rootDir,
+        emptyList(),
+        listOf("${rootDir.url}/$excludedDirName")
+      )
+      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(excludedDirPath)
+      ?: error("Excluded directory is not visible to the VFS: $excludedDirPath")
+    }
+  }
+
+  private fun assertChildrenNotCached(directory: VirtualFile) {
+    assertThat((directory as NewVirtualFile).allChildrenCached())
+      .describedAs("children of %s must not be cached, otherwise the excluded walk reads the cache instead of the disk", directory.path)
+      .isFalse()
+  }
+
+  private fun assertNotCached(path: Path) {
+    assertThat(LocalFileSystem.getInstance().findFileByPathIfCached(path.invariantSeparatorsPathString))
+      .describedAs("the excluded walk must not create a VFS record for %s", path)
+      .isNull()
   }
 
   /**
@@ -347,6 +392,73 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
     ) { actualResult ->
       val filePaths = parseResult(actualResult.textContent.text).filePaths()
       assertThat(filePaths).anyMatch { it.contains(fileName) }
+    }
+  }
+
+  @Test
+  fun search_file_excluded_walk_leaves_no_vfs_records() = runBlocking(Dispatchers.Default) {
+    val nestedDirName = "se_excluded_nested_dir_e4b1"
+    val fileName = "se_excluded_nested_file_e4b1.txt"
+    val excludedDir = createExcludedDirOnDisk("se_excluded_disk_dir_e4b1") { dir ->
+      val nestedDir = Files.createDirectories(dir.resolve(nestedDirName))
+      Files.writeString(nestedDir.resolve(fileName), "Excluded nested file content e4b1")
+    }
+    DumbService.getInstance(project).waitForSmartMode()
+    val nestedDirPath = excludedDir.toNioPath().resolve(nestedDirName)
+    val nestedFilePath = nestedDirPath.resolve(fileName)
+    assertChildrenNotCached(excludedDir)
+
+    testMcpTool(
+      SearchToolset::search_file.name,
+      buildJsonObject {
+        put("q", JsonPrimitive("**/$fileName"))
+        put("includeExcluded", JsonPrimitive(true))
+      }
+    ) { actualResult ->
+      val filePaths = parseResult(actualResult.textContent.text).filePaths()
+      assertThat(filePaths).anyMatch { it.endsWith("$nestedDirName/$fileName") }
+    }
+
+    assertNotCached(nestedFilePath)
+    assertNotCached(nestedDirPath)
+    assertChildrenNotCached(excludedDir)
+  }
+
+  @Test
+  fun search_file_excluded_walk_does_not_follow_symlinks() = runBlocking(Dispatchers.Default) {
+    IoTestUtil.assumeSymLinkCreationIsSupported()
+    val linkName = "se_excluded_link_c7d3"
+    val markerName = "se_symlink_marker_c7d3.txt"
+    val siblingName = "se_symlink_sibling_c7d3.txt"
+    val outsideDir = Files.createTempDirectory("se_symlink_target_c7d3")
+    try {
+      Files.writeString(outsideDir.resolve(markerName), "Marker behind a symlink c7d3")
+      val excludedDir = createExcludedDirOnDisk("se_excluded_link_dir_c7d3") { dir ->
+        // The sibling proves the walk listed the disk; the link must not be descended into.
+        Files.writeString(dir.resolve(siblingName), "Sibling next to the symlink c7d3")
+        Files.createSymbolicLink(dir.resolve(linkName), outsideDir)
+      }
+      DumbService.getInstance(project).waitForSmartMode()
+      assertChildrenNotCached(excludedDir)
+
+      testMcpTool(
+        SearchToolset::search_file.name,
+        buildJsonObject {
+          put("q", JsonPrimitive("**/*_c7d3.txt"))
+          put("includeExcluded", JsonPrimitive(true))
+        }
+      ) { actualResult ->
+        val filePaths = parseResult(actualResult.textContent.text).filePaths()
+        assertThat(filePaths).anyMatch { it.endsWith(siblingName) }
+        assertThat(filePaths).noneMatch { it.contains(markerName) }
+      }
+
+      val linkPath = excludedDir.toNioPath().resolve(linkName)
+      assertNotCached(linkPath.resolve(markerName))
+      assertNotCached(linkPath)
+    }
+    finally {
+      NioFiles.deleteRecursively(outsideDir)
     }
   }
 

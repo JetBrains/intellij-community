@@ -39,6 +39,8 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileVisitor
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.search.FilenameIndex
@@ -427,12 +429,16 @@ suspend fun searchFiles(
       }
 
       if (includeExcluded && !reachedLimit) {
+        // Excluded roots are a read-only disk probe and must leave no trace in the VFS: walking a cached root loads every
+        // visited file into the persistent VFS (records plus a watch root per symlink) and that growth is never undone.
+        // Build outputs (Bazel, pnpm) are huge symlink forests, so walk a cache-avoiding root and do not descend into symlinks.
         val excludedRoots = collectExcludedRoots(project)
         for (excludedRoot in excludedRoots) {
           val rootToScan = resolveExcludedSearchRoot(searchRoot, excludedRoot) ?: continue
-          val completed = VfsUtilCore.iterateChildrenRecursively(rootToScan, null, ContentIterator { file ->
+          val transientRoot = (rootToScan as? NewVirtualFile)?.asCacheAvoiding() ?: rootToScan
+          val completed = VfsUtilCore.iterateChildrenRecursively(transientRoot, null, ContentIterator { file ->
             processCandidate(file)
-          })
+          }, VirtualFileVisitor.NO_FOLLOW_SYMLINKS)
           if (!completed || reachedLimit) break
         }
       }
