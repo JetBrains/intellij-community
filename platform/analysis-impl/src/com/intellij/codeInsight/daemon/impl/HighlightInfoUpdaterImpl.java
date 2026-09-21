@@ -530,8 +530,9 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     boolean changed;
     do {
       evictedInfos = document.getUserData(EVICTED_PSI_ELEMENTS);
+      int oldSize = evictedInfos == null ? 0 : evictedInfos.size();
       newEvictedInfos = listProcessor.apply(evictedInfos);
-      changed = newEvictedInfos.size() != (evictedInfos == null ? 0 : evictedInfos.size());
+      changed = newEvictedInfos.size() != oldSize;
     }
     while (!((UserDataHolderEx)document).replace(EVICTED_PSI_ELEMENTS, evictedInfos, newEvictedInfos));
 
