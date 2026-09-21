@@ -2,26 +2,25 @@ package com.intellij.terminal.backend.hyperlinks
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.rethrowControlFlowException
-import com.intellij.execution.filters.CompositeFilter
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.InvisibleHyperlinkFilterProvider
-import com.intellij.execution.impl.applyToLineRange
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.event.EditorMouseEvent
-import com.intellij.openapi.progress.ProgressManager.checkCanceled
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkNavigator
@@ -138,18 +137,29 @@ internal class BackendTerminalHyperlinkFacade(
     return results
   }
 
+  /**
+   * Applies [filters] to the hovered line without a read action, so they can block on
+   * the file system, see [InvisibleHyperlinkFilterProvider]. A failing filter is logged
+   * and contributes nothing.
+   */
   private suspend fun applyFilters(
     filters: List<Filter>,
     request: TerminalHoverLineRequest,
   ): List<TerminalFilterResultInfoDto> {
     if (filters.isEmpty()) return emptyList()
-    val filter = CompositeFilter(project, filters).also { it.setForceUseAllFilters(true) }
-    val input = HypertextFromCharSequenceAdapter(request.text)
-    return readAction {
+    val line = request.text + "\n" // a filter expects the line to end with a line break
+    return withContext(Dispatchers.IO) {
       val dtos = mutableListOf<TerminalFilterResultInfoDto>()
-      filter.applyToLineRange(input, 0, 0) { applyResult ->
+      for (filter in filters) {
         checkCanceled()
-        val items = applyResult.filterResult?.resultItems ?: return@applyToLineRange
+        val items = try {
+          filter.applyFilter(line, line.length)?.resultItems ?: continue
+        }
+        catch (e: Exception) {
+          rethrowControlFlowException(e)
+          PluginException.logPluginError(LOG, "Failed to find invisible hyperlinks", e, filter.javaClass)
+          continue
+        }
         for (item in items) {
           dtos += item.toFilterResultDtos(hyperlinkIdCounter) { offset -> request.startOffset + offset }
         }

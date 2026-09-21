@@ -23,6 +23,10 @@ interface InvisibleHyperlinkFilterProvider {
   /**
    * Returns the filters for the consumer identified by [scope],
    * or an empty list if the provider has nothing to contribute.
+   *
+   * The filters are applied on a background thread without a read action, so they may
+   * block on I/O, for example to check that a file exists. A filter that needs a read
+   * action takes one itself.
    */
   fun getFilters(project: Project, scope: GlobalSearchScope): List<Filter>
 

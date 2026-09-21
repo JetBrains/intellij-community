@@ -2,89 +2,41 @@ package com.intellij.terminal.tests.reworked.hyperlinks
 
 import com.intellij.execution.filters.Filter
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.isFile
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile
-import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelOsFamily
-import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.terminal.backend.hyperlinks.TerminalHyperlinkFilterContextImpl
 import org.assertj.core.api.Assertions
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalFileHyperlinkInfo
 import org.jetbrains.plugins.terminal.hyperlinks.filter.FILENAME_MAX
+import org.jetbrains.plugins.terminal.hyperlinks.filter.TerminalFileKind
 import org.jetbrains.plugins.terminal.hyperlinks.filter.TerminalGenericFileFilter
-import org.jetbrains.plugins.terminal.hyperlinks.filter.TerminalHyperlinkFilterContext
-import org.jetbrains.plugins.terminal.hyperlinks.filter.TerminalOpenFileHyperlinkInfo
-import org.junit.Assume
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito
-import org.mockito.kotlin.eq
-import org.mockito.kotlin.whenever
 
 internal class TerminalGenericFileFilterRelativePathTest {
 
-  private val localFileSystem: LocalFileSystem = Mockito.mock()
   private val project: Project = Mockito.mock()
-  private val filterContext: TerminalHyperlinkFilterContext = Mockito.mock()
-  private val eelDescriptor: EelDescriptor = LocalEelDescriptor
+  private val descriptor = TestEelDescriptor.POSIX
+  private val fileLookup = FakeTerminalFileLookup(descriptor)
+  private val filterContext = TerminalHyperlinkFilterContextImpl(descriptor, fileLookup.path("/home/user"))
 
-  // Mock virtual file system structure
-  private val rootDir: NewVirtualFile = Mockito.mock()
-  private val srcDir: NewVirtualFile = Mockito.mock()
-  private val mainKt: NewVirtualFile = Mockito.mock()
-  private val testDir: NewVirtualFile = Mockito.mock()
-  private val testKt: NewVirtualFile = Mockito.mock()
-  private val libDir: NewVirtualFile = Mockito.mock()
-  private val utilKt: NewVirtualFile = Mockito.mock()
-  private val readmeMd: NewVirtualFile = Mockito.mock()
+  // The fake file tree; parent directories are added implicitly.
+  private val srcDir: EelPath = fileLookup.addFile("/project/src", TerminalFileKind.DIRECTORY)
+  private val mainKt: EelPath = fileLookup.addFile("/project/src/Main.kt")
+  private val testKt: EelPath = fileLookup.addFile("/project/test/Test.kt")
+  private val libDir: EelPath = fileLookup.addFile("/project/lib", TerminalFileKind.DIRECTORY)
+  private val utilKt: EelPath = fileLookup.addFile("/project/lib/Util.kt")
+  private val readmeMd: EelPath = fileLookup.addFile("/project/README.md")
 
-  private lateinit var filter: TerminalGenericFileFilter
+  private val filter = TerminalGenericFileFilter(project, descriptor, filterContext, fileLookup)
 
   @Before
   fun setUp() {
-    Assume.assumeTrue(eelDescriptor.osFamily == EelOsFamily.Posix)
-    whenever(filterContext.eelDescriptor).thenReturn(eelDescriptor)
-
-    setupVirtualFile(rootDir, "/project", true)
-    setupVirtualFile(srcDir, "/project/src", true)
-    setupVirtualFile(mainKt, "/project/src/Main.kt", false)
-    setupVirtualFile(testDir, "/project/test", true)
-    setupVirtualFile(testKt, "/project/test/Test.kt", false)
-    setupVirtualFile(libDir, "/project/lib", true)
-    setupVirtualFile(utilKt, "/project/lib/Util.kt", false)
-    setupVirtualFile(readmeMd, "/project/README.md", false)
-
-    setupNewVirtualFileChildren(rootDir, mapOf(
-      "src" to srcDir,
-      "test" to testDir,
-      "lib" to libDir,
-      "README.md" to readmeMd
-    ))
-    setupNewVirtualFileChildren(srcDir, mapOf("Main.kt" to mainKt))
-    setupNewVirtualFileChildren(testDir, mapOf("Test.kt" to testKt))
-    setupNewVirtualFileChildren(libDir, mapOf("Util.kt" to utilKt))
-
-    whenever(filterContext.currentWorkingDirectory).thenReturn(rootDir)
-
-    filter = TerminalGenericFileFilter(project, filterContext, localFileSystem)
-  }
-
-  private fun setupVirtualFile(file: VirtualFile, path: String, isDirectory: Boolean) {
-    whenever(file.path).thenReturn(path)
-    whenever(file.isValid).thenReturn(true)
-    whenever(file.isDirectory).thenReturn(isDirectory)
-    whenever(localFileSystem.findFileByPathIfCached(eq(path))).thenReturn(file)
-  }
-
-  private fun setupNewVirtualFileChildren(parent: NewVirtualFile, children: Map<String, NewVirtualFile>) {
-    children.forEach { (name, child) ->
-      whenever(parent.findChildIfCached(eq(name))).thenReturn(child)
-      whenever(child.parent).thenReturn(parent)
-    }
+    filterContext.updateCurrentDirectory("/project")
   }
 
   private class ExpectedLink(
-    val file: VirtualFile,
+    val file: EelPath,
     val startOffset: Int,
     val endOffset: Int,
     val oneBasedLine: Int = 1,
@@ -99,10 +51,10 @@ internal class TerminalGenericFileFilterRelativePathTest {
   private fun assertEqualLinks(actualLink: Filter.ResultItem, expectedLink: ExpectedLink) {
     Assertions.assertThat(actualLink.highlightStartOffset).isEqualTo(expectedLink.startOffset)
     Assertions.assertThat(actualLink.highlightEndOffset).isEqualTo(expectedLink.endOffset)
-    Assertions.assertThat(actualLink.hyperlinkInfo).isInstanceOf(TerminalOpenFileHyperlinkInfo::class.java)
-    val hyperlinkInfo = actualLink.hyperlinkInfo as TerminalOpenFileHyperlinkInfo
-    Assertions.assertThat(hyperlinkInfo.virtualFile).isEqualTo(expectedLink.file)
-    if (expectedLink.file.isFile) {
+    Assertions.assertThat(actualLink.hyperlinkInfo).isInstanceOf(TerminalFileHyperlinkInfo::class.java)
+    val hyperlinkInfo = actualLink.hyperlinkInfo as TerminalFileHyperlinkInfo
+    Assertions.assertThat(hyperlinkInfo.path).isEqualTo(expectedLink.file)
+    if (fileLookup.kindOf(expectedLink.file) == TerminalFileKind.FILE) {
       Assertions.assertThat(hyperlinkInfo.lineNumber + 1).isEqualTo(expectedLink.oneBasedLine)
       Assertions.assertThat(hyperlinkInfo.columnNumber + 1).isEqualTo(expectedLink.oneBasedColumn)
     }
@@ -110,7 +62,7 @@ internal class TerminalGenericFileFilterRelativePathTest {
 
   private fun assertSingleLink(
     result: Filter.Result?,
-    expectedFile: VirtualFile,
+    expectedFile: EelPath,
     expectedLinkStartOffset: Int,
     expectedLinkEndOffset: Int,
     oneBasedLine: Int = 1,
@@ -232,7 +184,7 @@ internal class TerminalGenericFileFilterRelativePathTest {
 
   @Test
   fun `recognize paths with two dots slash prefix`() {
-    whenever(filterContext.currentWorkingDirectory).thenReturn(srcDir)
+    filterContext.updateCurrentDirectory("/project/src")
     val result = applyFilter("../test/Test.kt")
     assertSingleLink(result, testKt, 0, 15)
 
@@ -245,20 +197,25 @@ internal class TerminalGenericFileFilterRelativePathTest {
 
   @Test
   fun `recognize mixed paths with dots slash prefixes`() {
-    whenever(filterContext.currentWorkingDirectory).thenReturn(srcDir)
+    filterContext.updateCurrentDirectory("/project/src")
     val result = applyFilter("test ./Main.kt -> ../test/Test.kt")
     assertLinks(result, ExpectedLink(mainKt, 5, 14), ExpectedLink(testKt, 18, 33))
   }
 
   @Test
   fun `no context means no relative paths`() {
-    assertNoLinks("src/Main.kt", TerminalGenericFileFilter(project, null, localFileSystem))
+    assertNoLinks("src/Main.kt", TerminalGenericFileFilter(project, descriptor, null, fileLookup))
   }
 
   @Test
   fun `no current working directory means no relative paths`() {
-    whenever(filterContext.currentWorkingDirectory).thenReturn(null)
+    filterContext.updateCurrentDirectory(null)
     assertNoLinks("src/Main.kt")
+  }
+
+  @Test
+  fun `relative paths can be disabled`() {
+    assertNoLinks("src/Main.kt", TerminalGenericFileFilter(project, descriptor, filterContext, fileLookup, relativePaths = false))
   }
 
   @Test

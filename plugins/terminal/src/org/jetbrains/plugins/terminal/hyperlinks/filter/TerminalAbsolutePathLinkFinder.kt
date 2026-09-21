@@ -3,19 +3,17 @@ package org.jetbrains.plugins.terminal.hyperlinks.filter
 
 import com.intellij.execution.filters.Filter
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.path.EelPathException
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalFileHyperlinkInfo
 
 /**
  * Finds absolute file path links in terminal output.
  *
  * Detects Linux-style absolute paths (starting with `/`), Windows-style absolute paths
  * (starting with drive letter like `C:\` or `C:/`), and home-relative paths (starting with `~/` or `~\`).
+ * A path becomes a link only if [fileLookup] finds a file at it.
  *
  * This class uses a state machine to parse paths character by character for maximum performance.
  *
@@ -25,9 +23,9 @@ internal class TerminalAbsolutePathLinkFinder(
   private val project: Project,
   private val line: String,
   private val indexOffset: Int,
-  private val localFileSystem: LocalFileSystem,
-  private val eelDescriptor: EelDescriptor?,
+  private val eelDescriptor: EelDescriptor,
   private val homeDirectory: EelPath?,
+  private val fileLookup: TerminalFileLookup,
   private val foundLinkSink: (Filter.ResultItem) -> Unit,
 ) {
 
@@ -64,19 +62,19 @@ internal class TerminalAbsolutePathLinkFinder(
   }
 
   private fun findValidResult(pathEndIndex: Int, lineNumber: Int, columnNumber: Int): Filter.ResultItem? {
-    val file = findFile(pathEndIndex) ?: return null
+    val path = findFile(pathEndIndex) ?: return null
     return createInvisibleLink(
       indexOffset + pathStartIndex,
       indexOffset + i,
-      TerminalOpenFileHyperlinkInfo(project, file, lineNumber, columnNumber),
+      TerminalFileHyperlinkInfo(project, path, lineNumber, columnNumber),
     )
   }
 
   /**
    * Resolves `line[pathStartIndex, pathEndIndex)` as a file path.
-   * Returns `null` if it is not a plausible path or the file is not cached by the local file system.
+   * Returns `null` if it is not a plausible path or there is no such file.
    */
-  private fun findFile(pathEndIndex: Int): VirtualFile? {
+  private fun findFile(pathEndIndex: Int): EelPath? {
     if (pathEndIndex - lastPathSegmentStart > FILENAME_MAX) return null
     if (pathEndIndex - pathStartIndex < PATH_MIN) return null
 
@@ -91,7 +89,7 @@ internal class TerminalAbsolutePathLinkFinder(
       homeDirectory?.let { it.toString() + path.substring(1) } ?: return null
     }
     else path
-    return findFileByPathIfCached(resolvedPath)
+    return lookUp(resolvedPath)
   }
 
   /**
@@ -214,30 +212,15 @@ internal class TerminalAbsolutePathLinkFinder(
     }
   }
 
-  private fun findFileByPathIfCached(path: @NativePath String): VirtualFile? {
-    return try {
-      doFindFileByPathIfCached(path)
+  /** Returns [path] parsed for the terminal's environment if a file exists there. */
+  private fun lookUp(path: String): EelPath? {
+    if (path.isBlank()) return null
+    val eelPath = try {
+      EelPath.parse(path, eelDescriptor)
     }
-    catch (_: Throwable) {
-      // We interpret any exception to mean the file is not found.
-      null
+    catch (_: EelPathException) {
+      return null // not an absolute path in the environment of the terminal, e.g. a Windows path on Linux
     }
-  }
-
-  private fun doFindFileByPathIfCached(pathString: @NativePath String): VirtualFile? {
-    if (pathString.isBlank()) return null
-
-    // pathString is a path in the environment of EelDescriptor.
-    // We need to get the absolute NIO path (with prefix like `\\wsl.localhost\` - fully identifies the environment)
-    // Otherwise, LocalFileSystem might confuse it with a path in the local environment.
-    // Do not perform the conversion if the descriptor is local - it is not required + better performance.
-    val absolutePath = if (eelDescriptor != null && eelDescriptor != LocalEelDescriptor) {
-      val eelPath = EelPath.parse(pathString, eelDescriptor)
-      val nioPath = eelPath.asNioPath()
-      nioPath.toString()
-    }
-    else pathString
-
-    return localFileSystem.findFileByPathIfCached(absolutePath)
+    return eelPath.takeIf { fileLookup.lookup(it) != null }
   }
 }

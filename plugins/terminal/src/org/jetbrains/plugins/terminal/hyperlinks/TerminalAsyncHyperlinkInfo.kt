@@ -24,6 +24,9 @@ object TerminalHyperlinkNavigator {
   private val crossProjectNavigator = TerminalCrossProjectFileHyperlinkNavigator()
 
   suspend fun navigate(project: Project, hyperlinkInfo: HyperlinkInfo, mouseEvent: EditorMouseEvent?) {
+    if (hyperlinkInfo is TerminalFileHyperlinkInfo) {
+      hyperlinkInfo.refreshFile() // both navigators below need the file in the VFS
+    }
     if (crossProjectNavigator.navigate(project, hyperlinkInfo, mouseEvent)) {
       return
     }

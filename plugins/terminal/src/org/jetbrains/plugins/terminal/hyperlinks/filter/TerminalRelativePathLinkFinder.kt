@@ -4,24 +4,32 @@ package org.jetbrains.plugins.terminal.hyperlinks.filter
 import com.intellij.execution.filters.Filter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
 import it.unimi.dsi.fastutil.chars.CharOpenHashSet
 import it.unimi.dsi.fastutil.chars.CharSet
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalFileHyperlinkInfo
 
+/**
+ * Finds links to files relative to the shell's working directory in terminal output.
+ *
+ * Every path segment is looked up with [fileLookup], so a path becomes a link only if
+ * the file exists.
+ */
 internal class TerminalRelativePathLinkFinder(
   private val project: Project,
   private val line: String,
   private val indexOffset: Int,
   eelDescriptor: EelDescriptor,
-  private val initialWorkingDirectory: VirtualFile,
+  private val initialWorkingDirectory: EelPath,
+  private val fileLookup: TerminalFileLookup,
   private val foundLinkSink: (Filter.ResultItem) -> Unit
 ) {
 
   private val isWindows: Boolean = eelDescriptor.osFamily.isWindows
-  private var dir: VirtualFile = initialWorkingDirectory
+  private var dir: EelPath = initialWorkingDirectory
   private var pathStartIndex: Int = -1
   private var lastPathSegmentStart: Int = -1
 
@@ -47,7 +55,7 @@ internal class TerminalRelativePathLinkFinder(
       return false
     }
     val child = if (name.isNotEmpty()) {
-      findValidChild(dir, name) ?: return false
+      findChild(dir, name)?.path ?: return false
     }
     else {
       dir // directory path with a trailing slash
@@ -57,7 +65,7 @@ internal class TerminalRelativePathLinkFinder(
     foundLinkSink(createInvisibleLink(
       indexOffset + pathStartIndex,
       indexOffset + linkEndExclusiveIndex,
-      TerminalOpenFileHyperlinkInfo(project, child, oneBasedLine - 1, oneBasedColumn - 1),
+      TerminalFileHyperlinkInfo(project, child, oneBasedLine - 1, oneBasedColumn - 1),
     ))
     return true
   }
@@ -89,10 +97,10 @@ internal class TerminalRelativePathLinkFinder(
             when {
               isSeparator(char) -> {
                 val name = line.substring(lastPathSegmentStart, ind)
-                val child = if (name.isNotEmpty()) findValidChild(dir, name)?.takeIf { it.isDirectory } else null
+                val child = if (name.isNotEmpty()) findChild(dir, name)?.takeIf { it.kind == TerminalFileKind.DIRECTORY } else null
                 if (child != null) {
                   lastPathSegmentStart = ind + 1
-                  dir = child
+                  dir = child.path
                 }
                 else {
                   state = ParsingState.CANCELED_PATH
@@ -134,18 +142,28 @@ internal class TerminalRelativePathLinkFinder(
     return ind == 0 || isNonPathChar(line[ind - 1])
   }
 
-  private fun findValidChild(parentDirectory: VirtualFile, name: String) : VirtualFile? {
+  /**
+   * Returns the child [name] of [parentDirectory] with its kind, or `null` if there is
+   * no such file. `.` and `..` are resolved without a lookup.
+   */
+  private fun findChild(parentDirectory: EelPath, name: String): Child? {
     if (name == ".") {
-      return parentDirectory
+      return Child(parentDirectory, TerminalFileKind.DIRECTORY)
     }
     if (name == "..") {
-      return parentDirectory.parent
+      return parentDirectory.parent?.let { Child(it, TerminalFileKind.DIRECTORY) }
     }
-    if (parentDirectory is NewVirtualFile) {
-      return parentDirectory.findChildIfCached(name)?.takeIf { it.isValid }
+    val child = try {
+      parentDirectory.resolve(name)
     }
-    return null
+    catch (_: EelPathException) {
+      return null // not a valid file name in the environment of the terminal
+    }
+    val kind = fileLookup.lookup(child) ?: return null
+    return Child(child, kind)
   }
+
+  private class Child(val path: EelPath, val kind: TerminalFileKind)
 }
 
 internal fun parsePosition(line: String, colonInd: Int): Position? {

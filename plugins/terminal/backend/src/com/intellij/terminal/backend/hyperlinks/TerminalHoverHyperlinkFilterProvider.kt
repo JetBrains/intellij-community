@@ -7,17 +7,21 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.plugins.terminal.hyperlinks.filter.TerminalFilterScope
+import org.jetbrains.plugins.terminal.hyperlinks.filter.TerminalNioFileLookup
 import org.jetbrains.plugins.terminal.hyperlinks.filter.createTerminalGenericFileFilter
 
 /**
  * Provides the file path filter for the hovered terminal output line.
  *
- * When `terminal.hyperlinks.on.hover` is off, this provider contributes nothing
- * and `TerminalGenericFileFilterProvider` applies the same filter to every output line.
+ * Files are looked up through the NIO file system of the terminal's environment, so a
+ * file does not have to be in the VFS to become a link.
+ *
+ * When `terminal.hyperlinks.on.hover` is off, this provider contributes nothing and
+ * `TerminalGenericFileFilterProvider` applies the same filter to every output line.
  */
 internal class TerminalHoverHyperlinkFilterProvider : InvisibleHyperlinkFilterProvider {
   override fun getFilters(project: Project, scope: GlobalSearchScope): List<Filter> {
     if (scope !is TerminalFilterScope || !Registry.`is`("terminal.hyperlinks.on.hover", true)) return emptyList()
-    return listOfNotNull(createTerminalGenericFileFilter(project, scope))
+    return listOfNotNull(createTerminalGenericFileFilter(project, scope, TerminalNioFileLookup()))
   }
 }
