@@ -8,6 +8,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.ExternalAnnotator;
@@ -240,7 +241,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         RangeHighlighterEx highlighter = info.getHighlighter();
         if (highlighter != null) {
           Document hostDocument = highlighter.getDocument();
-          evictedMap.computeIfAbsent(hostDocument, _->HashSet.newHashSet(infos.size())).add(info);
+          evictedMap.computeIfAbsent(hostDocument, _ -> ConcurrentCollectionFactory.createConcurrentIdentitySet(infos.size())).add(info);
         }
       }
       for (Map.Entry<Document, Set<HighlightInfo>> entry : evictedMap.entrySet()) {
@@ -248,7 +249,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         Set<HighlightInfo> evictedInfos = entry.getValue();
         boolean changed = updateEvictedInfoList(document, storedInfos -> {
           if (storedInfos == null) {
-            storedInfos = ConcurrentHashMap.newKeySet(evictedInfos.size());
+            storedInfos = ConcurrentCollectionFactory.createConcurrentIdentitySet(evictedInfos.size());
           }
           storedInfos.addAll(evictedInfos); // the assumption is that these newly evicted infos are arriving one-by-one, or in batches, so there's a good chance that adding them to `storedInfo` is cheaper than vice versa
           return storedInfos;
@@ -499,12 +500,12 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     Ref<List<HighlightInfo>> toRemoveRef = new Ref<>(List.of());
     updateEvictedInfoList(document, evictedInfos->{
       if (evictedInfos == null) {
-        return ConcurrentHashMap.newKeySet();
+        return ConcurrentCollectionFactory.createConcurrentIdentitySet();
       }
       int size = evictedInfos.size();
       List<HighlightInfo> toRemove = new ArrayList<>(size);
       toRemoveRef.set(toRemove);
-      Set<HighlightInfo> newEvictedInfos = ConcurrentHashMap.newKeySet(size);
+      Set<HighlightInfo> newEvictedInfos = ConcurrentCollectionFactory.createConcurrentIdentitySet(size);
       for (HighlightInfo info : evictedInfos) {
         (predicate.matches(info.toolId) ? toRemove : newEvictedInfos).add(info);
       }
