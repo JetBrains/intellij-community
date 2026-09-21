@@ -518,7 +518,6 @@ class LinuxDistributionBuilder(
       "-Dawt.lock.fair=true",
       // disabled for Gateway until JBR supports system tray in the Wayland toolkit (IJPL-231661/JBR-9966)
       "-Dawt.toolkit.name=auto".takeIf { context.productProperties.platformPrefix != "Gateway" },
-      "-Dsun.java2d.vulkan=True",
     ))
     writeVmOptions(vmOptionsFile, vmOptions, separator = "\n")
     return vmOptionsFile
