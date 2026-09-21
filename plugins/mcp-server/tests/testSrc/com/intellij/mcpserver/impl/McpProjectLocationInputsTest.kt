@@ -8,6 +8,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.mcpserver.McpExpectedError
 import com.intellij.mcpserver.impl.util.projectPathParameterName
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
+import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -297,6 +298,20 @@ class McpProjectLocationInputsTest {
       }
         .isInstanceOf(McpExpectedError::class.java)
         .hasMessageContaining("doesn't correspond to any open project.")
+    }
+  }
+
+  @Test
+  fun `resolveInProject resolves a path against a content root outside the project directory`() {
+    runBlocking(Dispatchers.Default) {
+      val outerRootPath = outerRoot.virtualFile.toNioPath()
+      awaitBaseDirectory(outerRootProject, outerRootPath)
+      val fileName = "bazel-like-content-root-file.txt"
+      withContext(Dispatchers.IO) { Files.createFile(outerRootPath.resolve(fileName)) }
+
+      val resolved = outerRootProject.resolveInProject(fileName)
+
+      assertThat(resolved).isEqualTo(outerRootPath.resolve(fileName).normalize())
     }
   }
 
