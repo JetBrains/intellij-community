@@ -36,7 +36,7 @@ import com.intellij.openapi.editor.impl.FocusModeModel;
 import com.intellij.openapi.editor.impl.FoldingKeys;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
-import com.intellij.openapi.editor.impl.caret.model.CaretCursorSnapshot;
+import com.intellij.openapi.editor.impl.caret.model.CaretCursor;
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
 import com.intellij.openapi.editor.impl.caret.model.CaretRepaintMetrics;
 import com.intellij.openapi.editor.impl.TabCharacterPaintMode;
@@ -187,17 +187,17 @@ public final class EditorPainter implements TextDrawingCallback {
     new Session(myView, g).paint();
   }
 
-  void paintCaret(Graphics2D g, CaretCursorSnapshot snapshot, int yShift) {
-    new Session(myView, g).paintCaret(snapshot, yShift);
+  void paintCaret(Graphics2D g, CaretCursor caretCursor, int yShift) {
+    new Session(myView, g).paintCaret(caretCursor, yShift);
   }
 
-  Rectangle [] caretRectanglesForLocations(CaretRectangle @NotNull [] locations) {
+  @NotNull List<Rectangle> caretRectanglesForLocations(@NotNull List<CaretRectangle> locations) {
     return caretRectanglesForLocations(locations, CARET_CACHE_RECTANGLE_MARGIN, myView.getCaretRepaintMetrics());
   }
 
-  void repaintCarets(@NotNull CaretCursorSnapshot snapshot) {
-    var locations = snapshot.locations;
-    var metrics = snapshot.repaintMetrics;
+  void repaintCarets(@NotNull CaretCursor caretCursor) {
+    var locations = caretCursor.locations();
+    var metrics = caretCursor.repaintMetrics();
     var editor = myView.getEditor();
     for (var rectangle : caretRectanglesForLocations(locations, CARET_REPAINT_RECTANGLE_MARGIN, metrics)) {
       editor.getContentComponent().repaintCaret(
@@ -256,15 +256,15 @@ public final class EditorPainter implements TextDrawingCallback {
     return rectangle;
   }
 
-  private static Rectangle[] caretRectanglesForLocations(
-    CaretRectangle @NotNull [] locations,
+  private static @NotNull List<Rectangle> caretRectanglesForLocations(
+    @NotNull List<CaretRectangle> locations,
     int grow,
     @NotNull CaretRepaintMetrics metrics
   ) {
     return ContainerUtil.map(
       locations,
       location -> caretRectangleForLocationAndGrow(location, metrics.caretTopOverhang, metrics.caretHeight, grow)
-    ).toArray(Rectangle[]::new);
+    );
   }
 
   private static final class Session {
@@ -1574,23 +1574,23 @@ public final class EditorPainter implements TextDrawingCallback {
       if (myIsBuildingCache) return;
       if (myEditor.isPurePaintingMode()) return;
       if (myEditor.isStickyLinePainting()) return; // suppress caret painting on sticky lines panel
-      CaretCursorSnapshot snapshot = myEditor.getCaretCursorSnapshot(true);
-      if (snapshot == null) return;
-
-      paintCaret(snapshot, 0);
+      CaretCursor caretCursor = myEditor.getCaretCursor(true);
+      if (caretCursor != null) {
+        paintCaret(caretCursor, 0);
+      }
     }
 
     /// @noinspection GraphicsSetClipInspection
-    private void paintCaret(CaretCursorSnapshot snapshot, int yShift) {
+    private void paintCaret(CaretCursor caretCursor, int yShift) {
       Graphics2D g = IdeBackgroundUtil.getOriginalGraphics(myGraphics);
       EditorSettings settings = myEditor.getSettings();
       Color caretColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
       if (caretColor == null) caretColor = new JBColor(CARET_DARK, CARET_LIGHT);
       int minX = myInsets.left;
-      int caretHeight = snapshot.repaintMetrics.caretHeight;
-      int topOverhang = snapshot.repaintMetrics.caretTopOverhang;
-      float opacity = snapshot.blinkOpacity;
-      for (CaretRectangle location : snapshot.locations) {
+      int caretHeight = caretCursor.repaintMetrics().caretHeight;
+      int topOverhang = caretCursor.repaintMetrics().caretTopOverhang;
+      float opacity = caretCursor.blinkOpacity();
+      for (CaretRectangle location : caretCursor.locations()) {
         float x = (float)location.getX();
         int y = (int)location.getY() - topOverhang + myYShift + yShift;
         Caret caret = location.getCaret();

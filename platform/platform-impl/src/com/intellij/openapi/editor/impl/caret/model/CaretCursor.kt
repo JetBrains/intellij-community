@@ -11,23 +11,45 @@ import kotlin.time.Duration
  * @param lastActivityAt when the caret was last shown or moved, or `null` while it has never been shown.
  *                       The quiet period that holds the blink off is measured from this moment.
  */
-internal class CaretCursorSnapshot private constructor(
-  @JvmField val locations: Array<CaretRectangle>,
-  @JvmField val isEnabled: Boolean,
-  @JvmField val isShown: Boolean,
-  @JvmField val blinkOpacity: Float,
-  @JvmField val repaintMetrics: CaretRepaintMetrics,
+internal class CaretCursor private constructor(
+  private val locations: List<CaretRectangle>,
+  private val isEnabled: Boolean,
+  private val isShown: Boolean,
+  private val blinkOpacity: Float,
+  private val repaintMetrics: CaretRepaintMetrics,
   private val lastActivityAt: AnimationTimeMark?,
 ) {
   /**
    * Whether the caret asks to be painted. The editor still has to agree, because a caret in a renderer or in an
    * unfocused editor stays hidden whatever the snapshot says.
    */
-  val wantsToBeShown: Boolean get() = isEnabled && isShown
+  fun wantsToBeShown(): Boolean {
+    return isEnabled && isShown
+  }
 
-  val isFullyOpaque: Boolean get() = blinkOpacity == FULL_OPACITY
+  fun isFullyOpaque(): Boolean {
+    return blinkOpacity == FULL_OPACITY
+  }
 
-  /// MARK: queries
+  fun locations(): List<CaretRectangle> {
+    return locations
+  }
+
+  fun isEnabled(): Boolean {
+    return isEnabled
+  }
+
+  fun isShown(): Boolean {
+    return isShown
+  }
+
+  fun blinkOpacity(): Float {
+    return blinkOpacity
+  }
+
+  fun repaintMetrics(): CaretRepaintMetrics {
+    return repaintMetrics
+  }
 
   /**
    * How long the caret has been idle at [now], or [Duration.INFINITE] while it has never been shown.
@@ -40,48 +62,46 @@ internal class CaretCursorSnapshot private constructor(
   /**
    * Whether [other] would be painted at a visibly different opacity than this snapshot.
    */
-  fun opacityDiffersFrom(other: CaretCursorSnapshot): Boolean {
+  fun opacityDiffersFrom(other: CaretCursor): Boolean {
     return opacityLevelOf(blinkOpacity) != opacityLevelOf(other.blinkOpacity)
   }
 
-  /// MARK: transitions
-
-  fun withEnabled(enabled: Boolean): CaretCursorSnapshot {
+  fun withEnabled(enabled: Boolean): CaretCursor {
     if (enabled == isEnabled) {
       return this
     }
-    return CaretCursorSnapshot(locations, enabled, isShown, blinkOpacity, repaintMetrics, lastActivityAt)
+    return CaretCursor(locations, enabled, isShown, blinkOpacity, repaintMetrics, lastActivityAt)
   }
 
   /**
    * Showing the caret counts as activity and makes it fully opaque; hiding it leaves both untouched.
    */
-  fun withShown(shown: Boolean, now: AnimationTimeMark): CaretCursorSnapshot {
+  fun withShown(shown: Boolean, now: AnimationTimeMark): CaretCursor {
     if (!shown) {
-      return CaretCursorSnapshot(locations, isEnabled, false, blinkOpacity, repaintMetrics, lastActivityAt)
+      return CaretCursor(locations, isEnabled, false, blinkOpacity, repaintMetrics, lastActivityAt)
     }
-    return CaretCursorSnapshot(locations, isEnabled, true, FULL_OPACITY, repaintMetrics, now)
+    return CaretCursor(locations, isEnabled, true, FULL_OPACITY, repaintMetrics, now)
   }
 
   /**
    * Shows the caret at full opacity, which is how it looks while the user is busy typing.
    */
-  fun shownFullyOpaque(): CaretCursorSnapshot {
-    return CaretCursorSnapshot(locations, isEnabled, true, FULL_OPACITY, repaintMetrics, lastActivityAt)
+  fun shownFullyOpaque(): CaretCursor {
+    return CaretCursor(locations, isEnabled, true, FULL_OPACITY, repaintMetrics, lastActivityAt)
   }
 
-  fun withActivityAt(activityAt: AnimationTimeMark): CaretCursorSnapshot {
-    return CaretCursorSnapshot(locations, isEnabled, isShown, blinkOpacity, repaintMetrics, activityAt)
+  fun withActivityAt(activityAt: AnimationTimeMark): CaretCursor {
+    return CaretCursor(locations, isEnabled, isShown, blinkOpacity, repaintMetrics, activityAt)
   }
 
   /**
    * Adopts the metrics the caret is repainted with, so that a repaint of this snapshot covers the caret it paints.
    */
-  fun withRepaintMetrics(repaintMetrics: CaretRepaintMetrics): CaretCursorSnapshot {
+  fun withRepaintMetrics(repaintMetrics: CaretRepaintMetrics): CaretCursor {
     if (repaintMetrics == this.repaintMetrics) {
       return this
     }
-    return CaretCursorSnapshot(locations, isEnabled, isShown, blinkOpacity, repaintMetrics, lastActivityAt)
+    return CaretCursor(locations, isEnabled, isShown, blinkOpacity, repaintMetrics, lastActivityAt)
   }
 
   /**
@@ -94,11 +114,11 @@ internal class CaretCursorSnapshot private constructor(
     blinkOpacity: Float?,
     now: AnimationTimeMark,
     repaintMetrics: CaretRepaintMetrics,
-  ): CaretCursorSnapshot {
+  ): CaretCursor {
     val nextActivityAt = if (locations == null) lastActivityAt else now
-    val nextLocations = locations?.toTypedArray() ?: this.locations
+    val nextLocations = locations ?: this.locations
     val nextOpacity = blinkOpacity ?: this.blinkOpacity
-    return CaretCursorSnapshot(
+    return CaretCursor(
       locations = nextLocations,
       isEnabled = isEnabled,
       isShown = isShown,
@@ -111,11 +131,13 @@ internal class CaretCursorSnapshot private constructor(
   /**
    * Opacity quantised to what the painter can actually show, so that a change below one level requests no repaint.
    */
-  private fun opacityLevelOf(opacity: Float): Int = (opacity * OPACITY_LEVELS).toInt()
+  private fun opacityLevelOf(opacity: Float): Int {
+    return (opacity * OPACITY_LEVELS).toInt()
+  }
 
   companion object {
-    val INITIAL: CaretCursorSnapshot = CaretCursorSnapshot(
-      locations = arrayOf(CaretRectangle.PLACEHOLDER),
+    val INITIAL: CaretCursor = CaretCursor(
+      locations = listOf(CaretRectangle.PLACEHOLDER),
       isEnabled = true,
       isShown = false,
       blinkOpacity = FULL_OPACITY,
@@ -124,7 +146,6 @@ internal class CaretCursorSnapshot private constructor(
     )
 
     private const val FULL_OPACITY = 1.0f
-
     private const val OPACITY_LEVELS = 255f
   }
 }

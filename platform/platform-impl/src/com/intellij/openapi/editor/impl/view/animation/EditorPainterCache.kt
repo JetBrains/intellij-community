@@ -31,7 +31,7 @@ import java.awt.image.BufferedImage
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 
-internal class EditorAnimationCache(
+internal class EditorPainterCache(
   private val editor: EditorImpl,
 ) : Disposable {
   private val coroutineScope: CoroutineScope = editor.coroutineScope
@@ -198,7 +198,7 @@ internal class EditorAnimationCache(
    */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun caretCacheRectangles(locations: List<CaretRectangle>): List<Rectangle2D> {
-    val caretRectangles = editor.view.caretRectanglesForLocations(locations.toTypedArray())
+    val caretRectangles = editor.view.caretRectanglesForLocations(locations)
     return caretRectangles.map { rectangle -> rectangle.coerceAtLeastEmpty() }
   }
 
@@ -227,7 +227,7 @@ internal class EditorAnimationCache(
     }
     // Only remember the key once the zone is actually cached, so a transient failure doesn't skip every later
     // attempt: the caret key stays the same for a whole move, and giving up on it would leave the move uncached.
-    request.storeKeyIn(lastCacheKey)
+    lastCacheKey.set(request.key)
   }
 
   /**
@@ -284,7 +284,7 @@ internal class EditorAnimationCache(
   }
 
   companion object {
-    private val LOG = logger<EditorAnimationCache>()
+    private val LOG = logger<EditorPainterCache>()
 
     private val DISPATCHER = Dispatchers.Default.limitedParallelism(1, "EditorAnimationCache")
 

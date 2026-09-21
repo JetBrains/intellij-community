@@ -32,11 +32,11 @@ import com.intellij.openapi.editor.impl.FocusModeModel;
 import com.intellij.openapi.editor.impl.FoldingModelInternal;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
-import com.intellij.openapi.editor.impl.caret.model.CaretCursorSnapshot;
+import com.intellij.openapi.editor.impl.caret.model.CaretCursor;
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
 import com.intellij.openapi.editor.impl.caret.model.CaretRepaintMetrics;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
-import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCache;
+import com.intellij.openapi.editor.impl.view.animation.EditorPainterCache;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -67,6 +67,7 @@ import java.awt.font.LineMetrics;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.text.Bidi;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 /**
@@ -220,7 +221,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return layout == null ? 0 : layout.getWidth();
   }
 
-  public void paint(@NotNull Graphics2D g, @Nullable EditorAnimationCache cache) {
+  public void paint(@NotNull Graphics2D g, @Nullable EditorPainterCache cache) {
     getSoftWrapModel().prepareToMapping();
     checkFontRenderContext(g.getFontRenderContext());
     Rectangle clip = g.getClipBounds();
@@ -240,7 +241,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   @RequiresEdt
-  public Rectangle @NotNull [] caretRectanglesForLocations(CaretRectangle @NotNull [] locations) {
+  public @NotNull List<Rectangle> caretRectanglesForLocations(@NotNull List<CaretRectangle> locations) {
     return myPainter.caretRectanglesForLocations(locations);
   }
 
@@ -248,8 +249,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     myEditor.invalidateAnimationCaches(null);
   }
 
-  public void repaintCarets(@NotNull CaretCursorSnapshot snapshot) {
-    myPainter.repaintCarets(snapshot);
+  public void repaintCarets(@NotNull CaretCursor caretCursor) {
+    myPainter.repaintCarets(caretCursor);
   }
 
   @RequiresEdt
@@ -644,15 +645,15 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   private void paintCaretFrame(Graphics2D graphics) {
-    CaretCursorSnapshot snapshot = myEditor.getCaretCursorSnapshot(true);
-    if (snapshot == null) {
+    CaretCursor caretCursor = myEditor.getCaretCursor(true);
+    if (caretCursor == null) {
       return;
     }
     Rectangle clip = graphics.getClipBounds();
     if (clip == null) {
       return;
     }
-    myPainter.paintCaret(graphics, snapshot, clip.y);
+    myPainter.paintCaret(graphics, caretCursor, clip.y);
   }
 
   private void runPaintCallback() {

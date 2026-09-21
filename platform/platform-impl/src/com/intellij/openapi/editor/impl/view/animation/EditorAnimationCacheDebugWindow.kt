@@ -29,7 +29,7 @@ import javax.swing.SwingUtilities
  * Mirrors the zones of one animation cache in a window above the editor.
  *
  * The window ignores every mouse event, so the editor receives them all and stays fully usable. A repaint of the
- * window reaches no component of the editor, so it cannot run [EditorAnimationCache.invalidate]. The marks therefore
+ * window reaches no component of the editor, so it cannot run [EditorPainterCache.invalidate]. The marks therefore
  * show the cache as it is, and they need nothing from the paint cycle of the editor.
  */
 internal class EditorAnimationCacheDebugWindow(

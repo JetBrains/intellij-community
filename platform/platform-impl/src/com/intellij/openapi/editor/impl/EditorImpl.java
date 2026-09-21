@@ -119,7 +119,7 @@ import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.caret.EditorCaretMutator;
-import com.intellij.openapi.editor.impl.caret.model.CaretCursorSnapshot;
+import com.intellij.openapi.editor.impl.caret.model.CaretCursor;
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
@@ -132,7 +132,7 @@ import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLinesPanel;
 import com.intellij.openapi.editor.impl.view.CharacterGrid;
 import com.intellij.openapi.editor.impl.view.CharacterGridImpl;
 import com.intellij.openapi.editor.impl.view.EditorView;
-import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCache;
+import com.intellij.openapi.editor.impl.view.animation.EditorPainterCache;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -359,7 +359,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   boolean myCursorSetExternally;
 
   private boolean myIsCurrentlyBuildingCache = false;
-  private final @Nullable EditorAnimationCache myContentAnimationCache;
+  private final @Nullable EditorPainterCache myContentAnimationCache;
   private final @NotNull EditorCaretMutator caretMutator;
 
   private static final Integer SCROLL_PANE_LAYER = 0;
@@ -701,7 +701,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myView = new EditorView(this, myEditorModel);
     myContentAnimationCache = Registry.is("editor.animation.cache.enabled")
-                              ? new EditorAnimationCache(this)
+                              ? new EditorPainterCache(this)
                               : null;
     if (myContentAnimationCache != null) {
       Disposer.register(myDisposable, myContentAnimationCache);
@@ -1712,7 +1712,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myMarkupModel.repaint();
         if (!isRightAligned()) return;
         updateCaretCursor();
-        repaintCaretCursorSnapshot();
+        repaintCaretCursor();
       }
     });
   }
@@ -1981,7 +1981,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Object oldValue = extractOldValueOrLog(event, false);
     myPropertyChangeSupport.firePropertyChange(PROP_INSERT_MODE, oldValue, event.getNewValue());
 
-    repaintCaretCursorSnapshot();
+    repaintCaretCursor();
   }
 
   @Override
@@ -2661,7 +2661,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myUpdateCursor = false;
     }
 
-    EditorAnimationCache cache = canPaintFromContentAnimationCache() ? myContentAnimationCache : null;
+    EditorPainterCache cache = canPaintFromContentAnimationCache() ? myContentAnimationCache : null;
     myView.paint(g, cache);
 
     boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
@@ -2863,15 +2863,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @ApiStatus.Internal
-  public CaretRectangle @Nullable [] getCaretLocations(boolean onlyIfShown) {
-    CaretCursorSnapshot snapshot = getCaretCursorSnapshot(onlyIfShown);
-    return snapshot == null ? null : snapshot.locations;
+  public @Nullable List<CaretRectangle> getCaretLocations(boolean onlyIfShown) {
+    CaretCursor caretCursor = getCaretCursor(onlyIfShown);
+    return caretCursor == null ? null : caretCursor.locations();
   }
 
   @ApiStatus.Internal
-  public @Nullable CaretCursorSnapshot getCaretCursorSnapshot(boolean onlyIfShown) {
-    CaretCursorSnapshot snapshot = caretMutator.snapshot();
-    return onlyIfShown && !isCaretShown(snapshot) ? null : snapshot;
+  public @Nullable CaretCursor getCaretCursor(boolean onlyIfShown) {
+    CaretCursor caretCursor = caretMutator.caretCursor();
+    return onlyIfShown && !isCaretShown(caretCursor) ? null : caretCursor;
   }
 
   @Override
@@ -3599,17 +3599,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   void updateCaretCursor() {
     myUpdateCursor = true;
-    if (caretMutator.snapshot().isShown) {
+    if (caretMutator.caretCursor().isShown()) {
       caretMutator.recordActivity();
     }
     else {
       caretMutator.showFullyOpaque();
-      repaintCaretCursorSnapshot();
+      repaintCaretCursor();
     }
   }
 
-  private void repaintCaretCursorSnapshot() {
-    myView.repaintCarets(caretMutator.snapshot());
+  private void repaintCaretCursor() {
+    myView.repaintCarets(caretMutator.caretCursor());
   }
 
   @ApiStatus.Internal
@@ -3708,8 +3708,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @ApiStatus.Internal
-  public boolean isCaretShown(@NotNull CaretCursorSnapshot snapshot) {
-    return snapshot.getWantsToBeShown() && !isRendererMode() && isEditorInputFocusOwner();
+  public boolean isCaretShown(@NotNull CaretCursor caretCursor) {
+    return caretCursor.wantsToBeShown() &&
+           !isRendererMode() &&
+           isEditorInputFocusOwner();
   }
 
   private final class ScrollingTimer {

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -87,12 +86,14 @@ public final class ImmediatePainter {
 
   ImmediatePainter(EditorImpl editor) {
     myEditor = editor;
-
-    Disposer.register(editor.getDisposable(), () -> {
-      if (myImage != null) {
-        myImage.flush();
+    EditorUtil.disposeWithEditor(
+      editor,
+      () -> {
+        if (myImage != null) {
+          myImage.flush();
+        }
       }
-    });
+    );
   }
 
   boolean paint(final Graphics g, final EditorActionPlan plan) {
@@ -201,7 +202,7 @@ public final class ImmediatePainter {
 
     Caret caret = editor.getCaretModel().getPrimaryCaret();
     //noinspection ConstantConditions
-    final float caretWidth = isBlockCursor ? editor.getCaretLocations(false)[0].getWidth()
+    final float caretWidth = isBlockCursor ? editor.getCaretLocations(false).getFirst().getWidth()
                                          : JBUIScale.scale(caret.getVisualAttributes().getWidth(settings.getLineCursorWidth())) * myEditor.getScale();
     final float caretShift = isBlockCursor ? 0 : caretWidth <= 1 ? 0 : 1 / JBUIScale.sysScale(g);
     final Rectangle2D caretRectangle = new Rectangle2D.Float(p2x + width2 - caretShift, p2y - topOverhang,

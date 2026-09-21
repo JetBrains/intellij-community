@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.impl.caret.model.CaretCursorSnapshot
+import com.intellij.openapi.editor.impl.caret.model.CaretCursor
 import com.intellij.openapi.editor.impl.caret.model.CaretFrameInterval
 import com.intellij.openapi.editor.impl.caret.model.CaretTick
 import com.intellij.openapi.editor.impl.view.animation.AnimationClock
@@ -54,13 +54,13 @@ internal class EditorCaretMutator internal constructor(
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun caretMoved() {
     val placements = editor.caretPlacements()
-    val isCaretShown = editor.isCaretShown(snapshot())
+    val isCaretShown = editor.isCaretShown(caretCursor())
     val repaintMetrics = editor.view.caretRepaintMetrics
     val tick = tick(CaretFrameInterval.MOVEMENT)
     val next = state.updateAndGet {
       it.retarget(placements, tick, isCaretShown, repaintMetrics)
     }
-    if (next.isMotionSettled) {
+    if (next.isMotionSettled()) {
       advanceNow(tick)
     } else {
       ensureLoop()
@@ -92,32 +92,32 @@ internal class EditorCaretMutator internal constructor(
     ensureLoop()
   }
 
-  fun snapshot(): CaretCursorSnapshot {
-    return state.value.snapshot
+  fun caretCursor(): CaretCursor {
+    return state.value.caretCursor()
   }
 
   fun setEnabled(enabled: Boolean): Boolean {
-    val previous: CaretCursorSnapshot = state.getAndUpdate {
+    val previous: CaretCursor = state.getAndUpdate {
       it.withEnabled(enabled)
-    }.snapshot
-    if (previous.isEnabled != enabled) {
+    }.caretCursor()
+    if (previous.isEnabled() != enabled) {
       repaint(previous)
     }
-    return previous.isEnabled
+    return previous.isEnabled()
   }
 
   fun setVisible(visible: Boolean): Boolean {
     val previousState = state.getAndUpdate {
       it.withShown(visible, AnimationClock.markAnimationNow())
     }
-    val previous = previousState.snapshot
-    val visibilityChanged = previous.isShown != visible
-    val becomesFullyOpaque = visible && !previous.isFullyOpaque
+    val previous = previousState.caretCursor()
+    val visibilityChanged = previous.isShown() != visible
+    val becomesFullyOpaque = visible && !previous.isFullyOpaque()
     if (visibilityChanged || becomesFullyOpaque) {
       repaint(previous)
     }
     ensureLoop()
-    return previous.isShown
+    return previous.isShown()
   }
 
   fun setBlinking(blinking: Boolean) {
@@ -173,7 +173,7 @@ internal class EditorCaretMutator internal constructor(
     }
     val wasRunning = state.getAndUpdate {
       it.withRunning(true)
-    }.isRunning
+    }.isRunning()
     if (wasRunning) {
       return
     }
@@ -200,7 +200,7 @@ internal class EditorCaretMutator internal constructor(
         // Wake up when the next frame is due, or as soon as somebody else changes the state.
         withTimeoutOrNull(step.nextDelay) {
           state.first {
-            it.version != step.version
+            it.version() != step.version
           }
         }
       }
@@ -257,21 +257,21 @@ internal class EditorCaretMutator internal constructor(
     if (prefetch != null) {
       editor.prefetchCaretFrames(prefetch)
     }
-    // Erasing the previous locations also erases the carets that were removed, because the snapshot still holds them.
+    // Erasing the previous locations also erases the carets that were removed, because the caretCursor still holds them.
     if (step.moved) {
-      repaint(previousState.snapshot)
+      repaint(previousState.caretCursor())
     }
     val needsRedraw = step.moved || step.opacityChanged
     if (needsRedraw) {
-      repaint(nextState.snapshot)
+      repaint(nextState.caretCursor())
     }
   }
 
-  private fun repaint(snapshot: CaretCursorSnapshot) {
+  private fun repaint(caretCursor: CaretCursor) {
     if (disposed.get()) {
       return
     }
-    editor.view.repaintCarets(snapshot)
+    editor.view.repaintCarets(caretCursor)
   }
 
   /**
@@ -290,7 +290,7 @@ internal class EditorCaretMutator internal constructor(
       now = now,
       frameDuration = frameDuration,
       settings = settings.get(),
-      elapsedQuietTime = snapshot().quietTimeAt(now),
+      elapsedQuietTime = caretCursor().quietTimeAt(now),
     )
   }
 
