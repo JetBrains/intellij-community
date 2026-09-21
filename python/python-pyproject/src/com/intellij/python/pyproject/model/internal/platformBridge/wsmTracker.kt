@@ -13,12 +13,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.CheckReturnValue
 
 
 /**
  * Tracks the workspace model of [project] for a change that the `pyproject.toml` model reads.
- * Calls [onWsmChanged] if one happens. Be sure to cancel the returned job when not needed.
+ * Calls [onWsmChanged] if one happens. Cancelling the calling scope stops the tracker.
  * Establishes the subscription before returning.
  *
  * The first argument of [onWsmChanged] holds every directory that stopped being excluded. The scanning pass
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.CheckReturnValue
  * The second argument names the change that woke the tracker. A rebuild writes to the workspace model itself,
  * so this reason tells a reader whether a build started another build.
  */
-@CheckReturnValue
 internal fun CoroutineScope.createWsmTracker(project: Project, onWsmChanged: (Set<VirtualFile>, String) -> Unit): Job =
   launch(start = CoroutineStart.UNDISPATCHED) {
     project.workspaceModel.eventLog.collect { event ->

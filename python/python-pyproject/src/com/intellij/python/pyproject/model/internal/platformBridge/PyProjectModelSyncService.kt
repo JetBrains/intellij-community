@@ -108,13 +108,12 @@ internal class PyProjectModelSyncService(private val project: Project, private v
     ensureActive()
     val vfsListenerDisposable = Disposer.newDisposable("PyProjectModelSyncService")
     val requests = PendingRebuildRequests()
-    var wsmTrackerJob: Job? = null
     try {
       knownRoots = setOf(project.stateStore.projectBasePath)
       requests.changes
         .onSubscription {
           subscribeToPyProjectTomlChanges(vfsListenerDisposable, { knownRoots }, requests::add)
-          wsmTrackerJob = createWsmTracker(project) { unExcluded, reason ->
+          createWsmTracker(project) { unExcluded, reason ->
             requests.add(RebuildRequest(unExcluded, reason))
           }
           loadProjectRootsIntoVfs()
@@ -135,7 +134,6 @@ internal class PyProjectModelSyncService(private val project: Project, private v
         }
     }
     finally {
-      wsmTrackerJob?.cancel()
       Disposer.dispose(vfsListenerDisposable)
     }
   }
