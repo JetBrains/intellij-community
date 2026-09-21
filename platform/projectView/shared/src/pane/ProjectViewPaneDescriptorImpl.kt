@@ -4,6 +4,7 @@ package com.intellij.platform.projectView.pane
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.serialization.Serializable
@@ -68,6 +69,10 @@ enum class ProjectViewPaneKind {
   BACKEND,
   LIGHT,
   UI_ONLY,
+  ;
+  companion object {
+    val DATA_KEY: DataKey<ProjectViewPaneKind> = DataKey.create("ProjectViewPaneKind")
+  }
 }
 
 @ApiStatus.Internal

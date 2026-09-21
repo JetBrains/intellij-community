@@ -31,6 +31,7 @@ import com.intellij.platform.projectView.pane.ProjectViewNodeModelImpl
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
+import com.intellij.platform.projectView.pane.ProjectViewPaneKind
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
@@ -404,6 +405,7 @@ internal class TreeBasedFrontendProjectViewPane(
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[ProjectViewPaneId.DATA_KEY] = paneTreeModel.descriptor.id
+    sink[ProjectViewPaneKind.DATA_KEY] = paneTreeModel.descriptor.kind
     sink[PROJECT_VIEW_SELECTED_NODE_IDS_KEY] = tree.selectionPaths?.mapNotNull { path ->
       (path?.lastPathComponent as? Node)?.projectViewNode?.id
     }
