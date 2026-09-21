@@ -20,6 +20,7 @@ import io.netty.util.ReferenceCountUtil
 import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.intellij.build.io.unmapBuffer
 import java.nio.MappedByteBuffer
+import java.nio.channels.ClosedChannelException
 import java.nio.channels.FileChannel
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -129,6 +130,12 @@ private class WebDavPutStatusChecker<T : Any>(
 ) : ChannelInboundHandlerAdapter() {
   override fun exceptionCaught(context: ChannelHandlerContext, cause: Throwable) {
     result.completeExceptionally(cause)
+  }
+
+  override fun channelInactive(context: ChannelHandlerContext) {
+    // a closed parent channel fires channelInactive, not exceptionCaught - no-op when the result is already completed
+    result.completeExceptionally(ClosedChannelException())
+    context.fireChannelInactive()
   }
 
   override fun channelRead(ctx: ChannelHandlerContext, message: Any) {

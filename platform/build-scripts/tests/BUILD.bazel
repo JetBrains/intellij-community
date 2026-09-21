@@ -134,6 +134,10 @@ jvm_library(
         "//platform/runtime/repository:repository_test_lib",
         "//libraries/junit5-params",
         "//libraries/junit5-params:junit5-params_test_lib",
+        "//libraries/netty/codec-http:libraries-netty-codec-http",
+        "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+        "//libraries/zstd-jni",
+        "//libraries/zstd-jni:zstd-jni_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.tests` end

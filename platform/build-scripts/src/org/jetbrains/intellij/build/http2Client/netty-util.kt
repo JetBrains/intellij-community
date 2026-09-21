@@ -13,6 +13,7 @@ import io.netty.handler.codec.http2.Http2StreamChannel
 import io.netty.util.concurrent.Future
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.nio.channels.ClosedChannelException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -109,6 +110,12 @@ internal abstract class InboundHandlerResultTracker<T : Any>(
 ) : SimpleChannelInboundHandler<T>() {
   override fun exceptionCaught(context: ChannelHandlerContext, cause: Throwable) {
     result.completeExceptionally(cause)
+  }
+
+  override fun channelInactive(context: ChannelHandlerContext) {
+    // a closed parent channel fires channelInactive, not exceptionCaught - no-op when the result is already completed
+    result.completeExceptionally(ClosedChannelException())
+    context.fireChannelInactive()
   }
 }
 

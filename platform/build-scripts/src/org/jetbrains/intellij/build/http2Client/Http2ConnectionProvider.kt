@@ -31,6 +31,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
@@ -54,6 +55,8 @@ private class ConnectionState(
 )
 
 private const val MAX_ATTEMPTS = 3
+// a closed connection triggers a retry without an attempt increment - bound such retries separately
+internal const val MAX_RECONNECTS = 10
 
 // https://cabulous.medium.com/http-2-and-how-it-works-9f645458e4b2
 // https://stackoverflow.com/questions/55087292/how-to-handle-http-2-goaway-with-java-net-httpclient
@@ -102,6 +105,12 @@ internal class Http2ConnectionProvider(
         connectionRef.compareAndSet(connection, null)
       }
     })
+    // fires for every close reason (GOAWAY, reset, network drop, our own close) - evict the dead connection,
+    // so in-flight streams get canceled and the next getConnection() opens a new channel
+    channel.closeFuture().addListener {
+      connection.coroutineScope.coroutineContext.cancel(CancellationException("TCP connection closed"))
+      connectionRef.compareAndSet(connection, null)
+    }
     val old = connectionRef.getAndSet(connection)
     require(old == null || !old.coroutineScope.isActive) {
       "Old connection must be inactive before opening a new one"
@@ -142,6 +151,7 @@ internal class Http2ConnectionProvider(
 
   suspend fun <T> stream(block: suspend (streamChannel: Http2StreamChannel, result: CompletableDeferred<T>) -> Unit): T {
     var attempt = 1
+    var reconnects = 0
     var suppressedExceptions: MutableList<Throwable>? = null
     while (true) {
       var currentConnection: ConnectionState? = null
@@ -157,13 +167,15 @@ internal class Http2ConnectionProvider(
         handleHttpError(e = e, attempt = attempt, currentConnection = currentConnection)
       }
       catch (e: CancellationException) {
-        if (coroutineContext.isActive) {
-          // task is canceled (due to GoAway or other such reasons), but not parent context - retry (without incrementing attemptIndex)
-          continue
-        }
-        else {
+        if (!currentCoroutineContext().isActive) {
           throw e
         }
+
+        // task is canceled (due to GoAway or a closed connection), but not parent context - retry (without incrementing attemptIndex)
+        if (++reconnects > MAX_RECONNECTS) {
+          throw RuntimeException("connection closed $reconnects times", e)
+        }
+        continue
       }
       catch (e: UnexpectedHttpStatus) {
         // retry only for server errors

@@ -11,6 +11,7 @@ import io.netty.handler.codec.http2.Http2HeadersFrame
 import io.netty.util.ReferenceCountUtil
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ensureActive
+import java.nio.channels.ClosedChannelException
 import java.nio.file.Path
 
 private const val MAX_BUFFER_SIZE = 8 * 1014 * 1024
@@ -32,6 +33,12 @@ internal class ZstdDecompressingFileDownloadHandler(
 
   override fun exceptionCaught(context: ChannelHandlerContext, cause: Throwable) {
     result.completeExceptionally(cause)
+  }
+
+  override fun channelInactive(context: ChannelHandlerContext) {
+    // a closed parent channel fires channelInactive, not exceptionCaught - no-op when the result is already completed
+    result.completeExceptionally(ClosedChannelException())
+    context.fireChannelInactive()
   }
 
   override fun handlerAdded(ctx: ChannelHandlerContext?) {
