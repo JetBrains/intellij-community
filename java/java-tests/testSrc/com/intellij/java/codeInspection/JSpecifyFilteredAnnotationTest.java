@@ -2,54 +2,23 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.NullabilityAnnotationInfo;
-import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase;
-import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
-import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.nullable.NotNullFieldNotInitializedInspection;
-import com.intellij.codeInspection.nullable.NullableStuffInspection;
-import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.LineColumn;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLambdaExpression;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import one.util.streamex.EntryStream;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -62,16 +31,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -83,40 +47,14 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
 
   private static final String PACKAGE_NAME = "org.jspecify.annotations";
   private static final Path PATH = Paths.get(JavaTestUtil.getJavaTestDataPath(), "/inspection/dataFlow/jspecify/");
-  private static final Pattern JSPECIFY_PATTERN = Pattern.compile("// jspecify_\\w+");
-  private static final Pattern TEST_CANNOT_CONVERT = Pattern.compile("// test:cannot-convert.*!>?");
-  private static final Statistic STATISTIC = new Statistic(new LongAdder(), new LongAdder(), new LongAdder(), MultiMap.create());
+  private static final JSpecifyCorpus.Statistic STATISTIC = new JSpecifyCorpus.Statistic(new LongAdder(), new LongAdder(), new LongAdder(), MultiMap.create());
 
   @Parameterized.Parameter
   public String myFileName;
 
-  private static final List<ErrorFilter> FILTERS = List.of(
-    new SkipErrorFilter("jspecify_nullness_not_enough_information"), //it is useless for our goals
-    new SkipIndividuallyFilter( //each case has its own reason (line number starts from 0)
-      Set.of(
-        new Pair<>("WildcardCapturesToBoundOfTypeParameterNotToTypeVariableItself.java", 24),// see: IDEA-377699
-
-        //this set was reverted because it is mostly about unspecified annotation, which we don't support, because it is not in the spec
-        new Pair<>("CaptureConvertedUnspecToObject.java", 77), // see: IDEA-380143
-        new Pair<>("CaptureConvertedUnspecToOther.java", 77), // see: IDEA-380143
-        new Pair<>("DereferenceTypeVariable.java", 123), // see: IDEA-380143
-        new Pair<>("MultiBoundTypeVariableUnspecToObject.java", 63), // see: IDEA-380143
-        new Pair<>("MultiBoundTypeVariableUnspecToOther.java", 63), // see: IDEA-380143
-        new Pair<>("TypeVariableToObject.java", 109), // see: IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 58), // see: IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 78), // see: IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 98), // see: IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 103), // see: IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 108), // see: IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 113), // see: IDEA-380143
-        new Pair<>("TypeVariableUnspecToObject.java", 118), // see: IDEA-380143
-        new Pair<>("TypeVariableUnspecToParent.java", 53), // see: IDEA-380143
-        new Pair<>("TypeVariableUnspecToParent.java", 68), // see: IDEA-380143
-        new Pair<>("TypeVariableUnspecToParent.java", 83), // see: IDEA-380143
-        new Pair<>("TypeVariableUnspecToParent.java", 98), // see: IDEA-380143
-        new Pair<>("UnionTypeArgumentWithUseSite.java", 95) // see: IDEA-380143
-      )
-    )
+  private static final List<JSpecifyCorpus.ErrorFilter> FILTERS = List.of(
+    new JSpecifyCorpus.SkipErrorFilter("jspecify_nullness_not_enough_information"), //it is useless for our goals
+    new JSpecifyCorpus.SkipIndividuallyFilter(JSpecifyCorpus.SKIPPED_PLACES)
   );
 
   private static final LightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
@@ -165,37 +103,22 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
     List<FileData> fileData = new ArrayList<>();
     for (Path file : files) {
       String fileText = Files.readString(file).replace("\r\n", "\n");
-      fileText = TEST_CANNOT_CONVERT.matcher(fileText).replaceAll("// jspecify_nullness_mismatch");
-      String stripped = JSPECIFY_PATTERN.matcher(fileText).replaceAll("");
+      fileText = JSpecifyCorpus.TEST_CANNOT_CONVERT.matcher(fileText).replaceAll("// jspecify_nullness_mismatch");
+      String stripped = JSpecifyCorpus.JSPECIFY_PATTERN.matcher(fileText).replaceAll("");
       String relativeFile = FileUtil.toSystemIndependentName((dirMode ? path.relativize(file) : file.getFileName()).toString());
       PsiFile psiFile = myFixture.addFileToProject(relativeFile, stripped);
-      fileData.add(new FileData(file, fileText, stripped, psiFile, createErrorContainer(fileText)));
+      fileData.add(new FileData(file, fileText, stripped, psiFile, JSpecifyCorpus.createErrorContainer(fileText)));
     }
     for (FileData data : fileData) {
       String fileText = getExpectedTest(data);
       String stripped = data.stripped;
       PsiFile file = data.psiFile;
 
-      Map<PsiElement, String> actual = new LinkedHashMap<>();
-      var dfaInspection = new JSpecifyDataFlowInspection(actual);
-      dfaInspection.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true;
-      dfaInspection.REPORT_UNSPECIFIED_PARAMETRIC_NULLNESS = true;
-      var nullableStuffInspection = new JSpecifyNullableStuffInspection(actual);
-      nullableStuffInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
-      // JSpecify deviates from the JLS here on purpose, see jspecify/jspecify#49
-      nullableStuffInspection.REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL = true;
-      var notNullFieldNotInitializedInspection = new JSpecifyNotNullFieldNotInitializedInspection(actual);
-      List<LocalInspectionTool> inspections = List.of(dfaInspection, nullableStuffInspection, notNullFieldNotInitializedInspection);
       ReadAction.run(() -> {
-        ProblemsHolder holder = new ProblemsHolder(new InspectionManagerEx(getProject()), file, false);
-        for (LocalInspectionTool inspection : inspections) {
-          PsiElementVisitor visitor = inspection.buildVisitor(holder, false);
-          PsiTreeUtil.processElements(file, e -> {
-            e.accept(visitor);
-            return true;
-          });
-        }
-        String actualText = getActualText(actual, stripped);
+        Map<PsiElement, String> actual = JSpecifyCorpus.collectMarkers(getProject(), file);
+        Map<Integer, String> byOffset = new LinkedHashMap<>();
+        actual.forEach((anchor, message) -> byOffset.put(anchor.getTextRange().getStartOffset(), message));
+        String actualText = JSpecifyCorpus.getActualText(file.getName(), byOffset, stripped, FILTERS);
         if (!FILTERS.isEmpty()) {
           Assert.assertEquals("Messages don't match (" + data.path.getFileName().toString() + ")", fileText, actualText);
         }
@@ -207,31 +130,9 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
     }
   }
 
-  String getActualText(Map<PsiElement, String> actual, String stripped) {
-    StringBuilder sb = new StringBuilder();
-    int pos = 0;
-    TreeMap<Integer, List<String>> map = EntryStream.of(actual)
-      .filter(e ->
-                !ContainerUtil.exists(FILTERS, filter ->
-                  filter.filterExpected(e.getKey(), e.getValue())))
-      .mapKeys(e -> e.getTextRange().getStartOffset())
-      .grouping(TreeMap::new, Collectors.toList());
-    for (String str : stripped.split("\n", -1)) {
-      int endPos = pos + str.length() + 1;
-      String warnings = StreamEx.of(map.subMap(pos, endPos).values()).flatMap(List::stream).distinct().joining(" & ");
-      if (!warnings.isEmpty()) {
-        sb.append("// ").append(warnings);
-      }
-      if (!sb.isEmpty()) sb.append("\n");
-      pos = endPos;
-      sb.append(str);
-    }
-    return sb.toString();
-  }
-
   @AfterClass
   public static void reportUnusedFilters() {
-    FILTERS.forEach(ErrorFilter::reportUnused);
+    FILTERS.forEach(JSpecifyCorpus.ErrorFilter::reportUnused);
   }
 
   @AfterClass
@@ -248,316 +149,15 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
 
   @NotNull
   private static String getExpectedTest(@NotNull FileData data) {
-    ErrorContainer container = data.errorContainer;
-    List<ErrorInfo> errors = new ArrayList<>(container.errors());
-    STATISTIC.total.add(errors.size());
-    errors.removeIf(er ->
-                      ContainerUtil.exists(JSpecifyFilteredAnnotationTest.FILTERS,
-                                           m -> !m.shouldCount() &&
-                                                m.filterActual(data.psiFile, data.stripped, er.lineNumber, er.startLineOffset,
-                                                               er.message)));
-    STATISTIC.valuable.add(errors.size());
-    errors.removeIf(er -> {
-      return ContainerUtil.exists(JSpecifyFilteredAnnotationTest.FILTERS,
-                                  m -> {
-                                    boolean matched = m.shouldCount() &&
-                                                      m.filterActual(data.psiFile, data.stripped, er.lineNumber, er.startLineOffset,
-                                                                     er.message);
-                                    if (matched) {
-                                      STATISTIC.skipped.putValue(m.getClass().getName(), new Place(data.path.toString(), er.lineNumber));
-                                    }
-                                    return matched;
-                                  });
-    });
-    STATISTIC.checked.add(errors.size());
-    String restoredText = restoreWithErrors(data.stripped, new ErrorContainer(errors));
+    String restoredText = JSpecifyCorpus.getExpectedText(data.psiFile.getName(), data.path.toString(), data.stripped, data.errorContainer,
+                                          FILTERS, STATISTIC);
     if (JSpecifyFilteredAnnotationTest.FILTERS.isEmpty()) {
       Assert.assertEquals("incorrect restored file", data.fileText, restoredText);
     }
     return restoredText;
   }
 
-  @NotNull
-  private static String restoreWithErrors(@NotNull String stripped, @NotNull ErrorContainer container) {
-    List<Pair<Integer, String>> indexToText = ContainerUtil.map(container.errors(), error -> Pair.create(
-      StringUtil.lineColToOffset(stripped, error.lineNumber, error.startLineOffset), error.message));
-    StringBuilder sb = new StringBuilder(stripped);
-    int additionalOffset = 0;
-    for (Pair<Integer, String> pair : indexToText) {
-      String additionalText = pair.second;
-      sb.insert(pair.first + additionalOffset, additionalText);
-      additionalOffset += additionalText.length();
-    }
-    return sb.toString();
+  private record FileData(Path path, String fileText, String stripped, PsiFile psiFile, JSpecifyCorpus.ErrorContainer errorContainer) {
   }
 
-  @NotNull
-  private static ErrorContainer createErrorContainer(@NotNull String text) {
-    ErrorContainer container = new ErrorContainer(new ArrayList<>());
-    JSPECIFY_PATTERN.matcher(text).results().forEach(m -> {
-      String message = m.group();
-      int start = m.start();
-      LineColumn column = StringUtil.offsetToLineColumn(text, start);
-      container.errors.add(new ErrorInfo(column.line, column.column, message));
-    });
-
-    return container;
-  }
-
-  private interface ErrorFilter {
-    boolean filterActual(@NotNull PsiFile file,
-                         @NotNull String strippedText,
-                         int lineNumber,
-                         int startLineOffset,
-                         @NotNull String errorMessage);
-
-    boolean filterExpected(@NotNull PsiElement psiElement, @NotNull String errorMessage);
-
-    default boolean shouldCount() {
-      return true;
-    }
-
-    default void reportUnused() {
-    }
-  }
-
-  private static class SkipIndividuallyFilter implements ErrorFilter {
-    private final Set<Pair<String, Integer>> places;
-    private final Set<Pair<String, Integer>> unusedPlaces;
-    private final Map<Pair<String, Integer>, Integer> bothUsedPlaces;
-
-    private SkipIndividuallyFilter(Set<Pair<String, Integer>> places) {
-      this.places = places;
-      this.unusedPlaces = new HashSet<>(places);
-      this.bothUsedPlaces = StreamEx.of(places).toMap(t -> t, t -> 2);
-    }
-
-    @Override
-    public boolean filterActual(@NotNull PsiFile file,
-                                @NotNull String strippedText,
-                                int lineNumber,
-                                int startLineOffset,
-                                @NotNull String errorMessage) {
-      if (!errorMessage.contains("jspecify_nullness_mismatch")) return false;
-      return filter(Pair.create(file.getName(), lineNumber));
-    }
-
-    @Override
-    public boolean filterExpected(@NotNull PsiElement psiElement, @NotNull String errorMessage) {
-      if (!errorMessage.contains("jspecify_nullness_mismatch")) return false;
-      PsiFile file = psiElement.getContainingFile();
-      if (file == null) return false;
-      Document document = file.getFileDocument();
-      return filter(Pair.create(file.getName(), document.getLineNumber(psiElement.getTextRange().getStartOffset()) - 1));
-    }
-
-    private boolean filter(Pair<@NotNull @NlsSafe String, Integer> pair) {
-      if (places.contains(pair)) {
-        unusedPlaces.remove(pair);
-        bothUsedPlaces.merge(pair, -1, Integer::sum);
-        return true;
-      }
-      return false;
-    }
-
-    @Override
-    public void reportUnused() {
-      for (Map.Entry<Pair<String, Integer>, Integer> entry : bothUsedPlaces.entrySet()) {
-        if(entry.getValue() == 0) {
-          unusedPlaces.add(entry.getKey());
-        }
-      }
-      if (unusedPlaces.isEmpty()) return;
-      System.out.println("Some filters were unused; probably they are not actual anymore and should be excluded:\n"
-                         + StringUtil.join(unusedPlaces, "\n"));
-    }
-  }
-
-  private static class SkipErrorFilter implements ErrorFilter {
-    private final String myMessage;
-
-
-    private SkipErrorFilter(@NotNull String message) {
-      myMessage = message;
-    }
-
-    @Override
-    public boolean shouldCount() {
-      return false;
-    }
-
-    @Override
-    public boolean filterActual(@NotNull PsiFile file,
-                                @NotNull String strippedText,
-                                int lineNumber,
-                                int startLineOffset,
-                                @NotNull String errorMessage) {
-      return errorMessage.contains(myMessage);
-    }
-
-    @Override
-    public boolean filterExpected(@NotNull PsiElement psiElement, @NotNull String errorMessage) {
-      return errorMessage.contains(myMessage);
-    }
-  }
-
-  static class JSpecifyNullableStuffInspection extends NullableStuffInspection {
-    private final Map<PsiElement, String> warnings;
-
-    JSpecifyNullableStuffInspection(Map<PsiElement, String> warnings) {
-      this.warnings = warnings;
-    }
-
-    @Override
-    protected void reportProblem(@NotNull ProblemsHolder holder, @NotNull PsiElement anchor, @NotNull LocalQuickFix @NotNull [] fixes,
-                                 @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String descriptionKey, @NotNull Object @NotNull[] descriptionArgs,
-                                 @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String tooltipKey, @NotNull Object @NotNull[] tooltipArgs) {
-      switch (descriptionKey) {
-        case "inspection.nullable.problems.primitive.type.annotation", "inspection.nullable.problems.receiver.annotation",
-             "inspection.nullable.problems.outer.type", "inspection.nullable.problems.at.reference.list",
-             "inspection.nullable.problems.at.constructor", "inspection.nullable.problems.at.enum.constant" ->
-          warnings.put(anchor, "jspecify_nullness_intrinsically_not_nullable");
-        case "inspection.nullable.problems.at.wildcard", "inspection.nullable.problems.at.type.parameter",
-             "inspection.nullable.problems.at.local.variable" -> warnings.put(anchor, "jspecify_unrecognized_location");
-        case "inspection.nullable.problems.Nullable.method.overrides.NotNull",
-             "inspection.nullable.problems.NotNull.parameter.overrides.Nullable",
-             "inspection.nullable.problems.Nullable.parameter.overrides.NotNull",
-             "inspection.nullable.problems.NotNull.type.parameter.bound.overrides.Nullable",
-             "complex.problem.with.nullability",
-             "assigning.a.class.with.nullable.elements",
-             "assigning.a.class.with.notnull.elements",
-             "returning.a.class.with.nullable.arguments",
-             "returning.a.class.with.notnull.arguments",
-             "overriding.a.class.with.nullable.elements",
-             "overriding.a.class.with.notnull.elements"
-          -> warnings.put(anchor, "jspecify_nullness_mismatch");
-        case "non.null.type.argument.is.expected" -> {
-          if (anchor instanceof PsiTypeElement typeElement) {
-            warnings.put(anchor, typeElement.getType().getNullability().nullability() == Nullability.NULLABLE
-                                 ? "jspecify_nullness_mismatch"
-                                 : "jspecify_nullness_not_enough_information");
-          }
-        }
-        case "inspection.nullable.problems.method.overrides.NotNull", "inspection.nullable.problems.parameter.overrides.NotNull",
-             "inspection.nullable.problems.unspecified.type.parameter.bound.overrides.Nullable" ->
-          warnings.put(anchor, "jspecify_nullness_not_enough_information");
-        case "inspection.nullable.problems.Nullable.NotNull.conflict" -> warnings.put(anchor, "jspecify_conflicting_annotations");
-      }
-    }
-  }
-
-  private static class JSpecifyNotNullFieldNotInitializedInspection extends NotNullFieldNotInitializedInspection {
-    private final Map<PsiElement, String> warnings;
-
-    JSpecifyNotNullFieldNotInitializedInspection(Map<PsiElement, String> warnings) {
-      this.warnings = warnings;
-    }
-
-    @Override
-    protected void reportProblem(@NotNull ProblemsHolder holder,
-                                 PsiElement anchor,
-                                 String message,
-                                 List<LocalQuickFix> fixes) {
-      warnings.put(anchor, "jspecify_nullness_mismatch");
-    }
-  }
-
-  // Reports dataflow problems in code-analysis-conformant way
-  static class JSpecifyDataFlowInspection extends DataFlowInspectionBase {
-    private final Map<PsiElement, String> warnings;
-
-    JSpecifyDataFlowInspection(Map<PsiElement, String> warnings) {
-      this.warnings = warnings;
-    }
-
-    @Override
-    protected void reportNullabilityProblems(ProblemReporter reporter,
-                                             List<NullabilityProblemKind.NullabilityProblem<?>> problems) {
-      for (NullabilityProblemKind.NullabilityProblem<?> problem : problems) {
-        String warning = getJSpecifyWarning(problem);
-        if (warning != null) {
-          warnings.put(problem.getDereferencedExpression(), warning);
-        }
-      }
-    }
-
-    @Override
-    protected void reportNullableReturnsProblems(ProblemReporter reporter,
-                                                 List<NullabilityProblemKind.NullabilityProblem<?>> problems,
-                                                 Nullability nullability,
-                                                 boolean parametricReturn,
-                                                 PsiAnnotation anno,
-                                                 NullableNotNullManager manager) {
-      for (NullabilityProblemKind.NullabilityProblem<?> problem : problems) {
-        if (parametricReturn) {
-          // Returning a nullable value from a parametric type-variable return type is a mismatch.
-          PsiExpression expression = problem.getDereferencedExpression();
-          if (expression != null) {
-            warnings.put(expression, "jspecify_nullness_mismatch");
-          }
-          continue;
-        }
-        String warning = getJSpecifyWarning(problem);
-        if (warning != null) {
-          warnings.put(problem.getDereferencedExpression(), warning);
-        }
-      }
-    }
-
-    private static @Nullable String getJSpecifyWarning(NullabilityProblemKind.NullabilityProblem<?> problem) {
-      PsiExpression expression = problem.getDereferencedExpression();
-      if (expression == null) return null;
-      if (problem.getKind() == NullabilityProblemKind.passingToNonAnnotatedParameter) return null;
-      if (problem.getKind() == NullabilityProblemKind.nullableReturn) {
-        final PsiElement methodOrLambda = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, PsiLambdaExpression.class);
-        if (methodOrLambda instanceof PsiMethod method) {
-          NullabilityAnnotationInfo info =
-            NullableNotNullManager.getInstance(methodOrLambda.getProject()).findEffectiveNullabilityInfo(method);
-          if (info == null || info.isInferred()) {
-            info = DfaPsiUtil.getTypeNullabilityInfo(PsiTypesUtil.getMethodReturnType(method.getBody()));
-          }
-          Nullability nullability = info == null ? Nullability.UNKNOWN : info.getNullability();
-          if (nullability == Nullability.NULLABLE) return null;
-          if (nullability == Nullability.UNKNOWN) return "jspecify_nullness_not_enough_information";
-        }
-      }
-      return problem.hasUnknownNullability() ? "jspecify_nullness_not_enough_information" : "jspecify_nullness_mismatch";
-    }
-  }
-
-  private record FileData(Path path, String fileText, String stripped, PsiFile psiFile, ErrorContainer errorContainer) {
-  }
-
-  private record ErrorContainer(List<ErrorInfo> errors) {
-  }
-
-  private record ErrorInfo(int lineNumber, int startLineOffset, String message) {
-  }
-
-  private record Statistic(LongAdder total, LongAdder valuable, LongAdder checked, MultiMap<String, Place> skipped) {
-    @Override
-    public String toString() {
-      return "Statistic{" +
-             "total=" + total +
-             ", valuable=" + valuable +
-             ", checked=" + checked +
-             ", skipped=\n" + prepareToString(skipped) +
-             '}';
-    }
-
-    private static String prepareToString(MultiMap<String, Place> map) {
-      StringBuilder sb = new StringBuilder();
-      for (Map.Entry<String, Collection<Place>> entry : map.entrySet()) {
-        sb.append(entry.getKey()).append(" (").append(entry.getValue().size()).append(")").append(": \n");
-        for (Place place : entry.getValue()) {
-          sb.append("  ").append(place.fileName).append(":").append(place.lineNumber).append("\n");
-        }
-        sb.append("\n");
-      }
-      return sb.toString();
-    }
-  }
-
-  record Place(String fileName, int lineNumber) {
-  }
 }

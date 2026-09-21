@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -137,7 +137,7 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
     PsiFile file = myFixture.addFileToProject(relativeFile, stripped);
 
     Map<PsiElement, String> actual = new LinkedHashMap<>();
-    var dfaInspection = new JSpecifyFilteredAnnotationTest.JSpecifyDataFlowInspection(actual);
+    var dfaInspection = new JSpecifyCorpus.JSpecifyDataFlowInspection(actual);
     dfaInspection.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true;
     var nullableStuffInspection = new JSpecifyNullableStuffInspection(actual);
     List<LocalInspectionTool> inspections = List.of(dfaInspection, nullableStuffInspection);
