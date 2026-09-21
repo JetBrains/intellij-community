@@ -10,7 +10,7 @@ import org.gradle.internal.logging.events.OutputEventListener
 import org.gradle.internal.service.ServiceRegistry
 import org.gradle.launcher.daemon.client.DaemonClientFactory
 import org.gradle.launcher.daemon.configuration.DaemonParameters
-import org.gradle.launcher.daemon.configuration.DaemonPriority
+import org.gradle.launcher.daemon.startup.DaemonPriority
 import org.gradle.tooling.internal.protocol.InternalBuildProgressListener
 import org.gradle.util.GradleVersion
 import java.io.ByteArrayInputStream

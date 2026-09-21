@@ -3,6 +3,7 @@ package com.intellij.gradle.toolingExtension.impl.util
 
 import com.intellij.testFramework.common.mock.notImplemented
 import org.gradle.StartParameter
+import org.gradle.TestStartParameter
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.invocation.Gradle
@@ -15,13 +16,14 @@ import org.slf4j.Marker
 import java.io.File
 import java.nio.file.Path
 
+@Suppress("IO_FILE_USAGE")
 abstract class GradleTasksUtilTestCase {
 
   @TempDir
   lateinit var tempDirectory: Path
 
   fun createStartParameter(workingDirectory: Path, taskNames: List<String>): StartParameter {
-    val startParameter = StartParameter()
+    val startParameter = TestStartParameter()
     startParameter.projectDir = workingDirectory.toFile()
     startParameter.setTaskNames(taskNames)
     return startParameter

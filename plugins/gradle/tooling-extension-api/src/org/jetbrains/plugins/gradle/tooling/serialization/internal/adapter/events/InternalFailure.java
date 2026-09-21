@@ -17,17 +17,20 @@ public final class InternalFailure implements Failure, Serializable {
 
   private final @Nullable String message;
   private final @Nullable String description;
+  private final @Nullable String ownDescription;
   private final @Nullable List<? extends Failure> causes;
   private final @Nullable List<Problem> problems;
 
   public InternalFailure(
     @Nullable String message,
     @Nullable String description,
+    @Nullable String ownDescription,
     @Nullable List<? extends Failure> causes,
     @Nullable List<Problem> problems
   ) {
     this.message = message;
     this.description = description;
+    this.ownDescription = ownDescription;
     this.causes = causes;
     this.problems = problems;
   }
@@ -36,6 +39,7 @@ public final class InternalFailure implements Failure, Serializable {
     this(
       failure.getMessage(),
       failure.getDescription(),
+      failure.getOwnDescription(),
       failure.getCauses() == null ? null : toInternalFailures(failure.getCauses()),
       failure.getProblems() == null ? null : toInternalProblem(failure.getProblems())
     );
@@ -50,6 +54,11 @@ public final class InternalFailure implements Failure, Serializable {
   @Override
   public @Nullable String getDescription() {
     return this.description;
+  }
+
+  @Override
+  public @Nullable String getOwnDescription() {
+    return this.ownDescription;
   }
 
   @Override

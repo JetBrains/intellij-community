@@ -11,6 +11,7 @@ import org.gradle.tooling.BuildAction
 import org.gradle.tooling.BuildController
 import org.gradle.tooling.FetchModelResult
 import org.gradle.tooling.UnknownModelException
+import org.gradle.tooling.internal.consumer.ClientFailureCache
 import org.gradle.tooling.internal.consumer.DefaultFetchModelResult
 import org.gradle.tooling.model.Model
 import java.io.File
@@ -144,7 +145,7 @@ internal class TestBuildController : BuildController by notImplemented(BuildCont
 
   private fun <T : Any> fetchModelResult(modelProvider: () -> T?): FetchModelResult<T> {
     return try {
-      DefaultFetchModelResult.of(modelProvider(), emptyList())
+      DefaultFetchModelResult.of(modelProvider(), emptyList(), ClientFailureCache())
     }
     catch (failure: Exception) {
       DefaultFetchModelResult.failure(failure)

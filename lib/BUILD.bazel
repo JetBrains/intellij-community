@@ -8916,17 +8916,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps/gradle-api-9.7.0.jar_copy",
-    src = "@org_jetbrains_intellij_deps-gradle-api-9_7_0_http//file",
-    out = "org.jetbrains.intellij.deps/gradle-api-9.7.0.jar",
+    name = "org.jetbrains.intellij.deps/gradle-api-9.8.0-rc-2.jar_copy",
+    src = "@org_jetbrains_intellij_deps-gradle-api-9_8_0-rc-2_http//file",
+    out = "org.jetbrains.intellij.deps/gradle-api-9.8.0-rc-2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-gradle-_gradle",
-    jar = "@org_jetbrains_intellij_deps-gradle-api-9_7_0_http//file",
-    source_jar = "@org_jetbrains_intellij_deps-gradle-api-9_7_0-sources_http//file",
+    jar = "@org_jetbrains_intellij_deps-gradle-api-9_8_0-rc-2_http//file",
+    source_jar = "@org_jetbrains_intellij_deps-gradle-api-9_8_0-rc-2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

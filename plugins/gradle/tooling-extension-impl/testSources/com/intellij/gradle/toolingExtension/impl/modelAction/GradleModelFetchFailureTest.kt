@@ -36,12 +36,14 @@ class GradleModelFetchFailureTest {
     val rootCause = object : Failure {
       override fun getMessage() = "root message"
       override fun getDescription() = "root description"
+      override fun getOwnDescription() = "ownDescription"
       override fun getCauses() = emptyList<Failure>()
       override fun getProblems() = emptyList<Problem>()
     }
     val failure = object : Failure {
       override fun getMessage() = "message"
       override fun getDescription() = "description"
+      override fun getOwnDescription() = "ownDescription"
       override fun getCauses() = listOf(rootCause)
       override fun getProblems() = emptyList<Problem>()
     }
