@@ -25,7 +25,9 @@ val PROXY_URL_PROPERTY = "SELF_CONTAINED_PROXY_URL"
 val VERBOSE_PROPERTY = "SELF_CONTAINED_VERBOSE"
 
 // --- Configuration ---
-val proxyUrl = (System.getenv(PROXY_URL_PROPERTY) ?: error("$PROXY_URL_PROPERTY must be set")).also {
+// env first, then a system property: Gradle 6.5's Tooling API does not forward environment variables to an
+// init script, so the caller also passes the URL as `-D$PROXY_URL_PROPERTY` (see GradleToolingApiHelper).
+val proxyUrl = (System.getenv(PROXY_URL_PROPERTY) ?: System.getProperty(PROXY_URL_PROPERTY) ?: error("$PROXY_URL_PROPERTY must be set")).also {
   check(!it.endsWith("/")) { "Proxy URL must not end with /" }
 }
 val verboseLogging = System.getenv(VERBOSE_PROPERTY)?.toBoolean() ?: true
@@ -38,6 +40,11 @@ fun logVerbose(message: String) {
 
 // --- Repository URL Rewriting ---
 fun rewriteUrl(originalUrl: URI): URI {
+  // Leave a local file repository (e.g. mavenLocal()) as it is: it needs no proxy, and in a self-contained run
+  // the local repository is empty, so it contributes nothing and the real artifacts still come from the proxy.
+  if (originalUrl.scheme == "file") {
+    return originalUrl
+  }
   if (originalUrl.scheme != "https" && originalUrl.scheme != "http") {
     error("Only HTTP and HTTPS URLs are supported: $originalUrl")
   }
@@ -63,6 +70,17 @@ fun rewriteRepositories(repositories: RepositoryHandler, context: String) {
       logVerbose("[$context] Rewrote: $original -> $newUrl")
     }
   }
+}
+
+// `dependencyResolutionManagement` exists only on Gradle 6.8+. Reach it reflectively so this script still
+// compiles and runs on an older Gradle (e.g. 6.5, tsunami-security-scanner): there the repositories live in
+// `pluginManagement` and the project `repositories {}`, which the other hooks rewrite, so skipping this is safe.
+fun rewriteDependencyResolutionRepositories(settings: Settings) {
+  val repositories = runCatching {
+    val drm = settings.javaClass.getMethod("getDependencyResolutionManagement").invoke(settings)
+    drm.javaClass.getMethod("getRepositories").invoke(drm) as RepositoryHandler
+  }.getOrNull() ?: return
+  rewriteRepositories(repositories, "dependencyResolutionManagement")
 }
 
 // --- Gradle Hooks ---
@@ -97,18 +115,8 @@ beforeSettings {
     }
   }
 
-  // Intercept dependencyResolutionManagement repositories as they are added
-  @Suppress("UnstableApiUsage")
-  dependencyResolutionManagement.repositories.all {
-    if (this is MavenArtifactRepository) {
-      val original = url
-      url = rewriteUrl(original)
-      if (url.scheme == "http") {
-        isAllowInsecureProtocol = true
-      }
-      logVerbose("[dependencyResolutionManagement] Rewrote: $original -> $url")
-    }
-  }
+  // Intercept dependencyResolutionManagement repositories (Gradle 6.8+; reflective so this compiles on 6.5)
+  rewriteDependencyResolutionRepositories(this)
 }
 
 gradle.settingsEvaluated {
@@ -123,18 +131,8 @@ gradle.settingsEvaluated {
     }
   }
 
-  // Intercept dependencyResolutionManagement repositories as they are added
-  @Suppress("UnstableApiUsage")
-  dependencyResolutionManagement.repositories.all {
-    if (this is MavenArtifactRepository) {
-      val original = url
-      url = rewriteUrl(original)
-      if (url.scheme == "http") {
-        isAllowInsecureProtocol = true
-      }
-      logVerbose("[dependencyResolutionManagement] Rewrote: $original -> $url")
-    }
-  }
+  // Intercept dependencyResolutionManagement repositories (Gradle 6.8+; reflective so this compiles on 6.5)
+  rewriteDependencyResolutionRepositories(this)
 
   buildscript.repositories.all {
     if (this is MavenArtifactRepository) {
