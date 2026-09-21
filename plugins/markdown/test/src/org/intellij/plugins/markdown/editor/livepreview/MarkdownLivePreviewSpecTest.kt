@@ -156,7 +156,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     """.trimMargin()
     val elements = elements(content)
     assertEquals(listOf("-", "*", "+", "-"), concealed(content))
-    assertEquals(listOf("- ", "* ", "+ ", "- "), revealRanges(content))
+    assertEquals(content.lines(), revealRanges(content))
     assertEquals(listOf("•", "◦", "▪", "•"), elements.map { (it as MarkdownLivePreviewSpec.Bullet).placeholderText })
   }
 
@@ -167,8 +167,30 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(listOf("◦"), elements.map { (it as MarkdownLivePreviewSpec.Bullet).placeholderText })
   }
 
-  fun testOrderedAndTaskListMarkersAreNotConcealed() {
-    assertEmpty(elements("1. ordered\n- [ ] todo\n- [x] done"))
+  fun testOrderedListMarkersAreNotConcealed() {
+    assertEmpty(elements("1. ordered"))
+  }
+
+  fun testTaskCheckboxesConcealTheirPrefixesAndRevealTheirLines() {
+    val content = "- [ ] todo\n* [x] done\n+ [X] done too\n1. [ ] ordered"
+    val tasks = elements(content).filterIsInstance<MarkdownLivePreviewSpec.TaskCheckbox>()
+    assertEquals(listOf(false, true, true, false), tasks.map { it.checked })
+    assertEquals(listOf("- [ ]", "* [x]", "+ [X]", "[ ]"), concealed(content))
+    assertEquals(content.lines(), revealRanges(content))
+    assertEquals(listOf("[ ]", "[x]", "[X]", "[ ]"), tasks.map {
+      content.substring(it.concealRange.endOffset - 3, it.concealRange.endOffset)
+    })
+  }
+
+  fun testNestedTaskAndQuotedTaskPreserveTheirIndentationAndQuoteMarkers() {
+    val content = "- [ ] parent\n  continuation\n  - [x] child\n\n> - [ ] quoted"
+    assertEquals(listOf("- [ ]", "- [x]", "- [ ]"), concealed(content))
+    assertEquals(listOf("- [ ] parent", "  - [x] child", "> - [ ] quoted"), revealRanges(content))
+  }
+
+  fun testTaskExamplesOutsideListsAreNotCheckboxes() {
+    val content = "[ ] plain\n[x] plain\n\n```markdown\n- [ ] example\n```\n\n    - [x] code\n\n`- [ ] inline`"
+    assertEmpty(elements(content).filterIsInstance<MarkdownLivePreviewSpec.TaskCheckbox>())
   }
 
   fun testTableCellInlineMarkersAreNotConcealed() {
@@ -236,6 +258,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     is MarkdownLivePreviewSpec.HorizontalRule -> listOf(range)
     is MarkdownLivePreviewSpec.Image -> listOf(range)
     is MarkdownLivePreviewSpec.Bullet -> listOf(concealRange)
+    is MarkdownLivePreviewSpec.TaskCheckbox -> listOf(concealRange)
   }
 
   private fun elements(content: String): List<MarkdownLivePreviewSpec> {

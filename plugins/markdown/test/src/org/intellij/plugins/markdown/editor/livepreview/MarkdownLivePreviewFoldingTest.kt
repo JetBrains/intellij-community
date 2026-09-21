@@ -3,17 +3,21 @@ package org.intellij.plugins.markdown.editor.livepreview
 
 import com.intellij.markdown.backend.editor.livepreview.computeLivePreviewSpecs
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewImageInlayRenderer
+import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewCheckboxInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewReconciler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FoldingKeys
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -25,6 +29,7 @@ import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.assertNothingLogged
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.EditorMouseFixture
 import com.intellij.util.DocumentUtil
@@ -126,6 +131,223 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEmpty(concealed())
   }
 
+  fun testEveryOffsetOnTheFirstListLineRevealsItsMarker() = assertNothingLogged {
+    for (prefix in listOf("  - ", "  - [ ] ", "  1. [x] ")) {
+      val line = "${prefix}item text  "
+      val content = "$line\n\ntail"
+      configure("$content<caret>")
+      for (offset in 0..line.length) {
+        moveCaretTo(offset)
+        assertEmpty("The caret at $offset must reveal $prefix", concealed())
+        assertEmpty(checkboxInlays())
+        moveCaretTo(content.length)
+        assertEquals(1, concealed().size)
+      }
+    }
+  }
+
+  fun testContinuationAndNestedListLinesDoNotRevealTheirParent() {
+    for (marker in listOf("-", "- [ ]")) {
+      val content = "$marker parent\n  continuation\n  $marker child\n\ntail"
+      configure("$content<caret>")
+      moveCaretTo(content.indexOf("continuation"))
+      assertEquals(listOf(marker, marker), concealed())
+      moveCaretTo(content.indexOf("child") + 2)
+      assertEquals(listOf(marker), concealed())
+      moveCaretTo(content.indexOf("parent") + 2)
+      assertEquals(listOf(marker), concealed())
+    }
+  }
+
+  fun testSoftWrappedListTextRevealsItsMarker() {
+    for (marker in listOf("-", "- [ ]")) {
+      val content = "$marker a long item that wraps over several visual lines\n\ntail"
+      configure("$content<caret>")
+      EditorTestUtil.configureSoftWraps(myFixture.editor, 15)
+      moveCaretTo(content.indexOf("visual"))
+      assertTrue(myFixture.editor.caretModel.visualPosition.line > 0)
+      assertEmpty(concealed())
+      assertEmpty(checkboxInlays())
+    }
+  }
+
+  fun testSelectionAndMultipleCaretsRevealListMarkers() {
+    val content = "- first\n- [ ] second\n- third\n\ntail"
+    configure("$content<caret>")
+    select(content.indexOf("second"), content.indexOf("second") + 2)
+    assertEquals(listOf("-", "-"), concealed())
+    val editor = myFixture.editor
+    editor.caretModel.addCaret(editor.offsetToVisualPosition(content.indexOf("first")))
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    assertEquals(listOf("-"), concealed())
+  }
+
+  fun testCheckboxesUseCompactWidthRegardlessOfSourcePrefixAndFontSize() {
+    val content = "- [ ] first\n-\t[x] second\n1. [X] third\n\ntail"
+    configure("$content<caret>")
+    val editor = myFixture.editor as EditorImpl
+    assertEquals(listOf(false, true, true), checkboxInlays().map { it.renderer.checked })
+    for (fontSize in listOf(editor.colorsScheme.editorFontSize, editor.colorsScheme.editorFontSize + 4)) {
+      editor.fontSize = fontSize
+      moveCaretTo(content.length)
+      val widths = checkboxInlays().map { it.widthInPixels }
+      assertEquals("Every checkbox must have the same width", 1, widths.distinct().size)
+      assertTrue("The checkbox must fit within one line height", widths.first() <= editor.lineHeight)
+      for (word in listOf("first", "second", "third")) {
+        moveCaretTo(content.length)
+        val offset = content.indexOf(word)
+        val position = editor.offsetToXY(offset)
+        moveCaretTo(offset)
+        assertTrue("The compact checkbox must use less space than the source prefix", position.x < editor.offsetToXY(offset).x)
+      }
+    }
+  }
+
+  fun testCheckboxClicksPreserveCaretsSelectionAndConcealment() {
+    val content = "- [ ] task\n\ntail text"
+    configure("$content<caret>")
+    val editor = myFixture.editor as EditorImpl
+    EditorTestUtil.setEditorVisibleSize(editor, 80, 12)
+    select(content.indexOf("tail"), content.length)
+    val carets = editor.caretModel.allCarets.map { Triple(it.offset, it.selectionStart, it.selectionEnd) }
+    val scroll = editor.scrollingModel.verticalScrollOffset
+    val checkbox = checkboxInlays().single()
+    val fold = concealedLivePreviewRegions(editor).single()
+    var disposals = 0
+    editor.foldingModel.addListener(object : FoldingListener {
+      override fun beforeFoldRegionDisposed(region: FoldRegion) {
+        if (region === fold) disposals++
+      }
+    }, testRootDisposable)
+
+    clickCheckbox(checkbox)
+    myFixture.checkResult(content.replace("[ ]", "[x]"))
+    assertTrue("The click must change the checkbox before highlighting", checkbox.renderer.checked)
+    waitForDocument(content.replace("[ ]", "[x]"))
+    assertTrue(checkboxInlays().single().renderer.checked)
+    assertEquals(carets, editor.caretModel.allCarets.map { Triple(it.offset, it.selectionStart, it.selectionEnd) })
+    assertEquals(scroll, editor.scrollingModel.verticalScrollOffset)
+    assertSame(checkbox, checkboxInlays().single())
+    assertEquals(0, disposals)
+
+    clickCheckbox(checkbox)
+    myFixture.checkResult(content)
+    assertFalse("The second click must also change the checkbox immediately", checkbox.renderer.checked)
+    waitForDocument(content)
+    assertFalse(checkboxInlays().single().renderer.checked)
+    assertEquals(carets, editor.caretModel.allCarets.map { Triple(it.offset, it.selectionStart, it.selectionEnd) })
+    assertEquals(0, disposals)
+  }
+
+  fun testCheckboxToggleIsOneUndoableEdit() {
+    val content = "- [X] task\n\ntail"
+    configure("$content<caret>")
+    clickCheckbox(checkboxInlays().single())
+    waitForDocument(content.replace("[X]", "[ ]"))
+    myFixture.performEditorAction(IdeActions.ACTION_UNDO)
+    assertTrue("Undo must update the checkbox before highlighting", checkboxInlays().single().renderer.checked)
+    waitForDocument(content)
+    myFixture.performEditorAction(IdeActions.ACTION_REDO)
+    assertFalse("Redo must update the checkbox before highlighting", checkboxInlays().single().renderer.checked)
+    waitForDocument(content.replace("[X]", "[ ]"))
+  }
+
+  fun testRapidCheckboxClicksDoNotWaitForHighlighting() {
+    val content = "- [ ] first\n- [ ] second\n\ntail"
+    configure("$content<caret>")
+    val (first, second) = checkboxInlays()
+    clickCheckbox(first)
+    assertTrue(first.renderer.checked)
+    clickCheckbox(first)
+    assertFalse(first.renderer.checked)
+    clickCheckbox(second)
+    assertTrue(second.renderer.checked)
+    myFixture.checkResult(content.replace("[ ] second", "[x] second"))
+    myFixture.performEditorAction(IdeActions.ACTION_UNDO)
+    assertFalse(second.renderer.checked)
+    myFixture.checkResult(content)
+  }
+
+  fun testCheckboxSurvivesAnEditBeforeItsRange() {
+    val content = "start\n\n- [ ] task\n\ntail"
+    configure("$content<caret>")
+    val inlay = checkboxInlays().single()
+    val region = concealedLivePreviewRegions(myFixture.editor).single()
+    val offset = inlay.offset
+
+    writeCommandAction(project).run<Throwable> {
+      myFixture.editor.document.insertString(0, "prefix\n")
+    }
+    myFixture.doHighlighting()
+    waitForCurrentSpecs()
+
+    assertSame(region, concealedLivePreviewRegions(myFixture.editor).single())
+    assertSame(inlay, checkboxInlays().single())
+    assertEquals(offset + "prefix\n".length, inlay.offset)
+    clickCheckbox(inlay)
+    waitForDocument("prefix\n${content.replace("[ ]", "[x]")}")
+    assertTrue(inlay.renderer.checked)
+  }
+
+  fun testCheckboxReleaseOutsideCancelsTheClick() {
+    val content = "- [ ] task\n\ntail"
+    configure("$content<caret>")
+    val editor = myFixture.editor as EditorImpl
+    EditorTestUtil.setEditorVisibleSize(editor, 80, 12)
+    val bounds = checkboxInlays().single().bounds!!
+    val caret = editor.caretModel.offset
+    EditorMouseFixture(editor).pressAtXY(bounds.x + 2, bounds.y + bounds.height / 2).dragTo(2, 0).release()
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    myFixture.checkResult(content)
+    assertEquals(caret, editor.caretModel.offset)
+  }
+
+  fun testReadOnlyCheckboxClickDoesNotEditOrReveal() {
+    val content = "- [ ] task\n\ntail"
+    configure("$content<caret>")
+    val editor = myFixture.editor
+    editor.document.setReadOnly(true)
+    try {
+      clickCheckbox(checkboxInlays().single())
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+      myFixture.checkResult(content)
+      assertEquals(content.length, editor.caretModel.offset)
+      assertEquals(listOf("- [ ]"), concealed())
+    }
+    finally {
+      editor.document.setReadOnly(false)
+    }
+  }
+
+  fun testCheckboxClickUsesItsMovedRangeBeforeHighlighting() {
+    val content = "- [ ] first\n- [ ] second\n\ntail"
+    configure("$content<caret>")
+    val checkbox = checkboxInlays().first()
+    writeCommandAction(project).run<Throwable> {
+      myFixture.editor.document.insertString(0, "- [ ] new\n")
+    }
+    clickCheckbox(checkbox)
+    assertTrue(checkbox.renderer.checked)
+    myFixture.checkResult("- [ ] new\n${content.replace("[ ] first", "[x] first")}")
+  }
+
+  fun testCheckboxSourceRemainsEditableAndPreviewCanBeDisabled() {
+    val content = "- [ ] task\n\ntail"
+    configure("$content<caret>")
+    moveCaretTo(content.indexOf(']'))
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+    myFixture.checkResult(content.replace("[ ]", "[]"))
+    myFixture.doHighlighting()
+    waitForCurrentSpecs()
+    assertEmpty(checkboxInlays())
+
+    configure("$content<caret>")
+    settings.enableLivePreview = false
+    myFixture.doHighlighting()
+    waitForConcealed(emptyList())
+    assertEmpty(checkboxInlays())
+  }
+
   fun testIndentingMarkerReplacesItsStalePlaceholder() {
     val content = "- parent\n- child\n\ntail"
     configure("$content<caret>")
@@ -222,6 +444,33 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
     moveCaretTo(content.length)
     assertEquals(listOf("---"), concealed())
+    assertEquals(1, thematicBreakHighlighters().size)
+  }
+
+  fun testDecorationKindChangesAtTheSameFoldRange() {
+    configure("-----\n\ntail<caret>")
+    val region = concealedLivePreviewRegions(myFixture.editor).single()
+    val rule = thematicBreakHighlighters().single()
+
+    writeCommandAction(project).run<Throwable> {
+      myFixture.editor.document.replaceString(0, 5, "- [ ]")
+    }
+    myFixture.doHighlighting()
+    waitForCurrentSpecs()
+    val checkbox = checkboxInlays().single()
+    assertSame(region, concealedLivePreviewRegions(myFixture.editor).single())
+    assertFalse(rule.isValid)
+    assertEmpty(thematicBreakHighlighters())
+
+    writeCommandAction(project).run<Throwable> {
+      myFixture.editor.document.replaceString(0, 5, "-----")
+    }
+    myFixture.doHighlighting()
+    waitForCurrentSpecs()
+
+    assertSame(region, concealedLivePreviewRegions(myFixture.editor).single())
+    assertFalse(checkbox.isValid)
+    assertEmpty(checkboxInlays())
     assertEquals(1, thematicBreakHighlighters().size)
   }
 
@@ -711,6 +960,60 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     waitForConcealed(listOf("**", "**"))
   }
 
+  fun testClearingSpecsAndDisablingPreviewRemoveAllDecorations() {
+    configureAllDecorations()
+    val editor = myFixture.editor
+    val reconciler = MarkdownLivePreviewReconciler.getExisting(editor)!!
+    val specs = computeLivePreviewSpecs(myFixture.file, editor)
+    val folds = concealedLivePreviewRegions(editor)
+    val checkbox = checkboxInlays().single()
+    val rule = thematicBreakHighlighters().single()
+    val image = imageInlays().single()
+
+    reconciler.publishSpecs(null)
+
+    assertEmpty(concealed())
+    assertEmpty(checkboxInlays())
+    assertEmpty(thematicBreakHighlighters())
+    assertEmpty(imageInlays())
+    assertTrue(folds.all { !it.isValid })
+    assertFalse(checkbox.isValid)
+    assertFalse(rule.isValid)
+    assertFalse(image.isValid)
+
+    reconciler.publishSpecs(specs)
+    assertEquals(3, concealed().size)
+    assertEquals(1, checkboxInlays().size)
+    assertEquals(1, thematicBreakHighlighters().size)
+    assertEquals(1, imageInlays().size)
+
+    settings.enableLivePreview = false
+    reconciler.reconcileNow()
+
+    assertEmpty(concealed())
+    assertEmpty(checkboxInlays())
+    assertEmpty(thematicBreakHighlighters())
+    assertEmpty(imageInlays())
+  }
+
+  fun testDisposalRemovesAllDecorationsAndIgnoresLaterUpdates() {
+    configureAllDecorations()
+    val editor = myFixture.editor
+    val reconciler = MarkdownLivePreviewReconciler.getExisting(editor)!!
+    val specs = computeLivePreviewSpecs(myFixture.file, editor)
+
+    Disposer.dispose(reconciler)
+    reconciler.publishSpecs(specs)
+    reconciler.reconcileNow()
+    moveCaretTo(0)
+
+    assertFalse(reconciler.hasCurrentSpecs())
+    assertEmpty(concealed())
+    assertEmpty(checkboxInlays())
+    assertEmpty(thematicBreakHighlighters())
+    assertEmpty(imageInlays())
+  }
+
   fun testDiffEditorHidesNothing() {
     configure("Some **bold** text<caret>")
     val document = myFixture.editor.document
@@ -734,6 +1037,29 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals("Every element but the one under the caret stays hidden", 40 * 2 - 2, concealed().size)
     moveCaretTo(content.length)
     assertEquals("With the caret past the end nothing is revealed", 40 * 2, concealed().size)
+  }
+
+  fun testRevealingElementsWithDifferentFoldCounts() {
+    val content = "![missing](missing.png)\n\n**bold**\n\n- [ ] task\n\n-----\n\ntail"
+    configureProjectFile(content)
+    assertEquals(listOf("**", "**", "- [ ]", "-----"), concealed())
+
+    moveCaretTo(content.indexOf("bold") + 1)
+    assertEquals(listOf("- [ ]", "-----"), concealed())
+    assertEquals(1, checkboxInlays().size)
+
+    moveCaretTo(content.indexOf("task") + 1)
+    assertEquals(listOf("**", "**", "-----"), concealed())
+    assertEmpty(checkboxInlays())
+
+    moveCaretTo(content.indexOf("-----") + 1)
+    assertEquals(listOf("**", "**", "- [ ]"), concealed())
+    assertEmpty(thematicBreakHighlighters())
+
+    moveCaretTo(content.indexOf("missing") + 1)
+    assertEquals(listOf("**", "**", "- [ ]", "-----"), concealed())
+    select(content.indexOf("bold"), content.indexOf("task") + 1)
+    assertEquals(listOf("-----"), concealed())
   }
 
   fun testSpecsFromAnOlderDocumentAreDeclined() {
@@ -787,6 +1113,33 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
   private fun configure(content: String) {
     myFixture.configureByText("test.md", content)
+    myFixture.doHighlighting()
+    waitForCurrentSpecs()
+  }
+
+  private fun configureAllDecorations() {
+    addPng(80, 40)
+    configureProjectFile("- [ ] task\n\n-----\n\n![alt](image.png)\n\ntail")
+    waitForImageInlay()
+    assertEquals(3, concealed().size)
+    assertEquals(1, checkboxInlays().size)
+    assertEquals(1, thematicBreakHighlighters().size)
+  }
+
+  private fun checkboxInlays(): List<Inlay<out MarkdownLivePreviewCheckboxInlayRenderer>> =
+    myFixture.editor.inlayModel.getInlineElementsInRange(
+      0, myFixture.editor.document.textLength, MarkdownLivePreviewCheckboxInlayRenderer::class.java,
+    )
+
+  private fun clickCheckbox(inlay: Inlay<*>) {
+    val editor = myFixture.editor as EditorImpl
+    EditorTestUtil.setEditorVisibleSize(editor, 80, 12)
+    val bounds = inlay.bounds!!
+    EditorMouseFixture(editor).clickAtXY(bounds.x + 2, bounds.y + bounds.height / 2)
+  }
+
+  private fun waitForDocument(expected: String) {
+    PlatformTestUtil.waitWithEventsDispatching("The checkbox edit was not applied", { myFixture.editor.document.text == expected }, 10)
     myFixture.doHighlighting()
     waitForCurrentSpecs()
   }

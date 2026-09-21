@@ -2,7 +2,6 @@
 package com.intellij.markdown.frontend.editor.livepreview
 
 import com.intellij.diagnostic.rethrowControlFlowException
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayProperties
@@ -18,10 +17,11 @@ import fleet.rpc.client.durable
 import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewRemoteApi
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
+import org.intellij.plugins.markdown.editor.livepreview.toTextRange
 import org.intellij.plugins.markdown.ui.preview.MarkdownImageResourceProvider
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 
-internal data class ImageInlay(
+private data class ImageInlay(
   val offset: Int,
   val destination: String,
   val source: MarkdownLivePreviewSpec.ImageSource,
@@ -30,13 +30,12 @@ internal data class ImageInlay(
 
 private data class InlayKey(val line: Int, val destination: String, val ordinal: Int)
 
-internal class MarkdownLivePreviewImageRenderer(project: Project, private val editor: EditorEx) : Disposable {
+internal class MarkdownLivePreviewImageRenderer(project: Project, private val editor: EditorEx) : MarkdownLivePreviewElementRenderer {
   private val inlays = LinkedHashSet<Inlay<MarkdownLivePreviewImageInlayRenderer>>()
   private val requestedDestinations = HashSet<String>()
   private var visibleWidth = editor.scrollingModel.visibleArea.width
 
   private val coroutineScope = EditorScopeProvider.getInstance(project).getEditorScope(editor)
-  private val editorId = editor.editorIdOrNull()
   private val resourceProvider = MarkdownImageResourceProvider(project, FileDocumentManager.getInstance().getFile(editor.document))
 
   init {
@@ -44,10 +43,46 @@ internal class MarkdownLivePreviewImageRenderer(project: Project, private val ed
     editor.scrollingModel.addVisibleAreaListener({ updateGeometry() }, this)
   }
 
-  /** Asks the backend to resolve [destination] once per document state; see [resetRequestedImages]. */
+  override fun presentation(spec: MarkdownLivePreviewSpec): List<MarkdownLivePreviewFold> {
+    return presentation(spec as MarkdownLivePreviewSpec.Image)
+  }
+
+  private fun presentation(spec: MarkdownLivePreviewSpec.Image): List<MarkdownLivePreviewFold> {
+    return if (spec.source == null) emptyList() else listOf(MarkdownLivePreviewFold(spec.range.toTextRange(), spec.placeholderText))
+  }
+
+  /** Updates image resources independently of source concealment. */
+  override fun documentChanged() {
+    requestedDestinations.clear()
+  }
+
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun requestImage(destination: String) {
-    val editorId = editorId ?: return
+  override fun reconcile(presentation: MarkdownLivePreviewPresentation?) {
+    reconcileImages(presentation?.elements?.mapNotNull { it.spec as? MarkdownLivePreviewSpec.Image }.orEmpty())
+  }
+
+  private fun reconcileImages(images: List<MarkdownLivePreviewSpec.Image>) {
+    val document = editor.document
+    val desired = ArrayList<ImageInlay>()
+    var previousOffset = -1
+    var ordinal = 0
+    for ((range, destination, _, source) in images) {
+      if (source == null) {
+        requestImage(destination)
+        continue
+      }
+      val endOffset = range.endOffset.coerceIn(0, document.textLength)
+      val offset = document.getLineEndOffset(document.getLineNumber(endOffset))
+      ordinal = if (offset == previousOffset) ordinal + 1 else 0
+      previousOffset = offset
+      desired += ImageInlay(offset, destination, source, ordinal)
+    }
+    reconcileInlays(desired)
+  }
+
+  /** Asks the backend to resolve [destination] once per document state. */
+  private fun requestImage(destination: String) {
+    val editorId = editor.editorIdOrNull() ?: return
     if (!requestedDestinations.add(destination)) return
     coroutineScope.launch {
       try {
@@ -62,17 +97,11 @@ internal class MarkdownLivePreviewImageRenderer(project: Project, private val ed
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun resetRequestedImages() {
-    requestedDestinations.clear()
-  }
-
   /**
    * Brings the owned inlays in line with [desired]. An inlay survives while its line, image, order, and stamp
    * stay the same. A new stamp replaces the inlay with one that holds a new renderer and a new image URL.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun reconcileInlays(desired: List<ImageInlay>) {
+  private fun reconcileInlays(desired: List<ImageInlay>) {
     val document = editor.document
     val obsolete = ArrayList<Inlay<MarkdownLivePreviewImageInlayRenderer>>()
     val owned = HashMap<InlayKey, Inlay<MarkdownLivePreviewImageInlayRenderer>>()

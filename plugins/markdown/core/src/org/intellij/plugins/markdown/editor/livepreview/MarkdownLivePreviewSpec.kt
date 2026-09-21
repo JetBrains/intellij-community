@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 import org.jetbrains.annotations.ApiStatus
 
@@ -132,6 +131,14 @@ sealed interface MarkdownLivePreviewSpec {
     val concealRange: MarkdownLivePreviewRange,
     val placeholderText: String,
   ) : MarkdownLivePreviewSpec
+
+  /** Replaces a task marker with a checkbox until a caret touches its first logical line. */
+  @Serializable
+  data class TaskCheckbox(
+    override val range: MarkdownLivePreviewRange,
+    val concealRange: MarkdownLivePreviewRange,
+    val checked: Boolean,
+  ) : MarkdownLivePreviewSpec
 }
 
 /** Everything live preview wants to hide in one state of a document. */
@@ -140,34 +147,4 @@ sealed interface MarkdownLivePreviewSpec {
 data class MarkdownLivePreviewSpecSet(
   @JvmField val documentVersion: MarkdownLivePreviewDocumentVersion,
   @JvmField val elements: List<MarkdownLivePreviewSpec>,
-) {
-  @Transient
-  @JvmField
-  val maxElementLength: Int = elements.maxOfOrNull { it.range.length } ?: 0
-
-  /** Indices of specs whose ranges intersect the closed interval [[start], [end]]. */
-  fun intersecting(start: Int, end: Int, into: MutableSet<Int>) {
-    // `elements` is sorted by start offset, so every element that intersects [start, end] starts at or
-    // before `end`, and - since it also has to reach `start` - no earlier than `start - maxElementLength`.
-    var index = firstElementAfter(end)
-    val lowestStart = start - maxElementLength
-    while (index-- > 0) {
-      val element = elements[index]
-      if (element.range.startOffset < lowestStart) break
-      if (element.range.endOffset >= start) {
-        into.add(index)
-      }
-    }
-  }
-
-  /** Index of the first element starting strictly after [offset], i.e., the exclusive upper bound. */
-  private fun firstElementAfter(offset: Int): Int {
-    var low = 0
-    var high = elements.size
-    while (low < high) {
-      val mid = (low + high) ushr 1
-      if (elements[mid].range.startOffset > offset) high = mid else low = mid + 1
-    }
-    return low
-  }
-}
+)
