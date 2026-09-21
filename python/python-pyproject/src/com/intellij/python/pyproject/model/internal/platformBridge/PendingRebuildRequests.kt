@@ -2,10 +2,14 @@
 package com.intellij.python.pyproject.model.internal.platformBridge
 
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.update
+import kotlin.time.Duration
 
 /**
  * Merges pending rebuilds and retains at most [directoryLimit] directory references.
@@ -17,7 +21,6 @@ internal class PendingRebuildRequests(private val directoryLimit: Int = 100) {
   }
 
   private val state = MutableStateFlow<PendingRebuild?>(null)
-  val changes = state.asStateFlow()
 
   fun add(request: RebuildRequest) {
     state.update { pending ->
@@ -33,8 +36,14 @@ internal class PendingRebuildRequests(private val directoryLimit: Int = 100) {
     }
   }
 
-  /** Removes the pending work atomically. Later requests belong to the next build. */
-  fun take(): PendingRebuild? = state.getAndUpdate { null }
+  /**
+   * Debounces state changes for [quietPeriod] and emits pending batches. Use one collector per instance.
+   * Each emission atomically removes the latest batch. Later requests belong to the next batch.
+   * Requests remain pending before collection starts and while the collector processes a batch.
+   */
+  @OptIn(FlowPreview::class)
+  fun batches(quietPeriod: Duration): Flow<PendingRebuild> =
+    state.debounce(quietPeriod).mapNotNull { state.getAndUpdate { null } }
 }
 
 /** An immutable batch for one build. [reason] describes the latest request, or the overflow. */

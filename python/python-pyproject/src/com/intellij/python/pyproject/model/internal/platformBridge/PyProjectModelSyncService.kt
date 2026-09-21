@@ -27,13 +27,9 @@ import com.intellij.python.pyproject.model.internal.workspaceBridge.collectExclu
 import com.intellij.python.pyproject.model.internal.workspaceBridge.rebuildProjectModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -103,35 +99,29 @@ internal class PyProjectModelSyncService(private val project: Project, private v
   }
 
   /** Tracks changes from before the initial scan until the session ends. */
-  @OptIn(FlowPreview::class)
   private suspend fun trackChanges(): Unit = coroutineScope {
     ensureActive()
     val vfsListenerDisposable = Disposer.newDisposable("PyProjectModelSyncService")
     val requests = PendingRebuildRequests()
     try {
       knownRoots = setOf(project.stateStore.projectBasePath)
-      requests.changes
-        .onSubscription {
-          subscribeToPyProjectTomlChanges(vfsListenerDisposable, { knownRoots }, requests::add)
-          createWsmTracker(project) { unExcluded, reason ->
-            requests.add(RebuildRequest(unExcluded, reason))
-          }
+      subscribeToPyProjectTomlChanges(vfsListenerDisposable, { knownRoots }, requests::add)
+      createWsmTracker(project) { unExcluded, reason ->
+        requests.add(RebuildRequest(unExcluded, reason))
+      }
+      loadProjectRootsIntoVfs()
+      rebuildNow("the start of the sync")
+
+      requests.batches(DEBOUNCE).collect { batch ->
+        if (batch.reloadProjectRoots) {
           loadProjectRootsIntoVfs()
-          rebuildNow("the start of the sync")
         }
-        .debounce(DEBOUNCE)
-        .filterNotNull()
-        .collect {
-          val batch = requests.take() ?: return@collect
-          if (batch.reloadProjectRoots) {
-            loadProjectRootsIntoVfs()
-          }
-          else if (batch.directoriesToLoad.isNotEmpty()) {
-            val loaded = measureTime { loadSubtreesIntoVfs(batch.directoriesToLoad, collectExcludedPaths(project)) }
-            log.debug { "Loaded ${batch.directoriesToLoad.size} new directories into the VFS in $loaded" }
-          }
-          rebuildNow(batch.reason)
+        else if (batch.directoriesToLoad.isNotEmpty()) {
+          val loaded = measureTime { loadSubtreesIntoVfs(batch.directoriesToLoad, collectExcludedPaths(project)) }
+          log.debug { "Loaded ${batch.directoriesToLoad.size} new directories into the VFS in $loaded" }
         }
+        rebuildNow(batch.reason)
+      }
     }
     finally {
       Disposer.dispose(vfsListenerDisposable)
