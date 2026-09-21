@@ -24,12 +24,20 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
-private class ValuesCache {
+/**
+ * The cache behind [VersionedEntityStorage.cachedValue], for one version of one storage.
+ *
+ * A caller that builds a new [VersionedEntityStorageImpl] for each read of one immutable storage can pass the
+ * same instance to each of them. The cached values then survive the new storage object. A version change on
+ * one of those objects leaves the shared instance alone: that object switches to a private cache.
+ */
+@ApiStatus.Internal
+public class ValuesCache {
   private val cachedValues: Cache<CachedValue<*>, Any?> = Caffeine.newBuilder().build()
   private val cachedValuesWithParameter: Cache<Pair<CachedValueWithParameter<*, *>, *>, Any?> =
     Caffeine.newBuilder().build()
 
-  fun <R> cachedValue(value: CachedValue<R>, storage: ImmutableEntityStorage): R {
+  public fun <R> cachedValue(value: CachedValue<R>, storage: ImmutableEntityStorage): R {
     val o: Any? = cachedValues.getIfPresent(value)
     var valueToReturn: R? = null
 
@@ -48,7 +56,7 @@ private class ValuesCache {
     return requireNotNull(valueToReturn) { "Cached value must not be null" }
   }
 
-  fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P, storage: ImmutableEntityStorage): R {
+  public fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P, storage: ImmutableEntityStorage): R {
     // recursive update - loading get cannot be used
     val o = cachedValuesWithParameter.getIfPresent(value to parameter)
     var valueToReturn: R? = null
@@ -67,17 +75,22 @@ private class ValuesCache {
     return requireNotNull(valueToReturn) { "Cached value with parameter must not be null" }
   }
 
-  fun <R> clearCachedValue(value: CachedValue<R>) {
+  public fun <R> clearCachedValue(value: CachedValue<R>) {
     cachedValueClearCounter.incrementAndGet()
     cachedValues.invalidate(value)
   }
 
-  fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) {
+  public fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) {
     cachedValueWithParametersClearCounter.incrementAndGet()
     cachedValuesWithParameter.invalidate(value to parameter)
   }
 
-  companion object {
+  public fun clearAll() {
+    cachedValues.invalidateAll()
+    cachedValuesWithParameter.invalidateAll()
+  }
+
+  private companion object {
     private val cachedValueFromCacheCounter = AtomicLong()
     private val cachedValueCalculatedCounter = AtomicLong()
 
@@ -201,8 +214,17 @@ public class DummyVersionedEntityStorage(private val builder: MutableEntityStora
   override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) {}
 }
 
-public open class VersionedEntityStorageImpl(initialStorage: ImmutableEntityStorage) : VersionedEntityStorage {
-  private val currentSnapshot: AtomicReference<StorageSnapshotCache> = AtomicReference()
+public open class VersionedEntityStorageImpl(
+  initialStorage: ImmutableEntityStorage,
+  /**
+   * The cache to start with, shared with every other instance built on [initialStorage]. `null` gives this
+   * instance a private cache. A [replace] on this instance switches it to a private cache, so a change here
+   * never reaches the other holders of [sharedValuesCache].
+   */
+  sharedValuesCache: ValuesCache? = null,
+) : VersionedEntityStorage {
+  private val currentSnapshot: AtomicReference<StorageSnapshotCache> =
+    AtomicReference(sharedValuesCache?.let { StorageSnapshotCache(INITIAL_VERSION, it, initialStorage) })
   private val valuesCache: ValuesCache
     get() {
       val pointer = currentPointer
@@ -242,7 +264,7 @@ public open class VersionedEntityStorageImpl(initialStorage: ImmutableEntityStor
   public class Current(public val version: Long, public val storage: ImmutableEntityStorage)
 
   @Volatile
-  private var currentPointer: Current = Current(0, initialStorage)
+  private var currentPointer: Current = Current(INITIAL_VERSION, initialStorage)
 
   /**
    * About [changes] parameter:
@@ -301,5 +323,8 @@ private class VersionedStorageChangeImpl(
 
   override fun getAllChanges(): Sequence<EntityChange<*>> = changes.values.asSequence().flatten()
 }
+
+/** The version of a [VersionedEntityStorageImpl] that no [VersionedEntityStorageImpl.replace] changed yet. */
+private const val INITIAL_VERSION: Long = 0
 
 private data class StorageSnapshotCache(val storageVersion: Long, val cache: ValuesCache, val storage: ImmutableEntityStorage)

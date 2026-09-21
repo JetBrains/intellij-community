@@ -71,14 +71,6 @@ private fun shouldWriteExternalFilesDirectly(): Boolean {
 
 @ApiStatus.Internal
 open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(project), ProjectStoreWithJpsContentReader {
-  private val persistentModules = CachedValue<List<Module>> { storage ->
-    val moduleMap = storage.moduleMap
-    storage.entities(ModuleEntity::class.java)
-      .mapNotNull { moduleMap.getDataByEntity(it) }
-      .filter { it.canStoreSettings() }
-      .toList()
-  }
-
   final override suspend fun saveModules(
     saveSessions: MutableList<SaveSession>,
     saveResult: SaveResult,
@@ -114,6 +106,18 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
 
   override fun createContentReader(): JpsFileContentReaderWithCache {
     return StorageJpsConfigurationReader(project = project, projectStore = this, configLocation = getJpsProjectConfigLocation(project)!!)
+  }
+
+  private companion object {
+    // The key lives in the companion object on purpose. A CachedValue is compared by identity, so a key in an
+    // instance field gives a new key for each ProjectWithModuleStoreImpl and never hits the cache.
+    private val persistentModules = CachedValue<List<Module>> { storage ->
+      val moduleMap = storage.moduleMap
+      storage.entities(ModuleEntity::class.java)
+        .mapNotNull { moduleMap.getDataByEntity(it) }
+        .filter { it.canStoreSettings() }
+        .toList()
+    }
   }
 }
 

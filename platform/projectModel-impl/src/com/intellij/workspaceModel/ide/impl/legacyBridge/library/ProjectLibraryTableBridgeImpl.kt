@@ -70,12 +70,6 @@ open class ProjectLibraryTableBridgeImpl(
 
   private val dispatcher = EventDispatcher.create(LibraryTable.Listener::class.java)
 
-  private val libraryArrayValue = CachedValue<Array<Library>> { storage ->
-    storage.entities(LibraryEntity::class.java).filter { it.tableId == LibraryTableId.ProjectLibraryTableId }
-      .mapNotNull { storage.libraryMap.getDataByEntity(it) }
-      .toList().toTypedArray()
-  }
-
   init {
     project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       /**
@@ -264,6 +258,14 @@ open class ProjectLibraryTableBridgeImpl(
   }
 
   companion object {
+    // The key stays in the companion object on purpose. A CachedValue is compared by identity, so a key in an
+    // instance field gives a new key for each ProjectLibraryTableBridgeImpl and never hits the cache.
+    private val libraryArrayValue = CachedValue<Array<Library>> { storage ->
+      storage.entities(LibraryEntity::class.java).filter { it.tableId == LibraryTableId.ProjectLibraryTableId }
+        .mapNotNull { storage.libraryMap.getDataByEntity(it) }
+        .toList().toTypedArray()
+    }
+
     internal val PROJECT_LIBRARY_TABLE_PRESENTATION = object : LibraryTablePresentation() {
       override fun getDisplayName(plural: Boolean) = ProjectModelBundle.message("project.library.display.name", if (plural) 2 else 1)
 

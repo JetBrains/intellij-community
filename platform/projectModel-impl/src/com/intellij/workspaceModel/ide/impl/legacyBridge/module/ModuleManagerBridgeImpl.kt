@@ -373,10 +373,6 @@ abstract class ModuleManagerBridgeImpl(
 
   override fun getUnloadedModuleDescription(moduleName: String): UnloadedModuleDescription? = moduleNameToUnloadedModuleDescription[moduleName]
 
-  private val modulesArrayValue = CachedValue<Array<Module>> { storage ->
-    modules(storage).toList().toTypedArray()
-  }
-
   override val modules: Array<Module>
     get() = entityStore.cachedValue(modulesArrayValue)
 
@@ -388,10 +384,6 @@ abstract class ModuleManagerBridgeImpl(
 
   override val sortedModules: Array<Module>
     get() = entityStore.cachedValue(sortedModulesValue)
-
-  private val modulesByNameMapValue = CachedValue<Map<String, Module>> { storage ->
-    modules(storage).associateByTo(hashMapOf()) { it.name }
-  }
 
   override val modulesByNameMap: Map<String, Module>
     get() = entityStore.cachedValue(modulesByNameMapValue)
@@ -591,6 +583,14 @@ abstract class ModuleManagerBridgeImpl(
       return entityStorage.current.entities(ModuleGroupPathEntity::class.java).firstOrNull() != null
     }
 
+    // The keys below stay in the companion object on purpose. A CachedValue is compared by identity, so a key in an
+    // instance field gives a new key for each ModuleManagerBridgeImpl and never hits the cache.
+    private val modulesArrayValue = CachedValue<Array<Module>> { storage ->
+      modules(storage).toList().toTypedArray()
+    }
+    private val modulesByNameMapValue = CachedValue<Map<String, Module>> { storage ->
+      modules(storage).associateByTo(hashMapOf()) { it.name }
+    }
     private val dependencyGraphWithTestsValue = CachedValue { storage ->
       buildModuleGraph(storage, true)
     }

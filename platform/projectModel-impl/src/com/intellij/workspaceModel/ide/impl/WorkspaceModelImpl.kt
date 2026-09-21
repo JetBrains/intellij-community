@@ -119,12 +119,26 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   private val updateModelSilentMethodName = WorkspaceModelImpl::updateProjectModelSilent.name
   private val onChangedMethodName = WorkspaceModelImpl::onChanged.name
 
-  constructor(project: Project, cs: CoroutineScope, storage: ImmutableEntityStorage, virtualFileUrlManager: VirtualFileUrlManager) {
+  /**
+   * Takes a ready [VersionedEntityStorageImpl] instead of building one.
+   *
+   * The cache behind [VersionedEntityStorage.cachedValue] belongs to the [VersionedEntityStorageImpl] instance,
+   * so a caller that builds a new [WorkspaceModelImpl] for each read of one immutable storage loses that cache
+   * every time. Such a caller builds the storage itself and gives every instance the same
+   * [com.intellij.platform.workspace.storage.impl.ValuesCache]. The JetBrains language server does this.
+   */
+  @ApiStatus.Internal
+  constructor(
+    project: Project,
+    cs: CoroutineScope,
+    entityStorage: VersionedEntityStorageImpl,
+    virtualFileUrlManager: VirtualFileUrlManager,
+  ) {
     this.project = project
     this.coroutineScope = cs
     this.virtualFileManager = virtualFileUrlManager
-    entityStorage = VersionedEntityStorageImpl(storage)
-    unloadedEntitiesStorage = VersionedEntityStorageImpl(ImmutableEntityStorage.empty())
+    this.entityStorage = entityStorage
+    this.unloadedEntitiesStorage = VersionedEntityStorageImpl(ImmutableEntityStorage.empty())
     this.loadedFromCache = true
   }
 
