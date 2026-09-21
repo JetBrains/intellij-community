@@ -70,7 +70,7 @@ open class BackgroundRun(
    *
    * The IDE is closed on any exception, or if it doesn't close automatically after the block execution completes.
    */
-  open fun <R> useDriver(closeIdeTimeout: Duration = 1.minutes, block: Driver.() -> R): IDEStartResult {
+  open fun <R> useDriverAndWaitIdeIsClosed(closeIdeTimeout: Duration = 1.minutes, block: Driver.() -> R): IDEStartResult {
     lateinit var ideStartResult: IDEStartResult
     runCatching {
       driver.withContext {
