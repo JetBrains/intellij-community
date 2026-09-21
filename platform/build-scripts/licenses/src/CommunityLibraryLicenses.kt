@@ -635,10 +635,6 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
       "Drew Stephens", "Vyacheslav Artemyev", "Dmitry Spikhalskiy"
     ),
 
-  LibraryLicense("Jackson Validator", libraryName = "jackson-validator", url = "https://github.com/FasterXML/jackson-dataformats-text")
-    .apache("https://github.com/FasterXML/jackson-dataformats-text/blob/2.16/pom.xml")
-    .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
-
   LibraryLicense("JaCoCo", libraryName = "JaCoCo", url = "https://www.eclemma.org/jacoco/")
     .eplV1("https://www.jacoco.org/jacoco/trunk/doc/license.html")
     .suppliedByOrganizations("Mountainminds GmbH & Co. KG and Contributors"),

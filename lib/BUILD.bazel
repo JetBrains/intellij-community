@@ -9668,44 +9668,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.worldturner.medeia/medeia-validator-jackson-1.1.1.jar_copy",
-    src = "@com_worldturner_medeia-medeia-validator-jackson-1_1_1_http//file",
-    out = "com.worldturner.medeia/medeia-validator-jackson-1.1.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.worldturner.medeia/medeia-validator-core-1.1.1.jar_copy",
-    src = "@com_worldturner_medeia-medeia-validator-core-1_1_1_http//file",
-    out = "com.worldturner.medeia/medeia-validator-core-1.1.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "libraries-jackson-validator-jackson-validator",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":com_worldturner_medeia-medeia-validator-jackson-1_1_1_http_import",
-        ":com_worldturner_medeia-medeia-validator-core-1_1_1_http_import",
-    ],
-)
-
-jvm_import(
-    name = "com_worldturner_medeia-medeia-validator-jackson-1_1_1_http_import",
-    jar = "@com_worldturner_medeia-medeia-validator-jackson-1_1_1_http//file",
-    source_jar = "@com_worldturner_medeia-medeia-validator-jackson-1_1_1-sources_http//file",
-)
-
-jvm_import(
-    name = "com_worldturner_medeia-medeia-validator-core-1_1_1_http_import",
-    jar = "@com_worldturner_medeia-medeia-validator-core-1_1_1_http//file",
-    source_jar = "@com_worldturner_medeia-medeia-validator-core-1_1_1-sources_http//file",
-)
-
-copy_file(
     name = "tools.jackson.core/jackson-databind-3.2.2.jar_copy",
     src = "@tools_jackson_core-jackson-databind-3_2_2_http//file",
     out = "tools.jackson.core/jackson-databind-3.2.2.jar",

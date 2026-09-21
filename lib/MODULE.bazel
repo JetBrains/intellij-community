@@ -7722,34 +7722,6 @@ http_file(
 )
 
 http_file(
-    name = "com_worldturner_medeia-medeia-validator-jackson-1_1_1_http",
-    downloaded_file_path = "medeia-validator-jackson-1.1.1.jar",
-    sha256 = "b3cc41b37e0b5953898467f282b6a42075a2b41dd500fc49b1212829184534b2",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/worldturner/medeia/medeia-validator-jackson/1.1.1/medeia-validator-jackson-1.1.1.jar",
-)
-
-http_file(
-    name = "com_worldturner_medeia-medeia-validator-core-1_1_1_http",
-    downloaded_file_path = "medeia-validator-core-1.1.1.jar",
-    sha256 = "206a37ae4cb84c1aa4bedcf145e94e30cbab6f15b809a9602231f28793ebf793",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/worldturner/medeia/medeia-validator-core/1.1.1/medeia-validator-core-1.1.1.jar",
-)
-
-http_file(
-    name = "com_worldturner_medeia-medeia-validator-jackson-1_1_1-sources_http",
-    downloaded_file_path = "medeia-validator-jackson-1.1.1-sources.jar",
-    sha256 = "b4fca6ed8594506cd3f1e2c2c23f233c4f65d9c986779587fde52c3d69da7a4f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/worldturner/medeia/medeia-validator-jackson/1.1.1/medeia-validator-jackson-1.1.1-sources.jar",
-)
-
-http_file(
-    name = "com_worldturner_medeia-medeia-validator-core-1_1_1-sources_http",
-    downloaded_file_path = "medeia-validator-core-1.1.1-sources.jar",
-    sha256 = "f0b314d7f113c73051f223a4024e57addf758112342ff4cbacf85d242ed26c42",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/worldturner/medeia/medeia-validator-core/1.1.1/medeia-validator-core-1.1.1-sources.jar",
-)
-
-http_file(
     name = "tools_jackson_core-jackson-databind-3_2_2_http",
     downloaded_file_path = "jackson-databind-3.2.2.jar",
     sha256 = "d27509f990d990fc779a01f3f612005ff6c67dc3bb0a720f5f4d9b2f5c713401",

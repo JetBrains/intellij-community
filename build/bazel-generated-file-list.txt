@@ -482,7 +482,6 @@ libraries/jackson/datatype-jsr310
 libraries/jackson/jackson
 libraries/jackson/jr-objects
 libraries/jackson/module-kotlin
-libraries/jackson/validator
 libraries/jackson3/databind
 libraries/jackson3/dataformat-cbor
 libraries/jackson3/dataformat-toml

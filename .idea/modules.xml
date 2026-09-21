@@ -1102,7 +1102,6 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/jackson/datatype-jsr310/intellij.libraries.jackson.datatype.jsr310.iml" filepath="$PROJECT_DIR$/libraries/jackson/datatype-jsr310/intellij.libraries.jackson.datatype.jsr310.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jackson/jr-objects/intellij.libraries.jackson.jr.objects.iml" filepath="$PROJECT_DIR$/libraries/jackson/jr-objects/intellij.libraries.jackson.jr.objects.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jackson/module-kotlin/intellij.libraries.jackson.module.kotlin.iml" filepath="$PROJECT_DIR$/libraries/jackson/module-kotlin/intellij.libraries.jackson.module.kotlin.iml" />
-      <module fileurl="file://$PROJECT_DIR$/libraries/jackson/validator/intellij.libraries.jackson.validator.iml" filepath="$PROJECT_DIR$/libraries/jackson/validator/intellij.libraries.jackson.validator.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jackson3/jackson/intellij.libraries.jackson3.iml" filepath="$PROJECT_DIR$/libraries/jackson3/jackson/intellij.libraries.jackson3.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jackson3/databind/intellij.libraries.jackson3.databind.iml" filepath="$PROJECT_DIR$/libraries/jackson3/databind/intellij.libraries.jackson3.databind.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jackson3/dataformat-cbor/intellij.libraries.jackson3.dataformat.cbor.iml" filepath="$PROJECT_DIR$/libraries/jackson3/dataformat-cbor/intellij.libraries.jackson3.dataformat.cbor.iml" />
