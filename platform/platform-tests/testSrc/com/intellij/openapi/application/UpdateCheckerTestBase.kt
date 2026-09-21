@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.TestIdeaPluginDescriptor
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
 import com.intellij.ide.plugins.updateBrokenPlugins
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.observable.util.whenDisposed
@@ -49,7 +48,7 @@ internal abstract class UpdateCheckerTestBase {
 
   @BeforeEach
   fun setup() {
-    server = createTestServer(testDisposable.get())
+    server = createTestServer().httpServer
 
     application.replaceService(InstalledPluginsState::class.java, InstalledPluginsState(), testDisposable.get())
     application.replaceService(UpdateCheckerPluginsFacade::class.java, TestUpdateCheckerPluginsFacade(), testDisposable.get())
@@ -77,12 +76,17 @@ internal abstract class UpdateCheckerTestBase {
     }
   }
 
-  protected fun createTestServer(disposable: Disposable): HttpServer {
+  protected data class Server(val httpServer: HttpServer, val suffix: String) {
+    val url: String
+      get() = "${httpServer.url}/$suffix"
+  }
+
+  protected fun createTestServer(suffix: String = "custom-repository"): Server {
     val server = HttpServer.create()!!
     server.bind(InetSocketAddress(0), 1)
     server.start()
-    disposable.whenDisposed { server.stop(0) }
-    return server
+    testDisposable.get().whenDisposed { server.stop(0) }
+    return Server(server, suffix)
   }
 
   protected fun setServerPlugins(
@@ -120,20 +124,20 @@ internal abstract class UpdateCheckerTestBase {
     }
   }
 
-  protected fun setCustomRepositoryPlugins(customServer: HttpServer, plugins: List<CustomRepositoryPlugin>) {
-    customServer.createContext("/custom-repository") { handler ->
+  protected fun setCustomRepositoryPlugins(customServer: Server, plugins: List<CustomRepositoryPlugin>) {
+    customServer.httpServer.createContext("/${customServer.suffix}") { handler ->
       handler.sendResponseHeaders(200, 0)
       handler.responseBody.writer().use { out ->
         out.write("""
           <plugins>
-            ${plugins.joinToString("\n") { it.toPluginXml(customServer) }}
+            ${plugins.joinToString("\n") { it.toPluginXml(customServer.httpServer) }}
           </plugins>
           """.trimIndent())
       }
     }
 
     for (plugin in plugins) {
-      customServer.createContext(plugin.downloadPath) { handler ->
+      customServer.httpServer.createContext(plugin.downloadPath) { handler ->
         handler.sendResponseHeaders(200, 0)
         handler.responseBody.use { output ->
           JarOutputStream(output).use { jarOutput ->

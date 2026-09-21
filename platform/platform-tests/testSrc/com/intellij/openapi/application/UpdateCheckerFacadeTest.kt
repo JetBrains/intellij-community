@@ -451,8 +451,7 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
   @Test
   fun `return updates for a broken plugin if the first repository contains only downgrades (IJPL-251144)`() {
     val pluginId = "test.custom.source.downgrade"
-    val customServer = createTestServer(testDisposable.get())
-    val customRepositoryUrl = customServer.url + "/custom-repository"
+    val customServer = createTestServer()
 
     setInstalledPluginMocks(
       InstalledPluginMock(id = pluginId,
@@ -463,7 +462,7 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
                           untilBuild = "999.99999",
                           enabled = true),
     )
-    installedPluginsFacade.setHosts(listOf(customRepositoryUrl))
+    installedPluginsFacade.setHosts(listOf(customServer.url))
     updateBrokenPlugins(mapOf(Pair(PluginId(pluginId), setOf("2.0"))))
 
     val marketplaceUpdate = RepositoryPluginMock(pluginId = pluginId, externalPluginId = "501", externalUpdateId = "101", version = "3.0")
@@ -516,8 +515,7 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
   @Test
   fun `don't suggest downgrade for non-broken plugins from custom repository even when downgrade is allowed (IJPL-251144)`() {
     val pluginId = "test.custom.source.downgrade"
-    val customServer = createTestServer(testDisposable.get())
-    val customRepositoryUrl = customServer.url + "/custom-repository"
+    val customServer = createTestServer()
 
     setInstalledPluginMocks(
       InstalledPluginMock(id = pluginId,
@@ -528,7 +526,7 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
                           untilBuild = "999.99999",
                           enabled = true),
     )
-    installedPluginsFacade.setHosts(listOf(customRepositoryUrl))
+    installedPluginsFacade.setHosts(listOf(customServer.url))
 
     setCustomRepositoryPlugins(customServer, listOf(
       CustomRepositoryPlugin(pluginId, "1.0"),

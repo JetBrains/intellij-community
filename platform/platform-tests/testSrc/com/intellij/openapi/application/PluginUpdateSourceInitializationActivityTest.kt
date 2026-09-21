@@ -11,7 +11,6 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.http.url
 import com.intellij.util.SystemProperties
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -37,18 +36,14 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
 
   @Test
   fun `plugin update sources are initialized only for unambiguous plugins and only once`(): Unit = timeoutRunBlocking {
-    val customServer = createTestServer(testDisposable.get())
-    val anotherCustomServer = createTestServer(testDisposable.get())
-    val customRepositoryUrl = customServer.url + "/custom-repository"
-    val anotherCustomRepositoryUrl = anotherCustomServer.url + "/custom-repository"
-    val firstNightlyServer = createTestServer(testDisposable.get())
-    val secondNightlyServer = createTestServer(testDisposable.get())
-    val firstNightlyRepositoryUrl = firstNightlyServer.url + "/custom-repository"
-    val secondNightlyRepositoryUrl = secondNightlyServer.url + "/custom-repository"
+    val customServer = createTestServer()
+    val anotherCustomServer = createTestServer()
+    val firstNightlyServer = createTestServer()
+    val secondNightlyServer = createTestServer()
 
-    setCustomRepositoryHosts(listOf(customRepositoryUrl, anotherCustomRepositoryUrl))
+    setCustomRepositoryHosts(listOf(customServer.url, anotherCustomServer.url))
     withSystemProperty(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY,
-                       "$firstNightlyRepositoryUrl,$secondNightlyRepositoryUrl") {
+                       "${firstNightlyServer.url},${secondNightlyServer.url}") {
       setInstalledPluginMocks(*INSTALLED_PLUGINS.toTypedArray())
 
       setServerPlugins(
@@ -87,7 +82,7 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
 
       executeInitializationActivity()
 
-      val customRepositoryUpdateSourceId = pluginUpdateSourceService.createCustomRepositoryPluginUpdateSourceId(customRepositoryUrl)
+      val customRepositoryUpdateSourceId = pluginUpdateSourceService.createCustomRepositoryPluginUpdateSourceId(customServer.url)
       assertPluginUpdateSource(ALREADY_INITIALIZED_PLUGIN, marketplaceUpdateSourceId)
       assertNoPluginUpdateSource(UNKNOWN_PLUGIN)
       assertNoPluginUpdateSource(MULTIPLE_CUSTOM_REPOSITORIES_PLUGIN)
@@ -99,7 +94,7 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
       assertNoPluginUpdateSource(BUNDLED_NON_UPDATEABLE_JET_BRAINS_PLUGIN_CUSTOM_REPOSITORY_PLUGIN)
       assertPluginUpdateSource(BUNDLED_UPDATEABLE_PLUGIN_CUSTOM_REPOSITORY_PLUGIN, customRepositoryUpdateSourceId)
       assertNoPluginUpdateSource(BUNDLED_NON_UPDATEABLE_PLUGIN_CUSTOM_REPOSITORY_PLUGIN)
-      val nightlyRepositoryUpdateSourceId = pluginUpdateSourceService.createCustomRepositoryPluginUpdateSourceId(firstNightlyRepositoryUrl)
+      val nightlyRepositoryUpdateSourceId = pluginUpdateSourceService.createCustomRepositoryPluginUpdateSourceId(firstNightlyServer.url)
       assertPluginUpdateSource(SINGLE_NIGHTLY_REPOSITORY_PLUGIN, nightlyRepositoryUpdateSourceId)
       assertPluginUpdateSource(MULTIPLE_NIGHTLY_REPOSITORIES_PLUGIN, nightlyRepositoryUpdateSourceId)
 

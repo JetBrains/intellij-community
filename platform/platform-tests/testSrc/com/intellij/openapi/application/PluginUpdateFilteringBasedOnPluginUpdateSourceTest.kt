@@ -9,7 +9,6 @@ import com.intellij.openapi.updateSettings.impl.createNightlyPluginUpdateSourceI
 import com.intellij.testFramework.PlatformTestUtil.withSystemProperty
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.http.url
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -33,8 +32,7 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
 
   @Test
   fun `plugin updates are checked only against recorded plugin update source`() {
-    val customServer = createTestServer(testDisposable.get())
-    val customRepositoryUrl = customServer.url + "/custom-repository"
+    val customServer = createTestServer()
 
     val installedPluginIds = listOf(
       MARKETPLACE_SOURCE_BOTH,
@@ -46,7 +44,7 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
       WITHOUT_SOURCE_BOTH,
     )
     setInstalledPluginMocks(*installedPluginIds.map { installedPlugin(it) }.toTypedArray())
-    installedPluginsFacade.setHosts(listOf(customRepositoryUrl))
+    installedPluginsFacade.setHosts(listOf(customServer.url))
 
     val marketplaceUpdates = listOf(
       RepositoryPluginMock(MARKETPLACE_SOURCE_BOTH, "501", "101", "2.0"),
@@ -69,7 +67,7 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
                            MARKETPLACE_SOURCE_BOTH,
                            MARKETPLACE_SOURCE_CUSTOM_ONLY,
                            MARKETPLACE_SOURCE_MARKETPLACE_ONLY)
-    setPluginUpdateSources(PluginUpdateSourceService.getInstance().createCustomRepositoryPluginUpdateSourceId(customRepositoryUrl),
+    setPluginUpdateSources(PluginUpdateSourceService.getInstance().createCustomRepositoryPluginUpdateSourceId(customServer.url),
                            CUSTOM_SOURCE_BOTH,
                            CUSTOM_SOURCE_MARKETPLACE_ONLY,
                            CUSTOM_SOURCE_CUSTOM_ONLY)
@@ -102,8 +100,7 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
 
   @Test
   fun `updateable JetBrains bundled plugins are updated from Marketplace only`() {
-    val customServer = createTestServer(testDisposable.get())
-    val customRepositoryUrl = customServer.url + "/custom-repository"
+    val customServer = createTestServer()
 
     val installedPluginIds = listOf(
       UPDATEABLE_BUNDLED_JETBRAINS,
@@ -117,7 +114,7 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
       installedPlugin(NON_UPDATEABLE_BUNDLED_JETBRAINS, isBundled = true, isJetBrainsPlugin = true),
       installedPlugin(NON_UPDATEABLE_BUNDLED_NOT_JETBRAINS, isBundled = true),
     )
-    installedPluginsFacade.setHosts(listOf(customRepositoryUrl))
+    installedPluginsFacade.setHosts(listOf(customServer.url))
 
     setMarketplacePlugins(listOf(
       RepositoryPluginMock(UPDATEABLE_BUNDLED_JETBRAINS, "601", "201", "2.0"),
@@ -148,27 +145,24 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
 
   @Test
   fun `plugins installed from nightly servers are updated from current nightly servers only`() {
-    val oldNightlyServer = createTestServer(testDisposable.get())
-    val firstNightlyServer = createTestServer(testDisposable.get())
-    val secondNightlyServer = createTestServer(testDisposable.get())
-    val oldNightlyRepositoryUrl = oldNightlyServer.url + "/custom-repository"
-    val firstNightlyRepositoryUrl = firstNightlyServer.url + "/custom-repository"
-    val secondNightlyRepositoryUrl = secondNightlyServer.url + "/custom-repository"
+    val oldNightlyServer = createTestServer()
+    val firstNightlyServer = createTestServer()
+    val secondNightlyServer = createTestServer()
 
     setInstalledPluginMocks(installedPlugin(NIGHTLY_SOURCE_PLUGIN))
-    installedPluginsFacade.setHosts(listOf(oldNightlyRepositoryUrl, firstNightlyRepositoryUrl, secondNightlyRepositoryUrl))
+    installedPluginsFacade.setHosts(listOf(oldNightlyServer.url, firstNightlyServer.url, secondNightlyServer.url))
 
     setCustomRepositoryPlugins(oldNightlyServer, listOf(CustomRepositoryPlugin(NIGHTLY_SOURCE_PLUGIN, "9.0")))
     setCustomRepositoryPlugins(firstNightlyServer, listOf(CustomRepositoryPlugin(NIGHTLY_SOURCE_PLUGIN, "2.0")))
     setCustomRepositoryPlugins(secondNightlyServer, listOf(CustomRepositoryPlugin(NIGHTLY_SOURCE_PLUGIN, "3.0")))
 
-    withSystemProperty<RuntimeException>(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY, oldNightlyRepositoryUrl) {
-      setPluginUpdateSources(PluginUpdateSourceService.getInstance().createCustomRepositoryPluginUpdateSourceId(oldNightlyRepositoryUrl),
+    withSystemProperty<RuntimeException>(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY, oldNightlyServer.url) {
+      setPluginUpdateSources(PluginUpdateSourceService.getInstance().createCustomRepositoryPluginUpdateSourceId(oldNightlyServer.url),
                              NIGHTLY_SOURCE_PLUGIN)
     }
 
     withSystemProperty<RuntimeException>(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY,
-                                         "$firstNightlyRepositoryUrl,$secondNightlyRepositoryUrl") {
+                                         "${firstNightlyServer.url},${secondNightlyServer.url}") {
       val internalResult = UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates()
       assertEquals(emptyMap<String?, Exception>(), internalResult.errors)
       val result = internalResult.pluginUpdates
