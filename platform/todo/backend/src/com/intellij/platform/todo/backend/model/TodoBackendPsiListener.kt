@@ -24,7 +24,10 @@ internal class TodoBackendPsiListener(
   override fun propertyChanged(event: PsiTreeChangeEvent) {
     when (event.propertyName) {
       PsiTreeChangeEvent.PROP_FILE_NAME, PsiTreeChangeEvent.PROP_WRITABLE -> scheduleFor(event)
-      PsiTreeChangeEvent.PROP_DIRECTORY_NAME, PsiTreeChangeEvent.PROP_UNLOADED_PSI -> scheduleInitialScan()
+      PsiTreeChangeEvent.PROP_DIRECTORY_NAME,
+      PsiTreeChangeEvent.PROP_UNLOADED_PSI,
+      PsiTreeChangeEvent.PROP_ROOTS,
+      PsiTreeChangeEvent.PROP_FILE_TYPES -> scheduleInitialScan()
     }
   }
 
