@@ -106,6 +106,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     DataContext dataContext = e.getDataContext();
     Project project = e.getProject();
     if (project == null) return;
+    if (!RefactoringSafeMode.isRefactoringAllowed(dataContext)) return;
     int eventCount = IdeEventQueue.getInstance().getEventCount();
     if (!PsiDocumentManager.getInstance(project).commitAllDocumentsUnderProgress()) {
       return;
@@ -193,6 +194,10 @@ public abstract class BaseRefactoringAction extends AnAction {
     DataContext dataContext = e.getDataContext();
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || isHidden()) {
+      hideAction(e);
+      return;
+    }
+    if (!RefactoringSafeMode.isRefactoringAllowed(dataContext)) {
       hideAction(e);
       return;
     }

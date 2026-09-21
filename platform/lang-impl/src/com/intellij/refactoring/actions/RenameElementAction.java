@@ -56,6 +56,9 @@ public class RenameElementAction extends DumbAwareAction {
     if (project == null) {
       return false;
     }
+    if (!RefactoringSafeMode.isRefactoringAllowed(dataContext)) {
+      return false;
+    }
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
     if (editor != null && InplaceRefactoringContinuation.hasInplaceContinuation(editor, RenameElementAction.class)) {
       return true;
@@ -69,6 +72,9 @@ public class RenameElementAction extends DumbAwareAction {
       DataContext dataContext = e.getDataContext();
       Project project = dataContext.getData(CommonDataKeys.PROJECT);
       if (project == null) {
+        return;
+      }
+      if (!RefactoringSafeMode.isRefactoringAllowed(dataContext)) {
         return;
       }
       Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
