@@ -1130,10 +1130,12 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
 
     fun firstVisibleOccurrence(relativeTo: JComponent, visibleRect: Rectangle): OccurrenceBounds? {
       if (realRows) {
-        return realRowComponents.entries.firstNotNullOfOrNull { (occurrenceId, component) ->
-          val bounds = SwingUtilities.convertRectangle(component, Rectangle(0, 0, component.width, component.height), relativeTo)
-          bounds.takeIf { it.intersects(visibleRect) }?.let { OccurrenceBounds(occurrenceId, it) }
-        }
+        return realRowComponents.asSequence()
+          .mapNotNull { (occurrenceId, component) ->
+            val bounds = SwingUtilities.convertRectangle(component, Rectangle(0, 0, component.width, component.height), relativeTo)
+            bounds.takeIf { it.intersects(visibleRect) }?.let { OccurrenceBounds(occurrenceId, it) }
+          }
+          .minByOrNull { it.bounds.y }
       }
       if (model.isEmpty) return null
 

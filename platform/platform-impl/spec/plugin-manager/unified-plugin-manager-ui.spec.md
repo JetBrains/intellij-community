@@ -463,7 +463,8 @@ Untested: No focused test verifies Shift-selection or Select All across sections
     `expanding a preceding section preserves visible occurrence offset`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
-    `installing row height change preserves a later visible occurrence`
+    `installing row height change preserves a later visible occurrence`;
+    `reordered real rows preserve the top visible occurrence after a height change`
   )
 
 ## Presentation

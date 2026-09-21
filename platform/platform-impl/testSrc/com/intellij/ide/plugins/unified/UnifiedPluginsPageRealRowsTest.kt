@@ -426,6 +426,50 @@ internal class UnifiedPluginsPageRealRowsTest {
   }
 
   @Test
+  fun `reordered real rows preserve the top visible occurrence after a height change`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UI) {
+      val factory = RecordingRowFactory()
+      val items = (1..20).map { item("installed.$it") }
+      val controller = UnifiedPluginsPageController()
+      controller.updateSection(section(PluginSectionId.Installed, *items.toTypedArray()))
+      controller.setSectionExpanded(PluginSectionId.Installed, true)
+      val view = createView(factory)
+      view.render(controller.state.value)
+      prepareForScrolling(view)
+
+      val scrollPane = componentsOfType(view.component, JBScrollPane::class.java).single()
+      scrollToComponent(scrollPane, factory.row(PluginSectionId.Installed, items[9]).component)
+
+      val reversedItems = items.reversed()
+      controller.updateSection(section(PluginSectionId.Installed, *reversedItems.toTypedArray()))
+      view.render(controller.state.value)
+      val visibleItems = reversedItems.filter { item ->
+        val component = factory.row(PluginSectionId.Installed, item).component
+        val bounds = SwingUtilities.convertRectangle(
+          component,
+          Rectangle(0, 0, component.width, component.height),
+          scrollPane.viewport.view,
+        )
+        bounds.intersects(scrollPane.viewport.viewRect)
+      }
+      assertThat(visibleItems).hasSizeGreaterThan(2)
+      val anchorItem = visibleItems.first()
+      val anchor = factory.row(PluginSectionId.Installed, anchorItem).component
+      val initialOffset = componentOffset(scrollPane, anchor)
+
+      val resizedItem = visibleItems[visibleItems.size / 2]
+      factory.row(PluginSectionId.Installed, resizedItem).setHeight(ROW_HEIGHT * 3)
+      val revisedItems = reversedItems.map { item ->
+        if (item.pluginId == resizedItem.pluginId) item.copy(contentRevision = 1) else item
+      }
+      controller.updateSection(section(PluginSectionId.Installed, *revisedItems.toTypedArray()))
+      view.render(controller.state.value)
+
+      assertThat(componentOffset(scrollPane, anchor)).isEqualTo(initialOffset)
+      view.close()
+    }
+
+  @Test
   fun `filtered one-row sections do not shrink real rows below preferred height`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val factory = RecordingRowFactory()
     val firstItem = item("first.plugin")
