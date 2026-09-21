@@ -1,12 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
+import com.intellij.diagnostic.PerformanceWatcher
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.contentModuleName
 import com.intellij.ide.plugins.contentModules
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.AttachmentFactory
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
@@ -98,6 +102,19 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
       catch (e: AtomicMoveNotSupportedException) {
         LOG.warn(e)
         Files.move(tmpFile, file, StandardCopyOption.REPLACE_EXISTING)
+      }
+      catch (e: AccessDeniedException) {
+        val attachments = try {
+          val dumpPath = PerformanceWatcher.getInstanceIfCreated()?.dumpThreads("workspaceCacheAccessDenied", true, false)
+          val attachment = dumpPath?.let { AttachmentFactory.createAttachment(it, false) }
+          listOfNotNull(attachment)
+        }
+        catch (e: Throwable) {
+          rethrowControlFlowException(e)
+          LOG.warn("Failed to write a thread dump for the workspace cache access denied report", e)
+          emptyList()
+        }
+        LOG.error(RuntimeExceptionWithAttachments("AccessDenied in save workspace cache", e, *attachments.toTypedArray()))
       }
     }
     finally {
