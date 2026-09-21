@@ -83,12 +83,15 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
         myDebuggerStateManager.fireStateChanged(newContext, event);
       }
       if (event == DebuggerSession.Event.ATTACHED) {
+        assert session != null;
         getEventPublisher().sessionAttached(session);
       }
       else if (event == DebuggerSession.Event.DETACHED) {
+        assert session != null;
         getEventPublisher().sessionDetached(session);
       }
       else if (event == DebuggerSession.Event.DISPOSE) {
+        assert session != null;
         dispose(session);
         if (myDebuggerStateManager.myDebuggerSession == session) {
           myDebuggerStateManager
@@ -367,7 +370,7 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
     }
   }
 
-  private void dispose(DebuggerSession session) {
+  private void dispose(@NotNull DebuggerSession session) {
     ProcessHandler processHandler = session.getProcess().getProcessHandler();
     synchronized (mySessions) {
       DebuggerSession removed = mySessions.remove(processHandler);

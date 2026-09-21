@@ -27,12 +27,12 @@ public final class AlternativeJreClassFinder extends NonClasspathClassFinder {
 
     project.getMessageBus().connect().subscribe(DebuggerManagerListener.TOPIC, new DebuggerManagerListener() {
       @Override
-      public void sessionCreated(DebuggerSession session) {
+      public void sessionCreated(@NotNull DebuggerSession session) {
         clearCache();
       }
 
       @Override
-      public void sessionRemoved(DebuggerSession session) {
+      public void sessionRemoved(@NotNull DebuggerSession session) {
         clearCache();
       }
     });

@@ -204,12 +204,12 @@ public final class JavaDebuggerConsoleFilterProvider implements ConsoleFilterPro
       addListener(new InlayContentListener(inlay));
       myProject.getMessageBus().connect(inlay).subscribe(DebuggerManagerListener.TOPIC, new DebuggerManagerListener() {
         @Override
-        public void sessionCreated(DebuggerSession session) {
+        public void sessionCreated(@NotNull DebuggerSession session) {
           updateLater(inlay);
         }
 
         @Override
-        public void sessionRemoved(DebuggerSession session) {
+        public void sessionRemoved(@NotNull DebuggerSession session) {
           updateLater(inlay);
         }
       });

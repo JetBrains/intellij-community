@@ -31,8 +31,7 @@ private const val CANCELLATION_FQN = "com.intellij.openapi.progress.Cancellation
 private object PauseListener : DebuggerManagerListener {
   private val sessionThreadsDataKey = Key.create<SessionThreadsData>("devkit.debugger.session.threads.data")
 
-  override fun sessionAttached(session: DebuggerSession?) {
-    if (session == null) return
+  override fun sessionAttached(session: DebuggerSession) {
     val debugProcess = session.process
     debugProcess.putUserData(sessionThreadsDataKey, SessionThreadsData())
     debugProcess.addDebugProcessListener(object : DebugProcessListener {
@@ -48,8 +47,7 @@ private object PauseListener : DebuggerManagerListener {
     })
   }
 
-  override fun sessionDetached(session: DebuggerSession?) {
-    if (session == null) return
+  override fun sessionDetached(session: DebuggerSession) {
     session.process.putUserData(sessionThreadsDataKey, null)
   }
 

@@ -557,7 +557,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
     }
 
     @Override
-    public void sessionAttached(DebuggerSession session) {
+    public void sessionAttached(@NotNull DebuggerSession session) {
       if (myConn == null) {
         myConn = myProject.getMessageBus().connect();
         myConn.subscribe(ProjectTaskListener.TOPIC, new MyCompilationStatusListener(myProject));
@@ -567,7 +567,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
     }
 
     @Override
-    public void sessionDetached(DebuggerSession session) {
+    public void sessionDetached(@NotNull DebuggerSession session) {
       if (!getHotSwappableDebugSessions(myProject).isEmpty()) return;
 
       MessageBusConnection conn = myConn;

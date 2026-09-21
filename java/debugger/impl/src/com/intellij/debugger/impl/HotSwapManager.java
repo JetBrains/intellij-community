@@ -313,12 +313,12 @@ public final class HotSwapManager {
     }
 
     @Override
-    public void sessionCreated(DebuggerSession session) {
+    public void sessionCreated(@NotNull DebuggerSession session) {
       getInstance(myProject).setTimeStamp(session, System.currentTimeMillis());
     }
 
     @Override
-    public void sessionRemoved(DebuggerSession session) {
+    public void sessionRemoved(@NotNull DebuggerSession session) {
       getInstance(myProject).myTimeStamps.remove(session);
     }
   }

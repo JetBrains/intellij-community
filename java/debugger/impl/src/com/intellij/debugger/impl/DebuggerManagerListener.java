@@ -2,6 +2,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
@@ -46,7 +47,7 @@ public interface DebuggerManagerListener extends EventListener {
    * <p>
    * This event occurs once. It does not mean that a target VM is attached.
    */
-  default void sessionCreated(DebuggerSession session) {
+  default void sessionCreated(@NotNull DebuggerSession session) {
   }
 
   /**
@@ -55,7 +56,7 @@ public interface DebuggerManagerListener extends EventListener {
    * This event occurs for the initial attach and for each successful reattach.
    * Create state that belongs to one VM connection here.
    */
-  default void sessionAttached(DebuggerSession session) {
+  default void sessionAttached(@NotNull DebuggerSession session) {
   }
 
   /**
@@ -65,7 +66,7 @@ public interface DebuggerManagerListener extends EventListener {
    * Release state for the current VM connection here.
    * Keep session state until {@link #sessionRemoved(DebuggerSession)}.
    */
-  default void sessionDetached(DebuggerSession session) {
+  default void sessionDetached(@NotNull DebuggerSession session) {
   }
 
   /**
@@ -74,6 +75,6 @@ public interface DebuggerManagerListener extends EventListener {
    * This event occurs once and ends the session lifecycle.
    * Release all remaining session and VM connection state here.
    */
-  default void sessionRemoved(DebuggerSession session) {
+  default void sessionRemoved(@NotNull DebuggerSession session) {
   }
 }
