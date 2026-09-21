@@ -15,6 +15,7 @@ import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +66,7 @@ public class PsiDeconstructionPatternVariableImpl extends CompositePsiElement im
 
   @Override
   public @NotNull PsiType getType() {
-    return JavaSharedImplUtil.getType(getTypeElement(), getNameIdentifier());
+    return CachedValuesManager.getProjectPsiDependentCache(this, __ -> JavaSharedImplUtil.getPatternVariableType(this));
   }
 
   @Override

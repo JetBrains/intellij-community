@@ -10,6 +10,7 @@ import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.JavaTypeNullabilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,8 +153,10 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
     Boolean writtenInNullMarkedScope = myWrittenInNullMarkedScope;
     if (writtenInNullMarkedScope == null) {
       PsiElement wildcardContext = myExistential.getPsiContext();
+      // A nullness written in a pattern type is ignored, so a wildcard written there belongs to no scope.
       myWrittenInNullMarkedScope = writtenInNullMarkedScope =
-        wildcardContext == null ? isCapturedInNullMarkedScope() : isInNullMarkedScope(wildcardContext);
+        !JavaTypeNullabilityUtil.isWrittenInPatternType(wildcardContext) &&
+        (wildcardContext == null ? isCapturedInNullMarkedScope() : isInNullMarkedScope(wildcardContext));
     }
     return writtenInNullMarkedScope;
   }

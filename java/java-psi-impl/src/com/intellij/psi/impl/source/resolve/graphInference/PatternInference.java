@@ -6,10 +6,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiDeconstructionPattern;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPattern;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
@@ -35,31 +35,53 @@ import java.util.List;
 public final class PatternInference {
   /**
    * @param resolveResult result of deconstruction pattern type element resolve before the inference
-   * @param pattern deconstruction pattern itself, which has no type arguments specified 
+   * @param pattern pattern itself, which has no type arguments specified
    * @param recordClass record class of deconstruction pattern
    * @param type context type; type of the expression, which is matched against the pattern
    * @return updated {@link CandidateInfo} that contains a substitutor with inferred type arguments
    */
   public static @NotNull CandidateInfo inferPatternGenerics(@NotNull CandidateInfo resolveResult,
-                                                            @NotNull PsiDeconstructionPattern pattern,
+                                                            @NotNull PsiPattern pattern,
                                                             @NotNull PsiClass recordClass,
                                                             @Nullable PsiType type) {
+    InferenceSession session = createSession(pattern, recordClass, type);
+    if (session == null) return resolveResult;
+    PsiSubstitutor substitutor = session.infer();
+    return new PatternCandidateInfo(resolveResult, substitutor, ContainerUtil.getFirstItem(session.getIncompatibleErrorMessages()));
+  }
+
+  /**
+   * Infers the type arguments of a pattern class from the type of the expression that the pattern is matched against.
+   * Unlike {@link #inferPatternGenerics}, this method needs no resolve result, so a caller that only wants the type
+   * arguments can use it. The inference keeps the nullability of the context type.
+   *
+   * @param pattern      pattern to infer the type arguments for
+   * @param patternClass class of the pattern type
+   * @param type         context type; type of the expression, which is matched against the pattern
+   * @return the inferred substitutor, or {@link PsiSubstitutor#EMPTY} if the inference is not possible
+   */
+  public static @NotNull PsiSubstitutor inferPatternSubstitutor(@NotNull PsiPattern pattern,
+                                                                @NotNull PsiClass patternClass,
+                                                                @Nullable PsiType type) {
+    InferenceSession session = createSession(pattern, patternClass, type);
+    return session == null ? PsiSubstitutor.EMPTY : session.infer();
+  }
+
+  private static @Nullable InferenceSession createSession(@NotNull PsiPattern pattern,
+                                                          @NotNull PsiClass recordClass,
+                                                          @Nullable PsiType type) {
     // JLS 18.5.5
-    if (type == null) return resolveResult;
+    if (type == null) return null;
     type = JavaVarTypeUtil.getUpwardProjection(type);
     Project project = recordClass.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiClassType recordRawType = factory.createType(recordClass);
     if (!recordRawType.isConvertibleFrom(type) || JavaGenericsUtil.isUncheckedCast(recordRawType, type)) {
-      return resolveResult;
+      return null;
     }
     PsiTypeParameter[] parameters = recordClass.getTypeParameters();
     InferenceSession session = new InferenceSession(parameters, PsiSubstitutor.EMPTY, PsiManagerEx.getInstanceEx(project), pattern);
-    if (!addConstraints(recordClass, type, factory, session)) {
-      return resolveResult;
-    }
-    PsiSubstitutor substitutor = session.infer();
-    return new PatternCandidateInfo(resolveResult, substitutor, ContainerUtil.getFirstItem(session.getIncompatibleErrorMessages()));
+    return addConstraints(recordClass, type, factory, session) ? session : null;
   }
 
   private static boolean addConstraints(@NotNull PsiClass recordClass,

@@ -4,6 +4,7 @@ package com.intellij.psi.util;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaTokenType;
@@ -23,6 +24,7 @@ import com.intellij.psi.PsiForeachPatternStatement;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiInstanceOfExpression;
 import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiParenthesizedExpression;
 import com.intellij.psi.PsiPattern;
 import com.intellij.psi.PsiPatternVariable;
@@ -44,8 +46,10 @@ import com.intellij.psi.PsiUnnamedPattern;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.JavaVarTypeUtil;
+import com.intellij.psi.impl.source.resolve.graphInference.PatternInference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.JavaTypeNullabilityUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -573,7 +577,7 @@ public final class JavaPsiPatternUtil {
       PsiDeconstructionList deconstructionList = ObjectUtils.tryCast(pattern.getParent(), PsiDeconstructionList.class);
       if (deconstructionList == null) return null;
       PsiDeconstructionPattern deconstructionPattern = (PsiDeconstructionPattern)deconstructionList.getParent();
-      PsiType patternType = deconstructionPattern.getTypeElement().getType();
+      PsiType patternType = getEffectivePatternType(deconstructionPattern);
       if (patternType instanceof PsiClassType) {
         patternType = PsiUtil.captureToplevelWildcards(patternType, pattern);
         PsiSubstitutor substitutor = ((PsiClassType)patternType).resolveGenerics().getSubstitutor();
@@ -681,8 +685,65 @@ public final class JavaPsiPatternUtil {
   }
 
   /**
+   * Computes the type of the pattern with the nullability that the context type implies.
+   * <p>
+   * The JSpecify spec calls "any component in a pattern" an unrecognized type-use location, so
+   * {@link com.intellij.util.JavaTypeNullabilityUtil#isWrittenInPatternType} already removed every nullability written on
+   * the pattern type. This method puts the nullability back from the context type, which is the type of the expression
+   * that the pattern is matched against.
+   *
+   * @param pattern pattern to compute the type for
+   * @return the declared pattern type with the nullability of the context type; null if the pattern has no type element
+   */
+  public static @Nullable PsiType getEffectivePatternType(@NotNull PsiPattern pattern) {
+    PsiType type = getPatternType(pattern);
+    if (type == null) return null;
+    PsiType effective = RecursionManager.doPreventingRecursion(pattern, true, () -> computeEffectivePatternType(pattern, type));
+    return effective == null ? type : effective;
+  }
+
+  private static @NotNull PsiType computeEffectivePatternType(@NotNull PsiPattern pattern, @NotNull PsiType declared) {
+    PsiClassType declaredClassType = ObjectUtils.tryCast(declared, PsiClassType.class);
+    if (declaredClassType == null || declaredClassType.isRaw()) return declared;
+    PsiClassType.ClassResolveResult declaredResult = declaredClassType.resolveGenerics();
+    PsiClass patternClass = declaredResult.getElement();
+    if (patternClass == null || !patternClass.hasTypeParameters()) return declared;
+    if (hasInferredTypeArguments(pattern)) {
+      // JavaResolveUtil.substituteResults already ran the inference against the context type, and it keeps the nullability
+      return declared;
+    }
+    PsiType contextType = getContextType(pattern);
+    if (contextType == null) return declared;
+    PsiSubstitutor fromContext = PatternInference.inferPatternSubstitutor(pattern, patternClass, contextType);
+    if (fromContext == PsiSubstitutor.EMPTY) return declared;
+    PsiSubstitutor fromPattern = declaredResult.getSubstitutor();
+    PsiSubstitutor result = PsiSubstitutor.EMPTY;
+    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(patternClass)) {
+      PsiType writtenArgument = fromPattern.substitute(parameter);
+      PsiType contextArgument = fromContext.substitute(parameter);
+      result = result.put(parameter, writtenArgument == null || contextArgument == null
+                                     ? writtenArgument
+                                     : JavaTypeNullabilityUtil.withNullabilityFrom(writtenArgument, contextArgument));
+    }
+    return JavaPsiFacade.getElementFactory(patternClass.getProject()).createType(patternClass, result)
+      .withNullability(declared.getNullability());
+  }
+
+  /**
+   * @param pattern pattern to check
+   * @return true if the type arguments of the pattern type come from the inference of {@link PatternInference}, and not
+   * from the source. Only a deconstruction pattern gets that inference; see {@code JavaResolveUtil#substituteResults}.
+   */
+  private static boolean hasInferredTypeArguments(@NotNull PsiPattern pattern) {
+    if (!(pattern instanceof PsiDeconstructionPattern)) return false;
+    PsiJavaCodeReferenceElement reference =
+      ((PsiDeconstructionPattern)pattern).getTypeElement().getInnermostComponentReferenceElement();
+    return reference != null && reference.getTypeParameterCount() == 0;
+  }
+
+  /**
    * @param pattern deconstruction pattern to find a context type for
-   * @return a context type for the pattern; null, if it cannot be determined. This method can perform 
+   * @return a context type for the pattern; null, if it cannot be determined. This method can perform
    * the inference for outer patterns if necessary.
    */
   public static @Nullable PsiType getContextType(@NotNull PsiPattern pattern) {
@@ -714,10 +775,11 @@ public final class JavaPsiPatternUtil {
       if (parentPattern != null) {
         int index = ArrayUtil.indexOf(((PsiDeconstructionList)parent).getDeconstructionComponents(), pattern);
         if (index < 0) return null;
-        PsiType patternType = parentPattern.getTypeElement().getType();
+        PsiType patternType = getEffectivePatternType(parentPattern);
         if (!(patternType instanceof PsiClassType)) return null;
-        PsiSubstitutor parentSubstitutor = ((PsiClassType)patternType).resolveGenerics().getSubstitutor();
-        PsiClass parentRecord = PsiUtil.resolveClassInClassTypeOnly(parentPattern.getTypeElement().getType());
+        PsiClassType.ClassResolveResult parentResult = ((PsiClassType)patternType).resolveGenerics();
+        PsiSubstitutor parentSubstitutor = parentResult.getSubstitutor();
+        PsiClass parentRecord = parentResult.getElement();
         if (parentRecord == null) return null;
         PsiRecordComponent[] components = parentRecord.getRecordComponents();
         if (index >= components.length) return null;

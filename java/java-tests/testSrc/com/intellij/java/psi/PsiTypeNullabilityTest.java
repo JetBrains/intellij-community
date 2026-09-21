@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiPatternVariable;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
@@ -772,6 +773,76 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
       assertNotNull(type);
       assertEquals(conditional.getText(), "NULLABLE (@Nullable)", type.getNullability().toString());
     }
+  }
+
+  /**
+   * A nullability written on a pattern type is ignored, so the container does not reach the pattern variable.
+   */
+  public void testPatternVariableIgnoresContainer() {
+    setupJSpecifyAnnotations();
+    assertEquals("UNKNOWN (NONE)", patternVariableNullability("""
+      import org.jspecify.annotations.NullMarked;
+
+      @NullMarked
+      class A {
+        void test(Object o) {
+          if (o instanceof String s) {}
+        }
+      }
+      """));
+  }
+
+  /**
+   * A nullability written on a pattern type is ignored, and the not-null context type supplies one instead.
+   */
+  public void testPatternVariableTakesContextNullability() {
+    setupJSpecifyAnnotations();
+    assertEquals("NOT_NULL (@NullMarked on class A)", patternVariableNullability("""
+      import org.jspecify.annotations.NullMarked;
+      import org.jspecify.annotations.Nullable;
+
+      @NullMarked
+      class A {
+        interface Foo<T extends @Nullable Object> {}
+        record FooInner<T extends @Nullable Object>(T value) implements Foo<T> {}
+
+        void test(Foo<String> foo) {
+          if (foo instanceof FooInner<String>(String s)) {}
+        }
+      }
+      """));
+  }
+
+  /**
+   * The written type argument of the pattern says not-null, but a pattern cannot check that, so the nullable context wins.
+   */
+  public void testPatternVariableTakesNullableContextNullability() {
+    setupJSpecifyAnnotations();
+    assertEquals("NULLABLE (@Nullable)", patternVariableNullability("""
+      import org.jspecify.annotations.NullMarked;
+      import org.jspecify.annotations.Nullable;
+
+      @NullMarked
+      class A {
+        interface Foo<T extends @Nullable Object> {}
+        record FooInner<T extends @Nullable Object>(T value) implements Foo<T> {}
+
+        void test(Foo<@Nullable String> foo) {
+          if (foo instanceof FooInner<String>(String s)) {}
+        }
+      }
+      """));
+  }
+
+  /**
+   * @param code code with exactly one pattern variable
+   * @return the nullability of the type of that pattern variable
+   */
+  private @NotNull String patternVariableNullability(@Language("JAVA") @NotNull String code) {
+    PsiFile file = myFixture.configureByText("Test.java", code);
+    PsiPatternVariable variable = PsiTreeUtil.findChildOfType(file, PsiPatternVariable.class);
+    assertNotNull(variable);
+    return variable.getType().getNullability().toString();
   }
 
   private static @NotNull String argumentNullabilityOf(@NotNull PsiMethodCallExpression call) {

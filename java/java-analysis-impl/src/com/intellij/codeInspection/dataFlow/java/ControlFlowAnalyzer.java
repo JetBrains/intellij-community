@@ -1354,7 +1354,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (innerPattern == null) return;
     else if (innerPattern instanceof PsiDeconstructionPattern deconstructionPattern) {
       PsiPatternVariable variable = deconstructionPattern.getPatternVariable();
-      PsiType patternType = deconstructionPattern.getTypeElement().getType();
+      // The nullability written on a pattern type is ignored, so take it from the type of the matched expression
+      PsiType effectiveType = JavaPsiPatternUtil.getEffectivePatternType(deconstructionPattern);
+      PsiType patternType = effectiveType != null ? effectiveType : deconstructionPattern.getTypeElement().getType();
       DfaVariableValue patternDfaVar = variable == null ? createTempVariable(patternType) :
                                        PlainDescriptor.createVariableValue(getFactory(), variable);
 
@@ -1415,6 +1417,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addPatternTypeTest(innerPattern, instanceofAnchor, endPatternOffset, patternDfaVar, checkType);
     }
     else {
+      // The assigned value keeps the type of the record accessor, which loses the type arguments of the pattern.
+      // The declared type of the pattern variable has them, so narrow the value to it.
       DfType declaredType = patternDfaVar.getInherentType();
       if (!(checkType instanceof PsiPrimitiveType) &&
           declaredType instanceof DfReferenceType &&

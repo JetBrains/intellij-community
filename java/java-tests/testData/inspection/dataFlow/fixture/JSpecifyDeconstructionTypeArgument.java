@@ -78,4 +78,41 @@ abstract class JSpecifyDeconstructionTypeArgument {
       }
     }
   }
+
+  void typeTestPatternNullCheck() {
+    Foo<Bar> foo = makeFooBar();
+    if (foo instanceof Foo.FooInner<Bar> fi) {
+      if (<warning descr="Condition 'fi.value() == null' is always 'false'">fi.value() == null</warning>) {}
+    }
+  }
+
+  void nestedPatternNullCheck(Box<Bar> box) {
+    if (box instanceof Box<Bar>(Foo.FooInner<Bar>(Bar bar))) {
+      if (<warning descr="Condition 'bar == null' is always 'false'">bar == null</warning>) {}
+    }
+  }
+
+  // The context type says the component is nullable, so the written non-null type argument does not apply.
+  void nullableContextTypeTest(Foo.FooInner<@Nullable Bar> foo) {
+    if (<warning descr="Condition 'foo instanceof Foo.FooInner<Bar> fi' is always 'true'">foo instanceof Foo.FooInner<Bar> fi</warning>) {
+      fi.value().<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>();
+    }
+  }
+
+  // A nullability written on a pattern type is ignored, so the not-null context type wins.
+  void writtenNullableIgnored() {
+    Foo<Bar> foo = makeFooBar();
+    if (foo instanceof Foo.FooInner<@Nullable Bar> fi) {
+      if (<warning descr="Condition 'fi.value() == null' is always 'false'">fi.value() == null</warning>) {}
+    }
+  }
+
+  // The pattern cannot check the nullness of the type argument, so the nullable context type stays.
+  void nullableContextDeconstruction(Foo.FooInner<@Nullable Bar> foo) {
+    if (foo.value() == null) {
+      if (<warning descr="Condition 'foo instanceof Foo.FooInner<Bar>(Bar bar)' is always 'true'">foo instanceof Foo.FooInner<Bar>(Bar bar)</warning>) {
+        System.out.println(bar.<warning descr="Method invocation 'hashCode' will produce 'NullPointerException'">hashCode</warning>());
+      }
+    }
+  }
 }

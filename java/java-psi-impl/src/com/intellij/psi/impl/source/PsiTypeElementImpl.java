@@ -655,6 +655,8 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   @ApiStatus.Experimental
   @Nullable
   public static PsiModifierListOwner findContainerNullabilityContext(@NotNull PsiTypeElement typeElement) {
+    // A nullness written in a pattern type is ignored, so no container applies to an array written there either.
+    if (JavaTypeNullabilityUtil.isWrittenInPatternType(typeElement)) return null;
     PsiElement parent = typeElement.getContext();
     while (parent != null) {
       if (parent instanceof PsiModifierListOwner) {

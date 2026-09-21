@@ -45,9 +45,11 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.java.AnnotationElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaTypeNullabilityUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -83,6 +85,27 @@ public final class JavaSharedImplUtil {
     }
 
     return type;
+  }
+
+  /**
+   * Computes the type of a pattern variable.
+   * <p>
+   * A nullability written on a pattern type is ignored, because the JSpecify spec calls "any component in a pattern" an
+   * unrecognized type-use location. The nullability comes from the context instead. A component of a deconstruction
+   * pattern takes it from the record component that the component binds. Any other pattern variable takes it from the
+   * type of the expression that the pattern is matched against.
+   *
+   * @param variable pattern variable to compute the type for
+   * @return the written type of the variable with the nullability of its context
+   */
+  public static @NotNull PsiType getPatternVariableType(@NotNull PsiPatternVariable variable) {
+    PsiType type = getType(variable.getTypeElement(), variable.getNameIdentifier());
+    PsiPattern pattern = variable.getPattern();
+    PsiType source = JavaPsiPatternUtil.getDeconstructedImplicitPatternType(pattern);
+    if (source == null) {
+      source = JavaPsiPatternUtil.getEffectivePatternType(pattern);
+    }
+    return source == null ? type : JavaTypeNullabilityUtil.withNullabilityFrom(type, source);
   }
 
   /**

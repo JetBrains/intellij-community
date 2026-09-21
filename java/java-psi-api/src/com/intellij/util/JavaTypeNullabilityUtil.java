@@ -7,18 +7,24 @@ import com.intellij.codeInsight.NullabilitySource;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.TypeNullability;
 import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiCapturedWildcardType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiPattern;
+import com.intellij.psi.PsiPatternVariable;
 import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiTypeParameter;
@@ -42,6 +48,11 @@ import java.util.Set;
  */
 @ApiStatus.Internal
 public final class JavaTypeNullabilityUtil {
+  /**
+   * Limits the walk of {@link #withNullabilityFrom}, so that a recursive generic type cannot make it loop.
+   */
+  private static final int MAX_NULLABILITY_OVERLAY_DEPTH = 10;
+
   /**
    * The nullability of the implicit upper bound of an unbounded wildcard {@code ?} inside a {@code @NullMarked} scope.
    * Per the JSpecify spec ("bound of an unbounded wildcard"), it is base type {@code Object} with nullness operator
@@ -114,6 +125,8 @@ public final class JavaTypeNullabilityUtil {
                                                              @Nullable Set<PsiClassType> visited,
                                                              boolean checkContainer,
                                                              boolean lookThroughUnspecified) {
+    PsiElement context = type.getPsiContext();
+    if (isWrittenInPatternType(context)) return TypeNullability.UNKNOWN;
     if (visited != null && visited.contains(type)) return TypeNullability.UNKNOWN;
     TypeNullability fromAnnotations = getNullabilityFromAnnotations(type.getAnnotations());
     boolean explicit = !fromAnnotations.equals(TypeNullability.UNKNOWN);
@@ -121,7 +134,6 @@ public final class JavaTypeNullabilityUtil {
                           isUnspecifiedNullness(fromAnnotations) &&
                           type.resolve() instanceof PsiTypeParameter;
     if (explicit && !transparent) return fromAnnotations;
-    PsiElement context = type.getPsiContext();
     if (context != null && checkContainer && !transparent) {
       NullableNotNullManager manager = NullableNotNullManager.getInstance(context.getProject());
       if (manager != null) {
@@ -161,6 +173,93 @@ public final class JavaTypeNullabilityUtil {
       }
     }
     return transparent ? fromAnnotations : TypeNullability.UNKNOWN;
+  }
+
+  /**
+   * Checks whether the type was written inside a pattern. The JSpecify spec calls "any component in a pattern" an
+   * unrecognized type-use location, because nullness is not reified and an {@code instanceof} cannot check it. A nullness
+   * written there is ignored, at the top level and inside every type argument, and a container annotation such as
+   * {@code @NullMarked} does not apply either. The nullness of a pattern variable comes from the context type instead;
+   * see {@code JavaPsiPatternUtil#getEffectivePatternType}.
+   * <p>
+   * The walk goes only through the element kinds that can separate a pattern type reference from its pattern, so it
+   * stops after a few steps for a type written anywhere else.
+   *
+   * @param context PSI context of the type, usually the reference element that the type was created from
+   * @return true if the type was written in a pattern type
+   */
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isWrittenInPatternType(@Nullable PsiElement context) {
+    for (PsiElement element = context; element != null; element = element.getParent()) {
+      if (element instanceof PsiPattern) return true;
+      if (!(element instanceof PsiJavaCodeReferenceElement ||
+            element instanceof PsiTypeElement ||
+            element instanceof PsiReferenceParameterList ||
+            element instanceof PsiAnnotation ||
+            element instanceof PsiPatternVariable)) {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Copies the nullability of one type onto a structurally equal type. The walk goes into the type arguments, the array
+   * components and the wildcard bounds. A part where the two types are not structurally equal keeps its own nullability.
+   *
+   * @param target type to copy the nullability to
+   * @param source type to copy the nullability from
+   * @return the target type with the nullability of the source type
+   */
+  public static @NotNull PsiType withNullabilityFrom(@NotNull PsiType target, @NotNull PsiType source) {
+    return withNullabilityFrom(target, source, 0);
+  }
+
+  private static @NotNull PsiType withNullabilityFrom(@NotNull PsiType target, @NotNull PsiType source, int depth) {
+    if (depth > MAX_NULLABILITY_OVERLAY_DEPTH) return target;
+    if (target instanceof PsiArrayType && !(target instanceof PsiEllipsisType) && source instanceof PsiArrayType) {
+      PsiType component = withNullabilityFrom(((PsiArrayType)target).getComponentType(),
+                                              ((PsiArrayType)source).getComponentType(), depth + 1);
+      return new PsiArrayType(component, target.getAnnotationProvider()).withNullability(source.getNullability());
+    }
+    if (target instanceof PsiWildcardType && source instanceof PsiWildcardType) {
+      PsiWildcardType targetWildcard = (PsiWildcardType)target;
+      PsiWildcardType sourceWildcard = (PsiWildcardType)source;
+      PsiType targetBound = targetWildcard.getBound();
+      PsiType sourceBound = sourceWildcard.getBound();
+      if (targetBound == null || sourceBound == null || targetWildcard.isExtends() != sourceWildcard.isExtends()) {
+        return target.withNullability(source.getNullability());
+      }
+      PsiType bound = withNullabilityFrom(targetBound, sourceBound, depth + 1);
+      return targetWildcard.isExtends()
+             ? PsiWildcardType.createExtends(targetWildcard.getManager(), bound)
+             : PsiWildcardType.createSuper(targetWildcard.getManager(), bound);
+    }
+    if (!(target instanceof PsiClassType) || !(source instanceof PsiClassType)) {
+      return target.withNullability(source.getNullability());
+    }
+    PsiClassType.ClassResolveResult targetResult = ((PsiClassType)target).resolveGenerics();
+    PsiClassType.ClassResolveResult sourceResult = ((PsiClassType)source).resolveGenerics();
+    PsiClass targetClass = targetResult.getElement();
+    if (targetClass == null || targetClass != sourceResult.getElement() || ((PsiClassType)target).isRaw()) {
+      return target.withNullability(source.getNullability());
+    }
+    PsiSubstitutor targetSubstitutor = targetResult.getSubstitutor();
+    PsiSubstitutor sourceSubstitutor = sourceResult.getSubstitutor();
+    PsiSubstitutor result = PsiSubstitutor.EMPTY;
+    boolean changed = false;
+    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(targetClass)) {
+      PsiType targetArgument = targetSubstitutor.substitute(parameter);
+      PsiType sourceArgument = sourceSubstitutor.substitute(parameter);
+      PsiType argument = targetArgument == null || sourceArgument == null
+                         ? targetArgument
+                         : withNullabilityFrom(targetArgument, sourceArgument, depth + 1);
+      changed |= argument != targetArgument;
+      result = result.put(parameter, argument);
+    }
+    if (!changed) return target.withNullability(source.getNullability());
+    return JavaPsiFacade.getElementFactory(targetClass.getProject()).createType(targetClass, result)
+      .withNullability(source.getNullability());
   }
 
   private static @NotNull TypeNullability keepUnspecified(@NotNull TypeNullability fromBound,
