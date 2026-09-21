@@ -469,6 +469,8 @@ jvm_library(
         "//java/java-features-trainer:featuresTrainer-tests_test_lib",
         "//java/ide-customization:ide-customization-tests",
         "//java/ide-customization:ide-customization-tests_test_lib",
+        "//java/ide-customization/backend:java-ide-customization-backend-tests",
+        "//java/ide-customization/backend:java-ide-customization-backend-tests_test_lib",
         "//plugins/rareJavaRefactorings:java-rareRefactorings-tests",
         "//plugins/rareJavaRefactorings:java-rareRefactorings-tests_test_lib",
         "//java/structuralsearch-java:structuralSearch-tests",

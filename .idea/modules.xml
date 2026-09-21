@@ -676,6 +676,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/java-i18n/intellij.java.i18n.tests.iml" filepath="$PROJECT_DIR$/plugins/java-i18n/intellij.java.i18n.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/ide-customization/intellij.java.ide.customization.iml" filepath="$PROJECT_DIR$/java/ide-customization/intellij.java.ide.customization.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/ide-customization/backend/intellij.java.ide.customization.backend.iml" filepath="$PROJECT_DIR$/java/ide-customization/backend/intellij.java.ide.customization.backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/ide-customization/backend/intellij.java.ide.customization.backend.tests.iml" filepath="$PROJECT_DIR$/java/ide-customization/backend/intellij.java.ide.customization.backend.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/ide-customization/intellij.java.ide.customization.tests.iml" filepath="$PROJECT_DIR$/java/ide-customization/intellij.java.ide.customization.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/ide-customization/training/intellij.java.ide.customization.training.iml" filepath="$PROJECT_DIR$/java/ide-customization/training/intellij.java.ide.customization.training.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/ide-resources/newUiOnboarding/intellij.java.ide.newUiOnboarding.iml" filepath="$PROJECT_DIR$/java/ide-resources/newUiOnboarding/intellij.java.ide.newUiOnboarding.iml" />

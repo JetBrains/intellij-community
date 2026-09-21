@@ -3,12 +3,10 @@ package com.intellij.java.ide.customization.backend.welcomeScreen
 
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.ide.nonModalWelcomeScreen.isNonModalWelcomeScreenEnabled
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
 import java.nio.file.Path
 
-@Internal
-class IdeaWelcomeScreenProjectProvider : WelcomeScreenProjectProvider() {
+internal class IdeaWelcomeScreenProjectProvider : WelcomeScreenProjectProvider() {
   override fun canOpenFilesFromSystemFileManager(filePath: Path): Boolean {
     return isNonModalWelcomeScreenEnabled && Files.isRegularFile(filePath)
   }

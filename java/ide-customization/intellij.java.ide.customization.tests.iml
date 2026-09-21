@@ -29,7 +29,6 @@
     <orderEntry type="module" module-name="intellij.platform.welcomeScreen" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.ide.customization" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.ide.customization.backend" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.java.ide.customization" />
 </module>

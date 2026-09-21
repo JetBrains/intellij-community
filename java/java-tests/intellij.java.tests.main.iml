@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="intellij.java.decompiler.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.featuresTrainer.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.ide.customization.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.ide.customization.backend.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rareRefactorings.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.structuralSearch.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.terminal.tests" scope="TEST" />

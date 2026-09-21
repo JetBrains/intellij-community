@@ -42,11 +42,6 @@
                         overrides="true"/>
 
     <platform.ide.welcomeScreenContentProvider implementation="com.intellij.ide.customization.java.welcomeScreen.IdeaWelcomeRightTabContentProvider"/>
-
-    <platform.ide.welcomeScreenAccessProvider implementation="com.intellij.ide.customization.java.welcomeScreen.IdeaWelcomeScreenAccessProvider"/>
-
-    <registryKey key="idea.welcome.screen.non.modal.enabled" defaultValue="true" restartRequired="true"
-                 description="Show the Welcome screen in non-modal mode for IDEA"/>
   </extensions>
 
   <actions resource-bundle="messages.NonModalWelcomeScreenBundle">
