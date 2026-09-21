@@ -14,7 +14,7 @@
   <!-- region additional -->
   <content namespace="jetbrains">
     <!-- chain: direct -->
-    <module name="intellij.lambda.sampleTestsWithFixtures._test"/>
+    <module name="intellij.lambda.sampleTestsWithFixtures"/>
   </content>
   <content>
     <!-- chain: direct -->

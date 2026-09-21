@@ -161,14 +161,6 @@ data class DevDistPlanGenerationResult(
 data class DependencyFileResult(
   /** Module name (e.g., "intellij.platform.core.ui") */
   val contentModuleName: ContentModuleName,
-  /**
-   * The actual JPS module these dependencies come from.
-   * For test descriptors (._test suffix), this is the base module name without the suffix.
-   * For regular descriptors, this equals [contentModuleName].
-   *
-   * This makes the relationship explicit: test descriptor `foo._test` gets deps from JPS module `foo`.
-   */
-  val sourceJpsModule: ContentModuleName = contentModuleName,
   /** Absolute path to the descriptor file */
   @JvmField val descriptorPath: Path,
   /** Change status of the file */

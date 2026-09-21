@@ -115,8 +115,7 @@ private fun generateRuntimePluginHeader(
           val contentModuleData = pluginDescriptorData.contentModules[moduleName]
           val loadingRule = contentModuleData?.loadingRule ?: RuntimeModuleLoadingRule.EMBEDDED
           val requiredIfAvailableId = contentModuleData?.requiredIfAvailable
-          val jpsModuleName = moduleName.removeSuffix("._test") //todo remove this after IJPL-242652 is fixed
-          val jpsModule = project.findModuleByName(jpsModuleName) ?: error("Cannot find module by name: $jpsModuleName")
+          val jpsModule = project.findModuleByName(moduleName) ?: error("Cannot find module by name: $moduleName")
           val moduleId = createIdForModule(jpsModule, contentModuleData, pluginDescriptorData, elementsIncludedInMultiplePlugins, existingIdsToReuse)
           if (moduleId !in moduleIdToJpsElement) {
             moduleIdToJpsElement[moduleId] = jpsModule
@@ -160,8 +159,7 @@ private fun generateRuntimePluginHeader(
         }
         is ModuleLibraryFileEntry -> {
           if (pathRelativeToDistributionDir != null) {
-            val jpsModuleName = entry.moduleName.removeSuffix("._test") //todo remove this after IJPL-242652 is fixed
-            moduleLibraryPaths.putValue(jpsModuleName, pathRelativeToDistributionDir)
+            moduleLibraryPaths.putValue(entry.moduleName, pathRelativeToDistributionDir)
           }
           //no separate runtime modules are generated for module-level libraries; their paths are included in the descriptor corresponding to the containing module instead
           null

@@ -96,18 +96,5 @@ class SlashNotationModuleTest {
       val module = ContentModuleName("intellij.platform.core")
       assertThat(module.baseModuleName().value).isEqualTo("intellij.platform.core")
     }
-
-    @Test
-    fun `test descriptor returns base without suffix`() {
-      val module = ContentModuleName("intellij.platform.core._test")
-      assertThat(module.baseModuleName().value).isEqualTo("intellij.platform.core")
-    }
-
-    @Test
-    fun `slash module takes precedence over test suffix`() {
-      // If both slash and test suffix exist, slash should be handled first
-      val module = ContentModuleName("intellij.restClient/intelliLang._test")
-      assertThat(module.baseModuleName().value).isEqualTo("intellij.restClient")
-    }
   }
 }

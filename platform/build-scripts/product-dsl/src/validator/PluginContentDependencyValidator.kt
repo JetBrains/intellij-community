@@ -383,12 +383,8 @@ private fun validateSinglePlugin(
   for (dep in allProblematic) {
     for (contentModuleName in contentModules) {
       val deps = contentModuleDeps.get(contentModuleName) ?: emptySet()
-      val testDeps = contentModuleDeps.get(ContentModuleName("${contentModuleName.value}._test")) ?: emptySet()
       if (dep in deps) {
         missingDeps.computeIfAbsent(dep) { HashSet() }.add(contentModuleName)
-      }
-      if (dep in testDeps) {
-        missingDeps.computeIfAbsent(dep) { HashSet() }.add(ContentModuleName("${contentModuleName.value}._test"))
       }
     }
     if (dep in pluginModuleDependencies) {

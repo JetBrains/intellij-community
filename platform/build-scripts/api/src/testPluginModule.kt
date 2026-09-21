@@ -23,18 +23,15 @@ fun isTestOnlyPluginModule(moduleName: String, module: JpsModule?, outputProvide
 }
 
 /**
- * The name rule of [isTestOnlyPluginModule], without its enablement check.
+ * The rule of [isTestOnlyPluginModule], without its enablement check.
  *
- * True for the modules named below. True for a `.tests` suffix. True for a `.test.` segment when [module] has a test
- * source root. True for the Product DSL `._test` suffix. [moduleName] can carry that suffix while [module] is the JPS
- * module it marks. A generator that plans a test plugin applies this rule to match the packager's output-root choice.
+ * True when every source root of [module] is a test root. True for a `.tests` suffix. True for a `.test.` segment when
+ * [module] has a test source root. A generator that plans a test plugin applies this rule to match the packager's
+ * output-root choice.
  */
 fun isTestOnlyPluginModuleName(moduleName: String, module: JpsModule): Boolean {
-  // todo use some marker
-  if (moduleName == "intellij.rdct.testFramework" ||
-      moduleName == "intellij.platform.split.testFramework" ||
-      moduleName == "intellij.python.junit5Tests" ||
-      moduleName == "intellij.rdct.tests.distributed") {
+  // a module without production source roots has test output only
+  if (module.sourceRoots.isNotEmpty() && module.sourceRoots.all { it.rootType.isForTests }) {
     return true
   }
 
@@ -46,5 +43,5 @@ fun isTestOnlyPluginModuleName(moduleName: String, module: JpsModule): Boolean {
   if (moduleName.contains(".test.")) {
     return module.sourceRoots.any { it.rootType.isForTests }
   }
-  return moduleName.endsWith("._test")
+  return false
 }

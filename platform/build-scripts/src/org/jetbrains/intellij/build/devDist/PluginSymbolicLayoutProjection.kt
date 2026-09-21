@@ -700,9 +700,8 @@ private class SymbolicLayoutProjector(
     return files.filter { copiedFiles.add(it to destination) }
   }
 
-  /** Resolves a layout module name. A Product DSL `._test` name resolves to the JPS module it marks. */
   private fun module(name: String): JpsModule? {
-    val module = project.findModuleByName(name) ?: project.findModuleByName(name.removeSuffix("._test"))
+    val module = project.findModuleByName(name)
     if (module == null) gap("module:$name", "The JPS module does not exist")
     return module
   }

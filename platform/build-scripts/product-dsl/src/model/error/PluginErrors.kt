@@ -256,7 +256,6 @@ data class PluginDependencyError(
   override val category: ErrorCategory get() = ErrorCategory.PLUGIN_DEPENDENCY_UNRESOLVED
 
   override fun format(s: AnsiStyle): String = buildString {
-    val isTestDescriptor = context.startsWith("Test descriptor dependencies:")
     val isTestPluginContent = context.startsWith("Test plugin content dependencies:")
     val hasOnlyStructural = structuralViolations.isNotEmpty() &&
                             missingDependencies.isEmpty() &&
@@ -267,7 +266,6 @@ data class PluginDependencyError(
     val header = when {
       hasOnlyStructural && isTestPluginContent -> "Test plugin '$pluginNameStr' has structural violations"
       hasOnlyStructural -> "Plugin '$pluginNameStr' has structural violations"
-      isTestDescriptor -> "Plugin '$pluginNameStr' has unresolvable test descriptor dependencies"
       isTestPluginContent -> "Test plugin '$pluginNameStr' has unresolvable content module dependencies"
       else -> "Plugin '$pluginNameStr' has unresolvable content module dependencies"
     }
@@ -344,7 +342,6 @@ data class PluginDependencyError(
         val info = moduleSourceInfo.get(mod)
         val modStr = mod.value
         val moduleType = when {
-          modStr.endsWith("._test") -> "test descriptor"
           info?.sourcePlugin != null -> {
             val loading = info.loadingMode
             if (loading != null && loading != ModuleLoadingRuleValue.OPTIONAL) {
@@ -375,7 +372,7 @@ data class PluginDependencyError(
     // Non-bundled plugins have "(non-bundled)" key in unresolvedByProduct
     val isNonBundledPlugin = unresolvedByProduct.containsKey("(non-bundled)") && !hasFilteredDeps
     when {
-      isTestDescriptor || isTestPluginContent -> {
+      isTestPluginContent -> {
         appendLine("${s.blue}Fix:${s.reset} Register the missing module as <content><module> in a test plugin,")
         appendLine("     or add to a module set if it should be generally available.")
       }
@@ -403,7 +400,7 @@ data class PluginDependencyError(
     appendLine()
 
     if (proposedPatches.isNotEmpty()) {
-      val proposedPatchHint = if (isTestDescriptor || isTestPluginContent) {
+      val proposedPatchHint = if (isTestPluginContent) {
         "Add missing modules to the test plugin content in product specs."
       }
       else {

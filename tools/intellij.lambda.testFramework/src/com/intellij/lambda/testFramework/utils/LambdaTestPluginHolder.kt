@@ -53,13 +53,12 @@ object LambdaTestPluginHolder {
    *
    * ```kotlin
    * override fun beforeAll(context: ExtensionContext) {
-   *   LambdaTestPluginHolder.setupAllModesPlugin("intellij.myFeature._test")
+   *   LambdaTestPluginHolder.setupAllModesPlugin("intellij.myFeature.lambdaTests")
    * }
    * ```
    *
-   * @param mainTestModuleId JPS module id of the test module (e.g. `intellij.myFeature._test`)
-   * @param pluginModuleBaseName Base for the plugin module name. Defaults to [mainTestModuleId]
-   *   with `._test` stripped.
+   * @param mainTestModuleId JPS module id of the test module (e.g. `intellij.myFeature.lambdaTests`)
+   * @param pluginModuleBaseName Base for the plugin module name. Defaults to [mainTestModuleId].
    * @param pluginDirName Name of the plugin's directory inside the IDE distribution's `plugins/`
    *   folder. Defaults to the plugin module id with `intellij.` stripped and dots replaced by
    *   dashes — the convention used by `jpsModelToBazel`. Override when the module id doesn't
@@ -69,7 +68,7 @@ object LambdaTestPluginHolder {
    */
   fun setupAllModesPlugin(
     mainTestModuleId: String,
-    pluginModuleBaseName: String = mainTestModuleId.removeSuffix("._test"),
+    pluginModuleBaseName: String = mainTestModuleId,
     pluginDirName: String = "$pluginModuleBaseName.plugin".removePrefix("intellij.").replace('.', '-'),
     additionalPlugins: List<AdditionalLambdaPlugin> = emptyList(),
   ) {
@@ -99,13 +98,13 @@ object LambdaTestPluginHolder {
    *
    * ```kotlin
    * override fun beforeAll(context: ExtensionContext) {
-   *   LambdaTestPluginHolder.setupModeSplitPlugins("intellij.myFeature._test")
+   *   LambdaTestPluginHolder.setupModeSplitPlugins("intellij.myFeature.lambdaTests")
    * }
    * ```
    *
-   * @param mainTestModuleId JPS module id of the test module (e.g. `intellij.myFeature._test`)
-   * @param wrapperModuleBaseName Base of the generated wrapper module names. Defaults to
-   *   [mainTestModuleId] with `._test` stripped, which matches the lambda test plugin naming convention.
+   * @param mainTestModuleId JPS module id of the test module (e.g. `intellij.myFeature.lambdaTests`)
+   * @param wrapperModuleBaseName Base of the generated wrapper module names. Defaults to [mainTestModuleId],
+   *   which matches the lambda test plugin naming convention.
    * @param pluginDirNameBase Base for the per-mode plugin directory names inside the IDE
    *   distribution's `plugins/` folder. The mode suffix is appended automatically
    *   (e.g. base `"myFeature"` → `"myFeature-backend-split-plugin"`). Defaults to
@@ -114,7 +113,7 @@ object LambdaTestPluginHolder {
    */
   fun setupModeSplitPlugins(
     mainTestModuleId: String,
-    wrapperModuleBaseName: String = mainTestModuleId.removeSuffix("._test"),
+    wrapperModuleBaseName: String = mainTestModuleId,
     pluginDirNameBase: String = wrapperModuleBaseName.removePrefix("intellij.").replace('.', '-'),
   ) {
     setupAdditionalLambdaPlugins(
@@ -130,28 +129,25 @@ object LambdaTestPluginHolder {
   }
 
   fun setupSampleTestsWithFixturesPlugin(): Unit =
-    setupAllModesPlugin("intellij.lambda.sampleTestsWithFixtures._test")
+    setupAllModesPlugin("intellij.lambda.sampleTestsWithFixtures")
 
   fun setupSampleTestsWithPluginPlugin(): Unit =
-    setupAllModesPlugin("intellij.lambda.sampleTestsWithPlugin._test")
+    setupAllModesPlugin("intellij.lambda.sampleTestsWithPlugin")
 
   fun setupDaemonLambdaTestsPlugin(): Unit =
-    setupAllModesPlugin("intellij.platform.daemon.lambdaTests._test")
+    setupAllModesPlugin("intellij.platform.daemon.lambdaTests")
 
   fun setupJavaLambdaDebuggerPlugin(): Unit =
-    setupAllModesPlugin(
-      mainTestModuleId = "intellij.debugger.lambdaDebuggerTests.java._test",
-      pluginModuleBaseName = "intellij.debugger.lambdaDebuggerTests.java",
-    )
+    setupAllModesPlugin("intellij.debugger.lambdaDebuggerTests.java")
 
   fun setupPhpFrontendSplitLambdaTestsPlugin(): Unit =
-    setupAllModesPlugin("intellij.php.frontend.split.lambdaTests._test")
+    setupAllModesPlugin("intellij.php.frontend.split.lambdaTests")
 
   fun setupRdctLambdaTestsUiPlugin(): Unit =
-    setupAllModesPlugin("intellij.rdct.lambdaTestsUi._test")
+    setupAllModesPlugin("intellij.rdct.lambdaTestsUi")
 
   fun setupRdctLambdaTestsPlugin(): Unit =
-    setupModeSplitPlugins("intellij.rdct.lambdaTests._test")
+    setupModeSplitPlugins("intellij.rdct.lambdaTests")
 
   private val MODE_SPLIT_SUFFIXES = listOf(
     "monolith.plugin" to LoadingInSplitMode.Monolith,

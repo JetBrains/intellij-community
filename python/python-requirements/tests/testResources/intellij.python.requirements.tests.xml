@@ -9,6 +9,7 @@
     <module name="intellij.platform.testFramework.common"/>
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.python.community"/>
+    <module name="intellij.python.community.junit5Tests.framework"/>
     <module name="intellij.python.requirements.backend"/>
     <module name="intellij.python.requirements.common"/>
     <module name="intellij.python.test.env.junit5"/>

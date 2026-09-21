@@ -552,9 +552,6 @@ value class GraphScope @PublishedApi internal constructor(
   /** Plugin: does this node have a main target backing it? */
   val PluginNode.hasMainTarget: Boolean get() = store.successorCount(EDGE_MAIN_TARGET, id) > 0
 
-  /** Whether this module is a test descriptor (._test suffix) */
-  val ContentModuleNode.isTestDescriptor: Boolean get() = store.isTestDescriptor(id)
-
   /** Whether this module has a descriptor on disk */
   val ContentModuleNode.hasDescriptor: Boolean get() = store.hasDescriptor(id)
 

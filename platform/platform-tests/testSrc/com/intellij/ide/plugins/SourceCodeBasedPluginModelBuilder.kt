@@ -306,7 +306,7 @@ class SourceCodeBasedPluginModelBuilder(
         .mapNotNull { moduleDescriptorFile ->
           val descriptor = loadRawPluginDescriptor(moduleDescriptorFile) ?: return@mapNotNull null
           val contentModuleName = when {
-            moduleDescriptorFile.nameWithoutExtension.removeSuffix("._test") == module.name -> moduleDescriptorFile.nameWithoutExtension
+            moduleDescriptorFile.nameWithoutExtension == module.name -> module.name
             else -> "${module.name}/${moduleDescriptorFile.nameWithoutExtension.removePrefix("${module.name}.")}"
           }
           ContentModuleDescriptorFileInfo(

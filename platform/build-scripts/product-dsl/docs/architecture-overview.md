@@ -80,7 +80,6 @@ The generation uses a **5-stage pipeline architecture** with pluggable generator
 │     ├─ ModuleSetXmlNode             - Module set XML files      │
 │     ├─ ProductModuleDependencyNode  - Module descriptors        │
 │     ├─ ContentModuleDependencyNode  - moduleName.xml deps       │
-│     ├─ TestDescriptorNode           - moduleName._test.xml      │
 │     ├─ PluginXmlDependencyNode      - plugin.xml deps           │
 │     ├─ PluginValidationNode         - validates plugin deps     │
 │     ├─ SuppressionConfigNode        - suppressions.json         │

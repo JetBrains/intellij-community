@@ -15,7 +15,7 @@ internal class ModuleOutputProviderIndex(
 
   @JvmField val sourceFiles: ModuleSourceFileIndex = ModuleSourceFileIndex(modules)
 
-  fun findModule(name: String): JpsModule? = nameToModule.get(name.removeSuffix("._test"))
+  fun findModule(name: String): JpsModule? = nameToModule.get(name)
 
   fun findRequiredModule(name: String): JpsModule {
     return requireNotNull(findModule(name)) {

@@ -38,13 +38,8 @@ import java.nio.file.Path
 /**
  * Planner for content module dependency XML files.
  *
- * Processes two types of descriptor files in a single pass:
- * 1. **Main descriptors** (`moduleName.xml`) - for all content modules
- * 2. **Test descriptor files** (`moduleName._test.xml`) - for non-test-descriptor modules only
- *
- * Note: "Test descriptor modules" (content modules named `foo._test`) are a different concept.
- * They are actual content modules whose main descriptor is `foo._test.xml`. They do NOT have
- * separate test descriptor files (`foo._test._test.xml` doesn't exist).
+ * Every content module has exactly one descriptor (`moduleName.xml`). A test-only module keeps its descriptor in a
+ * test resource root; [shouldIncludeTestScopeForWrittenDeps] reads that location to decide which JPS scopes are written.
  *
  * ## JPS Scopes vs Plugin Model
  *
@@ -65,7 +60,7 @@ import java.nio.file.Path
  * **Input:** All content modules with production or test content sources
  * **Output:** Dependency plans for descriptor files with `<dependencies>` sections
  *
- * **Publishes:** [Slots.CONTENT_MODULE_PLAN] for downstream writing and validation (includes both regular and test descriptor modules)
+ * **Publishes:** [Slots.CONTENT_MODULE_PLAN] for downstream writing and validation
  *
  * **No dependencies** - can run immediately (level 0).
  */
@@ -86,10 +81,7 @@ internal object ContentModuleDependencyPlanner : PipelineNode {
 
       // Single pass over all modules - no deduplication needed
       // hasContentSource filters to modules declared in plugins/products/module-sets or test plugins
-      // Each content module has ONE descriptor: regular modules have moduleName.xml,
-      // test descriptor modules (foo._test) have foo._test.xml - these are separate content modules
-      val mainDescriptorJobs = ArrayList<Subtask<GenerationOutput>>()
-      val testDescriptorJobs = ArrayList<Subtask<GenerationOutput>>()
+      val jobs = ArrayList<Subtask<GenerationOutput>>()
 
       model.pluginGraph.query {
         contentModules { contentModule ->
@@ -99,50 +91,31 @@ internal object ContentModuleDependencyPlanner : PipelineNode {
           }
 
           val moduleName = contentModule.contentName()
-          val isTestDescriptorModule = contentModule.isTestDescriptor
-
-          // Each content module has ONE descriptor - process uniformly
-          val job = fork("plan content module ${moduleName.value}") {
+          jobs.add(fork("plan content module ${moduleName.value}") {
             val (plan, suppressibleError) = planContentModuleDependenciesWithBothSets(
               contentModuleName = moduleName,
               descriptorCache = model.descriptorCache,
               outputProvider = model.outputProvider,
               pluginGraph = model.pluginGraph,
-              isTestDescriptor = isTestDescriptorModule,
               suppressionConfig = model.suppressionConfig,
               updateSuppressions = model.updateSuppressions,
             )
             GenerationOutput(plan, suppressibleError)
-          }
-
-          // Categorize based on module type for downstream slots
-          if (isTestDescriptorModule) {
-            testDescriptorJobs.add(job)
-          }
-          else {
-            mainDescriptorJobs.add(job)
-          }
+          })
         }
       }
 
       join()
-      val mainOutputs = mainDescriptorJobs.map { it.get() }
-      val mainPlans = mainOutputs.mapNotNull { it.plan }
-      val mainErrors = mainOutputs.mapNotNull { it.suppressibleError }
-
-      val testOutputs = testDescriptorJobs.map { it.get() }
-      val testDescriptorPlans = testOutputs.mapNotNull { it.plan }
-      val testErrors = testOutputs.mapNotNull { it.suppressibleError }
-
-      val errors = mainErrors + testErrors
+      val outputs = jobs.map { it.get() }
+      val plans = outputs.mapNotNull { it.plan }
+      val errors = outputs.mapNotNull { it.suppressibleError }
 
       // Graph is single source of truth - populate module deps for validation
       // Returns new graph instance (immutable pattern for coroutine safety)
-      updateGraphWithModuleDependencyPlans(model.pluginGraph, mainPlans + testDescriptorPlans)
+      updateGraphWithModuleDependencyPlans(model.pluginGraph, plans)
 
       ctx.emitErrors(errors)
-      // Publish combined results - both regular and test descriptor modules in single output
-      ctx.publish(Slots.CONTENT_MODULE_PLAN, ContentModuleDependencyPlanOutput(plans = mainPlans + testDescriptorPlans))
+      ctx.publish(Slots.CONTENT_MODULE_PLAN, ContentModuleDependencyPlanOutput(plans = plans))
     }
   }
 }
@@ -186,7 +159,6 @@ internal fun planContentModuleDependenciesWithBothSets(
   descriptorCache: ModuleDescriptorCache,
   outputProvider: ModuleOutputProvider? = null,
   pluginGraph: PluginGraph,
-  isTestDescriptor: Boolean,
   suppressionConfig: SuppressionConfig,
   updateSuppressions: Boolean,
 ): ContentModuleGenerationOutput {
@@ -212,7 +184,6 @@ internal fun planContentModuleDependenciesWithBothSets(
     graph = pluginGraph,
     suppressionConfig = suppressionConfig,
     updateSuppressions = updateSuppressions,
-    isTestDescriptor = isTestDescriptor,
   )
   return ContentModuleGenerationOutput(plan = plan, suppressibleError = prodInfo.suppressibleError)
 }
@@ -228,9 +199,8 @@ internal fun planContentModuleDependenciesWithBothSets(
  *
  * ## Test Module Handling
  *
- * Content modules ending with `._test` are test modules (test descriptors declared in module sets).
- * These modules need their TEST scope JPS dependencies included in the XML because they run in
- * a test context. For these modules, we use `withTests=true` when computing "production" deps.
+ * A test-only module keeps its descriptor in a test resource root. Such a module runs in a test context, so its
+ * TEST scope JPS dependencies are included in the written XML; see [shouldIncludeTestScopeForWrittenDeps].
  */
 private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
   contentModuleName: ContentModuleName,
@@ -239,7 +209,6 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
   graph: PluginGraph,
   suppressionConfig: SuppressionConfig,
   updateSuppressions: Boolean,
-  isTestDescriptor: Boolean,
 ): ContentModuleDependencyPlan {
   // Skip XML modification for modules with non-standard XML root
   if (prodInfo.suppressibleError?.category == ErrorCategory.NON_STANDARD_DESCRIPTOR_ROOT) {
@@ -285,7 +254,6 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
     outputProvider = outputProvider,
     contentModuleName = contentModuleName,
     descriptorPath = prodInfo.descriptorPath,
-    isTestDescriptor = isTestDescriptor,
   )
   val prodGraphDeps = computeJpsDeps(
     graph = graph,
@@ -409,23 +377,18 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
 /**
  * Decides whether TEST-scope JPS deps belong in the descriptor's generated `<dependencies>`.
  *
- * True in exactly three cases:
- * 1. the descriptor is a test descriptor (`foo._test.xml`);
- * 2. the module is test support (`*.testFramework`, IDE starter, …) and has no production content source;
- * 3. the descriptor file itself lies under a JPS test source root (e.g. `testResources/foo.tests.xml`).
+ * True in exactly two cases:
+ * 1. the module is test support (`*.testFramework`, IDE starter, …) and has no production content source;
+ * 2. the descriptor file itself lies under a JPS test source root (e.g. `testResources/foo.tests.xml`).
  *
- * Case 3 is what makes test-only modules work; it is deliberately based on descriptor location, not on the module name.
+ * Case 2 is what makes test-only modules work; it is deliberately based on descriptor location, not on the module name.
  */
 private fun shouldIncludeTestScopeForWrittenDeps(
   graph: PluginGraph,
   outputProvider: ModuleOutputProvider?,
   contentModuleName: ContentModuleName,
   descriptorPath: Path,
-  isTestDescriptor: Boolean,
 ): Boolean {
-  if (isTestDescriptor) {
-    return true
-  }
   if (isTestSupportContentModule(contentModuleName, descriptorPath) && !hasProductionContentSource(graph, contentModuleName)) {
     return true
   }

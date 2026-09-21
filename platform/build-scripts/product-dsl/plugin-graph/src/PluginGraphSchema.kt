@@ -69,14 +69,11 @@ const val NODE_FLAG_IS_DSL_DEFINED: Int = 1 shl 10
 /** Flag: plugin is a build-declared module-set wrapper */
 const val NODE_FLAG_IS_MODULE_SET_WRAPPER: Int = 1 shl 11
 
-/** Flag: content module is a test descriptor (._test suffix) */
-const val NODE_FLAG_IS_TEST_DESCRIPTOR: Int = 1 shl 12
-
 /** Flag: content module has a descriptor on disk ({moduleName}.xml) */
-const val NODE_FLAG_HAS_DESCRIPTOR: Int = 1 shl 13
+const val NODE_FLAG_HAS_DESCRIPTOR: Int = 1 shl 12
 
 /** Flag: plugin node is a synthetic alias target bundled by a product */
-const val NODE_FLAG_IS_ALIAS: Int = 1 shl 14
+const val NODE_FLAG_IS_ALIAS: Int = 1 shl 13
 
 // endregion
 

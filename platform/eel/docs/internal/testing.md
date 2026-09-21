@@ -9,7 +9,8 @@
 | `intellij.platform.eel.codegen` | `community/platform/eel/codegen/` | `BuildersGeneratorTest`. It regenerates the builders in `gen-builders/`. See [Module Layout](module-layout.md). |
 | `intellij.platform.testFramework.junit5.eel` | `community/platform/testFramework/junit5/eel/src/` | The framework for Eel API users. The deprecated `eelFixture()` and `IsolatedFileSystem` also live here. |
 | `intellij.platform.testFramework.junit5.eel.tests` | `community/platform/testFramework/junit5/eel/test/` | `@TestApplicationWithEel` and `@EelSource` in `params/api/`, and their tests. |
-| `intellij.platform.ijent.testFramework` | `platform/ijent/testFramework/src/` (ultimate) | `EelFixture`, `eelTestFactory`, the fixture factories, and the remote Eel providers for `@TestApplicationWithEel`. |
+| `intellij.platform.ijent.testFramework` | `platform/ijent/testFramework/src/` (ultimate) | `EelFixture`, `eelTestFactory`, and the fixture factories. |
+| `intellij.platform.ijent.testFramework.tests` | `platform/ijent/testFramework/tests/` (ultimate) | The remote Eel providers for `@TestApplicationWithEel`, registered via SPI. |
 
 ## Run a Test
 

@@ -47,11 +47,6 @@ value class PluginId(val value: String) : Comparable<PluginId> {
  * **NOT the same as [PluginId]** - modules are JPS build units, while plugins are runtime units.
  * A plugin content module's descriptor file is named `<module.name>.xml` (e.g., `intellij.css.plugin.xml`).
  *
- * **Test Descriptors:**
- * Test descriptors use a `._test` suffix (e.g., `intellij.foo._test`), which is a synthetic name.
- * The actual JPS module is `intellij.foo` (without the suffix). Use [isTestDescriptor] and
- * [baseModuleName] to handle this convention.
- *
  * See `docs/IntelliJ-Platform/4_man/Plugin-Model/Plugin-Model-v1-v2.md` for detailed explanation.
  */
 @Serializable
@@ -110,29 +105,16 @@ value class TargetName(val value: String) : Comparable<TargetName> {
   override fun toString(): String = value
 }
 
-/** Suffix used for test descriptor synthetic module names */
-const val TEST_DESCRIPTOR_SUFFIX: String = "._test"
-
-/** Returns true if this is a test descriptor synthetic name (ends with `._test`) */
-fun ContentModuleName.isTestDescriptor(): Boolean = value.endsWith(TEST_DESCRIPTOR_SUFFIX)
-
 fun PluginModuleId.contentName(): ContentModuleName = ContentModuleName(name)
 
 /**
  * Returns the base JPS module name.
  *
- * Handles two conventions:
- * 1. Test descriptors: `intellij.foo._test` → `intellij.foo` (removes `._test` suffix)
- * 2. Slash-notation: `intellij.restClient/intelliLang` → `intellij.restClient` (parent plugin module)
- *
+ * Slash-notation: `intellij.restClient/intelliLang` → `intellij.restClient` (parent plugin module).
  * For regular modules, returns the same name unchanged.
  */
 fun ContentModuleName.baseModuleName(): ContentModuleName {
-  return when {
-    isSlashNotation() -> ContentModuleName(value.substringBefore('/'))
-    isTestDescriptor() -> ContentModuleName(value.removeSuffix(TEST_DESCRIPTOR_SUFFIX))
-    else -> this
-  }
+  return if (isSlashNotation()) ContentModuleName(value.substringBefore('/')) else this
 }
 
 // region Slash-Notation Module Support

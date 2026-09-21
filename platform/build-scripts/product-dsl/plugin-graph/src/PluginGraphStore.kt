@@ -188,9 +188,6 @@ class PluginGraphStore internal constructor(
   /** Check if module set is self-contained */
   fun isSelfContained(nodeId: Int): Boolean = (kinds[nodeId] and NODE_FLAG_SELF_CONTAINED) != 0
 
-  /** Check if content module is a test descriptor (._test suffix) */
-  fun isTestDescriptor(nodeId: Int): Boolean = (kinds[nodeId] and NODE_FLAG_IS_TEST_DESCRIPTOR) != 0
-
   /** Check if content module has a descriptor on disk */
   fun hasDescriptor(nodeId: Int): Boolean = (kinds[nodeId] and NODE_FLAG_HAS_DESCRIPTOR) != 0
 

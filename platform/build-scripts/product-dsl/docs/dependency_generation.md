@@ -66,7 +66,8 @@ the environment at runtime, not from the dependency module.
 ### Why Exclude TEST?
 
 TEST scope dependencies are only for test code execution. Production runtime
-doesn't need them. Test descriptors (`._test.xml`) handle test deps separately.
+doesn't need them. A test-only module, whose descriptor lies under a test source root, is the exception; see
+[Test-only content modules](#test-only-content-modules).
 
 **Source**: `JpsJavaDependencyScope.java:23-26` defines which scopes include `PRODUCTION_RUNTIME`.
 
@@ -189,11 +190,11 @@ Generates dependencies for **product modules** (modules declared in module sets 
 Generates dependencies for **plugin content modules** (modules declared in plugin.xml `<content>` sections).
 
 **Responsibilities:**
-- Plans dependencies for production and test content modules (including `._test` modules)
-- Writes `{moduleName}.xml` and `{moduleName}._test.xml` descriptors
-- Handles content modules ending with `._test` (their `.xml` IS the test descriptor)
+- Plans dependencies for production and test-only content modules
+- Writes `{moduleName}.xml` descriptors
+- Includes TEST-scope dependencies when the descriptor lies under a test source root
 
-**Files updated:** content module XMLs, test descriptor XMLs
+**Files updated:** content module XMLs
 
 ### PluginDependencyPlanner + PluginXmlWriter
 Generates dependencies for **plugin.xml** of plugin main modules.
@@ -254,15 +255,14 @@ The generator computes **both** production and test dependencies for each conten
 | `EDGE_CONTENT_MODULE_DEPENDS_ON` | COMPILE, RUNTIME (and TEST for test-runtime-only modules) | Yes | Production validation |
 | `EDGE_CONTENT_MODULE_DEPENDS_ON_TEST` | COMPILE, RUNTIME, TEST | No | Test plugin validation |
 
-For written XML, TEST scope (together with PROVIDED, which JPS puts in test runtime) is included in exactly three cases:
+For written XML, TEST scope (together with PROVIDED, which JPS puts in test runtime) is included in exactly two cases:
 
-1. the descriptor is a **test descriptor** (`foo._test.xml`, `isTestDescriptor == true`);
-2. the module is **test support** (`*.testFramework`, IDE starter, a `testFramework` descriptor path, …) and has no production content source;
-3. the **descriptor file itself lies under a JPS test source root** — e.g. `tests/testResources/intellij.foo.tests.xml` in a module whose `.iml` declares that root as `java-test-resource`.
+1. the module is **test support** (`*.testFramework`, IDE starter, a `testFramework` descriptor path, …) and has no production content source;
+2. the **descriptor file itself lies under a JPS test source root** — e.g. `tests/testResources/intellij.foo.tests.xml` in a module whose `.iml` declares that root as `java-test-resource`.
 
-Case 3 is what makes test-only content modules work. It is decided by descriptor *location*, never by the module name: a module named `*.tests` whose descriptor sits in a production `resources` root is generated as production code, and a test-resource descriptor without a `.tests` suffix still gets TEST scope. For these test-runtime-only modules, `libraryModuleFilter` is bypassed for both written and test dependency sets, so required test libraries are preserved.
+Case 2 is what makes test-only content modules work. It is decided by descriptor *location*, never by the module name: a module named `*.tests` whose descriptor sits in a production `resources` root is generated as production code, and a test-resource descriptor without a `.tests` suffix still gets TEST scope. For these test-runtime-only modules, `libraryModuleFilter` is bypassed for both written and test dependency sets, so required test libraries are preserved.
 
-**A descriptor generated with test scope never gains a *new* `<plugin>` dependency.** In these three cases the generator writes `<module>` entries only: its required plugin dependency set is limited to JPS dependencies already present in the XML before suppression handling and [missing plugin dependency validation](validators/plugin-content-dependency.md). Nothing has to be declared for the remaining JPS plugin dependencies, so they are not suppressions.
+**A descriptor generated with test scope never gains a *new* `<plugin>` dependency.** In these two cases the generator writes `<module>` entries only: its required plugin dependency set is limited to JPS dependencies already present in the XML before suppression handling and [missing plugin dependency validation](validators/plugin-content-dependency.md). Nothing has to be declared for the remaining JPS plugin dependencies, so they are not suppressions.
 
 Rationale: a `<plugin id>` entry is a **hard gate**. If the plugin is not in the layout, the content module is silently excluded together with everything that depends on it, and the failure surfaces far away as `module ... not found in product layout`. TEST/PROVIDED scope order entries routinely point at plugins that the layout the tests run in does not contain, so writing them breaks test entry points - this is exactly how IJPL-248736 broke the Rider TestNG suites. Plugin entries already in the XML are kept, the same grandfathering as `isTestOnlyContentModule` in [test-plugins.md](test-plugins.md).
 
@@ -385,8 +385,6 @@ For DSL-defined test plugins, the generator can **automatically add** JPS module
 
 **Key Principle**: Only add **unresolvable** modules - those not available in the same product (module sets + bundled production plugins; other test plugins excluded).
 
-DSL test plugins also support a test-descriptor fallback for JPS targets: when dependency target `X` has no `X.xml` descriptor but has `X._test.xml`, dependency planning treats it as content module `X._test`.
-
 ```
 JPS Dependencies (.iml)
         │
@@ -422,42 +420,22 @@ This fallback is scoped to **DSL test plugin auto-add** and does not change glob
 
 For DSL reference, see [dsl-api-reference.md](dsl-api-reference.md#testplugin----define-test-plugin).
 
-## Test Descriptor Handling (`._test.xml`)
+## Test-only content modules
 
-Test descriptors provide dependencies for test code.
+A test-only module has test source roots and no production source roots (`IdeaUltimateProjectStructureTest` forbids
+new modules with both kinds of roots). Such a module, for example `intellij.rdct.tests.distributed`, has exactly one descriptor,
+`intellij.rdct.tests.distributed.xml`, kept in one of its test resource roots. The generator recognizes the descriptor
+by its location under a test source root and writes TEST-scope JPS dependencies into it (case 2 above). A test plugin
+declares such a module under its JPS module name, and the packager packs it from its test output
+(`isTestOnlyPluginModule`).
 
-**Two cases:**
-
-1. **Regular content modules** (e.g., `intellij.foo`):
-   - Production descriptor: `intellij.foo.xml`
-   - Test descriptor: `intellij.foo._test.xml`
-   - Both are processed; test uses `withTests=true` for JPS dependencies
-
-2. **Test content modules** (e.g., `intellij.foo._test`):
-    - Their `.xml` file IS the test descriptor
-    - No separate `._test._test.xml` file
-    - Processed with `isTestDescriptor=true` (production deps include TEST scope)
-
-**Code logic:**
-```kotlin
-val isTestDescriptor = contentModuleName.endsWith("._test")
-val plan = planContentModuleDependenciesWithBothSets(
-  contentModuleName = contentModuleName,
-  isTestDescriptor = isTestDescriptor,
-  libraryModuleFilter = config.libraryModuleFilter,
-)
-// plan.moduleDependencies -> main descriptor
-// plan.testDependencies -> moduleName._test.xml for non-test descriptor modules
-```
-
-### `*.tests.xml` is not `*._test.xml`
+### `*.tests.xml` is an ordinary descriptor
 
 Test-only content modules such as `intellij.clion.profiling.tests` (descriptor
-`CIDR/clion-profiling/tests/testResources/intellij.clion.profiling.tests.xml`) are **ordinary content modules** —
-`isTestDescriptor == false`, no `._test` counterpart. They are generated through the same path as any other content
-module; the only thing that distinguishes them is that their descriptor lives in a test source root, so TEST-scope JPS
-deps are included in the written XML (case 3 above), and that no *new* `<plugin>` dependency is written for them. The
-`.tests` name suffix has no meaning to descriptor generation.
+`CIDR/clion-profiling/tests/testResources/intellij.clion.profiling.tests.xml`) are **ordinary content modules**. They
+are generated through the same path as any other content module; the only thing that distinguishes them is that their
+descriptor lives in a test source root, so TEST-scope JPS deps are included in the written XML (case 2 above), and that
+no *new* `<plugin>` dependency is written for them. The `.tests` name suffix has no meaning to descriptor generation.
 
 There is exactly one supported way to freeze a descriptor's generated `<dependencies>`: put the
 `@skip-dependency-generation` marker in it. Suffix-based freezing is not supported — it silently disabled regeneration

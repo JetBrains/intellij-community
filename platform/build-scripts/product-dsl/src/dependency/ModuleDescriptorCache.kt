@@ -23,7 +23,6 @@ import java.nio.file.Path
  * Cache for module descriptor information to avoid redundant file system lookups.
  *
  * This cache handles module descriptors (`{moduleName}.xml`) in both production and test resources.
- * For test descriptors (`{moduleName}._test.xml`), see test descriptor generation in the pipeline.
  *
  * For test plugin content modules, descriptors may be in test resources and need test dependencies.
  * See [docs/test-plugins.md](../../docs/test-plugins.md) for details.

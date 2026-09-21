@@ -32,7 +32,6 @@ import com.intellij.platform.pluginGraph.NODE_FLAG_IS_ALIAS
 import com.intellij.platform.pluginGraph.NODE_FLAG_IS_DSL_DEFINED
 import com.intellij.platform.pluginGraph.NODE_FLAG_IS_MODULE_SET_WRAPPER
 import com.intellij.platform.pluginGraph.NODE_FLAG_IS_TEST
-import com.intellij.platform.pluginGraph.NODE_FLAG_IS_TEST_DESCRIPTOR
 import com.intellij.platform.pluginGraph.NODE_FLAG_SELF_CONTAINED
 import com.intellij.platform.pluginGraph.NODE_MODULE_SET
 import com.intellij.platform.pluginGraph.NODE_PLUGIN
@@ -43,7 +42,6 @@ import com.intellij.platform.pluginGraph.PLUGIN_DEP_MODERN_MASK
 import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.PluginModuleId
-import com.intellij.platform.pluginGraph.TEST_DESCRIPTOR_SUFFIX
 import com.intellij.platform.pluginGraph.TargetDependencyScope
 import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginGraph.aliasNodeName
@@ -219,8 +217,7 @@ internal class PluginGraphBuilder(
 
     val id = store.names.size
     store.names.add(name.value)
-    val flags = if (name.value.endsWith("._test")) NODE_FLAG_IS_TEST_DESCRIPTOR else 0
-    store.kinds.add(NODE_CONTENT_MODULE or flags)
+    store.kinds.add(NODE_CONTENT_MODULE)
     store.mutableNameIndex(NODE_CONTENT_MODULE).set(name.value, id)
     store.descriptorFlagsComplete = false
     return id
@@ -236,8 +233,7 @@ internal class PluginGraphBuilder(
 
     val id = store.names.size
     store.names.add(stringId)
-    val flags = if (moduleId.name.endsWith("._test")) NODE_FLAG_IS_TEST_DESCRIPTOR else 0
-    store.kinds.add(NODE_CONTENT_MODULE_WITH_NAMESPACE or flags)
+    store.kinds.add(NODE_CONTENT_MODULE_WITH_NAMESPACE)
     store.mutableNameIndex(NODE_CONTENT_MODULE_WITH_NAMESPACE).set(stringId, id)
     store.descriptorFlagsComplete = false
     return id
@@ -718,10 +714,6 @@ internal class PluginGraphBuilder(
     for (targetName in targetNames) {
       if (descriptorCache.getOrAnalyze(targetName) != null) {
         markContentModuleHasDescriptor(ContentModuleName(targetName))
-      }
-      val testDescriptorName = targetName + TEST_DESCRIPTOR_SUFFIX
-      if (descriptorCache.getOrAnalyze(testDescriptorName) != null) {
-        markContentModuleHasDescriptor(ContentModuleName(testDescriptorName))
       }
     }
 

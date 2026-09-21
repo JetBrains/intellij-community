@@ -347,7 +347,7 @@ object CommunityModuleSets {
     module("intellij.platform.testFramework.junit5.codeInsight")
     module("intellij.platform.testFramework.junit5.tests")
     module("intellij.platform.testFramework.junit5.eel.tests")
-    module("intellij.platform.testFramework.junit5.wsl._test")
+    module("intellij.platform.testFramework.junit5.wsl")
   }
 
   // endregion

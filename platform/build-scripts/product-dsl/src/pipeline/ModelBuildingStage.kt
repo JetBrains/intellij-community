@@ -14,7 +14,6 @@ import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginGraph.baseModuleName
 import com.intellij.platform.pluginGraph.contentName
 import com.intellij.platform.pluginGraph.isSlashNotation
-import com.intellij.platform.pluginGraph.isTestDescriptor
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import io.opentelemetry.api.trace.Span
@@ -1036,13 +1035,7 @@ internal object ModelBuildingStage {
       val declaredModules = collectDeclaredContentModules(spec.spec)
       for (moduleName in declaredModules) {
         if (moduleName.isSlashNotation()) continue
-        val targetName = if (moduleName.isTestDescriptor()) {
-          moduleName.baseModuleName().value
-        }
-        else {
-          moduleName.value
-        }
-        builder.addTarget(TargetName(targetName))
+        builder.addTarget(TargetName(moduleName.value))
       }
     }
   }

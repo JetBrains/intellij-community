@@ -6,13 +6,10 @@ package org.jetbrains.intellij.build.productLayout.dependency
 import com.intellij.platform.buildScripts.concurrency.SharedCache
 import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.ContentModuleName
-import com.intellij.platform.pluginGraph.DependencyClassification
 import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginGraph.contentName
-import com.intellij.platform.pluginGraph.isSlashNotation
-import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
 import org.jetbrains.intellij.build.productLayout.config.ValidationException
@@ -44,7 +41,6 @@ import org.jetbrains.intellij.build.productLayout.validator.PluginContentDepende
 import org.jetbrains.intellij.build.productLayout.xml.extractDependenciesEntries
 import org.jetbrains.intellij.build.productLayout.xml.updateXmlDependencies
 import org.jetbrains.intellij.build.mapConcurrent
-import java.nio.file.Files
 
 /**
  * Simplified entry point for tests - extension on [PluginTestSetupContext].
@@ -120,7 +116,6 @@ internal fun generatePluginDependencies(
     val outputProvider = testSetup.jps.outputProvider
     val owner = descriptorCache.owner
     val contentModuleCache = SharedCache<String, PlannedContentModuleResult?>(owner)
-    val testContentModuleCache = SharedCache<String, DependencyFileResult?>(owner)
     val pluginGraphDeps = collectPluginGraphDeps(graph = graph)
       .associateBy { it.pluginContentModuleName.value }
     val actionGroupProviderModules = buildActionGroupProviderModules(graph = graph, descriptorCache = descriptorCache)
@@ -140,7 +135,6 @@ internal fun generatePluginDependencies(
           updateSuppressions = updateSuppressions,
           strategy = strategy,
           contentModuleCache = contentModuleCache,
-          testContentModuleCache = testContentModuleCache,
         )
       }
     }.filterNotNull()
@@ -235,7 +229,6 @@ private fun generatePluginDependency(
   updateSuppressions: Boolean,
   strategy: FileUpdateStrategy,
   contentModuleCache: SharedCache<String, PlannedContentModuleResult?>,
-  testContentModuleCache: SharedCache<String, DependencyFileResult?>,
 ): PluginDependencyGenerationOutput? {
   val info = pluginContentCache.getOrExtract(pluginModuleName) ?: return null
   val effectiveStrategy = strategy.withUpdateSuppressions(updateSuppressions)
@@ -300,7 +293,6 @@ private fun generatePluginDependency(
   for (module in info.contentModules) {
     val contentModule = module.moduleId.contentName()
     val contentModuleName = contentModule.value
-    val isTestModule = contentModuleName.endsWith("._test")
 
     // Use production function for content module dependency generation
     // Tests pass through their SuppressionConfig (same as production)
@@ -310,7 +302,6 @@ private fun generatePluginDependency(
         descriptorCache = descriptorCache,
         outputProvider = outputProvider,
         pluginGraph = graph,
-        isTestDescriptor = isTestModule,
         suppressionConfig = effectiveConfig,
         updateSuppressions = updateSuppressions,
       )
@@ -320,36 +311,6 @@ private fun generatePluginDependency(
     if (planned != null) {
       contentModuleResults.add(planned.result)
       contentModulePlans.add(planned.plan)
-    }
-
-    if (!isTestModule) {
-      val testResult = testContentModuleCache.getOrPut(contentModuleName) {
-        // Compute deps using graph
-        val graphModuleDeps = HashSet<ContentModuleName>()
-        graph.query {
-          val mod = contentModule(ContentModuleName(contentModuleName)) ?: return@query
-          mod.backedBy { target ->
-            target.dependsOn { dep ->
-              when (val c = classifyTarget(dep.targetId)) {
-                is DependencyClassification.ModuleDep -> graphModuleDeps.add(c.moduleName)
-                else -> {}
-              }
-            }
-          }
-        }
-
-        val testSuppressedModules = planned?.plan?.suppressedModules ?: effectiveConfig.getSuppressedModules(contentModule)
-        generateTestDescriptorDependencies(
-          contentModuleName = contentModule,
-          outputProvider = outputProvider,
-          graphModuleDeps = graphModuleDeps,
-          dependencyFilter = { depName -> !testSuppressedModules.contains(ContentModuleName(depName)) },
-          strategy = effectiveStrategy,
-        )
-      }
-      if (testResult != null) {
-        contentModuleResults.add(testResult)
-      }
     }
   }
 
@@ -400,79 +361,6 @@ private fun writeContentModulePlan(plan: ContentModuleDependencyPlan, strategy: 
     writtenPluginDependencies = plan.writtenPluginDependencies,
     requiredPluginDependencies = plan.requiredPluginDependencies,
     suppressionUsages = plan.suppressionUsages,
-  )
-}
-
-/**
- * Generates dependencies for a test descriptor file (moduleName._test.xml).
- *
- * Test descriptor files provide additional test-time dependencies for content modules.
- * They are separate from the main module descriptor (`moduleName.xml`).
- *
- * Note: This is different from "test descriptor modules" (`foo._test` content modules).
- * This function generates `foo._test.xml` for regular `foo` modules.
- *
- * @param contentModuleName The base module name (without ._test suffix)
- * @param outputProvider JPS output provider for locating test descriptor files
- * @param graphModuleDeps Pre-computed module dependencies from the graph
- * @param dependencyFilter Filter that returns true for deps to INCLUDE (false = suppressed)
- * @param strategy File update strategy (write vs diff)
- * @return Result with written dependencies or null if no test descriptor exists
- */
-private fun generateTestDescriptorDependencies(
-  contentModuleName: ContentModuleName,
-  outputProvider: ModuleOutputProvider,
-  graphModuleDeps: Set<ContentModuleName>,
-  dependencyFilter: (String) -> Boolean,
-  strategy: FileUpdateStrategy,
-): DependencyFileResult? {
-  // Handle slash-notation modules (e.g., "intellij.restClient/intelliLang")
-  // These are virtual content modules without separate JPS modules - no test descriptors
-  if (contentModuleName.isSlashNotation()) {
-    return null
-  }
-
-  val jpsModule = outputProvider.findRequiredModule(contentModuleName.value)
-  val descriptorPath = outputProvider.findFileInModuleSources(
-    module = jpsModule,
-    relativePath = "${contentModuleName.value}._test.xml",
-    onlyProductionSources = false,
-  ) ?: return null
-
-  val content = Files.readString(descriptorPath)
-  if (content.contains("@skip-dependency-generation")) {
-    return null
-  }
-
-  // Parse existing XML dependencies for accurate implicitDependencies computation
-  val parseResult = parseContentAndXIncludes(input = content.toByteArray(), locationSource = null)
-  val existingModuleDeps = parseResult.moduleDependencies.toSet()
-
-  val moduleDeps = mutableListOf<String>()
-  for (depModule in graphModuleDeps) {
-    val depName = depModule.value
-    if (dependencyFilter(depName)) {
-      moduleDeps.add(depName)
-    }
-  }
-
-  val status = updateXmlDependencies(
-    path = descriptorPath,
-    content = content,
-    moduleDependencies = moduleDeps.distinct().sorted(),
-    pluginDependencies = emptyList(),
-    preserveExistingModule = { !dependencyFilter(it) },
-    preserveExistingPlugin = { _ -> true },
-    strategy = strategy,
-  )
-  return DependencyFileResult(
-    contentModuleName = ContentModuleName("${contentModuleName.value}._test"),
-    // Explicit: test descriptor ._test gets deps from the base JPS module (without suffix)
-    sourceJpsModule = contentModuleName,
-    descriptorPath = descriptorPath,
-    status = status,
-    writtenDependencies = moduleDeps.distinct().sorted().map(::ContentModuleName),
-    existingXmlModuleDependencies = existingModuleDeps.mapTo(HashSet(), ::ContentModuleName),
   )
 }
 

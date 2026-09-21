@@ -17,7 +17,7 @@ internal class JarPackagerDependencyHelperTest {
   @Test
   fun `recognizes a selectively enabled test plugin module`() {
     val project = JpsElementFactory.getInstance().createModel().project
-    val module = project.addModule("intellij.sample._test", JpsJavaModuleType.INSTANCE)
+    val module = project.addModule("intellij.sample.tests", JpsJavaModuleType.INSTANCE)
     val helper = newDependencyHelper(SelectiveTestOutputProvider(module))
 
     assertThat(helper.isTestPluginModule(module.name, module)).isTrue()

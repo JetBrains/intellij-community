@@ -192,7 +192,7 @@ open class DistributedTestHost(private val coroutineScope: CoroutineScope) : App
           }
 
           // Create test class
-          val testModuleId = System.getProperty("distributed.test.module", "intellij.rdct.tests.distributed._test")
+          val testModuleId = System.getProperty("distributed.test.module", "intellij.rdct.tests.distributed")
           val testModule = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(testModuleId, PluginModuleId.JETBRAINS_NAMESPACE))
           if (testModule == null) {
             LOG.fatalErrorWithWarnDetails("Distributed test module is not enabled in the plugin set when the test session started",

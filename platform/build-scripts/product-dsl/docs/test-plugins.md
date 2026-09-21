@@ -167,8 +167,6 @@ When a test plugin's content modules have JPS module dependencies with descripto
 - **Resolvable** = available in the same product: module sets + bundled production plugin content + `additionalBundledPluginTargetNames` (target names; other test plugins excluded)
 - **Unresolvable** = not found anywhere
 
-For DSL test plugins, JPS dependency targets also support a test-descriptor fallback: if target `X` has no descriptor `X.xml` but has `X._test.xml`, auto-add treats the dependency as `X._test`.
-
 Only **unresolvable** modules are auto-added to the test plugin content.
 
 **Note:** Content modules that belong to a plugin are **not** auto-added when their owning plugin or another graph source is resolvable for the test plugin scope (the module is already available). If neither the owning plugin nor another graph source is resolvable, descriptor-backed modules are auto-added only when they have a single production owner and that owner embeds them; non-embedded or ambiguously owned plugin-owned modules still report an error and skip auto-add unless the plugin ID is listed in `allowedMissingPluginIds` (either on the test plugin or on the module that triggered the dependency). **Exception:** library wrapper modules (`intellij.libraries.*`) are always auto-added as module dependencies, even if owned by a plugin.
@@ -187,7 +185,7 @@ This suffix check (`isTestOnlyContentModule` in `TestPluginDependencyPlanner`) i
 *name* matters. The same *policy* — never introduce a new `<plugin>` gate — also applies to a `*.tests.xml` module
 descriptor's own `<dependencies>`, but there it is keyed on the descriptor being generated with test scope (its location
 under a test source root), not on the name suffix — see
-[dependency_generation.md](dependency_generation.md#testsxml-is-not-_testxml).
+[dependency_generation.md](dependency_generation.md#testsxml-is-an-ordinary-descriptor).
 
 ### Source of Truth and Transitive Closure
 
