@@ -75,6 +75,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
@@ -1153,7 +1154,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       // take a number of queued requests to update and pretend we execute them all (they are all the same, so one is enough)
       long requestDelta = analyzer.getDelta();
       try {
-        if (!project.isDefault() && project.isInitialized() && !isBackgroundActivitiesSuppressedSync(project)) {
+        if (!project.isDefault() && project.isInitialized() &&
+            (!isBackgroundActivitiesSuppressedSync(project) || WelcomeScreenProjectProvider.isWelcomeScreenProject(project))) {
           String result = analyzer.runUpdate();
           if (LOG.isDebugEnabled()) {
             LOG.debug("runUpdate result: " + result+"; requestDelta:"+requestDelta);

@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -26,6 +27,7 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,7 +97,10 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
       boolean cancelled = false;
       try {
         TextEditorHighlightingPassRegistrarEx passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
-        return passRegistrar.instantiatePasses(psiFile, editor, effectivePassesToIgnore);
+        List<TextEditorHighlightingPass> passes = passRegistrar.instantiatePasses(psiFile, editor, effectivePassesToIgnore);
+        return WelcomeScreenProjectProvider.isWelcomeScreenProject(project)
+               ? ContainerUtil.filter(passes, pass -> pass.getId() == Pass.LINE_MARKERS || pass.getId() == Pass.SLOW_LINE_MARKERS)
+               : passes;
       }
       catch (CancellationException e) {
         cancelled = true;
