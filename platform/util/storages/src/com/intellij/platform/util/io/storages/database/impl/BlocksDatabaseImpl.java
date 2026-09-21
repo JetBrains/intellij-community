@@ -4,6 +4,7 @@ package com.intellij.platform.util.io.storages.database.impl;
 import com.intellij.platform.util.io.storages.UnsupportedFormatException;
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabase;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
+import com.intellij.platform.util.io.storages.database.spi.StoreMetadata;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -184,6 +185,20 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
     }
   }
 
+  @NotNull DatabaseCatalog.StoreInfo storeInfo(@NotNull BlocksStoreImpl store) {
+    synchronized (databaseLock) {
+      return requireCurrent(store);
+    }
+  }
+
+  void updateStoreMetadata(@NotNull BlocksStoreImpl store,
+                           @NotNull StoreMetadata storeMetadata) throws IOException {
+    synchronized (databaseLock) {
+      var storeInfo = requireCurrent(store);
+      databaseCatalog.updateStoreMetadata(storeInfo.storeId(), storeMetadata);
+    }
+  }
+
   /// Allocates a block that belongs to the current store
   @NotNull DatabaseBlock allocateBlock(@NotNull BlocksStoreImpl store,
                                        int role,
@@ -252,10 +267,12 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
     }
     var storeInfo = store.info();
     var currentStoreInfo = databaseCatalog.findStore(storeInfo.name());
-    if (!storeInfo.equals(currentStoreInfo)) {
+    if (currentStoreInfo == null ||
+        storeInfo.storeId() != currentStoreInfo.storeId() ||
+        storeInfo.dataVersion() != currentStoreInfo.dataVersion()) {
       throw new IllegalStateException("Store " + storeInfo.name() + " with storeId(=" + storeInfo.storeId() + ") is not current");
     }
-    return storeInfo;
+    return currentStoreInfo;
   }
 
   private @NotNull BlocksStoreImpl requireStoreImplementation(@NotNull BlocksStore store) {

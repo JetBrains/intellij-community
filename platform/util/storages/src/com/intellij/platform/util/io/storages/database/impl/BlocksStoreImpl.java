@@ -2,6 +2,7 @@
 package com.intellij.platform.util.io.storages.database.impl;
 
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
+import com.intellij.platform.util.io.storages.database.spi.StoreMetadata;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,16 @@ final class BlocksStoreImpl implements BlocksStore {
   @Override
   public int dataVersion() {
     return database.dataVersion(this);
+  }
+
+  @Override
+  public @NotNull StoreMetadata storeMetadata() {
+    return database.storeInfo(this).storeMetadata();
+  }
+
+  @Override
+  public void updateStoreMetadata(@NotNull StoreMetadata storeMetadata) throws IOException {
+    database.updateStoreMetadata(this, storeMetadata);
   }
 
   /** Allocates one block for this store */

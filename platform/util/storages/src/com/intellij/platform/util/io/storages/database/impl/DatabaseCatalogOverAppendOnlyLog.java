@@ -15,6 +15,9 @@ import com.intellij.platform.util.io.storages.database.impl.layout.StoreCreatePa
 import com.intellij.platform.util.io.storages.database.impl.layout.StoreCreatePayloadLayout.StoreCreateRecordPayload;
 import com.intellij.platform.util.io.storages.database.impl.layout.StoreDropPayloadLayout;
 import com.intellij.platform.util.io.storages.database.impl.layout.StoreDropPayloadLayout.StoreDropRecordPayload;
+import com.intellij.platform.util.io.storages.database.impl.layout.StoreMetadataPayloadLayout;
+import com.intellij.platform.util.io.storages.database.impl.layout.StoreMetadataPayloadLayout.StoreMetadataRecordPayload;
+import com.intellij.platform.util.io.storages.database.spi.StoreMetadata;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.CorruptedException;
 import org.jetbrains.annotations.NotNull;
@@ -168,9 +171,16 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
         case CHUNK_RETIRE -> catalog.retireChunk(readChunkChangeRecord(storagePath, recordId, recordHeader.version(), payload).chunkId());
         case STORE_CREATE -> {
           var store = readStoreCreateRecord(storagePath, recordId, recordHeader.version(), payload);
-          catalog.addStore(store.storeId(), store.name(), store.dataVersion());
+          catalog.addStore(
+            store.storeId(), store.name(), store.dataVersion(),
+            store.storeMetadata()
+          );
         }
         case STORE_DROP -> catalog.dropStore(readStoreDropRecord(storagePath, recordId, recordHeader.version(), payload).storeId());
+        case STORE_METADATA_UPDATE -> {
+          var metadata = readStoreMetadataRecord(storagePath, recordId, recordHeader.version(), payload);
+          catalog.updateStoreMetadata(metadata.storeId(), metadata.storeMetadata());
+        }
       }
     }
     catch (IllegalArgumentException | IllegalStateException e) {
@@ -241,6 +251,30 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
     return StoreDropRecordPayload.read(source);
   }
 
+  private static @NotNull StoreMetadataRecordPayload readStoreMetadataRecord(@NotNull Path storagePath,
+                                                                              long recordId,
+                                                                              short recordVersion,
+                                                                              @NotNull ByteBuffer source) throws IOException {
+    if (recordVersion != StoreMetadataPayloadLayout.PAYLOAD_FORMAT_VERSION) {
+      throw new UnsupportedFormatException(
+        "store metadata record " + recordId + " in " + storagePath,
+        Short.toUnsignedInt(StoreMetadataPayloadLayout.PAYLOAD_FORMAT_VERSION),
+        Short.toUnsignedInt(recordVersion)
+      );
+    }
+    try {
+      return StoreMetadataRecordPayload.read(source);
+    }
+    catch (CorruptedException e) {
+      throw corruptedCatalogRecord(
+        storagePath,
+        recordId,
+        e.getMessage(),
+        e
+      );
+    }
+  }
+
   private static @NotNull CorruptedException corruptedCatalogRecord(@NotNull Path storagePath,
                                                                     long recordId,
                                                                     @NotNull String details,
@@ -274,16 +308,24 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
   }
 
   @Override
-  public synchronized void registerNewStore(int storeId, @NotNull String name, int dataVersion) throws IOException {
+  public synchronized void registerNewStore(int storeId,
+                                            @NotNull String name,
+                                            int dataVersion,
+                                            @NotNull StoreMetadata storeMetadata) throws IOException {
     ensureOpen();
     var expectedStoreId = currentCatalog.nextStoreId();
     if (storeId != expectedStoreId) {
       throw new IllegalArgumentException("storeId(=" + storeId + ") must be the next storeId(=" + expectedStoreId + ")");
     }
-    currentCatalog.validateStoreCreation(storeId, name);
+    currentCatalog.validateStoreCreation(
+      storeId, name, storeMetadata
+    );
 
     var header = new CatalogChangeRecordHeader(ChangeType.STORE_CREATE, StoreCreatePayloadLayout.PAYLOAD_FORMAT_VERSION);
-    var payload = new StoreCreateRecordPayload(storeId, dataVersion, name);
+    var payload = new StoreCreateRecordPayload(
+      storeId, dataVersion,
+      name, storeMetadata
+    );
     catalogChangesLog.append(
       buffer -> {
         header.writeTo(buffer);
@@ -292,7 +334,31 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
       },
       Math.addExact(CatalogChangeHeaderLayout.HEADER_SIZE, payload.payloadSize())
     );
-    currentCatalog.addStore(storeId, name, dataVersion);
+    currentCatalog.addStore(
+      storeId, name, dataVersion, storeMetadata
+    );
+  }
+
+  @Override
+  public synchronized void updateStoreMetadata(int storeId,
+                                               @NotNull StoreMetadata storeMetadata) throws IOException {
+    ensureOpen();
+    currentCatalog.validateStoreMetadataUpdate(storeId, storeMetadata);
+
+    var header = new CatalogChangeRecordHeader(
+      ChangeType.STORE_METADATA_UPDATE,
+      StoreMetadataPayloadLayout.PAYLOAD_FORMAT_VERSION
+    );
+    var payload = new StoreMetadataRecordPayload(storeId, storeMetadata);
+    catalogChangesLog.append(
+      buffer -> {
+        header.writeTo(buffer);
+        payload.writeTo(buffer);
+        return buffer;
+      },
+      Math.addExact(CatalogChangeHeaderLayout.HEADER_SIZE, payload.payloadSize())
+    );
+    currentCatalog.updateStoreMetadata(storeId, storeMetadata);
   }
 
   @Override

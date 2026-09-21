@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.database.impl;
 
+import com.intellij.platform.util.io.storages.database.spi.StoreMetadata;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,8 +30,19 @@ public interface DatabaseCatalog extends Closeable, Flushable {
   /** @return the next store identifier without changing persistent metadata */
   int nextStoreId();
 
-  /** Registers a new store */
-  void registerNewStore(int storeId, @NotNull String name, int dataVersion) throws IOException;
+  /** Registers a new store without store metadata. */
+  default void registerNewStore(int storeId, @NotNull String name, int dataVersion) throws IOException {
+    registerNewStore(storeId, name, dataVersion, StoreMetadata.EMPTY);
+  }
+
+  /** Registers a new store with its initial metadata */
+  void registerNewStore(int storeId,
+                        @NotNull String name,
+                        int dataVersion,
+                        @NotNull StoreMetadata storeMetadata) throws IOException;
+
+  /** Replaces the opaque metadata of a current store */
+  void updateStoreMetadata(int storeId, @NotNull StoreMetadata storeMetadata) throws IOException;
 
   /** Removes a current store while keeping its identifier reserved */
   void dropStore(int storeId) throws IOException;
@@ -106,5 +118,12 @@ public interface DatabaseCatalog extends Closeable, Flushable {
   record ChunkInfo(int chunkId, ChunkState state) {}
 
   /** A catalog entry for one current store */
-  record StoreInfo(int storeId, @NotNull String name, int dataVersion) {}
+  record StoreInfo(int storeId,
+                   @NotNull String name,
+                   int dataVersion,
+                   @NotNull StoreMetadata storeMetadata) {
+    StoreInfo(int storeId, @NotNull String name, int dataVersion) {
+      this(storeId, name, dataVersion, StoreMetadata.EMPTY);
+    }
+  }
 }

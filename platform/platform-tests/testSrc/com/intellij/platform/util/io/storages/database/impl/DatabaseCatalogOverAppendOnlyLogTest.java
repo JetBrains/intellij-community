@@ -1,10 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.database.impl;
 
+import com.intellij.platform.util.io.storages.database.spi.StoreMetadata;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.nio.ReadOnlyBufferException;
 import java.util.List;
 
 import static com.intellij.platform.util.io.storages.database.impl.DatabaseCatalog.ChunkState.ACTIVE;
@@ -152,6 +154,37 @@ public class DatabaseCatalogOverAppendOnlyLogTest {
     try (var catalog = DatabaseCatalogOverAppendOnlyLog.open(catalogPath, CHUNK_SIZE)) {
       assertEquals(List.of(new DatabaseCatalog.StoreInfo(1, "store", 1)), catalog.stores());
       assertEquals(2, catalog.nextStoreId(), "Replay must not observe rejected changes");
+    }
+  }
+
+  /** Replay must apply the last store catalog update. */
+  @Test
+  public void storeMetadataSurvivesReopening(@TempDir Path tempDirectory) throws Exception {
+    var catalogPath = tempDirectory.resolve("database.meta");
+    try (var catalog = DatabaseCatalogOverAppendOnlyLog.open(catalogPath, CHUNK_SIZE)) {
+      var storeId = catalog.nextStoreId();
+      var initialBytes = new byte[]{1, 4, 2};
+      catalog.registerNewStore(storeId, "map", 3, StoreMetadata.copyOf(1, initialBytes));
+      initialBytes[0] = 0;
+      assertEquals(StoreMetadata.copyOf(1, new byte[]{1, 4, 2}), catalog.findStore("map").storeMetadata());
+      catalog.updateStoreMetadata(storeId, StoreMetadata.copyOf(7, new byte[]{7, 8, 9}));
+
+      var expectedStore = new DatabaseCatalog.StoreInfo(storeId, "map", 3, StoreMetadata.copyOf(7, new byte[]{7, 8, 9}));
+      assertEquals(expectedStore, catalog.findStore("map"));
+      assertThrows(
+        IllegalArgumentException.class,
+        () -> catalog.updateStoreMetadata(storeId + 1, StoreMetadata.copyOf(1, new byte[]{1})),
+        "The catalog must reject catalog for an unknown store"
+      );
+      catalog.flush();
+    }
+
+    try (var catalog = DatabaseCatalogOverAppendOnlyLog.open(catalogPath, CHUNK_SIZE)) {
+      var store = catalog.findStore("map");
+      var expectedStore = new DatabaseCatalog.StoreInfo(1, "map", 3, StoreMetadata.copyOf(7, new byte[]{7, 8, 9}));
+      assertEquals(expectedStore, store);
+      assertThrows(ReadOnlyBufferException.class, () -> store.storeMetadata().asReadOnlyBuffer().put(0, (byte)0));
+      assertEquals(expectedStore, catalog.findStore("map"));
     }
   }
 }

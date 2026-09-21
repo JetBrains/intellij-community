@@ -45,7 +45,8 @@ public final class CatalogChangeHeaderLayout {
     CHUNK_RETIRE(3),
 
     STORE_CREATE(4),
-    STORE_DROP(5);
+    STORE_DROP(5),
+    STORE_METADATA_UPDATE(6);
 
     private final short code;
 

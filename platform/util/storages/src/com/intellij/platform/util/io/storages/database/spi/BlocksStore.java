@@ -13,14 +13,22 @@ import java.util.List;
 /// - allocate blocks: persistent memory segments to store data into
 /// - find already allocated blocks
 /// - seal/retire blocks
+/// - store/load custom per-store-implementation metadata ([storeMetadata])
 ///
-/// The blocks accessible through this interface all belong to the specific named store instance.
+/// All blocks accessible through this interface belong to the specific named store instance.
+///
 /// @see BlocksDatabase#openStore(String, int)
 /// @see BlocksDatabase#findStore(String)
 @ApiStatus.Internal
 public interface BlocksStore {
   /// @return the application data format version
   int dataVersion();
+
+  /// @return the immutable opaque store metadata
+  @NotNull StoreMetadata storeMetadata();
+
+  /// Replaces the opaque store metadata in the database metadata journal
+  void updateStoreMetadata(@NotNull StoreMetadata storeMetadata) throws IOException;
 
   /// @return all blocks that belong to this store, including retired ones
   @NotNull List<Block> blocks();

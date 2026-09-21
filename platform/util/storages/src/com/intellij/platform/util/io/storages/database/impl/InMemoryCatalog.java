@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.database.impl;
 
+import com.intellij.platform.util.io.storages.database.spi.StoreMetadata;
+import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,10 +21,10 @@ import static com.intellij.platform.util.io.storages.database.impl.DatabaseCatal
  * Not thread-safe.
  */
 final class InMemoryCatalog {
-  private final Map<Integer, DatabaseCatalog.ChunkInfo> chunksById = new LinkedHashMap<>();
+  private final Int2ObjectSortedMap<DatabaseCatalog.ChunkInfo> chunksById = new Int2ObjectLinkedOpenHashMap<>();
   private int lastChunkId;
 
-  private final Map<Integer, DatabaseCatalog.StoreInfo> storesById = new LinkedHashMap<>();
+  private final Int2ObjectSortedMap<DatabaseCatalog.StoreInfo> storesById = new Int2ObjectLinkedOpenHashMap<>();
   private final Map<String, DatabaseCatalog.StoreInfo> storesByName = new LinkedHashMap<>();
   private int lastStoreId;
 
@@ -36,6 +39,10 @@ final class InMemoryCatalog {
   /** @return a stable snapshot in identifier order */
   @NotNull List<DatabaseCatalog.StoreInfo> stores() {
     return List.copyOf(storesById.values());
+  }
+
+  int storesCount() {
+    return storesById.size();
   }
 
   @Nullable DatabaseCatalog.StoreInfo findStore(@NotNull String name) {
@@ -56,13 +63,39 @@ final class InMemoryCatalog {
     }
   }
 
-  /** Applies a creation record after its append or during recovery. */
-  void addStore(int storeId, @NotNull String name, int dataVersion) {
+  void validateStoreCreation(int storeId,
+                             @NotNull String name,
+                             @NotNull StoreMetadata storeMetadata) {
     validateStoreCreation(storeId, name);
-    var store = new DatabaseCatalog.StoreInfo(storeId, name, dataVersion);
+    Objects.requireNonNull(storeMetadata, "storeMetadata");
+  }
+
+  /** Applies a creation record after its append or during recovery. */
+  void addStore(int storeId,
+                @NotNull String name,
+                int dataVersion,
+                @NotNull StoreMetadata storeMetadata) {
+    validateStoreCreation(storeId, name);
+    Objects.requireNonNull(storeMetadata, "storeMetadata");
+    var store = new DatabaseCatalog.StoreInfo(storeId, name, dataVersion, storeMetadata);
     storesById.put(storeId, store);
     storesByName.put(name, store);
     lastStoreId = storeId;
+  }
+
+  void validateStoreMetadataUpdate(int storeId, @NotNull StoreMetadata storeMetadata) {
+    validateStoreDrop(storeId);
+    Objects.requireNonNull(storeMetadata, "storeMetadata");
+  }
+
+  void updateStoreMetadata(int storeId, @NotNull StoreMetadata storeMetadata) {
+    validateStoreMetadataUpdate(storeId, storeMetadata);
+    var oldStore = storesById.get(storeId);
+    var newStore = new DatabaseCatalog.StoreInfo(
+      storeId, oldStore.name(), oldStore.dataVersion(), storeMetadata
+    );
+    storesById.put(storeId, newStore);
+    storesByName.put(newStore.name(), newStore);
   }
 
   void validateStoreDrop(int storeId) {
