@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.NamedConfigurable
@@ -79,7 +80,9 @@ internal class PluginLspServerConfigurable(
 
       row(LspUiBundle.message("lsp.settings.server.provided.by")) {
         link(pluginDescriptor.name) {
-          PluginManagerConfigurable.showPluginConfigurable(project, listOf(pluginDescriptor.pluginId))
+          ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginManagerConfigurable::class.java) {
+            it.navigateToInstalled(pluginDescriptor.name)
+          }
         }
       }
 
