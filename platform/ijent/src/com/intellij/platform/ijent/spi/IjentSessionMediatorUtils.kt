@@ -51,69 +51,8 @@ import kotlin.time.toKotlinDuration
 object IjentSessionMediatorUtils {
   private val loggedErrors = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap<Throwable, Boolean>())
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  fun createProcessScope(parentScope: ParentOfIjentScopes, ijentLabel: String): IjentScope {
-    val context = IjentThreadPool.coroutineContext
-    // Prevents from logging the error by the default exception handler.
-    // Errors are logged explicitly in this function.
-    val dummyExceptionHandler = CoroutineExceptionHandler { _, err -> /* nothing */ }
-
-    // This supervisor scope exists only to prevent automatic propagation of IjentUnavailableException to the parent scope.
-    // Instead, there's a logic below that decides if a specific IjentUnavailableException should be propagated to the parent scope.
-    val trickySupervisorScope = parentScope.s.childScope(ijentLabel, context + dummyExceptionHandler, supervisor = true)
-
-    val ijentProcessScope = trickySupervisorScope.childScope(ijentLabel, supervisor = false, context = IjentScope.IjentContext())
-
-    ijentProcessScope.coroutineContext.job.invokeOnCompletion { err ->
-      // Unconditional: the categorized logging below mutes cancellations and expected exits, which leaves a
-      // teardown mid-bootstrap with no trace of what felled the scope.
-      IjentLogger.LIFETIME_LOG.debug { "$ijentLabel session scope completed, cause: $err" }
-
-      // Has to be read before the scope is cancelled below, otherwise every teardown looks application-initiated.
-      val closedByApplication = trickySupervisorScope.coroutineContext.job.isCancelled
-
-      trickySupervisorScope.cancel()
-
-      if (err != null) {
-        val actualError = IjentUnavailableException.unwrapFromCancellationExceptions(err)
-        val ijentContext = ijentProcessScope.coroutineContext[IjentScope.IjentContext.Key]!!
-
-        (actualError as? IjentUnavailableException)?.let(ijentContext::completeExitReason)
-        val errorToPropagate =
-          if (actualError is IOException && ijentContext.exitReason.isCompleted) ijentContext.exitReason.getCompleted()
-          else actualError
-
-        val propagateToParentScope = when (errorToPropagate) {
-          is CancellationException -> false
-          is IjentUnavailableException -> when (errorToPropagate) {
-            is IjentUnavailableException.ClosedByApplication -> false
-            is IjentUnavailableException.CommunicationFailure -> !errorToPropagate.exitedExpectedly
-          }
-          else -> !closedByApplication
-        }
-
-        if (propagateToParentScope) {
-          try {
-            errorToPropagate.addSuppressed(Throwable("Rethrown from here"))
-            parentScope.s.launch(start = CoroutineStart.UNDISPATCHED) {
-              throw errorToPropagate
-            }
-          }
-          catch (_: Throwable) {
-            // It seems that the scope has already been canceled with something else.
-          }
-
-          // TODO Callers should be able to define their own exception handlers.
-          logIjentError(ijentLabel, errorToPropagate)
-        }
-        else {
-          IjentLogger.LIFETIME_LOG.debug(err) { "Ignored a failure of IJent $ijentLabel, its scope was already being shut down" }
-        }
-      }
-    }
-    @OptIn(EelDelicateApi::class)
-    return IjentScope(parentScope, ijentProcessScope)
-  }
+  fun createProcessScope(parentScope: ParentOfIjentScopes, ijentLabel: String): IjentScope =
+    parentScope.createIjentScope(ijentLabel)
 
   fun logIjentError(ijentLabel: String, exception: Throwable) {
     // Wrapped in a non-cancellable section because this can be called from `invokeOnCompletion`

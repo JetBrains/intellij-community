@@ -9,13 +9,22 @@
 package com.intellij.platform.ijent
 
 import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.ijent.spi.IjentSessionMediatorUtils
+import com.intellij.platform.ijent.spi.IjentThreadPool
+import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.IOException
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
@@ -37,6 +46,69 @@ class ParentOfIjentScopes(val s: CoroutineScope) {
     require(s.coroutineContext[Job] != null) {
       "Scope $s has no Job"
     }
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class, EelDelicateApi::class)
+  fun createIjentScope(ijentLabel: String): IjentScope {
+    val context = IjentThreadPool.coroutineContext
+    // Prevents from logging the error by the default exception handler.
+    // Errors are logged explicitly in this function.
+    val dummyExceptionHandler = CoroutineExceptionHandler { _, err -> /* nothing */ }
+
+    // This supervisor scope exists only to prevent automatic propagation of IjentUnavailableException to the parent scope.
+    // Instead, there's a logic below that decides if a specific IjentUnavailableException should be propagated to the parent scope.
+    val trickySupervisorScope = s.childScope(ijentLabel, context + dummyExceptionHandler, supervisor = true)
+
+    val ijentProcessScope = trickySupervisorScope.childScope(ijentLabel, supervisor = false, context = IjentScope.IjentContext())
+
+    ijentProcessScope.coroutineContext.job.invokeOnCompletion { err ->
+      // Unconditional: the categorized logging below mutes cancellations and expected exits, which leaves a
+      // teardown mid-bootstrap with no trace of what felled the scope.
+      IjentLogger.LIFETIME_LOG.debug { "$ijentLabel session scope completed, cause: $err" }
+
+      // Has to be read before the scope is cancelled below, otherwise every teardown looks application-initiated.
+      val closedByApplication = trickySupervisorScope.coroutineContext.job.isCancelled
+
+      trickySupervisorScope.cancel()
+
+      if (err != null) {
+        val actualError = IjentUnavailableException.unwrapFromCancellationExceptions(err)
+        val ijentContext = ijentProcessScope.coroutineContext[IjentScope.IjentContext.Key]!!
+
+        (actualError as? IjentUnavailableException)?.let(ijentContext::completeExitReason)
+        val errorToPropagate =
+          if (actualError is IOException && ijentContext.exitReason.isCompleted) ijentContext.exitReason.getCompleted()
+          else actualError
+
+        val propagateToParentScope = when (errorToPropagate) {
+          is CancellationException -> false
+          is IjentUnavailableException -> when (errorToPropagate) {
+            is IjentUnavailableException.ClosedByApplication -> false
+            is IjentUnavailableException.CommunicationFailure -> !errorToPropagate.exitedExpectedly
+          }
+          else -> !closedByApplication
+        }
+
+        if (propagateToParentScope) {
+          try {
+            errorToPropagate.addSuppressed(Throwable("Rethrown from here"))
+            s.launch(start = CoroutineStart.UNDISPATCHED) {
+              throw errorToPropagate
+            }
+          }
+          catch (_: Throwable) {
+            // It seems that the scope has already been canceled with something else.
+          }
+
+          // TODO Callers should be able to define their own exception handlers.
+          IjentSessionMediatorUtils.logIjentError(ijentLabel, errorToPropagate)
+        }
+        else {
+          IjentLogger.LIFETIME_LOG.debug(err) { "Ignored a failure of IJent $ijentLabel, its scope was already being shut down" }
+        }
+      }
+    }
+    return IjentScope(this, ijentProcessScope)
   }
 }
 
