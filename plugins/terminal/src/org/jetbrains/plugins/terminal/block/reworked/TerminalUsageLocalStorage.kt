@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicReference
 class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalStorage.State> {
   private val enterKeyPressedTimes = AtomicInteger()
 
-  private val completionInlineShownTimes = AtomicInteger()
+  private val inlineCompletionShownTimes = AtomicInteger()
   private val inlineCompletionAcceptedTimes = AtomicInteger()
   private val completionPopupShownTimes = AtomicInteger()
   private val completionItemChosenTimes = AtomicInteger()
@@ -35,7 +35,7 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
 
   override fun getState(): State = State(
     enterKeyPressedTimes.get(),
-    completionInlineShownTimes.get(),
+    inlineCompletionShownTimes.get(),
     inlineCompletionAcceptedTimes.get(),
     completionPopupShownTimes.get(),
     completionItemChosenTimes.get(),
@@ -44,7 +44,7 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
 
   override fun loadState(state: State) {
     enterKeyPressedTimes.set(state.enterKeyPressedTimes)
-    completionInlineShownTimes.set(state.completionInlineShownTimes)
+    inlineCompletionShownTimes.set(state.inlineCompletionShownTimes)
     inlineCompletionAcceptedTimes.set(state.inlineCompletionAcceptedTimes)
     completionPopupShownTimes.set(state.completionPopupShownTimes)
     completionItemChosenTimes.set(state.completionItemChosenTimes)
@@ -56,7 +56,7 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
   }
 
   fun recordInlineCompletionShown() {
-    completionInlineShownTimes.incrementAndGet()
+    inlineCompletionShownTimes.incrementAndGet()
   }
 
   fun recordInlineCompletionAccepted() {
@@ -78,7 +78,7 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
   @Serializable
   data class State(
     val enterKeyPressedTimes: Int = 0,
-    val completionInlineShownTimes: Int = 0,
+    val inlineCompletionShownTimes: Int = 0,
     val inlineCompletionAcceptedTimes: Int = 0,
     val completionPopupShownTimes: Int = 0,
     val completionItemChosenTimes: Int = 0,

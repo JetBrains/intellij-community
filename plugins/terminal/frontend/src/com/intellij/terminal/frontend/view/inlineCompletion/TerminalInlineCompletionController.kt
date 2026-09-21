@@ -128,7 +128,7 @@ class TerminalInlineCompletionController(
       if (shellIntegration.outputStatus.value != TerminalOutputStatus.TypingCommand) return@launchInlineCompletionAction
       if (getCurrentTypedCommandText() != "") return@launchInlineCompletionAction
 
-      inlineCompletionShownCounter.onNewCommand()
+      inlineCompletionShownCounter.resetShownStatus()
       val offset = (model.cursorOffset - model.startOffset).toInt()
       syncEditorCaretWithModel(editor, model)
       // This synthetic event represents the new terminal command input; no editor document change occurred.
@@ -152,7 +152,7 @@ class TerminalInlineCompletionController(
   private class InlineCompletionShownCounter : InlineCompletionEventAdapter {
     private var wasShown: Boolean = false
 
-    fun onNewCommand() {
+    fun resetShownStatus() {
       wasShown = false
     }
 
