@@ -217,6 +217,7 @@ private class FilesDequeImpl(
     while (bfsQueue.isNotEmpty()) {
       val file = bfsQueue.removeFirst()
 
+      ProgressManager.checkCanceled()
       val shouldProcessRoot = traversal.expand(file, bfsQueue::addAll)
       if (!shouldProcessRoot) continue // skip only the current file, children can pass the filter
 
