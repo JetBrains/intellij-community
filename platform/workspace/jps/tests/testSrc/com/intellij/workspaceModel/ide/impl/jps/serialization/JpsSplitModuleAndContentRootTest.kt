@@ -582,7 +582,7 @@ class JpsSplitModuleAndContentRootTest {
       registerFacetType(mockFacetType, projectModel.disposableRule.disposable)
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       builder.modifyModuleEntity( moduleEntity) {
-        this.facets += FacetEntity(moduleEntity.symbolicId, "MyFacet", FacetEntityTypeId(MockFacetType.ID.toString()),
+        this.moduleSettings += FacetEntity("MyFacet", FacetEntityTypeId(MockFacetType.ID.toString()),
                                    getInternalFileSource(moduleEntity.entitySource)!!)
       }
     }

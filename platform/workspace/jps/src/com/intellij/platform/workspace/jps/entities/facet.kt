@@ -17,18 +17,14 @@ data class FacetEntityTypeId(val name: @NonNls String)
  */
 interface FacetEntity : ModuleSettingsFacetBridgeEntity {
   override val symbolicId: FacetId
-    get() = FacetId(name, typeId, moduleId)
+    get() = FacetId(name, typeId, module.symbolicId)
   val typeId: FacetEntityTypeId
   val configurationXmlTag: @NonNls String?
-
-  @Parent
-  val module: ModuleEntity
 
   // underlyingFacet is a parent facet!!
   @Parent
   val underlyingFacet: FacetEntity?
 
-  //region generated code
   @Deprecated(message = "Use FacetEntityBuilder instead")
   interface Builder : FacetEntityBuilder {
     @Deprecated(message = "Use new API instead")
@@ -64,10 +60,8 @@ interface FacetEntity : ModuleSettingsFacetBridgeEntity {
       init: (Builder.() -> Unit)? = null,
     ): Builder = FacetEntityType.compatibilityInvoke(moduleId, name, typeId, entitySource, init)
   }
-  //endregion
 }
 
-//region generated code
 @Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyFacetEntity(
   entity: FacetEntity,
@@ -86,7 +80,6 @@ var FacetEntity.Builder.childrenFacets: List<FacetEntity.Builder>
   set(value) {
     (this as FacetEntityBuilder).childrenFacets = value
   }
-//endregion
 
 val FacetEntity.childrenFacets: List<FacetEntity>
-    by WorkspaceEntity.extension()
+  by WorkspaceEntity.extension()

@@ -25,7 +25,6 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
     constructor() :
             this(
                 KotlinSettingsEntity(name = KotlinFacetType.INSTANCE.presentableName,
-                                     moduleId = ModuleId(""),
                                      sourceRoots = emptyList(),
                                      configFileItems = emptyList(),
                                      useProjectSettings = true,
@@ -46,7 +45,6 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
 
     constructor(originKotlinSettingsEntity: KotlinSettingsEntity) :
             this(KotlinSettingsEntity(
-                originKotlinSettingsEntity.moduleId,
                 originKotlinSettingsEntity.name,
                 originKotlinSettingsEntity.sourceRoots,
                 originKotlinSettingsEntity.configFileItems,
@@ -73,7 +71,6 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
             })
 
     override fun init(moduleEntity: ModuleEntity, entitySource: EntitySource) {
-        kotlinSettingsEntity.moduleId = moduleEntity.symbolicId
         kotlinSettingsEntity.entitySource = entitySource
     }
 
@@ -83,7 +80,6 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
 
     override fun getEntityBuilder(moduleEntity: ModuleEntityBuilder): KotlinSettingsEntityBuilder {
         return KotlinSettingsEntity(
-            kotlinSettingsEntity.moduleId,
             kotlinSettingsEntity.name,
             kotlinSettingsEntity.sourceRoots,
             kotlinSettingsEntity.configFileItems,
@@ -113,7 +109,6 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
 
     override fun update(diffEntity: KotlinSettingsEntity) {
         kotlinSettingsEntity.entitySource = diffEntity.entitySource
-        kotlinSettingsEntity.moduleId = diffEntity.moduleId
         kotlinSettingsEntity.sourceRoots = diffEntity.sourceRoots.toMutableList()
         kotlinSettingsEntity.configFileItems = diffEntity.configFileItems.toMutableList()
         kotlinSettingsEntity.useProjectSettings = diffEntity.useProjectSettings

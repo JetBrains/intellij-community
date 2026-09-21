@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.jps.entities.FacetId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntityBuilder
 import com.intellij.platform.workspace.jps.entities.childrenFacets
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -52,7 +53,7 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
       val facetEntityTypeId = facetEntityTypes[facetState.facetType]!!
       val newFacetId = FacetId(facetState.name, facetEntityTypeId, ModuleId(moduleEntity.name))
       var facetEntity: FacetEntityBuilder? = null
-      val existingFacet = findFacetById(moduleEntity.facets, newFacetId)
+      val existingFacet = findFacetById(moduleEntity.moduleSettings.filterIsInstance<FacetEntityBuilder>(), newFacetId)
       if (existingFacet != null && configurationXmlTag != null) {
         if (existingFacet.configurationXmlTag == null) {
           existingFacet.apply {
@@ -64,7 +65,7 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
       }
 
       if (existingFacet == null) {
-        facetEntity = FacetEntity(ModuleId(moduleEntity.name), facetState.name, facetEntityTypeId, entitySource) {
+        facetEntity = FacetEntity(facetState.name, facetEntityTypeId, entitySource) {
           this.configurationXmlTag = configurationXmlTag
           this.module = moduleEntity
           this.underlyingFacet = underlyingFacet

@@ -14,11 +14,10 @@ import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 @GeneratedCodeApiVersion(3)
 interface FacetEntityBuilder : WorkspaceEntityBuilder<FacetEntity>, ModuleSettingsFacetBridgeEntity.Builder<FacetEntity> {
   override var entitySource: EntitySource
-  override var moduleId: ModuleId
   override var name: String
+  override var module: ModuleEntityBuilder
   var typeId: FacetEntityTypeId
   var configurationXmlTag: String?
-  var module: ModuleEntityBuilder
   var underlyingFacet: FacetEntityBuilder?
 }
 
@@ -26,14 +25,12 @@ internal object FacetEntityType : EntityType<FacetEntity, FacetEntityBuilder>() 
   override val entityImplClass: Class<*> get() = FacetEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = FacetEntityImpl.Builder::class.java
   operator fun invoke(
-    moduleId: ModuleId,
     name: String,
     typeId: FacetEntityTypeId,
     entitySource: EntitySource,
     init: (FacetEntityBuilder.() -> Unit)? = null,
   ): FacetEntityBuilder {
     val builder = builder()
-    builder.moduleId = moduleId
     builder.name = name
     builder.typeId = typeId
     builder.entitySource = entitySource
@@ -50,7 +47,6 @@ internal object FacetEntityType : EntityType<FacetEntity, FacetEntityBuilder>() 
     init: (FacetEntity.Builder.() -> Unit)? = null,
   ): FacetEntity.Builder {
     val builder = builder() as FacetEntity.Builder
-    builder.moduleId = moduleId
     builder.name = name
     builder.typeId = typeId
     builder.entitySource = entitySource
@@ -67,6 +63,8 @@ fun MutableEntityStorage.modifyFacetEntity(
 var FacetEntityBuilder.childrenFacets: List<FacetEntityBuilder>
   by WorkspaceEntity.extensionBuilder(FacetEntity::class.java)
 
+// IJPL-150365
+@Deprecated(message = "Use new constructor without moduleId")
 @JvmOverloads
 @JvmName("createFacetEntity")
 fun FacetEntity(
@@ -75,4 +73,13 @@ fun FacetEntity(
   typeId: FacetEntityTypeId,
   entitySource: EntitySource,
   init: (FacetEntityBuilder.() -> Unit)? = null,
-): FacetEntityBuilder = FacetEntityType(moduleId, name, typeId, entitySource, init)
+): FacetEntityBuilder = FacetEntityType(name, typeId, entitySource, init)
+
+@JvmOverloads
+@JvmName("createFacetEntity")
+fun FacetEntity(
+  name: String,
+  typeId: FacetEntityTypeId,
+  entitySource: EntitySource,
+  init: (FacetEntityBuilder.() -> Unit)? = null,
+): FacetEntityBuilder = FacetEntityType(name, typeId, entitySource, init)

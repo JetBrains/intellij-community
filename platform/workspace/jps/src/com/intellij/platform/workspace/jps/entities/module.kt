@@ -31,7 +31,9 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
   val dependencies: List<ModuleDependencyItem>
 
   val contentRoots: List<ContentRootEntity>
+  val moduleSettings: List<ModuleSettingsFacetBridgeEntity>
   val facets: List<FacetEntity>
+    get() = moduleSettings.filterIsInstance<FacetEntity>()
 
   @Deprecated(message = "Use ModuleEntityBuilder instead")
   interface Builder : ModuleEntityBuilder

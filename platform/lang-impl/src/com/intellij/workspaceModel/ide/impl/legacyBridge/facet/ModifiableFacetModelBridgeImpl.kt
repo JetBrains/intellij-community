@@ -81,7 +81,7 @@ class ModifiableFacetModelBridgeImpl(
       diff.modifyModuleEntity(moduleEntity) module@{
         if (underlyingEntity != null) {
           diff.modifyFacetEntity(underlyingEntity) facet@{
-            val newFacet = diff addEntity FacetEntity(moduleEntity.symbolicId, facet.name, FacetEntityTypeId(facetTypeId), source) {
+            val newFacet = diff addEntity FacetEntity(facet.name, FacetEntityTypeId(facetTypeId), source) {
               configurationXmlTag = facetConfigurationXml
               module = this@module
               underlyingFacet = this@facet
@@ -90,7 +90,7 @@ class ModifiableFacetModelBridgeImpl(
           }
         }
         else {
-          val newFacet = diff addEntity FacetEntity(moduleEntity.symbolicId, facet.name, FacetEntityTypeId(facetTypeId), source) {
+          val newFacet = diff addEntity FacetEntity(facet.name, FacetEntityTypeId(facetTypeId), source) {
             configurationXmlTag = facetConfigurationXml
             module = this@module
           }

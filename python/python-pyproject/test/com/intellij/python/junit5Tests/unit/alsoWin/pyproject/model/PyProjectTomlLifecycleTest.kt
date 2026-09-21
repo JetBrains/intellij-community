@@ -230,7 +230,7 @@ internal class PyProjectTomlLifecycleTest {
   @Test
   fun `facets preserved on module adoption and rename`(): Unit = timeoutRunBlocking(30.seconds) {
     val libDir = f.addNonPyprojectModule("lib", "lib") {
-      facets = listOf(FacetEntity(ModuleId("lib"), "TestFacet", FacetEntityTypeId("MockFacetId"), entitySource))
+      moduleSettings = listOf(FacetEntity("TestFacet", FacetEntityTypeId("MockFacetId"), entitySource))
     }
 
     // Create pyproject.toml at same location (adopts "lib") + another module "app"
@@ -257,7 +257,7 @@ internal class PyProjectTomlLifecycleTest {
     f.project.workspaceModel.update("add facet to old-app") { storage ->
       val appModule = storage.resolve(ModuleId("old-app"))!!
       storage.modifyModuleEntity(appModule) {
-        facets = listOf(FacetEntity(ModuleId("old-app"), "AppFacet", FacetEntityTypeId("MockFacetId"), appModule.entitySource))
+        moduleSettings = listOf(FacetEntity("AppFacet", FacetEntityTypeId("MockFacetId"), appModule.entitySource))
       }
     }
 

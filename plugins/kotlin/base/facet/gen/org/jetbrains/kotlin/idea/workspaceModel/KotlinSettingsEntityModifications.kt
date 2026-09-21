@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
@@ -22,11 +21,10 @@ import org.jetbrains.kotlin.idea.workspaceModel.impl.KotlinSettingsEntityImpl
 interface KotlinSettingsEntityBuilder : WorkspaceEntityBuilder<KotlinSettingsEntity>,
     ModuleSettingsFacetBridgeEntity.Builder<KotlinSettingsEntity> {
     override var entitySource: EntitySource
-    override var moduleId: ModuleId
+    override var module: ModuleEntityBuilder
     override var name: String
     var sourceRoots: MutableList<String>
     var configFileItems: MutableList<ConfigFileItem>
-    var module: ModuleEntityBuilder
     var useProjectSettings: Boolean
     var implementedModuleNames: MutableList<String>
     var dependsOnModuleNames: MutableList<String>
@@ -51,7 +49,6 @@ internal object KotlinSettingsEntityType : EntityType<KotlinSettingsEntity, Kotl
     override val entityImplClass: Class<*> get() = KotlinSettingsEntityImpl::class.java
     override val entityImplBuilderClass: Class<*> get() = KotlinSettingsEntityImpl.Builder::class.java
     operator fun invoke(
-        moduleId: ModuleId,
         name: String,
         sourceRoots: List<String>,
         configFileItems: List<ConfigFileItem>,
@@ -72,7 +69,6 @@ internal object KotlinSettingsEntityType : EntityType<KotlinSettingsEntity, Kotl
         init: (KotlinSettingsEntityBuilder.() -> Unit)? = null,
     ): KotlinSettingsEntityBuilder {
         val builder = builder()
-        builder.moduleId = moduleId
         builder.name = name
         builder.sourceRoots = sourceRoots.toMutableWorkspaceList()
         builder.configFileItems = configFileItems.toMutableWorkspaceList()
@@ -117,7 +113,6 @@ internal object KotlinSettingsEntityType : EntityType<KotlinSettingsEntity, Kotl
         init: (KotlinSettingsEntity.Builder.() -> Unit)? = null,
     ): KotlinSettingsEntity.Builder {
         val builder = builder() as KotlinSettingsEntity.Builder
-        builder.moduleId = moduleId
         builder.name = name
         builder.sourceRoots = sourceRoots.toMutableWorkspaceList()
         builder.configFileItems = configFileItems.toMutableWorkspaceList()
@@ -145,9 +140,8 @@ fun MutableEntityStorage.modifyKotlinSettingsEntity(
     modification: KotlinSettingsEntityBuilder.() -> Unit,
 ): KotlinSettingsEntity = modifyEntity(KotlinSettingsEntityBuilder::class.java, entity, modification)
 
-var ModuleEntityBuilder.kotlinSettings: List<KotlinSettingsEntityBuilder>
-        by WorkspaceEntity.extensionBuilder(KotlinSettingsEntity::class.java)
-
+// IJPL-150365
+@Deprecated(message = "Use new constructor without moduleId")
 @JvmOverloads
 @JvmName("createKotlinSettingsEntity")
 fun KotlinSettingsEntity(
@@ -171,7 +165,48 @@ fun KotlinSettingsEntity(
     entitySource: EntitySource,
     init: (KotlinSettingsEntityBuilder.() -> Unit)? = null,
 ): KotlinSettingsEntityBuilder = KotlinSettingsEntityType(
-    moduleId,
+    name,
+    sourceRoots,
+    configFileItems,
+    useProjectSettings,
+    implementedModuleNames,
+    dependsOnModuleNames,
+    additionalVisibleModuleNames,
+    sourceSetNames,
+    isTestModule,
+    externalProjectId,
+    isHmppEnabled,
+    pureKotlinSourceFolders,
+    kind,
+    externalSystemRunTasks,
+    version,
+    flushNeeded,
+    entitySource,
+    init
+)
+
+@JvmOverloads
+@JvmName("createKotlinSettingsEntity")
+fun KotlinSettingsEntity(
+    name: String,
+    sourceRoots: List<String>,
+    configFileItems: List<ConfigFileItem>,
+    useProjectSettings: Boolean,
+    implementedModuleNames: List<String>,
+    dependsOnModuleNames: List<String>,
+    additionalVisibleModuleNames: Set<String>,
+    sourceSetNames: List<String>,
+    isTestModule: Boolean,
+    externalProjectId: String,
+    isHmppEnabled: Boolean,
+    pureKotlinSourceFolders: List<String>,
+    kind: KotlinModuleKind,
+    externalSystemRunTasks: List<String>,
+    version: Int,
+    flushNeeded: Boolean,
+    entitySource: EntitySource,
+    init: (KotlinSettingsEntityBuilder.() -> Unit)? = null,
+): KotlinSettingsEntityBuilder = KotlinSettingsEntityType(
     name,
     sourceRoots,
     configFileItems,

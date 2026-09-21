@@ -743,7 +743,7 @@ class JpsProjectSerializersImpl(
     entitiesToSave.forEach { (source, entities) ->
       val actualFileSource = getActualFileSource(source)
       if (actualFileSource is JpsProjectFileEntitySource.FileInDirectory) {
-        val fileNameByEntity = calculateFileNameForEntity(actualFileSource, source, storage, entities)
+        val fileNameByEntity = calculateFileNameForEntity(actualFileSource, source, entities)
         val oldFileName = fileIdToFileName.get(actualFileSource.fileNameId)
         if (oldFileName != fileNameByEntity) {
           // Don't convert to links[key] = ... because it *may* became autoboxing
@@ -886,7 +886,6 @@ class JpsProjectSerializersImpl(
   private fun calculateFileNameForEntity(
     source: JpsProjectFileEntitySource.FileInDirectory,
     originalSource: EntitySource,
-    storage: EntityStorage,
     entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
   ): String? {
     val directoryFactory = directorySerializerFactoriesByUrl[source.directory.url]
@@ -903,7 +902,7 @@ class JpsProjectSerializersImpl(
         it.entitySourceFilter(originalSource)
       }
       if (moduleListSerializer != null) {
-        return getFileNameForModuleEntity(moduleListSerializer, storage, entities)
+        return getFileNameForModuleEntity(moduleListSerializer, entities)
       }
     }
     return null
@@ -919,7 +918,6 @@ class JpsProjectSerializersImpl(
 
   private fun getFileNameForModuleEntity(
     moduleListSerializer: JpsModuleListSerializer,
-    storage: EntityStorage,
     entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
   ): String? {
     val entity = entities[ModuleEntity::class.java]?.singleOrNull() as? ModuleEntity
@@ -939,10 +937,9 @@ class JpsProjectSerializersImpl(
     if (module != null) {
       return moduleListSerializer.getFileName(module)
     }
-    val moduleEntity = additionalModuleRelatedEntities.mapNotNull {
-      val moduleId = (entities[it]?.firstOrNull() as? ModuleSettingsFacetBridgeEntity)?.moduleId ?: return@mapNotNull null
-      storage.resolve(moduleId)
-    }.firstOrNull() ?: return null
+    val moduleEntity = additionalModuleRelatedEntities.firstNotNullOfOrNull {
+      (entities[it]?.firstOrNull() as? ModuleSettingsFacetBridgeEntity)?.module
+    } ?: return null
     return moduleListSerializer.getFileName(moduleEntity)
   }
 

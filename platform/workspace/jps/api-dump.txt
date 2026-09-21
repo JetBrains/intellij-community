@@ -947,7 +947,6 @@ com.intellij.platform.workspace.jps.entities.FacetEntity
 - s:create(com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.FacetEntity$Builder
 - s:create(com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.FacetEntity$Builder
 - a:getConfigurationXmlTag():java.lang.String
-- a:getModule():com.intellij.platform.workspace.jps.entities.ModuleEntity
 - getSymbolicId():com.intellij.platform.workspace.jps.entities.FacetId
 - a:getTypeId():com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
 - a:getUnderlyingFacet():com.intellij.platform.workspace.jps.entities.FacetEntity
@@ -968,21 +967,22 @@ com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
 - a:getConfigurationXmlTag():java.lang.String
 - a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
 - a:getModule():com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
-- a:getModuleId():com.intellij.platform.workspace.jps.entities.ModuleId
 - a:getName():java.lang.String
 - a:getTypeId():com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
 - a:getUnderlyingFacet():com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
 - a:setConfigurationXmlTag(java.lang.String):V
 - a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
 - a:setModule(com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder):V
-- a:setModuleId(com.intellij.platform.workspace.jps.entities.ModuleId):V
 - a:setName(java.lang.String):V
 - a:setTypeId(com.intellij.platform.workspace.jps.entities.FacetEntityTypeId):V
 - a:setUnderlyingFacet(com.intellij.platform.workspace.jps.entities.FacetEntityBuilder):V
 f:com.intellij.platform.workspace.jps.entities.FacetEntityModifications
 - sf:createFacetEntity(com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
 - sf:createFacetEntity(com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
+- sf:createFacetEntity(java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
+- sf:createFacetEntity(java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
 - bs:createFacetEntity$default(com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
+- bs:createFacetEntity$default(java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
 - sf:getChildrenFacets(com.intellij.platform.workspace.jps.entities.FacetEntityBuilder):java.util.List
 - sf:modifyFacetEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.FacetEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.FacetEntity
 - sf:setChildrenFacets(com.intellij.platform.workspace.jps.entities.FacetEntityBuilder,java.util.List):V
@@ -1171,7 +1171,8 @@ com.intellij.platform.workspace.jps.entities.ModuleEntity
 - s:create(java.lang.String,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder
 - a:getContentRoots():java.util.List
 - a:getDependencies():java.util.List
-- a:getFacets():java.util.List
+- getFacets():java.util.List
+- a:getModuleSettings():java.util.List
 - a:getName():java.lang.String
 - getSymbolicId():com.intellij.platform.workspace.jps.entities.ModuleId
 - a:getType():com.intellij.platform.workspace.jps.entities.ModuleTypeId
@@ -1192,13 +1193,13 @@ com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 - a:getContentRoots():java.util.List
 - a:getDependencies():java.util.List
 - a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
-- a:getFacets():java.util.List
+- a:getModuleSettings():java.util.List
 - a:getName():java.lang.String
 - a:getType():com.intellij.platform.workspace.jps.entities.ModuleTypeId
 - a:setContentRoots(java.util.List):V
 - a:setDependencies(java.util.List):V
 - a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
-- a:setFacets(java.util.List):V
+- a:setModuleSettings(java.util.List):V
 - a:setName(java.lang.String):V
 - a:setType(com.intellij.platform.workspace.jps.entities.ModuleTypeId):V
 f:com.intellij.platform.workspace.jps.entities.ModuleEntityModifications
@@ -1218,17 +1219,17 @@ f:com.intellij.platform.workspace.jps.entities.ModuleId
 - hashCode():I
 com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
 - com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
-- a:getModuleId():com.intellij.platform.workspace.jps.entities.ModuleId
+- a:getModule():com.intellij.platform.workspace.jps.entities.ModuleEntity
 - a:getName():java.lang.String
 com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity$Builder
 - com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntityBuilder
 com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntityBuilder
 - com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
-- a:getModuleId():com.intellij.platform.workspace.jps.entities.ModuleId
+- a:getModule():com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 - a:getName():java.lang.String
 - a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
-- a:setModuleId(com.intellij.platform.workspace.jps.entities.ModuleId):V
+- a:setModule(com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder):V
 - a:setName(java.lang.String):V
 f:com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 - com.intellij.platform.workspace.jps.entities.ModuleDependencyItem

@@ -5,7 +5,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.metadata.impl.MetadataStorageBase
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.metadata.model.ExtPropertyMetadata
 import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
 import com.intellij.platform.workspace.storage.metadata.model.OwnPropertyMetadata
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
@@ -98,31 +97,12 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     isComputable = false,
                     isKey = false,
                     isOpen = false,
-                    name = "moduleId",
-                    valueType = ValueTypeMetadata.SimpleType.CustomType(
-                        isNullable = false,
-                        typeMetadata = FinalClassMetadata.ClassMetadata(
-                            fqName = "com.intellij.platform.workspace.jps.entities.ModuleId",
-                            properties = listOf(
-                                OwnPropertyMetadata(
-                                    isComputable = false,
-                                    isKey = false,
-                                    isOpen = false,
-                                    name = "name",
-                                    valueType = primitiveTypeStringNotNullable,
-                                    withDefault = false
-                                ),
-                                OwnPropertyMetadata(
-                                    isComputable = false,
-                                    isKey = false,
-                                    isOpen = false,
-                                    name = "presentableName",
-                                    valueType = primitiveTypeStringNotNullable,
-                                    withDefault = false
-                                )
-                            ),
-                            supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")
-                        )
+                    name = "module",
+                    valueType = ValueTypeMetadata.EntityReference(
+                        connectionType = ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
+                        entityFqName = "com.intellij.platform.workspace.jps.entities.ModuleEntity",
+                        isChild = false,
+                        isNullable = false
                     ),
                     withDefault = false
                 ),
@@ -178,19 +158,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                 )
                             )
                         ), primitive = primitiveTypeListNotNullable
-                    ),
-                    withDefault = false
-                ),
-                OwnPropertyMetadata(
-                    isComputable = false,
-                    isKey = false,
-                    isOpen = false,
-                    name = "module",
-                    valueType = ValueTypeMetadata.EntityReference(
-                        connectionType = ConnectionId.ConnectionType.ONE_TO_MANY,
-                        entityFqName = "com.intellij.platform.workspace.jps.entities.ModuleEntity",
-                        isChild = false,
-                        isNullable = false
                     ),
                     withDefault = false
                 ),
@@ -483,33 +450,19 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     withDefault = false
                 )
             ),
-            extProperties = listOf(
-                ExtPropertyMetadata(
-                    isComputable = false,
-                    isOpen = false,
-                    name = "kotlinSettings",
-                    receiverFqn = "com.intellij.platform.workspace.jps.entities.ModuleEntity",
-                    valueType = ValueTypeMetadata.EntityReference(
-                        connectionType = ConnectionId.ConnectionType.ONE_TO_MANY,
-                        entityFqName = "org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity",
-                        isChild = true,
-                        isNullable = false
-                    ),
-                    withDefault = false
-                )
-            ),
+            extProperties = listOf(),
             isAbstract = false
         )
         addMetadata(typeMetadata)
     }
 
     override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity", metadataHash = 1024345350)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleId", metadataHash = 369441961)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity", metadataHash = -1509832458)
         addMetadataHash(typeFqn = "com.intellij.util.descriptors.ConfigFileItem", metadataHash = -994527959)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.config.KotlinModuleKind", metadataHash = -1825543060)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.workspaceModel.CompilerSettingsData", metadataHash = -929863122)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsId", metadataHash = 1513851317)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleId", metadataHash = 369441961)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = 1767211715)
     }
 }

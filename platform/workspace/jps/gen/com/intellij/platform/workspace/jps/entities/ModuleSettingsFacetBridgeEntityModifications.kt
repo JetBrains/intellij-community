@@ -10,6 +10,6 @@ import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 @GeneratedCodeApiVersion(3)
 interface ModuleSettingsFacetBridgeEntityBuilder<T : ModuleSettingsFacetBridgeEntity> : WorkspaceEntityBuilder<T> {
   override var entitySource: EntitySource
-  var moduleId: ModuleId
   var name: String
+  var module: ModuleEntityBuilder
 }

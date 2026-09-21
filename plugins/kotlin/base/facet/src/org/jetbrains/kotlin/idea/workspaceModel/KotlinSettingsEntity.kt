@@ -20,9 +20,6 @@ interface KotlinSettingsEntity : ModuleSettingsFacetBridgeEntity {
     val sourceRoots: List<String>
     val configFileItems: List<ConfigFileItem>
 
-    @Parent
-    val module: ModuleEntity
-
     // trivial parameters (String, Boolean)
     val useProjectSettings: Boolean
     val implementedModuleNames: List<String>
@@ -51,9 +48,8 @@ interface KotlinSettingsEntity : ModuleSettingsFacetBridgeEntity {
     val flushNeeded: Boolean
 
     override val symbolicId: KotlinSettingsId
-        get() = KotlinSettingsId(name, moduleId)
+        get() = KotlinSettingsId(name, module.symbolicId)
 
-    //region generated code
     @Deprecated(message = "Use KotlinSettingsEntityBuilder instead")
     interface Builder : KotlinSettingsEntityBuilder {
         @ApiStatus.ScheduledForRemoval
@@ -131,12 +127,9 @@ interface KotlinSettingsEntity : ModuleSettingsFacetBridgeEntity {
             additionalVisibleModuleNames, sourceSetNames, isTestModule, externalProjectId, isHmppEnabled,
             pureKotlinSourceFolders, kind, externalSystemRunTasks, version, flushNeeded, entitySource, init
         )
-        //endregion compatibility generated code
     }
-    //endregion
 }
 
-//region generated code
 @ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyKotlinSettingsEntity(
@@ -150,13 +143,12 @@ fun MutableEntityStorage.modifyKotlinSettingsEntity(
 var ModuleEntity.Builder.kotlinSettings: List<KotlinSettingsEntity.Builder>
     @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
-    get() = (this as ModuleEntityBuilder).kotlinSettings as List<KotlinSettingsEntity.Builder>
+    get() = (this as ModuleEntityBuilder).moduleSettings.filterIsInstance<KotlinSettingsEntity.Builder>()
     @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Use new API instead")
     set(value) {
-        (this as ModuleEntityBuilder).kotlinSettings = value
+        (this as ModuleEntityBuilder).moduleSettings = value
     }
-//endregion
 
 data class CompilerSettingsData(
     val additionalArguments: String,
@@ -167,7 +159,7 @@ data class CompilerSettingsData(
 )
 
 val ModuleEntity.kotlinSettings: List<KotlinSettingsEntity>
-        by WorkspaceEntity.extension()
+    get() = moduleSettings.filterIsInstance<KotlinSettingsEntity>()
 
 data class KotlinSettingsId(val name: @NlsSafe String, val parentId: ModuleId) : SymbolicEntityId<KotlinSettingsEntity> {
     override val presentableName: String

@@ -91,7 +91,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
         mavenProject: MavenProject
     ) {
         storage.modifyModuleEntity(module) {
-            this.kotlinSettings += createWorkspaceEntity(module)
+            this.moduleSettings += createWorkspaceEntity(module)
         }
 
         val mavenPlugin = mavenProject.findKotlinMavenPlugin() ?: return

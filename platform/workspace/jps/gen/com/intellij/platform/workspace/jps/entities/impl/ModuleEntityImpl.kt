@@ -5,8 +5,6 @@ package com.intellij.platform.workspace.jps.entities.impl
 
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
-import com.intellij.platform.workspace.jps.entities.FacetEntity
-import com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
 import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.LibraryId
@@ -14,6 +12,8 @@ import com.intellij.platform.workspace.jps.entities.ModuleDependency
 import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.jps.entities.ModuleTypeId
 import com.intellij.platform.workspace.jps.entities.SdkDependency
@@ -44,9 +44,11 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
   private companion object {
     internal val CONTENTROOTS_CONNECTION_ID: ConnectionId =
       ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val FACETS_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    private val connections = listOf<ConnectionId>(CONTENTROOTS_CONNECTION_ID, FACETS_CONNECTION_ID)
+    internal val MODULESETTINGS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
+                                                                                  ModuleSettingsFacetBridgeEntity::class.java,
+                                                                                  ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
+                                                                                  false)
+    private val connections = listOf<ConnectionId>(CONTENTROOTS_CONNECTION_ID, MODULESETTINGS_CONNECTION_ID)
   }
 
   override val symbolicId: ModuleId = super.symbolicId
@@ -70,10 +72,11 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
     @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(CONTENTROOTS_CONNECTION_ID, this) as? Sequence<ContentRootEntity>)?.toList() ?: error(
       "Children list contentRoots not found for ModuleEntity")
-  override val facets: List<FacetEntity>
+  override val moduleSettings: List<ModuleSettingsFacetBridgeEntity>
     @Suppress("UNCHECKED_CAST")
-    get() = (snapshot.instrumentation.getManyChildren(FACETS_CONNECTION_ID, this) as? Sequence<FacetEntity>)?.toList()
-            ?: error("Children list facets not found for ModuleEntity")
+    get() = (snapshot.instrumentation.getManyChildren(MODULESETTINGS_CONNECTION_ID,
+                                                      this) as? Sequence<ModuleSettingsFacetBridgeEntity>)?.toList()
+            ?: error("Children list moduleSettings not found for ModuleEntity")
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -171,12 +174,12 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
         changeChildren(value, CONTENTROOTS_CONNECTION_ID)
         changedProperty.add("contentRoots")
       }
-    override var facets: List<FacetEntityBuilder>
+    override var moduleSettings: List<ModuleSettingsFacetBridgeEntityBuilder<out ModuleSettingsFacetBridgeEntity>>
       @Suppress("UNCHECKED_CAST")
-      get() = getChildren(FACETS_CONNECTION_ID) as List<FacetEntityBuilder>
+      get() = getChildren(MODULESETTINGS_CONNECTION_ID) as List<ModuleSettingsFacetBridgeEntityBuilder<out ModuleSettingsFacetBridgeEntity>>
       set(value) {
-        changeChildren(value, FACETS_CONNECTION_ID)
-        changedProperty.add("facets")
+        changeChildren(value, MODULESETTINGS_CONNECTION_ID)
+        changedProperty.add("moduleSettings")
       }
 
     override fun getEntityClass(): Class<ModuleEntity> = ModuleEntity::class.java

@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.idea.workspaceModel.impl
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -39,18 +40,20 @@ import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsId
 internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntityData) : KotlinSettingsEntity,
     WorkspaceEntityBase(dataSource) {
     private companion object {
-        internal val MODULE_CONNECTION_ID: ConnectionId =
-            ConnectionId.create(ModuleEntity::class.java, KotlinSettingsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+        internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(
+            ModuleEntity::class.java,
+            ModuleSettingsFacetBridgeEntity::class.java,
+            ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
+            false
+        )
         private val connections = listOf<ConnectionId>(MODULE_CONNECTION_ID)
     }
 
-    override val symbolicId: KotlinSettingsId = super.symbolicId
+    override val symbolicId: KotlinSettingsId = KotlinSettingsId(dataSource.name, dataSource.moduleSymbolicId_Synthetic)
 
-    override val moduleId: ModuleId
-        get() {
-            readField("moduleId")
-            return dataSource.moduleId
-        }
+    override val module: ModuleEntity
+        get() = snapshot.instrumentation.getParent(MODULE_CONNECTION_ID, this) as? ModuleEntity
+            ?: error("Parent module not found for ModuleSettingsFacetBridgeEntity")
     override val name: String
         get() {
             readField("name")
@@ -66,9 +69,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
             readField("configFileItems")
             return dataSource.configFileItems
         }
-    override val module: ModuleEntity
-        get() = snapshot.instrumentation.getParent(MODULE_CONNECTION_ID, this) as? ModuleEntity
-            ?: error("Parent module not found for KotlinSettingsEntity")
     override val useProjectSettings: Boolean
         get() {
             readField("useProjectSettings")
@@ -178,8 +178,14 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
             if (!getEntityData().isEntitySourceInitialized()) {
                 error("Field WorkspaceEntity#entitySource should be initialized")
             }
-            if (!getEntityData().isModuleIdInitialized()) {
-                error("Field ModuleSettingsFacetBridgeEntity#moduleId should be initialized")
+            if (_diff != null) {
+                if (_diff.instrumentation.getParentBuilder(MODULE_CONNECTION_ID, this) == null) {
+                    error("Field ModuleSettingsFacetBridgeEntity#module should be initialized")
+                }
+            } else {
+                if (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] == null) {
+                    error("Field ModuleSettingsFacetBridgeEntity#module should be initialized")
+                }
             }
             if (!getEntityData().isNameInitialized()) {
                 error("Field ModuleSettingsFacetBridgeEntity#name should be initialized")
@@ -189,15 +195,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
             }
             if (!getEntityData().isConfigFileItemsInitialized()) {
                 error("Field KotlinSettingsEntity#configFileItems should be initialized")
-            }
-            if (_diff != null) {
-                if (_diff.instrumentation.getParentBuilder(MODULE_CONNECTION_ID, this) == null) {
-                    error("Field KotlinSettingsEntity#module should be initialized")
-                }
-            } else {
-                if (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] == null) {
-                    error("Field KotlinSettingsEntity#module should be initialized")
-                }
             }
             if (!getEntityData().isImplementedModuleNamesInitialized()) {
                 error("Field KotlinSettingsEntity#implementedModuleNames should be initialized")
@@ -222,6 +219,9 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
             }
             if (!getEntityData().isExternalSystemRunTasksInitialized()) {
                 error("Field KotlinSettingsEntity#externalSystemRunTasks should be initialized")
+            }
+            if (!getEntityData().isModuleSymbolicId_SyntheticInitialized()) {
+                error("Field KotlinSettingsEntity#module should be initialized")
             }
         }
 
@@ -268,7 +268,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
         override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
             dataSource as KotlinSettingsEntity
             if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-            if (this.moduleId != dataSource.moduleId) this.moduleId = dataSource.moduleId
             if (this.name != dataSource.name) this.name = dataSource.name
             if (this.sourceRoots != dataSource.sourceRoots) this.sourceRoots = dataSource.sourceRoots.toMutableList()
             if (this.configFileItems != dataSource.configFileItems) this.configFileItems = dataSource.configFileItems.toMutableList()
@@ -305,12 +304,12 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
                 getEntityData(true).entitySource = value
                 changedProperty.add("entitySource")
             }
-        override var moduleId: ModuleId
-            get() = getEntityData().moduleId
+        override var module: ModuleEntityBuilder
+            get() = getParent(MODULE_CONNECTION_ID) as? ModuleEntityBuilder ?: error("module is null for ModuleSettingsFacetBridgeEntity")
             set(value) {
-                checkModificationAllowed()
-                getEntityData(true).moduleId = value
-                changedProperty.add("moduleId")
+                changeParentOfMany(value, MODULE_CONNECTION_ID)
+                changedProperty.add("module")
+                updateSymbolicId(value, MODULE_CONNECTION_ID)
             }
         override var name: String
             get() = getEntityData().name
@@ -358,12 +357,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
                 checkModificationAllowed()
                 getEntityData(true).configFileItems = value
                 configFileItemsUpdater.invoke(value)
-            }
-        override var module: ModuleEntityBuilder
-            get() = getParent(MODULE_CONNECTION_ID) as? ModuleEntityBuilder ?: error("module is null for KotlinSettingsEntity")
-            set(value) {
-                changeParentOfMany(value, MODULE_CONNECTION_ID)
-                changedProperty.add("module")
             }
         override var useProjectSettings: Boolean
             get() = getEntityData().useProjectSettings
@@ -571,12 +564,18 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
             }
 
         override fun getEntityClass(): Class<KotlinSettingsEntity> = KotlinSettingsEntity::class.java
+        override fun updateSymbolicId(parent: WorkspaceEntityBuilder<*>, connectionId: ConnectionId) {
+            if (connectionId == MODULE_CONNECTION_ID) {
+                parent as ModuleEntityBuilder
+                getEntityData(true).moduleSymbolicId_Synthetic = ModuleId(parent.name)
+                changedProperty.add("moduleSymbolicId_Synthetic")
+            }
+        }
     }
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEntity>(), SoftLinkable {
-    lateinit var moduleId: ModuleId
     lateinit var name: String
     lateinit var sourceRoots: MutableList<String>
     lateinit var configFileItems: MutableList<ConfigFileItem>
@@ -598,7 +597,7 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
     lateinit var externalSystemRunTasks: MutableList<String>
     var version: Int = 0
     var flushNeeded: Boolean = false
-    internal fun isModuleIdInitialized(): Boolean = ::moduleId.isInitialized
+    lateinit var moduleSymbolicId_Synthetic: ModuleId
     internal fun isNameInitialized(): Boolean = ::name.isInitialized
     internal fun isSourceRootsInitialized(): Boolean = ::sourceRoots.isInitialized
     internal fun isConfigFileItemsInitialized(): Boolean = ::configFileItems.isInitialized
@@ -610,21 +609,22 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
     internal fun isPureKotlinSourceFoldersInitialized(): Boolean = ::pureKotlinSourceFolders.isInitialized
     internal fun isKindInitialized(): Boolean = ::kind.isInitialized
     internal fun isExternalSystemRunTasksInitialized(): Boolean = ::externalSystemRunTasks.isInitialized
+    internal fun isModuleSymbolicId_SyntheticInitialized(): Boolean = ::moduleSymbolicId_Synthetic.isInitialized
     override fun getLinks(): Set<SymbolicEntityId<*>> {
         val result = HashSet<SymbolicEntityId<*>>()
-        result.add(moduleId)
+        result.add(moduleSymbolicId_Synthetic)
         return result
     }
 
     override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-        index.index(this, moduleId)
+        index.index(this, moduleSymbolicId_Synthetic)
     }
 
     override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
         val mutablePreviousSet = HashSet(prev)
-        val removedItem_moduleId = mutablePreviousSet.remove(moduleId)
-        if (!removedItem_moduleId) {
-            index.index(this, moduleId)
+        val removedItem_moduleSymbolicId_Synthetic = mutablePreviousSet.remove(moduleSymbolicId_Synthetic)
+        if (!removedItem_moduleSymbolicId_Synthetic) {
+            index.index(this, moduleSymbolicId_Synthetic)
         }
         for (removed in mutablePreviousSet) {
             index.remove(this, removed)
@@ -633,14 +633,14 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
 
     override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
         var changed = false
-        val moduleId_data = if (moduleId == oldLink) {
+        val moduleSymbolicId_Synthetic_data = if (moduleSymbolicId_Synthetic == oldLink) {
             changed = true
             newLink as ModuleId
         } else {
             null
         }
-        if (moduleId_data != null) {
-            moduleId = moduleId_data
+        if (moduleSymbolicId_Synthetic_data != null) {
+            moduleSymbolicId_Synthetic = moduleSymbolicId_Synthetic_data
         }
         return changed
     }
@@ -671,7 +671,6 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
 
     override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
         return KotlinSettingsEntity(
-            moduleId,
             name,
             sourceRoots,
             configFileItems,
@@ -710,7 +709,6 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
         if (this.javaClass != other.javaClass) return false
         other as KotlinSettingsEntityData
         if (this.entitySource != other.entitySource) return false
-        if (this.moduleId != other.moduleId) return false
         if (this.name != other.name) return false
         if (this.sourceRoots != other.sourceRoots) return false
         if (this.configFileItems != other.configFileItems) return false
@@ -739,7 +737,6 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
         if (other == null) return false
         if (this.javaClass != other.javaClass) return false
         other as KotlinSettingsEntityData
-        if (this.moduleId != other.moduleId) return false
         if (this.name != other.name) return false
         if (this.sourceRoots != other.sourceRoots) return false
         if (this.configFileItems != other.configFileItems) return false
@@ -766,7 +763,6 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
 
     override fun hashCode(): Int {
         var result = entitySource.hashCode()
-        result = 31 * result + moduleId.hashCode()
         result = 31 * result + name.hashCode()
         result = 31 * result + sourceRoots.hashCode()
         result = 31 * result + configFileItems.hashCode()
@@ -793,7 +789,6 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
 
     override fun hashCodeIgnoringEntitySource(): Int {
         var result = javaClass.hashCode()
-        result = 31 * result + moduleId.hashCode()
         result = 31 * result + name.hashCode()
         result = 31 * result + sourceRoots.hashCode()
         result = 31 * result + configFileItems.hashCode()

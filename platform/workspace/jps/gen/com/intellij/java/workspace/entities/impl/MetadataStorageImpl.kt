@@ -2363,33 +2363,17 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                       OwnPropertyMetadata(isComputable = false,
                                                                           isKey = false,
                                                                           isOpen = false,
-                                                                          name = "moduleId",
-                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
-                                                                                                                                fqName = "com.intellij.platform.workspace.jps.entities.ModuleId",
-                                                                                                                                properties = listOf(
-                                                                                                                                  OwnPropertyMetadata(
-                                                                                                                                    isComputable = false,
-                                                                                                                                    isKey = false,
-                                                                                                                                    isOpen = false,
-                                                                                                                                    name = "name",
-                                                                                                                                    valueType = primitiveTypeStringNotNullable,
-                                                                                                                                    withDefault = false),
-                                                                                                                                  OwnPropertyMetadata(
-                                                                                                                                    isComputable = false,
-                                                                                                                                    isKey = false,
-                                                                                                                                    isOpen = false,
-                                                                                                                                    name = "presentableName",
-                                                                                                                                    valueType = primitiveTypeStringNotNullable,
-                                                                                                                                    withDefault = false)),
-                                                                                                                                supertypes = listOf(
-                                                                                                                                  "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
+                                                                          name = "name",
+                                                                          valueType = primitiveTypeStringNotNullable,
                                                                           withDefault = false),
                                                       OwnPropertyMetadata(isComputable = false,
                                                                           isKey = false,
                                                                           isOpen = false,
-                                                                          name = "name",
-                                                                          valueType = primitiveTypeStringNotNullable,
+                                                                          name = "module",
+                                                                          valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
+                                                                                                                        entityFqName = "com.intellij.platform.workspace.jps.entities.ModuleEntity",
+                                                                                                                        isChild = false,
+                                                                                                                        isNullable = false),
                                                                           withDefault = false),
                                                       OwnPropertyMetadata(isComputable = true,
                                                                           isKey = false,
@@ -2484,15 +2468,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           isOpen = false,
                                                                           name = "configurationXmlTag",
                                                                           valueType = primitiveTypeStringNullable,
-                                                                          withDefault = false),
-                                                      OwnPropertyMetadata(isComputable = false,
-                                                                          isKey = false,
-                                                                          isOpen = false,
-                                                                          name = "module",
-                                                                          valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_MANY,
-                                                                                                                        entityFqName = "com.intellij.platform.workspace.jps.entities.ModuleEntity",
-                                                                                                                        isChild = false,
-                                                                                                                        isNullable = false),
                                                                           withDefault = false),
                                                       OwnPropertyMetadata(isComputable = false,
                                                                           isKey = false,
@@ -3262,9 +3237,9 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                       OwnPropertyMetadata(isComputable = false,
                                                                           isKey = false,
                                                                           isOpen = false,
-                                                                          name = "facets",
-                                                                          valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_MANY,
-                                                                                                                        entityFqName = "com.intellij.platform.workspace.jps.entities.FacetEntity",
+                                                                          name = "moduleSettings",
+                                                                          valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
+                                                                                                                        entityFqName = "com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity",
                                                                                                                         isChild = true,
                                                                                                                         isNullable = false),
                                                                           withDefault = false)),
@@ -3333,33 +3308,17 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                       OwnPropertyMetadata(isComputable = false,
                                                                           isKey = false,
                                                                           isOpen = false,
-                                                                          name = "moduleId",
-                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
-                                                                                                                                fqName = "com.intellij.platform.workspace.jps.entities.ModuleId",
-                                                                                                                                properties = listOf(
-                                                                                                                                  OwnPropertyMetadata(
-                                                                                                                                    isComputable = false,
-                                                                                                                                    isKey = false,
-                                                                                                                                    isOpen = false,
-                                                                                                                                    name = "name",
-                                                                                                                                    valueType = primitiveTypeStringNotNullable,
-                                                                                                                                    withDefault = false),
-                                                                                                                                  OwnPropertyMetadata(
-                                                                                                                                    isComputable = false,
-                                                                                                                                    isKey = false,
-                                                                                                                                    isOpen = false,
-                                                                                                                                    name = "presentableName",
-                                                                                                                                    valueType = primitiveTypeStringNotNullable,
-                                                                                                                                    withDefault = false)),
-                                                                                                                                supertypes = listOf(
-                                                                                                                                  "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
+                                                                          name = "name",
+                                                                          valueType = primitiveTypeStringNotNullable,
                                                                           withDefault = false),
                                                       OwnPropertyMetadata(isComputable = false,
                                                                           isKey = false,
                                                                           isOpen = false,
-                                                                          name = "name",
-                                                                          valueType = primitiveTypeStringNotNullable,
+                                                                          name = "module",
+                                                                          valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
+                                                                                                                        entityFqName = "com.intellij.platform.workspace.jps.entities.ModuleEntity",
+                                                                                                                        isChild = false,
+                                                                                                                        isNullable = false),
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = true)
@@ -3718,7 +3677,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity", metadataHash = 2090027351)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ExcludeUrlOrderEntity", metadataHash = -331091110)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity", metadataHash = 1508097930)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.FacetEntity", metadataHash = 8848663)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.FacetEntity", metadataHash = 1813552722)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.FacetId", metadataHash = -50923013)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.FacetEntityTypeId", metadataHash = -963163377)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.FacetsOrderEntity", metadataHash = 1547161932)
@@ -3729,7 +3688,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryRootTypeId", metadataHash = -389178127)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity", metadataHash = 290215019)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity", metadataHash = 1350823518)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleEntity", metadataHash = 1886794103)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleEntity", metadataHash = -327975723)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleTypeId", metadataHash = 56899897)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleDependencyItem", metadataHash = -622238916)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.InheritedSdkDependency", metadataHash = 820358211)
@@ -3740,7 +3699,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkDependency", metadataHash = 2137223506)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkId", metadataHash = 206069110)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity", metadataHash = 1040067970)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity", metadataHash = 687624729)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity", metadataHash = -260448549)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity", metadataHash = -161397061)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkEntity", metadataHash = 324475262)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkRoot", metadataHash = -2116217859)

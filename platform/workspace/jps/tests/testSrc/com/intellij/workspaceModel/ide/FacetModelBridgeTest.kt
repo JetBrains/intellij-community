@@ -124,8 +124,8 @@ class FacetModelBridgeTest {
     val source = JpsProjectFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
 
     builder addEntity ModuleEntity(name = "test", dependencies = emptyList(), entitySource = source) {
-      this.facets = listOf(
-        FacetEntity(ModuleId("test"), "MyFacet", MOCK_FACET_TYPE_ID, source) {
+      this.moduleSettings = listOf(
+        FacetEntity("MyFacet", MOCK_FACET_TYPE_ID, source) {
           configurationXmlTag = """<configuration data="foo" />"""
         }
       )
@@ -157,7 +157,7 @@ class FacetModelBridgeTest {
 
     val moduleEntity = ModuleEntity(name = "test", dependencies = emptyList(), entitySource = source)
 
-    builder addEntity FacetEntity(ModuleId("test"), "AnotherMockFacet", FacetEntityTypeId("AnotherMockFacetId"), source) {
+    builder addEntity FacetEntity("AnotherMockFacet", FacetEntityTypeId("AnotherMockFacetId"), source) {
       configurationXmlTag = """
         <AnotherFacetConfigProperties>
           <firstElement>
@@ -272,9 +272,9 @@ class FacetModelBridgeTest {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel { builder ->
         val moduleEntity = builder.entities<ModuleEntity>().first()
         builder.modifyModuleEntity(moduleEntity) module@{
-          builder addEntity FacetEntity(moduleEntity.symbolicId, "myName", MOCK_FACET_TYPE_ID, moduleEntity.entitySource) {
+          builder addEntity FacetEntity("myName", MOCK_FACET_TYPE_ID, moduleEntity.entitySource) {
             this.module = this@module
-            underlyingFacet = FacetEntity(moduleEntity.symbolicId, "anotherName", MOCK_FACET_TYPE_ID, moduleEntity.entitySource) {
+            underlyingFacet = FacetEntity("anotherName", MOCK_FACET_TYPE_ID, moduleEntity.entitySource) {
               this.module = this@module
             }
           }

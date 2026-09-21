@@ -20,7 +20,7 @@ interface ModuleEntityBuilder : WorkspaceEntityBuilder<ModuleEntity> {
   var type: ModuleTypeId?
   var dependencies: MutableList<ModuleDependencyItem>
   var contentRoots: List<ContentRootEntityBuilder>
-  var facets: List<FacetEntityBuilder>
+  var moduleSettings: List<ModuleSettingsFacetBridgeEntityBuilder<out ModuleSettingsFacetBridgeEntity>>
 }
 
 internal object ModuleEntityType : EntityType<ModuleEntity, ModuleEntityBuilder>() {

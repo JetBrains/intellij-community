@@ -22,7 +22,7 @@ class KotlinFacetBridge(
         get() = configuration as KotlinFacetConfigurationBridge
 
     override fun updateExistingEntityInStorage(existingFacetEntity: KotlinSettingsEntity, mutableStorage: MutableEntityStorage) {
-        val moduleEntity = mutableStorage.resolve(existingFacetEntity.moduleId)!!
+        val moduleEntity = existingFacetEntity.module
         mutableStorage.modifyModuleEntity(moduleEntity) module@{
             val kotlinSettingsEntity = config.getEntityBuilder(this@module)
             mutableStorage.modifyKotlinSettingsEntity(existingFacetEntity) {
@@ -30,7 +30,6 @@ class KotlinFacetBridge(
                 name = kotlinSettingsEntity.name
                 sourceRoots = kotlinSettingsEntity.sourceRoots.toMutableList()
                 configFileItems = kotlinSettingsEntity.configFileItems.toMutableList()
-                moduleId = kotlinSettingsEntity.moduleId
                 module = this@module
                 useProjectSettings = kotlinSettingsEntity.useProjectSettings
                 implementedModuleNames = kotlinSettingsEntity.implementedModuleNames.toMutableList()

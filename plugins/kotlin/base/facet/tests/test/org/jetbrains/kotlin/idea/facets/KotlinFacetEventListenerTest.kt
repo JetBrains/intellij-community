@@ -126,7 +126,7 @@ class KotlinFacetEventListenerTest {
                     val moduleEntity = workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).first()
                     workspaceModel.updateProjectModel("add kotlin setting entity") {
                         it.modifyModuleEntity(moduleEntity) {
-                            this.kotlinSettings += createEmptyEntity()
+                            this.moduleSettings += createEmptyEntity()
                         }
                     }
 
@@ -176,7 +176,7 @@ class KotlinFacetEventListenerTest {
                     val moduleEntity = workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).first()
                     workspaceModel.updateProjectModel("add Kotlin setting entity") {
                         it.modifyModuleEntity(moduleEntity) {
-                            this.kotlinSettings += createEmptyEntity()
+                            this.moduleSettings += createEmptyEntity()
                         }
                     }
 
