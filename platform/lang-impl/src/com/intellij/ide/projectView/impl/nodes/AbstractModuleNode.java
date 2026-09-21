@@ -49,6 +49,11 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
   }
 
   @Override
+  public boolean shouldBeInitiallyExpanded() {
+    return true;
+  }
+
+  @Override
   public @NotNull Collection<VirtualFile> getRoots() {
     Module module = getValue();
     return module != null && !module.isDisposed()

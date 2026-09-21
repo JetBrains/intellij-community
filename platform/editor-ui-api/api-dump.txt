@@ -580,6 +580,7 @@ a:com.intellij.ide.util.treeView.AbstractTreeNode
 - p:recordValueSetTrace(Z):V
 - f:setParent(com.intellij.ide.util.treeView.AbstractTreeNode):V
 - f:setValue(java.lang.Object):V
+- shouldBeInitiallyExpanded():Z
 - p:shouldUpdateData():Z
 - toTestString(com.intellij.openapi.ui.Queryable$PrintInfo):java.lang.String
 - p:valueIsCut():Z

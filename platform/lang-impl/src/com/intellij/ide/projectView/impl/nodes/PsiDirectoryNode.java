@@ -90,6 +90,11 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   }
 
   @Override
+  public boolean shouldBeInitiallyExpanded() {
+    return true;
+  }
+
+  @Override
   protected void updateImpl(@NotNull PresentationData data) {
     Project project = getProject();
     assert project != null : this;

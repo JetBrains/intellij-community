@@ -151,6 +151,19 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return true;
   }
 
+  /**
+   * Determines whether the node should be initially expanded if it's at the top level.
+   * <p>
+   *   Works only if it's the only top-level node that returns {@code true}.
+   *   For example, if we have a module, External Libraries and Scratches and Consoles at the top,
+   *   the module will be expanded. If we have several modules at the top, none of them will be expanded.
+   * </p>
+   * @return {@code false} in the default implementation, override for directory-like nodes to {@code true}
+   */
+  public boolean shouldBeInitiallyExpanded() {
+    return false;
+  }
+
   @Override
   public final @Nullable AbstractTreeNode<T> getElement() {
     return getEqualityObject() != null ? this : null;

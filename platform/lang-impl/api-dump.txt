@@ -3355,6 +3355,7 @@ a:com.intellij.ide.projectView.impl.nodes.AbstractModuleNode
 - com.intellij.ide.projectView.ProjectViewNode
 - com.intellij.pom.NavigatableWithText
 - getRoots():java.util.Collection
+- shouldBeInitiallyExpanded():Z
 a:com.intellij.ide.projectView.impl.nodes.AbstractProjectNode
 - com.intellij.ide.projectView.ProjectViewNode
 a:com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode
@@ -3393,6 +3394,7 @@ a:com.intellij.ide.projectView.impl.nodes.ModuleGroupNode
 - getRoots():java.util.Collection
 - getSortOrder(com.intellij.ide.projectView.NodeSortSettings):com.intellij.ide.projectView.NodeSortOrder
 - getTestPresentation():java.lang.String
+- shouldBeInitiallyExpanded():Z
 - update(com.intellij.ide.projectView.PresentationData):V
 - validate():Z
 f:com.intellij.ide.projectView.impl.nodes.NamedLibraryElement
@@ -3430,6 +3432,7 @@ c:com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 - getFilter():com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter
 - isFQNameShown():Z
 - isValid():Z
+- shouldBeInitiallyExpanded():Z
 - p:updateImpl(com.intellij.ide.projectView.PresentationData):V
 c:com.intellij.ide.projectView.impl.nodes.PsiFileNode
 - com.intellij.ide.projectView.impl.nodes.BasePsiNode

@@ -63,6 +63,10 @@ private data class TreeStructureProjectViewNodeImpl(
   fun isExpandOnDoubleClick(): Boolean {
     return elementDescriptor.expandOnDoubleClick()
   }
+  
+  fun shouldBeInitiallyExpanded(): Boolean {
+    return (elementDescriptor as? AbstractTreeNode<*>)?.shouldBeInitiallyExpanded() == true
+  }
 }
 
 @ApiStatus.Experimental
@@ -136,6 +140,7 @@ class TreeStructureProjectViewNodeProvider(
       nodeBuilder.setIncludedInExpandAll(node.isIncludedInExpandAll())
       nodeBuilder.setIsDirectory(node.isDirectory())
       nodeBuilder.setExpandOnDoubleClick(node.isExpandOnDoubleClick())
+      nodeBuilder.setShouldBeInitiallyExpanded(node.shouldBeInitiallyExpanded())
     }
   }
 
