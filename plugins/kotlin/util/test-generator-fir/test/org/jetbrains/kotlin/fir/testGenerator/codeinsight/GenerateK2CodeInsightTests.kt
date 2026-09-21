@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyWithLibTest
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractHierarchyMultiplatformTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtCallChainHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtDefaultParameterInlayHintsProviderTest
-import org.jetbrains.kotlin.idea.k2.hints.AbstractKtLambdasHintsProvider
+import org.jetbrains.kotlin.idea.k2.hints.AbstractKtLambdasHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtParameterHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtReferenceTypeHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtValuesHintsProviderTest
@@ -184,7 +184,7 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
         testClass<AbstractKtReferenceTypeHintsProviderTest> {
             model("../../../idea/tests/testData/codeInsight/hints/types", pattern = inlayHintsFileRegexp)
         }
-        testClass<AbstractKtLambdasHintsProvider> {
+        testClass<AbstractKtLambdasHintsProviderTest> {
             model("../../../idea/tests/testData/codeInsight/hints/lambda")
         }
         testClass<AbstractKtValuesHintsProviderTest> {

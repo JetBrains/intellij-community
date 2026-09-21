@@ -5,7 +5,7 @@ import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinLambdasHintsProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtLambdasHintsProvider
 
-abstract class AbstractKtLambdasHintsProvider: AbstractKotlinLambdasHintsProvider() {
+abstract class AbstractKtLambdasHintsProviderTest: AbstractKotlinLambdasHintsProvider() {
 
     override fun inlayHintsProvider(): InlayHintsProvider =
         KtLambdasHintsProvider()

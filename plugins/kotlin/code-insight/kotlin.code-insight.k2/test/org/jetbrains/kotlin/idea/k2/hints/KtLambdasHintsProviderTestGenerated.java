@@ -18,10 +18,10 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../idea/tests/testData/codeInsight/hints/lambda")
-public abstract class KtLambdasHintsProviderGenerated extends AbstractKtLambdasHintsProvider {
+public abstract class KtLambdasHintsProviderTestGenerated extends AbstractKtLambdasHintsProviderTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/hints/lambda/context")
-    public static class Context extends AbstractKtLambdasHintsProvider {
+    public static class Context extends AbstractKtLambdasHintsProviderTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -69,7 +69,7 @@ public abstract class KtLambdasHintsProviderGenerated extends AbstractKtLambdasH
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/hints/lambda")
-    public static class Uncategorized extends AbstractKtLambdasHintsProvider {
+    public static class Uncategorized extends AbstractKtLambdasHintsProviderTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
