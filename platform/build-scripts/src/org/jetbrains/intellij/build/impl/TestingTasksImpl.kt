@@ -607,7 +607,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     val devBuildServerSettings = DevBuildServerSettings.readDevBuildServerSettingsFromIntellijYaml(mainModule.name)
       .takeIf { runContextModule.name != "intellij.clion.main.tests" }  // TODO: remove this after fixing clion tests build types
-      .takeIf { runContextModule.name != "intellij.idea.community.main.tests" }
     val bootstrapClasspath = context.getModuleRuntimeClasspath(module = outputProvider.findRequiredModule("intellij.tools.testsBootstrap"), forTests = false)
       .mapTo(mutableListOf()) { it.toString() }
     @Suppress("NAME_SHADOWING")
