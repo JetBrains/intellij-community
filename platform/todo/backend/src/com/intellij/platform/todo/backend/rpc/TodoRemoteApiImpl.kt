@@ -70,7 +70,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
             buildInitialScanEvents(project, request.scope, searchScope, filter)
           }
           PsiManager.getInstance(project).addPsiTreeChangeListener(
-            TodoBackendPsiListener { file -> if (searchScope?.contains(file) != false) fileChangesQueue.trySend(file) },
+            TodoBackendPsiListener(::scheduleInitialScan) { file -> if (searchScope?.contains(file) != false) fileChangesQueue.trySend(file) },
             currentScanDisposable
           )
         }
