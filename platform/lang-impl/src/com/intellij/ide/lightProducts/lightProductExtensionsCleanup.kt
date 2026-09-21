@@ -38,28 +38,31 @@ private val logger = Logger.getInstance("#com.intellij.ide.lightProducts.LightPr
  * and `com.intellij.idea.ultimate.light.customization.IjLightAppExtensionsConfigurator`.
  */
 @ApiStatus.Internal
-fun unregisterExtensionsForLightProduct() {
+fun unregisterExtensionsForLightProduct(checkNotInstantiated: Boolean = false) {
   UsageGroupingRuleProvider.EP_NAME.appPoint
     .unregisterExtensions(
-      UsageGroupingRuleProviderImpl::class
+      UsageGroupingRuleProviderImpl::class,
+      checkNotInstantiated = checkNotInstantiated,
     )
 
   SearchEverywhereContributor.EP_NAME.appPoint
     .unregisterExtensions(
       FileSearchEverywhereContributorFactory::class,
+      checkNotInstantiated = checkNotInstantiated,
     )
 
-  ChooseByNameContributor.FILE_EP_NAME.appPoint.unregisterEverything()
+  ChooseByNameContributor.FILE_EP_NAME.appPoint.unregisterEverything(checkNotInstantiated)
 
   IntentionMenuContributor.EP_NAME.appPoint
     .unregisterExtensions(
-      GutterIntentionMenuContributor::class
+      GutterIntentionMenuContributor::class,
+      checkNotInstantiated = checkNotInstantiated,
     )
 
-  unregisterIndexExtensions()
+  unregisterIndexExtensions(checkNotInstantiated)
 
   UsageCollectors.PROJECT_EP_NAME.appPoint
-    .unregisterExtensionsMatching { _, adapter ->
+    .unregisterExtensionsMatching(checkNotInstantiated) { _, adapter ->
       val bean = adapter.createInstance<UsageCollectorBean>(application)
       bean?.implementationClass != "com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector"
     }.also { reports ->
@@ -72,6 +75,7 @@ fun unregisterExtensionsForLightProduct() {
       "editing.templates",
       "trusted.hosts",
       "diff.base",
+      checkNotInstantiated = checkNotInstantiated,
     )
 
   StatusBarWidgetFactory.EP_NAME.appPoint
@@ -87,6 +91,7 @@ fun unregisterExtensionsForLightProduct() {
       "inspectionProfileWidget",
       "SmartModeIndicator",
       "IndexesAndVfsFlushIndicator",
+      checkNotInstantiated = checkNotInstantiated,
     )
 
   GeneralSettings.getInstance().isShowTipsOnStartup = false
@@ -112,10 +117,10 @@ val LIGHT_PRODUCT_INDEX_EXTENSION_POINTS: List<String> = listOf(
  */
 private val KEPT_INDEX_EXTENSIONS = setOf(FileTypeIndexImpl::class.java.name)
 
-private fun unregisterIndexExtensions() {
+private fun unregisterIndexExtensions(checkNotInstantiated: Boolean) {
   for (pointName in LIGHT_PRODUCT_INDEX_EXTENSION_POINTS) {
     application.extensionArea.getExtensionPoint<Any>(pointName)
-      .unregisterExtensionsMatching { className, _ -> className !in KEPT_INDEX_EXTENSIONS }
+      .unregisterExtensionsMatching(checkNotInstantiated) { className, _ -> className !in KEPT_INDEX_EXTENSIONS }
   }
 }
 

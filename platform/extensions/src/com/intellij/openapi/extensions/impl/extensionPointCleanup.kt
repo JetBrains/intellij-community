@@ -12,22 +12,22 @@ private val logger = Logger.getInstance("#com.intellij.openapi.extensions.impl.E
 
 // IDEA-226246 unregisterExtension(Class<*>) doesn't work with inner classes
 @ApiStatus.Internal
-fun <T : Any> ExtensionPoint<T>.unregisterExtensions(vararg toRemoveClasses: KClass<out T>) {
-  unregisterExtensionsByClassName(*toRemoveClasses.map { it.java.name }.toTypedArray())
+fun <T : Any> ExtensionPoint<T>.unregisterExtensions(vararg toRemoveClasses: KClass<out T>, checkNotInstantiated: Boolean = false) {
+  unregisterExtensionsByClassName(*toRemoveClasses.map { it.java.name }.toTypedArray(), checkNotInstantiated = checkNotInstantiated)
 }
 
 @ApiStatus.Internal
-fun <T : Any> ExtensionPoint<T>.unregisterExtensionsByClassName(vararg toRemoveClassNames: String) {
+fun <T : Any> ExtensionPoint<T>.unregisterExtensionsByClassName(vararg toRemoveClassNames: String, checkNotInstantiated: Boolean = false) {
   val toRemoveSet = toRemoveClassNames.toSet()
-  val allEps = unregisterExtensionsMatching { className, _ -> className in toRemoveSet }
+  val allEps = unregisterExtensionsMatching(checkNotInstantiated) { className, _ -> className in toRemoveSet }
   val notFound = toRemoveSet - allEps.map { it.className }.toSet()
   notFound.forEach { logger.info("Can't unregister '${this}' extension: $it - Not Found") }
 }
 
 @ApiStatus.Internal
-fun <T : Any> ExtensionPoint<T>.unregisterExtensionsById(vararg toRemoveIds: String) {
+fun <T : Any> ExtensionPoint<T>.unregisterExtensionsById(vararg toRemoveIds: String, checkNotInstantiated: Boolean = false) {
   val toRemoveSet = toRemoveIds.toSet()
-  val allEps = unregisterExtensionsMatching { _, adapter -> adapter.orderId in toRemoveSet }
+  val allEps = unregisterExtensionsMatching(checkNotInstantiated) { _, adapter -> adapter.orderId in toRemoveSet }
   val notFound = toRemoveSet - allEps.map { it.adapter.orderId }.toSet()
   notFound.forEach { logger.info("Can't unregister '${this}' extension: $it - Not Found") }
 }
@@ -54,16 +54,21 @@ fun <T : Any> ExtensionPoint<T>.unregisterEverythingExceptById(vararg toKeepIds:
 }
 
 @ApiStatus.Internal
-fun <T : Any> ExtensionPoint<T>.unregisterEverything(): List<ExtensionUnregistrationReport> =
-  unregisterExtensionsMatching { _, _ -> true }
+fun <T : Any> ExtensionPoint<T>.unregisterEverything(checkNotInstantiated: Boolean = false): List<ExtensionUnregistrationReport> =
+  unregisterExtensionsMatching(checkNotInstantiated) { _, _ -> true }
 
 @ApiStatus.Internal
 fun <T : Any> ExtensionPoint<T>.unregisterExtensionsMatching(
+  checkNotInstantiated: Boolean = false,
   filter: (className: String, adapter: ExtensionComponentAdapter) -> Boolean,
 ): List<ExtensionUnregistrationReport> {
   val allEps = mutableListOf<ExtensionUnregistrationReport>()
   unregisterExtensions({ className, adapter ->
+                         val wasInstanceCreated = checkNotInstantiated && adapter.isInstanceCreated
                          val wasUnregistered = filter(className, adapter)
+                         check(!wasUnregistered || !wasInstanceCreated) {
+                           "Cannot unregister extension '$className' from '$this': its instance was already created"
+                         }
                          allEps += ExtensionUnregistrationReport(className, adapter, wasUnregistered)
                          !wasUnregistered
                        }, /*stopAfterFirstMatch =*/ false)
