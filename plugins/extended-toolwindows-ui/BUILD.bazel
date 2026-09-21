@@ -5,6 +5,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 ### auto-generated section `dev intellij.extendedToolWindowsUi` start
 dev_dist_plugin(
     content_modules = ["intellij.extendedToolWindowsUi.frontend"],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = ["intellij.extendedToolWindowsUi.frontend"],
+    jars = {
+        "lib/extendedToolWindowsUi.jar": ["intellij.extendedToolWindowsUi"],
+    },
     main_module = "intellij.extendedToolWindowsUi",
 )
 ### auto-generated section `dev intellij.extendedToolWindowsUi` end
