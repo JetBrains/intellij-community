@@ -20,8 +20,7 @@ import java.util.function.BiPredicate;
  */
 @ApiStatus.Internal
 public interface DurableMap<K, V> extends KeyValueStore<K, V>,
-                                          Compactable<DurableMap<K, V>>,
-                                          CleanableStorage, Forceable, Closeable {
+                                           CleanableStorage, Forceable, Closeable {
 
   boolean isEmpty() throws IOException;
 

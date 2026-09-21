@@ -22,25 +22,19 @@ public interface Compactable<C extends Compactable<C>> {
    */
   @NotNull <C1 extends C> C1 compact(@NotNull ThrowableComputable<C1, ? extends IOException> compactedMapFactory) throws IOException;
 
-  class CompactionScore {
-    private final double score;
-
-    public CompactionScore(double score) {
-      this.score = score;
-    }
-
-    /**
-     * @return how much compaction is worthwhile/needed.
-     * <pre>
-     * Value is in [0..1], expected approximate meaning is following:
-     * < 0.1  =>   almost nothing to compact
-     * > 0.5  =>   compaction maybe worthwhile, but not urgently needed
-     * > 0.9  =>   compaction needed urgently
-     * = 1    =>   can't work without compaction
-     * </pre>
-     */
-    public double score() {
-      return score;
+  ///Scores, how strongly compaction is worthwhile/needed.
+  /// Value is in `[0..1]`, expected approximate meaning is following:
+  ///<pre>
+  ///< 0.1  =>   almost nothing to compact
+  ///> 0.5  =>   compaction maybe worthwhile, but not urgently needed
+  ///> 0.9  =>   compaction needed urgently
+  ///= 1    =>   can't work without compaction
+  ///</pre>
+  record CompactionScore(double score) {
+    public CompactionScore {
+      if (!(0 <= score && score <= 1)) {
+        throw new IllegalArgumentException("score(=" + score + ") should be in [0..1]");
+      }
     }
 
     public boolean compactionNotNeeded(){
@@ -53,11 +47,6 @@ public interface Compactable<C extends Compactable<C>> {
 
     public boolean compactionNeededUrgently(){
       return score > 0.9;
-    }
-
-    @Override
-    public String toString() {
-      return "CompactionScore[=" + score + ']';
     }
   }
 

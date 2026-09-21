@@ -43,7 +43,7 @@ import java.util.function.BiPredicate;
  * </ol>
  */
 @ApiStatus.Internal
-public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Unmappable {
+public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Compactable<DurableMapOverAppendOnlyLog<K, V>>, Unmappable {
 
   public static final int DATA_FORMAT_VERSION = 1;
 
@@ -266,7 +266,7 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Unma
   }
 
   @Override
-  public @NotNull <M extends DurableMap<K, V>> M compact(
+  public @NotNull <M extends DurableMapOverAppendOnlyLog<K, V>> M compact(
     @NotNull ThrowableComputable<M, ? extends IOException> compactedMapFactory
   ) throws IOException {
     //FIXME RC: design the new map creation: how/where to create it? Paths should somehow be

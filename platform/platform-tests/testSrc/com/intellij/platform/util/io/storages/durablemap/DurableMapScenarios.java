@@ -320,7 +320,8 @@ public final class DurableMapScenarios {
     }
   }
 
-  public interface CompactionScenarios<K, V, M extends DurableMap<K, V>> extends DurableMapTestContext<K, V, M> {
+  public interface CompactionScenarios<K, V, M extends DurableMap<K, V> & Compactable<M>>
+    extends DurableMapTestContext<K, V, M> {
     @Test
     default void compactionReturnsMapWithSameMapping_afterManyDifferentMappingsPut(@TempDir Path tempDir,
                                                                                    KeyValueTestData<K, V> testData) throws Exception {

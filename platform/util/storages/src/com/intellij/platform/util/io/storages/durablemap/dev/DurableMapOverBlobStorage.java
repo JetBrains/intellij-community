@@ -7,6 +7,7 @@ import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.DataExternalizerEx.KnownSizeRecordWriter;
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.StorageFactory;
+import com.intellij.platform.util.io.storages.durablemap.Compactable;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
 import com.intellij.platform.util.io.storages.durablemap.DurableMapFactory;
 import com.intellij.platform.util.io.storages.durablemap.DurableMapOverAppendOnlyLog;
@@ -43,7 +44,7 @@ import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehash
  * It works, and has a good performance, but the API design could be better. Use on your own risk.
  */
 @ApiStatus.Internal
-public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Unmappable {
+public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Compactable<DurableMapOverBlobStorage<K, V>>, Unmappable {
 
   private final StreamlinedBlobStorage keyValuesStorage;
   private final DurableIntToMultiIntMap keyHashToIdMap;
@@ -295,7 +296,7 @@ public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Unmapp
   }
 
   @Override
-  public @NotNull <M extends DurableMap<K, V>> M compact(
+  public @NotNull <M extends DurableMapOverBlobStorage<K, V>> M compact(
     @NotNull ThrowableComputable<M, ? extends IOException> compactedMapFactory
   ) throws IOException {
     //FIXME RC: design the new map creation: how/where to create it? Paths should somehow be

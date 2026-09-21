@@ -7,6 +7,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.appendonlylog.dev.ChunkedAppendOnlyLog;
+import com.intellij.platform.util.io.storages.durablemap.Compactable;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
 import com.intellij.platform.util.io.storages.durablemap.DurableMapOverAppendOnlyLog;
 import com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntMap;
@@ -33,7 +34,9 @@ import java.util.function.BiPredicate;
  * chunks, each of chunk itself works as append-only log.
  */
 @ApiStatus.Internal
-public class DurableMapWithAppendableValues<K, VItem> implements AppendableDurableMap<K, VItem>, Unmappable {
+public class DurableMapWithAppendableValues<K, VItem> implements AppendableDurableMap<K, VItem>,
+                                                                 Compactable<DurableMapWithAppendableValues<K, VItem>>,
+                                                                 Unmappable {
 
   private final ChunkedAppendOnlyLog keyValuesLog;
   private final ExtendibleHashMap keyHashToChunkIdMap;
@@ -236,7 +239,7 @@ public class DurableMapWithAppendableValues<K, VItem> implements AppendableDurab
   }
 
   @Override
-  public <C1 extends DurableMap<K, Set<VItem>>> @NotNull C1 compact(@NotNull ThrowableComputable<C1, ? extends IOException> compactedMapFactory)
+  public <C1 extends DurableMapWithAppendableValues<K, VItem>> @NotNull C1 compact(@NotNull ThrowableComputable<C1, ? extends IOException> compactedMapFactory)
     throws IOException {
     //TODO please, implement me
     throw new UnsupportedOperationException("Method is not implemented yet");
