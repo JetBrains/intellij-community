@@ -23,5 +23,5 @@
     <orderEntry type="module" module-name="intellij.platform.rpc.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.platform.recentFiles.backend" />
+  <component name="TestModuleProperties" production-module="intellij.platform.recentFiles" />
 </module>

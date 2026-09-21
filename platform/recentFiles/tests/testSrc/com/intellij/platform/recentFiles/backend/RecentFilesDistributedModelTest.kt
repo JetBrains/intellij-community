@@ -10,6 +10,7 @@ import com.intellij.platform.recentFiles.frontend.model.FrontendRecentFilesModel
 import com.intellij.platform.recentFiles.shared.FileChangeKind
 import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesExcluder
+import com.intellij.platform.recentFiles.shared.RecentFilesModel
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -98,11 +99,11 @@ class RecentFilesDistributedModelTest {
   }
 
   private fun CoroutineScope.startModelSynchronization(): List<Job> {
-    val backendModel = BackendRecentFilesModel.getInstance(project)
+    val backendModel = RecentFilesModel.getInstance(project)
     val frontendModel = FrontendRecentFilesModel.getInstance(project)
     return RecentFileKind.entries.flatMap { kind ->
       listOf(
-        launch { backendModel.subscribeToBackendRecentFilesUpdates(kind) },
+        launch { backendModel.subscribeToRecentFileEvents(kind) },
         launch { frontendModel.subscribeToBackendRecentFilesUpdates(kind) }
       )
     }
@@ -155,7 +156,7 @@ class RecentFilesDistributedModelTest {
   }
 
   private fun backendFiles(kind: RecentFileKind): List<VirtualFile> {
-    return BackendRecentFilesModel.getInstance(project).getFilesByKind(kind)
+    return RecentFilesModel.getInstance(project).getFilesByKind(kind)
   }
 
   private class TestDiffVirtualFile(name: String) : LightVirtualFile(name, "diff"), IdeDocumentHistoryImpl.OptionallyIncluded {

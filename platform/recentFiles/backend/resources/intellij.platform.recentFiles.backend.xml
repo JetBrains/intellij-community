@@ -1,37 +1,23 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="fleet.rhizomedb"/>
-    <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.analysis.impl"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
-    <module name="intellij.platform.core.impl"/>
-    <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
-    <module name="intellij.platform.ide"/>
-    <module name="intellij.platform.ide.core"/>
-    <module name="intellij.platform.ide.core.impl"/>
-    <module name="intellij.platform.ide.impl"/>
-    <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.indexing"/>
-    <module name="intellij.platform.kernel.backend"/>
-    <module name="intellij.platform.lang"/>
-    <module name="intellij.platform.project"/>
-    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.recentFiles"/>
-    <module name="intellij.platform.statistics"/>
-    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.rpc.backend"/>
   </dependencies>
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="switcher.presentation.update.debounce.interval.ms" defaultValue="300"
-                 description="A time period to skip before updating name/color/etc for the next file batch for the switcher/recent files model, measured in millis"/>
-
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.recentFiles.backend.RecentFilesBackendApiProvider"
                                             apiInterfaces="com.intellij.platform.recentFiles.shared.FileSwitcherApi"/>
-    <vfs.asyncListener id="RecentFileRemovalListener" implementation="com.intellij.platform.recentFiles.backend.RecentFilesVfsListener"/>
-    <postStartupActivity implementation="com.intellij.platform.recentFiles.backend.BackendRecentFileModelSynchronizer"/>
+    <recentFiles.presentationContributor implementation="com.intellij.platform.recentFiles.backend.BackendRecentFilePathContributor"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.platform.recentFiles.backend.RecentFilesVcsStatusListener"
+              topic="com.intellij.openapi.vcs.FileStatusListener" activeInTestMode="false"/>
+  </projectListeners>
 </idea-plugin>

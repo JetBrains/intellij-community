@@ -1,35 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.recentFiles.backend
+package com.intellij.platform.recentFiles.shared
 
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
-import com.intellij.platform.recentFiles.shared.RecentFileKind
-import com.intellij.platform.recentFiles.shared.SWITCHER_ELEMENTS_LIMIT
 import com.intellij.problems.WolfTheProblemSolver
-import com.intellij.psi.search.FilenameIndex
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.IconUtil
-import com.intellij.util.PlatformUtils
-import com.intellij.util.Processor
-import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.indexing.ProcessorWithThrottledCancellationCheck
-import java.io.File
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.io.path.Path
-import kotlin.io.path.pathString
 import kotlin.math.max
 
 @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
@@ -118,74 +103,18 @@ private fun getRecentFiles(project: Project): List<VirtualFile> {
   return result
 }
 
-private val IDENTICAL_NAMES_CACHE_KEY = Key.create<Boolean>("IDENTICAL_NAMES_CACHE_KEY")
-
 @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
-private fun areThereFilesWithSameName(virtualFile: VirtualFile, project: Project): Boolean {
-  if (DumbService.getInstance(project).isDumb) return false
-
-  val alreadyComputedValue = virtualFile.getUserData(IDENTICAL_NAMES_CACHE_KEY)
-  if (alreadyComputedValue != null) return alreadyComputedValue
-
-  val searchScope =
-    if (PlatformUtils.isRider()) GlobalSearchScope.allScope(project) else GlobalSearchScope.projectScope(project)
-  val processor = StopOnTwoIdenticalNamesProcessor(virtualFile.name)
-  val cancellationAwareProcessor = ProcessorWithThrottledCancellationCheck(processor)
-  FilenameIndex.processFilesByName(virtualFile.name, true, searchScope, cancellationAwareProcessor)
-  val moreThanOneOccurrence = processor.areThereMoreThanOneFile()
-  virtualFile.putUserData(IDENTICAL_NAMES_CACHE_KEY, moreThanOneOccurrence)
-  return moreThanOneOccurrence
-}
-
-private class StopOnTwoIdenticalNamesProcessor(private val searchedName: String) : Processor<VirtualFile> {
-  private var fileNameCounter = AtomicInteger(0)
-
-  fun areThereMoreThanOneFile(): Boolean {
-    return fileNameCounter.get() > 1
-  }
-
-  override fun process(file: VirtualFile): Boolean {
-    val name = file.name
-
-    if (searchedName != name) return true
-
-    val newCount = fileNameCounter.incrementAndGet()
-    return newCount <= 1
-  }
-}
-
-@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
-internal fun createRecentFileViewModel(virtualFile: VirtualFile, project: Project): BackendRecentFilePresentation {
+internal fun createRecentFileViewModel(virtualFile: VirtualFile, project: Project): LocalRecentFilePresentation {
   ProgressManager.checkCanceled()
-  val parentPath = virtualFile.parent?.path?.toNioPathOrNull()
-  val result = if (parentPath == null ||
-                   parentPath.nameCount == 0 ||
-                   !areThereFilesWithSameName(virtualFile, project)
-  ) {
-    ""
-  }
-  else {
-    val filePath = parentPath.pathString
-    val projectPath = project.basePath?.let { FileUtil.toSystemDependentName(it) }
-    if (projectPath != null && FileUtil.isAncestor(projectPath, filePath, true)) {
-      val locationRelativeToProjectDir = FileUtil.getRelativePath(projectPath, filePath, File.separatorChar)
-      if (locationRelativeToProjectDir != null && Path(locationRelativeToProjectDir).nameCount != 0) locationRelativeToProjectDir
-      else filePath
-    }
-    else if (FileUtil.isAncestor(SystemProperties.getUserHome(), filePath, true)) {
-      val locationRelativeToUserHome = FileUtil.getLocationRelativeToUserHome(filePath)
-      if (Path(locationRelativeToUserHome).nameCount != 0) locationRelativeToUserHome else filePath
-    }
-    else {
-      filePath
-    }
-  }
+  // The path text needs the file name index, so only a process with a backend supplies it. A light session shows none.
+  val pathText = RecentFilePresentationContributor.EP_NAME.extensionList
+                   .firstNotNullOfOrNull { it.getPathText(project, virtualFile) } ?: ""
 
   ProgressManager.checkCanceled()
-  return BackendRecentFilePresentation(
+  return LocalRecentFilePresentation(
     mainText = EditorTabPresentationUtil.getCustomEditorTabTitle(project, virtualFile) ?: virtualFile.presentableName,
     statusText = FileUtil.getLocationRelativeToUserHome(virtualFile.parent?.presentableUrl ?: virtualFile.presentableUrl),
-    pathText = result,
+    pathText = pathText,
     hasProblems = WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile),
     virtualFile = virtualFile,
     icon = IconUtil.getIcon(virtualFile, 0, project),

@@ -9,14 +9,19 @@
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.objectSerializer"/>
     <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.runtime.product"/>
+    <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
@@ -25,5 +30,30 @@
     <extensionPoint interface="com.intellij.platform.recentFiles.shared.RecentFilesExcluder"
                     qualifiedName="com.intellij.recentFiles.excluder"
                     dynamic="true"/>
+    <extensionPoint interface="com.intellij.platform.recentFiles.shared.RecentFilePresentationContributor"
+                    qualifiedName="com.intellij.recentFiles.presentationContributor"
+                    dynamic="true"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="switcher.presentation.update.debounce.interval.ms" defaultValue="300"
+                 description="A time period to skip before updating name/color/etc for the next file batch for the switcher/recent files model, measured in millis"/>
+
+    <!-- The local model of this process. The backend module serves the same service instance over RPC. -->
+    <applicationService serviceInterface="com.intellij.platform.recentFiles.shared.FileSwitcherApi"
+                        serviceImplementation="com.intellij.platform.recentFiles.shared.FileSwitcherApiImpl"/>
+
+    <!-- The listener returns early in a process that does not host the model, see doesProcessHostRecentFilesModel -->
+    <!--suppress SplitModeXmlApiUsage -->
+    <vfs.asyncListener id="RecentFileRemovalListener" implementation="com.intellij.platform.recentFiles.shared.RecentFilesVfsListener"/>
+    <!-- The activity returns early in a process that does not host the model, see doesProcessHostRecentFilesModel -->
+    <postStartupActivity implementation="com.intellij.platform.recentFiles.shared.RecentFileEventsModelSynchronizer"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.platform.recentFiles.shared.RecentFilesDaemonAnalyserListener"
+              topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener" activeInTestMode="false"/>
+    <listener class="com.intellij.platform.recentFiles.shared.RecentFilesProblemsListener"
+              topic="com.intellij.problems.ProblemListener" activeInTestMode="false"/>
+  </projectListeners>
 </idea-plugin>

@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.recentFiles.backend
+package com.intellij.platform.recentFiles.shared
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.HighlightingPassesCache
-import com.intellij.ide.actions.shouldUseFallbackSwitcher
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.VirtualFileId
@@ -25,16 +23,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.FileStatusListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.findProjectOrNull
-import com.intellij.platform.recentFiles.shared.FileChangeKind
-import com.intellij.platform.recentFiles.shared.RecentFileKind
-import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
-import com.intellij.platform.recentFiles.shared.RecentFilesEvent
-import com.intellij.platform.recentFiles.shared.SwitcherRpcDto
-import com.intellij.platform.recentFiles.shared.isAllowedInRecentFilesModel
-import com.intellij.problems.ProblemListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.BufferOverflow
@@ -51,45 +41,50 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG by lazy { fileLogger() }
 
+/**
+ * The recent files model of this process: one event flow per [RecentFileKind], and the presentation of each file.
+ *
+ * [RecentFileEventsController] feeds it, [RecentFilesModel] mirrors the resulting lists back, and [FileSwitcherApiImpl]
+ * serves the flows to the user interface. Only a process that hosts the model runs it, see
+ * [doesProcessHostRecentFilesModel].
+ */
 @Service(Service.Level.PROJECT)
-internal class BackendRecentFileEventsModel(private val project: Project, coroutineScope: CoroutineScope) {
+internal class RecentFileEventsModel(private val project: Project, coroutineScope: CoroutineScope) {
   private val bufferSize = Registry.intValue("editor.navigation.history.stack.size").coerceIn(100, 1000)
   private val updateDebounceMs = Registry.intValue("switcher.presentation.update.debounce.interval.ms").coerceIn(0, 10000)
 
   private val orderChangeEvents = Channel<OrderChangeEvent>(capacity = UNLIMITED)
   private val fileChangeEvents = Channel<List<VirtualFile>>(capacity = UNLIMITED)
 
-  private val recentlyOpenedFiles = MutableSharedFlow<BackendRecentFilesEvent>(
+  private val recentlyOpenedFiles = MutableSharedFlow<LocalRecentFilesEvent>(
     extraBufferCapacity = bufferSize,
     replay = bufferSize,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
   )
 
-  private val recentlyEditedFiles = MutableSharedFlow<BackendRecentFilesEvent>(
+  private val recentlyEditedFiles = MutableSharedFlow<LocalRecentFilesEvent>(
     extraBufferCapacity = bufferSize,
     replay = bufferSize,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
   )
 
-  private val recentlyOpenedUnpinnedFiles = MutableSharedFlow<BackendRecentFilesEvent>(
+  private val recentlyOpenedUnpinnedFiles = MutableSharedFlow<LocalRecentFilesEvent>(
     extraBufferCapacity = bufferSize,
     replay = bufferSize,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
   )
 
   init {
+    // The other listeners of the model are declarative, see the descriptors of the shared and of the backend module.
+    // This one stays programmatic because of the workaround below.
+    //
     // Workaround for `disposed temporary` state that coroutines do not respect when being launched inside project service scope.
     // The active subscription leads to coroutine A launched during test A being executed during test B or in between (!) and producing various
     // `already disposed` and alike exceptions. It needs to be fixed on the platform side,
     // maybe by cancelling project service scope' children during temporary dispose phase
-    if (!ApplicationManager.getApplication().isUnitTestMode
-        && project is ProjectEx
-        && !shouldUseFallbackSwitcher()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode && project is ProjectEx) {
       project.messageBus.connect(coroutineScope).apply {
         subscribe(RecentFileHistoryOrderListener.TOPIC, ChangedIdeHistoryFileHistoryOrderListener(project))
-        subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, RecentFilesDaemonAnalyserListener(project))
-        subscribe(FileStatusListener.TOPIC, RecentFilesVcsStatusListener(project))
-        subscribe(ProblemListener.TOPIC, RecentFilesProblemsListener(project))
       }
     }
 
@@ -102,7 +97,7 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
     }
   }
 
-  fun getRecentFiles(fileKind: RecentFileKind): Flow<BackendRecentFilesEvent> {
+  fun getRecentFiles(fileKind: RecentFileKind): Flow<LocalRecentFilesEvent> {
     LOG.debug("Switcher get recent files for kind: $fileKind")
     return chooseTargetFlow(fileKind)
   }
@@ -122,9 +117,9 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
         }
 
     val event = if (metadataRequest.forceAddToModel)
-      BackendRecentFilesEvent.ItemsAdded(metadata)
+      LocalRecentFilesEvent.ItemsAdded(metadata)
     else
-      BackendRecentFilesEvent.ItemsUpdated(metadata, false)
+      LocalRecentFilesEvent.ItemsUpdated(metadata, false)
 
     targetFlow.emit(event)
   }
@@ -135,7 +130,7 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
 
     val targetFlow = chooseTargetFlow(searchRequest.filesKind)
 
-    targetFlow.emit(BackendRecentFilesEvent.AllItemsRemoved())
+    targetFlow.emit(LocalRecentFilesEvent.AllItemsRemoved())
 
     val freshRecentFiles = collectRecentFiles(searchRequest)
     if (freshRecentFiles != null) {
@@ -143,7 +138,7 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
     }
   }
 
-  fun scheduleApplyBackendChanges(changeKind: FileChangeKind, files: Collection<VirtualFile>) {
+  fun scheduleApplyChanges(changeKind: FileChangeKind, files: Collection<VirtualFile>) {
     if (files.isEmpty()) return
     val reasonablyLimitedFilesList = files.take(bufferSize)
 
@@ -191,12 +186,12 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
           val models = createRecentFilesViewModels(
             event.files.filter { isAllowedInRecentFilesModel(project, fileKind, it) }
           )
-          val fileEvent = BackendRecentFilesEvent.ItemsAdded(models)
+          val fileEvent = LocalRecentFilesEvent.ItemsAdded(models)
           chooseTargetFlow(fileKind).emit(fileEvent)
         }
       }
       FileChangeKind.REMOVED -> {
-        val fileEvent = BackendRecentFilesEvent.ItemsRemoved(event.files)
+        val fileEvent = LocalRecentFilesEvent.ItemsRemoved(event.files)
 
         for (fileKind in RecentFileKind.entries) {
           chooseTargetFlow(fileKind).emit(fileEvent)
@@ -214,7 +209,7 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
 
   private suspend fun processFileUpdateEvent(files: List<VirtualFile>, putOnTop: Boolean = true) {
     val knownFilesByKind = RecentFileKind.entries.associateWith { fileKind ->
-      BackendRecentFilesModel.getInstance(project).getFilesByKind(fileKind).toSet()
+      RecentFilesModel.getInstance(project).getFilesByKind(fileKind).toSet()
     }
 
     val filesToUpdate = files.filter { file -> knownFilesByKind.values.any { known -> known.contains(file) } }
@@ -226,12 +221,12 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
       }
       val eventModels = createRecentFilesViewModels(filesForKind)
 
-      val fileEvent = BackendRecentFilesEvent.ItemsUpdated(eventModels, putOnTop)
+      val fileEvent = LocalRecentFilesEvent.ItemsUpdated(eventModels, putOnTop)
       chooseTargetFlow(fileKind).emit(fileEvent)
     }
   }
 
-  private suspend fun createRecentFilesViewModels(files: List<VirtualFile>): List<BackendRecentFilePresentation> {
+  private suspend fun createRecentFilesViewModels(files: List<VirtualFile>): List<LocalRecentFilePresentation> {
     return files.map {
       readAction {
         createRecentFileViewModel(it, project)
@@ -249,7 +244,7 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
       }
     }
     chooseTargetFlow(hideFilesRequest.filesKind)
-      .emit(BackendRecentFilesEvent.ItemsRemoved(hideFilesRequest.filesToHide.mapNotNull { it.virtualFile() }))
+      .emit(LocalRecentFilesEvent.ItemsRemoved(hideFilesRequest.filesToHide.mapNotNull { it.virtualFile() }))
   }
 
   fun scheduleRehighlightUnopenedFiles() {
@@ -263,7 +258,7 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
     return recentFiles.subtract(openFiles.toSet()).toList()
   }
 
-  private suspend fun collectRecentFiles(filter: RecentFilesBackendRequest.FetchFiles): BackendRecentFilesEvent? {
+  private suspend fun collectRecentFiles(filter: RecentFilesBackendRequest.FetchFiles): LocalRecentFilesEvent? {
     LOG.debug("Switcher started fetching recent files")
     val project = filter.projectId.findProjectOrNull() ?: return null
 
@@ -280,10 +275,10 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
     LOG.debug("Switcher collected ${collectedFiles.size} recent files")
     LOG.trace { "Switcher collected recent files list: ${collectedFiles.joinToString(prefix = "\n", separator = "\n") { it.mainText }}" }
 
-    return BackendRecentFilesEvent.ItemsAdded(collectedFiles)
+    return LocalRecentFilesEvent.ItemsAdded(collectedFiles)
   }
 
-  private fun chooseTargetFlow(fileKind: RecentFileKind): MutableSharedFlow<BackendRecentFilesEvent> {
+  private fun chooseTargetFlow(fileKind: RecentFileKind): MutableSharedFlow<LocalRecentFilesEvent> {
     return when (fileKind) {
       RecentFileKind.RECENTLY_OPENED -> recentlyOpenedFiles
       RecentFileKind.RECENTLY_EDITED -> recentlyEditedFiles
@@ -292,26 +287,26 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
   }
 
   companion object {
-    fun getInstance(project: Project): BackendRecentFileEventsModel {
-      return project.service<BackendRecentFileEventsModel>()
+    fun getInstance(project: Project): RecentFileEventsModel {
+      return project.service<RecentFileEventsModel>()
     }
 
-    suspend fun getInstanceAsync(project: Project): BackendRecentFileEventsModel {
-      return project.serviceAsync<BackendRecentFileEventsModel>()
+    suspend fun getInstanceAsync(project: Project): RecentFileEventsModel {
+      return project.serviceAsync<RecentFileEventsModel>()
     }
   }
 }
 
 private data class OrderChangeEvent(val changeKind: FileChangeKind, val files: List<VirtualFile>)
 
-internal sealed interface BackendRecentFilesEvent {
-  class ItemsUpdated(val batch: List<BackendRecentFilePresentation>, val putOnTop: Boolean) : BackendRecentFilesEvent
-  class ItemsAdded(val batch: List<BackendRecentFilePresentation>) : BackendRecentFilesEvent
-  class ItemsRemoved(val batch: List<VirtualFile>) : BackendRecentFilesEvent
-  class AllItemsRemoved : BackendRecentFilesEvent
+internal sealed interface LocalRecentFilesEvent {
+  class ItemsUpdated(val batch: List<LocalRecentFilePresentation>, val putOnTop: Boolean) : LocalRecentFilesEvent
+  class ItemsAdded(val batch: List<LocalRecentFilePresentation>) : LocalRecentFilesEvent
+  class ItemsRemoved(val batch: List<VirtualFile>) : LocalRecentFilesEvent
+  class AllItemsRemoved : LocalRecentFilesEvent
 }
 
-internal class BackendRecentFilePresentation(
+internal class LocalRecentFilePresentation(
   val mainText: @NlsSafe String,
   val statusText: @NlsSafe String,
   val pathText: @NlsSafe String,
@@ -322,14 +317,14 @@ internal class BackendRecentFilePresentation(
   val virtualFile: VirtualFile,
 )
 
-internal fun BackendRecentFilesEvent.toRpcModel(): RecentFilesEvent = when (this) {
-  is BackendRecentFilesEvent.ItemsUpdated -> RecentFilesEvent.ItemsUpdated(batch.map { it.toRpcModel() }, putOnTop)
-  is BackendRecentFilesEvent.ItemsAdded -> RecentFilesEvent.ItemsAdded(batch.map { it.toRpcModel() })
-  is BackendRecentFilesEvent.ItemsRemoved -> RecentFilesEvent.ItemsRemoved(batch.map { it.rpcId() })
-  is BackendRecentFilesEvent.AllItemsRemoved -> RecentFilesEvent.AllItemsRemoved()
+internal fun LocalRecentFilesEvent.toRpcModel(): RecentFilesEvent = when (this) {
+  is LocalRecentFilesEvent.ItemsUpdated -> RecentFilesEvent.ItemsUpdated(batch.map { it.toRpcModel() }, putOnTop)
+  is LocalRecentFilesEvent.ItemsAdded -> RecentFilesEvent.ItemsAdded(batch.map { it.toRpcModel() })
+  is LocalRecentFilesEvent.ItemsRemoved -> RecentFilesEvent.ItemsRemoved(batch.map { it.rpcId() })
+  is LocalRecentFilesEvent.AllItemsRemoved -> RecentFilesEvent.AllItemsRemoved()
 }
 
-internal fun BackendRecentFilePresentation.toRpcModel(): SwitcherRpcDto {
+internal fun LocalRecentFilePresentation.toRpcModel(): SwitcherRpcDto {
   return SwitcherRpcDto.File(
     mainText = mainText,
     statusText = statusText,

@@ -10,7 +10,7 @@
   <vendor>JetBrains</vendor>
   <content namespace="jetbrains">
     <module name="intellij.platform.recentFiles"/>
-    <module name="intellij.platform.recentFiles.backend"/>
+    <module name="intellij.platform.recentFiles.backend" required-if-available="intellij.platform.backend"/>
     <module name="intellij.platform.recentFiles.frontend"/>
   </content>
 </idea-plugin>

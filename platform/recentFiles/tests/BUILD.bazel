@@ -37,8 +37,8 @@ jvm_library(
         allow_empty = True,
     ),
     associates = [
-        "//platform/recentFiles/backend",
-        "//platform/recentFiles/backend:backend_test_lib",
+        "//platform/recentFiles/shared:recentFiles",
+        "//platform/recentFiles/shared:recentFiles_test_lib",
     ],
     visibility = ["//visibility:public"],
     runtime_deps = [
@@ -51,10 +51,10 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//platform/recentFiles/backend",
+        "//platform/recentFiles/backend:backend_test_lib",
         "//platform/recentFiles/frontend",
         "//platform/recentFiles/frontend:frontend_test_lib",
-        "//platform/recentFiles/shared:recentFiles",
-        "//platform/recentFiles/shared:recentFiles_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/testFramework",

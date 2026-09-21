@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.recentFiles.backend
+package com.intellij.platform.recentFiles.shared
 
-import com.intellij.ide.actions.shouldUseFallbackSwitcher
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.diagnostic.trace
@@ -16,11 +15,12 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import com.intellij.platform.recentFiles.shared.FileChangeKind
 
+// The listener returns null in a process that does not host the model, see `doesProcessHostRecentFilesModel`.
+@Suppress("SplitModeApiUsage")
 internal class RecentFilesVfsListener : AsyncFileListener {
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
-    if (ApplicationManager.getApplication().isUnitTestMode || shouldUseFallbackSwitcher()) return null
+    if (ApplicationManager.getApplication().isUnitTestMode || !doesProcessHostRecentFilesModel()) return null
 
     val removedFiles = collectRemovedFiles(events)
     val movedFiles = collectMovedFiles(events)
@@ -33,13 +33,13 @@ internal class RecentFilesVfsListener : AsyncFileListener {
           val projectFilesToRemove = filterProjectFiles(removedFiles, project)
           if (projectFilesToRemove.isNotEmpty()) {
             thisLogger().trace { "Removed files to apply changes for: ${projectFilesToRemove.joinToString { it.name }}" }
-            BackendRecentFileEventsController.applyRelevantEventsToModel(projectFilesToRemove, FileChangeKind.REMOVED, project)
+            RecentFileEventsController.filesRemoved(project, projectFilesToRemove)
           }
 
           val projectFilesToRename = filterProjectFiles(renamedFiles, project)
           if (projectFilesToRename.isNotEmpty()) {
             thisLogger().trace { "Renamed files to apply changes for: ${projectFilesToRename.joinToString { it.name }}" }
-            BackendRecentFileEventsController.applyRelevantEventsToModel(projectFilesToRename, FileChangeKind.UPDATED, project)
+            RecentFileEventsController.presentationChanged(project, projectFilesToRename)
           }
 
           val projectFilesToMove = filterProjectFiles(movedFiles, project)
@@ -48,7 +48,7 @@ internal class RecentFilesVfsListener : AsyncFileListener {
           if (projectFilesToUpdate.isNotEmpty()) {
             thisLogger().trace { "Moved files to apply changes for: ${projectFilesToMove.joinToString { it.name }}" }
             thisLogger().trace { "Changed content files to apply changes for: ${projectFilesWithChangedContents.joinToString { it.name }}" }
-            BackendRecentFileEventsController.applyRelevantEventsToModel(projectFilesToUpdate, FileChangeKind.UPDATED, project)
+            RecentFileEventsController.presentationChanged(project, projectFilesToUpdate)
           }
         }
       }
