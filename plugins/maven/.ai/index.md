@@ -1,6 +1,6 @@
 # Maven Plugin Coding Agent Guidelines
 
-Routing notes for AI coding agents working under `community/plugins/maven/`. Open the page you need; do not read everything. Repository-wide rules in the top-level `CLAUDE.md` always apply — this file adds Maven-specific overlays only.
+Routing notes for AI coding agents working under `community/plugins/maven/`. Open the page you need; do not read everything. Repository-wide rules in the top-level `AGENTS.md` always apply — this file adds Maven-specific overlays only.
 
 This plugin is indented to provide integration of Maven build tool into IntelliJ IDEA
 

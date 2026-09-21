@@ -51,16 +51,6 @@ const outputs = [
     onlyWhenEdition: "ULTIMATE",
   },
   {
-    name: "CLAUDE.md (ultimate)",
-    tool: "CLAUDE",
-    template: "guide.md",
-    output: "CLAUDE.md",
-    generatedHeader: generatedGuideHeader,
-    generatedHeaderPosition: "after-frontmatter",
-    edition: "ULTIMATE",
-    onlyWhenEdition: "ULTIMATE",
-  },
-  {
     name: "Junie AGENTS.md",
     tool: "JUNIE",
     template: "guide.md",
@@ -268,7 +258,7 @@ const editionRootByEdition = new Map([
  * Paths that `.gitignore` covers. A checkout has one only after the developer writes it, so the
  * reference check must not ask for it.
  */
-const perDeveloperReferencePaths = new Set([".ai/local.md", ".claude/local.md", ".claude/CLAUDE.md"]);
+const perDeveloperReferencePaths = new Set([".ai/local.md"]);
 
 const backtickedTokenPattern = /`([^`\n]+)`/g;
 

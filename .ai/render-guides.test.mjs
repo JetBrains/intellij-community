@@ -139,7 +139,6 @@ describe('render-guides skills', () => {
       '`build/eap/*.py`',
       '`<path-to-iml>/nope`',
       '`.ai/local.md`',
-      '`.claude/CLAUDE.md`',
     ].join(' ')
 
     await assertReferencesResolve(text, 'probe', 'ULTIMATE')

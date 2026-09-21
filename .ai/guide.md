@@ -67,9 +67,8 @@ Never use the `code-search` skill. The search tools below replace it. Recipes, t
 ### Search & navigation (ijproxy preferred)
 
 Use `search_symbol` for a class, a method, or a field. Use `search_file` to find a file by glob. Use `search_text` and `search_regex` for a string, a comment, or another match that is not a symbol.
-<!-- IF_TOOL:CODEX -->
-Codex exposes these as `mcp__ijproxy__<name>`. Inspect the deferred tool catalog (`ALL_TOOLS`) for them before you use a shell or a non-ijproxy fallback.
-<!-- /IF_TOOL:CODEX -->
+
+These are `mcp__ijproxy__<name>`. Look them up in the harness deferred-tool catalog before you use a shell or a non-ijproxy fallback.
 
 ### IDE-backed semantic tools
 
@@ -95,7 +94,3 @@ The harness can list skill *names* only, without a description. When a task look
 ## Individual Preferences
 
 **Local Preferences:** @./.ai/local.md
-
-<!-- IF_TOOL:CLAUDE -->
-{{PARTIAL:claude-only-individual-preferences}}
-<!-- /IF_TOOL:CLAUDE -->

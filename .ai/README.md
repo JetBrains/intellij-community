@@ -6,7 +6,7 @@ This directory (`community/.ai`) contains the templates and documentation source
 bazel run //.ai:render-guides
 ```
 
-The renderer produces guide files (`AGENTS.md`, `CLAUDE.md`, `.junie/AGENTS.md`), skill stubs, OpenCode config/skills, and the harness tool-permission rules.
+The renderer produces guide files (`AGENTS.md`, `.junie/AGENTS.md`), skill stubs, OpenCode config/skills, and the harness tool-permission rules.
 
 ## Quick run
 
@@ -29,7 +29,6 @@ AI_GUIDE_EDITION=ULTIMATE  bazel run //.ai:render-guides
 
 - `AGENTS.md`
 - `community/AGENTS.md` (generated in ultimate workspace)
-- `CLAUDE.md` (ultimate only)
 - `.junie/AGENTS.md`
 - `opencode.json` (from `.mcp.json`)
 - `.opencode/skill/*` (generated from skill sources)
@@ -54,7 +53,6 @@ AI_GUIDE_EDITION=ULTIMATE  bazel run //.ai:render-guides
                              |
                              +--> AGENTS.md
                              +--> community/AGENTS.md (ultimate workspace)
-                             +--> CLAUDE.md (ultimate only)
                              +--> .junie/AGENTS.md
                              +--> opencode.json
                              +--> .opencode/skill/*

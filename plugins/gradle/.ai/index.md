@@ -1,7 +1,7 @@
 # Gradle Plugin Coding Agent Guidelines
 
 Routing notes for AI coding agents working under `community/plugins/gradle/`.
-Repository-wide rules in top-level `AGENTS.md` / `CLAUDE.md` always apply —
+Repository-wide rules in the top-level `AGENTS.md` always apply —
 this file adds Gradle-specific overlays only.
 
 ## Docs
