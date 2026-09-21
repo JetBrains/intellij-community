@@ -12,6 +12,7 @@
     <module name="intellij.platform.backend.observation"/>
     <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.externalSystem"/>
@@ -34,6 +35,7 @@
     <module name="intellij.python.test.env.common"/>
     <module name="intellij.python.test.env.junit5"/>
     <module name="intellij.toml.core"/>
+    <module name="intellij.tools.ide.metrics.benchmark"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

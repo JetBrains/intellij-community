@@ -246,6 +246,8 @@ jvm_library(
         "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
         "//platform/statistics",
         "//platform/statistics:statistics_test_lib",
         "//platform/indexing-api:indexing",
