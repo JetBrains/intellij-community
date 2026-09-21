@@ -4,13 +4,17 @@ package com.intellij.openapi.actionSystem
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.actions.CollapseAllAction
+import com.intellij.ide.actions.ExpandAllAction
 import com.intellij.ide.actions.NonTrivialActionGroup
 import com.intellij.ide.actions.PopupInMainMenuActionGroup
+import com.intellij.ide.projectView.actions.ExpandRecursivelyAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.SkipOperation
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.WriteActionListener
 import com.intellij.openapi.application.WriteIntentReadAction
@@ -21,6 +25,7 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.impl.DockToolWindowAction
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
@@ -236,6 +241,72 @@ class ActionUpdaterTest {
     assertTrue(millis < 500, "The update must not take much more than ~100 ms, actual $millis ms (jobCompleted=$jobCompleted)")
     assertTrue(jobCompleted, "The update job must be synchronously completed by fast-track")
     assertEquals(1, actions.size)
+  }
+
+  @Test
+  fun testFastTrackYieldsToLockProhibition() = timeoutRunBlocking {
+    // scenario: expand on `Dispatchers.UI` with the fast track requested; the group needs the read lock on the EDT
+    // expected: no lock is taken inline in the prohibited frame, and the expansion completes through the dispatched path
+    val group = object : ActionGroup() {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> = arrayOf(EmptyAction.createEmptyAction("", null, true))
+    }
+    val actions = withContext(Dispatchers.UI) {
+      val result = async(start = CoroutineStart.UNDISPATCHED) {
+        Utils.expandActionGroupSuspend(group, PresentationFactory(), DataContext.EMPTY_CONTEXT,
+                                       ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = true)
+      }
+      assertFalse(result.isCompleted, "The fast track must not run inside a frame that forbids the lock")
+      result.await()
+    }
+    assertEquals(1, actions.size)
+  }
+
+  @Test
+  fun testSkippedFastTrackReportsLockRequiringEdtActions() = timeoutRunBlocking {
+    // scenario: expand on `Dispatchers.UI` with the fast track requested; one EDT action needs the read lock, one does not
+    // expected: the fast track is skipped, and only the lock-requiring action class is reported
+    val group = DefaultActionGroup(LockRequiringEdtAction(), LockFreeEdtAction())
+    val actions = withContext(Dispatchers.UI) {
+      Utils.expandActionGroupSuspend(group, PresentationFactory(), DataContext.EMPTY_CONTEXT,
+                                     ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = true)
+    }
+    assertEquals(2, actions.size)
+    val reported = Utils.getReportedEdtLockActions()
+    assertTrue(LockRequiringEdtAction::class.java.name in reported, "The lock-requiring EDT action must be reported, actual $reported")
+    assertFalse(LockFreeEdtAction::class.java.name in reported, "The lock-free EDT action must not be reported, actual $reported")
+  }
+
+  @Test
+  fun testHeaderActionsNeedNoLock() {
+    // scenario: the EDT actions of the tool window header toolbar read Swing or `ToolWindow` state only
+    // expected: they update without the read lock, so a header added under `Dispatchers.UI` takes no lock on the EDT
+    for (action in listOf(DockToolWindowAction(), ExpandAllAction(), ExpandAllAction { null }, CollapseAllAction(), CollapseAllAction { null },
+                          ExpandRecursivelyAction())) {
+      assertEquals(ActionUpdateThread.EDT, action.actionUpdateThread, "$action must update on the EDT")
+      assertFalse(Utils.isLockRequired(action), "$action must update without the read lock")
+    }
+  }
+
+  private class LockRequiringEdtAction : AnAction() {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+    override fun update(e: AnActionEvent) {
+      assertTrue(EDT.isCurrentThreadEdt(), "Must be in EDT")
+      assertTrue(application.isReadAccessAllowed(), "Must be in RA")
+    }
+    override fun actionPerformed(e: AnActionEvent) = Unit
+  }
+
+  private class LockFreeEdtAction : AnAction() {
+    init {
+      templatePresentation.isRWLockRequired = false
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+    override fun update(e: AnActionEvent) {
+      assertTrue(EDT.isCurrentThreadEdt(), "Must be in EDT")
+    }
+    override fun actionPerformed(e: AnActionEvent) = Unit
   }
 
   @Test

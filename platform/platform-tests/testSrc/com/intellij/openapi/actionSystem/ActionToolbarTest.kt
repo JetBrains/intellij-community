@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.util.application
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.RunMethodInEdt
 import com.intellij.testFramework.junit5.TestApplication
@@ -269,6 +271,20 @@ class ActionToolbarTest {
     PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync())
 
     assertNull(toolbar.buttonFor(action).name, "Buttons must not be named unless the action asks for it")
+  }
+
+  @Test
+  @RunMethodInEdt
+  fun testToolbarUpdatesWhereLocksAreProhibited() {
+    // An update started in a frame that forbids the lock takes no lock inline, and still delivers the actions.
+    // The group and the actions keep the default presentation, so the update does need the read lock on the EDT.
+    val toolbar = ActionToolbarImpl("Test", MutableGroup(NamedAction("1", null), NamedAction("2", null)), false)
+    val future = (application as ApplicationEx).withLocksProhibited("the toolbar update must not take the lock inline") {
+      toolbar.updateActionsAsync()
+    }
+    // pumps the queue outside the prohibition, as a real EDT does after the prohibited frame returns
+    PlatformTestUtil.waitForFuture(future)
+    toolbar.assertToolbarTexts("1", "2")
   }
 
   private class NamedAction(text: String, componentName: String?) : AnAction(text, text, null) {

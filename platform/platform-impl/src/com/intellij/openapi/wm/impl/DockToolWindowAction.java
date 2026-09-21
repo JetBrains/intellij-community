@@ -22,6 +22,7 @@ import javax.swing.Icon;
 public final class DockToolWindowAction extends DumbAwareAction /*implements FusAwareAction*/ {
   public DockToolWindowAction() {
     super(ActionsBundle.messagePointer("action.DockToolWindow.text"));
+    getTemplatePresentation().setRWLockRequired(false);
   }
 
   @Override

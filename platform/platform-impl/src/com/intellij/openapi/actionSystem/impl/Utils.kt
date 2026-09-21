@@ -55,6 +55,7 @@ import com.intellij.openapi.application.readActionUndispatched
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.keymap.impl.ActionProcessor
@@ -183,6 +184,9 @@ private val toolbarDispatcher = Dispatchers.Default.limitedParallelism(2, "toolb
 private var lastFailedFastTrackFinishNanos = 0L
 private var lastFailedFastTrackCount = 0
 
+// The action classes already reported by `reportEdtLockActions`, one line per class per IDE session
+private val reportedEdtLockActions: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
 /**
  * The main utility to expand action groups asynchronously (without blocking EDT).
  *
@@ -195,6 +199,8 @@ private var lastFailedFastTrackCount = 0
  *    It is used by **toolbars**, and they often expand on [JComponent.addNotify].
  *    If their action groups are fast to expand, then the UI will appear instantly.
  *    Otherwise, a progress icon is shown while expecting the results.
+ *    The short EDT block takes the read lock, so it runs only where the caller's frame permits the lock.
+ *    A toolbar added from `Dispatchers.UI` skips it and fills asynchronously.
  *
  * 2. Blocking without blocking the UI approach via [Utils.expandActionGroup].
  *    The call blocks the caller but keeps the UI running using secondary EDT loop inside.
@@ -360,7 +366,14 @@ object Utils {
     ThreadingAssertions.assertEventDispatchThread()
     val asyncDataContext = createAsyncDataContext(dataContext)
     checkAsyncDataContext(asyncDataContext, place)
-    val fastTrackTime = getFastTrackMaxTime(fastTrack, place, uiKind is ActionUiKind.Toolbar, true)
+    // The fast track runs the EDT half of the update inline in this frame, under a blocking read action.
+    // A frame that forbids the lock (`Dispatchers.UI`, a paint) cannot host it, so the update takes the
+    // dispatched path, and a toolbar fills in a later event.
+    val lockProhibitedAdvice = ApplicationManager.getApplication().lockProhibitedAdvice
+    val fastTrackTime = if (lockProhibitedAdvice == null) getFastTrackMaxTime(fastTrack, place, uiKind is ActionUiKind.Toolbar, true) else 0
+    if (fastTrack && lockProhibitedAdvice != null) {
+      LOG.debug { "Fast track skipped for '$place': the RW lock is prohibited on this thread" }
+    }
     val edtDispatcher =
       if (fastTrackTime > 0) AltEdtDispatcher.apply { switchToQueue() }
       else if (isLockRequired(group)) lockingEdtCoroutineDispatcher
@@ -374,8 +387,34 @@ object Utils {
     if (fastTrackTime > 0) {
       AltEdtDispatcher.runOwnQueueBlockingAndSwitchBackToEDT(deferred, fastTrackTime)
     }
-    deferred.await()
+    val result = deferred.await()
+    if (fastTrack && lockProhibitedAdvice != null) {
+      reportEdtLockActions(place, updater.edtLockRequiringActions)
+    }
+    result
   }
+
+  /**
+   * Logs each action class that took the read lock on the EDT while the fast track was skipped.
+   * A class is logged once per IDE session, in internal mode or unit-test mode only.
+   */
+  private fun reportEdtLockActions(place: String, classNames: Set<String>) {
+    val application = ApplicationManager.getApplication()
+    if (!application.isInternal && !application.isUnitTestMode) {
+      return
+    }
+    for (name in classNames) {
+      if (reportedEdtLockActions.add(name)) {
+        LOG.warn("$name takes the read lock on the EDT during the update of '$place'. " +
+                 "A toolbar added under Dispatchers.UI waits for it. " +
+                 "Call getTemplatePresentation().setRWLockRequired(false) when the update needs no model access.")
+      }
+    }
+  }
+
+  @TestOnly
+  @JvmStatic
+  fun getReportedEdtLockActions(): Set<String> = reportedEdtLockActions
 
   fun isLockRequired(action: AnAction): Boolean {
     if (action.actionUpdateThread == ActionUpdateThread.EDT

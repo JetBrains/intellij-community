@@ -23,6 +23,10 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 @Experimental
 class ExpandRecursivelyAction : DumbAwareAction(), CustomComponentAction, ActionRemoteBehaviorSpecification.Frontend {
+  init {
+    templatePresentation.isRWLockRequired = false
+  }
+
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun actionPerformed(e: AnActionEvent) {

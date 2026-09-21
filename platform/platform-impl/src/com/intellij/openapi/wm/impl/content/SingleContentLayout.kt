@@ -598,6 +598,10 @@ internal class SingleContentLayout(
   }
 
   private inner class CloseCurrentContentAction : DumbAwareAction(CommonBundle.messagePointer("action.close"), AllIcons.Actions.Cancel) {
+    init {
+      templatePresentation.isRWLockRequired = false
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
       val content = getSingleContentOrNull()
       if (content != null && content.isPinned) {

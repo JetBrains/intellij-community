@@ -145,6 +145,12 @@ internal class ActionUpdater @JvmOverloads constructor(
   private var edtCallsCount: Int = 0 // used only in EDT
   private var edtWaitNanos: Long = 0 // used only in EDT
 
+  /**
+   * The class names of the actions whose EDT block took the read lock in this session.
+   * [Utils.expandActionGroupSuspend] reports them when the fast track was skipped.
+   */
+  internal val edtLockRequiringActions: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
   init {
     checkRecursiveUpdateSession()
   }
@@ -200,6 +206,9 @@ internal class ActionUpdater @JvmOverloads constructor(
           }
         }
       }
+    }
+    if (isRWLockRequired) {
+      opElement.action?.let { edtLockRequiringActions.add(it.javaClass.name) }
     }
     return computeOnEdt(opElement, updateThread == ActionUpdateThread.EDT, isRWLockRequired) {
       call()
@@ -320,7 +329,11 @@ internal class ActionUpdater @JvmOverloads constructor(
         group, dataContext, place, uiKind, presentationFactory, asUpdateSession()) {
         removeUnnecessarySeparators(doExpandActionGroup(group, false))
       }
-      computeOnEdt(group.toString(), isLockRequired(group)) {
+      val isRWLockRequired = isLockRequired(group)
+      if (isRWLockRequired) {
+        edtLockRequiringActions.add(group.javaClass.name)
+      }
+      computeOnEdt(group.toString(), isRWLockRequired) {
         applyPresentationChanges()
       }
       return result
