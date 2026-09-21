@@ -16,10 +16,7 @@
 
   <extensions defaultExtensionNs="com.intellij.platform.ide">
     <welcomeScreenFeatureBackend implementation="com.intellij.java.ide.customization.backend.welcomeScreen.IdeaTerminalFeatureBackend"/>
-    <welcomeScreenFeatureBackend
-      implementation="com.intellij.java.ide.customization.backend.welcomeScreen.IdeaAttachToProcessFeatureBackend"/>
-    <welcomeScreenFeatureBackend implementation="com.intellij.java.ide.customization.backend.welcomeScreen.NewJavaFileFeatureBackend" />
-    <welcomeScreenFeatureBackend implementation="com.intellij.java.ide.customization.backend.welcomeScreen.NewKotlinFileFeatureBackend" />
+    <welcomeScreenFeatureBackend implementation="com.intellij.java.ide.customization.backend.welcomeScreen.NewFileFeatureBackend" />
 
     <welcomeScreenFeatureBackend implementation="com.intellij.java.ide.customization.backend.welcomeScreen.IdeaPluginsWelcomeScreenFeature"/>
 
