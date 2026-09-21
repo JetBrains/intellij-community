@@ -20,7 +20,6 @@ import com.intellij.execution.wsl.WSLCommandLineOptions;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
-import com.intellij.ide.macro.MacroPathConverter;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -33,25 +32,18 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.platform.eel.EelOsFamily;
 import com.intellij.platform.eel.provider.utils.JEelUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 
 public class Tool implements SchemeElement {
@@ -373,9 +365,11 @@ public class Tool implements SchemeElement {
       }
 
       Path exePath = Path.of(exePathStr);
+      // A macro keeps the global path, such as \\wsl.localhost\Ubuntu\home\me\a.txt.
+      // The launch converts the path to the native path of the target. See EelProcessLauncher.
+      // The macro preview then shows the same value as the command line.
       DataContext paramContext = SimpleDataContext
         .builder()
-        .add(MacroManager.PATH_CONVERTER_KEY, new EelMacroPathConverter())
         .add(MacroManager.CONTEXT_PATH, getContextPath(exePath, workDirPath))
         .setParent(dataContext)
         .build();
@@ -391,8 +385,8 @@ public class Tool implements SchemeElement {
         commandLine.getParametersList().prependAll("-a", exePath.toString());
       }
       else {
-        var eelPath = JEelUtils.toEelPath(exePath);
-        commandLine.withExePath(eelPath != null ? eelPath.toString() : exePathStr);
+        // Keep the global path. The target selection reads the program path, and the launch converts it.
+        commandLine.withExePath(exePathStr);
       }
     }
     catch (Macro.ExecutionCancelledException ignored) {
@@ -448,44 +442,6 @@ public class Tool implements SchemeElement {
     // run command in interactive shell so that shell rc files are executed and configure proper environment
     wslOptions.setExecuteCommandInInteractiveShell(true);
     return wsl.patchCommandLine(cmd, project, wslOptions);
-  }
-
-  private static class EelMacroPathConverter implements MacroPathConverter {
-
-    @Override
-    public @NotNull String convertPath(@NotNull String path) {
-      if (!path.isEmpty()) {
-        Path nioPath;
-        try {
-          nioPath = Path.of(path);
-        }
-        catch (InvalidPathException e) {
-          // Guard against macros that return a path list (e.g. ";"-joined on Windows) but are
-          // misclassified as PathMacro instead of PathListMacro. Return the value unchanged so
-          // the External Tool run does not crash.
-          return path;
-        }
-        var eelPath = JEelUtils.toEelPath(nioPath);
-        if (eelPath != null) return eelPath.toString();
-      }
-      return path;
-    }
-
-    @Override
-    public @NotNull String convertPathList(@NotNull String pathList) {
-      List<String> paths = StringUtil.split(pathList, File.pathSeparator);
-      if (paths.isEmpty()) return pathList;
-      var eelPath = JEelUtils.toEelPath(Path.of(paths.getFirst()));
-      if (eelPath == null) return pathList;
-      var separator =  eelPath.getDescriptor().getOsFamily() == EelOsFamily.Windows ? ";" : ":";
-      return Strings.join(ContainerUtil.map(paths, p -> convertPath(p)), separator);
-    }
-  }
-
-  @ApiStatus.Internal
-  @TestOnly
-  public static MacroPathConverter createMacroConverter() {
-    return new EelMacroPathConverter();
   }
 
   private static @Nullable Path getContextPath(@NotNull Path cmd, @Nullable Path workDir) {
