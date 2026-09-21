@@ -35,7 +35,6 @@ internal data class LegacyUvRunConfigurationOptions(
   var checkSync: Boolean = true,
   var uvSdkKey: String? = null,
   var uvArgs: List<String> = emptyList(),
-  var debugJustMyCode: Boolean = false,
 )
 
 /**
@@ -86,7 +85,6 @@ internal fun applyLegacyUvRunConfiguration(element: Element, configuration: Pyth
   // Merged rather than assigned, to keep the environment the configuration set up for itself.
   migrated.envs.putAll(options.env)
   migrated.sdk = options.uvSdkKey?.let { PythonSdkUtil.findSdkByKey(it) }
-  migrated.setDebugJustMyCode(options.debugJustMyCode)
   migrated.useRunTool = true
   // Cast pins the PythonRunConfigurationParams overload, which copies the script fields too, not just the base ones.
   PythonRunConfiguration.copyParams(migrated as PythonRunConfigurationParams, configuration)

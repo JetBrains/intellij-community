@@ -32,6 +32,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
+import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.run.features.PyRunToolData;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -68,7 +69,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   private boolean myUseModuleSdk;
   private boolean myAddContentRoots = true;
   private boolean myAddSourceRoots = true;
-  private boolean myDebugJustMyCode = false;
 
   protected PathMappingSettings myMappingSettings;
   /**
@@ -295,8 +295,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     myAddContentRoots = addContentRoots == null || Boolean.parseBoolean(addContentRoots);
     final String addSourceRoots = JDOMExternalizerUtil.readField(element, "ADD_SOURCE_ROOTS");
     myAddSourceRoots = addSourceRoots == null || Boolean.parseBoolean(addSourceRoots);
-    final String debugJustMyCode = JDOMExternalizerUtil.readField(element, "DEBUG_JUST_MY_CODE");
-    myDebugJustMyCode = debugJustMyCode == null || Boolean.parseBoolean(debugJustMyCode);
 
     if (!mySkipModuleSerialization) {
       getConfigurationModule().readExternal(element);
@@ -333,7 +331,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     JDOMExternalizerUtil.writeField(element, "IS_MODULE_SDK", Boolean.toString(myUseModuleSdk));
     JDOMExternalizerUtil.writeField(element, "ADD_CONTENT_ROOTS", Boolean.toString(myAddContentRoots));
     JDOMExternalizerUtil.writeField(element, "ADD_SOURCE_ROOTS", Boolean.toString(myAddSourceRoots));
-    JDOMExternalizerUtil.writeField(element, "DEBUG_JUST_MY_CODE", Boolean.toString(myDebugJustMyCode));
     if (!mySkipModuleSerialization) {
       getConfigurationModule().writeExternal(element);
     }
@@ -433,7 +430,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     target.setAddSourceRoots(source.shouldAddSourceRoots());
     target.setUseRunTool(source.getUseRunTool());
     target.setRunAsScript(source.getRunAsScript());
-    target.setDebugJustMyCode(source.shouldDebugJustMyCode());
   }
 
   /**
@@ -572,13 +568,13 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   @Override
   @ApiStatus.Internal
   public boolean shouldDebugJustMyCode() {
-    return myDebugJustMyCode;
+    return PyDebuggerSettings.getInstance().isLibrariesFilterEnabled();
   }
 
   @Override
   @ApiStatus.Internal
   public void setDebugJustMyCode(boolean debugJustMyCode) {
-    myDebugJustMyCode = debugJustMyCode;
+    PyDebuggerSettings.getInstance().setLibrariesFilterEnabled(debugJustMyCode);
   }
 
 
