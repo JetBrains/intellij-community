@@ -1,23 +1,18 @@
 package com.intellij.ide.starter.driver.engine
 
 import com.intellij.driver.client.Driver
-import com.intellij.driver.sdk.WaitForException
 import com.intellij.driver.sdk.waitFor
-import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.report.DetailsOnCI
 import com.intellij.ide.starter.runner.IDEHandle
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.utils.catchAll
-import com.intellij.platform.testFramework.teamCity.TeamCityReporter.SyntheticTestKind
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 open class BackgroundRun(
   val startResult: Deferred<IDEStartResult>,
@@ -36,7 +31,7 @@ open class BackgroundRun(
           driverWithoutAwaitedConnection.isConnected
         }
       }.onFailure { t ->
-        driverWithoutAwaitedConnection.closeIdeAndWait(1.minutes)
+        catchAll("Close the IDE that the Driver did not reach") { driverWithoutAwaitedConnection.closeIdeAndWait(1.minutes) }
         throw t
       }
     }
@@ -62,15 +57,12 @@ open class BackgroundRun(
     shutdownHook: Driver.() -> Unit = {},
     block: Driver.() -> R,
   ): IDEStartResult {
-    val ideStartResult: IDEStartResult
-    try {
-      driver.withContext { block(this) }
-    }
-    finally {
-      catchAll { shutdownHook(driver) }
-      ideStartResult = driver.closeIdeAndWait(closeIdeTimeout, takeScreenshot)
-    }
-    return ideStartResult
+    val testError = runCatching { driver.withContext { block(this) } }.exceptionOrNull()
+    catchAll { shutdownHook(driver) }
+    val closeResult = runCatching { driver.closeIdeAndWait(closeIdeTimeout, takeScreenshot) }
+    if (testError == null) return closeResult.getOrThrow()
+    closeResult.exceptionOrNull()?.let(testError::addSuppressed)
+    throw testError
   }
 
   /**
@@ -88,14 +80,15 @@ open class BackgroundRun(
     }.onFailure { e ->
       runCatching {
         driver.exitApplication()
-        waitFor(
-          timeout = 15.seconds,
-          errorMessage = {
-            forceKill()
-            "Error on exit application via Driver"
-          },
-        ) { !driver.isConnected }
+        waitFor(timeout = closeIdeTimeout,
+                errorMessage = { "Error on exit application via Driver" },
+                condition = { !process.isAlive })
+      }.exceptionOrNull()?.let { t ->
+        logError("Error on exit application via Driver", t)
+        forceKill()
+        e.addSuppressed(t)
       }
+      catchAll { driver.close() }
       throw e
     }.onSuccess {
       ideStartResult = driver.waitToClose(closeIdeTimeout)
@@ -109,71 +102,82 @@ open class BackgroundRun(
 
   protected fun Driver.closeIdeAndWait(closeIdeTimeout: Duration, takeScreenshot: Boolean = true): IDEStartResult {
     val logPrefix = "[Closing ${process.id}]"
-    try {
-      if (isConnected) {
-        if (takeScreenshot) {
-          takeScreenshot("beforeIdeClosed")
-        }
+    val connected = runCatching { isConnected }.getOrDefault(false)
+    val exitError = if (connected) {
+      if (takeScreenshot) {
+        catchAll("Take a screenshot before the IDE closes") { takeScreenshot("beforeIdeClosed") }
+      }
+      runCatching {
         exitApplication()
-        waitFor("$logPrefix Driver is not connected", closeIdeTimeout) { !isConnected }
-      }
-      else {
-        error("$logPrefix Driver is not connected, so it can't exit IDE")
+        waitFor(message = "$logPrefix The IDE process ended",
+                timeout = closeIdeTimeout,
+                errorMessage = { "$logPrefix The IDE did not stop after the Driver asked it to exit. ${ideStateDetails()}" },
+                condition = { !process.isAlive })
+      }.exceptionOrNull()?.let { t ->
+        logError("$logPrefix Error on exit application via Driver", t)
+        t.takeIf { process.isAlive }?.also { forceKill() }
       }
     }
-    catch (t: Throwable) {
-      logError("$logPrefix Error on exit application via Driver", t)
+    else if (process.isAlive) {
+      val message = "$logPrefix The Driver has no connection, and the IDE is still alive. ${ideStateDetails()}"
+      logError(message)
       forceKill()
+      IllegalStateException(message)
     }
-    finally {
-      try {
-        if (isConnected) close()
-        waitFor("$logPrefix Process is closed", closeIdeTimeout) { !process.isAlive }
-      }
-      catch (e: Throwable) {
-        logError("$logPrefix Error waiting IDE is closed", e)
-        if (e is WaitForException) {
-          reportIdeDidNotStop()
-        }
-        forceKill()
-        throw IllegalStateException("$logPrefix Process didn't die after waiting for Driver to close IDE", e)
-      }
+    else {
+      logOutput("$logPrefix The IDE stopped before the Driver asked it to exit")
+      null
     }
 
-    @Suppress("TestOnlyProblems")
-    return timeoutRunBlocking(5.minutes) {
-      startResult.await()
-    }
+    catchAll { if (isConnected) close() }
+    return awaitProcessEnd(logPrefix, closeIdeTimeout, exitError)
   }
 
   protected fun Driver.waitToClose(closeIdeTimeout: Duration): IDEStartResult {
     val logPrefix = "[Waiting shutdown ${process.id}]"
-    runCatching {
-      waitFor("$logPrefix Driver is not connected", closeIdeTimeout) { !isConnected }
-    }.onFailure { e ->
+    val exitError = runCatching {
+      waitFor(message = "$logPrefix The IDE process ended",
+              timeout = closeIdeTimeout,
+              errorMessage = { "$logPrefix The IDE did not stop by itself. ${ideStateDetails()}" },
+              condition = { !process.isAlive })
+    }.exceptionOrNull()?.also { e ->
       logError("$logPrefix Error on waiting for application exit", e)
-      takeScreenshot("beforeIdeKilled")
-      if (e is WaitForException) {
-        reportIdeDidNotStop()
-      }
+      catchAll("Take a screenshot before the IDE is killed") { takeScreenshot("beforeIdeKilled") }
       forceKill()
     }
+    return awaitProcessEnd(logPrefix, closeIdeTimeout, exitError)
+  }
+
+  /**
+   * Waits for the IDE process to end, and gives the result of the run.
+   *
+   * [exitError] is the failure of a close that ended in a [forceKill]. The run of a killed IDE reports only that
+   * kill, so the close error is the real one and wins over the result. A close that needed no kill gives `null`.
+   */
+  private fun Driver.awaitProcessEnd(logPrefix: String, closeIdeTimeout: Duration, exitError: Throwable?): IDEStartResult {
     runCatching {
       waitFor("$logPrefix Process is closed", closeIdeTimeout) { !process.isAlive }
     }.onFailure { e ->
       logError("$logPrefix Error waiting IDE is closed", e)
-      if (e is WaitForException) {
-        reportIdeDidNotStop()
-      }
       forceKill()
-      throw IllegalStateException("$logPrefix Process didn't die after waiting for Driver to close IDE", e)
+      val processError = IllegalStateException("$logPrefix Process didn't die after waiting for Driver to close IDE", e)
+      throw exitError?.also { it.addSuppressed(processError) } ?: processError
     }
 
-    @Suppress("SSBasedInspection")
-    return runBlocking {
-      startResult.await()
-    }
+    @Suppress("TestOnlyProblems")
+    val result = runCatching { timeoutRunBlocking(5.minutes) { startResult.await() } }
+    if (exitError == null) return result.getOrThrow()
+    result.exceptionOrNull()?.let(exitError::addSuppressed)
+    throw exitError
   }
+
+  private fun ideStateDetails(): String = runCatching {
+    val artifacts = DetailsOnCI.instance.getLinkToCIArtifacts(runContext.lastIdeReportingData)
+    "State: product=${runContext.testContext.testCase.ideInfo.fullName}, " +
+    "commandLine=${runContext.commandLine(runContext).args.joinToString(" ")}, " +
+    "driverConnected=${driverWithoutAwaitedConnection.isConnected}, processAlive=${process.isAlive}, " +
+    "processId=${process.id}" + (artifacts?.let { ", artifacts=$it" } ?: "")
+  }.getOrElse { "State: not known, ${it.message}" }
 
   open fun forceKill() {
     catchAll("Restrict IDE errors to existing before force kill") {
@@ -181,26 +185,6 @@ open class BackgroundRun(
     }
     logOutput("[Closing ${process.id}] Performing force kill")
     process.kill()
-  }
-
-  private fun reportIdeDidNotStop() {
-    catchAll("Report IDE self-shutdown timeout to CI") {
-      if (!process.isAlive) return@catchAll
-
-      val testContext = runContext.testContext
-      val ideInfo = testContext.testCase.ideInfo
-      val commandLine = runContext.commandLine(runContext).args.joinToString(" ")
-
-      CIServer.instance.reportTestFailure(
-        testName = "IDE did not stop by itself in time: product=${ideInfo.fullName}, commandLine=$commandLine",
-        message = "IDE did not stop by itself in time. " +
-                  "product=${ideInfo.fullName}, commandLine=$commandLine",
-        details = "State: driverConnected=${driverWithoutAwaitedConnection.isConnected}, " +
-                  "processAlive=${process.isAlive}, processId=${process.id}",
-        linkToLogs = DetailsOnCI.instance.getLinkToCIArtifacts(runContext.lastIdeReportingData),
-        kind = SyntheticTestKind.TEST_INFRA_EXCEPTION,
-      )
-    }
   }
 }
 

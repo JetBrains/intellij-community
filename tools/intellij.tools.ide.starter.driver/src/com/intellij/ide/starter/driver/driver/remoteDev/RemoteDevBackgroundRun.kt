@@ -9,8 +9,8 @@ import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.runner.IDEHandle
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.utils.catchAll
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -26,17 +26,19 @@ open class RemoteDevBackgroundRun(
                   process = frontendProcess,
                   runContext = frontendRunContext) {
   override fun <R> useDriverAndCloseIde(closeIdeTimeout: Duration, takeScreenshot: Boolean, shutdownHook: Driver.() -> Unit, block: Driver.() -> R): IDEStartResult {
-    try {
+    val testError = runCatching {
       waitAndPrepareForTest()
-
       driver.withContext { block(this) }
+    }.exceptionOrNull()
+    catchAll { shutdownHook(driver) }
+    val closeError = runCatching { closeIdeAndWait(closeIdeTimeout, takeScreenshot) }.exceptionOrNull()
+    if (testError != null) {
+      closeError?.let(testError::addSuppressed)
+      throw testError
     }
-    finally {
-      catchAll { shutdownHook(driver) }
-      closeIdeAndWait(closeIdeTimeout, takeScreenshot)
-    }
-    @Suppress("SSBasedInspection")
-    return runBlocking {
+    closeError?.let { throw it }
+    @Suppress("TestOnlyProblems")
+    return timeoutRunBlocking(5.minutes) {
       backendRun.startResult.await()
         .also {
           it.frontendStartResult = startResult.await()
@@ -81,12 +83,14 @@ open class RemoteDevBackgroundRun(
   }
 
   override fun closeIdeAndWait(closeIdeTimeout: Duration, takeScreenshot: Boolean) {
-    try {
-      driver.closeIdeAndWait(closeIdeTimeout)
+    val frontendError = runCatching { driver.closeIdeAndWait(closeIdeTimeout) }.exceptionOrNull()
+    val backendError = runCatching { backendRun.closeIdeAndWait(closeIdeTimeout + 30.seconds, false) }.exceptionOrNull()
+    if (frontendError == null) {
+      backendError?.let { throw it }
+      return
     }
-    finally {
-      backendRun.closeIdeAndWait(closeIdeTimeout + 30.seconds, false)
-    }
+    backendError?.let(frontendError::addSuppressed)
+    throw frontendError
   }
 
   override fun forceKill() {
