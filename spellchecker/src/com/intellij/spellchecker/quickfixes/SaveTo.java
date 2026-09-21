@@ -132,7 +132,7 @@ public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction, Du
   private static void acceptWord(String word, @Nullable DictionaryLayer layer, PsiFile file, TextRange wordRange) {
     SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS);
     Project project = file.getProject();
-    SpellCheckerManager.getInstance(project).acceptWordAsCorrect$intellij_spellchecker(word, file.getViewProvider().getVirtualFile(), project, layer);
+    SpellCheckerManager.getInstance(project).acceptWordAsCorrect(word, file.getViewProvider().getVirtualFile(), project, layer);
     removeHighlightersWithExactRange(file.getViewProvider().getDocument(), project, wordRange, SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME);
   }
 

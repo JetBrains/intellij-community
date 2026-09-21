@@ -54,6 +54,7 @@ import com.intellij.spellchecker.state.AppDictionaryState
 import com.intellij.spellchecker.state.DictionaryStateListener
 import com.intellij.spellchecker.state.ProjectDictionaryState
 import com.intellij.spellchecker.util.SpellCheckerBundle
+import com.intellij.spellchecker.util.Strings
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -264,37 +265,42 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
     acceptWordAsCorrect(word = word, file = null, project = project, dictionaryLayer = ProjectDictionaryLayer(project)) // TODO: or default
   }
 
-  internal fun acceptWordAsCorrect(word: String, file: VirtualFile?, project: Project, dictionaryLayer: DictionaryLayer?) {
+  @Internal
+  fun acceptWordAsCorrect(word: String, file: VirtualFile?, project: Project, dictionaryLayer: DictionaryLayer?) {
     if (dictionaryLayer == null) {
       return
     }
 
+    val transformed = transformWord(word)
     val dictionary = dictionaryLayer.dictionary
     if (file != null) {
       WriteCommandAction.writeCommandAction(project)
         .run<RuntimeException> {
           UndoManager.getInstance(project).undoableActionPerformed(object : BasicUndoableAction(file) {
             override fun undo() {
-              removeWordFromDictionary(dictionary, word)
+              removeWordFromDictionary(dictionary, transformed)
             }
 
             override fun redo() {
-              addWordToDictionary(dictionary, word)
+              addWordToDictionary(dictionary, transformed)
             }
           })
         }
     }
-    addWordToDictionary(dictionary, word)
+    addWordToDictionary(dictionary, transformed)
   }
 
-  private fun addWordToDictionary(dictionary: EditableDictionary, word: String) {
+  private fun addWordToDictionary(dictionary: EditableDictionary, transformed: String) {
     val spellChecker = spellChecker ?: return
-    dictionary.addToDictionary(word)
+    dictionary.addToDictionary(transformed)
     if (!spellChecker.isDictionaryLoad(dictionary.name)) {
       spellChecker.addModifiableDictionary(dictionary)
     }
     fireDictionaryChanged(dictionary)
   }
+
+  private fun transformWord(word: String): String =
+    if (Strings.isCapitalized(word) && !Strings.isMixedCase(word)) word.lowercase() else word
 
   private fun removeWordFromDictionary(dictionary: EditableDictionary, transformed: String) {
     dictionary.removeFromDictionary(transformed)

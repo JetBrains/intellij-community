@@ -22,6 +22,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.spellchecker.ProjectDictionaryLayer
+import com.intellij.spellchecker.SpellCheckerManager.Companion.getInstance
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -150,5 +152,11 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
   protected open fun runHighlightTestForFile(file: String) {
     myFixture.configureByFile(file)
     myFixture.checkHighlighting(true, false, false)
+  }
+
+  protected fun saveWord(word: String) {
+    val layer = ProjectDictionaryLayer(project)
+    getInstance(project).acceptWordAsCorrect(word, null, project, layer)
+    Disposer.register(testRootDisposable) { layer.dictionary.removeFromDictionary(word) }
   }
 }

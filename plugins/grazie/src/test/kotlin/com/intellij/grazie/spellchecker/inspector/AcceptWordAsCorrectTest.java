@@ -25,8 +25,9 @@ public class AcceptWordAsCorrectTest extends BasePlatformTestCase {
     final SpellCheckerManager manager = SpellCheckerManager.getInstance(project);
     try {
       assertTrue(manager.hasProblem(word));
-      CommandProcessor.getInstance().executeCommand(project, () -> manager
-        .acceptWordAsCorrect$intellij_spellchecker(word, file, project, new ProjectDictionaryLayer(project)), getName(), null);
+      CommandProcessor.getInstance().executeCommand(
+        project, () -> manager.acceptWordAsCorrect(word, file, project, new ProjectDictionaryLayer(project)), getName(), null
+      );
       assertFalse(manager.hasProblem(word));
     }
     finally {
@@ -80,8 +81,9 @@ public class AcceptWordAsCorrectTest extends BasePlatformTestCase {
     final SpellCheckerManager manager = SpellCheckerManager.getInstance(project);
 
     assertTrue(manager.hasProblem(TYPPO));
-    CommandProcessor.getInstance().executeCommand(project, () -> manager
-      .acceptWordAsCorrect$intellij_spellchecker(TYPPO, file, project, new ProjectDictionaryLayer(project)), getName(), null);
+    CommandProcessor.getInstance().executeCommand(
+      project, () -> manager.acceptWordAsCorrect(TYPPO, file, project, new ProjectDictionaryLayer(project)), getName(), null
+    );
     assertFalse(manager.hasProblem(TYPPO));
 
     instance.undo(FileEditorManager.getInstance(project).getSelectedEditor(file));

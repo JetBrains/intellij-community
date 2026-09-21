@@ -13,8 +13,6 @@ import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.openapi.util.Disposer
 import com.intellij.spellchecker.ProjectDictionaryLayer
-import com.intellij.spellchecker.SpellCheckerManager
-import com.intellij.spellchecker.dictionary.Loader
 import com.intellij.spellchecker.settings.SpellCheckerSettings
 import com.intellij.testFramework.DumbModeTestUtils.runInDumbModeSynchronously
 import com.intellij.testFramework.LightProjectDescriptor
@@ -24,7 +22,6 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.junit.Assert.assertArrayEquals
 import org.junit.jupiter.api.assertDoesNotThrow
-import java.util.function.Consumer
 
 
 class JavaSupportTest : GrazieTestBase() {
@@ -247,15 +244,29 @@ class JavaSupportTest : GrazieTestBase() {
     myFixture.checkHighlighting()
   }
 
-  fun `test capitalized and uppercases words are not treated as typo if lowercase version is in the custom dictionary`() {
-    SpellCheckerManager.getInstance(project).spellChecker!!.loadDictionary(object: Loader {
-      override fun load(consumer: Consumer<String>) {
-        consumer.accept("wexwex")
-      }
-      override fun getName(): String = "TestLoader"
-    })
-
+  fun `test capitalized and uppercases words are not treated as typo if lowercase version is saved to a dictionary`() {
+    saveWord("wexwex")
     myFixture.configureByText("a.java", "// wexwex, Wexwex, WEXWEX")
+    myFixture.checkHighlighting()
+  }
+
+  fun `test capitalized and uppercases words are not treated as typo if capitalized version is saved to a dictionary`() {
+    saveWord("Wexwex")
+    myFixture.configureByText("a.java", "// wexwex, Wexwex, WEXWEX")
+    myFixture.checkHighlighting()
+  }
+
+  fun `test capitalized and uppercases words are treated as typo if mixed case version is saved to a dictionary`() {
+    saveWord("WexWex")
+    myFixture.configureByText("a.java",
+      """
+        // <TYPO descr="Typo: In word 'wexwex'">wexwex</TYPO> 
+        // <TYPO descr="Typo: In word 'wexWex'">wexWex</TYPO> 
+        // <TYPO descr="Typo: In word 'Wexwex'">Wexwex</TYPO> 
+        // <TYPO descr="Typo: In word 'WEXWEX'">WEXWEX</TYPO>
+        // WexWex
+      """.trimIndent()
+    )
     myFixture.checkHighlighting()
   }
 
@@ -264,7 +275,7 @@ class JavaSupportTest : GrazieTestBase() {
     myFixture.configureByText("a.java", "// <TYPO descr=\"Typo: In word 'typppoStatusChanged'\">typppoStatusChanged</TYPO>")
     myFixture.checkHighlighting()
 
-    SpellCheckerManager.getInstance(project).acceptWordAsCorrect("typppoStatusChanged", project)
+    saveWord("typppoStatusChanged")
     myFixture.configureByText("a.java", "// typppoStatusChanged")
     myFixture.checkHighlighting()
   }
@@ -380,7 +391,6 @@ class JavaSupportTest : GrazieTestBase() {
       myFixture.checkHighlighting()
     }
   }
-
 
   private fun doTest(beforeText: String, afterText: String, hint: String) {
     myFixture.configureByText("a.java", beforeText)
