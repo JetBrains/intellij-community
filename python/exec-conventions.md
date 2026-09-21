@@ -92,3 +92,28 @@ assertEquals(binary, (err.exe as Exe.OnEel).eelPath.asNioPath())
 
 `asInstanceOf` also asserts that the value is not null, and a failure reports the
 full chain. A cast reports only a `ClassCastException`.
+
+## Don't catch broadly
+
+* Never catch `Exception`, `Throwable`, or `RuntimeException`. Catch the type that the KDoc
+  of the callee documents with `@throws`.
+* Never use `runCatching`. It also catches `CancellationException` and breaks cancellation.
+* If you cannot avoid a broad catch, rethrow the exception after you handle it.
+* For a failure that the caller can expect, return `PyResult` instead of a throw.
+  See `com.jetbrains.python.errorProcessing.PyResult`.
+* To return an error one level up, use `getOr`. Give it a bundle message, they build a readable chain.
+
+Use these rules for an exception that you caught:
+
+* The user can correct the cause: Report the failure to the user and do not rethrow.
+* The user cannot correct the cause: Do not catch the exception. Let it propagate, because
+  Diogen must record it. Diogen is the internal system that aggregates exceptions.
+
+```kotlin
+// Wrong: this hides the cause and stops cancellation.
+val sdk = runCatching { createSdkForNewEnv(context, ref) }.getOrNull()
+
+// Right: the caller gets the documented failure, with the context added.
+val sdk = createSdkForNewEnv(context, ref)
+  .getOr(PyBundle.message("sdk.configuration.path.cant.create.sdk", python)) { return it }
+```
