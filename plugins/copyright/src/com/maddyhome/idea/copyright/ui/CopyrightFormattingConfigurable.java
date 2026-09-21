@@ -13,6 +13,7 @@ import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 import java.util.Arrays;
@@ -21,7 +22,7 @@ import java.util.Collections;
 
 public class CopyrightFormattingConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll, Configurable.WithEpDependencies {
   private final Project myProject;
-  private TemplateCommentPanel myPanel;
+  private @Nullable TemplateCommentPanel myPanel;
 
   CopyrightFormattingConfigurable(Project project) {
     myProject = project;
@@ -44,11 +45,10 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
 
   @Override
   public JComponent createComponent() {
-    getOrCreateMainPanel();
-    return myPanel.createComponent();
+    return getOrCreateMainPanel().createComponent();
   }
 
-  private TemplateCommentPanel getOrCreateMainPanel() {
+  private @NotNull TemplateCommentPanel getOrCreateMainPanel() {
     if (myPanel == null) {
       myPanel = new TemplateCommentPanel(null, null, myProject);
     }
@@ -57,23 +57,31 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
 
   @Override
   public boolean isModified() {
-    return myPanel.isModified();
+    return myPanel != null && myPanel.isModified();
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    myPanel.apply();
+    if (myPanel != null) {
+      myPanel.apply();
+    }
   }
 
   @Override
   public void reset() {
-    myPanel.reset();
+    if (myPanel != null) {
+      myPanel.reset();
+    }
   }
 
   @Override
   public void disposeUIResources() {
-    myPanel.disposeUIResources();
-    myPanel = null;
+    super.disposeUIResources();
+
+    if (myPanel != null) {
+      myPanel.disposeUIResources();
+      myPanel = null;
+    }
   }
 
   @Override

@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
@@ -39,15 +40,24 @@ import javax.swing.event.EventListenerList
 import kotlin.math.max
 import kotlin.math.min
 
-class TemplateCommentPanel(_fileType: FileType?,
-                           private val parentPanel: TemplateCommentPanel?,
-                           private val project: Project,
-                           vararg locations: @NlsContexts.RadioButton String) : SearchableConfigurable {
+class TemplateCommentPanel(
+  private val _fileType: FileType?,
+  private val parentPanel: TemplateCommentPanel?,
+  private val project: Project,
+  private vararg val locations: @NlsContexts.RadioButton String,
+) : SearchableConfigurable {
 
-  val fileType: FileType
-  private val allowBlock: Boolean
+  private val fileType: FileType = _fileType ?: StdFileTypes.JAVA
+
+  /**
+   * The call loads the [com.intellij.lang.Commenter] class of the language plugin, so it must not run in the constructor.
+   */
+  private val allowBlock: Boolean by lazy { FileTypeUtil.hasBlockComment(fileType) }
+
   private val listeners = EventListenerList()
   private val fileLocations = mutableListOf<JRadioButton>()
+
+  private var panel: DialogPanel? = null
 
   private lateinit var noCopyright: JBRadioButton
   private lateinit var useDefaultSettingsRadioButton: JBRadioButton
@@ -75,7 +85,7 @@ class TemplateCommentPanel(_fileType: FileType?,
 
   private lateinit var preview: JTextArea
 
-  val panel = panel {
+  private fun createPanel(): DialogPanel = panel {
     val updateOverrideListener = ActionListener { updateOverride() }
     val changeEventListener = ActionListener { fireChangeEvent() }
     val updateBoxListener = ActionListener {
@@ -88,7 +98,6 @@ class TemplateCommentPanel(_fileType: FileType?,
         updateBox()
       }
     }
-
 
     buttonsGroup {
       row {
@@ -107,7 +116,7 @@ class TemplateCommentPanel(_fileType: FileType?,
           .applyToComponent { addActionListener(updateOverrideListener) }
           .component
       }
-    }
+    }.visible(_fileType != null)
 
     row {
       panel {
@@ -220,16 +229,11 @@ class TemplateCommentPanel(_fileType: FileType?,
   }
 
   init {
-    if (_fileType == null) {
-      useDefaultSettingsRadioButton.isVisible = false
-      useCustomFormattingOptionsRadioButton.isVisible = false
-      noCopyright.isVisible = false
-    }
-
-    fileType = _fileType ?: StdFileTypes.JAVA
-    allowBlock = FileTypeUtil.hasBlockComment(fileType)
-
-    parentPanel?.addOptionChangeListener(TemplateOptionsPanelListener { updateOverride() })
+    parentPanel?.addOptionChangeListener(TemplateOptionsPanelListener {
+      if (panel != null) {
+        updateOverride()
+      }
+    })
 
     addOptionChangeListener { showPreview(getOptions()) }
   }
@@ -252,10 +256,16 @@ class TemplateCommentPanel(_fileType: FileType?,
   }
 
   override fun createComponent(): JComponent {
-    return panel
+    val result = panel ?: createPanel()
+    panel = result
+    return result
   }
 
   override fun isModified(): Boolean {
+    if (panel == null) {
+      return false
+    }
+
     if (parentPanel == null) {
       return getCopyrightOptions().templateOptions != getOptions()
     }
@@ -264,6 +274,10 @@ class TemplateCommentPanel(_fileType: FileType?,
   }
 
   override fun apply() {
+    if (panel == null) {
+      return
+    }
+
     val options = getCopyrightOptions()
     if (parentPanel == null) {
       options.templateOptions = getOptions()
@@ -274,6 +288,10 @@ class TemplateCommentPanel(_fileType: FileType?,
   }
 
   override fun reset() {
+    if (panel == null) {
+      return
+    }
+
     val options = if (parentPanel == null) getCopyrightOptions().templateOptions
     else getCopyrightOptions().getOptions(fileType.name)
     val isBlock = options.isBlock
@@ -315,6 +333,12 @@ class TemplateCommentPanel(_fileType: FileType?,
   }
 
   private fun getOptions(): LanguageOptions {
+    if (panel == null) {
+      // Another panel can read the options before the dialog shows this page
+      createComponent()
+      reset()
+    }
+
     // If this is a fully custom comment we should really ensure there are no blank lines in the comments outside
     // of a block comment. If there are any blank lines the replacement logic will fall apart.
     val result = LanguageOptions()
@@ -326,7 +350,7 @@ class TemplateCommentPanel(_fileType: FileType?,
       result.setLenBefore(lengthBefore.text.toInt())
       result.setLenAfter(lengthAfter.text.toInt())
     }
-    catch (e: NumberFormatException) {
+    catch (_: NumberFormatException) {
       //leave blank
     }
     result.isBox = box.isSelected
