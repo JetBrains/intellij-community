@@ -41,7 +41,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePreCloseCheck
-import com.intellij.openapi.vfs.findOrCreateFile
+import com.intellij.openapi.vfs.findFile
 import com.intellij.platform.PROJECT_CLOSE_WITH_CONFIRMATION
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -309,13 +309,37 @@ private fun doSaveFilesOnExit(project: Project, files: List<VirtualFile>): Boole
     val manager = FileDocumentManager.getInstance()
 
     for (file in files) {
-      writeFile(manager, file, targetDir.findOrCreateFile(file.name))
+      writeFile(manager, file, createChildFile(targetDir, file))
     }
   })
 
   deleteFilesOnExit(project, files)
 
   return true
+}
+
+private fun createChildFile(targetDir: VirtualFile, file: VirtualFile): VirtualFile {
+  val name = file.name
+  val newFile = targetDir.findFile(name)
+  if (newFile != null) {
+    val ext = file.extension
+    if (ext == null) {
+      return createChildFile(targetDir, name, "")
+    }
+    return createChildFile(targetDir, file.nameWithoutExtension, ".${ext}")
+  }
+  return targetDir.createChildData(targetDir.fileSystem, name)
+}
+
+private fun createChildFile(targetDir: VirtualFile, name: String, extensionWithDot: String): VirtualFile {
+  var index = 1
+  while (true) {
+    val newName = "${name}_${index++}${extensionWithDot}"
+    val newFile = targetDir.findChild(newName)
+    if (newFile == null) {
+      return targetDir.createChildData(targetDir.fileSystem, newName)
+    }
+  }
 }
 
 private fun writeFile(manager: FileDocumentManager, file: VirtualFile, targetFile: VirtualFile) {
