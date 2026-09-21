@@ -1,3 +1,9 @@
+## 42
+
+* `plugins` changed - `classCount`, `classLoadingEdtTime` and `classLoadingBackgroundTime` sum over every class loader of the plugin, not only the main one
+* `plugins` changed - add `loaderCount` and `modules` (`name`, `classCount`, `classLoadingEdtTime` per class loader, sorted by `classCount` descending)
+* `plugins` sorted by `classCount` descending
+
 ## 41
 
 * add `additionalMetrics` property where `memory` and `gc` are stored for unified reporting

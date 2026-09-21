@@ -7,6 +7,7 @@ import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.ThreadNameManager
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.Logger
@@ -25,6 +26,8 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Base64
+import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.concurrent.TimeUnit
 
 private val logger: Logger
@@ -199,18 +202,55 @@ private fun writeServiceStats(writer: JsonGenerator) {
   }
 
   writer.array("plugins") {
-    for (plugin in pluginSet.enabledPlugins) {
-      val classLoader = plugin.pluginClassLoader as? PluginAwareClassLoader ?: continue
-      if (classLoader.loadedClassCount == 0L) {
-        continue
-      }
-
+    for (stat in collectPluginClassLoadingStats(pluginSet.getEnabledModules())) {
       writer.obj {
-        writer.writeStringField("id", plugin.pluginId.idString)
-        writer.writeNumberField("classCount", classLoader.loadedClassCount)
-        writer.writeNumberField("classLoadingEdtTime", TimeUnit.NANOSECONDS.toMillis(classLoader.edtTime))
-        writer.writeNumberField("classLoadingBackgroundTime", TimeUnit.NANOSECONDS.toMillis(classLoader.backgroundTime))
+        writer.writeStringField("id", stat.pluginId)
+        writer.writeNumberField("classCount", stat.classCount)
+        writer.writeNumberField("classLoadingEdtTime", TimeUnit.NANOSECONDS.toMillis(stat.edtTime))
+        writer.writeNumberField("classLoadingBackgroundTime", TimeUnit.NANOSECONDS.toMillis(stat.backgroundTime))
+        writer.writeNumberField("loaderCount", stat.loaders.size)
+        writer.array("modules") {
+          for (loader in stat.loaders.filter { it.loadedClassCount > 0L }.sortedByDescending { it.loadedClassCount }) {
+            writer.obj {
+              writer.writeStringField("name", loader.moduleId ?: stat.pluginId)
+              writer.writeNumberField("classCount", loader.loadedClassCount)
+              writer.writeNumberField("classLoadingEdtTime", TimeUnit.NANOSECONDS.toMillis(loader.edtTime))
+            }
+          }
+        }
       }
     }
   }
+}
+
+private class PluginClassLoadingStat(@JvmField val pluginId: String) {
+  @JvmField val loaders: MutableList<PluginAwareClassLoader> = ArrayList()
+
+  val classCount: Long
+    get() = loaders.sumOf { it.loadedClassCount }
+
+  val edtTime: Long
+    get() = loaders.sumOf { it.edtTime }
+
+  val backgroundTime: Long
+    get() = loaders.sumOf { it.backgroundTime }
+}
+
+/**
+ * Groups the class loaders of [modules] by plugin id.
+ * A loader that several modules share is counted once.
+ * The result holds only plugins with at least one loaded class, sorted by class count in descending order.
+ */
+private fun collectPluginClassLoadingStats(modules: List<PluginModuleDescriptor>): List<PluginClassLoadingStat> {
+  val seen = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
+  val byPlugin = LinkedHashMap<String, PluginClassLoadingStat>()
+  for (module in modules) {
+    val classLoader = module.pluginClassLoader ?: continue
+    if (!seen.add(classLoader)) {
+      continue
+    }
+    val pluginClassLoader = classLoader as? PluginAwareClassLoader ?: continue
+    byPlugin.computeIfAbsent(pluginClassLoader.pluginId.idString) { PluginClassLoadingStat(it) }.loaders.add(pluginClassLoader)
+  }
+  return byPlugin.values.filter { it.classCount > 0L }.sortedByDescending { it.classCount }
 }
