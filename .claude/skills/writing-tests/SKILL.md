@@ -119,15 +119,15 @@ fun testWithSystemProperty() { ... }
 
 ## Coroutines and UI Tests
 
-Use `com.intellij.testFramework.common.timeoutRunBlocking` as the coroutine boundary and add a 30-second JUnit
-`@Timeout`. `timeoutRunBlocking` has a 10-second default timeout, so a suspended test fails quickly with a coroutine-aware thread dump.
+Use `com.intellij.testFramework.common.timeoutRunBlocking` as the coroutine boundary. It has a 10-second default timeout, so a
+suspended test fails quickly with a coroutine-aware thread dump. Do not add a JUnit `@Timeout` to such a test. The two timeouts
+duplicate each other, and the `@Timeout` gives a worse diagnostic.
 
 Keep setup, background work, and assertions off the UI thread. Move only Swing operations into a small
 `withContext(Dispatchers.UI)` block:
 
 ```kotlin
 @Test
-@Timeout(30)
 fun updatesLabel(): Unit = timeoutRunBlocking {
   val value = loadValue()
   val actual = withContext(Dispatchers.UI) {
