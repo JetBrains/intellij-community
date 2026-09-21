@@ -68,7 +68,11 @@ internal class UnifiedPluginsPageRealRowsTest {
     assertThat(factory.row(PluginSectionId.Installed, firstItem)).isSameAs(firstRow)
     assertThat(factory.row(PluginSectionId.Installed, secondItem)).isSameAs(secondRow)
 
-    controller.updateSection(section(PluginSectionId.Installed, secondItem, firstItem))
+    controller.replaceSourceState(
+      query = PluginsQueryState("reordered", "reordered", revision = 1),
+      updatedSections = listOf(section(PluginSectionId.Installed, secondItem, firstItem)),
+      mayEstablishSelection = false,
+    )
     view.render(controller.state.value)
 
     assertThat(factory.row(PluginSectionId.Installed, firstItem)).isSameAs(firstRow)
@@ -441,7 +445,11 @@ internal class UnifiedPluginsPageRealRowsTest {
       scrollToComponent(scrollPane, factory.row(PluginSectionId.Installed, items[9]).component)
 
       val reversedItems = items.reversed()
-      controller.updateSection(section(PluginSectionId.Installed, *reversedItems.toTypedArray()))
+      controller.replaceSourceState(
+        query = PluginsQueryState("reordered", "reordered", revision = 1),
+        updatedSections = listOf(section(PluginSectionId.Installed, *reversedItems.toTypedArray())),
+        mayEstablishSelection = false,
+      )
       view.render(controller.state.value)
       val visibleItems = reversedItems.filter { item ->
         val component = factory.row(PluginSectionId.Installed, item).component
@@ -468,6 +476,61 @@ internal class UnifiedPluginsPageRealRowsTest {
       assertThat(componentOffset(scrollPane, anchor)).isEqualTo(initialOffset)
       view.close()
     }
+
+  @Test
+  fun `same query refreshes preserve real-row order and visible offset`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val factory = RecordingRowFactory()
+    val items = (1..20).map { item("installed.$it") }
+    val controller = UnifiedPluginsPageController(
+      initialSections = listOf(section(PluginSectionId.Installed, *items.toTypedArray())),
+    )
+    controller.setSectionExpanded(PluginSectionId.Installed, true)
+    val view = createView(factory)
+    view.render(controller.state.value)
+    prepareForScrolling(view)
+
+    val scrollPane = componentsOfType(view.component, JBScrollPane::class.java).single()
+    scrollToComponent(scrollPane, factory.row(PluginSectionId.Installed, items[9]).component)
+    val expectedOrder = items.map { PluginOccurrenceId(PluginSectionId.Installed, it.pluginId) }
+    val sourceOrders = listOf(
+      items.reversed(),
+      items.drop(5) + items.take(5),
+      items.filterIndexed { index, _ -> index % 2 == 0 } + items.filterIndexed { index, _ -> index % 2 != 0 },
+    )
+    val heightChanges = listOf(items[7] to ROW_HEIGHT * 3, items[8] to ROW_HEIGHT * 2, items[7] to ROW_HEIGHT)
+
+    sourceOrders.zip(heightChanges).forEachIndexed { index, (sourceOrder, heightChange) ->
+      val viewRect = scrollPane.viewport.viewRect
+      val anchor = items.asSequence()
+        .map { item -> factory.row(PluginSectionId.Installed, item).component }
+        .map { component ->
+          component to SwingUtilities.convertRectangle(
+            component,
+            Rectangle(0, 0, component.width, component.height),
+            scrollPane.viewport.view,
+          )
+        }
+        .filter { (_, bounds) -> bounds.intersects(viewRect) }
+        .minBy { (_, bounds) -> bounds.y }
+        .first
+      val anchorOffset = componentOffset(scrollPane, anchor)
+      val (resizedItem, height) = heightChange
+      factory.row(PluginSectionId.Installed, resizedItem).setHeight(height)
+      val updatedItems = sourceOrder.map { item ->
+        if (item.pluginId == resizedItem.pluginId) item.copy(contentRevision = index + 1L) else item
+      }
+      controller.replaceSourceState(
+        query = PluginsQueryState(),
+        updatedSections = listOf(section(PluginSectionId.Installed, *updatedItems.toTypedArray())),
+        mayEstablishSelection = false,
+      )
+      view.render(controller.state.value)
+
+      assertThat(factory.renderedOccurrences).containsExactlyElementsOf(expectedOrder)
+      assertThat(componentOffset(scrollPane, anchor)).isEqualTo(anchorOffset)
+    }
+    view.close()
+  }
 
   @Test
   fun `filtered one-row sections do not shrink real rows below preferred height`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {

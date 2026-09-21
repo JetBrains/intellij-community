@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.unified
 
+import com.intellij.openapi.extensions.PluginId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +32,7 @@ internal class UnifiedPluginsPageController(
   private var initialSelectionPending = true
   private var pendingQuerySelectionRevision: Long? = null
   private val priorityBundledCategories = priorityBundledCategories.toSet()
+  private val sectionItemOrders = HashMap<PluginSectionItemOrderKey, PluginSectionItemOrder>()
 
   private val mutableState = MutableStateFlow(
     UnifiedPluginsPageState(
@@ -96,6 +98,7 @@ internal class UnifiedPluginsPageController(
         return
       }
       sectionInsertionOrder.remove(sectionId)
+      sectionItemOrders.keys.removeAll { it.sectionId == sectionId }
       publish(establishSelection = true)
     }
   }
@@ -190,6 +193,7 @@ internal class UnifiedPluginsPageController(
     }
     query = updatedQuery
     if (normalizedQueryChanged) {
+      sectionItemOrders.clear()
       selectedOccurrences = emptyList()
       initialSelectionPending = true
       pendingQuerySelectionRevision = updatedQuery.revision
@@ -247,8 +251,53 @@ internal class UnifiedPluginsPageController(
       .asSequence()
       .filter { section -> isVisibleForCurrentQuery(section, selectedRepositoryIds) }
       .map(::orderBundledItems)
+      .map(::stabilizeItemOrder)
       .sortedWith(compareBy({ section: PluginSectionState -> sectionRank(section.id) }, { sectionInsertionOrder.getValue(it.id) }))
       .toList()
+  }
+
+  private fun stabilizeItemOrder(section: PluginSectionState): PluginSectionState {
+    val itemsById = LinkedHashMap<PluginId, PluginItemState>()
+    for (item in section.items) {
+      if (itemsById.put(item.pluginId, item) != null) {
+        sectionItemOrders.keys.removeAll { it.sectionId == section.id }
+        return section
+      }
+    }
+    val mode = if (section.id == PluginSectionId.Bundled && query.normalizedQuery.isEmpty() && section.id in expandedSections) {
+      PluginSectionItemOrderMode.ExpandedBundled
+    }
+    else {
+      PluginSectionItemOrderMode.Default
+    }
+    val orderKey = PluginSectionItemOrderKey(section.id, mode)
+    val categories = if (mode == PluginSectionItemOrderMode.ExpandedBundled) {
+      section.items.associate { item -> item.pluginId to bundledPluginCategory(item.searchCategory) }
+    }
+    else {
+      emptyMap()
+    }
+    val previousOrder = sectionItemOrders[orderKey]
+    if (previousOrder == null || previousOrder.hasChangedCategory(categories)) {
+      sectionItemOrders[orderKey] = PluginSectionItemOrder(section.items.map(PluginItemState::pluginId), categories)
+      return section
+    }
+
+    val previousIds = previousOrder.pluginIds.toHashSet()
+    val newItems = section.items.filter { it.pluginId !in previousIds }
+    val updatedCategories = previousOrder.bundledCategories + categories
+    val updatedPluginIds = if (mode == PluginSectionItemOrderMode.ExpandedBundled) {
+      appendNewBundledPluginIds(previousOrder.pluginIds, newItems.map(PluginItemState::pluginId), updatedCategories)
+    }
+    else {
+      previousOrder.pluginIds + newItems.map(PluginItemState::pluginId)
+    }
+    val orderedItems = updatedPluginIds.mapNotNull(itemsById::get)
+    sectionItemOrders[orderKey] = PluginSectionItemOrder(
+      pluginIds = updatedPluginIds,
+      bundledCategories = updatedCategories,
+    )
+    return if (orderedItems == section.items) section else section.copy(items = orderedItems)
   }
 
   private fun orderBundledItems(section: PluginSectionState): PluginSectionState {
@@ -312,7 +361,7 @@ internal class UnifiedPluginsPageController(
 
   private fun normalizeSelection(occurrenceIds: List<PluginOccurrenceId>): List<PluginOccurrenceId> {
     val preferredMode = occurrenceIds.lastOrNull()?.let { pluginDetailsMode(it.sectionId) } ?: return emptyList()
-    val pluginIds = HashSet<com.intellij.openapi.extensions.PluginId>()
+    val pluginIds = HashSet<PluginId>()
     return occurrenceIds.filter { occurrenceId ->
       pluginDetailsMode(occurrenceId.sectionId) == preferredMode && pluginIds.add(occurrenceId.pluginId)
     }
@@ -338,6 +387,49 @@ internal class UnifiedPluginsPageController(
     )
 
     val REQUIRED_SECTION_IDS: Set<PluginSectionId> = DEFAULT_SECTIONS.mapTo(HashSet(), PluginSectionState::id)
+  }
+}
+
+private enum class PluginSectionItemOrderMode {
+  Default,
+  ExpandedBundled,
+}
+
+private data class PluginSectionItemOrderKey(
+  val sectionId: PluginSectionId,
+  val mode: PluginSectionItemOrderMode,
+)
+
+private data class PluginSectionItemOrder(
+  val pluginIds: List<PluginId>,
+  val bundledCategories: Map<PluginId, String>,
+) {
+  fun hasChangedCategory(updatedCategories: Map<PluginId, String>): Boolean {
+    return bundledCategories.any { (pluginId, category) ->
+      updatedCategories[pluginId]?.let { it != category } == true
+    }
+  }
+}
+
+private fun appendNewBundledPluginIds(
+  retainedPluginIds: List<PluginId>,
+  newPluginIds: List<PluginId>,
+  categories: Map<PluginId, String>,
+): List<PluginId> {
+  val newPluginIdsByCategory = LinkedHashMap<String, MutableList<PluginId>>()
+  for (pluginId in newPluginIds) {
+    newPluginIdsByCategory.getOrPut(categories.getValue(pluginId)) { ArrayList() }.add(pluginId)
+  }
+  return buildList(retainedPluginIds.size + newPluginIds.size) {
+    retainedPluginIds.forEachIndexed { index, pluginId ->
+      add(pluginId)
+      val category = categories.getValue(pluginId)
+      val nextCategory = retainedPluginIds.getOrNull(index + 1)?.let(categories::getValue)
+      if (category != nextCategory) {
+        newPluginIdsByCategory.remove(category)?.let(::addAll)
+      }
+    }
+    newPluginIdsByCategory.values.forEach(::addAll)
   }
 }
 

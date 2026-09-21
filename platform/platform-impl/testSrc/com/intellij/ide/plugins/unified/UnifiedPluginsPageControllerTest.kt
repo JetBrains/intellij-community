@@ -393,6 +393,187 @@ internal class UnifiedPluginsPageControllerTest {
   }
 
   @Test
+  fun `query revision keeps local row order across repeated refreshes`() {
+    val installedFirstError = categoryItem("installed.first.error", "Installed", enabled = false, hasErrors = true)
+    val installedSecondError = categoryItem("installed.second.error", "Installed", enabled = false, hasErrors = true)
+    val installedHealthy = categoryItem("installed.healthy", "Installed", enabled = false)
+    val bundledFirstError = categoryItem("bundled.first.error", "First", enabled = false, hasErrors = true)
+    val bundledSecondError = categoryItem("bundled.second.error", "Second", enabled = false, hasErrors = true)
+    val bundledHealthy = categoryItem("bundled.healthy", "Healthy", enabled = false)
+    val controller = UnifiedPluginsPageController(
+      initialSections = listOf(
+        PluginSectionState(
+          PluginSectionId.Installed,
+          items = listOf(installedFirstError, installedSecondError, installedHealthy),
+        ),
+        PluginSectionState(
+          PluginSectionId.Bundled,
+          items = listOf(bundledFirstError, bundledSecondError, bundledHealthy),
+        ),
+      ),
+    )
+    val installedOrder = controller.state.value.section(PluginSectionId.Installed).items.map(PluginItemState::pluginId)
+    val collapsedBundledOrder = controller.state.value.section(PluginSectionId.Bundled).items.map(PluginItemState::pluginId)
+
+    controller.replaceSourceState(
+      query = PluginsQueryState(),
+      updatedSections = listOf(
+        PluginSectionState(
+          PluginSectionId.Installed,
+          items = listOf(installedSecondError, installedHealthy, installedFirstError.withoutErrors()),
+        ),
+        PluginSectionState(
+          PluginSectionId.Bundled,
+          items = listOf(bundledSecondError, bundledHealthy, bundledFirstError.withoutErrors()),
+        ),
+      ),
+      mayEstablishSelection = false,
+    )
+
+    assertThat(controller.state.value.section(PluginSectionId.Installed).items.map(PluginItemState::pluginId))
+      .containsExactlyElementsOf(installedOrder)
+    assertThat(controller.state.value.section(PluginSectionId.Bundled).items.map(PluginItemState::pluginId))
+      .containsExactlyElementsOf(collapsedBundledOrder)
+
+    controller.replaceSourceState(
+      query = PluginsQueryState(),
+      updatedSections = listOf(
+        PluginSectionState(
+          PluginSectionId.Installed,
+          items = listOf(installedSecondError, installedHealthy, installedFirstError.withoutErrors()),
+        ),
+        PluginSectionState(
+          PluginSectionId.Bundled,
+          items = listOf(bundledSecondError, bundledHealthy, bundledFirstError.withoutErrors()),
+        ),
+      ),
+      mayEstablishSelection = false,
+    )
+
+    assertThat(controller.state.value.section(PluginSectionId.Installed).items.map(PluginItemState::pluginId))
+      .containsExactlyElementsOf(installedOrder)
+    assertThat(controller.state.value.section(PluginSectionId.Bundled).items.map(PluginItemState::pluginId))
+      .containsExactlyElementsOf(collapsedBundledOrder)
+
+    controller.replaceSourceState(
+      query = PluginsQueryState(),
+      updatedSections = listOf(
+        PluginSectionState(
+          PluginSectionId.Installed,
+          items = listOf(installedHealthy, installedFirstError.withoutErrors(), installedSecondError.withoutErrors()),
+        ),
+        PluginSectionState(
+          PluginSectionId.Bundled,
+          items = listOf(bundledHealthy, bundledFirstError.withoutErrors(), bundledSecondError.withoutErrors()),
+        ),
+      ),
+      mayEstablishSelection = false,
+    )
+
+    assertThat(controller.state.value.section(PluginSectionId.Installed).items.map(PluginItemState::pluginId))
+      .containsExactlyElementsOf(installedOrder)
+    assertThat(controller.state.value.section(PluginSectionId.Bundled).items.map(PluginItemState::pluginId))
+      .containsExactlyElementsOf(collapsedBundledOrder)
+
+    controller.setSectionExpanded(PluginSectionId.Bundled, true)
+    val expandedBundledOrder = controller.state.value.section(PluginSectionId.Bundled).items.map(PluginItemState::pluginId)
+    controller.replaceSourceState(
+      query = PluginsQueryState(),
+      updatedSections = listOf(
+        PluginSectionState(
+          PluginSectionId.Bundled,
+          items = listOf(bundledFirstError, bundledSecondError, bundledHealthy),
+        ),
+      ),
+      mayEstablishSelection = false,
+    )
+
+    assertThat(controller.state.value.section(PluginSectionId.Bundled).items.map(PluginItemState::pluginId))
+      .containsExactlyElementsOf(expandedBundledOrder)
+  }
+
+  @Test
+  fun `new plugins append, returning plugins resume, and a new query resets order`() {
+    val first = item("first.plugin")
+    val second = item("second.plugin")
+    val added = item("added.plugin")
+    val sortedQuery = PluginsQueryState("/sortBy:name", "/sortBy:name", revision = 1)
+    val controller = UnifiedPluginsPageController(
+      initialSections = listOf(PluginSectionState(PluginSectionId.Installed, items = listOf(first, second))),
+      initialQuery = sortedQuery,
+    )
+
+    controller.replaceSourceState(
+      query = sortedQuery,
+      updatedSections = listOf(
+        PluginSectionState(PluginSectionId.Installed, items = listOf(added, second, first)),
+      ),
+      mayEstablishSelection = false,
+    )
+    assertThat(controller.state.value.section(PluginSectionId.Installed).items.map(PluginItemState::pluginId))
+      .containsExactly(first.pluginId, second.pluginId, added.pluginId)
+
+    controller.replaceSourceState(
+      query = sortedQuery,
+      updatedSections = listOf(PluginSectionState(PluginSectionId.Installed, items = listOf(added, second))),
+      mayEstablishSelection = false,
+    )
+    controller.replaceSourceState(
+      query = sortedQuery,
+      updatedSections = listOf(PluginSectionState(PluginSectionId.Installed, items = listOf(first, added, second))),
+      mayEstablishSelection = false,
+    )
+    assertThat(controller.state.value.section(PluginSectionId.Installed).items.map(PluginItemState::pluginId))
+      .containsExactly(first.pluginId, second.pluginId, added.pluginId)
+
+    val nextQuery = PluginsQueryState("/sortBy:downloads", "/sortBy:downloads", revision = 2)
+    controller.replaceSourceState(
+      query = nextQuery,
+      updatedSections = listOf(PluginSectionState(PluginSectionId.Installed, items = listOf(first, added, second))),
+      mayEstablishSelection = false,
+    )
+    assertThat(controller.state.value.section(PluginSectionId.Installed).items.map(PluginItemState::pluginId))
+      .containsExactly(first.pluginId, added.pluginId, second.pluginId)
+  }
+
+  @Test
+  fun `expanded Bundled appends new plugins inside their category`() {
+    val firstTool = categoryItem("first.tool", "Tools", enabled = false)
+    val secondTool = categoryItem("second.tool", "Tools", enabled = false)
+    val language = categoryItem("language", "Languages", enabled = false)
+    val addedTool = categoryItem("added.tool", "Tools", enabled = false)
+    val addedTheme = categoryItem("added.theme", "Themes", enabled = false)
+    val controller = UnifiedPluginsPageController(
+      initialSections = listOf(
+        PluginSectionState(PluginSectionId.Bundled, items = listOf(firstTool, secondTool, language)),
+      ),
+    )
+    controller.setSectionExpanded(PluginSectionId.Bundled, true)
+
+    controller.replaceSourceState(
+      query = PluginsQueryState(),
+      updatedSections = listOf(
+        PluginSectionState(
+          PluginSectionId.Bundled,
+          items = listOf(addedTheme, addedTool, language, secondTool, firstTool),
+        ),
+      ),
+      mayEstablishSelection = false,
+    )
+
+    assertThat(controller.state.value.section(PluginSectionId.Bundled).items.map(PluginItemState::pluginId))
+      .containsExactly(firstTool.pluginId, secondTool.pluginId, addedTool.pluginId, language.pluginId, addedTheme.pluginId)
+
+    controller.setSectionExpanded(PluginSectionId.Bundled, false)
+    assertThat(controller.state.value.section(PluginSectionId.Bundled).items.map(PluginItemState::pluginId))
+      .containsExactly(firstTool.pluginId, secondTool.pluginId, language.pluginId, addedTheme.pluginId, addedTool.pluginId)
+
+    controller.setSectionExpanded(PluginSectionId.Bundled, true)
+    assertThat(controller.state.value.section(PluginSectionId.Bundled).items.map(PluginItemState::pluginId))
+      .containsExactly(firstTool.pluginId, secondTool.pluginId, addedTool.pluginId, language.pluginId, addedTheme.pluginId)
+  }
+
+  @Test
   fun `Bundled category action includes plugins beyond the display limit`() {
     val items = (1..1_001).map { index ->
       PluginItemState(PluginId.getId("bundled.$index"), "Bundled $index", searchCategory = "Tools")
@@ -687,6 +868,10 @@ internal class UnifiedPluginsPageControllerTest {
       ),
       searchCategory = category,
     )
+  }
+
+  private fun PluginItemState.withoutErrors(): PluginItemState {
+    return copy(rowInput = requireNotNull(rowInput).copy(errors = emptyList()))
   }
 
   private fun occurrence(sectionId: PluginSectionId, pluginId: String): PluginOccurrenceId {

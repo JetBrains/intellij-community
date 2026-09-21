@@ -255,12 +255,22 @@ This specification covers the page structure, section model, search, source load
     `search renders placeholder and ordered focusable controls`
   )
 
-- Relevance must place local plugin errors before healthy local plugins, then use the existing name and description match scores.
+- The first result for a query revision must set the plugin order in each section.
+- Relevance must initially place local plugin errors before healthy plugins, then use the existing match scores.
+- Later results in the same query revision must retain the relative order of plugins that remain in a section.
+- A new plugin must append after existing plugins. A plugin that leaves and returns must resume its retained position.
+- In expanded Bundled, a new plugin must append in its category. A new category must append after existing categories.
+- The first collapsed and expanded Bundled results may set separate orders to keep categories together.
 - An explicit sort must override local error priority and control Marketplace ordering. Custom repositories must retain their source order.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
     `local relevance prioritizes errors while explicit sorts override that priority`;
     `installed relevance uses legacy name and description match scores`;
     `sort controls primary Marketplace without suppressing cached filtering`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (
+    `query revision keeps local row order across repeated refreshes`;
+    `new plugins append, returning plugins resume, and a new query resets order`;
+    `expanded Bundled appends new plugins inside their category`
   )
 
 - Search history must persist across page views.
@@ -464,7 +474,8 @@ Untested: No focused test verifies Shift-selection or Select All across sections
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
     `installing row height change preserves a later visible occurrence`;
-    `reordered real rows preserve the top visible occurrence after a height change`
+    `reordered real rows preserve the top visible occurrence after a height change`;
+    `same query refreshes preserve real-row order and visible offset`
   )
 
 ## Presentation
@@ -561,8 +572,8 @@ Untested: No focused test verifies that Internal ignores the legacy Show All que
   )
 
 - With an empty query, a priority provider must move its exact Bundled category before healthy nonpriority categories.
-- Error items must remain before healthy priority items.
-- An expanded Bundled section must keep each category together and place error categories before healthy categories.
+- The initial Bundled order must keep error items before healthy priority items.
+- The initial expanded Bundled order must keep each category together and place error categories before healthy categories.
 - A promotion panel must appear after its category header only while Bundled is expanded.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (
     `Bundled category priority applies without a query and matches exact case`;
