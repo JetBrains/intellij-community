@@ -77,6 +77,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiPackageStatement;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiPatternVariable;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiReceiverParameter;
 import com.intellij.psi.PsiReferenceExpression;
@@ -356,6 +357,11 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       public void visitAnnotation(@NotNull PsiAnnotation annotation) {
         NullabilityAnnotationWrapper wrapper = NullabilityAnnotationWrapper.from(annotation);
         if (wrapper == null) return;
+        if (isWrittenInPattern(annotation, wrapper)) {
+          reportProblem(holder, annotation, new RemoveAnnotationQuickFix(annotation, wrapper.listOwner()),
+                        "inspection.nullable.problems.at.pattern");
+          return;
+        }
         PsiType targetType = wrapper.targetType();
         PsiType type = wrapper.type();
         PsiModifierListOwner listOwner = wrapper.listOwner();
@@ -448,6 +454,15 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
             }
           }
         }
+      }
+
+      /**
+       * A pattern cannot check the nullability of the value that it matches, so every nullability written inside a pattern
+       * is ignored. See {@link JavaTypeNullabilityUtil#isWrittenInPatternType}. The annotation can sit in the pattern type,
+       * including a type argument of it, or in the modifier list of the pattern variable.
+       */
+      private static boolean isWrittenInPattern(@NotNull PsiAnnotation annotation, @NotNull NullabilityAnnotationWrapper wrapper) {
+        return JavaTypeNullabilityUtil.isWrittenInPatternType(annotation) || wrapper.listOwner() instanceof PsiPatternVariable;
       }
 
       private void checkRedundantInContainerScope(NullabilityAnnotationWrapper wrapper) {

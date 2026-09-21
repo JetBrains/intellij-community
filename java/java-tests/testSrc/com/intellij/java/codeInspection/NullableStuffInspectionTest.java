@@ -349,6 +349,10 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTestWithFix("Remove annotation");
   }
 
+  public void testNullabilityAnnotationInPattern() { doTest(); }
+
+  public void testRemovePatternNullabilityAnnotation() { doTestWithFix("Remove annotation"); }
+
   public void testTypeUseArrayAnnotation() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     setupTypeUseAnnotations("typeUse", myFixture);
