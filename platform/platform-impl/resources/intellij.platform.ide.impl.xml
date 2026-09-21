@@ -1848,6 +1848,7 @@
       implementation="com.intellij.toolWindow.DefaultToolWindowLayoutProviderToExtensionAdapter"
       order="after DefaultToolWindowLayoutPlatformExtension"
     />
+    <remote.customDataContextSerializer implementation="com.intellij.toolWindow.ToolWindowIdDataContextSerializer"/>
     <applicationService serviceInterface="com.intellij.openapi.wm.IdeFocusManager"
                         serviceImplementation="com.intellij.openapi.wm.impl.FocusManagerImpl"
                         headlessImplementation="com.intellij.openapi.wm.impl.IdeFocusManagerHeadless" preload="notHeadless"/>

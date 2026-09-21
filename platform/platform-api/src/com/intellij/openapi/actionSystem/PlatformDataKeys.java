@@ -54,6 +54,14 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
   public static final DataKey<ToolWindow> TOOL_WINDOW = DataKey.create("TOOL_WINDOW");
 
   /**
+   * The ID of the currently active tool window, if any.
+   * <p>
+   *   Unlike {@link #TOOL_WINDOW}, this property is available on the backend in remdev mode even for frontend-only tool windows.
+   * </p>
+   */
+  public static final DataKey<String> TOOL_WINDOW_ID = DataKey.create("TOOL_WINDOW_ID");
+
+  /**
    * @see #TOOL_WINDOW
    */
   public static final DataKey<ToolWindow[]> LAST_ACTIVE_TOOL_WINDOWS = DataKey.create("LAST_ACTIVE_TOOL_WINDOWS");

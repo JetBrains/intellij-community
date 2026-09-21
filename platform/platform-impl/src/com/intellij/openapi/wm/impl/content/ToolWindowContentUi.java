@@ -774,6 +774,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
     sink.set(PlatformDataKeys.TOOL_WINDOW, window);
+    sink.set(PlatformDataKeys.TOOL_WINDOW_ID, window.getId());
     sink.set(PlatformCoreDataKeys.HELP_ID, window.getHelpId());
     sink.set(CommonDataKeys.PROJECT, window.toolWindowManager.getProject());
     sink.set(CloseAction.CloseTarget.KEY, computeCloseTarget(window));

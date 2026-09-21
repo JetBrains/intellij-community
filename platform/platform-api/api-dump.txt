@@ -1784,6 +1784,7 @@ c:com.intellij.openapi.actionSystem.PlatformDataKeys
 - sf:SPEED_SEARCH_TEXT:com.intellij.openapi.actionSystem.DataKey
 - sf:STATUS_BAR:com.intellij.openapi.actionSystem.DataKey
 - sf:TOOL_WINDOW:com.intellij.openapi.actionSystem.DataKey
+- sf:TOOL_WINDOW_ID:com.intellij.openapi.actionSystem.DataKey
 - sf:TREE_EXPANDER:com.intellij.openapi.actionSystem.DataKey
 - sf:TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER:com.intellij.openapi.actionSystem.DataKey
 - sf:UI_DISPOSABLE:com.intellij.openapi.actionSystem.DataKey
