@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.mcpserver.mcpFail
+import com.intellij.mcpserver.mcpToolCallIdOrNull
 import com.intellij.mcpserver.statistics.logLintFilesFinished
 import com.intellij.mcpserver.util.awaitExternalChangesAndIndexing
 import com.intellij.openapi.application.ApplicationManager
@@ -195,6 +196,7 @@ internal suspend fun reportLintFilesTelemetry(project: Project, telemetry: LintF
   }
   logLintFilesFinished(
     project = project,
+    toolCallId = currentCoroutineContext().mcpToolCallIdOrNull,
     minSeverity = telemetry.minSeverity,
     requestedFileCount = telemetry.requestedFileCount,
     problemFileCount = telemetry.problemFileCount,

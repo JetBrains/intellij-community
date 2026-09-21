@@ -4,12 +4,14 @@ package com.intellij.mcpserver.toolsets.general
 
 import com.intellij.mcpserver.McpExpectedError
 import com.intellij.mcpserver.McpServerBundle
+import com.intellij.mcpserver.McpToolCallId
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.impl.util.McpServerJson
 import com.intellij.mcpserver.mcpCallInfo
 import com.intellij.mcpserver.mcpFail
+import com.intellij.mcpserver.mcpToolCallIdOrNull
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
@@ -109,7 +111,7 @@ class UniversalToolset : McpToolset {
     @McpDescription("Command-line string with tool name and arguments")
     command: String,
   ): String {
-    val dispatchEvent = ExecuteToolDispatchEvent()
+    val dispatchEvent = ExecuteToolDispatchEvent(currentCoroutineContext().mcpToolCallIdOrNull)
     try {
       currentCoroutineContext().reportToolActivity(
         McpServerBundle.message("tool.activity.executing.universal.tool", command))
@@ -216,6 +218,7 @@ class UniversalToolset : McpToolset {
       withContext(NonCancellable) {
         val callInfo = currentCoroutineContext().mcpCallInfo
         McpServerCounterUsagesCollector.logMcpToolCall(
+          toolCallId = callInfo.toolCallId,
           descriptor = tool.descriptor,
           outcome = outcome,
           durationMs = callMark.elapsedNow().inWholeMilliseconds,
@@ -294,7 +297,7 @@ class UniversalToolset : McpToolset {
    * Counters are mutated progressively as the dispatch advances, so the event still
    * reports the last reached stage when an `mcpFail` aborts the call midway.
    */
-  private class ExecuteToolDispatchEvent {
+  private class ExecuteToolDispatchEvent(private val toolCallId: McpToolCallId?) {
     private val mark = TimeSource.Monotonic.markNow()
     private var toolName: String? = null
     private var argCount: Int = 0
@@ -322,6 +325,7 @@ class UniversalToolset : McpToolset {
 
     fun emit() {
       McpServerCounterUsagesCollector.logExecuteToolDispatch(
+        toolCallId = toolCallId,
         dispatchedToolName = toolName,
         argCount = argCount,
         found = found,

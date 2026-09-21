@@ -14,8 +14,9 @@ class McpServerCounterUsagesCollectorTest {
     val fields = event.getFields()
 
     assertThat(group.id).isEqualTo("mcpserver.events")
-    assertThat(group.version).isEqualTo(10)
+    assertThat(group.version).isEqualTo(11)
     assertThat(fields.map { it.name }).containsExactly(
+      "tool_call_id",
       "min_severity",
       "result",
       "requested_file_count",
@@ -47,6 +48,7 @@ class McpServerCounterUsagesCollectorTest {
     val event = McpServerCounterUsagesCollector.group.events.single { it.eventId == "mcp.tool.call" }
 
     assertThat(event.getFields().map { it.name }).contains(
+      "tool_call_id",
       "tool_name",
       "toolset",
       "outcome",

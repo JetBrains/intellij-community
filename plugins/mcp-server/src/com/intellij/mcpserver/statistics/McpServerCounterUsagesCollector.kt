@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.mcpserver.McpToolCallResult
 import com.intellij.mcpserver.McpToolCallResultContent
 import com.intellij.mcpserver.McpToolDescriptor
+import com.intellij.mcpserver.McpToolCallId
 import com.intellij.mcpserver.McpToolInvocationMode
 import com.intellij.mcpserver.McpToolsProvider
 import com.intellij.mcpserver.McpToolset
@@ -116,7 +117,13 @@ internal fun McpToolCallResult.reportableResultSize(): Int =
   content.sumOf { part -> (part as? McpToolCallResultContent.Text)?.text?.length ?: 0 }
 
 object McpServerCounterUsagesCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("mcpserver.events", 10)
+  private val GROUP = EventLogGroup("mcpserver.events", 11)
+
+  private val TOOL_CALL_ID = EventFields.ShortAnonymizedField(
+    "tool_call_id",
+    "Identifies one MCP tool call. The per-tool groups report the same value for the call they served, so a per-tool " +
+    "row joins the latency, outcome, payload size and caller that only mcp.tool.call carries",
+  )
 
   private val TOOL_NAME = EventFields.StringValidatedByCustomRule<McpToolNameValidator>("tool_name")
   private val TOOLSET = EventFields.StringValidatedByCustomRule<McpToolsetNameValidator>(
@@ -168,6 +175,7 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
 
   private val MCP_TOOL_CALL_EVENT: VarargEventId = GROUP.registerVarargEvent(
     "mcp.tool.call",
+    TOOL_CALL_ID,
     TOOL_NAME,
     TOOLSET,
     OUTCOME,
@@ -194,6 +202,7 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
 
   private val EXECUTE_TOOL_DISPATCH_EVENT: VarargEventId = GROUP.registerVarargEvent(
     "mcp.execute_tool.dispatch",
+    TOOL_CALL_ID,
     DISPATCHED_TOOL_NAME,
     ARG_COUNT,
     DISPATCHED_TOOL_FOUND,
@@ -217,6 +226,7 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
 
   private val LINT_FILES_FINISHED_EVENT: VarargEventId = GROUP.registerVarargEvent(
     "mcp.lint.files.finished",
+    TOOL_CALL_ID,
     LINT_FILES_MIN_SEVERITY,
     LINT_FILES_RESULT,
     REQUESTED_FILE_COUNT,
@@ -249,6 +259,7 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   internal fun logMcpToolCall(
+    toolCallId: McpToolCallId?,
     descriptor: McpToolDescriptor,
     outcome: McpToolCallOutcome,
     durationMs: Long,
@@ -261,6 +272,7 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
   ) {
     MCP_TOOL_CALL_EVENT.log(
       buildList {
+        add(TOOL_CALL_ID.with(toolCallId?.value))
         add(TOOL_NAME.with(descriptor.name))
         add(TOOLSET.with(descriptor.category.fullyQualifiedName))
         add(OUTCOME.with(outcome))
@@ -277,6 +289,7 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
   }
 
   fun logExecuteToolDispatch(
+    toolCallId: McpToolCallId?,
     dispatchedToolName: String?,
     argCount: Int,
     found: Boolean,
@@ -286,6 +299,7 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
   ) {
     EXECUTE_TOOL_DISPATCH_EVENT.log(
       buildList {
+        add(TOOL_CALL_ID.with(toolCallId?.value))
         // The name is reported only once it resolved to a tool that exists. What the agent typed is its own text,
         // and putting it here is what made the validator write a sentinel into this field.
         dispatchedToolName?.let { add(DISPATCHED_TOOL_NAME.with(it)) }
@@ -300,6 +314,7 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
 
   fun logLintFilesFinished(
     project: Project,
+    toolCallId: McpToolCallId?,
     minSeverity: String,
     requestedFileCount: Int,
     problemFileCount: Int,
@@ -313,6 +328,7 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
     val result = lintFilesResultKind(problemCount, timedOutFileCount, notAnalyzedFileCount, more)
     LINT_FILES_FINISHED_EVENT.log(
       project,
+      TOOL_CALL_ID.with(toolCallId?.value),
       LINT_FILES_MIN_SEVERITY.with(minSeverity),
       LINT_FILES_RESULT.with(result),
       REQUESTED_FILE_COUNT.with(requestedFileCount),
@@ -409,6 +425,7 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
 
 fun logLintFilesFinished(
   project: Project,
+  toolCallId: McpToolCallId?,
   minSeverity: String,
   requestedFileCount: Int,
   problemFileCount: Int,
@@ -421,6 +438,7 @@ fun logLintFilesFinished(
 ) {
   McpServerCounterUsagesCollector.logLintFilesFinished(
     project = project,
+    toolCallId = toolCallId,
     minSeverity = minSeverity,
     requestedFileCount = requestedFileCount,
     problemFileCount = problemFileCount,
