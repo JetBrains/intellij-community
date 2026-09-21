@@ -8,6 +8,7 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UITheme
 import com.intellij.ide.ui.customization.NonCustomizableAction
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoImpl
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -57,6 +58,8 @@ import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 
+private const val WIDGET_CLICKED_KEY = "ide.update.toolbar.widget.clicked"
+
 /**
  * Announces an available IDE update in the main toolbar instead of the [com.intellij.ide.actions.SettingsEntryPointAction] menu.
  *
@@ -93,8 +96,10 @@ internal class IdeUpdateToolbarWidget :
           PlatformUpdateDialog.restartLaterAndRunCommand(command)
         }
       }
-      else -> {}
+      else -> return
     }
+
+    PropertiesComponent.getInstance().setValue(WIDGET_CLICKED_KEY, true)
   }
 
   private fun showUpdatePopup(e: AnActionEvent) {
