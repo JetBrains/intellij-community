@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.options.ex.Settings
@@ -35,8 +34,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JLabel
-
-private val logger = logger<ProofreadConfigurable>()
 
 class ProofreadConfigurable : BoundSearchableConfigurable(
   OptionsBundle.message("configurable.group.proofread.settings.display.name"),

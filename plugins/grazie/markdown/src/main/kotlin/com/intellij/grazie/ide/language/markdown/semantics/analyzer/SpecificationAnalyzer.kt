@@ -103,7 +103,7 @@ internal object SpecificationAnalyzer {
     val mutexKey = mutexKeys.computeIfAbsent(analyzer.javaClass.name) { Key.create("mutex key for ${analyzer.javaClass.name}") }
     val mutexes = getMutexes(files, mutexKey)
     return runWithCheckCanceled {
-      APIQueries.handleExceptions(files.first().project) {
+      APIQueries.handleExceptions {
         mutexes.withLock {
           action()
         }

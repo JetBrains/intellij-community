@@ -5,7 +5,6 @@ import ai.grazie.model.cloud.exceptions.HTTPStatusException
 import ai.grazie.model.cloud.exceptions.HttpExceptionBase
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.Project
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
@@ -13,30 +12,24 @@ import java.io.IOException
 
 object APIQueries {
   @ApiStatus.Internal
-  suspend fun <T> handleExceptions(project: Project, service: BackgroundCloudService? = null, compute: suspend () -> T?): T? =
+  suspend fun <T> handleExceptions(compute: suspend () -> T?): T? =
     try {
-      val result = compute()
-      GrazieCloudNotifications.Connection.connectionStable(project, service)
-      result
+      compute()
     }
     catch (e: HTTPStatusException.AccessProhibited) {
       thisLogger().info("Authorisation error in Grazie functionality", e)
       null
     }
-    catch (e: HttpExceptionBase) {
-      GrazieCloudNotifications.Connection.connectionError(project, service, e)
+    catch (_: HttpExceptionBase) {
       null
     }
-    catch (e: HTTPConnectionError) {
-      GrazieCloudNotifications.Connection.connectionError(project, service, e)
+    catch (_: HTTPConnectionError) {
       null
     }
-    catch (e: HttpRequestTimeoutException) {
-      GrazieCloudNotifications.Connection.connectionError(project, service, e)
+    catch (_: HttpRequestTimeoutException) {
       null
     }
-    catch (e: IOException) {
-      GrazieCloudNotifications.Connection.connectionError(project, service, e)
+    catch (_: IOException) {
       null
     }
     catch (e: CancellationException) {
