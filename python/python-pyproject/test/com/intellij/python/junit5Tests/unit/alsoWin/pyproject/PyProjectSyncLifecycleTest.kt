@@ -5,7 +5,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.modules
+import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -115,10 +117,9 @@ internal class PyProjectSyncLifecycleTest {
     return workspace
   }
 
-  private fun vfsListeners(): List<*> {
-    val manager = VirtualFileManager.getInstance()
-    return manager.javaClass.getMethod("withAsyncFileListenersBackgroundable", List::class.java)
-      .invoke(manager, emptyList<Any>()) as List<*>
+  private fun vfsListeners(): List<AsyncFileListener> {
+    val manager = VirtualFileManager.getInstance() as VirtualFileManagerImpl
+    return manager.withAsyncFileListenersBackgroundable(emptyList())
   }
 
   private class GatedWorkspace(delegate: WorkspaceModelInternal) : WorkspaceModelInternal by delegate {
