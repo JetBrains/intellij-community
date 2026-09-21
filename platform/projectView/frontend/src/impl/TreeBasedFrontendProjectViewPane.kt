@@ -196,6 +196,10 @@ internal class TreeBasedFrontendProjectViewPane(
       else {
         LOG.debug { "The pane $id doesn't need to expand the first top node (already expanded something)" }
       }
+      if (tree.selectionPath == null && tree.rowCount > 0) {
+        LOG.debug { "The pane $id has no initial selection, selecting the first row" }
+        tree.selectionPath = tree.getPathForRow(0)
+      }
     }
     enableDnD(tree, paneTreeModel)
   }
