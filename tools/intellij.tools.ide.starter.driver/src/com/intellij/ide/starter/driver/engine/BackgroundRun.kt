@@ -11,8 +11,11 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 open class BackgroundRun(
   val startResult: Deferred<IDEStartResult>,
@@ -172,10 +175,14 @@ open class BackgroundRun(
   }
 
   private fun ideStateDetails(): String = runCatching {
+    @Suppress("TestOnlyProblems")
+    val connected = runCatching {
+      timeoutRunBlocking(10.seconds) { withContext(Dispatchers.IO) { driverWithoutAwaitedConnection.isConnected } }
+    }.fold({ it.toString() }, { "unknown" })
     val artifacts = DetailsOnCI.instance.getLinkToCIArtifacts(runContext.lastIdeReportingData)
     "State: product=${runContext.testContext.testCase.ideInfo.fullName}, " +
     "commandLine=${runContext.commandLine(runContext).args.joinToString(" ")}, " +
-    "driverConnected=${driverWithoutAwaitedConnection.isConnected}, processAlive=${process.isAlive}, " +
+    "driverConnected=$connected, processAlive=${process.isAlive}, " +
     "processId=${process.id}" + (artifacts?.let { ", artifacts=$it" } ?: "")
   }.getOrElse { "State: not known, ${it.message}" }
 
