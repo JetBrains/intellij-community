@@ -1428,7 +1428,7 @@ class PluginDetailsPageComponent private constructor(
       return
     }
     val installationState = withContext(Dispatchers.IO) {
-      UiPluginManager.getInstance().getPluginInstallationState(plugin!!.pluginId)
+      UiPluginManager.getInstance().getPluginInstallationState(pluginId)
     }
     if (shouldHidePluginUpdateSourceUI(installationState)) {
       updatePluginUpdateSourceUI(null, true)
