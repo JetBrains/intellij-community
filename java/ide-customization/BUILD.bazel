@@ -191,6 +191,8 @@ jvm_library(
         "//platform/welcome-screen:welcome-screen_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//java/ide-customization/backend",
+        "//java/ide-customization/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.ide.customization.tests` end

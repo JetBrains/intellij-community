@@ -43,8 +43,6 @@
 
     <platform.ide.welcomeScreenContentProvider implementation="com.intellij.ide.customization.java.welcomeScreen.IdeaWelcomeRightTabContentProvider"/>
 
-    <welcomeScreenProjectProvider implementation="com.intellij.ide.customization.java.welcomeScreen.IdeaWelcomeScreenProjectProvider" order="first"/>
-
     <platform.ide.welcomeScreenAccessProvider implementation="com.intellij.ide.customization.java.welcomeScreen.IdeaWelcomeScreenAccessProvider"/>
 
     <registryKey key="idea.welcome.screen.non.modal.enabled" defaultValue="true" restartRequired="true"

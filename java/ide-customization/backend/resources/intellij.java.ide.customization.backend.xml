@@ -10,6 +10,7 @@
     <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.welcomeScreen"/>
   </dependencies>
   <!-- endregion -->
 
@@ -21,5 +22,9 @@
     <welcomeScreenFeatureBackend implementation="com.intellij.java.ide.customization.backend.welcomeScreen.NewKotlinFileFeatureBackend" />
 
     <welcomeScreenFeatureBackend implementation="com.intellij.java.ide.customization.backend.welcomeScreen.IdeaPluginsWelcomeScreenFeature"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <welcomeScreenProjectProvider implementation="com.intellij.java.ide.customization.backend.welcomeScreen.IdeaWelcomeScreenProjectProvider" order="first"/>
   </extensions>
 </idea-plugin>
