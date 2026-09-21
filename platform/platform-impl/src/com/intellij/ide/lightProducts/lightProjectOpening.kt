@@ -87,6 +87,10 @@ suspend fun openProjectForLightProduct(
   }
 
   val rootDir = projectRootDir ?: if (path.isDirectory()) path else path.parent
+  // Every startup activity may ask for the host path, so it is set before the project is initialized rather than
+  // after the open call returns - post-startup activities are not joined before then. `ThinClientRdProjectViewSession`
+  // sets the descriptor and both paths together for the same reason.
+  val hostPath = path.asEelPath().toString()
   val options = OpenProjectTask {
     isNewProject = !ProjectUtil.isValidProjectPath(projectFile)
     this.showWelcomeScreen = showWelcomeScreen
@@ -101,6 +105,9 @@ suspend fun openProjectForLightProduct(
       beforeInit(project)
       @OptIn(EelDelicateApi::class)
       project.setEelDescriptor(eelDescriptor)
+      // `getRemoteProjectBaseNioPath` reads the descriptor, so it has to be set first.
+      project.setRemoteProjectBaseNioPath(hostPath)
+      project.setRemoteProjectIdentityNioPath(hostPath)
     }
     projectName = path.name
   }
@@ -116,9 +123,6 @@ suspend fun openProjectForLightProduct(
     (serviceAsync<RecentProjectsManager>() as RecentProjectsManagerBase).setProjectHidden(project, true)
   }
   CloseProjectWindowHelper.SHOW_WELCOME_FRAME_FOR_PROJECT.set(project, false)
-
-  project.setRemoteProjectBaseNioPath(path.asEelPath().toString())
-  project.setRemoteProjectIdentityNioPath(path.asEelPath().toString())
 
   val machine = eelMachineInitializer(eelDescriptor)
   if (machine != null) {
