@@ -41,7 +41,11 @@ class ToolWindowRightToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) 
   val gradleButton: StripeButtonUi = stripeButton("Gradle")
   val mavenButton: StripeButtonUi = stripeButton("Maven")
   val databaseButton: StripeButtonUi = stripeButton("Database")
-  val aiAssistantButton: StripeButtonUi = stripeButton("AI Chat")
+  /**
+   * The AI Assistant tool window is titled "AI Chat" when the AI Assistant plugin provides its content,
+   * and "Connect AI with IDE" when the installer shows its promo instead (e.g. on the Remote Development frontend).
+   */
+  val aiAssistantButton: StripeButtonUi = stripeButton { byAccessibleName("AI Chat") or byAccessibleName("Connect AI with IDE") }
   val mesonButton: StripeButtonUi = stripeButton("Meson")
 }
 
