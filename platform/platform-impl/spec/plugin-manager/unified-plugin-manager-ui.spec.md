@@ -380,10 +380,7 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
     `expandable section header supports mouse keyboard hover and focus`
   )
 
-- Plugin rows, section headers, and the Settings action must show an outline for keyboard focus.
-  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
-    `settings action shows keyboard focus outline`
-  )
+- Plugin rows and section headers must show an outline for keyboard focus.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
     `unified rows use stable island selection geometry`
   )

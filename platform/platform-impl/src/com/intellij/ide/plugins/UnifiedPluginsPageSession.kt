@@ -51,7 +51,6 @@ import com.intellij.ide.plugins.unified.UnifiedPluginsPageController
 import com.intellij.ide.plugins.unified.UnifiedPluginsPageSourceCoordinator
 import com.intellij.ide.plugins.unified.UnifiedPluginsPageSourceState
 import com.intellij.ide.plugins.unified.UnifiedPluginsPageView
-import com.intellij.ide.plugins.unified.createUnifiedPluginFocusBorder
 import com.intellij.ide.plugins.unified.eligibleBundledCategoryPluginModels
 import com.intellij.ide.plugins.unified.eligibleInstalledPluginModels
 import com.intellij.ide.plugins.unified.initialPluginsQueryState
@@ -59,13 +58,11 @@ import com.intellij.ide.plugins.unified.loadUnifiedPluginInternalGroup
 import com.intellij.ide.plugins.unified.pluginDetailsMode
 import com.intellij.ide.plugins.unified.unifiedPluginSearchStatistics
 import com.intellij.ide.plugins.unified.withEnrichmentReadiness
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -101,10 +98,6 @@ import java.awt.Container
 import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
-import java.awt.event.ContainerAdapter
-import java.awt.event.ContainerEvent
-import java.awt.event.FocusAdapter
-import java.awt.event.FocusEvent
 import java.util.concurrent.CancellationException
 import java.util.function.Consumer
 import javax.swing.JComponent
@@ -113,8 +106,6 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
-
-private const val SETTINGS_BUTTON_FOCUS_INSTALLED_PROPERTY: String = "UnifiedPlugins.settingsButtonFocusInstalled"
 
 // @spec platform/platform-impl/spec/plugin-manager/unified-plugin-manager-ui.spec.md
 // @spec platform/platform-impl/spec/plugin-manager/plugin-operations.spec.md
@@ -571,7 +562,11 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
           },
         )
         add(
-          createSettingsToolbar(),
+          TabbedPaneHeaderComponent.createToolbar(
+            actions.group,
+            IdeBundle.message("plugin.manager.tooltip"),
+            AllIcons.General.GearPlain,
+          ),
           GridBagConstraints().apply {
             gridx = 2
             gridy = 0
@@ -585,42 +580,6 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
         sink[PluginManagerConfigurable.PLUGIN_INSTALL_CALLBACK_DATA_KEY] = installCallback
       }
     }
-  }
-
-  private fun createSettingsToolbar(): JComponent {
-    val toolbar = TabbedPaneHeaderComponent.createToolbar(
-      actions.group,
-      IdeBundle.message("plugin.manager.tooltip"),
-      AllIcons.General.GearPlain,
-    )
-    toolbar.addContainerListener(object : ContainerAdapter() {
-      override fun componentAdded(event: ContainerEvent) {
-        (event.child as? ActionButton)?.let(::configureSettingsButton)
-      }
-    })
-    toolbar.components.filterIsInstance<ActionButton>().forEach(::configureSettingsButton)
-    return toolbar
-  }
-
-  private fun configureSettingsButton(button: ActionButton) {
-    button.isFocusable = true
-    if (button.getClientProperty(SETTINGS_BUTTON_FOCUS_INSTALLED_PROPERTY) == true) return
-
-    val contentBorder = button.border ?: JBUI.Borders.empty()
-    val focusBorder = createUnifiedPluginFocusBorder(button, contentBorder, JBUI.emptyInsets(), DarculaUIUtil.BUTTON_ARC.get())
-    button.border = contentBorder
-    button.putClientProperty(SETTINGS_BUTTON_FOCUS_INSTALLED_PROPERTY, true)
-    button.addFocusListener(object : FocusAdapter() {
-      override fun focusGained(event: FocusEvent) {
-        button.border = if (button.isEnabled && event.cause != FocusEvent.Cause.MOUSE_EVENT) focusBorder else contentBorder
-        button.repaint()
-      }
-
-      override fun focusLost(event: FocusEvent) {
-        button.border = contentBorder
-        button.repaint()
-      }
-    })
   }
 
   private fun createContentComponent(): JComponent {
