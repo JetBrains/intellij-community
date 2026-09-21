@@ -133,6 +133,34 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
     });
   }
 
+  public void testComputedLazyQuickFixCanBeUnregistered() {
+    @Language("JAVA")
+    String text = """
+      package x;
+      class MyClass2 {
+        public MyClass var1;
+      }
+      """;
+    configureFromFileText("X.java", text);
+
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaLanguage.INSTANCE, new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{
+      new MyLazyFixAnnotator()}, () -> {
+      getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("MyClass var1"));
+      myDaemonCodeAnalyzer.restart(getTestName(false));
+      List<HighlightInfo> errors = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR);
+      HighlightInfo info = ContainerUtil.find(errors, highlight -> "my class".equals(highlight.getDescription()));
+      assertNotNull(info);
+      CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getProject(), getEditor());
+
+      IntentionAction fix = info.findRegisteredQuickFix((descriptor, _) -> descriptor.getAction());
+      assertNotNull(fix);
+      info.unregisterQuickFix(action -> action == fix);
+
+      assertNull(info.findRegisteredQuickFix((descriptor, _) -> descriptor.getAction() == fix ? descriptor : null));
+      assertFalse(info.hasQuickFixes());
+    });
+  }
+
   // highlight "MyClass"
   public static class MyLazyFixAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
     static boolean invoked;
