@@ -89,8 +89,6 @@ internal class IDEFrontendHandler(
                 }
               }
             }
-            withScreenRecording()
-
             configure(this)
           })
           .also {

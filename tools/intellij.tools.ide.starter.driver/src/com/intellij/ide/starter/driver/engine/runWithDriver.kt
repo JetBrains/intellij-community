@@ -26,9 +26,6 @@ fun IDETestContext.runIdeWithDriver(commandLine: (IDERunContext) -> IDECommandLi
                                     pauseOnIndicators: Duration? = null,
                                     configure: IDERunContext.() -> Unit = {}): BackgroundRun {
   val run = selectedDriverRunner().runIdeWithDriver(this, commandLine, commands, runTimeout, useStartupScript, launchName, expectedKill, expectedExitCode, collectNativeThreads, pauseOnIndicators) {
-    if (System.getenv("SCREEN_RECORDING_ENABLED").toBoolean()) {
-      withScreenRecording()
-    }
     if (disableNonModalWelcomeScreen) {
       disableNonModalWelcomeScreen()
     }
