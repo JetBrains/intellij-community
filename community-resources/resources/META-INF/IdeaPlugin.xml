@@ -42,6 +42,7 @@
     <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen.frontend"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen.terminal"/>
   </content>
   <content>
     <module name="intellij.libraries.sqlite"/>
