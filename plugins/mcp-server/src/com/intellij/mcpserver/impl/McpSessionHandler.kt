@@ -12,6 +12,7 @@ import com.intellij.mcpserver.McpToolCallResult
 import com.intellij.mcpserver.McpToolCallResultContent
 import com.intellij.mcpserver.McpToolInvocationMode
 import com.intellij.mcpserver.launchOriginOf
+import com.intellij.mcpserver.mcpCallOwnerIdsOf
 import com.intellij.mcpserver.ToolCallListener
 import com.intellij.mcpserver.elicitation.McpElicitationKind
 import com.intellij.mcpserver.elicitation.McpSessionElement
@@ -496,6 +497,7 @@ internal class McpSessionHandler(
               finally {
                 McpServerCounterUsagesCollector.logMcpToolCall(
                   toolCallId = additionalData.toolCallId,
+                  ownerIds = mcpCallOwnerIdsOf(sessionOptions),
                   descriptor = mcpTool.descriptor,
                   outcome = outcome,
                   durationMs = callMark.elapsedNow().inWholeMilliseconds,

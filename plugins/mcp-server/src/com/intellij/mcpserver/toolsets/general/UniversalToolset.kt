@@ -10,6 +10,7 @@ import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.impl.util.McpServerJson
 import com.intellij.mcpserver.mcpCallInfo
+import com.intellij.mcpserver.mcpCallOwnerIdsOf
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.mcpToolCallIdOrNull
 import com.intellij.mcpserver.project
@@ -219,6 +220,7 @@ class UniversalToolset : McpToolset {
         val callInfo = currentCoroutineContext().mcpCallInfo
         McpServerCounterUsagesCollector.logMcpToolCall(
           toolCallId = callInfo.toolCallId,
+          ownerIds = mcpCallOwnerIdsOf(callInfo.mcpSessionOptions),
           descriptor = tool.descriptor,
           outcome = outcome,
           durationMs = callMark.elapsedNow().inWholeMilliseconds,
