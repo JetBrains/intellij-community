@@ -44,12 +44,12 @@ sealed class IjentUnavailableException : EelUnavailableException, ExceptionWithA
         body()
       }
       catch (initialError: Throwable) {
-        throw unwrapFromCancellationExceptions(initialError)
+        throw unwrapFromCancellationExceptions(initialError) ?: initialError
       }
 
     @Internal
     @JvmStatic
-    fun unwrapFromCancellationExceptions(initialError: Throwable): Throwable {
+    fun unwrapFromCancellationExceptions(initialError: Throwable): IjentUnavailableException? {
       var err: Throwable? = initialError
       while (true) {
         when (err) {
@@ -60,7 +60,7 @@ sealed class IjentUnavailableException : EelUnavailableException, ExceptionWithA
           else -> break
         }
       }
-      return initialError
+      return null
     }
 
     /**
@@ -113,9 +113,9 @@ sealed class IjentUnavailableException : EelUnavailableException, ExceptionWithA
     ): Throwable {
       val unwrapped = unwrapFromCancellationExceptions(initialError)
       if (unwrapped is IjentUnavailableException) return unwrapped
-      ijentContext ?: return unwrapped
+      ijentContext ?: return initialError
       val resolved = withContext(NonCancellable) { ijentContext.resolveExitReason(timeout) }
-      return resolved ?: unwrapped
+      return resolved ?: initialError
     }
   }
 }

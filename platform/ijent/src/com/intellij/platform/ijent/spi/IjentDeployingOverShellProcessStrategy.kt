@@ -233,7 +233,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
     }
     catch (e: CancellationException) {
       currentCoroutineContext().ensureActive()
-      throw IjentUnavailableException.unwrapFromCancellationExceptions(e)
+      throw IjentUnavailableException.unwrapFromCancellationExceptions(e) ?: RuntimeException(e)
     }
   }
 
@@ -581,12 +581,12 @@ private suspend fun <T : Any> ShellSession.execCommand(block: suspend ShellSessi
     // A process failure may be hidden behind CancellationException. Prefer the canonical failure from the process scope in that case.
     // Other errors may be programmer bugs and must retain their original type so that they reach the error reporter.
     // A null errorFromScope means the process was killed by this cleanup itself, so the stack error is the root cause.
-    val mainError =
+    val mainError: Throwable =
       when {
-        errorFromScope == null -> errorFromStack
-        errorFromStack is IjentUnavailableException -> errorFromStack
-        errorFromStack is CancellationException -> errorFromScope
-        else -> errorFromStack
+        errorFromScope == null -> errorFromStack ?: initialErrorFromStack
+        errorFromStack != null -> errorFromStack
+        initialErrorFromStack is CancellationException -> errorFromScope
+        else -> initialErrorFromStack
       }
 
     for (secondaryError in listOfNotNull(errorFromStack, errorFromScope)) {

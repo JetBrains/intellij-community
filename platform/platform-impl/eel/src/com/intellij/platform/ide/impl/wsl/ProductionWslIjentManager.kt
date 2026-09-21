@@ -106,7 +106,7 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
       return deferred.await()
     }
     catch (err: Throwable) {
-      throw IjentUnavailableException.unwrapFromCancellationExceptions(err)
+      throw IjentUnavailableException.unwrapFromCancellationExceptions(err) ?: err
     }
   }
 

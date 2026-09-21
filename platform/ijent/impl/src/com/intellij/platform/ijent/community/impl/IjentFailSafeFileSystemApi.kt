@@ -133,13 +133,11 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
       withDelegateFirstAttempt(callerContext, block)
     }
     catch (err: Throwable) {
-      val unwrapped = IjentUnavailableException.unwrapFromCancellationExceptions(err)
-      if (unwrapped is IjentUnavailableException.CommunicationFailure) {
+      when (val unwrapped = IjentUnavailableException.unwrapFromCancellationExceptions(err)) {
         // TODO There must be a request ID, in order to ensure in idempotency of mutating calls.
-        withDelegateSecondAttempt(callerContext, block)
-      }
-      else {
-        throw unwrapped
+        is IjentUnavailableException.CommunicationFailure -> withDelegateSecondAttempt(callerContext, block)
+        is IjentUnavailableException.ClosedByApplication -> throw unwrapped
+        null -> throw err
       }
     }
   }

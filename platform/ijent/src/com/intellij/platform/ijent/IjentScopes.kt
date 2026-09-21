@@ -72,7 +72,7 @@ class ParentOfIjentScopes(val s: CoroutineScope) {
       trickySupervisorScope.cancel()
 
       if (err != null) {
-        val actualError = IjentUnavailableException.unwrapFromCancellationExceptions(err)
+        val actualError = IjentUnavailableException.unwrapFromCancellationExceptions(err) ?: err
         val ijentContext = ijentProcessScope.coroutineContext[IjentScope.IjentContext.Key]!!
 
         (actualError as? IjentUnavailableException)?.let(ijentContext::completeExitReason)
