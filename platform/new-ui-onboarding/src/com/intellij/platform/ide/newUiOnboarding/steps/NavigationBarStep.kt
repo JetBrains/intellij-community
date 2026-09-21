@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.newUiOnboarding.steps
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.CheckedDisposable
@@ -15,15 +17,23 @@ import com.intellij.ui.GotItComponentBuilder
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBPoint
 import com.intellij.util.ui.JBUI
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
-open class NavigationBarStep : NewUiOnboardingStep {
-  protected open val stepText: String
+class NavigationBarStep : NewUiOnboardingStep {
+
+  private companion object {
+    @Language("devkit-action-id")
+    const val NAVBAR_LOCATION_GROUP_ID = "NavbarLocationGroup"
+  }
+
+  private val stepText: @Nls String
     get() {
       val menuPath = ActionsBundle.message("group.ViewMenu.text").dropMnemonic() +
                      " | " + ActionsBundle.message("group.ViewAppearanceGroup.text").dropMnemonic() +
-                     " | " + ActionsBundle.message("group.NavbarLocationGroup.text")
+                     " | " + getNavBarGroup()?.templateText
       return NewUiOnboardingBundle.message("navigation.bar.step.text", menuPath)
     }
 
@@ -39,6 +49,10 @@ open class NavigationBarStep : NewUiOnboardingStep {
 
   override fun isAvailable(): Boolean {
     val settings = UISettings.getInstance()
-    return settings.showStatusBar && settings.showNavigationBarInBottom
+    return settings.showStatusBar && settings.showNavigationBarInBottom && getNavBarGroup() != null
+  }
+
+  private fun getNavBarGroup(): AnAction? {
+    return ActionManager.getInstance().getAction(NAVBAR_LOCATION_GROUP_ID)
   }
 }
