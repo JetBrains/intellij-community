@@ -229,7 +229,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
           }.visible(commandCompletionAvailable)
 
           if (inlineCompletionAvailable) {
-            inlineCompletionSettingsProvider.addSettingsRow(this)
+            inlineCompletionSettingsProvider.addSettingsRow(this, project)
           }
         }.bottomGap(BottomGap.NONE)
           .visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED)
