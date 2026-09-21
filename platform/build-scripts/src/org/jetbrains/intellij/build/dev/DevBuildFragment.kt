@@ -16,7 +16,7 @@ import org.jetbrains.intellij.build.impl.ModuleItem
  */
 @ApiStatus.Internal
 data class DevBuildFragment(
-  /** Identifies the fragment in its component manifest and in diagnostics; `platform_lib`, `platform_resources`. */
+  /** Identifies the fragment in its component manifest and in diagnostics; `platform_lib`, `platform_resources`, `platform_runtime_module_repository`. */
   @JvmField val name: String,
   /** The `lib/` jars this fragment owns, or `null` if it owns none. */
   @JvmField val platform: PlatformJarSelector?,
@@ -24,6 +24,8 @@ data class DevBuildFragment(
   @JvmField val platformResources: Boolean,
   /** The bundled plugin directories this assembly owns: [PluginFragmentSelector.All] for a complete one, `null` for a fragment. */
   @JvmField val plugins: PluginFragmentSelector?,
+  /** Whether this fragment writes `modules/module-descriptors.{dat,jar}`. */
+  @JvmField val runtimeModuleRepository: Boolean,
 ) {
   companion object {
     /** The whole distribution in one assembly: what an in-process dev launch and a non-split standalone build produce. */
@@ -33,6 +35,7 @@ data class DevBuildFragment(
       platform = PlatformJarSelector.ALL,
       platformResources = true,
       plugins = PluginFragmentSelector.All,
+      runtimeModuleRepository = true,
     )
   }
 
@@ -51,6 +54,10 @@ data class DevBuildFragment(
 
   internal val ownsPlugins: Boolean
     get() = plugins != null
+
+  /** Whether this fragment owns the runtime module repository files under `modules/`. */
+  internal val ownsRuntimeModuleRepository: Boolean
+    get() = runtimeModuleRepository
 
   /**
    * Whether this fragment packs the jars that the inlined product descriptor ends up in.

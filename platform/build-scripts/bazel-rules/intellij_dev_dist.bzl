@@ -438,8 +438,8 @@ def _mnemonic(fragment_name):
     return "IntellijDev" + "".join([part.capitalize() for part in fragment_name.replace("-", "_").replace(".", "_").split("_")])
 
 def _fragment_impl(ctx):
-    if not ctx.attr.platform and not ctx.attr.platform_resources:
-        fail("%s selects nothing: set platform or platform_resources" % ctx.label)
+    if not ctx.attr.platform and not ctx.attr.platform_resources and not ctx.attr.runtime_module_repository:
+        fail("%s selects nothing: set platform, platform_resources or runtime_module_repository" % ctx.label)
     if not ctx.files.preloaded_manifests:
         fail("%s must declare at least one preloaded download manifest" % ctx.label)
 
@@ -489,6 +489,10 @@ def _fragment_impl(ctx):
             )
     if ctx.attr.platform_resources:
         args.add("--platform-resources")
+    if ctx.attr.runtime_module_repository:
+        # The assembler lays the platform and the bundled plugins out without files, then writes only `modules/`.
+        args.add("--runtime-module-repository")
+        args.add("--generate-runtime-module-repository")
 
     plugin_classpath_prefix = None
     if ctx.attr.produces_plugin_classpath_prefix:
@@ -555,8 +559,9 @@ intellij_dev_fragment = rule(
 
     What the fragment owns is a selector over names, not a file list. `platform` owns the `lib/` jars by a generated
     jar-name set: every jar `except` the named ones, or `only` them. `platform_resources` owns `bin`, the product
-    metadata, the launchers and the copied product files. No fragment owns a plugin directory: the packed plugin
-    components do, and the composer checks that the components of one distribution partition it exactly.
+    metadata, the launchers and the copied product files. `runtime_module_repository` owns `modules/`, the runtime
+    module repository a row asks for. No fragment owns a plugin directory: the packed plugin components do, and the
+    composer checks that the components of one distribution partition it exactly.
     """,
     implementation = _fragment_impl,
     attrs = {
@@ -567,6 +572,7 @@ intellij_dev_fragment = rule(
         "fragment_name": attr.string(mandatory = True, doc = "Identifies this fragment in its manifest, its mnemonic and the composer's completeness check."),
         "platform": attr.string(default = "", values = _PLATFORM_SELECTORS, doc = "Which `lib/` jars this fragment owns - all `except` the packed ones, or `only` those; empty means none."),
         "platform_resources": attr.bool(default = False, doc = "Whether this fragment owns `bin`, the product metadata, the launchers and the copied product files."),
+        "runtime_module_repository": attr.bool(default = False, doc = "Whether this fragment owns `modules/module-descriptors.dat` and `modules/module-descriptors.jar`."),
         "platform_payload": attr.label(
             providers = [DevDistPlatformPayloadInfo],
             doc = "The `lib/` jar file names `platform` reads, as the target that derives them: with `except`, the " +

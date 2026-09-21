@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.platform.buildScripts.concurrency.SharedCache
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
 import com.intellij.platform.runtime.product.serialization.RawProductModules
@@ -348,11 +349,14 @@ class BuildContextImpl internal constructor(
 
   override fun getEmbeddedFrontendProductContext(): BuildContext? = embeddedFrontendProductContext.get()
 
-  private val layoutOfAdditionalFrontendOnlyPlugins = sharedLazy(lifetime, "layout of additional frontend only plugins") {
-    computeDescriptorsForAdditionalFrontendPlugins(this@BuildContextImpl, distributionState().platformLayout)
-  }
+  // The layout fills the descriptor cache of the given platform layout, so the result is cached per layout identity.
+  private val layoutOfAdditionalFrontendOnlyPlugins = SharedCache<PlatformLayout, List<PluginBuildResult>>(lifetime.sharedTasks)
 
-  override fun getLayoutOfAdditionalFrontendOnlyPlugins(): List<PluginBuildResult> = layoutOfAdditionalFrontendOnlyPlugins.get()
+  override fun getLayoutOfAdditionalFrontendOnlyPlugins(platformLayout: PlatformLayout): List<PluginBuildResult> {
+    return layoutOfAdditionalFrontendOnlyPlugins.getOrPut(platformLayout) {
+      computeDescriptorsForAdditionalFrontendPlugins(this, platformLayout)
+    }
+  }
 
   private val _contentModuleFilter by lazy { computeContentModuleFilter() }
 

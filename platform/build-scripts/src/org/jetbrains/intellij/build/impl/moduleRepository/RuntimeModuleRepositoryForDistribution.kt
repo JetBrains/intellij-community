@@ -13,6 +13,7 @@ import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.getEmbeddedProductTempPluginDir
 import org.jetbrains.intellij.build.classPath.resolveAndCacheDescriptorForEmbeddedProduct
+import org.jetbrains.intellij.build.impl.DistributionBuilderState
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -45,7 +46,7 @@ internal fun generateRuntimeModuleRepositoryForDistribution(
   context: BuildContext,
   platformLayout: PlatformLayout,
 ) {
-  val additionalFrontendOnlyPlugins = context.getLayoutOfAdditionalFrontendOnlyPlugins()
+  val additionalFrontendOnlyPlugins = context.getLayoutOfAdditionalFrontendOnlyPlugins(platformLayout)
 
   val osSpecificDistPaths = SUPPORTED_DISTRIBUTIONS.associateWith {
     getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, libc = it.libcImpl, context = context)
@@ -135,7 +136,7 @@ internal fun generateCrossPlatformRepository(
   val targetDir = context.paths.tempDir.resolve("cross-platform-module-repository")
   val actualPlatformEntries = contentReport.platform.filter { it.path.startsWith(commonTargetDirectory) }
   val actualPlugins = contentReport.bundledPlugins.filter { it.os == null && it.arch == null } + crossPlatformBuiltPlugins.map { it.buildResult }
-  val additionalFrontendOnlyPlugins = context.getLayoutOfAdditionalFrontendOnlyPlugins()
+  val additionalFrontendOnlyPlugins = context.getLayoutOfAdditionalFrontendOnlyPlugins(platformLayout)
   generateRepositoryForDistribution(
     targetDirectory = targetDir,
     platformEntries = actualPlatformEntries,
@@ -232,6 +233,7 @@ private fun removeDataForSuppressedPlugins(originalPluginDescriptorsData: List<P
  * Returns the list of descriptors for additional plugins which should be added to the runtime module repository.
  * These plugins are not bundled with the IDE, but they are used from the frontend process started from the IDE.
  * To be able to run the frontend process from a regular IDE, we need to include information about its modules to the runtime module repository.
+ * The layout fills the descriptor cache of [platformLayout], so read the result with the same layout.
  * Use [BuildContext.getLayoutOfAdditionalFrontendOnlyPlugins] to get the cached value instead of calling this method directly.
  */
 internal fun computeDescriptorsForAdditionalFrontendPlugins(
@@ -288,6 +290,8 @@ internal fun computeDescriptorsForAdditionalFrontendPlugins(
       /* generate descriptors for custom 'Xxx for JetBrains Client' plugins, which are not bundled with the IDE but are used in the frontend process; eventually we'll get rid of
          them (see IJPL-220139) */
       val additionalPluginModuleLayouts = getPluginLayoutsByJpsModuleNames(additionalPluginModules, embeddedFrontendContext.productProperties.productLayout)
+      // A dry layout needs only the platform layout. distributionState() also walks every monorepo plugin when
+      // buildAllCompatiblePlugins is on, and that walk needs descriptor sources this fragment does not declare.
       additionalFrontendPlugins.addAll(buildPlugins(
         plugins = additionalPluginModuleLayouts,
         os = null,
@@ -296,7 +300,11 @@ internal fun computeDescriptorsForAdditionalFrontendPlugins(
         platformEntriesProvider = null,
         searchableOptionSet = null,
         descriptorCacheContainer = platformLayout.descriptorCacheContainer,
-        state = context.distributionState(),
+        state = DistributionBuilderState(
+          platformLayout = platformLayout,
+          pluginsToPublish = emptySet(),
+          context = context,
+        ),
         context = context,
         copyFiles = false,
         layoutOnly = true

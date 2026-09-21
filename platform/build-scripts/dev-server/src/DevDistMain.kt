@@ -205,19 +205,26 @@ private fun parseFragment(options: CommandLineOptions): DevBuildFragment {
     }
   }
   val platformResources = options.optionalBoolean("--platform-resources") ?: false
+  val runtimeModuleRepository = options.optionalBoolean("--runtime-module-repository") ?: false
 
   if (name == null) {
-    require(platform == null && !platformResources) {
+    require(platform == null && !platformResources && !runtimeModuleRepository) {
       "--fragment is required to select a part of a distribution; without it the whole distribution is assembled"
     }
     return DevBuildFragment.COMPLETE
   }
 
-  require(platform != null || platformResources) {
-    "The '$name' fragment selects nothing: pass at least one of --platform, --platform-resources"
+  require(platform != null || platformResources || runtimeModuleRepository) {
+    "The '$name' fragment selects nothing: pass at least one of --platform, --platform-resources, --runtime-module-repository"
   }
   // The plugin directories come from the packed plugin components, so a fragment never owns one.
-  return DevBuildFragment(name = name, platform = platform, platformResources = platformResources, plugins = null)
+  return DevBuildFragment(
+    name = name,
+    platform = platform,
+    platformResources = platformResources,
+    plugins = null,
+    runtimeModuleRepository = runtimeModuleRepository,
+  )
 }
 
 /**

@@ -74,14 +74,54 @@ class IdeBuilderTest {
     assertThat(complete.platform).isEqualTo(PlatformJarSelector.ALL)
     assertThat(complete.platformResources).isTrue()
     assertThat(complete.plugins).isEqualTo(PluginFragmentSelector.All)
+    assertThat(complete.runtimeModuleRepository).isTrue()
     assertThat(
       DevBuildFragment(
         name = "platform_lib",
         platform = PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.EXCLUDE),
         platformResources = false,
         plugins = null,
+        runtimeModuleRepository = false,
       ).isComplete
     ).isFalse()
+  }
+
+  @Test
+  fun runtimeModuleRepositoryFragmentIsNotComplete() {
+    val fragment = DevBuildFragment(
+      name = "platform_runtime_module_repository",
+      platform = null,
+      platformResources = false,
+      plugins = null,
+      runtimeModuleRepository = true,
+    )
+
+    assertThat(fragment.isComplete).isFalse()
+    assertThat(fragment.runtimeModuleRepository).isTrue()
+    assertThat(fragment.platform).isNull()
+    assertThat(fragment.platformResources).isFalse()
+    assertThat(fragment.plugins).isNull()
+  }
+
+  @Test
+  fun runtimeModuleRepositoryFragmentForcesRepositoryGeneration() {
+    val options = BuildOptions().apply { generateRuntimeModuleRepository = false }
+
+    configureDevModeBuildOptions(
+      options = options,
+      request = createBuildRequest(
+        fragment = DevBuildFragment(
+          name = "platform_runtime_module_repository",
+          platform = null,
+          platformResources = false,
+          plugins = null,
+          runtimeModuleRepository = true,
+        ),
+      ),
+      buildOptionsTemplate = BuildOptions(),
+    )
+
+    assertThat(options.generateRuntimeModuleRepository).isTrue()
   }
 
   @Test
@@ -242,6 +282,7 @@ class IdeBuilderTest {
           platform = PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.ONLY),
           platformResources = false,
           plugins = null,
+          runtimeModuleRepository = false,
         ),
       ),
       buildOptionsTemplate = BuildOptions(),
@@ -262,6 +303,7 @@ class IdeBuilderTest {
           platform = PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.EXCLUDE),
           platformResources = false,
           plugins = null,
+          runtimeModuleRepository = false,
         ),
       ),
       buildOptionsTemplate = BuildOptions(),
@@ -282,6 +324,7 @@ class IdeBuilderTest {
           platform = PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.ONLY),
           platformResources = false,
           plugins = null,
+          runtimeModuleRepository = false,
         ),
         pluginClasspathPrefixFile = tempDir.resolve("plugin-classpath-prefix"),
       ),

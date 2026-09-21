@@ -5,6 +5,21 @@ load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+# The product images directory of PyCharm Community. The split platform set of the ultimate checkout reads it as an
+# extra project file.
+filegroup(
+    name = "images",
+    srcs = glob(["images/**"]),
+    visibility = ["//visibility:public"],
+)
+
+# `PyCharmCommunityProperties` reads the bundled plugin list; the split platform set of the ultimate checkout reads it
+# as an extra project file.
+exports_files(
+    ["plugin-list.txt"],
+    visibility = ["//visibility:public"],
+)
+
 # Can't name the target 'installers' since it triggers elevation in Windows
 java_binary(
     name = "i_build_target",

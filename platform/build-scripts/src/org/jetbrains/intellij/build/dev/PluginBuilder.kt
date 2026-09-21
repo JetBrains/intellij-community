@@ -173,7 +173,9 @@ internal fun scrambleAlreadyLaidOutPluginsForDevMode(
 }
 
 internal fun devModePluginCandidates(request: BuildRequest, context: BuildContext): List<PluginLayout> {
-  check(request.fragment.ownsPlugins) { "The '${request.fragment}' fragment owns no plugin" }
+  check(request.fragment.ownsPlugins || request.fragment.ownsRuntimeModuleRepository) {
+    "The '${request.fragment}' fragment owns no plugin"
+  }
   val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)
   // The candidate set is the product's whole bundled set: the one assembly that owns plugins owns every one of them.
   val owned = getPluginLayoutsByJpsModuleNames(bundledMainModuleNames, context.productProperties.productLayout)

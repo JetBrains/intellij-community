@@ -5,6 +5,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 ### auto-generated section `dev intellij.restructuredtext` start
 dev_dist_plugin(
     content_modules = ["intellij.restructuredtext.python"],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = ["intellij.restructuredtext.python"],
+    jars = {
+        "lib/restructuredtext.jar": ["intellij.restructuredtext"],
+    },
     main_module = "intellij.restructuredtext",
 )
 ### auto-generated section `dev intellij.restructuredtext` end

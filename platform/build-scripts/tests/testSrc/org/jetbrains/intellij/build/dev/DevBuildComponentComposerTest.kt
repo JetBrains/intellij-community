@@ -365,6 +365,61 @@ internal class DevBuildComponentComposerTest {
   }
 
   @Test
+  fun `composer places runtime module repository files at the distribution root`(@TempDir tempDir: Path) {
+    val repositoryRoot = tempDir.resolve("runtime-module-repository")
+    val dat = repositoryRoot.resolve("modules/module-descriptors.dat")
+    val jar = repositoryRoot.resolve("modules/module-descriptors.jar")
+    Files.createDirectories(dat.parent)
+    Files.writeString(dat, "repository-dat")
+    Files.writeString(jar, "repository-jar")
+    val beforeManifest = tempDir.resolve("before.json")
+    writeDevBuildComponentManifest(
+      file = beforeManifest,
+      kind = "platform_runtime_module_repository",
+      platformPrefix = "idea",
+      os = OsFamily.LINUX,
+      arch = JvmArchitecture.x64,
+      additionalModules = emptyList(),
+      mainClass = "com.intellij.idea.Main",
+      coreClassPath = emptyList(),
+      pluginCount = 0,
+      componentRoot = repositoryRoot,
+    )
+    val before = readDevBuildComponentManifest(beforeManifest)
+    Files.writeString(dat, "repository-dat-changed")
+    val afterManifest = tempDir.resolve("after.json")
+    writeDevBuildComponentManifest(
+      file = afterManifest,
+      kind = "platform_runtime_module_repository",
+      platformPrefix = "idea",
+      os = OsFamily.LINUX,
+      arch = JvmArchitecture.x64,
+      additionalModules = emptyList(),
+      mainClass = "com.intellij.idea.Main",
+      coreClassPath = emptyList(),
+      pluginCount = 0,
+      componentRoot = repositoryRoot,
+    )
+    val after = readDevBuildComponentManifest(afterManifest)
+    val platformLib = component(tempDir, "platform-lib", "lib/platform.jar")
+    val target = tempDir.resolve("target")
+
+    val result = composeDevBuildComponents(
+      components = listOf(
+        DevBuildComponent(root = platformLib, manifest = manifest(kind = "platform_lib", coreClassPath = listOf("lib/platform.jar"))),
+        DevBuildComponent(root = repositoryRoot, manifest = after),
+      ),
+      target = target,
+    )
+
+    assertThat(Files.readString(target.resolve("modules/module-descriptors.dat"))).isEqualTo("repository-dat-changed")
+    assertThat(Files.readString(target.resolve("modules/module-descriptors.jar"))).isEqualTo("repository-jar")
+    assertThat(result.coreClassPath).containsExactly("lib/platform.jar")
+    assertThat(computeIdeFingerprintFromComponents(listOf(after)))
+      .isNotEqualTo(computeIdeFingerprintFromComponents(listOf(before)))
+  }
+
+  @Test
   fun `composer accepts ordered platform layers and plugins`(@TempDir tempDir: Path) {
     val platformLib = component(tempDir, "platform-lib", "lib/platform.jar")
     val platformResources = component(tempDir, "platform-resources", "bin/idea.properties")

@@ -866,8 +866,11 @@ def platform_values_error(main_module, platforms, platform_values):
 def plan_product_error(main_module, product, plan_product):
     """Returns why `plan_product` does not fit `product`, or None when it does.
 
-    `dev_dist_complex_plugin` fails with the message at load time. A non-empty `plan_product` is the product itself: the
-    plan file of a divergent product is named by that product, and a chain never reads the plan file of another one.
+    `dev_dist_complex_plugin` fails with the message at load time. A non-empty `plan_product` is the product itself, or
+    its case-safe plan name: the case-folded product key, an underscore and a suffix, such as `idea_community` for
+    `Idea`. The generator assigns a plan name to a product whose key collides with another key on a case-insensitive
+    file system. The plan file of a divergent product is named by that name, and a chain never reads the plan file of
+    another product.
 
     Args:
         main_module: The plugin's main module, named in the message.
@@ -877,7 +880,7 @@ def plan_product_error(main_module, product, plan_product):
     Returns:
         The message, or None.
     """
-    if plan_product and plan_product != product:
+    if plan_product and plan_product != product and not plan_product.startswith(product.lower() + "_"):
         return "%s names the plan product '%s', which is not its product '%s'" % (main_module, plan_product, product)
     return None
 
@@ -915,8 +918,8 @@ def dev_dist_complex_plugin(
         main_module: The plugin's main module. It is the component name and the plan file stem.
         product: The product's platform prefix, the first element of every chain stem.
         plan_product: The product in the plan file name, `<main module>.<plan_product>[.<platform>].dev-plan.json`,
-            for a product whose plan text differs from the baseline product's. Empty for a plan file the product shares
-            with the baseline product.
+            for a product whose plan text differs from the baseline product's: the product, or its case-safe plan name,
+            see `plan_product_error`. Empty for a plan file the product shares with the baseline product.
         plan_package: The package that holds the plan file, as an absolute label such as
             `@community//plugins/kotlin/plugin`. Empty for a plan file in the package of the call.
         product_info: The product info target that configures the descriptor and the catalogue.

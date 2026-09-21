@@ -12,6 +12,7 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.impl.DistributionBuilderState
+import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
@@ -170,9 +171,10 @@ interface BuildContext : CompilationContext {
 
   /**
    * Returns descriptors of plugins that are not bundled with the IDE, but used from the frontend process started from the IDE.
+   * The layout fills the descriptor cache of [platformLayout]. Read the result with the same layout.
    */
   @Internal
-  fun getLayoutOfAdditionalFrontendOnlyPlugins(): List<PluginBuildResult>
+  fun getLayoutOfAdditionalFrontendOnlyPlugins(platformLayout: PlatformLayout): List<PluginBuildResult>
 
   fun getContentModuleFilter(): ContentModuleFilter
 

@@ -519,12 +519,13 @@ def _check_platform_values_refusals(main_module):
 
 def _check_plan_product_refusals(main_module):
     """Fails at load time when `plan_product_error` accepts a plan product that is not the product, or refuses the
-    empty one or the product itself."""
-    error = plan_product_error(main_module, "idea", "server")
-    if error == None or "is not its product" not in error:
-        fail("plan_product_error accepted the plan product 'server' for 'idea': %s" % error)
-    for accepted in ["", "idea"]:
-        error = plan_product_error(main_module, "idea", accepted)
+    empty one, the product itself, or the product's case-safe plan name."""
+    for refused in ["server", "ideacommunity", "Idea_community"]:
+        error = plan_product_error(main_module, "Idea", refused)
+        if error == None or "is not its product" not in error:
+            fail("plan_product_error accepted the plan product '%s' for 'Idea': %s" % (refused, error))
+    for accepted in ["", "Idea", "idea_community"]:
+        error = plan_product_error(main_module, "Idea", accepted)
         if error != None:
             fail("plan_product_error refused '%s': %s" % (accepted, error))
 

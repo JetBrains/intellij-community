@@ -11,6 +11,14 @@ dev_dist_plugin(
         "intellij.pycharm.community.ide.impl.promotion",
         "intellij.pycharm.community.customization.shared",
     ],
+    descriptor = "ide/resources/META-INF/plugin.xml",
+    descriptor_modules = ["intellij.pycharm.community.ide.impl.promotion"],
+    jars = {
+        "lib/pycharm-community-customization.jar": [
+            "intellij.pycharm.community.customization",
+            "intellij.pycharm.community.customization.shared",
+        ],
+    },
     main_module = "intellij.pycharm.community.customization",
 )
 ### auto-generated section `dev intellij.pycharm.community.customization` end

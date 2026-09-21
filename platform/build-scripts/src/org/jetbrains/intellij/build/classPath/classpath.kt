@@ -8,7 +8,6 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ContentModuleFilter
 import org.jetbrains.intellij.build.DescriptorSearchPass
@@ -310,7 +309,12 @@ internal fun writePluginClassPathCount(out: DataOutputStream, pluginCount: Int) 
   out.writeShort(pluginCount)
 }
 
-@VisibleForTesting
+/**
+ * Fills the platform descriptor cache with the product content-module descriptors and returns the root element.
+ *
+ * A complete assembly and the runtime module repository fragment both need this cache before they write
+ * `plugin-classpath.txt` or `modules/module-descriptors.*`.
+ */
 fun createCachedProductDescriptor(
   platformLayout: PlatformLayout,
   platformDescriptorCache: ScopedCachedDescriptorContainer,
