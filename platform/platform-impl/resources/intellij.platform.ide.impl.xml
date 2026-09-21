@@ -495,9 +495,9 @@
       description="Merge an external file change into the unsaved changes, for a client that asks for it. Turning this off makes such a client keep the unsaved changes, and it takes effect at once. Turning it on reaches a document once the document loads or saves again."
     />
     <registryKey
-      key="ide.welcome.screen.recent.project.update"
+      key="ide.welcome.screen.recent.project.vcs.actions"
       defaultValue="false"
-      description="Show the 'Update Project' action for a recent version control project on the welcome screen"
+      description="Show the VCS actions icon and menu for a recent version control project on the welcome screen"
     />
     <registryKey
       key="ide.hide.default.project.directory.for.isolated.workspace"

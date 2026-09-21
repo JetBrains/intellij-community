@@ -3348,7 +3348,6 @@
   WelcomeScreen.QuickStart
 [group WelcomeScreenRecentProjectActionGroup]
   WelcomeScreen.OpenSelected
-  WelcomeScreen.UpdateProject
   WelcomeScreen.RevealIn
   WelcomeScreen.CopyProjectPath
   <separator>

@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
@@ -276,6 +277,7 @@ class RecentProjectFilteringTree(
     private val isProjectPathValid: (String) -> Boolean,
   ) : PopupHandler() {
     private var popupMenu: ActionPopupMenu? = null
+    private var vcsPopupMenu: ActionPopupMenu? = null
 
     override fun mouseMoved(mouseEvent: MouseEvent) {
       if (actionIsInProgress(mouseEvent)) return
@@ -294,10 +296,13 @@ class RecentProjectFilteringTree(
       }
 
       projectActionButtonViewModel.isButtonHovered = intersectWithActionIcon(point)
+      projectActionButtonViewModel.isVcsButtonHovered = intersectWithVcsIcon(point)
     }
 
     private fun actionIsInProgress(mouseEvent: MouseEvent): Boolean {
-      return popupMenu?.component?.isVisible == true || mouseEvent.isMultipleSelectionInProgress
+      return popupMenu?.component?.isVisible == true ||
+             vcsPopupMenu?.component?.isVisible == true ||
+             mouseEvent.isMultipleSelectionInProgress
     }
 
     override fun mouseExited(e: MouseEvent?) {
@@ -323,7 +328,10 @@ class RecentProjectFilteringTree(
       }
 
       if (mouseEvent.clickCount == 1 && SwingUtilities.isLeftMouseButton(mouseEvent)) {
-        if (intersectWithActionIcon(point)) {
+        if (intersectWithVcsIcon(point)) {
+          invokeVcsPopup(mouseEvent.component, point.x, point.y, item)
+        }
+        else if (intersectWithActionIcon(point)) {
           when (item) {
             is CloneableProjectItem -> {
               when (item.cloneableProject.cloneStatus) {
@@ -402,6 +410,45 @@ class RecentProjectFilteringTree(
 
       return Rectangle(helper.width - helper.rightMargin - size - rightGap,
                        bounds.y + (bounds.height - size) / 2, size, size)
+    }
+
+    private fun intersectWithVcsIcon(point: Point): Boolean {
+      if (!isVcsActionsEnabled()) return false
+      val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
+      if (row == -1) return false
+      val node = tree.getPathForRow(row)?.lastPathComponent as? DefaultMutableTreeNode
+      val item = node?.userObject as? RecentProjectItem ?: return false
+      return item.branchName != null &&
+             isProjectPathValid(item.projectPath) &&
+             getVcsButtonRect(row).contains(point)
+    }
+
+    // The VCS button sits one button-size to the left of the actions button.
+    private fun getVcsButtonRect(row: Int): Rectangle {
+      val actionsRect = getActionsButtonRect(row)
+      val size = JBUI.scale(ActionsButton.SIZE)
+      return Rectangle(actionsRect.x - size - JBUIScale.scale(ActionsButton.VCS_RIGHT_GAP), actionsRect.y, size, size)
+    }
+
+    private fun invokeVcsPopup(component: Component, x: Int, y: Int, sourceItem: RecentProjectTreeItem) {
+      val popupMenu = getVcsPopupMenu()
+      popupMenu.setDataContext {
+        SimpleDataContext.builder()
+          .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEMS_KEY, getSelectedItems(tree))
+          .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEM_KEY, sourceItem)
+          .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_TREE_KEY, tree)
+          .build()
+      }
+      popupMenu.component.show(component, x, y)
+    }
+
+    private fun getVcsPopupMenu(): ActionPopupMenu {
+      return vcsPopupMenu ?: ActionManager.getInstance().let { actionManager ->
+        val group = actionManager.getAction("WelcomeScreenRecentProjectVcsActionGroup") as ActionGroup
+        actionManager.createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group).also {
+          vcsPopupMenu = it
+        }
+      }
     }
 
     private fun cancelCloneProject(cloneableProject: CloneableProject) {
@@ -488,6 +535,9 @@ class RecentProjectFilteringTree(
       private val projectActions = ActionsButton().apply {
         setState(AllIcons.Ide.Notification.Gear, false)
       }
+      private val projectVcsActions = ActionsButton().apply {
+        setState(AllIcons.Vcs.Branch, false)
+      }
       private val projectNamePanel = JPanel(VerticalLayout(4)).apply {
         isOpaque = false
 
@@ -514,6 +564,7 @@ class RecentProjectFilteringTree(
                 verticalAlign = VerticalAlign.TOP)
           .cell(projectNamePanel, resizableColumn = true, horizontalAlign = HorizontalAlign.FILL, gaps = UnscaledGaps(4, 4, 4, 4))
           .cell(projectProgressLabel, resizableColumn = true, horizontalAlign = HorizontalAlign.RIGHT, gaps = UnscaledGaps(left = 8, right = 8))
+          .cell(projectVcsActions, gaps = UnscaledGaps(right = ActionsButton.VCS_RIGHT_GAP))
           .cell(projectActions, gaps = UnscaledGaps(right = ActionsButton.RIGHT_GAP))
       }
 
@@ -542,6 +593,10 @@ class RecentProjectFilteringTree(
           buttonViewModel.prepareActionsButton(projectActions, rowHovered, AllIcons.Welcome.RecentProjects.Remove,
                                                AllIcons.Welcome.RecentProjects.RemoveHover)
         }
+
+        buttonViewModel.prepareVcsButton(projectVcsActions, rowHovered,
+                                         visible = isVcsActionsEnabled() && isProjectValid && item.branchName != null,
+                                         icon = AllIcons.Vcs.Branch)
 
         return this
       }
@@ -620,6 +675,7 @@ class RecentProjectFilteringTree(
         projectStatusLabel.isVisible = false
         projectProgressLabel.isVisible = false
         projectActions.isVisible = false
+        projectVcsActions.isVisible = false
 
         if (tooltip != toolTipText) {
           serviceIfCreated<IdeTooltipManager>()?.hideCurrent(mouseEvent = null)
@@ -825,6 +881,7 @@ class RecentProjectFilteringTree(
 
   private class ProjectActionButtonViewModel(
     var isButtonHovered: Boolean = false,
+    var isVcsButtonHovered: Boolean = false,
   ) {
 
     fun prepareActionsButton(button: ActionsButton, rowHovered: Boolean, icon: Icon, hoveredIcon: Icon, alwaysReserveSpace: Boolean = false) {
@@ -838,6 +895,12 @@ class RecentProjectFilteringTree(
         button.isVisible = rowHovered
         button.setState(buttonIcon, buttonHovered)
       }
+    }
+
+    fun prepareVcsButton(button: ActionsButton, rowHovered: Boolean, visible: Boolean, icon: Icon) {
+      val show = rowHovered && visible
+      button.isVisible = show
+      button.setState(icon, isVcsButtonHovered && show)
     }
   }
 
@@ -962,12 +1025,18 @@ class RecentProjectFilteringTree(
   }
 }
 
+/** Registry key that enables the VCS actions icon and menu for a recent project on the welcome screen. Off by default. */
+private const val RECENT_PROJECT_VCS_ACTIONS_ENABLED = "ide.welcome.screen.recent.project.vcs.actions"
+
+private fun isVcsActionsEnabled(): Boolean = Registry.`is`(RECENT_PROJECT_VCS_ACTIONS_ENABLED)
+
 private class ActionsButton : SelectablePanel() {
 
   companion object {
     const val SIZE = 22
     const val RIGHT_GAP = 20
     const val GROUP_RIGHT_GAP = 14
+    const val VCS_RIGHT_GAP = 4
   }
 
   private val label = JLabel().apply {

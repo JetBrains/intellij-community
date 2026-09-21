@@ -1016,7 +1016,6 @@
 
     <group id="WelcomeScreenRecentProjectActionGroup" searchable="false">
       <reference ref="WelcomeScreen.OpenSelected"/>
-      <reference ref="WelcomeScreen.UpdateProject"/>
       <reference ref="WelcomeScreen.RevealIn"/>
       <reference ref="WelcomeScreen.CopyProjectPath"/>
       <separator/>
@@ -1029,6 +1028,10 @@
       <reference ref="WelcomeScreen.CustomRecentProjectActions"/>
       <separator/>
       <reference ref="WelcomeScreen.RemoveSelected"/>
+    </group>
+
+    <group id="WelcomeScreenRecentProjectVcsActionGroup" searchable="false">
+      <reference ref="WelcomeScreen.UpdateProject"/>
     </group>
 
     <group id="WelcomeScreen.KeymapGroup" searchable="false">
