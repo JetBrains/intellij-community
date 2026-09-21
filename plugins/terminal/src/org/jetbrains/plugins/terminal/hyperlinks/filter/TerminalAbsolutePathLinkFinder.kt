@@ -36,6 +36,7 @@ internal class TerminalAbsolutePathLinkFinder(
   private var lastPathSegmentStart = -1
   private var candidateItem: Filter.ResultItem? = null
   private var i = 0
+  private var hasSeenWhitespaceInPath = false
 
   private fun addPreviousCandidate() {
     candidateItem?.let {
@@ -48,6 +49,7 @@ internal class TerminalAbsolutePathLinkFinder(
     state = ParsingState.PATH
     pathStartIndex = i
     lastPathSegmentStart = i
+    hasSeenWhitespaceInPath = false
     addPreviousCandidate()
   }
 
@@ -62,6 +64,19 @@ internal class TerminalAbsolutePathLinkFinder(
   }
 
   private fun findValidResult(pathEndIndex: Int, lineNumber: Int, columnNumber: Int): Filter.ResultItem? {
+    val file = findFile(pathEndIndex) ?: return null
+    return createInvisibleLink(
+      indexOffset + pathStartIndex,
+      indexOffset + i,
+      TerminalOpenFileHyperlinkInfo(project, file, lineNumber, columnNumber),
+    )
+  }
+
+  /**
+   * Resolves `line[pathStartIndex, pathEndIndex)` as a file path.
+   * Returns `null` if it is not a plausible path or the file is not cached by the local file system.
+   */
+  private fun findFile(pathEndIndex: Int): VirtualFile? {
     if (pathEndIndex - lastPathSegmentStart > FILENAME_MAX) return null
     if (pathEndIndex - pathStartIndex < PATH_MIN) return null
 
@@ -76,17 +91,19 @@ internal class TerminalAbsolutePathLinkFinder(
       homeDirectory?.let { it.toString() + path.substring(1) } ?: return null
     }
     else path
-    val file = findFileByPathIfCached(resolvedPath)
-    return if (file != null) {
-      createInvisibleLink(
-        indexOffset + pathStartIndex,
-        indexOffset + i,
-        TerminalOpenFileHyperlinkInfo(project, file, lineNumber, columnNumber),
-      )
+    return findFileByPathIfCached(resolvedPath)
+  }
+
+  /**
+   * Checks the directory part of the current path (up to the last separator).
+   * If it does not exist, no continuation of the path (e.g. with spaces in the last segment) can exist either.
+   */
+  private fun directoryPrefixMayExist(): Boolean {
+    val prefixEnd = lastPathSegmentStart - 1 // index of the last separator
+    if (prefixEnd - pathStartIndex <= 1) {
+      return true // only a root or '~' before the last separator, e.g. "/foo", "~/foo", "C:\foo"
     }
-    else {
-      null
-    }
+    return findFile(prefixEnd) != null
   }
 
   private fun findValidResultWithNumbers(pathEndIndex: Int): Filter.ResultItem? {
@@ -125,17 +142,14 @@ internal class TerminalAbsolutePathLinkFinder(
           else when {
             line[i] == '\\' || line[i] == '/' -> {
               lastPathSegmentStart = i + 1
-              if (i - pathStartIndex > 1){
+              // A path without whitespace is looked up once, at the whitespace, ':' or end of line following it.
+              // Only a path with whitespace is validated at each separator, see `directoryPrefixMayExist()`.
+              if (hasSeenWhitespaceInPath && i - pathStartIndex > 1) {
                 val currentCandidate = findValidResult(i, 0, 0)
                 if (currentCandidate == null) {
-                  /* This is not a valid path it means that continuing as a path no longer will result in a valid file, but this could be
-                     the the start of a new path. Need to move back up to 4 characters since the path could include a drive letter.
-                   */
-                  if ((i - 3) > pathStartIndex && line[i - 1] == ':' && line[i - 2] in 'A'..'Z' && line[i - 3].isWhitespace()) {
-                    i -= 5
-                    startNormalMode()
-                  }
-                  else if ((i - 2) > pathStartIndex && line[i - 1] == '~' && line[i - 2].isWhitespace()) {
+                  // Continuing as a path can no longer result in a valid file, but this could be the start of a new path.
+                  // (A Windows path cannot start here: ':' in PATH state is handled by the ':' branch below.)
+                  if ((i - 2) > pathStartIndex && line[i - 1] == '~' && line[i - 2].isWhitespace()) {
                     // Could be the start of a new home-relative path, e.g. "... ~/foo"
                     i -= 3
                     startNormalMode()
@@ -173,9 +187,15 @@ internal class TerminalAbsolutePathLinkFinder(
             // Or can be a valid path but be the prefix of a longer path (for example "/work projects/" and "/work projects 2" exist,
             // https://issuetracker.google.com/issues/167701951)
             line[i].isWhitespace() -> {
+              val isFirstWhitespaceInPath = !hasSeenWhitespaceInPath
+              hasSeenWhitespaceInPath = true
               val possibleCandidate = findValidResult(i, 0, 0)
               if (possibleCandidate != null) {
                 candidateItem = possibleCandidate
+              }
+              else if (isFirstWhitespaceInPath && !directoryPrefixMayExist()) {
+                // Neither the path nor its directory exists, so no continuation of this path can exist either.
+                startNormalMode()
               }
             }
           }
@@ -183,6 +203,11 @@ internal class TerminalAbsolutePathLinkFinder(
         ParsingState.CANCELED_PATH -> if (line[i].isWhitespace()) startNormalMode()
       }
       i++
+    }
+    // Normally, the line ends with a line break, but let's support other cases too.
+    // Check if the previous character is whitespace to avoid work duplication.
+    if (state == ParsingState.PATH && !line[i - 1].isWhitespace()) {
+      findValidResult(i, 0, 0)?.let { candidateItem = it }
     }
     candidateItem?.let {
       foundLinkSink(it)

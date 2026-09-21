@@ -31,7 +31,11 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
+import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
+import org.mockito.kotlin.never
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import kotlin.random.Random
 
@@ -91,10 +95,11 @@ internal class TerminalGenericFileFilterAbsolutePathTest {
   @Test
   fun `honor FILENAME_MAX for performance reasons`() {
     val longString = RandomStringUtils.secure().nextAlphanumeric(FILENAME_MAX + 1)
-    whenever(localFileSystem.findFileByPathIfCached(eq("/$longString"))).thenThrow(AssertionError("Should not be queried"))
 
     getFilterResultAndCheckHighlightPositions("/$longString /path/to/file", listOf("/path/to/file"), checkHighlights = false)
       .checkFileLinks("/path/to/file")
+    // The finder swallows any Throwable thrown by the file system, so `thenThrow` cannot be used to assert this.
+    verify(localFileSystem, never()).findFileByPathIfCached(eq("/$longString"))
   }
 
   @Test
@@ -103,16 +108,94 @@ internal class TerminalGenericFileFilterAbsolutePathTest {
     val p2 = RandomStringUtils.secure().nextAlphanumeric(FILENAME_MAX / 2 + 1)
     assert(p1.length + p2.length > FILENAME_MAX)
 
-    whenever(localFileSystem.findFileByPathIfCached(eq("/$p1"))).thenReturn(null)
-    whenever(localFileSystem.findFileByPathIfCached(eq("/$p1 $p2"))).thenThrow(AssertionError("Should not be queried"))
     getFilterResultAndCheckHighlightPositions("/$p1 $p2 /path/to/file", listOf("/path/to/file"), checkHighlights = false)
       .checkFileLinks("/path/to/file")
+    verify(localFileSystem, never()).findFileByPathIfCached(eq("/$p1 $p2"))
   }
 
   @Test
   fun `nonexisting paths cancel early`() =
     getFilterResultAndCheckHighlightPositions("This /is/not/a path /path/to/file", listOf("/path/to/file"), checkHighlights = false)
       .checkFileLinks("/path/to/file")
+
+  @Test
+  fun `path without spaces is looked up once, not per segment`() {
+    getFilterResultAndCheckHighlightPositions("blah blah /path/to/file", listOf("/path/to/file"), checkHighlights = false)
+      .checkFileLinks("/path/to/file")
+    verify(localFileSystem, times(1)).findFileByPathIfCached(any())
+    verify(localFileSystem).findFileByPathIfCached(eq("/path/to/file"))
+  }
+
+  @Test
+  fun `nonexisting path followed by prose is not looked up per word`() {
+    getFilterResultAndCheckHighlightPositions(
+      "This /is/not/a path with more words /path/to/file", listOf("/path/to/file"), checkHighlights = false
+    ).checkFileLinks("/path/to/file")
+    // "/is/not/a", then its directory "/is/not" (which proves that no continuation can exist), then "/path/to/file"
+    verify(localFileSystem, times(3)).findFileByPathIfCached(any())
+    verify(localFileSystem).findFileByPathIfCached(eq("/is/not/a"))
+    verify(localFileSystem).findFileByPathIfCached(eq("/is/not"))
+    verify(localFileSystem, never()).findFileByPathIfCached(eq("/is/not/a path"))
+  }
+
+  @Test
+  fun `URL followed by prose is looked up a bounded number of times`() {
+    getFilterResultAndCheckHighlightPositions(
+      "see https://example.com/docs/setup for more information about the setup", emptyList(), checkHighlights = false
+    ).checkFileLinks()
+    verify(localFileSystem, times(2)).findFileByPathIfCached(any())
+    verify(localFileSystem).findFileByPathIfCached(eq("//example.com/docs/setup"))
+    verify(localFileSystem).findFileByPathIfCached(eq("//example.com/docs"))
+  }
+
+  @Test
+  fun `path with space in the first segment is not cancelled early`() =
+    getFilterResultAndCheckHighlightPositions("blah /with space blah C:\\with space blah", listOf("/with space", "C:\\with space"), checkHighlights = false)
+      .checkFileLinks("/with space", "C:\\with space")
+
+  @Test
+  fun `recognize Windows path after a nonexisting file in an existing directory`() {
+    // "/path/to/missing" does not exist, but "/path/to" does, so the parser must keep going (the file name may contain spaces)
+    // and restart at "C:" via the ':' branch.
+    getFilterResultAndCheckHighlightPositions(
+      "Cannot open /path/to/missing C:\\path\\to\\file", listOf("/path/to/file", "C:\\path\\to\\file"), checkHighlights = false
+    ).checkFileLinks("C:\\path\\to\\file")
+    verify(localFileSystem).findFileByPathIfCached(eq("/path/to/missing"))
+    verify(localFileSystem).findFileByPathIfCached(eq("/path/to"))
+  }
+
+  @Test
+  fun `recognize path with space in a middle segment when the prefix before the space does not exist`() =
+    getFilterResultAndCheckHighlightPositions("""
+    | blah blah /path/to/my dir/file blah blah
+                ^^^^^^^^^^^^^^^^^^^^
+  """.trimIndent(), listOf("/path/to/my dir/file"))
+    .checkFileLinks("/path/to/my dir/file")
+
+  @Test
+  fun `recognize path at the end of a line without a line break`() =
+    getFilterResultAndCheckHighlightPositions("blah blah /path/to/file", listOf("/path/to/file"), checkHighlights = false, lineBreak = "")
+      .checkFileLinks("/path/to/file")
+
+  @Test
+  fun `recognize Windows path at the end of a line without a line break`() =
+    getFilterResultAndCheckHighlightPositions("blah blah C:\\path\\to\\file", listOf("C:\\path\\to\\file"), checkHighlights = false, lineBreak = "")
+      .checkFileLinks("C:\\path\\to\\file")
+
+  @Test
+  fun `take longest path with spaces at the end of a line without a line break`() =
+    getFilterResultAndCheckHighlightPositions("In folder /work projects 2", listOf("/work projects", "/work projects 2"), checkHighlights = false, lineBreak = "")
+      .checkFileLinks("/work projects 2")
+
+  @Test
+  fun `nonexisting path at the end of a line is not looked up again with the line break`() {
+    getFilterResultAndCheckHighlightPositions("blah blah /is/not/a", emptyList(), checkHighlights = false)
+      .checkFileLinks()
+    // Looked up at the line break; the end-of-line check must not repeat it with the line break included.
+    verify(localFileSystem, times(2)).findFileByPathIfCached(any())
+    verify(localFileSystem).findFileByPathIfCached(eq("/is/not/a"))
+    verify(localFileSystem).findFileByPathIfCached(eq("/is/not"))
+  }
 
   @Test
   fun `recognize simple Linux path`() = getFilterResultAndCheckHighlightPositions("""
@@ -534,6 +617,7 @@ internal class TerminalGenericFileFilterAbsolutePathTest {
     validPaths: Collection<String>,
     checkHighlights: Boolean = true,
     filter: TerminalGenericFileFilter = this.filter,
+    lineBreak: String = "\n",
   ): List<Filter.Result> {
     var totalLength = 0
     var previousInputLine = ""
@@ -547,7 +631,7 @@ internal class TerminalGenericFileFilterAbsolutePathTest {
     })).thenReturn(null)
     content.lines().forEach { line ->
       if (!checkHighlights || line.startsWith('|')) {
-        val inputLine = line.removePrefix("| ") + "\n"
+        val inputLine = line.removePrefix("| ") + lineBreak
         previousInputLine = inputLine
         previousInputStartIndex = totalLength
         totalLength += inputLine.length
