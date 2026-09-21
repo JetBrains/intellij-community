@@ -60,6 +60,15 @@ class UnresolvedLinkLabelInspectionTest: BasePlatformTestCase() {
   }
 
   @Test
+  fun `normalization preserves word boundaries`() {
+    doTest("""
+      [text][<warning descr="Cannot resolve link label foo bar">foo bar</warning>]
+
+      [foobar]: https://example.com
+    """)
+  }
+
+  @Test
   fun `test standalone bracketed text is reported`() {
     doTest("""
       T030 [<warning descr="Cannot resolve link label P">P</warning>] Implement the thing
@@ -81,9 +90,9 @@ class UnresolvedLinkLabelInspectionTest: BasePlatformTestCase() {
   }
 
   @Test
-  fun `test bracketed text separated by a space after an image marker is not a reference link`() {
+  fun `an image and a reference separated by a space have separate labels`() {
     doTest("""
-      T030 ![P] [<warning descr="Cannot resolve link label US3">US3</warning>] Implement the thing
+      ![<warning descr="Cannot resolve link label P">P</warning>] [<warning descr="Cannot resolve link label US3">US3</warning>]
     """)
   }
 
@@ -91,6 +100,49 @@ class UnresolvedLinkLabelInspectionTest: BasePlatformTestCase() {
   fun `image reference label is reported`() {
     doTest("""
       ![P][<warning descr="Cannot resolve link label US3">US3</warning>]
+    """)
+  }
+
+  @Test
+  fun `collapsed image reference labels are reported`() {
+    doTest("""
+      ![<warning descr="Cannot resolve link label image">image</warning>][]
+    """)
+  }
+
+  @Test
+  fun `unresolved image labels inside links are reported`() {
+    doTest("""
+      [![<warning descr="Cannot resolve link label image">image</warning>]](https://example.org)
+      [![<warning descr="Cannot resolve link label image">image</warning>][]](https://example.org)
+      [![alt][<warning descr="Cannot resolve link label image">image</warning>]][outer]
+
+      [outer]: https://example.org
+    """)
+  }
+
+  @Test
+  fun `inline image alternate text is not a reference`() {
+    doTest("""
+      ![alt [text]](https://example.com/image.png)
+    """)
+  }
+
+  @Test
+  fun `a comment wrapper does not define a link label`() {
+    doTest("""
+      [<warning descr="Cannot resolve link label //">//</warning>]
+
+      [//]: # (A comment)
+    """)
+  }
+
+  @Test
+  fun `an incomplete definition does not define a link label`() {
+    doTest("""
+      [text][<warning descr="Cannot resolve link label label">label</warning>]
+
+      [<warning descr="Cannot resolve link label label">label</warning>]:
     """)
   }
 

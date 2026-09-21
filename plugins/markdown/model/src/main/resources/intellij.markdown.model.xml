@@ -69,5 +69,23 @@
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.intellij.plugins.markdown.model.psi.labels.UnresolvedLinkLabelInspection"/>
+    <localInspection language="Markdown"
+                     shortName="MarkdownUnusedLinkDefinition"
+                     bundle="messages.MarkdownBundle"
+                     key="markdown.unused.link.definition.inspection.name"
+                     groupKey="markdown.inspection.group.ruby.name"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     runForWholeFile="true"
+                     implementationClass="org.intellij.plugins.markdown.model.psi.labels.UnusedLinkDefinitionInspection"/>
+    <localInspection language="Markdown"
+                     shortName="MarkdownDuplicateLinkDefinition"
+                     bundle="messages.MarkdownBundle"
+                     key="markdown.duplicate.link.definition.inspection.name"
+                     groupKey="markdown.inspection.group.ruby.name"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     runForWholeFile="true"
+                     implementationClass="org.intellij.plugins.markdown.model.psi.labels.DuplicateLinkDefinitionInspection"/>
   </extensions>
 </idea-plugin>

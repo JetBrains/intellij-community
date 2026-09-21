@@ -10,7 +10,6 @@ import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.lang.psi.MarkdownRecursiveElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkLabel
 import org.intellij.plugins.markdown.model.psi.MarkdownPsiSymbolReferenceBase
-import org.intellij.plugins.markdown.model.psi.labels.LinkLabelSymbol.Companion.isDeclaration
 
 internal class LinkLabelSymbolReference(
   element: PsiElement,
@@ -18,8 +17,8 @@ internal class LinkLabelSymbolReference(
   private val text: String,
 ): MarkdownPsiSymbolReferenceBase(element, rangeInElement), PsiCompletableReference {
   override fun resolveReference(): Collection<Symbol> {
-    val declaration = declarationsByLabel(element.containingFile)[normalizeLabel(text)] ?: return emptyList()
-    return listOfNotNull(LinkLabelSymbol.createPointer(declaration).dereference())
+    val definition = LinkDefinitions.get(element.containingFile).find(text) ?: return emptyList()
+    return listOfNotNull(LinkLabelSymbol.createPointer(definition.linkLabel).dereference())
   }
 
   override fun getCompletionVariants(): Collection<LookupElement> {
@@ -29,16 +28,6 @@ internal class LinkLabelSymbolReference(
   }
 
   companion object {
-    private fun declarationsByLabel(file: PsiFile): Map<String, MarkdownLinkLabel> {
-      val declarations = LinkedHashMap<String, MarkdownLinkLabel>()
-      for (label in file.collectLinkLabels()) {
-        if (label.isDeclaration) {
-          declarations.putIfAbsent(normalizeLabel(label.labelText), label)
-        }
-      }
-      return declarations
-    }
-
     private fun PsiFile.collectLinkLabels(): List<MarkdownLinkLabel> {
       val elements = arrayListOf<MarkdownLinkLabel>()
       val visitor = object: MarkdownRecursiveElementVisitor() {
@@ -52,9 +41,5 @@ internal class LinkLabelSymbolReference(
       accept(visitor)
       return elements
     }
-
-    private fun normalizeLabel(label: String): String = SPACES_REGEX.replace(label, " ").lowercase()
-
-    private val SPACES_REGEX = Regex("\\s+")
   }
 }

@@ -84,6 +84,40 @@ class LinkLabelRenameTest: BasePlatformTestCase() {
     )
   }
 
+  @Test
+  fun `renaming a definition updates image references and keeps alternate text`() {
+    doRename(
+      before = """
+        ![label]
+        ![label][]
+        ![label][label]
+        ![label](https://example.com/image.png)
+        [![label]](https://example.org)
+        [![label][]](https://example.org)
+        [![label][label]][outer]
+        ![alt [label]](https://example.com/image.png)
+
+        [la<caret>bel]: https://example.com/image.png
+        [outer]: https://example.org
+      """,
+      oldName = "label",
+      newName = "picture",
+      after = """
+        ![picture]
+        ![picture][]
+        ![label][picture]
+        ![label](https://example.com/image.png)
+        [![picture]](https://example.org)
+        [![picture][]](https://example.org)
+        [![label][picture]][outer]
+        ![alt [label]](https://example.com/image.png)
+
+        [picture]: https://example.com/image.png
+        [outer]: https://example.org
+      """
+    )
+  }
+
   private fun doRename(before: String, oldName: String, newName: String, after: String) {
     myFixture.configureByText("some.md", before.trimIndent())
     val target = findRenameTargetAtCaret()
