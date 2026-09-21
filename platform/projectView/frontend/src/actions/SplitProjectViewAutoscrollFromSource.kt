@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.frontend.actions
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
@@ -11,6 +12,9 @@ import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.actions.SelectInSplitProjectView
@@ -58,10 +62,6 @@ internal class SplitProjectViewAutoscrollFromSource(
         selectionUpdates.queue(true)
       }
 
-      fun cancelAutoscroll() {
-        selectionUpdates.queue(false)
-      }
-
       launch(CoroutineName("Always select opened file on/off")) {
         optionService.getActionStateFlow().map { 
           it?.isAutoscrollFromSourceEnabled
@@ -90,12 +90,20 @@ internal class SplitProjectViewAutoscrollFromSource(
             LOG.debug { "Scheduling Select Opened File because the editor has been focused" }
             autoscroll()
           }
-
-          override fun focusLost(editor: Editor, event: FocusEvent) {
-            LOG.debug { "Cancelling Select Opened File because the editor has lost focus" }
-            cancelAutoscroll()
-          }
         }, asDisposable())
+        awaitCancellation()
+      }
+      launch(CoroutineName("PV show/hide")) {
+        ApplicationManager.getApplication().messageBus.connect(asDisposable())
+          .subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+            override fun toolWindowShown(toolWindow: ToolWindow) {
+              if (toolWindow.id == ToolWindowId.PROJECT_VIEW) {
+                LOG.debug { "Cancelling Select Opened File because the PV has been shown" }
+                autoscroll()
+              }
+            }
+          }
+        )
         awaitCancellation()
       }
     }
