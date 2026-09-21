@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -16,6 +17,15 @@ import javax.swing.Icon;
 import java.util.function.Consumer;
 
 public class HighlightInfoTest extends TestCase {
+  public void testIntentionActionDescriptorHashCodeMatchesEquals() {
+    var action = new EmptyIntentionAction("Action");
+    var descriptor1 = new HighlightInfo.IntentionActionDescriptor(action, null, null, null, null, null, null, null);
+    var descriptor2 = new HighlightInfo.IntentionActionDescriptor(action, null, null, null, null, null, null, null);
+
+    assertEquals(descriptor1, descriptor2);
+    assertEquals(descriptor1.hashCode(), descriptor2.hashCode());
+  }
+
   public void testHtmlTooltipWithDescription() {
     String description = "description with <>";
     String tooltip = XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(description)

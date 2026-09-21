@@ -1118,6 +1118,11 @@ public class HighlightInfo implements Segment {
       return obj instanceof IntentionActionDescriptor descriptor && myAction.equals(descriptor.myAction);
     }
 
+    @Override
+    public int hashCode() {
+      return myAction.hashCode();
+    }
+
     public @Nullable String getToolId() {
       return myKey != null ? myKey.getID() : null;
     }

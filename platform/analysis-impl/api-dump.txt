@@ -211,6 +211,8 @@ com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - a:textAttributes(com.intellij.openapi.editor.colors.TextAttributesKey):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - a:textAttributes(com.intellij.openapi.editor.markup.TextAttributes):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - a:unescapedToolTip(java.lang.String):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
+f:com.intellij.codeInsight.daemon.impl.HighlightInfo$IntentionActionDescriptor
+- hashCode():I
 com.intellij.codeInsight.daemon.impl.HighlightInfoFilter
 - sf:EMPTY_ARRAY:com.intellij.codeInsight.daemon.impl.HighlightInfoFilter[]
 - sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
