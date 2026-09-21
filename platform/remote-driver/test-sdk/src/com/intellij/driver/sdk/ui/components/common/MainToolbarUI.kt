@@ -9,6 +9,7 @@ import com.intellij.driver.sdk.ui.components.UiComponent.Companion.waitFound
 import com.intellij.driver.sdk.ui.components.elements.ActionButtonUi
 import com.intellij.driver.sdk.ui.components.elements.accessibleList
 import com.intellij.driver.sdk.ui.components.elements.popup
+import com.intellij.driver.sdk.ui.components.settings.SettingsDialogUiComponent
 import com.intellij.driver.sdk.ui.components.settings.settingsDialog
 import com.intellij.openapi.util.SystemInfo
 import java.awt.Point
@@ -87,12 +88,12 @@ class MainToolbarUI(data: ComponentData) : UiComponent(data) {
     abstractToolbarCombo { byType("com.intellij.vcs.git.frontend.widget.GitBranchToolbarComboButton") }
 }
 
-fun IdeaFrameUI.openSettingsViaToolbar() {
+fun IdeaFrameUI.openSettingsViaToolbar(): SettingsDialogUiComponent {
   step("Open Settings via Toolbar") {
     mainToolbar.settingsButton.click()
     popup().accessibleList().clickItem("Settings", fullMatch = false)
   }
-  step("Wait Settings window is opened") {
+  return step("Wait Settings window is opened") {
     settingsDialog().waitFound()
   }
 }
