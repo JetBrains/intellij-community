@@ -3,7 +3,6 @@ package com.intellij.ide.customization.java.welcomeScreen
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.DialogBackgroundImageProviderBase
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider
@@ -30,31 +29,35 @@ internal class IdeaWelcomeRightTabContentProvider(override val coroutineScope: C
 
   override val fileTypeIcon = AllIcons.Ultimate.IdeaUltimatePromo
 
+  /**
+   * The Air plugin contributes the agent prompt input as a section above the feature grid, under its own feature key.
+   * That input is the tab's call to action on its own, so the grid stays empty while the plugin is there, and these
+   * buttons stand in for the input while it is not.
+   */
   override fun getFeatureButtonModels(project: Project): List<WelcomeRightTabContentProvider.FeatureButtonModel> {
-    return listOfNotNull(
+    if (hasAgentPromptInput()) {
+      return emptyList()
+    }
+
+    return listOf(
       WelcomeRightTabContentProvider.FeatureButtonModel(
-        text = ActionsBundle.message ("action.NewJavaFile.text"),
-        icon = AllIcons.FileTypes.Java,
+        text = IdeBundle.message("idea.non.modal.welcome.screen.new.file"),
+        icon = AllIcons.FileTypes.Text,
         onClick = { _, _ ->
-          featureButtonOnClick(project, IdeaFeatureKeys.NEW_JAVA_FILE)
+          featureButtonOnClick(project, IdeaFeatureKeys.NEW_FILE)
         }
       ),
       WelcomeRightTabContentProvider.FeatureButtonModel(
-        text = ActionsBundle.message("action.NewKotlinFile.text"),
-        icon = AllIcons.Language.Kotlin,
+        text = IdeBundle.message("idea.non.modal.welcome.screen.open.terminal"),
+        icon = AllIcons.Debugger.Console,
         onClick = { _, _ ->
-          featureButtonOnClick(project, IdeaFeatureKeys.NEW_KOTLIN_FILE)
-        }
-      ),
-      WelcomeRightTabContentProvider.FeatureButtonModel(
-        text = ActionsBundle.message("action.AttachDebuger.text"),
-        icon = AllIcons.Toolwindows.ToolWindowDebugger,
-        onClick = { _, _ ->
-          featureButtonOnClick(project, IdeaFeatureKeys.ATTACH_TO_PROCESS)
+          featureButtonOnClick(project, IdeaFeatureKeys.TERMINAL)
         }
       )
     )
   }
+
+  private fun hasAgentPromptInput(): Boolean = WelcomeScreenFeatureUI.getForFeatureKey(IdeaFeatureKeys.AIR_SESSIONS) != null
 
   /**
    * Builds a button for a feature a plugin owns, or returns `null` when the plugin ships no button.
