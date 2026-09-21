@@ -2,6 +2,7 @@
 package com.intellij.grazie.ide.ui.grammar.tabs.rules.component
 
 import ai.grazie.nlp.langs.Language
+import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.ui.components.GrazieUIComponent
 import com.intellij.grazie.ide.ui.components.dsl.panel
@@ -17,6 +18,8 @@ import com.intellij.ide.DefaultTreeExpander
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.CheckboxTreeListener
 import com.intellij.ui.CheckedTreeNode
@@ -148,22 +151,30 @@ class GrazieTreeComponent(
 }
 
 @ApiStatus.Internal
+@JvmOverloads
 fun allRules(state: GrazieConfig.State = GrazieConfig.get()): Map<Lang, List<Rule>> {
   val result = hashMapOf<Lang, List<Rule>>()
   state.enabledLanguages.forEach { lang ->
-    val jLanguage = lang.jLanguage
-    if (jLanguage != null) {
-      val rules = TextChecker.allCheckers().flatMap { it.getRules(jLanguage.localeWithCountryAndVariant) }
-      if (rules.isNotEmpty()) {
-        result[lang] = rules
-      }
+    val rules = allRules(lang, state)
+    if (rules.isNotEmpty()) {
+      result[lang] = rules
     }
   }
   return result
 }
 
 @ApiStatus.Internal
-fun allRules(lang: Lang, state: GrazieConfig.State = GrazieConfig.get()): List<Rule> {
+@JvmOverloads
+fun allRules(lang: Lang, component: GrazieTreeComponent, state: GrazieConfig.State = GrazieConfig.get()): List<Rule> {
+  return runWithModalProgressBlocking(
+    ModalTaskOwner.component(component),
+    GrazieBundle.message("grazie.settings.grammar.tabs.rules.loading.message"),
+  ) {
+    allRules(lang, state)
+  }
+}
+
+private fun allRules(lang: Lang, state: GrazieConfig.State = GrazieConfig.get()): List<Rule> {
   if (lang !in state.enabledLanguages) return emptyList()
   val jLanguage = lang.jLanguage
   if (jLanguage != null) {
