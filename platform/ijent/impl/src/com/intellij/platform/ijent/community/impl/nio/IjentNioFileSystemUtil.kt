@@ -113,17 +113,33 @@ fun IjentCallerContext.Companion.computeCallerContext(): IjentCallerContext {
 fun <T> fsBlockingWithoutParallelismCompensation(callerContext: IjentCallerContext, body: suspend (IjentCallerContext) -> T): T {
   if (callerContext.allowCancellableNio()) {
     return prepareThreadContext { ctx ->
-      runBlocking(ctx + IjentCallerContextElement(callerContext) + NestedBlockingEventLoop(Thread.currentThread())) {
-        body(callerContext)
+      resetThreadLocalEventLoop {
+        runBlocking(ctx + IjentCallerContextElement(callerContext)) {
+          body(callerContext)
+        }
       }
     }
   }
-  return runBlocking(IjentCallerContextElement(callerContext) + NestedBlockingEventLoop(Thread.currentThread())) {
-    body(callerContext)
+  return resetThreadLocalEventLoop {
+    runBlocking(IjentCallerContextElement(callerContext)) {
+      body(callerContext)
+    }
   }
 }
 
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER", "ERROR_SUPPRESSION")
-private class NestedBlockingEventLoop(override val thread: Thread) : kotlinx.coroutines.EventLoopImplBase() {
-  override fun shouldBeProcessedFromContext(): Boolean = true
+/**
+ * See `resetThreadLocalEventLoop` in `com.intellij.serviceContainer.ComponentManagerImpl`
+ */
+@Suppress("INVISIBLE_REFERENCE")
+private inline fun <T> resetThreadLocalEventLoop(action: () -> T): T {
+  val existingEventLoop = kotlinx.coroutines.ThreadLocalEventLoop.currentOrNull()
+  kotlinx.coroutines.ThreadLocalEventLoop.resetEventLoop()
+  try {
+    return action()
+  }
+  finally {
+    if (existingEventLoop != null) {
+      kotlinx.coroutines.ThreadLocalEventLoop.setEventLoop(existingEventLoop)
+    }
+  }
 }

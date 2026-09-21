@@ -121,6 +121,7 @@ import java.lang.reflect.Modifier
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -1836,8 +1837,8 @@ private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X
         (ctx.contextModality()?.asContextElement() ?: EmptyCoroutineContext) + // leak modality state into initialization coroutine
         (ctx[Job] ?: EmptyCoroutineContext) + // bind to caller Job
         lockPermitContext + // capture whether the caller holds the read lock
-        (currentTemporaryThreadContextOrNull() ?: EmptyCoroutineContext) + // propagate modality state/CurrentlyInitializingInstance
-        NestedBlockingEventLoop(Thread.currentThread()) // avoid processing events from outer runBlocking (if any)
+        (currentTemporaryThreadContextOrNull() ?: EmptyCoroutineContext)
+          .minusKey(ContinuationInterceptor) // propagate modality state/CurrentlyInitializingInstance
       resetThreadLocalEventLoop {
         IntelliJCoroutinesFacade.runBlockingWithParallelismCompensation(contextForInitializer, action)
       }
@@ -1870,11 +1871,6 @@ private inline fun <T> resetThreadLocalEventLoop(action: () -> T): T {
       kotlinx.coroutines.ThreadLocalEventLoop.setEventLoop(existingEventLoop)
     }
   }
-}
-
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER", "ERROR_SUPPRESSION")
-private class NestedBlockingEventLoop(override val thread: Thread) : kotlinx.coroutines.EventLoopImplBase() {
-  override fun shouldBeProcessedFromContext(): Boolean = true
 }
 
 @ApiStatus.Internal
