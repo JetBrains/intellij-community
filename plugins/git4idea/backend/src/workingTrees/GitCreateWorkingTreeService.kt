@@ -11,12 +11,19 @@ import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelUnavailableException
+import com.intellij.platform.eel.LocalEelApi
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.EelSystemFolderUtils
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.util.progress.withProgressText
@@ -64,9 +71,20 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     private const val LAST_PARENT_PATH_KEY = "Git.CreateWorkingTree.LastParentPath"
     private const val MAX_WORKTREE_DIR_NAME_LENGTH = 100
 
-    //The [project]'s system temp directory, resolved in the same Eel environment (WSL/Docker/local) as the project itself
+    private val LOG = logger<GitCreateWorkingTreeService>()
+
+    //The system temp directory, resolved in the [eel]'s own environment (WSL/Docker/local)
     @RequiresBackgroundThread(generateAssertion = false)
-    internal fun getSystemTempDir(project: Project): Path = EelSystemFolderUtils.getSystemFolder(project).resolve("tmp")
+    @VisibleForTesting
+    internal fun getSystemTempDir(eel: EelApi): Path = EelSystemFolderUtils.getSystemFolder(eel).resolve("tmp")
+
+    //The default new-project directory for a local [eel], or that environment's home directory otherwise. A
+    //remote environment has no notion of the IDE host's "default project" setting.
+    @VisibleForTesting
+    internal fun getDefaultParentDir(eel: EelApi): Path {
+      if (eel is LocalEelApi) return Path(ProjectUtil.getBaseDir())
+      return eel.userInfo.home.asNioPath()
+    }
   }
 
   /**
@@ -146,10 +164,19 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     val project = repository.project
     val ideActivity = GitOperationsCollector.logCreateWorktreeActionInvoked(project, place, refFromContext)
     coroutineScope.launch(Dispatchers.Default) {
-      val systemTempDir = withContext(Dispatchers.IO) { getSystemTempDir(project) }
+      val (eel, systemTempDir) = withContext(Dispatchers.IO) {
+        val eel = try {
+          project.getEelDescriptor().toEelApiBlocking()
+        }
+        catch (e: EelUnavailableException) {
+          LOG.warn("Could not connect to the project's Eel environment; not opening the New Worktree dialog", e)
+          return@withContext null
+        }
+        eel to getSystemTempDir(eel)
+      } ?: return@launch
       val dialogContext = readAction {
         val lastParentPath = loadLastParentPath(project)
-        val initialParentPath = computeInitialParentPath(project, repository, systemTempDir)
+        val initialParentPath = computeInitialParentPath(project, repository, systemTempDir) { getDefaultParentDir(eel) }
         GitWorktreeDialogContext(project, repository, ideActivity, refFromContext,
                                  lastParentPath ?: initialParentPath, candidateRepositories)
       }
@@ -168,12 +195,12 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
   }
 
   /**
-   * Searches for a directory that doesn't lie under any of roots of the [project]. Falls back to the platform's
-   * default new-project directory ([ProjectUtil.getBaseDir]) when that search fails to leave [systemTempDir],
-   * e.g. when [project] itself is a scratch worktree opened from a temp directory (IJPL-252877).
+   * Searches for a directory that doesn't lie under any of roots of the [project]. Falls back to [defaultParentDir]
+   * when that search fails to leave [systemTempDir], e.g. when [project] itself is a scratch worktree opened
+   * from a temp directory (IJPL-252877). [defaultParentDir] runs only on that fallback path.
    */
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
-  internal fun computeInitialParentPath(project: Project, repository: GitRepository, systemTempDir: Path): String {
+  internal fun computeInitialParentPath(project: Project, repository: GitRepository, systemTempDir: Path, defaultParentDir: () -> Path): String {
     val fromProject = project.guessProjectDir()?.parent
     var root: VirtualFile? = fromProject ?: repository.root.parent
     val index = ProjectFileIndex.getInstance(project)
@@ -181,7 +208,7 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
       root = root.parent
     }
     if (root == null || Path(root.path).startsWith(systemTempDir)) {
-      return ProjectUtil.getBaseDir()
+      return defaultParentDir().toString()
     }
     return root.path
   }

@@ -1,9 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.workingTrees
 
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.testFramework.junit5.eel.params.api.DockerTest
+import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
+import com.intellij.platform.testFramework.junit5.eel.params.api.EelType
+import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
+import com.intellij.platform.testFramework.junit5.eel.params.api.WslTest
 import com.intellij.testFramework.junit5.TestApplication
 import git4idea.GitLocalBranch
 import git4idea.commands.GitBranchAlreadyCheckedOutInOtherWorktreeDetector
@@ -15,6 +22,9 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.OS
+import org.junit.jupiter.params.ParameterizedClass
+import kotlin.io.path.Path
 
 @TestApplication
 internal class GitCreateWorkingTreeServiceTest {
@@ -92,5 +102,23 @@ internal class GitCreateWorkingTreeServiceTest {
     val newBranch = repo.branches.findLocalBranch(branchName)
     assertThat(newBranch).describedAs("Branch $branchName was not created").isNotNull()
     return newBranch!!
+  }
+}
+
+@ParameterizedClass
+@TestApplicationWithEel(osesMayNotHaveRemoteEels = [OS.WINDOWS, OS.LINUX, OS.MAC])
+@WslTest(mandatory = false)
+@DockerTest(image = "alpine/git", mandatory = false)
+internal class GitCreateWorkingTreeServiceEelTest(private val eelHolder: EelHolder) {
+
+  @Test
+  fun `test getDefaultParentDir returns the IDE default project directory on the local machine and the environment's home directory otherwise`() {
+    val result = GitCreateWorkingTreeService.getDefaultParentDir(eelHolder.eel)
+
+    if (eelHolder.type == EelType.Local) {
+      assertThat(result).isEqualTo(Path(ProjectUtil.getBaseDir()))
+    } else {
+      assertThat(result).isEqualTo(eelHolder.eel.userInfo.home.asNioPath())
+    }
   }
 }
