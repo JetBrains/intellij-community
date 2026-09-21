@@ -2,12 +2,19 @@
 package com.intellij.platform.util.io.storages.database.impl
 
 import com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8
+import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory
 import com.intellij.platform.util.io.storages.database.DurableDatabaseFactory
 import com.intellij.platform.util.io.storages.database.impl.housekeeping.DatabaseHousekeepingCoordinator
+import com.intellij.platform.util.io.storages.database.spi.housekeeping.Housekeeper
 import com.intellij.platform.util.io.storages.database.impl.housekeeping.HousekeepingRegistration
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabase
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore
-import com.intellij.platform.util.io.storages.database.spi.housekeeping.Housekeeper
+import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ACTIVE
+import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.RETIRED
+import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.SEALED
+import com.intellij.platform.util.io.storages.database.storages.durablemap.RetireUnusedBlockInDurableMapHousekeeper
+import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapOverBlocks
+import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.DATA
 import com.intellij.util.ConcurrencyUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -314,6 +321,72 @@ class DatabaseHousekeepingCoordinatorTest {
 
         assertSame(blocksFailure, close.get(10, TimeUnit.SECONDS), "Database close must report the block close failure")
         assertTrue(blocksDatabase.closed, "The block database must close after housekeeping stops")
+      }
+    }
+  }
+
+  @Test
+  fun `store installation handle cancels and removes its housekeeper`(@TempDir directory: Path) {
+    DatabaseHousekeepingCoordinator().use { coordinator ->
+      BlocksDatabaseImpl.open(directory, 1024 * 1024, true, false).use { blocksDatabase ->
+        val store = DurableDatabaseImpl.HousekeepingBlocksStore(blocksDatabase.openStore("store", 1), coordinator)
+        val housekeeper = BlockingHousekeeper()
+        val installation = store.installHousekeeper(housekeeper)
+
+        Executors.newFixedThreadPool(2, ConcurrencyUtil.newNamedThreadFactory("Store housekeeper test worker")).use { executor ->
+          val run = executor.submit { coordinator.runHousekeeping() }
+          assertTrue(housekeeper.started.await(10, TimeUnit.SECONDS), "Housekeeping must start before the installation closes")
+
+          val closeInstallation = executor.submit { installation.close() }
+          assertTrue(housekeeper.cancelled.await(10, TimeUnit.SECONDS), "The installation close must cancel its housekeeping run")
+          assertFalse(closeInstallation.isDone, "The installation close must wait for its housekeeping run")
+
+          housekeeper.release.countDown()
+          run.get(10, TimeUnit.SECONDS)
+          closeInstallation.get(10, TimeUnit.SECONDS)
+        }
+
+        installation.close()
+        coordinator.runHousekeeping()
+        assertThrows(IllegalStateException::class.java, { store.installHousekeeper(Housekeeper { TEST_DELAY }) },
+                     "A closed installation must reject a new housekeeper")
+      }
+    }
+  }
+
+  @Test
+  fun `dead block sweep retires only unreachable sealed data blocks`(@TempDir directory: Path) {
+    val firstValue = "a".repeat(70 * 1024)
+    val liveValue = "b".repeat(70 * 1024)
+    val replacementValue = "c".repeat(70 * 1024)
+    BlocksDatabaseFactory(1024 * 1024).open(directory).use { blocksDatabase ->
+      DurableDatabaseImpl(blocksDatabase).use { database ->
+        val descriptor = stringAsUTF8()
+        val map = database.openMap("map", 1, descriptor, descriptor)
+        map.put("updated", firstValue)
+        map.put("live", liveValue)
+        map.put("updated", replacementValue)
+
+        val store = requireNotNull(blocksDatabase.findStore("map"))
+        val dataBlocks = store.blocks().filter { it.role() == DATA.persistentCode() }
+        assertEquals(listOf(SEALED, SEALED, ACTIVE), dataBlocks.map { it.state() })
+
+        val housekeeper = RetireUnusedBlockInDurableMapHousekeeper(map as DurableMapOverBlocks<*, *>)
+        housekeeper.runHousekeeping { false }
+        housekeeper.runHousekeeping { false }
+
+        assertEquals(listOf(RETIRED, SEALED, ACTIVE), dataBlocks.map { it.state() })
+        assertEquals(liveValue, map.get("live"))
+        assertEquals(replacementValue, map.get("updated"))
+      }
+    }
+
+    BlocksDatabaseFactory(1024 * 1024).open(directory).use { blocksDatabase ->
+      DurableDatabaseImpl(blocksDatabase).use { database ->
+        val descriptor = stringAsUTF8()
+        val map = database.openMap("map", 1, descriptor, descriptor)
+        assertEquals(liveValue, map.get("live"))
+        assertEquals(replacementValue, map.get("updated"))
       }
     }
   }

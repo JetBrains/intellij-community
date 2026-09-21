@@ -169,6 +169,12 @@ public final class RecordStorageOverBlocks {
     return (int)recordRef;
   }
 
+  boolean containsRecordBlock(long recordRef) {
+    synchronized (logsByBlockIdLock) {
+      return logsByBlockId.containsKey(blockId(recordRef));
+    }
+  }
+
   /// Processes one committed record.
   @FunctionalInterface
   public interface RecordReader {

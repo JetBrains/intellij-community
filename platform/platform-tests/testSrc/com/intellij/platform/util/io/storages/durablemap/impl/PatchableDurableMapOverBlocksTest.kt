@@ -141,6 +141,28 @@ class PatchableDurableMapOverBlocksTest {
   }
 
   @Test
+  fun replaySkipsAnObsoletePatchWhosePredecessorBlockWasRetired() {
+    BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
+      val store = database.openStore("map", 1)
+      openMap(store).use { map ->
+        map.put("key", (1..50).toSet())
+        map.patchValue("key", listOf(51))
+        map.put("key", setOf(1000))
+        map.put("filler", (1..50).toSet())
+      }
+      val dataBlocks = store.blocks().filter { it.role() == DATA.persistentCode() }
+      assertTrue(dataBlocks.size >= 3, "The records must span three DATA blocks")
+      dataBlocks.first().retire()
+      dropRecordRefIndex(store)
+
+      openMap(store).use { map ->
+        assertEquals(setOf(1000), map.get("key"), "Replay must ignore the obsolete patch chain")
+        assertEquals((1..50).toSet(), map.get("filler"))
+      }
+    }
+  }
+
+  @Test
   fun writesDoNotReadThePreviousValue() {
     BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
       val codec = SetCodec().apply { failReads = true }

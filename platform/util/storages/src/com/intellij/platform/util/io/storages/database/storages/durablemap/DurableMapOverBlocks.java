@@ -3,6 +3,7 @@ package com.intellij.platform.util.io.storages.database.storages.durablemap;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.platform.util.io.storages.UnsupportedFormatException;
+import com.intellij.platform.util.io.storages.database.spi.housekeeping.HousekeeperInstaller;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
 import com.intellij.platform.util.io.storages.database.storages.appendonlylog.AppendOnlyLogOverBlock;
 import com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapStorageOverLookupBlocks;
@@ -16,8 +17,11 @@ import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.Ext
 import com.intellij.util.Processor;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.io.CorruptedException;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,8 +31,12 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiPredicate;
+import java.util.function.BooleanSupplier;
 
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
+import static com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.DATA;
 import static com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapStorageOverLookupBlocks.IMPLEMENTATION_ID;
 import static com.intellij.platform.util.io.storages.intmultimaps.IntToMultiLongMap.NO_VALUE;
 import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64.DEFAULT_SEGMENT_SIZE;
@@ -44,6 +52,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
   /// 32K is not enough for indexes
   public static final int SEGMENT_SIZE = DEFAULT_SEGMENT_SIZE * 2;
 
+  private final @NotNull DurableMapBlockCatalog blockCatalog;
   private final @NotNull BlocksStore blocksStore;
 
   /// here `(key, value)` pairs, serialized by [entryExternalizer], are stored
@@ -61,12 +70,16 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
   private boolean closed;
   private boolean cleaned;
 
-  private DurableMapOverBlocks(@NotNull BlocksStore blocksStore,
+  private @NotNull AutoCloseable housekeeperRegistration = () -> { };
+
+  private DurableMapOverBlocks(@NotNull DurableMapBlockCatalog blockCatalog,
+                               @NotNull BlocksStore blocksStore,
                                @NotNull RecordStorageOverBlocks entries,
                                @NotNull RecordRefIndex keyHashToRecordRefIndex,
                                @NotNull EqualityPolicy<? super K> keyEquality,
                                @Nullable EqualityPolicy<? super V> valueEquality,
                                @NotNull EntryExternalizer<K, V> entryExternalizer) {
+    this.blockCatalog = blockCatalog;
     this.blocksStore = blocksStore;
     this.entries = entries;
     this.keyHashToRecordRefIndex = keyHashToRecordRefIndex;
@@ -89,7 +102,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
                                                                 @NotNull EqualityPolicy<? super K> keyEquality,
                                                                 @Nullable EqualityPolicy<? super V> valueEquality,
                                                                 @NotNull EntryExternalizer<K, V> entryExternalizer) throws IOException {
-    return open(blocksStore, preferredBlockContentLength, keyEquality, valueEquality, entryExternalizer, null);
+    return open(blocksStore, preferredBlockContentLength, keyEquality, valueEquality, entryExternalizer, /*patchExternalizer: */ null);
   }
 
   /// Opens a map whose codec can combine snapshots and patches.
@@ -102,7 +115,9 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
     @NotNull EntryExternalizer<K, V> entryExternalizer,
     @NotNull PatchableDurableMap.PatchableValueExternalizer<V, P> patchExternalizer
   ) throws IOException {
-    return asPatchable(open(blocksStore, preferredBlockContentLength, keyEquality, valueEquality, entryExternalizer, patchExternalizer));
+    return asPatchable(
+      open(blocksStore, preferredBlockContentLength, keyEquality, valueEquality, entryExternalizer, patchExternalizer)
+    );
   }
 
   private static <K, V> @NotNull DurableMapOverBlocks<K, V> open(
@@ -198,7 +213,8 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
       blocksStore, DurableMapBlockCatalog.open(blocksStore),
       preferredBlockContentLength,
       recordRefIndex, rebuildIndex,
-      keyEquality, valueEquality, entryExternalizer, /*patchExternalizer: */ null
+      keyEquality, valueEquality, entryExternalizer,
+      /*patchExternalizer: */ null
     );
   }
 
@@ -232,18 +248,25 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
                                                                  @NotNull EqualityPolicy<? super K> keyEquality,
                                                                  @Nullable EqualityPolicy<? super V> valueEquality,
                                                                  @NotNull EntryExternalizer<K, V> entryExternalizer,
-                                                                 @Nullable PatchableDurableMap.PatchableValueExternalizer<V, ?> patchExternalizer) throws IOException {
+                                                                 @Nullable PatchableDurableMap.PatchableValueExternalizer<V, ?> patchExternalizer)
+    throws IOException {
     if (rebuildLookup && !recordRefIndex.isEmpty()) {
       throw new IllegalArgumentException("The recordRefIndex must be empty before recovery");
     }
     var mapEntries = RecordStorageOverBlocks.open(blockCatalog, preferredBlockContentLength);
     DurableMapOverBlocks<K, V> durableMapImpl = (patchExternalizer == null) ?
-                                                new DurableMapOverBlocks<>(blocksStore, mapEntries, recordRefIndex, keyEquality,
+                                                new DurableMapOverBlocks<>(blockCatalog, blocksStore, mapEntries, recordRefIndex,
+                                                                           keyEquality,
                                                                            valueEquality, entryExternalizer) :
-                                                new PatchableMap<>(blocksStore, mapEntries, recordRefIndex, keyEquality,
+                                                new PatchableMap<>(blocksStore, blockCatalog, mapEntries, recordRefIndex, keyEquality,
                                                                      valueEquality, entryExternalizer, patchExternalizer);
     if (rebuildLookup) {
       durableMapImpl.rebuildLookupFromRecords();
+    }
+    if (blocksStore instanceof HousekeeperInstaller installer) {// not every BlocksStore supports HousekeeperInstaller!
+      durableMapImpl.housekeeperRegistration = installer.installHousekeeper(
+        new RetireUnusedBlockInDurableMapHousekeeper(durableMapImpl)
+      );
     }
     return durableMapImpl;
   }
@@ -440,6 +463,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
 
   @Override
   public void close() throws IOException {
+    closeHousekeeperRegistration();
     synchronized (lock) {
       if (closed) {
         return;
@@ -452,6 +476,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
 
   @Override
   public void closeAndClean() throws IOException {
+    closeHousekeeperRegistration();
     synchronized (lock) {
       if (!closed) {
         //we don't need closeAndClean(): store.drop() drops all the blocks owned by this storage anyway
@@ -465,17 +490,106 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
     }
   }
 
+  /// Find store's blocks that are [BlocksStore.Block.LifecycleState#SEALED] and not used by any currently alive records;
+  /// => retire those blocks.
+  void retireUnusedBlocks(@NotNull BooleanSupplier cancelled) throws IOException {
+    DeadBlocksSweepSnapshot snapshot;
+    synchronized (lock) {
+      if (closed || cancelled.getAsBoolean()) {
+        return;
+      }
+      var headRefs = new LongArrayList();
+      keyHashToRecordRefIndex.forEach((_, recordRef) -> {
+        headRefs.add(recordRef);
+        return true;
+      });
+      //TODO RC: check is it needed to be done under the lock -- there are some races, but seems like it could be worked around
+      var blocksToCheckForRetirement = blockCatalog.blocks(DATA).stream()
+        .filter(block -> block.state() == BlocksStore.Block.LifecycleState.SEALED)
+        .toList();
+      snapshot = new DeadBlocksSweepSnapshot(headRefs, blocksToCheckForRetirement);
+    }
+
+    var liveBlockIds = new IntOpenHashSet();
+    for (int i = 0; i < snapshot.headRefs().size(); i++) {
+      long headRef = snapshot.headRefs().getLong(i);
+      if (!collectAliveBlockIdsThroughChain(headRef, liveBlockIds, cancelled)) {
+        return; //cancelled
+      }
+    }
+    for (var block : snapshot.sealedBlocksToCheckForRetirement()) {
+      if (cancelled.getAsBoolean()) {
+        return;
+      }
+      if (!liveBlockIds.contains(block.id()) && block.state() == BlocksStore.Block.LifecycleState.SEALED) {
+        block.retire();
+      }
+    }
+  }
+
+  /// Traverse through the chain of records backref starting from `headRef`, and collect all blockIds along the chain;
+  /// @return false if cancelled, true otherwise
+  private boolean collectAliveBlockIdsThroughChain(long headRef,
+                                                   @NotNull IntOpenHashSet liveBlockIds,
+                                                   @NotNull BooleanSupplier cancelled) throws IOException {
+    long currentRef = headRef;
+    while (currentRef != NO_VALUE) {
+      if (cancelled.getAsBoolean()) {
+        return false;
+      }
+      liveBlockIds.add(RecordStorageOverBlocks.blockId(currentRef));
+      long previousRef = entries.readRecord(currentRef).previousRef();
+      if (previousRef < NO_VALUE || previousRef >= currentRef) {
+        throw new CorruptedException("Invalid record predecessor: " + currentRef + " -> " + previousRef);
+      }
+      currentRef = previousRef;
+    }
+    return true;
+  }
+
+  private record DeadBlocksSweepSnapshot(@NotNull LongArrayList headRefs,
+                                         @NotNull List<BlocksStore.Block> sealedBlocksToCheckForRetirement) { }
+
+  private void closeHousekeeperRegistration() throws IOException {
+    try {
+      housekeeperRegistration.close();
+    }
+    catch (RuntimeException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      rethrowControlFlowException(e);
+      if (e instanceof IOException ioException) {
+        throw ioException;
+      }
+      throw new IOException("Failed to remove the map housekeeper", e);
+    }
+  }
+
   private void rebuildLookupFromRecords() throws IOException {
     markLookupDirty();
     Long2ObjectMap<HeadState> heads = new Long2ObjectOpenHashMap<>();
+    var orphanedPatchRefs = new LongOpenHashSet();
     entries.forEachCommittedRecordWithLinks((recordRef, record) -> {
-      if (record.previousRef() != NO_VALUE) {
+      long previousRef = record.previousRef();
+      if (previousRef != NO_VALUE) {
         long baseRef = baseEntryRef(recordRef, record);
-        var previous = heads.remove(record.previousRef());
-        if (previous == null || previous.baseEntryRef() != baseRef) {
+        var previous = heads.remove(previousRef);
+        if (previous == null) {
+          if (orphanedPatchRefs.contains(previousRef) || !entries.containsRecordBlock(previousRef)) {
+            //A record is itself 'dead', and it refers a previous record, which is not only dead, but
+            // was located in a now-retired block -- so the reference is 'unresolved' now. Normally,
+            // both records shouldn't be reachable at all from LOOKUP -- but on recovery we scan all
+            // the records.
+            orphanedPatchRefs.add(recordRef);
+            return;
+          }
           throw new CorruptedException("The patch does not continue the current chain: " + recordRef);
         }
-        publishHead(previous.hash(), record.previousRef(), recordRef);
+        if (previous.baseEntryRef() != baseRef) {
+          throw new CorruptedException("The patch does not continue the current chain: " + recordRef);
+        }
+        publishHead(previous.hash(), previousRef, recordRef);
         heads.put(recordRef, previous);
         return;
       }
@@ -638,19 +752,23 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
     return (PatchableDurableMap<K, V, P>)map;
   }
 
-  ///Opens the 'patching' capability to the shared storage implementation: [patchValue] method is already implemented
-  /// in [DurableMapOverBlocks] superclass, but hidden
+  ///Opens the 'patching' capability to the shared storage implementation: [#patchValue] method is already implemented
+  /// in [DurableMapOverBlocks] superclass, but hidden.
+  /// The idea is: we don't want the base [DurableMapOverBlocks] implements [PatchableDurableMap] because some clients may
+  /// not want that. So we actually implement the patching in [DurableMapOverBlocks], but not the interface.
+  /// MAYBE RC: Don't know how important it is -- maybe better just implement PatchableDurableMap in DurableMapOverBlocks?
   private static final class PatchableMap<K, V, P> extends DurableMapOverBlocks<K, V> implements PatchableDurableMap<K, V, P> {
     private final @NotNull PatchableValueExternalizer<V, P> patchExternalizer;
 
     private PatchableMap(@NotNull BlocksStore blocksStore,
+                         @NotNull DurableMapBlockCatalog blockCatalog,
                          @NotNull RecordStorageOverBlocks entries,
                          @NotNull RecordRefIndex recordRefIndex,
                          @NotNull EqualityPolicy<? super K> keyEquality,
                          @Nullable EqualityPolicy<? super V> valueEquality,
                          @NotNull EntryExternalizer<K, V> entryExternalizer,
                          @NotNull PatchableValueExternalizer<V, P> patchExternalizer) {
-      super(blocksStore, entries, recordRefIndex, keyEquality, valueEquality, entryExternalizer);
+      super(blockCatalog, blocksStore, entries, recordRefIndex, keyEquality, valueEquality, entryExternalizer);
       this.patchExternalizer = patchExternalizer;
     }
 
