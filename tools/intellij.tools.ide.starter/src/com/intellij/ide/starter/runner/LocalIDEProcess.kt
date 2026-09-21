@@ -92,15 +92,18 @@ class LocalIDEProcess : IDEProcess {
             stderrRedirect = stderr,
             onProcessCreated = { process, _ ->
               span.addEvent("process created")
+              val handle = IDEProcessHandle(process)
               runInterruptible {
-                EventsBus.postAndWaitProcessing(IdeLaunchEvent(runContext = this, ideProcess = IDEProcessHandle(process)))
+                EventsBus.postAndWaitProcessing(IdeLaunchEvent(runContext = this, ideProcess = handle))
               }
               getIdeProcessIdWithRetry(process.toProcessInfo(), runContext)?.let {
                 ideProcessId = it
-                startCollectThreadDumpsLoop(IDEProcessHandle(process),
-                                            jdkHome,
-                                            it,
-                                            "ide")
+                startCollectThreadDumpsLoop(
+                  process = handle,
+                  jdkHome = jdkHome,
+                  collectingProcessId = it,
+                  processName = "ide",
+                )
               }
             },
             onBeforeKilled = { process, pid ->
