@@ -57,10 +57,9 @@ def invalid_annotations(
     pass
 
 
-# > It should evaluate without errors once the module has been fully loaded.
-# > The local and global namespace in which it is evaluated should be the same
-# > namespaces in which default arguments to the same function would be evaluated.
-
+# > Names within the expression are looked up in the same way as they would be
+# > looked up at runtime in Python 3.14 and higher if the annotation was not
+# > enclosed in a string literal.
 
 class ClassB:
     def method1(self) -> ClassB:  # E?: Runtime error prior to 3.14
@@ -75,25 +74,60 @@ class ClassC:
 
 
 class ClassD:
-    ClassC: "ClassC"  # OK
+    # OK
+    simple_attr: ClassA
+    ClassB: ClassB
+    ClassC: "ClassC"
+    bytes_direct: bytes
+    bytes: "bytes"
+    inner1: ClassInner  # E?: Runtime error prior to 3.14: requires quotes
+    inner2: "ClassInner"
+
+    class ClassInner:
+        ...
+
+    inner_after1: ClassInner
+    inner_after2: "ClassInner"
 
     ClassF: "ClassF"  # E: circular reference
 
-    str: "str" = ""  # OK
+    str: "str" = ""  # E: circular reference
+
+    z: "int" = 0  # E: Refers to the local int function, which isn't a valid type
 
     def int(self) -> None:  # OK
         ...
 
-    x: "int" = 0  # OK
+    y: int = 0  # E: Refers to the local int function, which isn't a valid type
 
-    y: int = 0  # E: Refers to local int, which isn't a legal type expression
+    x: "int" = 0  # E: Refers to the local int function, which isn't a valid type
 
     def __init__(self) -> None:
         self.ClassC = ClassC()
 
 
-assert_type(ClassD.str, str)
-assert_type(ClassD.x, int)
+def check_valid_attributes(d: ClassD) -> None:
+    assert_type(d.bytes, bytes)
+    assert_type(d.inner1, ClassD.ClassInner)  # E?: Runtime error prior to 3.14: requires quotes
+    assert_type(d.inner2, ClassD.ClassInner)
+    assert_type(d.inner_after1, ClassD.ClassInner)
+    assert_type(d.inner_after2, ClassD.ClassInner)
+
+
+class T:
+    ...
+
+
+class ClassE[T]:
+    def identity1(self, value: T) -> T:
+        return value
+
+    def identity2(self, value: "T") -> "T":
+        return value
+
+
+assert_type(ClassE[int]().identity1(1), int)
+assert_type(ClassE[int]().identity2(1), int)
 
 
 # > If a triple quote is used, the string should be parsed as though it is implicitly
