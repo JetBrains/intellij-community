@@ -2,14 +2,18 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.startup.impl.StartupManagerImpl
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -18,8 +22,9 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+
+private val LOG = logger<RecentProjectsService>()
 
 /**
  * Runs recent-project operations for the welcome screen on projects loaded without a frame.
@@ -35,9 +40,10 @@ import java.nio.file.Path
  * opened (for example on the VCS log). TODO(IJPL-256216): a finer policy that disposes a held project when no operation and no relayed
  * notification needs it, and that also covers non-welcome-screen open paths.
  */
-@ApiStatus.Internal
 @Service(Service.Level.APP)
-class RecentProjectsService(private val coroutineScope: CoroutineScope) {
+internal class RecentProjectsService(private val coroutineScope: CoroutineScope) {
+  private val projectManager = ProjectManagerEx.getInstanceEx()
+  private val taskTracker = RecentProjectTaskTracker.getInstance()
   private val loadMutex = Mutex()
   private val heldProjects = mutableMapOf<Path, HeldProject>()
 
@@ -48,14 +54,18 @@ class RecentProjectsService(private val coroutineScope: CoroutineScope) {
   private class HeldProject(val project: Project, val scope: CoroutineScope, val owned: Boolean)
 
   /**
-   * Loads and holds the recent project at [projectPath], then runs its registered update on the project scope. Confirms trust first, and does
-   * nothing when the user declines. The load runs on the service scope, so the caller does not manage a coroutine.
+   * Loads and holds the recent project at [projectPath], then runs [operation] on the project scope. Confirms trust first, and does nothing
+   * when the user declines. The load runs on the service scope, so the caller does not manage a coroutine.
    */
-  fun updateRecentProject(projectPath: Path) {
+  fun runOnRecentProject(projectPath: Path, operation: suspend (Project) -> Unit) {
     coroutineScope.launch {
       val held = getOrLoad(projectPath) ?: return@launch
       held.scope.launch {
-        RecentProjectUpdater.findUpdater(projectPath)?.update(held.project, projectPath)
+        if (held.project.isDisposed) {
+          LOG.warn("Cannot run the operation: the recent project at $projectPath is already disposed")
+          return@launch
+        }
+        operation(held.project)
       }
     }
   }
@@ -75,9 +85,25 @@ class RecentProjectsService(private val coroutineScope: CoroutineScope) {
     loadMutex.withLock {
       cachedHeldProject(projectPath)?.let { return it }
       findOpenProject(projectPath)?.let { return hold(projectPath, it, owned = false) }
-      val project = ProjectManagerEx.getInstanceEx().loadProject(projectPath)
+      LOG.info("Recent project $projectPath: loading it without a frame")
+      val project = projectManager.loadProject(projectPath)
+      initLoadedProject(project)
       return hold(projectPath, project, owned = true)
     }
+  }
+
+  /**
+   * Runs the init project activities on a project that was loaded but never opened.
+   *
+   * [ProjectManagerEx.loadProject] stops before them: the platform runs them from `ProjectManagerImpl.runInitProjectActivities`, on the
+   * open path only. Without them [com.intellij.openapi.startup.StartupManagerEx.startupActivityPassed] stays false for the whole life of
+   * the held project, and that flag backs [Project.isInitialized]: the project would report itself as uninitialized to the whole IDE
+   * while it is being used to run actions.
+   *
+   * @see `com.intellij.ide.lightEdit.project.LightEditProjectManager`
+   */
+  private suspend fun initLoadedProject(project: Project) {
+    (project.serviceAsync<StartupManager>() as StartupManagerImpl).initProject()
   }
 
   // Returns the held project when it is still alive, and forgets a disposed one. Must run under [loadMutex].
@@ -96,6 +122,7 @@ class RecentProjectsService(private val coroutineScope: CoroutineScope) {
     val held = HeldProject(project, coroutineScope.childScope("WelcomeScreenRecentProject"), owned)
     if (owned) {
       relayNotificationsToWelcomeScreen(project)
+      taskTracker.follow(projectPath, project)
     }
     heldProjects[projectPath] = held
     return held
@@ -105,7 +132,10 @@ class RecentProjectsService(private val coroutineScope: CoroutineScope) {
   // collides on the project storages (for example the VCS user storage), so the open one is reused instead.
   private fun findOpenProject(projectPath: Path): Project? {
     val target = projectPath.toString()
-    return ProjectManager.getInstance().openProjects.firstOrNull { project ->
+    return projectManager.openProjects.firstOrNull { project ->
+      if (project.isDisposed) {
+        return@firstOrNull false
+      }
       val basePath = project.basePath
       basePath != null && FileUtil.pathsEqual(basePath, target)
     }
@@ -119,12 +149,11 @@ class RecentProjectsService(private val coroutineScope: CoroutineScope) {
    */
   suspend fun disposeHeldProjects() {
     val held = loadMutex.withLock {
-      val copy = heldProjects.values.toList()
+      val copy = heldProjects.toMap()
       heldProjects.clear()
       copy
     }
-    val projectManager = ProjectManagerEx.getInstanceEx()
-    for (heldProject in held) {
+    held.values.forEach { heldProject ->
       heldProject.scope.coroutineContext.job.cancelAndJoin()
       // Close only a project the service loaded. An already-open project is owned by its own frame.
       if (heldProject.owned) {
@@ -133,14 +162,20 @@ class RecentProjectsService(private val coroutineScope: CoroutineScope) {
     }
   }
 
-  // Trust must be confirmed before the project is loaded. Already-trusted projects return true without a dialog.
+  /**
+   * Confirms trust before the project is loaded. An already-answered project shows no dialog.
+   *
+   * The dialog's own result only says the user did not cancel: "Preview in Safe Mode" also returns true, and it records the project as
+   * distrusted. A safe mode project refuses every Git command, so the trust state, not the dialog's result, decides whether to go on.
+   */
   private suspend fun confirmTrust(projectPath: Path): Boolean {
     val projectName = projectPath.fileName?.toString() ?: projectPath.toString()
-    return TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject(
+    TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject(
       projectRoot = projectPath,
       project = null,
       title = IdeBundle.message("untrusted.project.open.dialog.title", projectName),
     )
+    return TrustedProjects.isProjectTrusted(projectPath)
   }
 
   // The loaded project has no frame, so its notifications show nowhere. Re-post each one at the application level, where the welcome frame

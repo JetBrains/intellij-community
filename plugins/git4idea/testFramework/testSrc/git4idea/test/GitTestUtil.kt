@@ -4,9 +4,12 @@
 package git4idea.test
 
 import com.intellij.dvcs.push.PushSpec
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.vcs.Executor.append
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.Executor.touch
@@ -34,7 +37,9 @@ import git4idea.push.GitPushSource
 import git4idea.push.GitPushTarget
 import git4idea.repo.GitObjectFormat
 import git4idea.repo.GitRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -301,5 +306,24 @@ fun filterChangesByFileName(targetCommit: VcsFullCommitDetails, fileNames: Colle
   return targetCommit.changes.filter {
     val name = it.beforeRevision?.file?.name ?: it.afterRevision?.file?.name
     name in fileNames
+  }
+}
+
+/**
+ * Loads the project at [projectPath] without a frame, runs [action] on it, then disposes it without saving.
+ *
+ * This is how the welcome screen runs a version control action on a recent project that is not open: the project is loaded, never opened,
+ * and has no frame. Use it to test code that runs on such a project.
+ */
+suspend fun <T> withLoadedProject(projectPath: Path, action: suspend (Project) -> T): T {
+  val projectManager = ProjectManagerEx.getInstanceEx()
+  val project = projectManager.loadProject(projectPath)
+  try {
+    return action(project)
+  }
+  finally {
+    withContext(Dispatchers.EDT) {
+      writeIntentReadAction { projectManager.forceCloseProject(project) }
+    }
   }
 }

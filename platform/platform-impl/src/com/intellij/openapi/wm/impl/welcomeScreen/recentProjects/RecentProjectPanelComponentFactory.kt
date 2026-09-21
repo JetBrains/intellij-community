@@ -50,8 +50,10 @@ object RecentProjectPanelComponentFactory {
     val tree = Tree().apply {
       background = treeBackground
     }
+    val getRunningTask = RecentProjectTaskTracker.getInstance()::runningTask
     val filteringTree = RecentProjectFilteringTree(tree, parentDisposable, collectors,
-                                                   disableSearchFieldBorder = disableSearchFieldBorder).apply {
+                                                   disableSearchFieldBorder = disableSearchFieldBorder,
+                                                   getRunningTask = getRunningTask).apply {
       installSearchField()
       expandGroups()
     }
@@ -95,7 +97,7 @@ object RecentProjectPanelComponentFactory {
     })
 
     val job = service<RecentProjectPanelComponentFactoryCoroutineScopeHolder>().coroutineScope.launch {
-      repaintProgressBars(filteringTree, modelUpdatedFlow)
+      repaintProgressBars(filteringTree, modelUpdatedFlow, getRunningTask)
     }
     Disposer.register(parentDisposable) { job.cancel() }
 
@@ -105,9 +107,10 @@ object RecentProjectPanelComponentFactory {
   private suspend fun repaintProgressBars(
     filteringTree: RecentProjectFilteringTree,
     modelUpdatedFlow: Flow<Unit>,
+    getRunningTask: (RecentProjectItem) -> RecentProjectTaskProgress?,
   ) {
     withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
-      val hasProgressBar = { collectNodesWithProgressBars(filteringTree).isNotEmpty() }
+      val hasProgressBar = { collectNodesWithProgressBars(filteringTree, getRunningTask).isNotEmpty() }
       val hasProgressBarFlow = MutableStateFlow(hasProgressBar())
       launch {
         modelUpdatedFlow.collectLatest {
@@ -121,7 +124,7 @@ object RecentProjectPanelComponentFactory {
             while (isActive) {
               delay(UPDATE_INTERVAL)
               val treeModel = filteringTree.searchModel
-              for (it in collectNodesWithProgressBars(filteringTree)) {
+              for (it in collectNodesWithProgressBars(filteringTree, getRunningTask)) {
                 treeModel.nodeChanged(it)
               }
             }
@@ -131,7 +134,10 @@ object RecentProjectPanelComponentFactory {
     }
   }
 
-  private fun collectNodesWithProgressBars(filteringTree: RecentProjectFilteringTree): List<TreeNode> {
+  private fun collectNodesWithProgressBars(
+    filteringTree: RecentProjectFilteringTree,
+    getRunningTask: (RecentProjectItem) -> RecentProjectTaskProgress?,
+  ): List<TreeNode> {
     val isCloneActive = CloneableProjectsService.getInstance().isCloneActive()
     val model = filteringTree.searchModel
     return JBTreeTraverser.from<TreeNode> { node -> TreeUtil.nodeChildren(node) }
@@ -140,7 +146,8 @@ object RecentProjectPanelComponentFactory {
       .filter { node ->
         val userObject = TreeUtil.getUserObject(node)
         return@filter userObject is CloneableProjectItem && isCloneActive ||
-                      userObject is ProviderRecentProjectItem && userObject.progressText != null
+                      userObject is ProviderRecentProjectItem && userObject.progressText != null ||
+                      userObject is RecentProjectItem && getRunningTask(userObject) != null
       }.toList()
   }
 }

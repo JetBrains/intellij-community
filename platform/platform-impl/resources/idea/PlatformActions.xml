@@ -1030,14 +1030,9 @@
       <reference ref="WelcomeScreen.RemoveSelected"/>
     </group>
 
-    <group id="WelcomeScreenRecentProjectVcsActionGroup" searchable="false">
-      <reference ref="WelcomeScreen.UpdateProject"/>
-    </group>
-
     <group id="WelcomeScreen.KeymapGroup" searchable="false">
       <reference ref="WelcomeScreen.Options"/>
       <reference ref="WelcomeScreenRecentProjectActionGroup"/>
-      <reference ref="WelcomeScreenRecentProjectVcsActionGroup"/>
       <reference ref="WelcomeScreen.Configure"/>
       <reference ref="WelcomeScreen.OpenDirectoryProject"/>
 

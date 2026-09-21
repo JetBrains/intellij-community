@@ -12,6 +12,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -39,6 +41,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.readText
 
 internal class GitRecentProjectsBranchesProvider : RecentProjectsBranchesProvider {
@@ -96,6 +99,15 @@ internal class GitRecentProjectsBranchesService(private val coroutineScope: Coro
       }
     })
 
+    connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+      override fun projectClosing(project: Project) {
+        val basePath = project.basePath ?: return
+        if (cache.asMap().containsKey(basePath)) {
+          cache.synchronous().refresh(basePath)
+        }
+      }
+    })
+
     coroutineScope.launch {
       val recentProjectsTopic = application.messageBus.syncPublisher(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC)
       @OptIn(FlowPreview::class)
@@ -128,6 +140,10 @@ internal class GitRecentProjectsBranchesService(private val coroutineScope: Coro
     // The same guard [getCurrentBranch] uses. See IJPL-194035
     return Path(projectPath).getEelDescriptor() == LocalEelDescriptor && cache.get(projectPath)
       .getNow(GitRecentProjectCachedBranch.Unknown).headFilePath != null
+  }
+
+  fun refresh(projectPath: Path) {
+    cache.synchronous().refresh(projectPath.invariantSeparatorsPathString)
   }
 
   private inner class BranchesLoader : AsyncCacheLoader<String, GitRecentProjectCachedBranch> {

@@ -69,6 +69,9 @@ sealed interface RecentProjectTreeItem {
   }
 }
 
+/** The item's stored path, or null when it is not a valid path. Stored paths come from disk and outlive the projects they point at. */
+internal fun RecentProjectItem.projectNioPath(): Path? = runCatching { Path.of(projectPath) }.getOrNull()
+
 internal data class RecentProjectItem(
   @JvmField val projectPath: @SystemIndependent String,
   @NlsSafe val projectName: String,

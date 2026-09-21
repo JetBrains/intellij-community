@@ -381,8 +381,8 @@
     <extensionPoint qualifiedName="com.intellij.recentProjectsBranchesProvider"
                     interface="com.intellij.ide.vcs.RecentProjectsBranchesProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.recentProjectUpdater"
-                    interface="com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectUpdater"
+    <extensionPoint qualifiedName="com.intellij.recentProjectBrancher"
+                    interface="com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectBrancher"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.recentProjectsProvider"
                     interface="com.intellij.ide.RecentProjectProvider"

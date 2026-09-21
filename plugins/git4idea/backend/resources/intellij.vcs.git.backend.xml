@@ -871,7 +871,7 @@
                         testServiceImplementation="git4idea.commit.signing.GpgAgentPathsLocatorTestFactory"/>
 
     <recentProjectsBranchesProvider implementation="git4idea.repo.GitRecentProjectsBranchesProvider"/>
-    <recentProjectUpdater implementation="git4idea.update.GitRecentProjectUpdater"/>
+    <recentProjectBrancher implementation="git4idea.branch.GitRecentProjectBrancher"/>
 
     <vcs.taskHandler implementation="git4idea.GitTaskHandler"/>
 

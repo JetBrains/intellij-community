@@ -1,12 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 
+import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeTooltipManager
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
 import com.intellij.ide.unscaledProjectIconSize
 import com.intellij.idea.ActionsBundle
@@ -18,6 +20,8 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.DumbAware
@@ -62,6 +66,7 @@ import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.IconUtil
 import com.intellij.util.PathUtil
+import com.intellij.util.ThreeState
 import com.intellij.util.asSafely
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBDimension
@@ -86,6 +91,7 @@ import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
+import java.nio.file.Path
 import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -108,11 +114,12 @@ import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.pathString
 
 @ApiStatus.Internal
-class RecentProjectFilteringTree(
+class RecentProjectFilteringTree internal constructor(
   treeComponent: Tree,
   parentDisposable: Disposable,
   collectors: List<() -> List<RecentProjectTreeItem>>,
-  val disableSearchFieldBorder: Boolean
+  val disableSearchFieldBorder: Boolean,
+  getRunningTask: (RecentProjectItem) -> RecentProjectTaskProgress?,
 ) : FilteringTree<DefaultMutableTreeNode, RecentProjectTreeItem>(treeComponent, DefaultMutableTreeNode(RootItem(collectors))) {
   init {
     val projectActionButtonViewModel = ProjectActionButtonViewModel()
@@ -131,7 +138,7 @@ class RecentProjectFilteringTree(
 
     treeComponent.addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItems(treeComponent) }
 
-    val mouseListener = ProjectActionMouseListener(treeComponent, projectActionButtonViewModel, filePathChecker::isValid)
+    val mouseListener = ProjectActionMouseListener(treeComponent, projectActionButtonViewModel, filePathChecker::isValid, getRunningTask)
     treeComponent.addMouseListener(mouseListener)
     treeComponent.addMouseMotionListener(mouseListener)
     treeComponent.addTreeWillExpandListener(ToggleStateListener())
@@ -145,7 +152,7 @@ class RecentProjectFilteringTree(
     SmartExpander.installOn(treeComponent)
 
     treeComponent.isRootVisible = false
-    treeComponent.cellRenderer = ProjectActionRenderer(filePathChecker::isValid, projectActionButtonViewModel)
+    treeComponent.cellRenderer = ProjectActionRenderer(filePathChecker::isValid, projectActionButtonViewModel, getRunningTask)
     treeComponent.rowHeight = 0 // Fix tree renderer size on macOS
     treeComponent.toggleClickCount = 0
 
@@ -278,6 +285,7 @@ class RecentProjectFilteringTree(
     private val tree: Tree,
     private val projectActionButtonViewModel: ProjectActionButtonViewModel,
     private val isProjectPathValid: (String) -> Boolean,
+    private val getRunningTask: (RecentProjectItem) -> RecentProjectTaskProgress?,
   ) : PopupHandler() {
     private val buttonPopups = mutableMapOf<String, ActionPopupMenu>()
 
@@ -369,9 +377,14 @@ class RecentProjectFilteringTree(
       if (point == null) return null
       val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
       if (row == -1) return null
-      val item = itemAt(row) ?: return null
-      val buttons = rowButtons(item, isProjectValid(item))
+      val buttons = rowButtonsAt(row)
       return buttons.lastOrNull { buttonRect(row, buttons, buttons.indexOf(it)).contains(point) }
+    }
+
+    // The buttons [row] shows, which the renderer and the geometry have to agree on.
+    private fun rowButtonsAt(row: Int): List<RecentProjectRowButton> {
+      val item = itemAt(row) ?: return emptyList()
+      return rowButtons(item, isProjectValid(item), runningTaskOf(item))
     }
 
     private fun itemAt(row: Int): RecentProjectTreeItem? =
@@ -379,6 +392,9 @@ class RecentProjectFilteringTree(
 
     private fun isProjectValid(item: RecentProjectTreeItem): Boolean =
       item !is RecentProjectItem || isProjectPathValid(item.projectPath)
+
+    private fun runningTaskOf(item: RecentProjectTreeItem): RecentProjectTaskProgress? =
+      (item as? RecentProjectItem)?.let(getRunningTask)
 
     /**
      * The bounds of the button at [index] of [buttons] on [row].
@@ -412,11 +428,34 @@ class RecentProjectFilteringTree(
 
     private fun RecentProjectRowButton.onClick(component: Component, x: Int, y: Int, item: RecentProjectTreeItem) {
       when (this) {
-        is RecentProjectRowButton.VcsActions -> showPopup(ACTION_GROUP_ID, component, x, y, item)
+        is RecentProjectRowButton.VcsActions -> invokeRowAction(ACTION_ID, this, x, y, item)
+        is RecentProjectRowButton.CancelTask -> invokeRowAction(ACTION_ID, this, x, y, item)
         is RecentProjectRowButton.MoreActions -> showPopup(ACTION_GROUP_ID, component, x, y, item)
         is RecentProjectRowButton.Remove -> item.removeItem()
         is RecentProjectRowButton.CancelClone -> (item as? CloneableProjectItem)?.let { cancelCloneProject(it.cloneableProject) }
       }
+    }
+
+    private fun invokeRowAction(actionId: String, button: RecentProjectRowButton, x: Int, y: Int, sourceItem: RecentProjectTreeItem) {
+      val action = ActionManager.getInstance().getAction(actionId) ?: return
+      val dataContext = SimpleDataContext.builder()
+        .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEMS_KEY, getSelectedItems(tree))
+        .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEM_KEY, sourceItem)
+        .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_TREE_KEY, tree)
+        .add(PlatformDataKeys.CONTEXT_MENU_POINT, buttonBottomLeft(button, x, y))
+        .build()
+      ActionUtil.invokeAction(action, dataContext, ActionPlaces.WELCOME_SCREEN, null, null)
+    }
+
+    private fun buttonBottomLeft(button: RecentProjectRowButton, x: Int, y: Int): Point {
+      val clicked = Point(x, y)
+      val row = TreeUtil.getRowForLocation(tree, x, y)
+      if (row == -1) return clicked
+      val buttons = rowButtonsAt(row)
+      val index = buttons.indexOf(button)
+      if (index < 0) return clicked
+      val rect = buttonRect(row, buttons, index)
+      return Point(rect.x, rect.y + rect.height)
     }
 
     private fun showPopup(
@@ -492,6 +531,7 @@ class RecentProjectFilteringTree(
   private class ProjectActionRenderer(
     private val isProjectPathValid: (String) -> Boolean,
     private val buttonViewModel: ProjectActionButtonViewModel,
+    private val getRunningTask: (RecentProjectItem) -> RecentProjectTaskProgress?,
   ) : TreeCellRenderer {
     private val updateScaleHelper = UpdateScaleHelper()
     private val recentProjectComponent = RecentProjectComponent()
@@ -543,7 +583,7 @@ class RecentProjectFilteringTree(
       }
       private val projectIconLabel = JLabel()
 
-      private val buttonSlots = RowButtonSlots(count = 2)
+      private val buttonSlots = RowButtonSlots(count = 3)
       private val projectNamePanel = JPanel(VerticalLayout(4)).apply {
         isOpaque = false
 
@@ -560,6 +600,7 @@ class RecentProjectFilteringTree(
       private val projectProgressLabel = JLabel().apply {
         isOpaque = false
       }
+      private val taskProgressPanel = RowProgressPanel()
       private val updateScaleHelper = UpdateScaleHelper()
 
       init {
@@ -570,6 +611,7 @@ class RecentProjectFilteringTree(
                 verticalAlign = VerticalAlign.TOP)
           .cell(projectNamePanel, resizableColumn = true, horizontalAlign = HorizontalAlign.FILL, gaps = UnscaledGaps(4, 4, 4, 4))
           .cell(projectProgressLabel, resizableColumn = true, horizontalAlign = HorizontalAlign.RIGHT, gaps = UnscaledGaps(left = 8, right = 8))
+          .cell(taskProgressPanel, gaps = UnscaledGaps(left = 8, right = 8))
         for ((index, slot) in buttonSlots.components.withIndex()) {
           val isLast = index == buttonSlots.components.lastIndex
           builder.cell(slot,
@@ -594,7 +636,13 @@ class RecentProjectFilteringTree(
                            isProjectValid = isProjectValid,
                            providerIcon = null)
 
-        buttonSlots.show(rowButtons(item, isProjectValid), buttonViewModel.hovered, rowHovered)
+        val runningTask = getRunningTask(item)
+        if (runningTask != null) {
+          taskProgressPanel.isVisible = true
+          taskProgressPanel.show(runningTask.text ?: runningTask.title, runningTask.fraction)
+        }
+        val visibility = if (runningTask == null) SlotVisibility.ON_HOVER else SlotVisibility.ALWAYS
+        buttonSlots.show(rowButtons(item, isProjectValid, runningTask), buttonViewModel.hovered, rowHovered, visibility)
 
         return this
       }
@@ -669,6 +717,7 @@ class RecentProjectFilteringTree(
 
         projectStatusLabel.isVisible = false
         projectProgressLabel.isVisible = false
+        taskProgressPanel.isVisible = false
         buttonSlots.hide()
 
         if (tooltip != toolTipText) {
@@ -681,6 +730,7 @@ class RecentProjectFilteringTree(
           projectNameLabel,
           projectStatusLabel.takeIf { projectStatusLabel.isVisible },
           projectProgressLabel.takeIf { projectProgressLabel.isVisible },
+          taskProgressPanel.label.takeIf { taskProgressPanel.isVisible },
           providerPathLabel.takeIf { providerPathLabel.isVisible },
           projectPathLabel.takeIf { projectPathLabel.isVisible },
           projectBranchNameLabel.takeIf { projectBranchNameLabel.isVisible },
@@ -752,26 +802,7 @@ class RecentProjectFilteringTree(
       private var cancelButton: Boolean? = null
       private val buttonSlots = RowButtonSlots(count = 1)
       private val projectActionButton = buttonSlots.components.single()
-      private val projectProgressLabel = JLabel().apply {
-        foreground = NamedColorUtil.getInactiveTextColor()
-      }
-      private val projectProgressBar = JProgressBar().apply {
-        isOpaque = false
-      }
-      private val projectProgressBarPanel = object : BorderLayoutPanel() {
-        init {
-          isOpaque = false
-        }
-
-        override fun getPreferredSize(): Dimension {
-          val size = super.getPreferredSize()
-          size.width = PROGRESS_BAR_WIDTH
-          return size
-        }
-      }.apply {
-        add(projectProgressLabel, BorderLayout.NORTH)
-        add(projectProgressBar, BorderLayout.SOUTH)
-      }
+      private val projectProgressBarPanel = RowProgressPanel()
 
       init {
         isOpaque = false
@@ -807,25 +838,14 @@ class RecentProjectFilteringTree(
         toolTipText = null
         cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
 
-        projectProgressBar.apply {
-          val fraction = progressIndicator.fraction
-          if (fraction <= 0.0 || progressIndicator.isIndeterminate) {
-            isIndeterminate = true
-            updateIndeterminateProgressBarAnimation(this)
-          }
-          else {
-            isIndeterminate = false
-            value = (fraction * 100).toInt()
-          }
-        }
-
         when (cloneStatus) {
           CloneStatus.PROGRESS -> {
             projectProgressBarPanel.apply {
               isVisible = true
               isEnabled = true
             }
-            projectProgressLabel.text = taskInfo.actionTitle
+            projectProgressBarPanel.show(taskInfo.actionTitle,
+                                         progressIndicator.fraction.takeUnless { progressIndicator.isIndeterminate })
             projectIconLabel.icon = recentProjectsManager.getProjectIcon(item.projectPath, isProjectValid = true)
             toolTipText = taskInfo.actionTooltipText
             cancelButton = true
@@ -847,23 +867,11 @@ class RecentProjectFilteringTree(
           ", ",
           projectNameLabel,
           projectPathLabel.takeIf { projectPathLabel.isVisible },
-          projectProgressLabel.takeIf { projectProgressBarPanel.isVisible },
+          projectProgressBarPanel.label.takeIf { projectProgressBarPanel.isVisible },
         )
 
         return this
       }
-    }
-
-    private fun updateIndeterminateProgressBarAnimation(projectProgressBar: JProgressBar) {
-      val progressBarUI = projectProgressBar.ui
-      if (progressBarUI is DarculaProgressBarUI) {
-        progressBarUI.updateIndeterminateAnimationIndex(START_MILLIS)
-      }
-    }
-
-    companion object {
-      private const val START_MILLIS = 0L
-      private const val PROGRESS_BAR_WIDTH = 200
     }
   }
 
@@ -992,6 +1000,16 @@ class RecentProjectFilteringTree(
   }
 }
 
+/**
+ * Whether the VCS actions may run on the recent project at [projectPath].
+ *
+ * False only once the user has explicitly distrusted the project, which "Preview in Safe Mode" also does: a safe mode project refuses every
+ * Git command, so offering the menu would open a popup that cannot work. An unanswered project stays true, because that is every recent
+ * project nobody has opened yet, and the menu is what brings the trust dialog up.
+ */
+private fun isVcsActionsAllowed(projectPath: String): Boolean =
+  runCatching { TrustedProjects.getProjectTrustedState(Path.of(projectPath)) }.getOrNull() != ThreeState.NO
+
 private sealed class RecentProjectRowButton(
   val icon: Icon,
   val hoveredIcon: Icon = icon,
@@ -1002,7 +1020,7 @@ private sealed class RecentProjectRowButton(
 
   /** Opens the version control actions of a recent project that is on a branch. */
   object VcsActions : RecentProjectRowButton(icon = AllIcons.Vcs.Branch, rightGap = ActionsButton.VCS_RIGHT_GAP) {
-    const val ACTION_GROUP_ID: String = "WelcomeScreenRecentProjectVcsActionGroup"
+    const val ACTION_ID: String = "WelcomeScreen.Branches"
 
     override val tooltip: @NlsContexts.Tooltip String
       get() = IdeBundle.message("welcome.screen.recent.project.vcs.actions.tooltip")
@@ -1022,15 +1040,31 @@ private sealed class RecentProjectRowButton(
       get() = ActionsBundle.message("action.WelcomeScreen.RemoveSelected.text")
   }
 
+  /** Cancels the operation the welcome screen is running on a recent project. */
+  object CancelTask : RecentProjectRowButton(AllIcons.Actions.DeleteTag, AllIcons.Actions.DeleteTagHover,
+                                             rightGap = ActionsButton.VCS_RIGHT_GAP) {
+    const val ACTION_ID: String = "WelcomeScreen.CancelRecentProjectTask"
+
+    override val tooltip: @NlsContexts.Tooltip String
+      get() = CommonBundle.getCancelButtonText()
+  }
+
   /** Cancels a clone that is still running. The clone task supplies the wording. */
   data class CancelClone(override val tooltip: @NlsContexts.Tooltip String) :
     RecentProjectRowButton(AllIcons.Actions.DeleteTag, AllIcons.Actions.DeleteTagHover)
 }
 
-private fun rowButtons(item: RecentProjectTreeItem, isProjectValid: Boolean): List<RecentProjectRowButton> =
+private fun rowButtons(
+  item: RecentProjectTreeItem,
+  isProjectValid: Boolean,
+  runningTask: RecentProjectTaskProgress? = null,
+): List<RecentProjectRowButton> =
   when (item) {
     is RecentProjectItem -> listOfNotNull(
-      RecentProjectRowButton.VcsActions.takeIf { isProjectValid && item.vcsActionsEnabled },
+      RecentProjectRowButton.CancelTask.takeIf { runningTask?.cancellable == true },
+      RecentProjectRowButton.VcsActions.takeIf {
+        isProjectValid && item.vcsActionsEnabled && isVcsActionsAllowed(item.projectPath)
+      },
       if (isProjectValid) RecentProjectRowButton.MoreActions else RecentProjectRowButton.Remove,
     )
     is CloneableProjectItem -> when (item.cloneableProject.cloneStatus) {
@@ -1053,13 +1087,48 @@ private enum class SlotVisibility {
   RESERVE_SPACE,
 }
 
-/**
- * The button slots of a row, left to right.
- *
- * A cell renderer is a flyweight - one component tree reused for every row - so the components are created once and added to the grid
- * once, and a row only says which buttons go in them. A row's buttons are right aligned in the slots, because the rightmost slot is the
- * one every row uses.
- */
+private class RowProgressPanel : BorderLayoutPanel() {
+  /** Exposed for the row's accessible name, which is composed of the labels that show. */
+  val label: JLabel = JLabel().apply { foreground = NamedColorUtil.getInactiveTextColor() }
+
+  private val bar = JProgressBar().apply { isOpaque = false }
+
+  init {
+    isOpaque = false
+    addToTop(label)
+    addToBottom(bar)
+  }
+
+  override fun getPreferredSize(): Dimension {
+    val size = super.getPreferredSize()
+    size.width = PROGRESS_BAR_WIDTH
+    return size
+  }
+
+  /** Shows [text] over a bar at [fraction], or over an indeterminate bar when the operation reports no fraction yet. */
+  fun show(text: @NlsContexts.Label String, fraction: Double?) {
+    label.text = text
+    bar.apply {
+      if (fraction == null || fraction <= 0.0) {
+        isIndeterminate = true
+        val progressBarUI = ui
+        if (progressBarUI is DarculaProgressBarUI) {
+          progressBarUI.updateIndeterminateAnimationIndex(START_MILLIS)
+        }
+      }
+      else {
+        isIndeterminate = false
+        value = (fraction * 100).toInt()
+      }
+    }
+  }
+
+  private companion object {
+    const val START_MILLIS = 0L
+    const val PROGRESS_BAR_WIDTH = 200
+  }
+}
+
 private class RowButtonSlots(count: Int) {
   val components: List<ActionsButton> = List(count) { ActionsButton() }
 
