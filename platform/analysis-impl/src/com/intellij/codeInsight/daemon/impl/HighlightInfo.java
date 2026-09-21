@@ -1425,7 +1425,10 @@ public class HighlightInfo implements Segment {
       OffsetStore oldStore = newInfo.offsetStore;
       List<? extends IntentionActionDescriptor> newDescriptors =
         ContainerUtil.concat(ContainerUtil.map(infos, i -> ((HighlightInfo)i).offsetStore.intentionActionDescriptors()));
-      OffsetStore newStore = oldStore.withIntentionDescriptorsAndFixMarker(newDescriptors, oldStore.fixMarker());
+      List<? extends LazyFixDescription> newLazyFixes =
+        ContainerUtil.concat(ContainerUtil.map(infos, i -> ((HighlightInfo)i).offsetStore.lazyQuickFixes()));
+      OffsetStore newStore = oldStore.withIntentionDescriptorsAndFixMarker(newDescriptors, oldStore.fixMarker())
+        .withLazyQuickFixes(newLazyFixes);
       if (anchorInfo.getHighlighter() != null) {
         newStore = newStore.withHighlighter(anchorInfo.getHighlighter());
       }

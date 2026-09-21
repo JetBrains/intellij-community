@@ -161,6 +161,18 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
     });
   }
 
+  public void testCompositeIncludesLazyQuickFixesFromAllInfos() {
+    HighlightInfo anchor = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(0, 1).createUnconditionally();
+    HighlightInfo infoWithLazyFix = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+      .range(0, 1)
+      .registerLazyFixes(_ -> { })
+      .createUnconditionally();
+
+    HighlightInfo composite = HighlightInfo.createComposite(List.of(anchor, infoWithLazyFix), getProject());
+
+    assertTrue(composite.hasLazyQuickFixes());
+  }
+
   // highlight "MyClass"
   public static class MyLazyFixAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
     static boolean invoked;
