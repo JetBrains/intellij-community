@@ -1,20 +1,26 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage.durablemap.database
 
+import com.intellij.concurrency.virtualThreads.IntelliJVirtualThreads
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.util.io.storages.database.DurableDatabase
 import com.intellij.platform.util.io.storages.database.DurableDatabaseFactory
+import com.intellij.platform.util.io.storages.database.impl.DropRetiredChunksHousekeeper
+import com.intellij.platform.util.io.storages.database.impl.SparseChunksEvacuationHousekeeper
 import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.SingleEntryFileBasedIndexExtension
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
 import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension
+import com.intellij.util.io.IOUtil.MiB
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
 import java.util.function.Predicate
 
 /**
@@ -37,12 +43,31 @@ private val LOG = logger<DurableDatabaseIndexLayoutProvider>()
  */
 @ApiStatus.Internal
 class DurableDatabaseIndexLayoutProvider(
-  private val databasePath: Path = PathManager.getIndexRoot().resolve(DATABASE_DIRECTORY_NAME)
+  private val databasePath: Path = PathManager.getIndexRoot().resolve(DATABASE_DIRECTORY_NAME),
 ) : FileBasedIndexLayoutProvider {
+  private var lazyExecutorHolder: Lazy<ScheduledExecutorService> = newExecutorHolder()
   private var lazyDatabaseHolder: Lazy<DurableDatabase> = newDatabaseHolder()
 
+  private fun newExecutorHolder(): Lazy<ScheduledExecutorService> = lazy {
+    Executors.newSingleThreadScheduledExecutor(
+      IntelliJVirtualThreads.ofVirtual().name("durableDatabaseCompaction").factory()
+    )
+  }
+
   private fun newDatabaseHolder(): Lazy<DurableDatabase> = lazy {
-    DurableDatabaseFactory.withDefaults().open(databasePath)
+    //TODO RC: use one of the platform executors?
+    val scheduler = lazyExecutorHolder.value
+    DurableDatabaseFactory.withDefaults()
+      .housekeeping(scheduler, scheduler)
+      .startupHousekeeping(
+        SparseChunksEvacuationHousekeeper(
+          /* evacuateBelow:       */ 0.15f,
+          /* maxEvacuation:       */ 15L * MiB,
+          /* maxBlocksToEvacuate: */ 1000
+        ),
+        DropRetiredChunksHousekeeper(),
+      )
+      .open(databasePath)
   }
 
   private val applicableIndexIds: Predicate<String> by lazy {
@@ -100,6 +125,7 @@ class DurableDatabaseIndexLayoutProvider(
     if (Files.exists(databasePath) && !FileUtil.deleteWithRenaming(databasePath)) {
       throw IOException("Cannot delete database at $databasePath")
     }
+    lazyExecutorHolder = newExecutorHolder()
     lazyDatabaseHolder = newDatabaseHolder()
   }
 
@@ -111,6 +137,9 @@ class DurableDatabaseIndexLayoutProvider(
   private fun closeDatabase() {
     if (lazyDatabaseHolder.isInitialized()) {
       lazyDatabaseHolder.value.close()
+    }
+    if (lazyExecutorHolder.isInitialized()) {
+      lazyExecutorHolder.value.shutdown()
     }
   }
 }
