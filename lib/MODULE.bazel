@@ -8324,10 +8324,10 @@ http_file(
 )
 
 http_file(
-    name = "com_jayway_jsonpath-json-path-2_10_0_http",
-    downloaded_file_path = "json-path-2.10.0.jar",
-    sha256 = "890daa95dd3892d34d9fabc27cd5153656e6f369358625c88f4dc7b79cbd6c5a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jayway/jsonpath/json-path/2.10.0/json-path-2.10.0.jar",
+    name = "com_jayway_jsonpath-json-path-3_0_0_http",
+    downloaded_file_path = "json-path-3.0.0.jar",
+    sha256 = "e4e49440701674ace75af44a98840d9e13f53b34aab280446707661318405dc8",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jayway/jsonpath/json-path/3.0.0/json-path-3.0.0.jar",
 )
 
 http_file(
@@ -8345,10 +8345,10 @@ http_file(
 )
 
 http_file(
-    name = "com_jayway_jsonpath-json-path-2_10_0-sources_http",
-    downloaded_file_path = "json-path-2.10.0-sources.jar",
-    sha256 = "357f1c52217497c4251fae715ba8ef76ae310b1aae77ea319260bf4c6ad61440",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jayway/jsonpath/json-path/2.10.0/json-path-2.10.0-sources.jar",
+    name = "com_jayway_jsonpath-json-path-3_0_0-sources_http",
+    downloaded_file_path = "json-path-3.0.0-sources.jar",
+    sha256 = "7b9f3997f276b5a3535f8c3f001e51366e0459eabe5874038ade81df81949c4f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jayway/jsonpath/json-path/3.0.0/json-path-3.0.0-sources.jar",
 )
 
 http_file(

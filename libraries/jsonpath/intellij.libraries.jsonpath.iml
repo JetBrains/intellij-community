@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jsonpath" type="repository">
-        <properties maven-id="com.jayway.jsonpath:json-path:2.10.0">
+        <properties maven-id="com.jayway.jsonpath:json-path:3.0.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/jayway/jsonpath/json-path/2.10.0/json-path-2.10.0.jar">
-              <sha256sum>890daa95dd3892d34d9fabc27cd5153656e6f369358625c88f4dc7b79cbd6c5a</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jayway/jsonpath/json-path/3.0.0/json-path-3.0.0.jar">
+              <sha256sum>e4e49440701674ace75af44a98840d9e13f53b34aab280446707661318405dc8</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/net/minidev/json-smart/2.6.0/json-smart-2.6.0.jar">
               <sha256sum>1ae4b561458afb540be8ec5c6dbb4f2e715a319a7ae64854998aaf924770d61b</sha256sum>
@@ -27,19 +27,19 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jayway/jsonpath/json-path/2.10.0/json-path-2.10.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jayway/jsonpath/json-path/3.0.0/json-path-3.0.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/net/minidev/json-smart/2.6.0/json-smart-2.6.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/net/minidev/accessors-smart/2.6.0/accessors-smart-2.6.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jayway/jsonpath/json-path/2.10.0/json-path-2.10.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jayway/jsonpath/json-path/3.0.0/json-path-3.0.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/net/minidev/json-smart/2.6.0/json-smart-2.6.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/net/minidev/accessors-smart/2.6.0/accessors-smart-2.6.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.libraries.jackson" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" scope="RUNTIME" />
   </component>
 </module>

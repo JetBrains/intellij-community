@@ -11,8 +11,8 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestC
 import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.JsonPath
 import com.jayway.jsonpath.Option
-import com.jayway.jsonpath.spi.json.JacksonJsonProvider
-import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider
+import com.jayway.jsonpath.spi.json.Jackson3JsonProvider
+import com.jayway.jsonpath.spi.mapper.Jackson3MappingProvider
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -23,8 +23,8 @@ class JsonPathEvaluateTest : LightPlatformCodeInsightFixture4TestCase() {
   companion object {
     init {
       Configuration.setDefaults(object : Configuration.Defaults {
-        private val jsonProvider = JacksonJsonProvider()
-        private val mappingProvider = JacksonMappingProvider()
+        private val jsonProvider = Jackson3JsonProvider()
+        private val mappingProvider = Jackson3MappingProvider()
 
         override fun jsonProvider() = jsonProvider
 
@@ -110,7 +110,7 @@ class JsonPathEvaluateTest : LightPlatformCodeInsightFixture4TestCase() {
     val document = myFixture.configureByText("my.json", "{ invalid }")
     val evaluator = JsonPathEvaluator(document as JsonFile, "$", setOf())
     val result = evaluator.evaluate() as IncorrectDocument
-    assertThat(result.message).contains("Unexpected character ('i' (code 105)): was expecting double-quote to start field name")
+    assertThat(result.message).contains("Unexpected character ('i' (code 105)): was expecting double-quote to start property name")
   }
 
   private val sampleDocument: String

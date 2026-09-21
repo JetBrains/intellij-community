@@ -8,9 +8,9 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.InvalidPathException;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
-import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
+import com.jayway.jsonpath.spi.json.Jackson3JsonProvider;
 import com.jayway.jsonpath.spi.json.JsonProvider;
-import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
+import com.jayway.jsonpath.spi.mapper.Jackson3MappingProvider;
 import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +28,8 @@ import java.util.Set;
 public final class JsonPathResponseHandler extends SelectorBasedResponseHandler {
   static {
     Configuration.setDefaults(new Configuration.Defaults() {
-      private final JsonProvider jsonProvider = new JacksonJsonProvider();
-      private final MappingProvider mappingProvider = new JacksonMappingProvider();
+      private final JsonProvider jsonProvider = new Jackson3JsonProvider();
+      private final MappingProvider mappingProvider = new Jackson3MappingProvider();
 
       @Override
       public JsonProvider jsonProvider() {

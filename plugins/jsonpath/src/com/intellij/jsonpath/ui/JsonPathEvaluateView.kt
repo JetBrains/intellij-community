@@ -58,8 +58,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.Option
-import com.jayway.jsonpath.spi.json.JacksonJsonProvider
-import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider
+import com.jayway.jsonpath.spi.json.Jackson3JsonProvider
+import com.jayway.jsonpath.spi.mapper.Jackson3MappingProvider
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -78,11 +78,11 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
   companion object {
     init {
       Configuration.setDefaults(object : Configuration.Defaults {
-        private val jsonProvider: JacksonJsonProvider = JacksonJsonProvider()
-        private val mappingProvider: JacksonMappingProvider = JacksonMappingProvider()
+        private val jsonProvider: Jackson3JsonProvider = Jackson3JsonProvider()
+        private val mappingProvider: Jackson3MappingProvider = Jackson3MappingProvider()
 
-        override fun jsonProvider(): JacksonJsonProvider = jsonProvider
-        override fun mappingProvider(): JacksonMappingProvider = mappingProvider
+        override fun jsonProvider(): Jackson3JsonProvider = jsonProvider
+        override fun mappingProvider(): Jackson3MappingProvider = mappingProvider
         override fun options(): EnumSet<Option> = EnumSet.noneOf(Option::class.java)
       })
     }

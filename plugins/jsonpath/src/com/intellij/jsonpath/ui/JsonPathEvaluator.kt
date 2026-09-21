@@ -13,8 +13,8 @@ import com.jayway.jsonpath.JsonPath
 import com.jayway.jsonpath.JsonPathException
 import com.jayway.jsonpath.Option
 import com.jayway.jsonpath.PathNotFoundException
-import com.jayway.jsonpath.spi.json.JacksonJsonProvider
-import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider
+import com.jayway.jsonpath.spi.json.Jackson3JsonProvider
+import com.jayway.jsonpath.spi.mapper.Jackson3MappingProvider
 
 class JsonPathEvaluator(private val jsonFile: JsonFile?,
                         val expression: String,
@@ -30,8 +30,8 @@ class JsonPathEvaluator(private val jsonFile: JsonFile?,
     }
 
     val config = Configuration.ConfigurationBuilder()
-      .jsonProvider(JacksonJsonProvider())
-      .mappingProvider(JacksonMappingProvider())
+      .jsonProvider(Jackson3JsonProvider())
+      .mappingProvider(Jackson3MappingProvider())
       .options(evalOptions)
       .build()
 
