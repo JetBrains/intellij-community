@@ -195,6 +195,10 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
   @ApiStatus.OverrideOnly
   protected open suspend fun flushExternalUpdates() { }
 
+  override suspend fun refreshSettings() {
+    updateSettings()
+  }
+
   protected fun updateSettings() {
     currentTreeState.load()?.scheduleUpdateSettings()
   }

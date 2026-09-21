@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.platform.projectView.actions.EditorChoice
@@ -49,12 +48,9 @@ internal class SelectInSplitProjectViewImpl(private val project: Project, corout
   }
 
   override fun isSelectOpenedFileEnabled(): Boolean {
-    return ProjectViewActionSupport.getInstance(project)
-      .getActionState()
-      ?.optionStates
-      ?.get(ProjectViewPaneOptionDTO.AUTOSCROLL_FROM_SOURCE)
-      ?.isSelected != true ||
-           AdvancedSettings.getBoolean("project.view.do.not.autoscroll.to.libraries")
+    val actionState = ProjectViewActionSupport.getInstance(project).getActionState() ?: return true
+    return actionState.optionStates[ProjectViewPaneOptionDTO.AUTOSCROLL_FROM_SOURCE]?.isSelected != true ||
+           actionState.forceSelectOpenedFileEnabled
   }
 
   override fun selectOpenedFile(editorChoice: EditorChoice, invokedManually: Boolean) {

@@ -5,8 +5,10 @@ package com.intellij.platform.projectView.pane
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
 import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.actions.fromDTO
@@ -18,6 +20,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
@@ -25,6 +28,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
@@ -230,6 +234,23 @@ private class ProjectViewPaneManager(val pane: ProjectViewPaneModel, val descrip
               }
             }
           }
+      }
+      launch(CoroutineName("External settings updates for PV pane $id")) {
+        val refresh = Channel<Unit>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+        ApplicationManager.getApplication().messageBus.connect(this)
+          .subscribe(
+            AdvancedSettingsChangeListener.TOPIC,
+            object : AdvancedSettingsChangeListener {
+              override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
+                if (id == "project.view.do.not.autoscroll.to.libraries") {
+                  refresh.trySend(Unit)
+                }
+              }
+            }
+          )
+        refresh.consumeAsFlow().collect { 
+          pane.refreshSettings()
+        }
       }
     }
   }

@@ -12,6 +12,7 @@ data class ProjectViewPaneSettingsStateDTO(
   val optionStates: Map<ProjectViewPaneOptionDTO, ProjectViewOptionStateDTO>,
   val sortKeyState: ProjectViewSortKeyStateDTO,
   val fileNestingState: FileNestingStateDTO,
+  val forceSelectOpenedFileEnabled: Boolean,
 )
 
 @ApiStatus.Internal

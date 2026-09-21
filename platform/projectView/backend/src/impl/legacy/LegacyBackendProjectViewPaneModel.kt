@@ -261,6 +261,12 @@ private class LegacyBackendProjectViewPaneModel(
     return selectionDataContext(nodeIds)
   }
 
+  override suspend fun refreshSettings() {
+    withContext(Dispatchers.UI) {
+      legacyPaneManager.updateActionStates()
+    }
+  }
+
   /**
    * The data context the legacy pane itself would have for this selection.
    *
@@ -824,7 +830,7 @@ private class AbstractProjectViewPaneStateManager(
     updateActionStates()
   }
 
-  private fun updateActionStates() {
+  fun updateActionStates() {
     val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
     val updatedOptionStates = allProjectViewPaneOptions().associateWith { option ->
       val legacyOption = legacyProjectViewOption(project, option)

@@ -6,6 +6,7 @@ package com.intellij.platform.projectView.pane
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.platform.projectView.actions.toDTO
 import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
 import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValueImpl
@@ -289,6 +290,10 @@ class ProjectViewPaneStateBuilderImpl(
   override suspend fun updateSettingsState(build: (ProjectViewPaneSettingsStateBuilder) -> Unit) {
     val builder = ProjectViewPaneSettingsStateBuilderImpl()
     build(builder)
+    // This advanced setting forces Select Opened File to be always on.
+    // It must come from the pane model, because advanced settings can differ between the backend and the frontend,
+    // and the value is checked on the frontend (in AnAction.update, essentially).
+    builder.setForceSelectOpenedFileEnabled(AdvancedSettings.getBoolean("project.view.do.not.autoscroll.to.libraries"))
     updateState(ProjectViewSettingsStateEvent(builder.build()))
   }
 

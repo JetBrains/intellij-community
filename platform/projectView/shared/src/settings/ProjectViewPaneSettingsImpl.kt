@@ -49,6 +49,7 @@ internal class ProjectViewPaneSettingsStateBuilderImpl : ProjectViewPaneSettings
     activeRules = emptyList(),
     defaultRules = emptyList(),
   )
+  private var forceSelectOpenedFileEnabled = false
 
   override fun setOptionState(
     option: ProjectViewPaneOption,
@@ -77,12 +78,17 @@ internal class ProjectViewPaneSettingsStateBuilderImpl : ProjectViewPaneSettings
       isFileNestingOn, isFileNestingAvailable, activeRules.map { it.toDTO() }, defaultRules.map { it.toDTO() }
     )
   }
+  
+  fun setForceSelectOpenedFileEnabled(forceSelectOpenedFileEnabled: Boolean) {
+    this.forceSelectOpenedFileEnabled = forceSelectOpenedFileEnabled
+  }
 
   fun build(): ProjectViewPaneSettingsStateDTO {
     return ProjectViewPaneSettingsStateDTO(
       optionState,
       ProjectViewSortKeyStateDTO(sortKey, availableSortKeys),
       fileNesting,
+      forceSelectOpenedFileEnabled,
     )
   }
 }

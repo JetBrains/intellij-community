@@ -89,6 +89,7 @@
 - p:onStateChanged(com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor,kotlin.coroutines.Continuation):java.lang.Object
 - pa:order(kotlin.coroutines.Continuation):java.lang.Object
 - pa:presentableName(kotlin.coroutines.Continuation):java.lang.Object
+- refreshSettings(kotlin.coroutines.Continuation):java.lang.Object
 - setFileNesting(com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue,kotlin.coroutines.Continuation):java.lang.Object
 - setOptionValue(com.intellij.platform.projectView.settings.ProjectViewPaneOption,Z,kotlin.coroutines.Continuation):java.lang.Object
 - setPaneSelected(Z,com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions,kotlin.coroutines.Continuation):java.lang.Object
@@ -188,6 +189,7 @@
 - a:loadChildren(J,com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenOptions,kotlin.coroutines.Continuation):java.lang.Object
 - a:manageState(com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder,kotlin.coroutines.Continuation):java.lang.Object
 - a:navigate(J,com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions,kotlin.coroutines.Continuation):java.lang.Object
+- refreshSettings(kotlin.coroutines.Continuation):java.lang.Object
 - a:setFileNesting(com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue,kotlin.coroutines.Continuation):java.lang.Object
 - a:setOptionValue(com.intellij.platform.projectView.settings.ProjectViewPaneOption,Z,kotlin.coroutines.Continuation):java.lang.Object
 - a:setPaneSelected(Z,com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions,kotlin.coroutines.Continuation):java.lang.Object

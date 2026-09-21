@@ -37,6 +37,8 @@ interface ProjectViewPaneModel {
   fun getDataContext(nodeIds: List<Long>): DataContext
 
   suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath?
+  
+  suspend fun refreshSettings() { }
 }
 
 /** Reserved for future use. */
