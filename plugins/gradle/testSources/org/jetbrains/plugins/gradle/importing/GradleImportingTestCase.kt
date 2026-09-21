@@ -150,7 +150,7 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
 
   @Throws(Exception::class)
   override fun setUp() {
-    Assume.assumeThat(gradleVersion, versionMatcherRule.matcher)
+    assumeGradleVersion()
 
     myProjectSettings = GradleProjectSettings().withQualifiedModuleNames()
 
@@ -170,6 +170,14 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
     installExecutionDeprecationChecker()
     originalGradleUserHome = this.gradleUserHome
     ignoreGradleLongRunningThreads()
+  }
+
+  /**
+   * Consider overriding this function when overriding the Gradle version parameter provider
+   * ([org.jetbrains.plugins.gradle.importing.GradleImportingTestCase.Companion.data]).
+   */
+  open fun assumeGradleVersion() {
+    Assume.assumeThat(gradleVersion, versionMatcherRule.matcher)
   }
 
   private fun ignoreGradleLongRunningThreads() {
@@ -531,6 +539,10 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
       return GradleJvmResolver.resolveGradleJvmHomePath(gradleVersion, javaVersionRestriction)
     }
 
+    /**
+     * Consider overriding [org.jetbrains.plugins.gradle.importing.GradleImportingTestCase.assumeGradleVersion]
+     * when overriding this function.
+     */
     @JvmStatic
     @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
     open fun data(): Iterable<*> {
