@@ -3,6 +3,8 @@ package com.intellij.platform.projectView.frontend.actions
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
@@ -63,27 +65,34 @@ internal class SplitProjectViewAutoscrollFromSource(
       launch(CoroutineName("Always select opened file on/off")) {
         optionService.getActionStateFlow().map { 
           it?.isAutoscrollFromSourceEnabled
-        }.distinctUntilChanged().collectLatest { 
-          autoscroll()
+        }.distinctUntilChanged().collectLatest { isOn ->
+          if (isOn == true) {
+            LOG.debug { "Scheduling Select Opened File because Always Select Opened File was turned on" }
+            autoscroll()
+          }
         }
       }
       launch(CoroutineName("Selected editor")) {
         FileEditorManagerEx.getInstanceEx(project).getSelectedEditorFlow().collectLatest {
+          LOG.debug { "Scheduling Select Opened File because the selected editor has been changed" }
           autoscroll()
         }
       }
       launch(CoroutineName("Selected pane")) {
-        ProjectViewToolWindowServiceImpl.getInstance(project).currentPaneFlow.collectLatest { 
+        ProjectViewToolWindowServiceImpl.getInstance(project).currentPaneFlow.collectLatest {
+          LOG.debug { "Scheduling Select Opened File because the selected PV pane has been changed" }
           autoscroll()
         }
       }
       launch(CoroutineName("Editor focus")) {
         (EditorFactory.getInstance().eventMulticaster as? EditorEventMulticasterEx?)?.addFocusChangeListener(object : FocusChangeListener {
           override fun focusGained(editor: Editor, event: FocusEvent) {
+            LOG.debug { "Scheduling Select Opened File because the editor has been focused" }
             autoscroll()
           }
 
           override fun focusLost(editor: Editor, event: FocusEvent) {
+            LOG.debug { "Cancelling Select Opened File because the editor has lost focus" }
             cancelAutoscroll()
           }
         }, asDisposable())
@@ -95,3 +104,5 @@ internal class SplitProjectViewAutoscrollFromSource(
 
 private val ProjectViewPaneSettingsStateDTO.isAutoscrollFromSourceEnabled: Boolean
   get() = optionStates[ProjectViewPaneOptionDTO.AUTOSCROLL_FROM_SOURCE]?.isSelected == true
+
+private val LOG = logger<SplitProjectViewAutoscrollFromSource>()
