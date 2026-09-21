@@ -147,7 +147,7 @@ public final class PassExecutorService implements Disposable {
     }
   }
 
-  // must not acquire ReadLock here, to avoid deadlocks, because this method is invoked inside TextEditorHighlightingPassRegistrar lock
+  // Do not acquire the read lock while the pass graph uses the registrar monitor.
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   void submitPasses(@NotNull Document document,
@@ -171,28 +171,30 @@ public final class PassExecutorService implements Disposable {
     List<ScheduledPass> freePasses = new ArrayList<>(); // passes free to start, with no "after" dependencies
     AtomicInteger threadsToStartCountdown = new AtomicInteger(0);
 
-    for (HighlightingPass pass : passes) {
-      if (pass instanceof EditorBoundHighlightingPass editorPass) {
-        // have to make ids unique for this document
-        assignUniqueId(editorPass, id2Pass);
-        editorBoundPasses.add(editorPass);
-      }
-      else if (pass instanceof TextEditorHighlightingPass tePass) {
-        assignUniqueId(tePass, id2Pass);
-        documentBoundPasses.add(tePass);
-      }
-      else {
-        // generic HighlightingPass, run all of them concurrently
-        freePasses.add(new ScheduledPass(fileEditor, pass, updateProgress, threadsToStartCountdown));
-      }
-    }
-
     List<ScheduledPass> dependentPasses = new ArrayList<>();
     // passId -> created pass
     Int2ObjectMap<ScheduledPass> toBeSubmitted = new Int2ObjectOpenHashMap<>();
-    sortById(documentBoundPasses);
-    for (TextEditorHighlightingPass pass : ContainerUtil.concat(documentBoundPasses, editorBoundPasses)) {
-      createScheduledPass(fileEditor, document, context, virtualFile, psiFile, pass, toBeSubmitted, id2Pass, freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
+    synchronized (TextEditorHighlightingPassRegistrar.getInstance(myProject)) {
+      for (HighlightingPass pass : passes) {
+        if (pass instanceof EditorBoundHighlightingPass editorPass) {
+          // have to make ids unique for this document
+          assignUniqueId(editorPass, id2Pass);
+          editorBoundPasses.add(editorPass);
+        }
+        else if (pass instanceof TextEditorHighlightingPass tePass) {
+          assignUniqueId(tePass, id2Pass);
+          documentBoundPasses.add(tePass);
+        }
+        else {
+          // generic HighlightingPass, run all of them concurrently
+          freePasses.add(new ScheduledPass(fileEditor, pass, updateProgress, threadsToStartCountdown));
+        }
+      }
+
+      sortById(documentBoundPasses);
+      for (TextEditorHighlightingPass pass : ContainerUtil.concat(documentBoundPasses, editorBoundPasses)) {
+        createScheduledPass(fileEditor, document, context, virtualFile, psiFile, pass, toBeSubmitted, id2Pass, freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
+      }
     }
 
     if (CHECK_CONSISTENCY && !ApplicationManagerEx.isInStressTest()) {
@@ -365,6 +367,7 @@ public final class PassExecutorService implements Disposable {
 
   private void submit(@NotNull ScheduledPass pass) {
     if (!pass.myUpdateProgress.isCanceled()) {
+      assert !Thread.holdsLock(TextEditorHighlightingPassRegistrar.getInstance(myProject));
       Job job = ((JobLauncherImpl)JobLauncher.getInstance()).submitToJobThread(pass, future -> {
         try {
           if (!future.isCancelled()) { // for canceled task .get() generates CancellationException which is expensive

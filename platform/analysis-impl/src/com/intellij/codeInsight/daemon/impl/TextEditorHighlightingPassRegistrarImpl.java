@@ -113,19 +113,25 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     return ids;
   }
 
-  private synchronized PassConfig @NotNull [] freezeRegisteredPassFactories() {
+  private PassConfig @NotNull [] freezeRegisteredPassFactories() {
     PassConfig[] configs = myFrozenPassConfigs;
-    if (configs == null) {
-      int maxId = myRegisteredPassFactories.keySet().intStream().max().orElse(0);
-      configs = new PassConfig[maxId + 1];
-      for (Int2ObjectMap.Entry<PassConfig> entry : myRegisteredPassFactories.int2ObjectEntrySet()) {
-        int id = entry.getIntKey();
-        PassConfig config = entry.getValue();
-        configs[id] = config;
-      }
-      myFrozenPassConfigs = configs;
+    if (configs != null) {
+      return configs;
     }
-    return configs;
+    synchronized (this) {
+      configs = myFrozenPassConfigs;
+      if (configs == null) {
+        int maxId = myRegisteredPassFactories.keySet().intStream().max().orElse(0);
+        configs = new PassConfig[maxId + 1];
+        for (Int2ObjectMap.Entry<PassConfig> entry : myRegisteredPassFactories.int2ObjectEntrySet()) {
+          int id = entry.getIntKey();
+          PassConfig config = entry.getValue();
+          configs[id] = config;
+        }
+        myFrozenPassConfigs = configs;
+      }
+      return configs;
+    }
   }
 
   private record PassConfig(@NotNull TextEditorHighlightingPassFactory passFactory,

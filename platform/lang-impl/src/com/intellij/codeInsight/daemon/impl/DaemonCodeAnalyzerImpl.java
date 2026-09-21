@@ -5,7 +5,6 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.ReferenceImporter;
@@ -1492,10 +1491,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           stopAndRestartMyProcess(progress, null, " no passes created");
           return;
         }
-        // synchronize on TextEditorHighlightingPassRegistrarImpl instance to avoid concurrent modification of TextEditorHighlightingPassRegistrarImpl.nextAvailableId
-        synchronized (TextEditorHighlightingPassRegistrar.getInstance(myProject)) {
-          myPassExecutorService.submitPasses(document, context[0], virtualFile, psiFile, fileEditor, passes, progress);
-        }
+        myPassExecutorService.submitPasses(document, context[0], virtualFile, psiFile, fileEditor, passes, progress);
         //clearObsoleteRangeHighlightersManagedToSneakInAllTheSame(document, myProject);
         ProgressManager.checkCanceled();
       }), progress);
