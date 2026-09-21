@@ -176,7 +176,7 @@ internal class GhosttyTerminalEmulator(
   // lists the GhosttyCellData codes and [scratchCellValues] the matching output addresses inside
   // [scratchCellOut] (laid out at the CELL_OUT_OFF_* offsets). Filled once; the addresses are
   // stable because the arena never moves allocations.
-  private val scratchCellOut: MemorySegment = arena.allocate(16L)
+  private val scratchCellOut: MemorySegment = arena.allocate(20L)
   private val scratchCellKeys: MemorySegment = arena.allocate(C_INT, CELL_MULTI_KEYS.size.toLong()).also { keys ->
     CELL_MULTI_KEYS.forEachIndexed { i, key -> keys.setAtIndex(C_INT, i.toLong(), key.code) }
   }
@@ -1046,6 +1046,8 @@ internal class GhosttyTerminalEmulator(
    * only when those scalars say the cell has the data: graphemes for grapheme-cluster
    * cells, the URI for hyperlinked cells, and the style for a style id the current row
    * has not resolved yet (see [styleForId]).
+   * A background-only cell (no text) carries its color directly in the cell instead of a style id,
+   * so its [CellStyle] is built straight from that color, skipping [styleForId].
    */
   private fun readCell(pointTag: GhosttyPointTag, x: Int, y: Int, out: CellData): Boolean {
     ensureOpen()
@@ -1074,10 +1076,25 @@ internal class GhosttyTerminalEmulator(
       }
       out.codepoint = scratchCellOut.get(C_INT, CELL_OUT_OFF_CODEPOINT)
       out.wide = GhosttyCellWide.of(scratchCellOut.get(C_INT, CELL_OUT_OFF_WIDE))
-      if (GhosttyCellContentTag.of(scratchCellOut.get(C_INT, CELL_OUT_OFF_CONTENT_TAG)) == GhosttyCellContentTag.CODEPOINT_GRAPHEME) {
+      val contentTag = GhosttyCellContentTag.of(scratchCellOut.get(C_INT, CELL_OUT_OFF_CONTENT_TAG))
+      if (contentTag == GhosttyCellContentTag.CODEPOINT_GRAPHEME) {
         out.combining = readGraphemeCombining()
       }
-      out.style = styleForId(scratchCellOut.get(C_SHORT, CELL_OUT_OFF_STYLE_ID).toInt() and 0xFFFF)
+      out.style = when (contentTag) {
+        // A background-only cell carries its color directly in the cell, not through a style id:
+        // the engine skips the style map for a cell with no text.
+        GhosttyCellContentTag.BG_COLOR_PALETTE -> {
+          val index = scratchCellOut.get(C_BYTE, CELL_OUT_OFF_COLOR_PALETTE).toInt() and 0xFF
+          CellStyle(background = toColor(GhosttyStyleColorTag.PALETTE, index))
+        }
+        GhosttyCellContentTag.BG_COLOR_RGB -> {
+          val r = scratchCellOut.get(C_BYTE, CELL_OUT_OFF_COLOR_RGB).toInt() and 0xFF
+          val g = scratchCellOut.get(C_BYTE, CELL_OUT_OFF_COLOR_RGB + 1).toInt() and 0xFF
+          val b = scratchCellOut.get(C_BYTE, CELL_OUT_OFF_COLOR_RGB + 2).toInt() and 0xFF
+          CellStyle(background = toColor(GhosttyStyleColorTag.RGB, (r shl 16) or (g shl 8) or b))
+        }
+        else -> styleForId(scratchCellOut.get(C_SHORT, CELL_OUT_OFF_STYLE_ID).toInt() and 0xFFFF)
+      }
       if (scratchCellOut.get(C_BYTE, CELL_OUT_OFF_HAS_HYPERLINK).toInt() != 0) {
         out.hyperlink = readHyperlinkUri()
       }
@@ -1370,17 +1387,26 @@ private val CELL_MULTI_KEYS = arrayOf(
   GhosttyCellData.WIDE,
   GhosttyCellData.STYLE_ID,
   GhosttyCellData.HAS_HYPERLINK,
+  GhosttyCellData.COLOR_PALETTE,
+  GhosttyCellData.COLOR_RGB,
 )
 
-// Offsets of each key's output slot within the 16-byte output block; the C output types are
-// uint32_t, GhosttyCellContentTag, GhosttyCellWide, uint16_t, and bool, in [CELL_MULTI_KEYS] order.
-private const val CELL_OUT_OFF_CODEPOINT = 0L
-private const val CELL_OUT_OFF_CONTENT_TAG = 4L
-private const val CELL_OUT_OFF_WIDE = 8L
-private const val CELL_OUT_OFF_STYLE_ID = 12L
-private const val CELL_OUT_OFF_HAS_HYPERLINK = 14L
+// Offsets of each key's output slot within the 20-byte output block in [CELL_MULTI_KEYS] order.
+private const val CELL_OUT_OFF_CODEPOINT = 0L       // uint32_t
+private const val CELL_OUT_OFF_CONTENT_TAG = 4L     // GhosttyCellContentTag
+private const val CELL_OUT_OFF_WIDE = 8L            // GhosttyCellWide
+private const val CELL_OUT_OFF_STYLE_ID = 12L       // uint16_t
+private const val CELL_OUT_OFF_HAS_HYPERLINK = 14L  // bool
+private const val CELL_OUT_OFF_COLOR_PALETTE = 15L  // uint8_t
+private const val CELL_OUT_OFF_COLOR_RGB = 16L      // GhosttyColorRgb (3 packed uint8_t)
 private val CELL_OUT_OFFSETS = longArrayOf(
-  CELL_OUT_OFF_CODEPOINT, CELL_OUT_OFF_CONTENT_TAG, CELL_OUT_OFF_WIDE, CELL_OUT_OFF_STYLE_ID, CELL_OUT_OFF_HAS_HYPERLINK,
+  CELL_OUT_OFF_CODEPOINT,
+  CELL_OUT_OFF_CONTENT_TAG,
+  CELL_OUT_OFF_WIDE,
+  CELL_OUT_OFF_STYLE_ID,
+  CELL_OUT_OFF_HAS_HYPERLINK,
+  CELL_OUT_OFF_COLOR_PALETTE,
+  CELL_OUT_OFF_COLOR_RGB,
 )
 
 private val LOG: Logger = logger<GhosttyTerminalEmulator>()

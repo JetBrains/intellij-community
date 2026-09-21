@@ -121,28 +121,63 @@ class TextStyleTest {
   }
 
   /**
-   * ENGINE-SPECIFIC: an erase leaves *no* pen on the erased cells — not even the background.
+   * BCE (background color erase): an erase under a colored pen paints the erased cells with the pen's
+   * background, dropping every other attribute (its foreground, its reverse flag). `CSI 7;33;44m` + EL
+   * leaves cells with only a blue background — not yellow-on-blue, and not reversed.
    *
-   * libvterm (and xterm, via background-color erase) paints the erased cells with the pen's colors while
-   * dropping its other attributes, so `CSI 7;33;44m` + EL leaves yellow-on-blue non-reverse cells. Through
-   * this API the erased cells read back as [CellStyle.Default], so an embedder painting cell backgrounds
-   * sees no BCE. The written cell right next to them does carry the full pen, so this is about what an
-   * erase stores, not about SGR parsing.
-   *
-   * Characterizes the bundled libghostty-vt; if the engine gains BCE this test should start failing and be
-   * replaced by libvterm's expectation (fg = ANSI 3, bg = ANSI 4, inverse = false).
+   * The engine stores such a cell as background-only, separate from the style map (see
+   * `GhosttyCellContentTag.BG_COLOR_PALETTE` / `BG_COLOR_RGB`), so it carries no
+   * foreground, bold, or other attribute. The written cell right next to them does carry the full pen,
+   * so this is about what an erase stores, not about SGR parsing.
    */
   @Test
-  fun eraseLeavesNoPenOnTheErasedCells() = session(20, 2) { session ->
+  fun eraseUnderAColoredPenPaintsOnlyItsBackground() = session(20, 2) { session ->
     session.write(csi("H") + csi("7;33;44m") + csi("K")) // reverse + yellow on blue, then erase to end of line
 
     val cells = session.screenLine(0).cells
-    assertThat(cells[0].style).isEqualTo(CellStyle.Default)
-    assertThat(cells[19].style).isEqualTo(CellStyle.Default)
+    assertThat(cells[0].style).isEqualTo(CellStyle(background = TerminalColor.IndexedAnsi(4)))
+    assertThat(cells[19].style).isEqualTo(CellStyle(background = TerminalColor.IndexedAnsi(4)))
 
     session.write("X") // the same pen, written rather than erased, is kept in full
     assertThat(session.screenLine(0).cells[0].style)
       .isEqualTo(CellStyle(foreground = TerminalColor.IndexedAnsi(3), background = TerminalColor.IndexedAnsi(4), inverse = true))
+  }
+
+  @Test
+  fun backgroundOnlyCellsPastTheTextAreKept() = session(20, 1) { session ->
+    session.write("abc" + csi("44m") + csi("K")) // "abc", then blue background to the end of the line
+
+    val styled = session.screenLine(0).toStyledText()
+    assertThat(styled.text).isEqualTo("abc" + " ".repeat(17))
+    assertThat(styled.styleRanges).hasSize(1)
+    val range = styled.styleRanges.single()
+    assertThat(range.startOffset).isEqualTo(3)
+    assertThat(range.endOffset).isEqualTo(20)
+    assertThat(range.style).isEqualTo(CellStyle(background = TerminalColor.IndexedAnsi(4)))
+  }
+
+  @Test
+  fun backgroundOnlyCellsWithATrueColorPenAreKept() = session(10, 1) { session ->
+    session.write("Hi" + csi("48;2;10;20;30m") + csi("K"))
+
+    val styled = session.screenLine(0).toStyledText()
+    assertThat(styled.text).isEqualTo("Hi" + " ".repeat(8))
+    assertThat(styled.styleRanges.single().style).isEqualTo(CellStyle(background = TerminalColor.Rgb(10, 20, 30)))
+  }
+
+  @Test
+  fun backgroundOnlyCellsInTheMiddleOfARowAreKept() = session(20, 1) { session ->
+    session.write("ab" + csi("44m"))
+    session.eraseCharacters(3) // cols 2..4 (0-based): blue background, no text; cursor stays at column 2
+    session.write(csi("m") + csi("5C") + "cd") // reset the pen, skip cols 5..6 unwritten, "cd" at 7..8
+
+    val styled = session.screenLine(0).toStyledText()
+    assertThat(styled.text).isEqualTo("ab" + " ".repeat(5) + "cd")
+    assertThat(styled.styleRanges).hasSize(1)
+    val range = styled.styleRanges.single()
+    assertThat(range.startOffset).isEqualTo(2)
+    assertThat(range.endOffset).isEqualTo(5)
+    assertThat(range.style).isEqualTo(CellStyle(background = TerminalColor.IndexedAnsi(4)))
   }
 
   /**

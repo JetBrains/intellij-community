@@ -135,6 +135,10 @@ internal enum class GhosttyCellData(val code: Int) {
   STYLE_ID(6),
   /** Whether the cell carries an OSC 8 hyperlink (bool). */
   HAS_HYPERLINK(7),
+  /** The cell's background palette index (`uint8_t`); valid only when the content tag is `BG_COLOR_PALETTE`. */
+  COLOR_PALETTE(10),
+  /** The cell's background RGB color (3 packed `uint8_t`s); valid only when the content tag is `BG_COLOR_RGB`. */
+  COLOR_RGB(11),
 }
 
 /** `GhosttyCellContentTag` (screen.h) — what kind of content a cell holds. */

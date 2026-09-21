@@ -131,8 +131,10 @@ class TerminalRow(
   val wrapped: Boolean = false,
 ) {
   /**
-   * Returns the row projected to displayable text with its attributes as coalesced ranges. Trailing
-   * empty cells are dropped; trailing written spaces are kept.
+   * Returns the row projected to displayable text with its attributes as coalesced ranges. A trailing
+   * cell is dropped only when it is both textless and carries the default style; a trailing written
+   * space is kept, and so is a trailing textless cell with a non-default style (e.g. a background-only
+   * cell) — as a space, so its style has text to apply to.
    *
    * Each cell contributes the UTF-16 chars of its [Cell.codePoint] followed by those of its
    * [Cell.trailingCodePoints], so a full grapheme cluster is surfaced. A [CellWidth.SPACER] cell is
@@ -146,11 +148,11 @@ class TerminalRow(
     var writtenLength = 0
     for (cell in cells) {
       if (cell.width == CellWidth.SPACER) continue // the leading wide cell already produced the glyph
-      val style = if (cell.codePoint == 0 || cell.style == CellStyle.Default) null else cell.style
+      val style = if (cell.style == CellStyle.Default) null else cell.style
       styleRanges.update(chars.length, style)
       hyperlinks.update(chars.length, cell.hyperlink)
       chars.appendCellText(cell)
-      if (cell.codePoint != 0) {
+      if (cell.codePoint != 0 || style != null) {
         writtenLength = chars.length
       }
     }
