@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
@@ -81,7 +82,7 @@ class MarkdownTableAlignmentController(private val editor: Editor) : Disposable 
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  private fun performRefresh() {
+  internal fun performRefresh() {
     if (disposed || editor.isDisposed) return
     val project = editor.project ?: return
     PsiDocumentManager.getInstance(project).performForCommittedDocument(editor.document) {
@@ -153,12 +154,16 @@ class MarkdownTableAlignmentController(private val editor: Editor) : Disposable 
         return
       }
       val controller = MarkdownTableAlignmentController(editor)
+      editor.putUserData(KEY, controller)
       EditorUtil.disposeWithEditor(editor, controller)
       controller.start()
     }
   }
 
-  private companion object {
-    val REFRESH_DELAY = 150.milliseconds
+  internal companion object {
+    private val REFRESH_DELAY = 150.milliseconds
+    private val KEY = Key.create<MarkdownTableAlignmentController>("markdown.table.alignment.controller")
+
+    internal fun getExisting(editor: Editor): MarkdownTableAlignmentController? = editor.getUserData(KEY)
   }
 }

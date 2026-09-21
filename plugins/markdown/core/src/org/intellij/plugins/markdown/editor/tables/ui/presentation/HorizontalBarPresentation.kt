@@ -17,7 +17,7 @@ import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.markup.TextAttributes
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
 import com.intellij.psi.util.startOffset
@@ -34,6 +34,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.lang.psi.util.hasType
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.FontMetrics
 import java.awt.Graphics2D
@@ -41,10 +42,14 @@ import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
+import java.util.concurrent.CopyOnWriteArraySet
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 class HorizontalBarPresentation(private val editor: Editor, private val table: MarkdownTable): BasePresentation() {
+  init {
+    register(editor, this)
+  }
   private data class BoundsState(
     val width: Int,
     val height: Int,
@@ -63,6 +68,12 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
 
   private val isInvalid
     get() = !table.isValid || editor.isDisposed
+
+  private fun refresh() {
+    val previous = boundsState ?: return
+    boundsState = null
+    fireUpdateEvent(Dimension(previous.width, previous.height))
+  }
 
   override val width: Int
     get() = obtainBounds().width
@@ -258,6 +269,22 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
   }
 
   companion object {
+    private val KEY = Key.create<MutableSet<WeakReference<HorizontalBarPresentation>>>("markdown.table.horizontal.bar.presentations")
+
+    private fun register(editor: Editor, presentation: HorizontalBarPresentation) {
+      val presentations = getExisting(editor) ?: CopyOnWriteArraySet()
+      editor.putUserData(KEY, presentations)
+      presentations.add(WeakReference(presentation))
+    }
+
+    private fun getExisting(editor: Editor): MutableSet<WeakReference<HorizontalBarPresentation>>? = editor.getUserData(KEY)
+
+    fun refresh(editor: Editor) {
+      val references = getExisting(editor) ?: return
+      references.removeIf { it.get() == null }
+      references.mapNotNull { it.get() }.forEach(HorizontalBarPresentation::refresh)
+    }
+
     private val columnActionGroup
       get() = ActionManager.getInstance().getAction("Markdown.TableColumnActions") as ActionGroup
 

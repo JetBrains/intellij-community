@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.frontend.editor.livepreview
 
+import com.intellij.markdown.frontend.editor.tables.ui.alignment.MarkdownTableAlignmentController
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
 import org.intellij.plugins.markdown.editor.livepreview.isLivePreviewEnabled
+import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -170,13 +172,16 @@ class MarkdownLivePreviewReconciler private constructor(
     if (obsolete.isEmpty() && missing.isEmpty() && decorationChanges.isEmpty()) return
     ownedRegions.clear()
     ownedRegions.putAll(kept)
+    val foldsChanged = !obsolete.isEmpty() || !missing.isEmpty()
+    val failed = ArrayList<OwnedFold>()
     runEditorUpdate {
       updateFoldRegions(obsolete, missing)
       val rangesToReconcile = LinkedHashSet<TextRange>(missing.keys)
       rangesToReconcile.addAll(decorationChanges)
-      val failed = reconcileDecorations(desired, rangesToReconcile).mapNotNull { ownedRegions.remove(it) }
+      failed.addAll(reconcileDecorations(desired, rangesToReconcile).mapNotNull { ownedRegions.remove(it) })
       updateFoldRegions(failed)
     }
+    if (foldsChanged || !failed.isEmpty()) refreshTableInlays()
   }
 
   private fun reconcileDecorations(
@@ -230,9 +235,17 @@ class MarkdownLivePreviewReconciler private constructor(
   /** Removes the owned folds and decorations at the current document [ranges]. */
   private fun removeOwned(ranges: Collection<TextRange>) {
     val regions = ranges.mapNotNull { ownedRegions.remove(it) }
-    if (regions.isNotEmpty()) runEditorUpdate {
-      updateFoldRegions(regions)
+    if (regions.isNotEmpty()) {
+      runEditorUpdate {
+        updateFoldRegions(regions)
+      }
+      refreshTableInlays()
     }
+  }
+
+  private fun refreshTableInlays() {
+    MarkdownTableAlignmentController.getExisting(editor)?.performRefresh()
+    HorizontalBarPresentation.refresh(editor)
   }
 
   private fun removeAllOwned() {

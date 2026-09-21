@@ -1,13 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor.tables
 
+import com.intellij.markdown.backend.editor.livepreview.computeLivePreviewSpecs
+import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewReconciler
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.MockFontLayoutService
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.assertNothingLogged
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.intellij.plugins.markdown.editor.livepreview.enableLivePreviewSupport
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
@@ -64,6 +69,40 @@ class MarkdownTableInlayHintsPassTest : BasePlatformTestCase() {
     myFixture.doHighlighting()
 
     assertNull("a table without correct borders must have no bar", getInlay())
+  }
+
+  fun `test the mounted bar follows live preview folds`() = assertNothingLogged {
+    val settings = MarkdownApplicationSettings.getInstance()
+    val previousLivePreview = settings.enableLivePreview
+    Disposer.register(testRootDisposable) {
+      settings.enableLivePreview = previousLivePreview
+    }
+    settings.enableLivePreview = true
+
+    // language=Markdown
+    val content = """
+      | **aa** | x |
+      | --- | - |
+      | value | y |
+      """.trimIndent()
+    myFixture.configureByText("some.md", content)
+    myFixture.doHighlighting()
+    myFixture.editor.enableLivePreviewSupport()
+    myFixture.editor.caretModel.moveToOffset(content.length)
+
+    val reconciler = requireNotNull(MarkdownLivePreviewReconciler.getOrCreate(myFixture.editor))
+    reconciler.publishSpecs(computeLivePreviewSpecs(myFixture.file, myFixture.editor))
+    val bar = requireNotNull(getInlay())
+    val hiddenWidth = bar.widthInPixels
+
+    myFixture.editor.caretModel.moveToOffset(content.indexOf("**aa**") + 2)
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    assertTrue("the mounted bar must include revealed table-cell markers", bar.widthInPixels > hiddenWidth)
+
+    myFixture.editor.caretModel.moveToOffset(content.length)
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    assertEquals(hiddenWidth, bar.widthInPixels)
+    assertEquals(content, myFixture.editor.document.text)
   }
 
   private fun configureTable() {

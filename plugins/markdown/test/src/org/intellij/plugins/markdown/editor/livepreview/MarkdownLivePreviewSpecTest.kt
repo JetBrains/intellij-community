@@ -193,15 +193,6 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEmpty(elements(content).filterIsInstance<MarkdownLivePreviewSpec.TaskCheckbox>())
   }
 
-  fun testTableCellInlineMarkersAreNotConcealed() {
-    val content = """
-      || Name |
-      || --- |
-      || **bold** |
-    """.trimMargin()
-    assertEmpty(concealed(content))
-  }
-
   fun testThematicBreaksConcealTheirCompleteLines() {
     val content = "---\n***\n___\n  *  *  *  \ntail"
     val breaks = elements(content).filterIsInstance<MarkdownLivePreviewSpec.HorizontalRule>()

@@ -20,6 +20,7 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -31,7 +32,6 @@ private val NoDescendTypes: Set<IElementType> = setOf(
   MarkdownElementTypes.CODE_SPAN,
   MarkdownElementTypes.HTML_BLOCK,
   MarkdownElementTypes.IMAGE,
-  MarkdownElementTypes.TABLE,
   MarkdownElementTypes.LINK_DESTINATION,
   MarkdownElementTypes.AUTOLINK,
 )
@@ -77,7 +77,7 @@ private fun PsiElement.toDecorationSpecs(editor: Editor): MarkdownLivePreviewSpe
     MarkdownElementTypes.STRIKETHROUGH -> delimiterConceals(MarkdownTokenTypes.TILDE)
     MarkdownElementTypes.CODE_SPAN -> delimiterConceals(MarkdownTokenTypes.BACKTICK)
     MarkdownElementTypes.INLINE_LINK -> toInlineLinkSpecs()
-    MarkdownElementTypes.IMAGE -> toImageSpec(editor)
+    MarkdownElementTypes.IMAGE -> if (isInsideTable()) null else toImageSpec(editor)
     // `<https://example.org>` becomes a composite holding the brackets, while `<name@example.org>` stays
     // flat and keeps them as siblings, so the two forms need different lookups.
     MarkdownElementTypes.AUTOLINK -> toAutolinkSpecs()
@@ -90,6 +90,8 @@ private fun PsiElement.toDecorationSpecs(editor: Editor): MarkdownLivePreviewSpe
     else -> null
   }
 }
+
+private fun PsiElement.isInsideTable(): Boolean = PsiTreeUtil.getParentOfType(this, MarkdownTable::class.java) != null
 
 private fun PsiElement.toImageSpec(editor: Editor): MarkdownLivePreviewSpec.Image? {
   val image = this as? MarkdownImage ?: return null

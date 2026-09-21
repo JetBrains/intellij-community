@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.DocumentEx
@@ -420,6 +419,45 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     configure(content)
     assertFalse(concealed().isEmpty())
     myFixture.checkResult(content.removeSuffix("<caret>"))
+  }
+
+  fun testTableCellInlineMarkersAreConcealedAndRevealOnCaret() {
+    val content = """
+      || Name | Value |
+      || --- | --- |
+      || box | *box*, **box**, ~~box~~, `box`, [box](url) |
+    """.trimMargin()
+    configure("$content<caret>")
+    assertEquals(
+      """
+        || Name | Value |
+        || --- | --- |
+        || box | box, box, box, box, box |
+      """.trimMargin(),
+      visibleText(),
+    )
+
+    val boldStart = content.indexOf("**box**")
+    moveCaretTo(boldStart + 2)
+    assertEquals(listOf("*", "*", "~~", "~~", "`", "`", "[", "](url)"), concealed())
+    myFixture.checkResult(content)
+
+    writeCommandAction(project).run<Throwable> {
+      myFixture.editor.document.insertString(boldStart + 3, "new")
+    }
+    val editedContent = content.replace("**box**", "**bnewox**")
+    myFixture.doHighlighting()
+    waitForCurrentSpecs()
+    moveCaretTo(editedContent.length)
+    assertEquals(
+      """
+        || Name | Value |
+        || --- | --- |
+        || box | box, bnewox, box, box, box |
+      """.trimMargin(),
+      visibleText(),
+    )
+    myFixture.checkResult(editedContent)
   }
 
   fun testThematicBreaksUseEmptyFoldsAndOwnedRules() {
