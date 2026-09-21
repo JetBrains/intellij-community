@@ -58,6 +58,9 @@ private const val PROJECTS_DIR_NAME = "projects"
  * [projectRootDir] is the directory the platform treats as the project root.
  * When it is `null`, it is derived from a stat of [path], which costs a network round trip on a remote host;
  * pass the known value when the caller has already touched [path].
+ * [forceOpenInNewFrame] and [projectToClose] are passed through to the [OpenProjectTask]. Leaving them at their defaults
+ * always opens a new frame; passing `forceOpenInNewFrame = false` together with an open [projectToClose] lets the platform
+ * ask the user whether to reuse that frame or to attach, see `ProjectManagerImpl.attachToExistingOrOpenInTheSameFrame`.
  */
 @ApiStatus.Internal
 suspend fun openProjectForLightProduct(
@@ -66,6 +69,8 @@ suspend fun openProjectForLightProduct(
   materializeProject: Boolean,
   showWelcomeScreen: Boolean = true,
   projectRootDir: Path? = null,
+  forceOpenInNewFrame: Boolean = true,
+  projectToClose: Project? = null,
   beforeInit: (Project) -> Unit = {},
   eelMachineInitializer: suspend (EelDescriptor) -> EelMachine? = ::defaultLightEelMachineInitializer,
 ): Project? {
@@ -90,7 +95,8 @@ suspend fun openProjectForLightProduct(
     runConfigurators = false
     useDefaultProjectAsTemplate = false
     preventIprLookup = true
-    forceOpenInNewFrame = true
+    this.forceOpenInNewFrame = forceOpenInNewFrame
+    this.projectToClose = projectToClose
     beforeInitTasks += { project ->
       beforeInit(project)
       @OptIn(EelDelicateApi::class)
