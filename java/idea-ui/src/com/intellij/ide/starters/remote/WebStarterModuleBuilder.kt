@@ -411,7 +411,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
   @ApiStatus.Internal
   fun validateAndDownloadProject(
     project: Project?,
-    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */) validateWithServer: (ProgressIndicator) -> Boolean = { true }
+    @RequiresBackgroundThread validateWithServer: (ProgressIndicator) -> Boolean = { true }
   ) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
       {

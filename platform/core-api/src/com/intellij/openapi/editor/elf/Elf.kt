@@ -65,7 +65,7 @@ interface Elf {
    * checking [ElfFeatureFlag.isEnabled] before entering the scope.
    */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun <T> withElfScope(@RequiresEdt(generateAssertion = false /* IJPL-115548 */) action: () -> T): T
+  fun <T> withElfScope(@RequiresEdt action: () -> T): T
 
   /**
    * Returns `true` when the current EDT execution is inside [withElfScope].

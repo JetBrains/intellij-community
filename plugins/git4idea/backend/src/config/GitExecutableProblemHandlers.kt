@@ -74,8 +74,8 @@ interface ErrorNotifier {
     gitExecutableManager.dropVersionCache()
   }
 
-  sealed class FixOption(@Nls(capitalization = Sentence) val text: String, @RequiresEdt(generateAssertion = false /* IJPL-115548 */) val fix: () -> Unit) {
-    class Standard(@Nls(capitalization = Sentence) text: String, @RequiresEdt(generateAssertion = false /* IJPL-115548 */) fix: () -> Unit) : FixOption(text, fix)
+  sealed class FixOption(@Nls(capitalization = Sentence) val text: String, @RequiresEdt val fix: () -> Unit) {
+    class Standard(@Nls(capitalization = Sentence) text: String, @RequiresEdt fix: () -> Unit) : FixOption(text, fix)
 
     // todo probably change to "Select on disk" instead of opening Preferences
     internal class Configure(val project: Project) : FixOption(CommonBundle.message("action.text.configure.ellipsis"), {

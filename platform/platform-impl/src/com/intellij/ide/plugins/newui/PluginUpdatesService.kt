@@ -138,7 +138,7 @@ class PluginUpdatesService(val coroutineScope: CoroutineScope) {
    * calling thread of [subscribe] with that snapshot; all later invocations happen on [Dispatchers.UI].
    */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun subscribe(@RequiresEdt(generateAssertion = false /* IJPL-115548 */) callback: PluginUpdateCallback): PluginUpdateSubscription {
+  fun subscribe(@RequiresEdt callback: PluginUpdateCallback): PluginUpdateSubscription {
     myCallbacks.add(callback)
 
     val currentSnapshot = getLastUpdates()

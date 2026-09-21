@@ -103,7 +103,7 @@ interface ThreadingSupport {
   }
 
   suspend fun <T, R> runWriteActionWithExecutor(
-    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */) action: () -> T,
+    @RequiresWriteLock action: () -> T,
     onJobPublished: (Job) -> Unit,
     onJobNotNeeded: (Job) -> Unit,
     executor: (() -> T, Job) -> ExecutorResult<R>): R {
@@ -158,7 +158,7 @@ interface ThreadingSupport {
    * The suspending computations run on the dispatcher provided by [kotlin.coroutines.coroutineContext]
    */
   suspend fun <T, R> runWriteActionWithExecutor(
-    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */) action: () -> T,
+    @RequiresWriteLock action: () -> T,
     onJobPublished: (Job) -> Unit,
     onJobNotNeeded: (Job) -> Unit,
     shouldProceedWithWriteAction: (() -> Boolean)?,

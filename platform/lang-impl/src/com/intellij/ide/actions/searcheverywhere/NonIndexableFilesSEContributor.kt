@@ -407,7 +407,7 @@ private class SearchJobsState {
     resultsChannel.trySend(file to score)
   }
 
-  suspend fun collectResults(@RequiresReadLock(generateAssertion = false /* IJPL-115548 */) collector: (VirtualFile, Int) -> Boolean): Boolean {
+  suspend fun collectResults(@RequiresReadLock collector: (VirtualFile, Int) -> Boolean): Boolean {
     for ((file, score) in resultsChannel) {
       // Sadly, read action :( SE is to blame
       if (!readActionUndispatched { collector(file, score) }) return false

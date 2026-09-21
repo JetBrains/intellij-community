@@ -342,10 +342,7 @@ fun TargetEnvironment.UploadableVolume.uploadMeasureTime(
  */
 @ApiStatus.Internal
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-fun measureUploadTime(
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */) upload: () -> Unit,
-  genMessage: () -> @NlsSafe String,
-) {
+fun measureUploadTime(@RequiresBackgroundThread upload: () -> Unit, genMessage: () -> @NlsSafe String) {
   val duration = measureTime { upload() }
   logger.debug { "upload ${genMessage()} : $duration" }
 }

@@ -32,7 +32,7 @@ interface TransferredWriteActionService {
    */
   @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  fun runOnEdtWithTransferredWriteActionAndWait(@RequiresEdt(generateAssertion = false /* IJPL-115548 */) @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */) action: Runnable)
+  fun runOnEdtWithTransferredWriteActionAndWait(@RequiresEdt @RequiresWriteLock action: Runnable)
 
   /**
    * Executes [action] synchronously on a background thread under write action.
@@ -45,5 +45,5 @@ interface TransferredWriteActionService {
    */
   @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun runOnBackgroundThreadWithTransferredWriteActionAndWait(@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */) @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */) action: Runnable)
+  fun runOnBackgroundThreadWithTransferredWriteActionAndWait(@RequiresBackgroundThread @RequiresWriteLock action: Runnable)
 }

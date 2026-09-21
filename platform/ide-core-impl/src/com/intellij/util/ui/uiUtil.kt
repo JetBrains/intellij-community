@@ -66,5 +66,5 @@ interface UiReadExecutor {
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun executeWithReadAccess(@RequiresEdt(generateAssertion = false /* IJPL-115548 */) @RequiresReadLock(generateAssertion = false /* IJPL-115548 */) action: Runnable)
+  fun executeWithReadAccess(@RequiresEdt @RequiresReadLock action: Runnable)
 }

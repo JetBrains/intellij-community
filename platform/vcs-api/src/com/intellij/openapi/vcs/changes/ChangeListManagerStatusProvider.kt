@@ -29,7 +29,7 @@ interface ChangeListManagerStatusProvider {
     /**
      * Subscribe to the status updates in [project]
      */
-    suspend fun consumeStatusComponents(project: Project, @RequiresEdt(generateAssertion = false /* IJPL-115548 */) componentsConsumer: (List<JComponent>) -> Unit): Nothing {
+    suspend fun consumeStatusComponents(project: Project, @RequiresEdt componentsConsumer: (List<JComponent>) -> Unit): Nothing {
       fun update() {
         val components = EP_NAME.extensionList.mapNotNull {
           it.getStatusComponent(project)

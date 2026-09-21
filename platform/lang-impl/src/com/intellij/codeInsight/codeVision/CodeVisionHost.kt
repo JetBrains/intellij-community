@@ -500,7 +500,7 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
     calcLifetime: Lifetime,
     editor: Editor,
     lensesToUpdate: UpdateLensesRequest = UpdateLensesRequest.All,
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */) consumer: (newLenses: List<Pair<TextRange, CodeVisionEntry>>, providersToUpdate: List<String>) -> Unit,
+    @RequiresEdt consumer: (newLenses: List<Pair<TextRange, CodeVisionEntry>>, providersToUpdate: List<String>) -> Unit,
   ) {
     val modCount = modificationCount(editor)
 

@@ -87,7 +87,7 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
    * Executes the given action if and when the main log has been initialized.
    */
   @Internal
-  protected abstract fun runInMainUi(@RequiresEdt(generateAssertion = false /* IJPL-115548 */) consumer: (MainVcsLogUi) -> Unit)
+  protected abstract fun runInMainUi(@RequiresEdt consumer: (MainVcsLogUi) -> Unit)
 
   /**
    * Creates and initializes the [logManager] if [isAvailable]
@@ -146,7 +146,7 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
      */
     @JvmStatic
     @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-    fun runInMainLog(project: Project, @RequiresEdt(generateAssertion = false /* IJPL-115548 */) consumer: (MainVcsLogUi) -> Unit) {
+    fun runInMainLog(project: Project, @RequiresEdt consumer: (MainVcsLogUi) -> Unit) {
       if (!isAvailable(project)) {
         VcsLogContentUtil.showLogIsNotAvailableMessage(project)
         return
