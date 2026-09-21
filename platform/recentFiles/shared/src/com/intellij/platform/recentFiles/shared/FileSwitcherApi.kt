@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.recentFiles.shared
 
+import com.intellij.ide.rpc.awaitWithLocalFallback
 import com.intellij.ide.ui.colors.ColorId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -21,9 +23,13 @@ interface FileSwitcherApi : RemoteApi<Unit> {
   suspend fun updateRecentFilesBackendState(request: RecentFilesBackendRequest): Boolean
 
   companion object {
+    /**
+     * Resolves the model of this session. A light session has no backend to await, so it gets the application service
+     * that the shared module registers behind this interface. Every other mode awaits the backend connection.
+     */
     @JvmStatic
     suspend fun getInstance(): FileSwitcherApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<FileSwitcherApi>())
+      return LiteRemoteApiProviderService.awaitWithLocalFallback(remoteApiDescriptor<FileSwitcherApi>()) { service<FileSwitcherApi>() }
     }
   }
 }

@@ -143,11 +143,14 @@ Exactly one process of a session hosts the model:
 ### The callers of the guard
 
 - The function must have exactly three callers.
-- The controller must call it once, in the one private path that every entry point uses.
+- The controller must call it in the one private path that every entry point uses, and once more in
+  `allPresentationsChanged`, which reads the model before it reaches that path.
 - The startup activity must call it once and return early when the answer is false.
 - The VFS listener must call it once and return null when the answer is false.
-- No other class may call the function or read the product mode.
+- No other class may call the function.
 - The `frontend` module must not read the product mode to choose the model. It calls `FileSwitcherApi.getInstance()`.
+  It reads the mode for one other reason only, to know whether a light session can still gain a backend,
+  see [The frontend restart](#the-frontend-restart).
 - Each descriptor entry of a guarded class must carry the comment `see doesProcessHostRecentFilesModel`.
 
 ### The event entry points
@@ -187,11 +190,14 @@ Exactly one process of a session hosts the model:
 
 ### The frontend restart
 
-- The frontend synchronizer must restart its subscriptions when the product mode of the applied plugin set changes.
-- The source is `PluginManagerCore.currentInitContextFlow`, mapped to the product mode and made distinct.
+- The frontend synchronizer must restart its subscriptions when a `LIGHT` session gains a backend.
+- The source is `LiteRemoteApiProviderService.awaitConnectionAndResolve`, awaited beside the running subscriptions.
+  Only a strictly `LIGHT` session awaits it. Every other mode already takes the model from its backend.
 - The restart must cancel the previous subscriptions and fetches first.
 - The restart must resolve `FileSwitcherApi` again, so the backend takes the model over after a light upgrade.
 - The synchronizer must return early when the fallback switcher key is on.
+- The connection stands in for the product mode of the applied plugin set. Replace it with that mode once the
+  platform publishes the mode as a flow. The synchronizer carries the `TODO` that says so.
 
 ### The descriptors
 
@@ -272,9 +278,10 @@ Two commits rebuild the change. Each commit compiles and passes the distributed 
    - Set `required-if-available` on the `backend` module. Move the backend dependency to the `RUNTIME` scope.
    - Point the tests module at `shared`. Run `./build/jpsModelToBazel.cmd`.
 2. `IJPL-252054 [recentFiles] resolve FileSwitcherApi through the lite RPC service`
-   - Replace `intellij.platform.rpc` with `intellij.platform.rpc.lite` in `shared`, and with `fleet.rpc` in `frontend`.
+   - Replace `intellij.platform.rpc` with `intellij.platform.rpc.lite` in `shared`, and add `fleet.rpc` and
+     `intellij.platform.runtime.product` to `frontend`.
    - Resolve `FileSwitcherApi.getInstance()` through `awaitWithLocalFallback` with the service fallback.
-   - Restart the frontend synchronizer on a product mode change.
+   - Restart the frontend synchronizer once a light session gains a backend connection.
    - Update `.agents/skills/ij-light/references/dev-workflow.md`: the frontend module no longer
      blocks `intellij.performanceTesting.frontend`.
    - Run `./build/jpsModelToBazel.cmd`.
@@ -287,6 +294,9 @@ Two commits rebuild the change. Each commit compiles and passes the distributed 
   deleted file leaves the list in a `LIGHT` session, because a light project may have no content roots.
 - The distributed model test runs in the monolith mode. No automatic test covers the `LIGHT`
   resolution or the restart on the upgrade.
+- The restart watches the backend connection, not the product mode, so a mode change that brings no new
+  connection does not restart the frontend. `PluginManagerCore.currentInitContextFlow` would cover that case,
+  and it is not on master yet: it lives on `khbminus/light-2/monolith-product-mode`, in commit 0b8a3b1ce49ce.
 - The history order listener stays a programmatic subscription because of a test-mode workaround
   in the platform. A declarative listener would remove the `ProjectEx` check.
 
