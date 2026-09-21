@@ -11,19 +11,19 @@
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinx-coroutines-guava" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-guava:1.10.2-intellij-4">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-guava:1.11.0-intellij-1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-guava/1.10.2-intellij-4/kotlinx-coroutines-guava-1.10.2-intellij-4.jar">
-              <sha256sum>ee12c1d0185bf8625dc35829388bd37f434dea08483337a11b42c898a0ec8877</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-guava/1.11.0-intellij-1/kotlinx-coroutines-guava-1.11.0-intellij-1.jar">
+              <sha256sum>47f627efddb1971c56d62befd3cdc6a39b61f583fcec67c5f8a209418a37cbcb</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-guava/1.10.2-intellij-4/kotlinx-coroutines-guava-1.10.2-intellij-4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-guava/1.11.0-intellij-1/kotlinx-coroutines-guava-1.11.0-intellij-1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-guava/1.10.2-intellij-4/kotlinx-coroutines-guava-1.10.2-intellij-4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-guava/1.11.0-intellij-1/kotlinx-coroutines-guava-1.11.0-intellij-1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

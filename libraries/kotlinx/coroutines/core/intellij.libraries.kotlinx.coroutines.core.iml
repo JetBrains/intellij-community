@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinx-coroutines-core" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core-jvm:1.10.2-intellij-4">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core-jvm:1.11.0-intellij-1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-core-jvm/1.10.2-intellij-4/kotlinx-coroutines-core-jvm-1.10.2-intellij-4.jar">
-              <sha256sum>2d8a1ca242cb4b841169b8422c4959dc60b71ac949fdd30d7ede8fa216357ca1</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-core-jvm/1.11.0-intellij-1/kotlinx-coroutines-core-jvm-1.11.0-intellij-1.jar">
+              <sha256sum>86e0d0b5209c7dbfb60b5fe906102091dc662deb2822cc39a14195abd8ecc3df</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-core-jvm/1.10.2-intellij-4/kotlinx-coroutines-core-jvm-1.10.2-intellij-4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-core-jvm/1.11.0-intellij-1/kotlinx-coroutines-core-jvm-1.11.0-intellij-1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-core-jvm/1.10.2-intellij-4/kotlinx-coroutines-core-jvm-1.10.2-intellij-4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-core-jvm/1.11.0-intellij-1/kotlinx-coroutines-core-jvm-1.11.0-intellij-1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
