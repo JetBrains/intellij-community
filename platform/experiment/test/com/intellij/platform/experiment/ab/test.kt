@@ -1,16 +1,59 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.experiment.ab
 
+import com.intellij.platform.experiment.ab.impl.ABExperimentDecision
 import com.intellij.platform.experiment.ab.impl.ABExperimentOption
-import com.intellij.platform.experiment.ab.impl.ABExperimentUserData
+import com.intellij.platform.experiment.ab.impl.ExperimentAssignment
 import com.intellij.platform.experiment.ab.impl.IntelliJPlatformProduct
 import com.intellij.platform.experiment.ab.impl.NUMBER_OF_BUCKETS
 import com.intellij.platform.experiment.ab.impl.experimentsPartition
-import com.intellij.platform.experiment.ab.impl.getExperimentDecision
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 
 class ABExperimentSanityTest {
+
+  @Test
+  fun `no experiments skip the user decision lookup`() {
+    assertFalse(ABExperimentOption.NEW_USERS_ONBOARDING.isEnabled(emptyList()) {
+      error("The user decision must not be retrieved when no experiments are configured")
+    })
+  }
+
+  @Test
+  fun `an inactive experiment skips the user decision lookup`() {
+    val partition = listOf(assignment(ABExperimentOption.CLION_WIZARD_REMOVAL))
+
+    assertFalse(ABExperimentOption.NEW_USERS_ONBOARDING.isEnabled(partition) {
+      error("The user decision must not be retrieved for an inactive experiment")
+    })
+  }
+
+  @Test
+  fun `an active experiment retrieves the user decision`() {
+    val partition = listOf(assignment(ABExperimentOption.NEW_USERS_ONBOARDING))
+    var decisionLookups = 0
+
+    val enabled = ABExperimentOption.NEW_USERS_ONBOARDING.isEnabled(partition) {
+      decisionLookups++
+      ABExperimentDecision(ABExperimentOption.UNASSIGNED, isControlGroup = true, bucketNumber = 2)
+    }
+
+    assertFalse(enabled)
+    assertEquals(1, decisionLookups)
+  }
+
+  @Test
+  fun `the unassigned option fails before the user decision lookup`() {
+    assertThrows(IllegalArgumentException::class.java) {
+      ABExperimentOption.UNASSIGNED.isEnabled(emptyList()) {
+        error("The user decision must not be retrieved for the unassigned option")
+      }
+    }
+  }
+
 
   @Test
   fun `no intersections in experiment partitions`() {
@@ -68,4 +111,10 @@ class ABExperimentSanityTest {
   }
 
   fun assertWithinBounds(range: Set<Int>) = Assertions.assertTrue(range.subtract(0 until NUMBER_OF_BUCKETS).isEmpty())
+
+  private fun assignment(option: ABExperimentOption): ExperimentAssignment = ExperimentAssignment(
+    experiment = option,
+    experimentBuckets = setOf(0),
+    controlBuckets = setOf(1),
+  )
 }

@@ -32,11 +32,17 @@ enum class ABExperimentOption {
    */
   UNASSIGNED;
 
-  fun isEnabled(): Boolean {
+  fun isEnabled(): Boolean = isEnabled(experimentsPartition, ::getCurrentUserDecision)
+
+  @VisibleForTesting
+  internal fun isEnabled(partition: List<ExperimentAssignment>, getUserDecision: () -> ABExperimentDecision): Boolean {
     require(this != UNASSIGNED) {
       "UNASSIGNED experiment option is not supposed to be used in the isEnabled() method"
     }
-    val decision = getCurrentUserDecision()
+    if (partition.none { it.experiment == this }) {
+      return false
+    }
+    val decision = getUserDecision()
     if (decision.option != UNASSIGNED) {
       ABExperimentCountCollector.logABExperimentOptionUsed(decision)
     }
