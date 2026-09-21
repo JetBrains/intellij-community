@@ -673,8 +673,6 @@ private class EditorTabs(
   }
 
   override fun paintChildren(g: Graphics) {
-    super.paintChildren(g)
-
     ApplicationManagerEx.getApplicationEx().withLocksSoftlyProhibited(
       "The Read/Write lock is disallowed during paint. Usage of the R/W lock can lead to UI freezes.",
       { t -> THROTTLED_LOGGER.error(t) },
