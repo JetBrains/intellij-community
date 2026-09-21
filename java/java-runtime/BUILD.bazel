@@ -12,6 +12,7 @@ jvm_library(
         allow_empty = True,
     ),
     kotlinc_opts = "@community//:k8",
+    manifest_lines = ["Premain-Class: com.intellij.rt.execution.application.AppMainV2$Agent"],
     module_name = "intellij.java.rt",
     resource_strip_prefix = "resources",
     resources = glob(

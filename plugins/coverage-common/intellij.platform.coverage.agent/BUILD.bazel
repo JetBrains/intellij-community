@@ -15,6 +15,11 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    manifest_lines = [
+        "Premain-Class: com.intellij.rt.coverage.main.CoveragePremain",
+        "Boot-Class-Path: intellij.platform.coverage.agent.jar",
+        "Can-Retransform-Classes: true",
+    ],
     module_name = "intellij.platform.coverage.agent",
     resource_strip_prefix = "resources",
     resources = glob(

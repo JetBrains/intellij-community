@@ -213,6 +213,7 @@ def jvm_library(
         module_name = None,
         kotlinc_opts = None,
         javac_opts = None,
+        manifest_lines = [],
         exported_compiler_plugins = [],
         associates = [],
         data = [],
@@ -239,6 +240,10 @@ def jvm_library(
         module_name: Kotlin module name
         kotlinc_opts: Kotlin compiler options label
         javac_opts: Java compiler options label
+        manifest_lines: `Name: value` lines of the module's own manifest, the main attributes of the
+            `META-INF/MANIFEST.MF` in its resource root without `Manifest-Version` and `Created-By`. The JPS backend packs the
+            resource file itself, so the lines reach the rules_kotlin backend only: it assembles the jar with
+            singlejar, which drops the manifest of every input and writes its own from these lines.
         exported_compiler_plugins: Exported compiler plugins
         associates: Kotlin associate modules
         data: Data files
@@ -291,6 +296,7 @@ def jvm_library(
             module_name = module_name,
             kotlinc_opts = effective_kotlinc_opts,
             javac_opts = javac_opts,
+            manifest_lines = manifest_lines,
             exported_compiler_plugins = exported_compiler_plugins,
             associates = associates,
             data = data,

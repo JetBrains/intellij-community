@@ -103,6 +103,7 @@ class BazelGeneratorIntegrationTests {
   @Test fun resourcesTestRoot() = doTest("resources-test-root")
   @Test fun resourcesPluginDescriptorInSecondRoot() = doTest("resources-plugin-descriptor-in-second-root")
   @Test fun resourcesIconRobots() = doTest("resources-icon-robots")
+  @Test fun resourcesManifest() = doTest("resources-manifest")
 
   @Test fun compileExcludes() = doTest("compile-excludes")
 

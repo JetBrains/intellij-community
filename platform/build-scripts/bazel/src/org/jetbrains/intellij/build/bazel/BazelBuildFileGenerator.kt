@@ -27,13 +27,17 @@ import java.nio.file.Path
 import java.util.IdentityHashMap
 import java.util.TreeMap
 import java.util.TreeSet
+import java.util.jar.Manifest
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.io.path.exists
 import kotlin.io.path.extension
+import kotlin.io.path.inputStream
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 import kotlin.io.path.readText
 import kotlin.io.path.relativeTo
 import kotlin.io.path.walk
@@ -880,6 +884,13 @@ internal class BazelBuildFileGenerator(
         option("kotlinc_opts", kotlincOptionsLabel)
       }
 
+      if (customModule == null) {
+        val manifestLines = manifestLinesOf(moduleDescriptor)
+        if (manifestLines.isNotEmpty()) {
+          option("manifest_lines", manifestLines)
+        }
+      }
+
       // the associates carry the module name
       if (deps == null || deps.associates.isEmpty()) {
         option("module_name", module.name)
@@ -1349,6 +1360,47 @@ private const val ICON_ROBOTS_FILE_NAME = "icon-robots.txt"
 /** Tells if the resource root holds an `icon-robots.txt` file. */
 private fun hasIconRobots(root: Path): Boolean {
   return root.isDirectory() && root.walk().any { it.fileName.toString() == ICON_ROBOTS_FILE_NAME }
+}
+
+/** The manifest attributes the jar tool of the rules_kotlin backend writes itself. A module manifest may not set them. */
+private val JAR_TOOL_MANIFEST_ATTRIBUTES = java.util.Set.of("Manifest-Version", "Created-By")
+
+/** The manifest attributes the rules_kotlin rules write for the build graph. A module manifest must not set them. */
+private val RULE_MANIFEST_ATTRIBUTES = java.util.Set.of("Target-Label", "Injecting-Rule-Kind")
+
+/**
+ * The main attributes of the `META-INF/MANIFEST.MF` a module ships in a production resource root, as `Name: value` lines for the
+ * `manifest_lines` attribute. The rules_kotlin backend assembles the module jar with singlejar, which drops the manifest of every
+ * input and writes its own from these lines; the JPS backend packs the resource file itself. `Manifest-Version` and `Created-By`
+ * are left out because the jar tool writes them and they state nothing about the module.
+ *
+ * The file name is matched exactly: a jar manifest is `META-INF/MANIFEST.MF`, and a file with the same name in another case, such
+ * as the `MANIFEST.mf` of the Fleet modules, is an ordinary resource that a case-insensitive file system must not turn into one.
+ */
+private fun manifestLinesOf(module: ModuleDescriptor): List<String> {
+  val manifestFiles = module.resources
+    .filter { it.relativeOutputPath.isEmpty() }
+    .mapNotNull { resource ->
+      val metaInf = resource.root.resolve("META-INF")
+      if (metaInf.isDirectory()) metaInf.listDirectoryEntries().firstOrNull { it.name == "MANIFEST.MF" } else null
+    }
+  if (manifestFiles.isEmpty()) {
+    return emptyList()
+  }
+  val manifestFile = manifestFiles.singleOrNull()
+                     ?: error("Module ${module.module.name} ships a manifest in several resource roots: $manifestFiles")
+  val manifest = manifestFile.inputStream().use { Manifest(it) }
+  check(manifest.entries.isEmpty()) {
+    "Manifest $manifestFile has per-entry sections, which the manifest_lines attribute cannot express"
+  }
+  return manifest.mainAttributes.entries.mapNotNull { (name, value) ->
+    val attribute = name.toString()
+    when {
+      attribute in JAR_TOOL_MANIFEST_ATTRIBUTES -> null
+      attribute in RULE_MANIFEST_ATTRIBUTES -> error("Manifest $manifestFile sets $attribute, which the rules_kotlin rules write for the build graph")
+      else -> "$attribute: $value"
+    }
+  }
 }
 
 private fun compileExcludesForRoot(packageExcludes: List<String>, rootPrefix: String): List<String> {

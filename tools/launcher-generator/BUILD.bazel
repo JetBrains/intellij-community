@@ -11,6 +11,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    manifest_lines = ["Main-Class: com.pme.launcher.LauncherGeneratorMain"],
     module_name = "intellij.tools.launcherGenerator",
     resource_strip_prefix = "resources",
     resources = glob(

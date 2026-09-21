@@ -32,6 +32,10 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    manifest_lines = [
+        "Main-Class: org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler",
+        "Automatic-Module-Name: org.jetbrains.java.decompiler",
+    ],
     module_name = "intellij.java.decompiler.engine",
     resource_strip_prefix = "resources",
     resources = glob(

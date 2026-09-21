@@ -11,6 +11,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    manifest_lines = ["Main-Class: com.intellij.platform.tests.eelHelpers.EelHelper"],
     module_name = "intellij.platform.eelHelper",
     resource_strip_prefix = "resources",
     resources = glob(

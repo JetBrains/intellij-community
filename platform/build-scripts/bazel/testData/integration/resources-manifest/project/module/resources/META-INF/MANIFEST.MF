@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Created-By: 25 (JetBrains s.r.o.)
+Main-Class: com.intellij.module.Main
+Premain-Class: com.intellij.module.Agent

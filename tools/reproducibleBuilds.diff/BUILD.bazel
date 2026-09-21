@@ -11,6 +11,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    manifest_lines = ["Main-Class: org.jetbrains.intellij.reproducibleBuilds.diffTool.FileTreeContentComparison"],
     module_name = "intellij.tools.reproducibleBuilds.diff",
     resource_strip_prefix = "resources",
     resources = glob(
