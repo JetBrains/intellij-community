@@ -4,6 +4,7 @@ package com.intellij.execution.impl;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.AsyncPathVerdictCache;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -20,6 +21,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
@@ -130,7 +132,22 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       }
     });
 
+    ApplicationManager.getApplication().getMessageBus().connect(getEditor())
+      .subscribe(AsyncPathVerdictCache.VERDICT_TOPIC, __ -> onPathVerdictChanged());
+
     myRunOnTargetPanel = new RunOnTargetPanel(settings, getEditor());
+  }
+
+  /**
+   * Revalidates the configuration after a background path probe brings a new verdict.
+   * {@link RunConfiguration#checkConfiguration()} answers from {@link AsyncPathVerdictCache} without a file system call, so the first
+   * answer can be the unknown state. This call shows the problem as soon as the cache knows it.
+   */
+  private void onPathVerdictChanged() {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myValidationAlarm.isDisposed()) return;
+      requestToUpdateWarning();
+    }, ModalityState.any());
   }
 
   public static @NotNull <Config extends RunConfiguration> SingleConfigurationConfigurable<Config> editSettings(@NotNull RunnerAndConfigurationSettings settings,
