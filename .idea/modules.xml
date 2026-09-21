@@ -417,6 +417,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.experiments/intellij.devkit.experiments.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.experiments/intellij.devkit.experiments.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.gradle/intellij.devkit.gradle.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.gradle/intellij.devkit.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.gradle/intellij.devkit.gradle.tests.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.gradle/intellij.devkit.gradle.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.gradle.toml/intellij.devkit.gradle.toml.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.gradle.toml/intellij.devkit.gradle.toml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.gradle.tooling/intellij.devkit.gradle.tooling.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.gradle.tooling/intellij.devkit.gradle.tooling.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.i18n/intellij.devkit.i18n.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.i18n/intellij.devkit.i18n.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.i18n/intellij.devkit.i18n.tests.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.i18n/intellij.devkit.i18n.tests.iml" />

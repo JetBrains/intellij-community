@@ -228,6 +228,8 @@ jvm_library(
         "//platform/projectModel-impl:projectModel-impl_test_lib",
         "//jps/model-api:model",
         "//jps/model-api:model_test_lib",
+        "//plugins/devkit/intellij.devkit.gradle.toml:gradle-toml",
+        "//plugins/devkit/intellij.devkit.gradle.toml:gradle-toml_test_lib",
         "//plugins/devkit/intellij.devkit.gradle.tooling:gradle-tooling",
         "//plugins/devkit/intellij.devkit.gradle.tooling:gradle-tooling_test_lib",
         "//libraries/junit4",

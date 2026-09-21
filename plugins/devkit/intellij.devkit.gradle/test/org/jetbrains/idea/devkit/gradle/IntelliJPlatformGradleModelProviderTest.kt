@@ -110,6 +110,27 @@ internal class IntelliJPlatformGradleModelProviderTest : LightJavaCodeInsightFix
     }
   }
 
+  fun testImportsDataWithoutProductReleases() {
+    val file = myFixture.addFileToProject("project/build.gradle.kts", "")
+    val projectPath = file.virtualFile.parent.path
+    val model = object : IntelliJPlatformGradleModel {
+      override fun getDependencyHelperProductCodes() = emptyMap<String, String>()
+      override fun getProductReleasesFile(): String? = null
+      override fun getCurrentPluginVersion() = "2.17.0"
+      override fun getLatestPluginVersion() = "2.20.0"
+    }
+
+    assertEquals(1, provider.importProjectModels(projectPath, mapOf(projectPath to model)))
+
+    assertEquals(
+      IntelliJPlatformGradleData(
+        currentPluginVersion = "2.17.0",
+        latestPluginVersion = "2.20.0",
+      ),
+      provider.getModel(file),
+    )
+  }
+
   private fun updateProjectData(projectPath: String, vararg moduleData: Pair<String, IntelliJPlatformGradleData>) {
     provider.replaceProjectData(projectPath, moduleData.toMap())
   }

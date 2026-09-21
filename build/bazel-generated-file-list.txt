@@ -1212,6 +1212,7 @@ plugins/devkit/intellij.devkit.compose
 plugins/devkit/intellij.devkit.debugger
 plugins/devkit/intellij.devkit.experiments
 plugins/devkit/intellij.devkit.gradle
+plugins/devkit/intellij.devkit.gradle.toml
 plugins/devkit/intellij.devkit.gradle.tooling
 plugins/devkit/intellij.devkit.i18n
 plugins/devkit/intellij.devkit.intelliLang

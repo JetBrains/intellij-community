@@ -28,7 +28,7 @@ internal class DevKitGradleProjectResolverExtension : AbstractProjectResolverExt
     super.populateModuleExtraModels(gradleModule, ideModule)
     val data = resolverCtx.getProjectModel(gradleModule, IntelliJPlatformGradleModel::class.java)
       ?.toIntelliJPlatformGradleData()
-      ?.takeIf { it.productReleases.isNotEmpty() }
+      ?.takeIf { it.hasUsableData() }
       ?: return
 
     ideModule.createChild(IntelliJPlatformGradleData.KEY, data)

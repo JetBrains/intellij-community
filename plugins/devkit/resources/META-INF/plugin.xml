@@ -34,6 +34,7 @@
     <module name="intellij.devkit.compose"/>
     <module name="intellij.devkit.experiments"/>
     <module name="intellij.devkit.gradle"/>
+    <module name="intellij.devkit.gradle.toml" loading="optional"/>
     <module name="intellij.devkit.gradle.tooling"/>
     <module name="intellij.devkit.i18n"/>
     <module name="intellij.devkit.intelliLang"/>
