@@ -15,7 +15,7 @@ import kotlin.time.Duration
  * Merges pending rebuilds and retains at most [directoryLimit] directory references.
  * Overflow replaces the directory set with a request to load all project roots.
  */
-internal class PendingRebuildRequests(private val directoryLimit: Int = 100) {
+internal class PendingRebuildRequests(private val directoryLimit: Int = DIRECTORY_LIMIT) {
   init {
     require(directoryLimit > 0)
   }
@@ -23,16 +23,9 @@ internal class PendingRebuildRequests(private val directoryLimit: Int = 100) {
   private val state = MutableStateFlow<PendingRebuild?>(null)
 
   fun add(request: RebuildRequest) {
+    val batch = PendingRebuild(request.directoriesToLoad, request.reason, reloadProjectRoots = false)
     state.update { pending ->
-      if (pending?.reloadProjectRoots == true) return@update pending
-      val directories = LinkedHashSet(pending?.directoriesToLoad.orEmpty())
-      for (directory in request.directoriesToLoad) {
-        directories.add(directory)
-        if (directories.size > directoryLimit) {
-          return@update PendingRebuild(emptySet(), "the pending directory limit was exceeded", reloadProjectRoots = true)
-        }
-      }
-      PendingRebuild(directories, request.reason, reloadProjectRoots = false)
+      mergeRebuilds(pending, batch, directoryLimit)
     }
   }
 
@@ -52,3 +45,19 @@ internal class PendingRebuild(
   val reason: String,
   val reloadProjectRoots: Boolean,
 )
+
+/** Merges failed or pending work with [next], preserving full scans and the directory limit. */
+internal fun mergeRebuilds(previous: PendingRebuild?, next: PendingRebuild, directoryLimit: Int = DIRECTORY_LIMIT): PendingRebuild {
+  if (next.reloadProjectRoots) return next
+  if (previous?.reloadProjectRoots == true) return previous
+  val directories = LinkedHashSet(previous?.directoriesToLoad.orEmpty())
+  for (directory in next.directoriesToLoad) {
+    directories.add(directory)
+    if (directories.size > directoryLimit) {
+      return PendingRebuild(emptySet(), "the pending directory limit was exceeded", reloadProjectRoots = true)
+    }
+  }
+  return PendingRebuild(directories, next.reason, reloadProjectRoots = false)
+}
+
+private const val DIRECTORY_LIMIT = 100

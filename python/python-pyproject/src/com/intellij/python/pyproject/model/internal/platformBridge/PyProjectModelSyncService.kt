@@ -30,6 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -109,19 +110,20 @@ internal class PyProjectModelSyncService(private val project: Project, private v
       createWsmTracker(project) { unExcluded, reason ->
         requests.add(RebuildRequest(unExcluded, reason))
       }
-      loadProjectRootsIntoVfs()
-      rebuildNow("the start of the sync")
-
-      requests.batches(DEBOUNCE).collect { batch ->
-        if (batch.reloadProjectRoots) {
-          loadProjectRootsIntoVfs()
+      requests.batches(DEBOUNCE)
+        .onStart { emit(PendingRebuild(emptySet(), "the start of the sync", reloadProjectRoots = true)) }
+        .collectRebuilds(onFailure = { batch, error ->
+          log.error("Could not rebuild the pyproject.toml model (${batch.reason})", error)
+        }) { batch ->
+          if (batch.reloadProjectRoots) {
+            loadProjectRootsIntoVfs()
+          }
+          else if (batch.directoriesToLoad.isNotEmpty()) {
+            val loaded = measureTime { loadSubtreesIntoVfs(batch.directoriesToLoad, collectExcludedPaths(project)) }
+            log.debug { "Loaded ${batch.directoriesToLoad.size} new directories into the VFS in $loaded" }
+          }
+          rebuildNow(batch.reason)
         }
-        else if (batch.directoriesToLoad.isNotEmpty()) {
-          val loaded = measureTime { loadSubtreesIntoVfs(batch.directoriesToLoad, collectExcludedPaths(project)) }
-          log.debug { "Loaded ${batch.directoriesToLoad.size} new directories into the VFS in $loaded" }
-        }
-        rebuildNow(batch.reason)
-      }
     }
     finally {
       Disposer.dispose(vfsListenerDisposable)
