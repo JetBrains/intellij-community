@@ -61,6 +61,7 @@ import org.jetbrains.kotlin.psi.enumEntryVisitor
 import org.jetbrains.kotlin.psi.namedFunctionVisitor
 import org.jetbrains.kotlin.psi.packageDirectiveVisitor
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.isFromCompanionBlock
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.psi.psiUtil.unwrapNullability
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
@@ -347,7 +348,7 @@ abstract class PropertyNameInspectionBase protected constructor(
 
             hasModifier(KtTokens.CONST_KEYWORD) && !isTopLevel -> PropertyKind.CONST
 
-            private && containingClassOrObject is KtObjectDeclaration -> PropertyKind.OBJECT_PRIVATE
+            private && (containingClassOrObject is KtObjectDeclaration || isFromCompanionBlock) -> PropertyKind.OBJECT_PRIVATE
 
             !private && (containingClassOrObject is KtObjectDeclaration) || isTopLevel -> PropertyKind.OBJECT_OR_TOP_LEVEL
 
