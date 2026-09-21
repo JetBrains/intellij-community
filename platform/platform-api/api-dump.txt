@@ -5458,12 +5458,14 @@ com.intellij.platform.ide.productMode.IdeProductMode
 - s:isFrontend():Z
 - s:isLight():Z
 - s:isMonolith():Z
+- s:isUnifiedIde():Z
 f:com.intellij.platform.ide.productMode.IdeProductMode$Companion
 - f:getInstance():com.intellij.platform.ide.productMode.IdeProductMode
 - f:isBackend():Z
 - f:isFrontend():Z
 - f:isLight():Z
 - f:isMonolith():Z
+- f:isUnifiedIde():Z
 a:com.intellij.pom.NavigatableAdapter
 - com.intellij.pom.Navigatable
 - <init>():V

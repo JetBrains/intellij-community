@@ -12,6 +12,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.limits.FileSizeLimit
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.indexing.FileBasedIndexExtension
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
@@ -89,8 +90,10 @@ private fun computeIdeFingerprint(debugHelperToken: Int): IdeFingerprint {
   //    could change without code change, by sys-properties or other env conditions change.
   //    E.g., sharding: # shards could be changed with system properties and could change automatically if #CPU changed.
   //MAYBE RC: use com.intellij.util.indexing.FbiSnapshot -- it is an 'index version hash' thing developed for other (but similar) purposes?
-  FileBasedIndexExtension.EXTENSION_POINT_NAME.extensionList.forEach {
-    hasher.putInt(it.version)
+  if (!IdeProductMode.isUnifiedIde) { // skip for light standalone as it should have no indexes on startup, see IJPL-256215
+    FileBasedIndexExtension.EXTENSION_POINT_NAME.extensionList.forEach {
+      hasher.putInt(it.version)
+    }
   }
 
   hasher.putInt(debugHelperToken)
