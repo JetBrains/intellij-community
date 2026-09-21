@@ -197,9 +197,14 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
 
     final var started = System.currentTimeMillis();
     final var comparingPattern = qualifiedNamePattern != null ? qualifiedNamePattern : namePattern;
-    namesList.sort(Comparator.comparing((MatchResult mr) -> !rawPattern.equalsIgnoreCase(mr.elementName))
-                     .thenComparing((MatchResult mr) -> !comparingPattern.equalsIgnoreCase(mr.elementName))
-                     .thenComparing(Comparator.naturalOrder()));
+    final Comparator<MatchResult> byNameEquality =
+      Comparator.comparing((MatchResult mr) -> !rawPattern.equalsIgnoreCase(mr.elementName))
+        .thenComparing((MatchResult mr) -> !comparingPattern.equalsIgnoreCase(mr.elementName))
+        .thenComparing(Comparator.naturalOrder());
+    namesList.sort((mr1, mr2) -> {
+      ProgressManager.checkCanceled();
+      return byNameEquality.compare(mr1, mr2);
+    });
     if (LOG.isDebugEnabled()) {
       LOG.debug("sorted:"+ (System.currentTimeMillis() - started) + ",results:" + namesList.size());
     }

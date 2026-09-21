@@ -708,8 +708,10 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         }
       }
       MinusculeMatcher qualifierMatcher = getQualifiedNameMatcher(parameters.getLocalPatternName());
-      Comparator<MatchResult> byNameWithoutExtension = Comparator.comparing(
-        mr -> StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(mr.elementName)));
+      Comparator<MatchResult> byNameWithoutExtension = Comparator.comparing(mr -> {
+        ProgressManager.checkCanceled();
+        return StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(mr.elementName));
+      });
       Comparator<MatchResult> matchingDegreeComparator = matchingDegreeComparator();
       matchingNames = ContainerUtil.sorted(matchingNames, matchingDegreeComparator);
       // comparator1.thenComparing(comparator2) is too slow, let's lazily apply comparator2 as needed below
@@ -777,6 +779,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
     private @NotNull Comparator<MatchResult> matchingDegreeComparator() {
       return (mr1, mr2) -> {
+        ProgressManager.checkCanceled();
         boolean exactPrefix1 = StringUtil.startsWith(mr1.elementName, patternSuffix);
         boolean exactPrefix2 = StringUtil.startsWith(mr2.elementName, patternSuffix);
         if (exactPrefix1 && exactPrefix2) return 0;
