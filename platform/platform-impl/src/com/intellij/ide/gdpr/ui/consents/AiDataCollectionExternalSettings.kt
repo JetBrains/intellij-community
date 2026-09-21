@@ -16,8 +16,7 @@ interface AiDataCollectionExternalSettings {
 
     /**
      * Plugins allowed to answer for AI data collection, in priority order: AIR wins over AI Assistant, because AIR
-     * is where the consent surface ends up. The order is inert today, since AIR registers no extension yet, and it
-     * is what decides whose answer counts once it does.
+     * is where the consent surface ends up.
      */
     private val AI_PLUGIN_IDS: List<String> = listOf("com.intellij.air", "com.intellij.ml.llm")
 
