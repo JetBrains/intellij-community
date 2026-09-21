@@ -398,7 +398,7 @@ open class PMarkerRootImpl private constructor(
 
           val start = node.entry.nodeStart + ancestorDelta
           val end = node.entry.nodeEnd + ancestorDelta
-          if (end > startOffset && containsAllFlavorFlags(node.entry.flavorFlags, requiredFlavorFlags)) {
+          if (end >= startOffset && containsAllFlavorFlags(node.entry.flavorFlags, requiredFlavorFlags)) {
             return if (ancestorDelta == 0) node.entry else node.entry.copy(nodeStart = start, nodeEnd = end)
           }
         }
@@ -411,12 +411,12 @@ open class PMarkerRootImpl private constructor(
         while (nodeId != NULL_NODE) {
           val node = states.getUnchecked(nodeId) as ValidNode
           if (!containsAllFlavorFlags(node.subtreeFlavorFlags, requiredFlavorFlags) ||
-              node.maximumEndOffset + ancestorDelta <= startOffset) {
+              node.maximumEndOffset + ancestorDelta < startOffset) {
             return
           }
 
           val childDelta = ancestorDelta + node.lazyOffsetDelta
-          if (node.entry.nodeStart + ancestorDelta < endOffset) {
+          if (node.entry.nodeStart + ancestorDelta <= endOffset) {
             stack.addLast(TraversalFrame(node, ancestorDelta))
           }
           nodeId = node.leftId

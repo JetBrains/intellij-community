@@ -964,6 +964,21 @@ class SnapshotMarkerEngineImplTest {
   }
 
   @Test
+  fun `root overlapping iterator reports non-strict overlaps`() {
+    val flavor: Byte = 1
+    val otherFlavor: Byte = 2
+    val root = PMarkerRootImpl.empty()
+      .insert(1, 0, 0, nonGreedySpec(), flavor)
+      .insert(2, 0, 2, nonGreedySpec(), flavor)
+      .insert(3, 2, 4, nonGreedySpec(), flavor)
+      .insert(4, 2, 2, nonGreedySpec(), otherFlavor)
+      .insert(5, 3, 3, nonGreedySpec(), flavor)
+
+    assertEquals(listOf(1L, 2L), overlappingMarkerIds(root, flavor.toInt(), startOffset = 0, endOffset = 0))
+    assertEquals(listOf(2L, 3L), overlappingMarkerIds(root, flavor.toInt(), startOffset = 2, endOffset = 2))
+  }
+
+  @Test
   fun `root overlapping iterator respects flavors and lazy shifts`() {
     val firstFlavor: Byte = 1
     val secondFlavor: Byte = 2
@@ -1142,6 +1157,13 @@ class SnapshotMarkerEngineImplTest {
     }
     return result
   }
+
+  private fun overlappingMarkerIds(
+    root: PMarkerRoot,
+    tastePreference: Int,
+    startOffset: Int,
+    endOffset: Int,
+  ): List<Long> = root.overlappingIterator(startOffset, endOffset, tastePreference).asSequence().map { it.markerId }.toList()
 
   private fun currentRootContains(fixture: Fixture, markerId: Long): Boolean =
     fixture.rootStore.containsMarkerId(fixture.document.core.snapshot(), markerId)

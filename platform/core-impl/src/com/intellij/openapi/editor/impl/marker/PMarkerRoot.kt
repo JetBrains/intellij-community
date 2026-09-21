@@ -179,7 +179,7 @@ interface PMarkerRoot {
   ): Boolean
 
   /**
-   * Returns a lazy iterator over valid markers that intersect the half-open range `[startOffset, endOffset)` and match [tastePreference].
+   * Returns a lazy iterator over valid markers that non-strictly intersect `[startOffset, endOffset]` and match [tastePreference].
    * The iterator orders entries by start offset and marker ID.
    */
   fun overlappingIterator(startOffset: Int, endOffset: Int, tastePreference: Int): Iterator<MarkerEntry>
