@@ -30,7 +30,7 @@ FETCH_TIMEOUT_SECONDS = 10
 MAX_RESPONSE_BYTES = 256 * 1024
 # jewel-ui.dev sits behind Cloudflare, which answers the default urllib
 # User-Agent with 403. Identify the caller properly instead.
-USER_AGENT = "jewel-pr-preparer (+https://github.com/JetBrains/intellij-community)"
+USER_AGENT = "jewel-release (+https://github.com/JetBrains/intellij-community)"
 
 # The maintainers list is public, so treat it as untrusted input: everything
 # taken from it is validated before it is used, printed, or put in a command.

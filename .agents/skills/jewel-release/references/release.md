@@ -1,27 +1,16 @@
----
-name: jewel-release-helper
-description: "Prepare a Jewel release: version bumps, checks, release notes, cherry-picks, artifact validation, and tagging."
-allowed-tools:
-  - Bash
-  - Read
-  - Glob
-  - Grep
-  - AskUserQuestion
----
-
 # Jewel Release Helper
 
-This skill is an **interactive checklist** designed to automate the high-level tasks of a Jewel release. Work through one step at a time.
+This workflow is an **interactive checklist** designed to automate the high-level tasks of a Jewel release. Work through one step at a time.
 After completing each step, show a progress summary and ask the user to confirm before moving to the next. Never skip ahead.
 
 Only someone at JetBrains with monorepo access can complete the full
-release, but this skill helps with every step possible in the community
+release, but this workflow helps with every step possible in the community
 repository.
 
-Check the [`platform/jewel/docs`](../../../platform/jewel/docs) folder for detailed guides:
-- [`releasing-guide.md`](../../../platform/jewel/docs/releasing-guide.md) — full release process, cherry-pick workflow, publishing validation
-- [`api-compatibility.md`](../../../platform/jewel/docs/api-compatibility.md) — Metalava API dump validation, update workflow, compatibility-preserving patterns
-- [`pr-guide.md`](../../../platform/jewel/docs/pr-guide.md) — PR conventions, commit message format, release notes template
+Check the [`platform/jewel/docs`](../../../../platform/jewel/docs) folder for detailed guides:
+- [`releasing-guide.md`](../../../../platform/jewel/docs/releasing-guide.md) — full release process, cherry-pick workflow, publishing validation
+- [`api-compatibility.md`](../../../../platform/jewel/docs/api-compatibility.md) — Metalava API dump validation, update workflow, compatibility-preserving patterns
+- [`pr-guide.md`](../../../../platform/jewel/docs/pr-guide.md) — PR conventions, commit message format, release notes template
 
 This skill is meant to guide the user through the release process and automate the grunt work, rather than repeating every nuance of the
 documentation. If this skill's steps differ from the docs', use the docs' — that's the canonical source.
@@ -60,7 +49,7 @@ Ask the user:
 ## 1. Verify master is ready for release
 
 - [ ] **1a. Gradle checks**: `cd platform/jewel && ./gradlew check detekt detektMain detektTest --continue --no-daemon`
-- [ ] **1b. Metalava validation** (see [`api-compatibility.md`](../../../platform/jewel/docs/api-compatibility.md) for the full workflow):
+- [ ] **1b. Metalava validation** (see [`api-compatibility.md`](../../../../platform/jewel/docs/api-compatibility.md) for the full workflow):
   `cd platform/jewel && ./scripts/metalava-signatures.main.kts validate`
 - [ ] **1c. IJP target version**: Ask if the IJP target version in `platform/jewel/gradle/libs.versions.toml` needs updating; if so,
   update it.
@@ -77,12 +66,12 @@ Ask the user:
 - [ ] **2a.** If needed, update the IJP target version in `platform/jewel/gradle/libs.versions.toml`.
 - [ ] **2b. Draft release notes**: `cd platform/jewel && ./scripts/extract-release-notes.main.kts --since <yyyy-mm-dd>`
   (the script can auto-detect the date from `RELEASE NOTES.md` if omitted).
-- [ ] **2c. Finalize release notes** (see the release notes template in [`pr-guide.md`](../../../platform/jewel/docs/pr-guide.md)):
+- [ ] **2c. Finalize release notes** (see the release notes template in [`pr-guide.md`](../../../../platform/jewel/docs/pr-guide.md)):
   Read the draft, finalize the `RELEASE NOTES.md` entry matching the existing style, get user approval. Tidy up tone as needed. Put
   yourself in the shoes of a dev using Jewel to decide what you care about and what you don't. Do a sanity pass to make sure nothing is
   missing.
 - [ ] **2d. Commit**: Stage changes and commit with `[JEWEL-xxx] Prepare Jewel <version> release`.
-- [ ] **2e. Merge**: Remind user to merge this commit to `master` (suggest using `jewel-pr-preparer`).
+- [ ] **2e. Merge**: Remind user to merge this commit to `master` (suggest the [pull-request workflow](pull-request.md)).
 
 **Wait for user to confirm the commit is merged to master before proceeding.**
 
@@ -90,7 +79,7 @@ Ask the user:
 
 ## 3. Cherry-pick and cut the release
 
-Follow the cutoff checklist in [`releasing-guide.md`](../../../platform/jewel/docs/releasing-guide.md) for the detailed procedure.
+Follow the cutoff checklist in [`releasing-guide.md`](../../../../platform/jewel/docs/releasing-guide.md) for the detailed procedure.
 
 Repeat for **each target release branch** (ask user which branch to do first):
 
@@ -106,7 +95,7 @@ Repeat for **each target release branch** (ask user which branch to do first):
   - verify the standalone sample works
   - verify the IDE samples work
 - [ ] **3d. Verify publishing** (see "Testing publishing locally" in
-  [`releasing-guide.md`](../../../platform/jewel/docs/releasing-guide.md)) and confirm Metalava signatures still match `master`.
+  [`releasing-guide.md`](../../../../platform/jewel/docs/releasing-guide.md)) and confirm Metalava signatures still match `master`.
 - [ ] **3e. Smoke test**: Ask user to manually verify Jewel standalone/IDE samples.
 
 **Wait for user confirmation before moving to the next branch.**
@@ -118,12 +107,12 @@ performed by a JetBrains FTE. Confirm with the user if they are.
 
 ## 4. Prepare the next development cycle
 
-See "After cutoff" in [`releasing-guide.md`](../../../platform/jewel/docs/releasing-guide.md) for context.
+See "After cutoff" in [`releasing-guide.md`](../../../../platform/jewel/docs/releasing-guide.md) for context.
 
 - [ ] **4a.** After the release is cut, on `master` bump `jewel.release.version` in `platform/jewel/gradle.properties` to the next
   development version.
 - [ ] **4b. Run updater**: `cd platform/jewel && ./scripts/jewel-version-updater.main.kts`
-- [ ] **4c. Generate API dumps** (see [`api-compatibility.md`](../../../platform/jewel/docs/api-compatibility.md) for details):
+- [ ] **4c. Generate API dumps** (see [`api-compatibility.md`](../../../../platform/jewel/docs/api-compatibility.md) for details):
   `cd platform/jewel && ./scripts/metalava-signatures.main.kts update`
   These stable and experimental dumps become the compatibility baseline for ongoing development.
 - [ ] **4d. Reset baselines**: `cd platform/jewel && ./scripts/metalava-signatures.main.kts clean-baselines`

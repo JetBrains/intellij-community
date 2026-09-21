@@ -18,12 +18,13 @@
   "areas": {
     "air": ["acp-sync", "air", "air-release-backport", "vm-ui-tests"],
     "build": ["bazel-test-migration", "convert-lib-to-product-module", "module-set-pluginization", "plugin-model-analyzer"],
-    "clion": ["clion-devbuild-test-wiring", "clion-test-in-tc"],
-    "dotnet": ["dotnet-building", "dotnet-testing"],
-    "jewel": ["jewel-markdown", "jewel-pr-preparer", "jewel-release-helper"],
+    "clion": ["clion-test-in-tc"],
+    "dotnet": ["dotnet"],
+    "jewel": ["jewel-markdown", "jewel-release"],
     "kotlin-mpp": ["kmt-tc-duty"],
     "python": ["compare-python-typecheckers", "py-junit5-tests"],
     "remote-dev": [
+      "daemon-libraries",
       "investigate-split-completion",
       "remote-dev",
       "remote-dev-actions",
@@ -33,19 +34,16 @@
       "remote-dev-rpc",
       "remote-dev-settings-sync",
       "remote-dev-split-data-model",
-      "setup-local-daemon-libraries",
       "setup-local-rd-flow",
-      "setup-released-daemon-libraries",
       "split-mode-debug-run-config"
     ],
     "teamcity": [
       "find-test-on-teamcity",
       "fix-project-leak-from-tc-report",
       "mute-teamcity-test",
-      "teamcity-batch-verify",
-      "teamcity-flaky-probe"
+      "teamcity-batch-verify"
     ],
-    "toolbox": ["tbx-update-jetbrainsd", "toolbox-agent-ssh-deploy", "update-toolbox-agent-api"],
+    "toolbox": ["tbx-update-jetbrainsd", "toolbox-agent-ssh-deploy"],
     "ui": [
       "compose",
       "icon-resources",

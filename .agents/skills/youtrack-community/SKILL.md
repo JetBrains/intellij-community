@@ -1,6 +1,6 @@
 ---
 name: youtrack-community
-description: Use this bundled CLI only in community checkouts; monorepo users must use the monorepo-only `youtrack` skill instead.
+description: YouTrack CLI for a community checkout; the monorepo uses `youtrack`.
 compatibility: >-
   Needs python3 and no third-party packages, plus a YouTrack permanent token. The 1Password CLI
   (op) is optional — used only when the token comes from an op:// secret path rather than

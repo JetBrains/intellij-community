@@ -1,6 +1,6 @@
 ---
 name: modcommand-migration
-description: Convert LocalQuickFix or IntentionAction to ModCommand API; ModCommandQuickFix, ModPsiUpdater.
+description: Convert LocalQuickFix or IntentionAction to the ModCommand API.
 ---
 
 # Migrating quick-fixes and intentions to the ModCommand API

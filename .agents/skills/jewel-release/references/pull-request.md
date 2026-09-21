@@ -1,20 +1,9 @@
----
-name: jewel-pr-preparer
-description: "Prepare a Jewel pull request: validate the commit, run local CI checks, draft release notes, and create the PR."
-allowed-tools:
-  - Bash
-  - Read
-  - Glob
-  - Grep
-  - AskUserQuestion
----
-
 # Jewel PR Preparer
 
 Prepare a Jewel pull request that passes all CI checks and follows the project's contribution guidelines. Work through
 each section below in order, reporting results as you go. Stop and ask the user to fix issues before moving on.
 
-Check the [`platform/jewel/docs`](../../../platform/jewel/docs) folder for further guidelines and process info for PRs.
+Check the [`platform/jewel/docs`](../../../../platform/jewel/docs) folder for further guidelines and process info for PRs.
 
 ---
 
@@ -173,7 +162,7 @@ popup dismissal, scroll physics, or visual checks that need a rendered window.
 Today Spectre targets standalone Jewel (`src/spectreTest/kotlin` under a Jewel module). IJP bridge coverage (`JBPopup` /
 `ComposePanel` inside the IDE) is planned and may already be available — **check the current state** before assuming
 either limitation still holds. Read the
-[`platform/jewel/docs/bazel-build-tips.md`](../../../platform/jewel/docs/bazel-build-tips.md#running-the-spectre-headful-ui-tests)
+[`platform/jewel/docs/bazel-build-tips.md`](../../../../platform/jewel/docs/bazel-build-tips.md#running-the-spectre-headful-ui-tests)
 Spectre section, the `spectre` skill, and any `src/spectreTest` sources under the affected module on this branch.
 
 When the diff touches UI behavior that Spectre can exercise, add or extend a Spectre test and run the matching target
@@ -295,7 +284,7 @@ before requesting review.
 ## 7. Draft release notes
 
 If the PR has user-visible changes (new features, bug fixes, API changes, behavioral changes), draft a release notes
-section using the template found in [`platform/jewel/docs`](../../../platform/jewel/docs/pr-guide.md):
+section using the template found in [`platform/jewel/docs`](../../../../platform/jewel/docs/pr-guide.md):
 
 ```markdown
 ## Release notes
@@ -397,7 +386,7 @@ Guidelines:
 Before presenting the draft, validate the body layout:
 
 ```bash
-python3 .claude/skills/jewel-pr-preparer/scripts/validate_pr_body.py /tmp/pr-body.md
+python3 .claude/skills/jewel-release/scripts/validate_pr_body.py /tmp/pr-body.md
 ```
 
 Fix any reported layout errors before asking the user to approve the description.
@@ -417,7 +406,7 @@ escapes and cause all sorts of formatting issues. Re-run the layout validator on
 the PR:
 
 ```bash
-python3 .claude/skills/jewel-pr-preparer/scripts/validate_pr_body.py /tmp/pr-body.md
+python3 .claude/skills/jewel-release/scripts/validate_pr_body.py /tmp/pr-body.md
 ```
 
 Also confirm the commit does **not** touch `platform/jewel/RELEASE NOTES.md`:
@@ -469,7 +458,7 @@ open Jewel PRs. Try to keep at least one reviewer from each team in the set when
 — it does not know about vacations, availability, or special topic ownership.
 
 Requesting 3 reviewers is unrelated to how many approvals the PR needs to merge. Per the [approval
-rules](../../../platform/jewel/docs/jewel-contribution-guide.md#approval-rules), one Jewel team approval is enough for a
+rules](../../../../platform/jewel/docs/jewel-contribution-guide.md#approval-rules), one Jewel team approval is enough for a
 small or simple change, or for one confined to `platform/jewel`; anything else needs two approvals, at least one of them
 from a JetBrains maintainer. Note that "confined to `platform/jewel`" is deliberately narrower than the Jewel-related
 paths in the contribution guide, so a PR touching `libraries/skiko` — or this skill's own files — still needs a
@@ -478,7 +467,7 @@ JetBrains approval.
 Run the helper script from the repository root (or adjust the path accordingly):
 
 ```bash
-python3 .claude/skills/jewel-pr-preparer/scripts/suggest_reviewers.py \
+python3 .claude/skills/jewel-release/scripts/suggest_reviewers.py \
   --pr-number <current-pr-number> \
   --author-login <pr-author-login> \
   --exclude <optional-comma-separated-extra-logins>
