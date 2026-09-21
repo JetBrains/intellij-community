@@ -6,9 +6,10 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.util.io.createDirectories
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assumptions.assumeThat
 import org.junit.jupiter.api.Test
-import java.nio.file.Files
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
 import kotlin.io.path.createFile
 
@@ -86,30 +87,49 @@ internal class PyFindPythonWithChildNamesTest {
     }
   }
 
-  /**
-   * `findPythonInPythonRoot` resolves the directory of interpreters with `Path.resolve`, and a filesystem
-   * that ignores the case answers `resolve("bin")` with a directory named `Bin`. The names must allow that
-   * one, or the interpreter stays unseen and the load takes every file of the environment.
-   */
-  @Test
-  fun testTheCaseOfTheDirectoryNameFollowsTheFilesystem() {
+  @ParameterizedTest
+  @CsvSource("false, bin, true", "false, Bin, false", "true, Scripts, true", "true, scripts, true", "true, SCRIPTS, true")
+  fun testTheCaseOfTheDirectoryNameFollowsTheLayout(isWindows: Boolean, childName: String, matches: Boolean) {
+    val reader = if (isWindows) windows else posix
     val env = newDir("caseEnv")
-    env.resolve("Bin").createDirectories().resolve("python").createFile()
-    assumeThat(Files.isDirectory(env.resolve("bin")))
-      .describedAs("this filesystem keeps the case, so no interpreter is reachable as `bin`")
-      .isTrue()
+    val binName = if (isWindows) "Scripts" else "bin"
+    val binaryName = if (isWindows) "python.exe" else "python"
+    val binary = env.resolve(binName).createDirectories().resolve(binaryName).createFile()
 
-    assertThat(posix.findPythonUsingDirectoryListing(directory = env, childNames = sequenceOf("Bin"))).isNotNull()
+    assertThat(reader.findPythonUsingDirectoryListing(directory = env, childNames = sequenceOf(childName)))
+      .isEqualTo(binary.takeIf { matches })
   }
 
-  /** The layout of the other system does not count, because one path reads one layout. */
-  @Test
-  fun testTheLayoutOfTheOtherSystemDoesNotCount() {
+  @ParameterizedTest
+  @CsvSource("false, Scripts", "false, python.exe", "true, bin", "true, python")
+  fun testTheLayoutOfTheOtherSystemSkipsTheFilesystem(isWindows: Boolean, childName: String) {
+    val reader = if (isWindows) windows else posix
     val env = newDir("otherLayout")
-    env.resolve("Scripts").createDirectories().resolve("python.exe").createFile()
-    assertThat(posix.findPythonUsingDirectoryListing(directory = env, childNames = sequenceOf("Scripts")))
-      .describedAs("the posix layout reads `bin` and no `Scripts`")
+    val binaryName = if (isWindows) "python.exe" else "python"
+    val binary = env.resolve(binaryName).createFile()
+
+    assertThat(reader.findPythonUsingDirectoryListing(directory = env, childNames = sequenceOf(childName)))
+      .describedAs("a name from the other layout skips the interpreter on disk")
       .isNull()
+    assertThat(reader.findPythonUsingDirectoryListing(directory = env, childNames = sequenceOf(binaryName))).isEqualTo(binary)
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = [false, true])
+  fun testTheSuppliedLayoutAppliesToEveryDirectory(isWindows: Boolean) {
+    val reader = if (isWindows) windows else posix
+    val otherReader = if (isWindows) posix else windows
+    val root = newDir("sharedLayout")
+    val layout = reader.getLayout(root)
+    val binName = if (isWindows) "Scripts" else "bin"
+    val binaryName = if (isWindows) "python.exe" else "python"
+
+    for (name in listOf("first", "second")) {
+      val env = root.resolve(name).createDirectories()
+      val binary = env.resolve(binName).createDirectories().resolve(binaryName).createFile()
+      assertThat(otherReader.findPythonUsingDirectoryListing(env, sequenceOf(binName), layout)).isEqualTo(binary)
+      assertThat(otherReader.findPythonUsingDirectoryListing(env, sequenceOf(binName))).isNull()
+    }
   }
 
   @Test
@@ -117,7 +137,11 @@ internal class PyFindPythonWithChildNamesTest {
     val plain = newDir("plain")
     plain.resolve("src").createDirectories()
     plain.resolve("pyproject.toml").createFile()
+    plain.resolve("bin").createDirectories()
     assertThat(posix.findPythonUsingDirectoryListing(directory = plain, childNames = sequenceOf("src", "pyproject.toml"))).isNull()
+    assertThat(posix.findPythonUsingDirectoryListing(directory = plain, childNames = sequenceOf("bin")))
+      .describedAs("an empty bin directory contains no interpreter")
+      .isNull()
     assertThat(posix.findPythonUsingDirectoryListing(directory = plain, childNames = emptySequence()))
       .describedAs("no child at all")
       .isNull()

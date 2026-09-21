@@ -146,12 +146,15 @@ internal class PyProjectTomlDiscoveryBenchmarkTest {
     }
 
     // The check that the loader runs now: the method that reads the names of the children first.
+    val layout = virtualEnvReader.getLayout(root)
     val byTwoStage = sortedSetOf<String>()
     val twoStageTime = measure {
       walk(rootFile) { file ->
         val path = file.toNioPathOrNull() ?: return@walk
         val names = file.children.asSequence().map { it.name }
-        if (virtualEnvReader.findPythonUsingDirectoryListing(directory = path, childNames = names) != null) byTwoStage.add(path.toString())
+        if (virtualEnvReader.findPythonUsingDirectoryListing(directory = path, childNames = names, layout = layout) != null) {
+          byTwoStage.add(path.toString())
+        }
       }
     }
 

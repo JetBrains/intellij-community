@@ -106,8 +106,9 @@ internal suspend fun loadSubtreesIntoVfs(directories: Set<VirtualFile>, excluded
     for (directory in directories) {
       coroutineContext.ensureActive()
       if (!directory.isValid || !directory.isDirectory) continue
-      val rootPath = directory.toNioPathOrNull()
+      val rootPath = directory.toNioPathOrNull() ?: continue
       if (generateSequence(rootPath) { it.parent }.any { it in excludedPaths }) continue
+      val layout = virtualEnvReader.getLayout(rootPath)
       log.debug { "Loading $directory into the VFS" }
       VfsUtilCore.visitChildrenRecursively(directory, object : VirtualFileVisitor<Unit>(NO_FOLLOW_SYMLINKS) {
         // Keep every rule below at or wider than `PyProjectTomlPathFilter.isVisible` of the search. A rule
@@ -127,6 +128,7 @@ internal suspend fun loadSubtreesIntoVfs(directories: Set<VirtualFile>, excluded
           return virtualEnvReader.findPythonUsingDirectoryListing(
             directory = path,
             childNames = file.children.asSequence().map { it.name },
+            layout = layout,
           ) == null
         }
       })
