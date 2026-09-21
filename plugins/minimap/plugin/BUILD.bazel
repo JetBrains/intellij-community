@@ -5,6 +5,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 ### auto-generated section `dev intellij.minimap.plugin` start
 dev_dist_plugin(
     content_modules = ["intellij.minimap.core"],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = ["intellij.minimap.core"],
+    jars = {
+        "lib/minimap-plugin.jar": ["intellij.minimap.plugin"],
+    },
     main_module = "intellij.minimap.plugin",
 )
 ### auto-generated section `dev intellij.minimap.plugin` end

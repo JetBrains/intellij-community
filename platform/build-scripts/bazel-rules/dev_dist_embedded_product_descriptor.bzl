@@ -3,9 +3,14 @@
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load(":content_module_jar.bzl", "library_entries")
 
-def dev_dist_embedded_product_descriptor_target_name(main_module):
-    """Returns the target name for a plugin's embedded product descriptor."""
-    return main_module + "_dev_embedded_product_descriptor"
+def dev_dist_embedded_product_descriptor_target_name(main_module, product = None):
+    """Returns the target name for a plugin's embedded product descriptor.
+
+    The baseline product keeps the unsuffixed name. A divergent product appends `_<product>` so one package can hold
+    one helper per product that packs a CWM frontend of its own.
+    """
+    name = main_module + "_dev_embedded_product_descriptor"
+    return name if not product else name + "_" + product
 
 def _dev_dist_embedded_product_descriptor_impl(ctx):
     source = ctx.file.source
@@ -87,15 +92,20 @@ def dev_dist_embedded_product_descriptor(
         main_module,
         source_module = None,
         source = None,
+        product = None,
         tags = [],
         visibility = ["//visibility:public"],
         **kwargs):
-    """Declares one embedded product descriptor action."""
+    """Declares one embedded product descriptor action.
+
+    `product` is the `dev-build.json` key of a divergent product. The baseline product omits it and keeps the unsuffixed
+    target name.
+    """
     if not source:
         fail("dev_dist_embedded_product_descriptor requires a source")
     source_label = source_module.rpartition(":")[0] + ":" + source if source_module else source
     _dev_dist_embedded_product_descriptor(
-        name = dev_dist_embedded_product_descriptor_target_name(main_module),
+        name = dev_dist_embedded_product_descriptor_target_name(main_module, product),
         source = source_label,
         tags = tags + ["manual"],
         visibility = visibility,

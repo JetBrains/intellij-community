@@ -212,8 +212,14 @@ func storedDeflateBlocks(data []byte) []byte {
 }
 
 // tarLayoutArchive reads a gzip tar in stream order. Only the first gzip member is read, as the Kotlin reader did.
+// A hard link is a file entry that holds the bytes of its target and the mode of the link header. The target must be
+// a regular file of the same archive.
 type tarLayoutArchive struct {
 	file string
+	// hardLinkTargets holds the normalized name of every hard link target an earlier visit met. The next visit keeps
+	// the bytes of these entries, so a link reads its target from memory. A visit that meets a link before this set
+	// names its target reads the archive again up to the target.
+	hardLinkTargets map[string]bool
 }
 
 func (archive *tarLayoutArchive) rejectsDuplicates() bool {
@@ -237,6 +243,10 @@ func (archive *tarLayoutArchive) visit(visit func(layoutArchiveEntry) error) err
 	defer decompressed.Close()
 	decompressed.Multistream(false)
 	reader := tar.NewReader(decompressed)
+	// retained holds the bytes of every hard link target of this visit. resolved maps a hard link to its first file, so
+	// a link to a link reads the file.
+	retained := make(map[string][]byte)
+	resolved := make(map[string]string)
 	for {
 		header, err := reader.Next()
 		if err == io.EOF {
@@ -260,6 +270,34 @@ func (archive *tarLayoutArchive) visit(visit func(layoutArchiveEntry) error) err
 			entry.kind = "directory"
 		case header.Typeflag == tar.TypeReg:
 			entry.kind = "file"
+			if archive.hardLinkTargets[name] {
+				data, err := io.ReadAll(reader)
+				if err != nil {
+					return fmt.Errorf("%s: %s: %w", archive.file, header.Name, err)
+				}
+				retained[name] = data
+				entry.content = func() ([]byte, error) { return data, nil }
+			}
+		case header.Typeflag == tar.TypeLink:
+			target, ok, err := normalizeLayoutArchiveName(header.Linkname)
+			if err != nil || !ok {
+				return fmt.Errorf("hard link %q in %s has the unsafe target %q", header.Name, archive.file, header.Linkname)
+			}
+			if first, ok := resolved[target]; ok {
+				target = first
+			}
+			resolved[name] = target
+			if archive.hardLinkTargets == nil {
+				archive.hardLinkTargets = make(map[string]bool)
+			}
+			archive.hardLinkTargets[target] = true
+			entry.kind = "file"
+			entry.content = func() ([]byte, error) {
+				if data, ok := retained[target]; ok {
+					return data, nil
+				}
+				return archive.readEntry(target)
+			}
 		default:
 			return fmt.Errorf("unsupported archive entry %q in %s", header.Name, archive.file)
 		}
@@ -269,10 +307,52 @@ func (archive *tarLayoutArchive) visit(visit func(layoutArchiveEntry) error) err
 	}
 }
 
-// normalizeLayoutArchiveName removes one trailing slash and validates the name before any write. An empty name is skipped.
+// readEntry reads the archive again and returns the bytes of the regular file with the normalized name.
+// It serves a hard link whose target this visit did not retain.
+func (archive *tarLayoutArchive) readEntry(name string) ([]byte, error) {
+	input, err := os.Open(archive.file)
+	if err != nil {
+		return nil, err
+	}
+	defer input.Close()
+	decompressed, err := gzip.NewReader(bufio.NewReader(input))
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", archive.file, err)
+	}
+	defer decompressed.Close()
+	decompressed.Multistream(false)
+	reader := tar.NewReader(decompressed)
+	for {
+		header, err := reader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", archive.file, err)
+		}
+		current, ok, err := normalizeLayoutArchiveName(header.Name)
+		if err != nil {
+			return nil, err
+		}
+		if !ok || current != name {
+			continue
+		}
+		if header.Typeflag != tar.TypeReg || strings.HasSuffix(header.Name, "/") {
+			break
+		}
+		return io.ReadAll(reader)
+	}
+	return nil, fmt.Errorf("hard link target %q is not a file of %s", name, archive.file)
+}
+
+// normalizeLayoutArchiveName removes one trailing slash and every leading `./`, then validates the name before any write.
+// An empty name is skipped, as is the `.` root entry of an archive created with `tar -c .`.
 func normalizeLayoutArchiveName(name string) (string, bool, error) {
 	name = strings.TrimSuffix(name, "/")
-	if name == "" {
+	for strings.HasPrefix(name, "./") {
+		name = name[2:]
+	}
+	if name == "" || name == "." {
 		return "", false, nil
 	}
 	if err := validateRelativePath(name); err != nil {

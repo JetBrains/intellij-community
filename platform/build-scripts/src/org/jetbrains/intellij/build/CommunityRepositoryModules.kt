@@ -14,7 +14,6 @@ import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetTransform
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader
-import org.jetbrains.intellij.build.impl.DescriptorPluginVersion
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -322,9 +321,10 @@ fun getContribRepositoryPlugins(): List<PluginLayout> = java.util.List.of(
     // jSerialComm java JAR - Remember to update the binary dependency when updating to a new version!
     spec.withProjectLibrary("jetbrains.intellij.deps.jSerialComm", LibraryPackMode.STANDALONE_SEPARATE)
 
-    // jSerialComm native library
-    spec.withGeneratedResources { targetDir, context ->
-      val uri = URI.create("https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jSerialComm/9a7813435b79aa2e23c7f2a78f1b66b48c0504c4/jSerialComm.zip")
+    // jSerialComm native library. Keep the content hash in lockstep with `jserialcomm_url` in
+    // `community/build/dev_launch_dependencies.bzl`.
+    spec.withGeneratedResources(jSerialCommLayoutAssetSpec()) { targetDir, context ->
+      val uri = URI.create(jSerialCommDownloadUrl())
       val downloaded = BuildDependenciesDownloader.downloadFileToCacheLocation(context.paths.communityHomeDirRoot, uri, context.httpSession)
       BuildDependenciesDownloader.extractFile(downloaded, targetDir.resolve("bin"), context.paths.communityHomeDirRoot)
     }
@@ -471,7 +471,7 @@ private fun createAndroidPluginLayout(
 
       patchOsSpecificPluginXml(spec, os, arch)
 
-      spec.withCustomVersion(DescriptorPluginVersion("-${os.osId}-${arch.marketplaceName}"))
+      spec.withCustomVersion(osArchPluginVersion(os = os, arch = arch))
     }
     else {
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.CROSS_PLATFORM_DIST_ONLY
@@ -722,7 +722,7 @@ private fun createAndroidPluginLayout(
     //  "//tools/adt/idea/artwork:device-art-resources-bundle",  # duplicated in android.jar
     spec.withResourceFromModule("intellij.android.artwork", "resources/device-art-resources", "resources/device-art-resources")
     //  "//tools/adt/idea/android/annotations:androidAnnotations",
-    spec.withResourceArchiveFromModule("intellij.android.plugin", "../android/annotations", "resources/androidAnnotations.jar")
+    spec.withResourceArchiveFromModule("intellij.android.core", "annotations", "resources/androidAnnotations.jar")
     //  "//tools/adt/idea/emulator/native:native_lib",
     spec.withResourceFromModule("intellij.android.streaming", "native/linux", "resources/native/linux")
     spec.withResourceFromModule("intellij.android.streaming", "native/mac", "resources/native/mac")
@@ -907,6 +907,25 @@ private fun mavenDownloadsDirectory(): DevPluginLayoutAssetSource.BazelTarget {
 
 private fun downloadArchive(label: String, fileName: String): DevPluginLayoutAssetSource.BazelTarget {
   return DevPluginLayoutAssetSource.BazelTarget(label = label, kind = "archive", fileName = fileName)
+}
+
+/** The content hash of the jSerialComm native zip. Keep in lockstep with `jserialcomm_url` in the launch deps. */
+private const val JSERIALCOMM_NATIVE_HASH: String = "9a7813435b79aa2e23c7f2a78f1b66b48c0504c4"
+
+/** The URL of the jSerialComm native zip the serial-monitor plugin unpacks into `bin/`. */
+private fun jSerialCommDownloadUrl(): String =
+  "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jSerialComm/$JSERIALCOMM_NATIVE_HASH/jSerialComm.zip"
+
+/** The native jSerialComm archive unpacked into the serial-monitor plugin's `bin/`. */
+private fun jSerialCommLayoutAssetSpec(): DevPluginLayoutAssetSpec {
+  return DevPluginLayoutAssetSpec(
+    sources = listOf(downloadArchive("@dev_launch_jserialcomm//:files", "jSerialComm.zip")),
+    assets = listOf(DevPluginLayoutAsset(
+      destination = "bin",
+      sources = listOf(0),
+      transform = DevPluginLayoutAssetTransform.archiveTree(),
+    )),
+  )
 }
 
 /**

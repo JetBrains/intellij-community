@@ -1,8 +1,13 @@
 """Produces the application info of an embedded frontend from declared files."""
 
-def dev_dist_frontend_application_info_target_name(main_module):
-    """Returns the target name for a plugin's embedded frontend application info."""
-    return main_module + "_dev_frontend_application_info"
+def dev_dist_frontend_application_info_target_name(main_module, product = None):
+    """Returns the target name for a plugin's embedded frontend application info.
+
+    The baseline product keeps the unsuffixed name. A divergent product appends `_<product>` so one package can hold
+    one helper per product that packs a CWM frontend of its own.
+    """
+    name = main_module + "_dev_frontend_application_info"
+    return name if not product else name + "_" + product
 
 def _dev_dist_frontend_application_info_impl(ctx):
     output = ctx.actions.declare_file(ctx.label.name + ".xml")
@@ -75,12 +80,17 @@ def dev_dist_frontend_application_info(
         client_application_info,
         product_application_info,
         build_number,
+        product = None,
         tags = [],
         visibility = ["//visibility:public"],
         **kwargs):
-    """Declares one embedded frontend application info action."""
+    """Declares one embedded frontend application info action.
+
+    `product` is the `dev-build.json` key of a divergent product. The baseline product omits it and keeps the unsuffixed
+    target name.
+    """
     _dev_dist_frontend_application_info(
-        name = dev_dist_frontend_application_info_target_name(main_module),
+        name = dev_dist_frontend_application_info_target_name(main_module, product),
         client_application_info = client_application_info,
         product_application_info = product_application_info,
         build_number = build_number,

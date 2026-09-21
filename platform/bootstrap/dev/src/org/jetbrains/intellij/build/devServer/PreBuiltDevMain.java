@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +29,9 @@ import java.util.Map;
  * Reads configuration from a file specified by the "idea.ide.config.path" system property. The value is either a path or,
  * under Bazel, a runfiles-relative one - see {@link DevIdeConfig#resolveConfigFile}.
  * Local metadata selects a temporary linked home. The launcher removes that home at shutdown.
+ * <p>
+ * With {@code -Didea.dev.mode.custom.command=true} the first program argument names a custom command of the distribution,
+ * see {@link CustomCommandLaunch}. A plain launch reads no command.
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 @ApiStatus.Internal
@@ -51,12 +55,20 @@ public final class PreBuiltDevMain {
     }
 
     Path homePath = prepareLocalHome(ideConfig.homePath());
-    Map<String, String> properties = readProperties(lookup, classLoader, homePath);
+    Class<?> buildServer = loadBuildServer(classLoader);
+    Map<String, String> properties = readProperties(lookup, buildServer, homePath);
+    String mainClassName = ideConfig.mainClassName();
+    if (CustomCommandLaunch.isRequested()) {
+      Map.Entry<String, Map<String, String>> command = CustomCommandLaunch.read(lookup, buildServer, homePath, args);
+      mainClassName = command.getKey();
+      properties = new LinkedHashMap<>(properties);
+      properties.putAll(command.getValue());
+    }
     List<Path> classpath = readClasspath(homePath);
 
     classLoader.reset(classpath);
 
-    Class<?> mainClass = classLoader.loadClass(ideConfig.mainClassName());
+    Class<?> mainClass = classLoader.loadClass(mainClassName);
 
     System.setProperty("idea.vendor.name", "JetBrains");
     System.setProperty("idea.use.dev.build.server", "true");
@@ -141,12 +153,18 @@ public final class PreBuiltDevMain {
     return classpath;
   }
 
-  private static Map<String, String> readProperties(MethodHandles.Lookup lookup, PathClassLoader classLoader, Path ideHomePath)
-    throws Throwable {
+  /**
+   * The build-server entry points in a class loader of their own, so that nothing of the build scripts stays loaded in the
+   * class loader the IDE then runs in.
+   */
+  private static Class<?> loadBuildServer(PathClassLoader classLoader) throws ClassNotFoundException {
     UrlClassLoader.Builder urlClassLoader = UrlClassLoader.build()
       .files(classLoader.getFiles())
       .parent(ClassLoader.getPlatformClassLoader());
-    Class<?> buildServer = new PathClassLoader(urlClassLoader).loadClass("org.jetbrains.intellij.build.dev.BuildServerKt");
+    return new PathClassLoader(urlClassLoader).loadClass("org.jetbrains.intellij.build.dev.BuildServerKt");
+  }
+
+  private static Map<String, String> readProperties(MethodHandles.Lookup lookup, Class<?> buildServer, Path ideHomePath) throws Throwable {
     MethodHandle getIdeSystemProperties =
       lookup.findStatic(buildServer, "getIdeSystemProperties", MethodType.methodType(Map.class, Path.class));
     //noinspection unchecked

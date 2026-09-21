@@ -166,6 +166,51 @@ _source_tree_graph_test = analysistest.make(
     },
 )
 
+def _optional_source_tree_graph_test_impl(ctx):
+    """An optional source tree is a directory artifact in both of its states. With files below the prefix, the zipper
+    archives exactly those files, as a required tree does. With none, the rule writes an empty archive and the resource
+    files reach no action. The extract action reads a different archive in each state, so the two states have
+    different action keys, and the tree is the same catalogue artifact either way."""
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    graph = target[DevPluginGraphInfo]
+    source_tree = graph.source_trees.get(ctx.attr.source_tree_id)
+    asserts.true(env, source_tree != None)
+    asserts.true(env, source_tree.is_directory)
+    asserts.equals(env, [ctx.file.projection, source_tree], target[DefaultInfo].files.to_list())
+    actions = analysistest.target_actions(env)
+    resources = ctx.attr.resources[DefaultInfo].files.to_list()
+    extract = actions[1]
+    if ctx.attr.included:
+        asserts.equals(env, ["DevPluginSourceTreeArchive", "DevPluginSourceTreeExtract"], [action.mnemonic for action in actions])
+        archive = actions[0]
+        asserts.equals(
+            env,
+            sorted(ctx.attr.included),
+            sorted([file.basename for file in archive.inputs.to_list() if file in resources]),
+        )
+        asserts.true(env, archive.outputs.to_list()[0] in extract.inputs.to_list())
+    else:
+        asserts.equals(env, ["FileWrite", "DevPluginSourceTreeExtract"], [action.mnemonic for action in actions])
+        written = actions[0]
+        asserts.equals(env, _EMPTY_JAR, written.content)
+        for action in actions:
+            for file in resources:
+                asserts.false(env, file in action.inputs.to_list())
+        asserts.true(env, written.outputs.to_list()[0] in extract.inputs.to_list())
+    asserts.equals(env, [source_tree], extract.outputs.to_list())
+    return analysistest.end(env)
+
+_optional_source_tree_graph_test = analysistest.make(
+    _optional_source_tree_graph_test_impl,
+    attrs = {
+        "projection": attr.label(mandatory = True, allow_single_file = True),
+        "included": attr.string_list(doc = "The basenames of the resource files below the prefix. Empty for the absent state."),
+        "resources": attr.label(mandatory = True),
+        "source_tree_id": attr.string(mandatory = True),
+    },
+)
+
 def _shared_source_tree_graph_test_impl(ctx):
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
@@ -188,14 +233,17 @@ def _source_tree_catalogue_test_impl(ctx):
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
     catalogue = target[DevPluginArtifactCatalogueInfo]
-    source_tree = ctx.attr.graph[DevPluginGraphInfo].source_trees["source-tree"]
-    asserts.equals(env, source_tree, catalogue.artifacts["source-tree"])
+    source_tree = ctx.attr.graph[DevPluginGraphInfo].source_trees[ctx.attr.source_tree_id]
+    asserts.equals(env, source_tree, catalogue.artifacts[ctx.attr.source_tree_id])
     asserts.equals(env, [catalogue.catalogue], target[DefaultInfo].files.to_list())
     return analysistest.end(env)
 
 _source_tree_catalogue_test = analysistest.make(
     _source_tree_catalogue_test_impl,
-    attrs = {"graph": attr.label(mandatory = True, providers = [DevPluginGraphInfo])},
+    attrs = {
+        "graph": attr.label(mandatory = True, providers = [DevPluginGraphInfo]),
+        "source_tree_id": attr.string(default = "source-tree"),
+    },
 )
 
 def _library_catalogue_test_impl(ctx):
@@ -679,6 +727,69 @@ def dev_plugin_remainder_test_suite(name):
         target_under_test = ":" + library_catalogue,
         jars = [":" + library_second, ":" + library_first],
     )
+
+    # An optional source tree: the same target and ID shape as a required tree, present with files below the prefix
+    # and absent with none. A required tree with no file below its prefix fails, and an optional ID must name a tree.
+    absent_prefix = native.package_name() + "/" + source_files + ".absent"
+    optional_source_tree_tests = []
+    for suffix, prefix, included in [
+        ("present", native.package_name() + "/" + source_files + ".source-root", ["first.txt", "second.txt"]),
+        ("absent", absent_prefix, []),
+    ]:
+        optional_graph = name + "_optional_" + suffix + "_source_tree_graph"
+        dev_plugin_file_graph(
+            name = optional_graph,
+            projection = ":" + projection,
+            execution_version = 2,
+            source_tree_targets = {"optional-tree": ":" + resources},
+            source_tree_prefixes = {"optional-tree": prefix},
+            optional_source_trees = ["optional-tree"],
+        )
+        optional_graph_test = optional_graph + "_test"
+        _optional_source_tree_graph_test(
+            name = optional_graph_test,
+            target_under_test = ":" + optional_graph,
+            projection = ":" + projection,
+            included = included,
+            resources = ":" + resources,
+            source_tree_id = "optional-tree",
+        )
+        optional_source_tree_tests.append(optional_graph_test)
+        optional_catalogue = name + "_optional_" + suffix + "_source_tree_catalogue"
+        dev_plugin_artifact_catalogue(
+            name = optional_catalogue,
+            source_tree_graph = ":" + optional_graph,
+        )
+        optional_catalogue_test = optional_catalogue + "_test"
+        _source_tree_catalogue_test(
+            name = optional_catalogue_test,
+            target_under_test = ":" + optional_catalogue,
+            graph = ":" + optional_graph,
+            source_tree_id = "optional-tree",
+        )
+        optional_source_tree_tests.append(optional_catalogue_test)
+    for suffix, prefix, optional_source_trees, expected_message in [
+        ("required_absent", absent_prefix, [], "has no declared File below"),
+        ("undeclared_optional", absent_prefix, ["optional-tree", "missing-tree"], "optional source tree IDs are not declared source trees"),
+    ]:
+        refused_source_tree_graph = name + "_" + suffix + "_source_tree_graph"
+        dev_plugin_file_graph(
+            name = refused_source_tree_graph,
+            projection = ":" + projection,
+            execution_version = 2,
+            source_tree_targets = {"optional-tree": ":" + resources},
+            source_tree_prefixes = {"optional-tree": prefix},
+            optional_source_trees = optional_source_trees,
+            tags = ["manual"],
+        )
+        refused_source_tree_graph_test = refused_source_tree_graph + "_test"
+        _expected_failure_test(
+            name = refused_source_tree_graph_test,
+            target_under_test = ":" + refused_source_tree_graph,
+            expected_message = expected_message,
+        )
+        optional_source_tree_tests.append(refused_source_tree_graph_test)
+
     unsafe_source_tree_graph = name + "_unsafe_source_tree_graph"
     dev_plugin_file_graph(
         name = unsafe_source_tree_graph,
@@ -1095,6 +1206,7 @@ def dev_plugin_remainder_test_suite(name):
             root_source_tree_graph_test,
             shared_source_tree_graph_test,
             source_tree_catalogue_test,
+        ] + optional_source_tree_tests + [
             library_catalogue_test,
             unsafe_source_tree_graph_test,
         ] + remainder_tests + [

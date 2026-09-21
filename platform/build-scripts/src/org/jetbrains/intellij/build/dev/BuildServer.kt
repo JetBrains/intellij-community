@@ -150,6 +150,37 @@ fun readCustomCommand(runDir: Path, command: String): CustomCommandLaunchData? {
 fun CustomCommandLaunchData.resolveAdditionalJvmArguments(runDir: Path): List<String> =
   additionalJvmArguments.map { resolveIdeHomeMacro(it, runDir) }
 
+/**
+ * The system properties of the `-D` arguments in [jvmArguments], the JVM arguments of a custom command with the macros resolved.
+ * A property without `=` has an empty value. A value that still holds a `$` macro fails.
+ */
+@ApiStatus.Internal
+fun customCommandSystemProperties(jvmArguments: List<String>): Map<String, String> {
+  val result = LinkedHashMap<String, String>()
+  for (argument in jvmArguments) {
+    if (!argument.startsWith("-D")) {
+      continue
+    }
+    val property = argument.removePrefix("-D")
+    val value = property.substringAfter('=', "")
+    check('$' !in value) { "Unsubstituted macro in JVM argument: $property" }
+    result.put(property.substringBefore('='), value)
+  }
+  return result
+}
+
+/**
+ * The main class and the system properties of the custom command that handles [command] in the distribution at [runDir].
+ * `PreBuiltDevMain` calls it through reflection, so the result is a JDK type.
+ */
+@ApiStatus.Internal
+@Suppress("unused")
+fun readCustomCommandLaunch(runDir: Path, command: String): Map.Entry<String, Map<String, String>> {
+  val launch = readCustomCommand(runDir, command) ?: error("No custom command found for $command")
+  val mainClass = checkNotNull(launch.mainClass) { "The custom command '$command' names no main class" }
+  return java.util.AbstractMap.SimpleImmutableEntry(mainClass, customCommandSystemProperties(launch.resolveAdditionalJvmArguments(runDir)))
+}
+
 fun buildProductInProcess(request: BuildRequest): DevBuildResult {
   request.tracer?.let {
     TraceManager.setTracer(it)

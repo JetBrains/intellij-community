@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.bazel
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -22,8 +22,8 @@ private const val FIXTURES_MARKER_ENV = "BAZEL_GENERATOR_RUN_CONFIGURATIONS_TEST
 
 /**
  * The converter derives one [DevServerRunConfiguration] per `DevMainKt` run configuration: the product, the additional
- * modules, the launcher flags and the flag that keeps the launcher on `DevMainKt`. [RunConfigurationsFile] renders each
- * row as one macro call.
+ * modules, the launcher flags and the three feature attributes. [RunConfigurationsFile] renders each row as one
+ * `intellij_dev_run_configuration` call.
  *
  * The plan generator reads the same files with a reader of its own, `readDevDistRunConfigurationModules`. The fixture
  * set under `testData/run-configurations` and its `expected.txt` are shared with that reader's test, so both give one
@@ -65,35 +65,46 @@ internal class RunConfigurationsFileTest {
     assertEquals(listOf("intellij.devkit", "intellij.air.plugin"), row.additionalModules)
     assertEquals(listOf("-Didea.is.internal=true"), row.jvmFlags)
     assertFalse(row.jvmFlags.any { it.startsWith("-Dadditional.modules=") })
-    assertNull(row.keepsDevMain)
+    assertFalse(row.customCommand)
+    assertFalse(row.generateRuntimeModuleRepository)
+    assertFalse(row.compileClionBackendBeforeRun)
   }
 
   @Test
-  fun `a custom command keeps DevMain`() {
+  fun `a custom command is an attribute and leaves the jvm flags`() {
     val row = row(
       "-Didea.platform.prefix=JetBrainsClient -Ddev.build.base.ide.platform.prefix.for.frontend=idea " +
       "-Didea.dev.mode.custom.command=true"
     )
-    assertEquals("idea.dev.mode.custom.command", row.keepsDevMain)
+    assertTrue(row.customCommand)
+    assertEquals(listOf("-Ddev.build.base.ide.platform.prefix.for.frontend=idea"), row.jvmFlags)
   }
 
   @Test
-  fun `a runtime module repository keeps DevMain`() {
+  fun `a runtime module repository is an attribute and leaves the jvm flags`() {
     val row = row("""-Didea.platform.prefix=idea -Dintellij.build.generate.runtime.module.repository=true""")
-    assertEquals("intellij.build.generate.runtime.module.repository", row.keepsDevMain)
+    assertTrue(row.generateRuntimeModuleRepository)
+    assertEquals(emptyList<String>(), row.jvmFlags)
   }
 
   @Test
-  fun `the CLion before-run step keeps DevMain`() {
+  fun `the CLion before-run step is an attribute and leaves the jvm flags`() {
     val row = row("""-Didea.platform.prefix=idea -Dintellij.build.dev.server.compile.clion.backend.before.run=true""")
-    assertEquals("intellij.build.dev.server.compile.clion.backend.before.run=true", row.keepsDevMain)
+    assertTrue(row.compileClionBackendBeforeRun)
+    assertEquals(emptyList<String>(), row.jvmFlags)
+  }
+
+  @Test
+  fun `a feature property that is not true is off`() {
+    val row = row("""-Didea.platform.prefix=idea -Dintellij.build.dev.server.compile.clion.backend.before.run=false""")
+    assertFalse(row.compileClionBackendBeforeRun)
+    assertEquals(emptyList<String>(), row.jvmFlags)
   }
 
   @Test
   fun `a module the project does not have keeps the row`() {
     val row = row("""-Didea.platform.prefix=idea -Dadditional.modules=intellij.devkit,intellij.missing""")
     assertEquals(listOf("intellij.devkit", "intellij.missing"), row.additionalModules)
-    assertNull(row.keepsDevMain)
   }
 
   @Test
@@ -119,7 +130,7 @@ internal class RunConfigurationsFileTest {
     val rows = devServerRunConfigurations(root)
 
     assertEquals(listOf("alpha_air", "kept", "zed"), rows.map { it.name })
-    assertEquals(listOf(null, "idea.dev.mode.custom.command", null), rows.map { it.keepsDevMain })
+    assertEquals(listOf(false, true, false), rows.map { it.customCommand })
     assertEquals(listOf("intellij.devkit", "intellij.air.plugin"), rows.first().additionalModules)
   }
 
@@ -139,7 +150,6 @@ internal class RunConfigurationsFileTest {
 
     val actual = TreeMap<String, TreeSet<String>>()
     for (row in devServerRunConfigurations(root)) {
-      if (row.keepsDevMain != null) continue
       actual.computeIfAbsent(row.product) { TreeSet() }.addAll(row.additionalModules)
     }
 
@@ -198,24 +208,22 @@ internal class RunConfigurationsFileTest {
   }
 
   @Test
-  fun `a custom command renders the DevMain launcher with the reason`() {
+  fun `a custom command renders the attribute`() {
     val rendered = rendered(
       "Light Mode" to """-Didea.platform.prefix=JetBrainsClient -Ddev.build.base.ide.platform.prefix.for.frontend=idea -Didea.dev.mode.custom.command=true""",
     )
     assertEquals(
       """
-      |load("//build:intellij_dev_ultimate.bzl", "intellij_dev_binary_ultimate")
+      |load("//build:intellij_dev_ultimate.bzl", "intellij_dev_run_configuration")
       |
       |def dev_server_run_configurations():
-      |    intellij_dev_binary_ultimate(
+      |    intellij_dev_run_configuration(
       |        #xmlFile = "Light_Mode.xml",
-      |        #keepsDevMain = "idea.dev.mode.custom.command",
       |        name = "light_mode",
+      |        product = "ideaJetBrainsClient",
       |        platform_prefix = "JetBrainsClient",
-      |        jvm_flags = [
-      |            "-Ddev.build.base.ide.platform.prefix.for.frontend=idea",
-      |            "-Didea.dev.mode.custom.command=true",
-      |        ],
+      |        jvm_flags = ["-Ddev.build.base.ide.platform.prefix.for.frontend=idea"],
+      |        custom_command = True,
       |    )
       |""".trimMargin(),
       rendered,
@@ -223,24 +231,26 @@ internal class RunConfigurationsFileTest {
   }
 
   @Test
-  fun `a runtime module repository renders the DevMain launcher with the modules inside the flags`() {
+  fun `a runtime module repository renders the attribute and keeps the modules as modules`() {
     val rendered = rendered(
       "Repo" to """-Didea.platform.prefix=idea -Dadditional.modules=intellij.devkit,intellij.air.plugin -Dintellij.build.generate.runtime.module.repository=true""",
     )
     assertEquals(
       """
-      |load("//build:intellij_dev_ultimate.bzl", "intellij_dev_binary_ultimate")
+      |load("//build:intellij_dev_ultimate.bzl", "intellij_dev_run_configuration")
       |
       |def dev_server_run_configurations():
-      |    intellij_dev_binary_ultimate(
+      |    intellij_dev_run_configuration(
       |        #xmlFile = "Repo.xml",
-      |        #keepsDevMain = "intellij.build.generate.runtime.module.repository",
       |        name = "repo",
+      |        product = "idea",
       |        platform_prefix = "idea",
-      |        jvm_flags = [
-      |            "-Dadditional.modules=intellij.devkit,intellij.air.plugin",
-      |            "-Dintellij.build.generate.runtime.module.repository=true",
+      |        additional_modules = [
+      |            "intellij.devkit",
+      |            "intellij.air.plugin",
       |        ],
+      |        jvm_flags = [],
+      |        generate_runtime_module_repository = True,
       |    )
       |""".trimMargin(),
       rendered,
@@ -248,25 +258,26 @@ internal class RunConfigurationsFileTest {
   }
 
   @Test
-  fun `the CLion before-run step renders the DevMain launcher with the env`() {
+  fun `the CLion before-run step renders the attribute after the env`() {
     val rendered = rendered(
       "CLion Step" to """-Didea.platform.prefix=idea -Dintellij.build.dev.server.compile.clion.backend.before.run=true""",
       env = mapOf("CWM_NO_TIMEOUTS" to "1"),
     )
     assertEquals(
       """
-      |load("//build:intellij_dev_ultimate.bzl", "intellij_dev_binary_ultimate")
+      |load("//build:intellij_dev_ultimate.bzl", "intellij_dev_run_configuration")
       |
       |def dev_server_run_configurations():
-      |    intellij_dev_binary_ultimate(
+      |    intellij_dev_run_configuration(
       |        #xmlFile = "CLion_Step.xml",
-      |        #keepsDevMain = "intellij.build.dev.server.compile.clion.backend.before.run=true",
       |        name = "clion_step",
+      |        product = "idea",
       |        platform_prefix = "idea",
-      |        jvm_flags = ["-Dintellij.build.dev.server.compile.clion.backend.before.run=true"],
+      |        jvm_flags = [],
       |        env = {
       |            "CWM_NO_TIMEOUTS": "1",
       |        },
+      |        compile_clion_backend_before_run = True,
       |    )
       |""".trimMargin(),
       rendered,
@@ -274,13 +285,13 @@ internal class RunConfigurationsFileTest {
   }
 
   @Test
-  fun `the load line names both macros when both are used`() {
+  fun `the load line names the one macro for every row`() {
     val rendered = rendered(
       "Kept" to """-Didea.platform.prefix=idea -Didea.dev.mode.custom.command=true""",
       "Split" to """-Didea.platform.prefix=idea""",
     )
     assertEquals(
-      """load("//build:intellij_dev_ultimate.bzl", "intellij_dev_binary_ultimate", "intellij_dev_run_configuration")""",
+      """load("//build:intellij_dev_ultimate.bzl", "intellij_dev_run_configuration")""",
       rendered.lines().first(),
     )
     assertEquals(2, rendered.lines().count { it.endsWith("(") })

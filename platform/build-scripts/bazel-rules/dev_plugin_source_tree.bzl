@@ -42,7 +42,7 @@ def source_tree_entry(file, prefix):
         fail("source tree entry is unsafe after stripping %s: %s" % (prefix, path))
     return result
 
-def source_tree_entries(files, prefix, identifier, owner):
+def source_tree_entries(files, prefix, identifier, owner, optional = False):
     """The entries of source tree `identifier`: a dict of entry to the regular `File` of `files` it names.
 
     `owner` is the label of the target that lists `files`; a failure message names it. Fails on a directory artifact, on
@@ -58,7 +58,7 @@ def source_tree_entries(files, prefix, identifier, owner):
         if entry in entries:
             fail("source tree %s has conflicting entry %s from %s and %s" % (identifier, entry, entries[entry].path, file.path))
         entries[entry] = file
-    if not entries:
+    if not entries and not optional:
         fail("source tree %s has no declared File below %s in %s" % (identifier, prefix, owner))
     for entry in sorted(entries.keys()):
         parts = entry.split("/")

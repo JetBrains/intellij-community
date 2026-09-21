@@ -774,6 +774,18 @@ func validateLayoutAsset(asset LayoutAsset, format layoutFormat, kinds []string)
 			return err
 		}
 	}
+	if kind != "archive-tree" && len(transform.Includes) != 0 {
+		return fmt.Errorf("layout includes require archive-tree")
+	}
+	if _, err := compileLayoutIncludes(transform.Includes); err != nil {
+		return err
+	}
+	if kind != "archive-tree" && kind != "tree-map" && len(transform.Executables) != 0 {
+		return fmt.Errorf("layout executable patterns require archive-tree or tree-map")
+	}
+	if _, err := compileLayoutExecutables(transform.Executables); err != nil {
+		return err
+	}
 	for _, mapping := range transform.Mappings {
 		if mapping.StripComponents < 0 {
 			return fmt.Errorf("negative mapping strip count")

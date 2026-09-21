@@ -269,17 +269,25 @@ func (executor *layoutExecutor) directoryMember(artifact Artifact, reference Ref
 	return layoutInput{path: source, info: sourceInfo, kind: "file"}, true, nil
 }
 
-// layoutDirectory accepts a real directory root and returns its physical path.
+// layoutDirectory accepts a directory root and returns its physical path.
+//
+// A Bazel sandbox may mount an input directory as a symlink to the real artifact. That root is accepted: the
+// resolved path must be a directory. A relative link inside a tree stays a layout entry of its own, see
+// directoryMember and transportEntry.
 func layoutDirectory(root string) (string, error) {
-	info, err := os.Lstat(root)
-	if err != nil || !info.IsDir() {
-		return "", fmt.Errorf("layout source is not a directory: %s", root)
-	}
-	root, err = filepath.Abs(root)
+	root, err := filepath.Abs(root)
 	if err != nil {
 		return "", err
 	}
-	return evalSymlinks(root)
+	resolved, err := evalSymlinks(root)
+	if err != nil {
+		return "", fmt.Errorf("layout source is not a directory: %s", root)
+	}
+	info, err := os.Lstat(resolved)
+	if err != nil || !info.IsDir() {
+		return "", fmt.Errorf("layout source is not a directory: %s", root)
+	}
+	return resolved, nil
 }
 
 // copyAsset writes a plain copy. A directory is copied with every descendant in byte-sorted path order.
@@ -415,6 +423,61 @@ func compileLayoutExcludes(patterns []string) ([]javaglob.Matcher, error) {
 	return matchers, nil
 }
 
+// layoutIncludeRule is one Includes pattern. A leading `!` in the pattern text makes it an exclude.
+type layoutIncludeRule struct {
+	matcher javaglob.Matcher
+	exclude bool
+}
+
+func compileLayoutIncludes(patterns []string) ([]layoutIncludeRule, error) {
+	rules := make([]layoutIncludeRule, 0, len(patterns))
+	for _, pattern := range patterns {
+		exclude := strings.HasPrefix(pattern, "!")
+		glob := strings.TrimPrefix(pattern, "!")
+		if glob == "" {
+			return nil, fmt.Errorf("invalid include: empty pattern %q", pattern)
+		}
+		matcher, err := javaglob.Compile(glob)
+		if err != nil {
+			return nil, fmt.Errorf("invalid include: %w", err)
+		}
+		rules = append(rules, layoutIncludeRule{matcher: matcher, exclude: exclude})
+	}
+	return rules, nil
+}
+
+// includesEntry applies the Includes rules to one relative path. The last matching rule decides. Without a match, the
+// entry is written when every rule excludes, and dropped otherwise. No rule at all writes every entry.
+func includesEntry(rules []layoutIncludeRule, name string) bool {
+	included := !slices.ContainsFunc(rules, func(rule layoutIncludeRule) bool { return !rule.exclude })
+	for _, rule := range rules {
+		if rule.matcher.Match(name) {
+			included = !rule.exclude
+		}
+	}
+	return included
+}
+
+func compileLayoutExecutables(patterns []string) ([]javaglob.Matcher, error) {
+	matchers := make([]javaglob.Matcher, 0, len(patterns))
+	for _, pattern := range patterns {
+		matcher, err := javaglob.Compile(pattern)
+		if err != nil {
+			return nil, fmt.Errorf("invalid executable pattern: %w", err)
+		}
+		matchers = append(matchers, matcher)
+	}
+	return matchers, nil
+}
+
+// executableMode adds the executable bits to the mode of a regular file whose relative path an Executables pattern matches.
+func executableMode(mode uint32, name string, executables []javaglob.Matcher) uint32 {
+	if slices.ContainsFunc(executables, func(matcher javaglob.Matcher) bool { return matcher.Match(name) }) {
+		return mode | 0o111
+	}
+	return mode
+}
+
 // mapTrees copies the entries of every source directory that a mapping selects. The first mapping per entry wins.
 func (executor *layoutExecutor) mapTrees(inputs []layoutInput, asset LayoutAsset, writer layoutWriter) error {
 	excludes, err := compileLayoutExcludes(asset.Transform.Excludes)
@@ -422,6 +485,10 @@ func (executor *layoutExecutor) mapTrees(inputs []layoutInput, asset LayoutAsset
 		return err
 	}
 	directoryExcludes, err := compileLayoutExcludes(asset.Transform.DirectoryExcludes)
+	if err != nil {
+		return err
+	}
+	executables, err := compileLayoutExecutables(asset.Transform.Executables)
 	if err != nil {
 		return err
 	}
@@ -460,7 +527,11 @@ func (executor *layoutExecutor) mapTrees(inputs []layoutInput, asset LayoutAsset
 			if err != nil {
 				return err
 			}
-			return copyLayoutEntry(source, info, target, asset.Mode, writer)
+			mode := asset.Mode
+			if info.Mode().IsRegular() && len(executables) != 0 {
+				mode = executableMode(modeOr(mode, filemetadata.Permissions(info)), entry.relative, executables)
+			}
+			return copyLayoutEntry(source, info, target, mode, writer)
 		})
 		if err != nil {
 			return err
@@ -471,11 +542,20 @@ func (executor *layoutExecutor) mapTrees(inputs []layoutInput, asset LayoutAsset
 
 // extractArchive writes the entries of one archive. One mapping serves the whole archive: the first mapping in
 // declaration order that matches any stripped entry name. With mappings, an entry no mapping matches is dropped.
+// The Includes rules drop an entry before the mapping is selected, so a dropped entry selects no mapping.
 func (executor *layoutExecutor) extractArchive(input layoutInput, asset LayoutAsset, writer layoutWriter) error {
 	if input.kind != "file" {
 		return fmt.Errorf("archive-tree requires an archive file: %s", input.path)
 	}
 	transform := asset.Transform
+	includes, err := compileLayoutIncludes(transform.Includes)
+	if err != nil {
+		return err
+	}
+	executables, err := compileLayoutExecutables(transform.Executables)
+	if err != nil {
+		return err
+	}
 	archive, err := openLayoutArchive(input.path, executor.scratch)
 	if err != nil {
 		return err
@@ -483,7 +563,7 @@ func (executor *layoutExecutor) extractArchive(input layoutInput, asset LayoutAs
 	defer archive.close()
 	var names []string
 	if err := archive.visit(func(entry layoutArchiveEntry) error {
-		if stripped, ok := stripLayoutPath(entry.name, transform.StripComponents); ok {
+		if stripped, ok := stripLayoutPath(entry.name, transform.StripComponents); ok && includesEntry(includes, stripped) {
 			names = append(names, stripped)
 		}
 		return nil
@@ -505,7 +585,7 @@ func (executor *layoutExecutor) extractArchive(input layoutInput, asset LayoutAs
 	written := make(map[string]bool)
 	return archive.visit(func(entry layoutArchiveEntry) error {
 		stripped, ok := stripLayoutPath(entry.name, transform.StripComponents)
-		if !ok {
+		if !ok || !includesEntry(includes, stripped) {
 			return nil
 		}
 		mapped := stripped
@@ -538,7 +618,7 @@ func (executor *layoutExecutor) extractArchive(input layoutInput, asset LayoutAs
 			if err != nil {
 				return fmt.Errorf("%s: %s: %w", input.path, entry.name, err)
 			}
-			return writer.file(target, content, modeOr(mode, 0o644))
+			return writer.file(target, content, executableMode(modeOr(mode, 0o644), stripped, executables))
 		case "symlink":
 			return writer.symlink(target, entry.target)
 		}

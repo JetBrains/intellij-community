@@ -1,5 +1,16 @@
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.keymap.vscode` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/keymap-vscode.jar": ["intellij.keymap.vscode"],
+    },
+    main_module = "intellij.keymap.vscode",
+)
+### auto-generated section `dev intellij.keymap.vscode` end
 
 ### auto-generated section `build intellij.keymap.vscode` start
 jvm_library(

@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.dev
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.FileSystems
 
@@ -55,6 +56,11 @@ sealed interface DevPluginLayoutAssetSource {
     @JvmField val allowedNames: Set<String>,
   ) : DevPluginLayoutAssetSource
 
+  data class ModuleLibrary(
+    @JvmField val module: String,
+    @JvmField val name: String,
+  ) : DevPluginLayoutAssetSource
+
   data class DependencyProperty(
     @JvmField val name: String,
     @JvmField val format: String = "plain",
@@ -63,6 +69,44 @@ sealed interface DevPluginLayoutAssetSource {
   data class ExternalLocalizationTree(
     @JvmField val folder: String,
     @JvmField val language: String,
+  ) : DevPluginLayoutAssetSource
+
+  /**
+   * One CIDR dependency archive, as a `<name>-dependencies.json` file under `CIDR/` declares it for one platform and architecture.
+   * [name] is the `name` of that configuration, such as `cmake` or `LLDBFrontend`. [platform] is a CIDR platform
+   * token: `any`, `cygwin`, `linux`, `mac`, `win`, or `wsl`. [arch] is a CIDR architecture token: `any`, `aarch64`,
+   * `x64`, or `x86`. The generator binds the source to the `dev_launch_cidr_<name>_<platform>_<arch>` repository
+   * that `build/dev_launch_dependencies.bzl` declares from the same configuration. The archive is a `.zip` for `win`
+   * and a `.tar.gz` otherwise. An asset extracts it with an `archive-tree` transform, whose `includes` carry the
+   * `filePatterns` and whose `executables` carry the `executablePatterns` of the configuration entry.
+   */
+  data class CidrDependency(
+    @JvmField val name: String,
+    @JvmField val platform: String,
+    @JvmField val arch: String,
+  ) : DevPluginLayoutAssetSource
+
+  /**
+   * The RustRover native helper archive. One archive holds the helper of every platform under `<os>/<arch>/`, where
+   * [os] is an `OsFamily.dirName` (`mac`, `linux`, `win`) and [arch] a `JvmArchitecture` name. The generator binds
+   * the source to the `dev_launch_rust_native_helper` repository. An asset selects its platform with an
+   * `archive-tree` mapping whose pattern is the `<os>/<arch>/` prefix followed by a double star.
+   */
+  data class RustNativeHelper(
+    @JvmField val os: String,
+    @JvmField val arch: String,
+  ) : DevPluginLayoutAssetSource
+
+  /**
+   * A directory below `out/bundle-plugins` that a local backend build may create. The dev distribution declares its
+   * files when present and writes an empty tree when absent. Both states have different action keys.
+   */
+  data class OptionalLocalDirectory(
+    @JvmField val path: String,
+  ) : DevPluginLayoutAssetSource
+
+  data class GdScriptSdk(
+    @JvmField val version: String,
   ) : DevPluginLayoutAssetSource
 }
 
@@ -103,6 +147,11 @@ interface DevPluginLayoutAssetOwner {
 /**
  * One file or tree contribution to a prepared plugin tree.
  * A null [transform] is a direct copy.
+ *
+ * [hostPlatforms] names the `HOST_PLATFORMS` entries the asset serves, such as `darwin_aarch64`. An empty list serves
+ * every platform. The generator keeps the asset in the plan of a named platform and drops it from every other plan,
+ * so a source only such assets use is never bound there. The payload never carries the list: the plan of one platform
+ * is already selected when the payload is written.
  */
 @ApiStatus.Internal
 @OptIn(ExperimentalSerializationApi::class)
@@ -112,6 +161,7 @@ data class DevPluginLayoutAsset(
   @JvmField val sources: List<Int> = emptyList(),
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val transform: DevPluginLayoutAssetTransform? = null,
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val mode: Int = 0,
+  @Transient @JvmField val hostPlatforms: List<String> = emptyList(),
 )
 
 /** One ordered path mapping. The first contribution to a destination wins. */
@@ -123,7 +173,15 @@ data class DevPluginLayoutAssetMapping(
   @JvmField val destination: String = "",
 )
 
-/** The transform for one layout asset. Use the factory functions to create supported transforms. */
+/**
+ * The transform for one layout asset. Use the factory functions to create supported transforms.
+ *
+ * [includes] belong to `archive-tree`: ordered java.nio globs over the stripped entry path before mapping. A pattern
+ * with a leading `!` excludes. The last matching pattern decides an entry. An entry no pattern matches is written when
+ * every pattern excludes, and dropped otherwise. These are the `filePatterns` rules of a CIDR dependency.
+ * [executables] belong to `archive-tree` and `tree-map`: java.nio globs over the same path, or over the
+ * source-relative path of a tree. A regular file that matches gets the executable bits.
+ */
 @ApiStatus.Internal
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
@@ -134,13 +192,23 @@ data class DevPluginLayoutAssetTransform(
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val mappings: List<DevPluginLayoutAssetMapping> = emptyList(),
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val excludes: List<String> = emptyList(),
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val directoryExcludes: List<String> = emptyList(),
+  @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val includes: List<String> = emptyList(),
+  @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val executables: List<String> = emptyList(),
 ) {
   companion object {
     fun archiveTree(
       stripComponents: Int = 0,
       mappings: List<DevPluginLayoutAssetMapping> = emptyList(),
+      includes: List<String> = emptyList(),
+      executables: List<String> = emptyList(),
     ): DevPluginLayoutAssetTransform {
-      return DevPluginLayoutAssetTransform(kind = "archive-tree", stripComponents = stripComponents, mappings = mappings)
+      return DevPluginLayoutAssetTransform(
+        kind = "archive-tree",
+        stripComponents = stripComponents,
+        mappings = mappings,
+        includes = includes,
+        executables = executables,
+      )
     }
 
     fun gzipXmlArchive(): DevPluginLayoutAssetTransform {
@@ -155,8 +223,15 @@ data class DevPluginLayoutAssetTransform(
       mappings: List<DevPluginLayoutAssetMapping>,
       excludes: List<String> = emptyList(),
       directoryExcludes: List<String> = emptyList(),
+      executables: List<String> = emptyList(),
     ): DevPluginLayoutAssetTransform {
-      return DevPluginLayoutAssetTransform(kind = "tree-map", mappings = mappings, excludes = excludes, directoryExcludes = directoryExcludes)
+      return DevPluginLayoutAssetTransform(
+        kind = "tree-map",
+        mappings = mappings,
+        excludes = excludes,
+        directoryExcludes = directoryExcludes,
+        executables = executables,
+      )
     }
   }
 }
@@ -189,6 +264,7 @@ internal fun validateDevPluginLayoutAssetPreparation(
   }
   for (asset in preparation.assets) {
     val transform = asset.transform
+    require(asset.hostPlatforms.isEmpty()) { "A layout asset payload must not name host platforms: ${asset.destination}" }
     if (asset.destination.isEmpty()) {
       // An entry asset writes its output root when every entry brings its own relative path: a mapped tree, an
       // extracted archive, a gzip archive, or a copied directory. The Go packer checks the directory kind.
@@ -217,6 +293,19 @@ internal fun validateDevPluginLayoutAssetPreparation(
     }
     for (pattern in transform.excludes + transform.directoryExcludes) {
       require(pattern.isNotEmpty()) { "A layout asset exclusion requires a pattern" }
+      FileSystems.getDefault().getPathMatcher("glob:$pattern")
+    }
+    require(transform.kind == "archive-tree" || transform.includes.isEmpty()) { "Only an archive-tree transform accepts includes" }
+    for (pattern in transform.includes) {
+      val glob = pattern.removePrefix("!")
+      require(glob.isNotEmpty()) { "A layout asset include requires a pattern" }
+      FileSystems.getDefault().getPathMatcher("glob:$glob")
+    }
+    require(transform.kind in setOf("archive-tree", "tree-map") || transform.executables.isEmpty()) {
+      "Only an archive-tree or a tree-map transform accepts executable patterns"
+    }
+    for (pattern in transform.executables) {
+      require(pattern.isNotEmpty()) { "A layout asset executable pattern requires a pattern" }
       FileSystems.getDefault().getPathMatcher("glob:$pattern")
     }
     for (mapping in transform.mappings) {

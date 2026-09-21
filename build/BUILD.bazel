@@ -30,6 +30,14 @@ exports_files(
 
 jps_library_derivation_pipeline_test_suite(name = "jps_library_derivation_pipeline_test")
 
+# The IDEA Community branding images, read from the checkout while a distribution is laid out (`imagesDirectoryPath`
+# of `IdeaCommunityProperties`). Android Studio inherits them, so the ultimate `//build` package reads the group too.
+filegroup(
+    name = "idea_community_images",
+    srcs = glob(["idea-community-images/**"]),
+    visibility = ["//visibility:public"],
+)
+
 # Which product a `dev_dist_plugin_descriptor` action stamps for. One plugin's patched descriptor differs between two
 # products in three scalars only, so the scalars are a configuration and one descriptor target serves every product.
 #

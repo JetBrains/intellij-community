@@ -181,7 +181,10 @@ dev_dist_plugin(
 )
 
 exports_files(
-    ["intellij.kotlin.plugin.dev-plan.json"],
+    [
+        "intellij.kotlin.plugin.AndroidStudio.dev-plan.json",
+        "intellij.kotlin.plugin.dev-plan.json",
+    ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev intellij.kotlin.plugin` end

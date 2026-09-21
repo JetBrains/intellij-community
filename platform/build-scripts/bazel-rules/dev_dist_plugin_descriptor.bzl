@@ -320,6 +320,8 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
     stamps = _os_arch_stamps(ctx, product)
     if stamps.version_suffix:
         parameters.append(("--version-suffix", stamps.version_suffix, "formatted"))
+    if ctx.attr.compatible_build_range:
+        parameters.append(("--compatible-build-range", ctx.attr.compatible_build_range, "formatted"))
     parameters.extend([
         ("--marker", stamps.markers, "repeated"),
         ("--refused-content-module", ctx.attr.refused_content_modules, "repeated"),
@@ -733,6 +735,9 @@ occurrence of a plain string, and an unknown shape fails the action rather than 
 
 Empty for a layout that stamps the build version unchanged, which is nearly every one. A per-variant deviation: an
 OS-specific plugin states the marketplace operating system and architecture in its version.""",
+        ),
+        "compatible_build_range": attr.string(
+            doc = """Range constraint override.""",
         ),
         "refused_content_modules": attr.string_list(
             doc = """The content modules the product's filter refuses. Normally empty.

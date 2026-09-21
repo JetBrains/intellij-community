@@ -204,6 +204,12 @@ func kotlinLayoutAssetsOperation(t *testing.T, id, output, format, root string, 
 			if len(transform.DirectoryExcludes) != 0 {
 				text += `,"directoryExcludes":` + kotlinJSON(t, transform.DirectoryExcludes)
 			}
+			if len(transform.Includes) != 0 {
+				text += `,"includes":` + kotlinJSON(t, transform.Includes)
+			}
+			if len(transform.Executables) != 0 {
+				text += `,"executables":` + kotlinJSON(t, transform.Executables)
+			}
 			text += "}"
 		}
 		if asset.Mode != 0 {

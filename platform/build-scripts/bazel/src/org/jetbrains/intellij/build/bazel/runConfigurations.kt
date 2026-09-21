@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import java.nio.file.Files
 import java.nio.file.Path
 import java.text.Normalizer
-import java.util.TreeSet
 import java.util.stream.Collectors
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.name
@@ -158,14 +157,24 @@ private const val CUSTOM_COMMAND_PROPERTY = "idea.dev.mode.custom.command"
 private const val RUNTIME_MODULE_REPOSITORY_PROPERTY = "intellij.build.generate.runtime.module.repository"
 private const val COMPILE_CLION_BACKEND_BEFORE_RUN_PROPERTY = "intellij.build.dev.server.compile.clion.backend.before.run"
 
+/** The properties the macro takes as attributes, so they leave the `jvm_flags`. */
+private val ATTRIBUTE_PROPERTIES = setOf(
+  PLATFORM_PREFIX_PROPERTY,
+  ADDITIONAL_MODULES_PROPERTY,
+  CUSTOM_COMMAND_PROPERTY,
+  RUNTIME_MODULE_REPOSITORY_PROPERTY,
+  COMPILE_CLION_BACKEND_BEFORE_RUN_PROPERTY,
+)
+
 /**
  * One dev-server run configuration, as the converter reads it from `.idea/runConfigurations`.
  *
  * [product] is the `build/dev-build.json` key: the base prefix plus [platformPrefix] for a frontend, else [platformPrefix].
  * [additionalModules] keeps the order of the XML, because the order reaches the `ide_config` of the distribution.
- * [jvmFlags] holds every flag except the platform prefix and the additional modules.
- * [keepsDevMain] names the flag that keeps the launcher on `DevMainKt`, or is null. The converter reads no module fact.
- * The plan generator decides whether it can plan each additional module.
+ * [jvmFlags] holds every flag except the platform prefix, the additional modules and the three feature properties.
+ * [customCommand], [generateRuntimeModuleRepository] and [compileClionBackendBeforeRun] are those properties, each
+ * `true` when the XML sets it to `true`. The converter reads no module fact. The plan generator decides whether it
+ * can plan each additional module.
  */
 internal data class DevServerRunConfiguration(
   @JvmField val name: String,
@@ -175,7 +184,9 @@ internal data class DevServerRunConfiguration(
   @JvmField val additionalModules: List<String>,
   @JvmField val jvmFlags: List<String>,
   @JvmField val env: Map<String, String>,
-  @JvmField val keepsDevMain: String?,
+  @JvmField val customCommand: Boolean,
+  @JvmField val generateRuntimeModuleRepository: Boolean,
+  @JvmField val compileClionBackendBeforeRun: Boolean,
   @JvmField val spec: RunConfigurationSpec,
 )
 
@@ -211,32 +222,13 @@ internal fun devServerRunConfiguration(xmlFile: Path, spec: RunConfigurationSpec
     product = if (frontendBasePrefix == null) platformPrefix else frontendBasePrefix + platformPrefix,
     platformPrefix = platformPrefix,
     additionalModules = additionalModules,
-    jvmFlags = spec.bazelJvmFlags(
-      configurationName = name,
-      excludedProperties = setOf(PLATFORM_PREFIX_PROPERTY, ADDITIONAL_MODULES_PROPERTY),
-    ),
+    jvmFlags = spec.bazelJvmFlags(configurationName = name, excludedProperties = ATTRIBUTE_PROPERTIES),
     env = spec.bazelEnv(),
-    keepsDevMain = keepsDevMain(properties),
+    customCommand = properties.get(CUSTOM_COMMAND_PROPERTY) == "true",
+    generateRuntimeModuleRepository = properties.get(RUNTIME_MODULE_REPOSITORY_PROPERTY) == "true",
+    compileClionBackendBeforeRun = properties.get(COMPILE_CLION_BACKEND_BEFORE_RUN_PROPERTY) == "true",
     spec = spec,
   )
-}
-
-/**
- * The flag that keeps a configuration on `DevMainKt`, or null.
- *
- * `PreBuiltDevMain` has no custom command, no runtime module repository and no before-run step.
- */
-private fun keepsDevMain(properties: Map<String, String>): String? {
-  if (properties.containsKey(CUSTOM_COMMAND_PROPERTY)) {
-    return CUSTOM_COMMAND_PROPERTY
-  }
-  if (properties.containsKey(RUNTIME_MODULE_REPOSITORY_PROPERTY)) {
-    return RUNTIME_MODULE_REPOSITORY_PROPERTY
-  }
-  if (properties.get(COMPILE_CLION_BACKEND_BEFORE_RUN_PROPERTY) == "true") {
-    return "$COMPILE_CLION_BACKEND_BEFORE_RUN_PROPERTY=true"
-  }
-  return null
 }
 
 /**
@@ -261,62 +253,55 @@ internal fun saveDevServerRunConfigurations(ultimateRoot: Path, targetFilePath: 
 
 private const val DEV_ULTIMATE_BZL = "//build:intellij_dev_ultimate.bzl"
 private const val RUN_CONFIGURATION_MACRO = "intellij_dev_run_configuration"
-private const val DEV_MAIN_LAUNCHER_MACRO = "intellij_dev_binary_ultimate"
 
 /**
- * The content of `dev_server_run_configurations.bzl`: the `load` line of the macros the calls name, then
- * `def dev_server_run_configurations():` over one call per [DevServerRunConfiguration].
+ * The content of `dev_server_run_configurations.bzl`: the `load` line of the macro, then
+ * `def dev_server_run_configurations():` over one `intellij_dev_run_configuration` call per [DevServerRunConfiguration].
  */
 internal class RunConfigurationsFile : BuildFile() {
-  private val usedMacros = TreeSet<String>()
+  private var hasRows = false
 
   override fun render(existingLoads: Map<String, Set<String>>): String {
-    if (usedMacros.isEmpty()) {
+    if (!hasRows) {
       return ""
     }
     val body = super.render(existingLoads).lines().joinToString("\n") { line ->
       if (line.isEmpty()) line else "$INDENT$line"
     }
-    return LoadStatement(bzlFile = DEV_ULTIMATE_BZL, symbols = usedMacros.toList()).render() + "\n\n" +
+    return LoadStatement(bzlFile = DEV_ULTIMATE_BZL, symbols = listOf(RUN_CONFIGURATION_MACRO)).render() + "\n\n" +
            "def dev_server_run_configurations():\n" +
            body + if (body.endsWith("\n")) "" else "\n"
   }
 
   /**
-   * A row without [DevServerRunConfiguration.keepsDevMain] becomes an `intellij_dev_run_configuration` call.
-   * A row with a reason keeps the `intellij_dev_binary_ultimate` call and states the reason in a `#keepsDevMain` comment.
+   * One `intellij_dev_run_configuration` call. A feature attribute is rendered only when it is `true`, so a plain row
+   * reads as before. The macro decides whether the launcher runs from a split distribution.
    */
   fun generateDevServerRunConfiguration(row: DevServerRunConfiguration) {
-    val keepsDevMain = row.keepsDevMain
-    val macro = if (keepsDevMain == null) RUN_CONFIGURATION_MACRO else DEV_MAIN_LAUNCHER_MACRO
-    usedMacros.add(macro)
-    target(macro) {
+    hasRows = true
+    target(RUN_CONFIGURATION_MACRO) {
       option("#xmlFile", row.xmlFile.fileName.toString())
-      if (keepsDevMain != null) {
-        option("#keepsDevMain", keepsDevMain)
-      }
       option("name", row.name)
-      if (keepsDevMain == null) {
-        option("product", row.product)
-      }
+      option("product", row.product)
       option("platform_prefix", row.platformPrefix)
-      if (keepsDevMain == null && row.additionalModules.isNotEmpty()) {
+      if (row.additionalModules.isNotEmpty()) {
         option("additional_modules", row.additionalModules)
       }
-      option("jvm_flags", if (keepsDevMain == null) row.jvmFlags else row.devMainJvmFlags())
+      option("jvm_flags", row.jvmFlags)
       if (row.env.isNotEmpty()) {
         option("env", LinkedHashMap(row.env))
       }
+      if (row.customCommand) {
+        option("custom_command", true)
+      }
+      if (row.generateRuntimeModuleRepository) {
+        option("generate_runtime_module_repository", true)
+      }
+      if (row.compileClionBackendBeforeRun) {
+        option("compile_clion_backend_before_run", true)
+      }
     }
   }
-}
-
-/** The `jvm_flags` of a `DevMainKt` launcher: [DevServerRunConfiguration.jvmFlags] plus the additional-modules flag. */
-private fun DevServerRunConfiguration.devMainJvmFlags(): List<String> {
-  if (additionalModules.isEmpty()) {
-    return jvmFlags
-  }
-  return (jvmFlags + "-D$ADDITIONAL_MODULES_PROPERTY=${additionalModules.joinToString(",")}").sorted()
 }
 
 /**

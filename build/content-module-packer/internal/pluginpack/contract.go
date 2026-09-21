@@ -186,11 +186,18 @@ type LayoutAsset struct {
 
 // LayoutTransform kinds are archive-tree, gzip-xml-archive, inline-text, and tree-map.
 // An archive-tree extracts one .zip, .jar, .zip.zst, .tar.gz, or .tgz archive after StripComponents, into a tree or into jar entries.
+// A link entry of a .tar.gz, a .tgz, or a Unix-created .zip stays a link with its target spelling. A tree writes it as
+// a link. Jar entries accept no link. An entry name loses its leading `./` prefixes, and the `.` root entry is skipped.
 // A gzip-xml-archive reads the .xml entries of its .zip or .jar archives in central-directory order and writes each one
 // as the jar entry <name>.gzip. It accepts no other file and no link.
 // An inline-text writes Text as UTF-8. A tree-map copies the entries of its directories that a mapping selects.
 // Only tree-map accepts Excludes and DirectoryExcludes. Both use java.nio globs over the whole relative path before mapping.
 // Excludes omits files and symlinks. DirectoryExcludes prunes matching directories and their descendants.
+// Only archive-tree accepts Includes: ordered java.nio globs over the stripped entry path before mapping. A pattern
+// with a leading `!` excludes. The last matching pattern decides an entry. An entry no pattern matches is written when
+// every pattern excludes, and dropped otherwise. The parent directories of a written entry are implicit.
+// Executables are java.nio globs over the same path for archive-tree, and over the source-relative path for tree-map.
+// A regular file that matches gets the executable bits 0111 on top of its mode. Only those two kinds accept them.
 type LayoutTransform struct {
 	Kind              string          `json:"kind"`
 	StripComponents   int             `json:"stripComponents,omitempty"`
@@ -198,6 +205,8 @@ type LayoutTransform struct {
 	Mappings          []LayoutMapping `json:"mappings,omitempty"`
 	Excludes          []string        `json:"excludes,omitempty"`
 	DirectoryExcludes []string        `json:"directoryExcludes,omitempty"`
+	Includes          []string        `json:"includes,omitempty"`
+	Executables       []string        `json:"executables,omitempty"`
 }
 
 // LayoutMapping selects entries by a java.nio glob over the whole relative path. An empty Pattern is "**".

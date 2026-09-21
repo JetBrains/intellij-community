@@ -60,12 +60,15 @@ def _declare_source_trees(ctx):
             sorted(by_id.keys()),
             sorted(ctx.attr.source_tree_prefixes.keys()),
         ))
+    optional = {identifier: True for identifier in ctx.attr.optional_source_trees}
+    if any([identifier not in by_id for identifier in optional]):
+        fail("optional source tree IDs are not declared source trees: %s" % sorted(optional.keys()))
 
     result = {}
     for index, identifier in enumerate(sorted(by_id.keys())):
         target = by_id[identifier]
         prefix = source_tree_prefix(ctx.attr.source_tree_prefixes[identifier], identifier)
-        entries = source_tree_entries(target[DefaultInfo].files.to_list(), prefix, identifier, target.label)
+        entries = source_tree_entries(target[DefaultInfo].files.to_list(), prefix, identifier, target.label, optional = identifier in optional)
 
         archive = ctx.actions.declare_file(ctx.label.name + ".source-tree-%d.zip" % index)
         directory = ctx.actions.declare_directory(ctx.label.name + ".source-tree-%d" % index)
@@ -77,14 +80,17 @@ def _declare_source_trees(ctx):
             args.add("%s=%s" % (entry, file.path))
         args.use_param_file("@%s", use_always = True)
         args.set_param_file_format("multiline")
-        ctx.actions.run(
-            executable = ctx.executable._zipper,
-            arguments = ["c", archive.path, args],
-            inputs = inputs,
-            outputs = [archive],
-            mnemonic = "DevPluginSourceTreeArchive",
-            progress_message = "Normalizing source tree %s" % identifier,
-        )
+        if entries:
+            ctx.actions.run(
+                executable = ctx.executable._zipper,
+                arguments = ["c", archive.path, args],
+                inputs = inputs,
+                outputs = [archive],
+                mnemonic = "DevPluginSourceTreeArchive",
+                progress_message = "Normalizing source tree %s" % identifier,
+            )
+        else:
+            ctx.actions.write(archive, "PK\005\006" + ("\000" * 18))
         ctx.actions.run(
             executable = ctx.executable._zipper,
             arguments = ["x", archive.path, "-d", directory.path],
@@ -200,6 +206,7 @@ dev_jupyter_frontend = rule(
         "local_paths": attr.string_dict(),
         "source_tree_targets": attr.string_keyed_label_dict(allow_files = True),
         "source_tree_prefixes": attr.string_dict(),
+        "optional_source_trees": attr.string_list(),
         "_zipper": attr.label(default = "@bazel_tools//tools/zip:zipper", executable = True, cfg = "exec"),
     },
     doc = "Runs typed Jupyter preparation with resolved inputs. Skipping contributes an empty resource tree and no licenses.",
@@ -243,6 +250,7 @@ dev_debugger_egg = rule(
             mandatory = True,
             doc = "Repository-relative source prefixes keyed by pydev and metadata.",
         ),
+        "optional_source_trees": attr.string_list(),
         "build_number": attr.string(mandatory = True),
         "file_name": attr.string(default = "pydevd-pycharm.egg"),
         "preparer": attr.label(mandatory = True, executable = True, cfg = "exec"),
@@ -325,6 +333,9 @@ dev_plugin_file_graph = rule(
         ),
         "source_tree_prefixes": attr.string_dict(
             doc = "Repository-relative source prefix keyed by the matching source tree artifact ID.",
+        ),
+        "optional_source_trees": attr.string_list(
+            doc = "Source tree IDs that may have no files and then materialize as empty directories.",
         ),
         "_zipper": attr.label(
             default = "@bazel_tools//tools/zip:zipper",
@@ -886,6 +897,7 @@ def dev_dist_complex_plugin(
         libraries = {},
         source_tree_targets = {},
         source_tree_prefixes = {},
+        optional_source_trees = [],
         independent_artifacts = [],
         tags = [],
         visibility = ["//visibility:public"]):
@@ -923,6 +935,7 @@ def dev_dist_complex_plugin(
             jars.
         source_tree_targets: Declared source targets keyed by the artifact ID of each normalized directory.
         source_tree_prefixes: Repository-relative source prefix keyed by the source tree artifact ID.
+        optional_source_trees: Source tree IDs that may have no files and then materialize as empty directories.
         independent_artifacts: The `content_module_jar` targets whose jar the plugin reuses.
         tags: Tags for every target of every chain.
         visibility: The visibility of every component. Public by default, because the product's dist is in another
@@ -961,6 +974,7 @@ def dev_dist_complex_plugin(
             platform_values = platform_values[platform] if platform_values else {},
             source_tree_targets = _dict_for_platform(source_tree_targets, platform, "source_tree_targets"),
             source_tree_prefixes = _dict_for_platform(source_tree_prefixes, platform, "source_tree_prefixes"),
+            optional_source_trees = optional_source_trees,
             artifact_inputs = _dict_for_platform(artifact_inputs, platform, "artifact_inputs"),
             resource_inputs = chain_resources,
             libraries = _dict_for_platform(libraries, platform, "libraries"),
@@ -982,6 +996,7 @@ def dev_dist_complex_plugin_variant(
         platform_values = {},
         source_tree_targets = {},
         source_tree_prefixes = {},
+        optional_source_trees = [],
         artifact_inputs = {},
         resource_inputs = {},
         libraries = {},
@@ -1012,6 +1027,7 @@ def dev_dist_complex_plugin_variant(
         source_tree_targets: Declared source targets keyed by the artifact ID of each normalized directory. One
             target may serve two IDs with different prefixes.
         source_tree_prefixes: Repository-relative source prefix keyed by the source tree artifact ID.
+        optional_source_trees: Source tree IDs that may have no files and then materialize as empty directories.
         artifact_inputs: Compiled targets mapped to stable artifact IDs.
         resource_inputs: Resource and descriptor targets mapped to stable artifact IDs.
         libraries: Library container targets mapped to stable library IDs.
@@ -1032,6 +1048,7 @@ def dev_dist_complex_plugin_variant(
         execution_version = execution_version,
         source_tree_targets = source_tree_targets,
         source_tree_prefixes = source_tree_prefixes,
+        optional_source_trees = optional_source_trees,
         tags = tags,
     )
     dev_plugin_artifact_catalogue(

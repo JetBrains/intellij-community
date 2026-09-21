@@ -8,6 +8,7 @@ import (
 	"encoding/binary"
 	"hash/crc32"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -130,11 +131,14 @@ func assertAbsent(t *testing.T, file string) {
 	}
 }
 
+// tarTestEntry is one entry of writeTarGz. link makes a symbolic link, hardlink makes a hard link to an earlier entry,
+// and a name with a trailing slash makes a directory.
 type tarTestEntry struct {
-	name    string
-	content string
-	mode    int64
-	link    string
+	name     string
+	content  string
+	mode     int64
+	link     string
+	hardlink string
 }
 
 func writeTarGz(t *testing.T, file string, entries ...tarTestEntry) {
@@ -146,6 +150,9 @@ func writeTarGz(t *testing.T, file string, entries ...tarTestEntry) {
 		header := &tar.Header{Name: entry.name, Mode: entry.mode, Typeflag: tar.TypeReg, Size: int64(len(entry.content))}
 		if entry.link != "" {
 			header.Typeflag, header.Linkname, header.Size = tar.TypeSymlink, entry.link, 0
+		}
+		if entry.hardlink != "" {
+			header.Typeflag, header.Linkname, header.Size = tar.TypeLink, entry.hardlink, 0
 		}
 		if strings.HasSuffix(entry.name, "/") {
 			header.Typeflag, header.Size = tar.TypeDir, 0
@@ -378,6 +385,43 @@ func TestLayoutAssetsMatchTheKotlinExecutorCases(t *testing.T) {
 		layout := LayoutAssets{Inputs: []Reference{{Artifact: "tree"}}, Assets: []LayoutAsset{{Sources: []int{0}}}}
 		output, _ := writeExecution(t, layoutTreeRecipe("resources", 0, layout), Catalogue{Version: Version, Artifacts: []Artifact{directoryArtifact("tree", transport)}})
 		assertContent(t, filepath.Join(output, "resources/nested/resource.txt"), "resource")
+	})
+	t.Run("direct tree copies accept a sandbox-mounted directory root", func(t *testing.T) {
+		// A darwin-sandbox input is a symlink to the declared directory artifact, including an empty optional tree.
+		root := t.TempDir()
+		realTree := filepath.Join(root, "real")
+		if err := os.Mkdir(realTree, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		writeTestFile(t, filepath.Join(realTree, "nested/resource.txt"), []byte("resource"))
+		mounted := filepath.Join(root, "mounted")
+		if err := os.Symlink(realTree, mounted); err != nil {
+			t.Fatal(err)
+		}
+		layout := LayoutAssets{Inputs: []Reference{{Artifact: "tree"}}, Assets: []LayoutAsset{{Sources: []int{0}}}}
+		output, _ := writeExecution(t, layoutTreeRecipe("resources", 0, layout), Catalogue{Version: Version, Artifacts: []Artifact{directoryArtifact("tree", mounted)}})
+		assertContent(t, filepath.Join(output, "resources/nested/resource.txt"), "resource")
+	})
+	t.Run("direct tree copies accept an empty sandbox-mounted directory root", func(t *testing.T) {
+		root := t.TempDir()
+		realTree := filepath.Join(root, "real")
+		if err := os.Mkdir(realTree, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		mounted := filepath.Join(root, "mounted")
+		if err := os.Symlink(realTree, mounted); err != nil {
+			t.Fatal(err)
+		}
+		layout := LayoutAssets{Inputs: []Reference{{Artifact: "tree"}}, Assets: []LayoutAsset{{Sources: []int{0}}}}
+		output, inventory := writeExecution(t, layoutTreeRecipe("resources", 0, layout), Catalogue{Version: Version, Artifacts: []Artifact{directoryArtifact("tree", mounted)}})
+		if _, err := os.Stat(filepath.Join(output, "resources")); err != nil {
+			t.Fatalf("empty tree did not create the destination: %v", err)
+		}
+		for _, entry := range inventory {
+			if entry.RelativePath != "resources" && strings.HasPrefix(entry.RelativePath, "resources") {
+				t.Fatalf("empty tree wrote %s", entry.RelativePath)
+			}
+		}
 	})
 	t.Run("direct tree copies preserve relative links", func(t *testing.T) {
 		root := t.TempDir()
@@ -620,12 +664,110 @@ func TestLayoutArchiveReadersFollowTheKotlinReaderRules(t *testing.T) {
 			t.Fatalf("inventory differs: %+v", inventory)
 		}
 	})
+	t.Run("a tar of the current directory loses its dot root and dot-slash prefixes", func(t *testing.T) {
+		root := t.TempDir()
+		archive := filepath.Join(root, "gdb.tar.gz")
+		writeTarGz(t, archive, tarTestEntry{name: "./", mode: 0o755}, tarTestEntry{name: "./bin/", mode: 0o755},
+			tarTestEntry{name: "./bin/gdb", content: "gdb", mode: 0o755}, tarTestEntry{name: "././share/doc.txt", content: "doc", mode: 0o644})
+		layout := LayoutAssets{Inputs: []Reference{{Artifact: "archive"}}, Assets: []LayoutAsset{{Sources: []int{0}, Transform: archiveTree(0)}}}
+		output, inventory := writeExecution(t, layoutTreeRecipe("payload", 0, layout), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", archive)}})
+		assertContent(t, filepath.Join(output, "payload/bin/gdb"), "gdb")
+		assertContent(t, filepath.Join(output, "payload/share/doc.txt"), "doc")
+		if len(inventory) != 5 {
+			t.Fatalf("inventory differs: %+v", inventory)
+		}
+	})
 	t.Run("an unsupported archive name fails", func(t *testing.T) {
 		root := t.TempDir()
 		archive := filepath.Join(root, "assets.7z")
 		writeTestFile(t, archive, []byte("not an archive"))
 		layout := LayoutAssets{Inputs: []Reference{{Artifact: "archive"}}, Assets: []LayoutAsset{{Sources: []int{0}, Transform: archiveTree(0)}}}
 		writeLayoutFailure(t, layoutTreeRecipe("payload", 0, layout), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", archive)}}, "unsupported layout archive")
+	})
+}
+
+// TestLayoutArchiveTarHardLinks pins the hard link rule of the tar reader: a hard link is a file with the bytes of its
+// target, as in the GDB archives where bin/ld.bfd links to bin/ld.
+func TestLayoutArchiveTarHardLinks(t *testing.T) {
+	layout := LayoutAssets{Inputs: []Reference{{Artifact: "archive"}}, Assets: []LayoutAsset{{Sources: []int{0}, Transform: archiveTree(0)}}}
+	t.Run("a hard link becomes a copy of its target", func(t *testing.T) {
+		root := t.TempDir()
+		archive := filepath.Join(root, "gdb.tar.gz")
+		writeTarGz(t, archive, tarTestEntry{name: "bin/ld", content: "ld", mode: 0o755},
+			tarTestEntry{name: "bin/ld.bfd", hardlink: "bin/ld", mode: 0o755}, tarTestEntry{name: "./x/bin/ld", hardlink: "./bin/ld", mode: 0o755},
+			tarTestEntry{name: "bin/gdb", content: "gdb", mode: 0o755})
+		output, inventory := writeExecution(t, layoutTreeRecipe("payload", 0, layout), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", archive)}})
+		for _, name := range []string{"payload/bin/ld", "payload/bin/ld.bfd", "payload/x/bin/ld"} {
+			assertContent(t, filepath.Join(output, name), "ld")
+			assertMode(t, filepath.Join(output, name), 0o755)
+		}
+		assertContent(t, filepath.Join(output, "payload/bin/gdb"), "gdb")
+		if !slices.ContainsFunc(inventory, func(entry filemetadata.Entry) bool {
+			return entry.RelativePath == "payload/bin/ld.bfd" && entry.Type == "file"
+		}) {
+			t.Fatalf("inventory misses the hard link as a file: %+v", inventory)
+		}
+	})
+	t.Run("a hard link to a hard link reads the first file", func(t *testing.T) {
+		root := t.TempDir()
+		archive := filepath.Join(root, "gdb.tar.gz")
+		writeTarGz(t, archive, tarTestEntry{name: "bin/ld", content: "ld", mode: 0o755},
+			tarTestEntry{name: "bin/ld.bfd", hardlink: "bin/ld", mode: 0o755}, tarTestEntry{name: "bin/ld.gold", hardlink: "bin/ld.bfd", mode: 0o755})
+		output, _ := writeExecution(t, layoutTreeRecipe("payload", 0, layout), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", archive)}})
+		assertContent(t, filepath.Join(output, "payload/bin/ld.gold"), "ld")
+		assertMode(t, filepath.Join(output, "payload/bin/ld.gold"), 0o755)
+	})
+	t.Run("a hard link without a file target fails", func(t *testing.T) {
+		root := t.TempDir()
+		missing := filepath.Join(root, "missing.tar.gz")
+		writeTarGz(t, missing, tarTestEntry{name: "bin/ld.bfd", hardlink: "bin/ld", mode: 0o755})
+		writeLayoutFailure(t, layoutTreeRecipe("payload", 0, layout), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", missing)}}, `hard link target "bin/ld" is not a file of`)
+		directory := filepath.Join(root, "directory.tar.gz")
+		writeTarGz(t, directory, tarTestEntry{name: "bin/", mode: 0o755}, tarTestEntry{name: "bin/ld.bfd", hardlink: "bin/", mode: 0o755})
+		writeLayoutFailure(t, layoutTreeRecipe("payload", 0, layout), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", directory)}}, `hard link target "bin" is not a file of`)
+		unsafe := filepath.Join(root, "unsafe.tar.gz")
+		writeTarGz(t, unsafe, tarTestEntry{name: "bin/ld.bfd", hardlink: "../outside", mode: 0o755})
+		writeLayoutFailure(t, layoutTreeRecipe("payload", 0, layout), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", unsafe)}}, "has the unsafe target")
+	})
+	t.Run("a hard link keeps its bytes when the includes drop its target", func(t *testing.T) {
+		root := t.TempDir()
+		archive := filepath.Join(root, "gdb.tar.gz")
+		writeTarGz(t, archive, tarTestEntry{name: "bin/ld", content: "ld", mode: 0o644}, tarTestEntry{name: "bin/ld.bfd", hardlink: "bin/ld", mode: 0o644})
+		transform := archiveTree(0)
+		transform.Includes = []string{"!bin/ld"}
+		transform.Executables = []string{"bin/*"}
+		filtered := LayoutAssets{Inputs: []Reference{{Artifact: "archive"}}, Assets: []LayoutAsset{{Sources: []int{0}, Transform: transform}}}
+		output, _ := writeExecution(t, layoutTreeRecipe("payload", 0, filtered), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", archive)}})
+		assertContent(t, filepath.Join(output, "payload/bin/ld.bfd"), "ld")
+		assertMode(t, filepath.Join(output, "payload/bin/ld.bfd"), 0o755)
+		assertAbsent(t, filepath.Join(output, "payload/bin/ld"))
+	})
+	t.Run("a single visit reads the target from the archive again", func(t *testing.T) {
+		root := t.TempDir()
+		archive := filepath.Join(root, "gdb.tar.gz")
+		writeTarGz(t, archive, tarTestEntry{name: "bin/ld", content: "ld", mode: 0o755}, tarTestEntry{name: "bin/ld.bfd", hardlink: "bin/ld", mode: 0o755})
+		reader := &tarLayoutArchive{file: archive}
+		var kinds []string
+		err := reader.visit(func(entry layoutArchiveEntry) error {
+			kinds = append(kinds, entry.kind)
+			if entry.name != "bin/ld.bfd" {
+				return nil
+			}
+			content, err := entry.content()
+			if err != nil {
+				return err
+			}
+			if string(content) != "ld" {
+				t.Fatalf("the hard link holds %q, want %q", content, "ld")
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !slices.Equal(kinds, []string{"file", "file"}) || !reader.hardLinkTargets["bin/ld"] {
+			t.Fatalf("the visit saw %v and recorded %v", kinds, reader.hardLinkTargets)
+		}
 	})
 }
 
@@ -859,6 +1001,175 @@ func TestLayoutTreeMapExcludesValidation(t *testing.T) {
 			}
 		}
 	}
+}
+
+// TestLayoutArchiveTreeIncludes follows the CIDR `filePatterns` rules: an ordered list where `!` excludes, the last
+// match decides, and a list with a positive pattern drops the unmatched entries.
+func TestLayoutArchiveTreeIncludes(t *testing.T) {
+	files := map[string]string{
+		"bin/tool": "tool", "bin/LLDBFrontend": "frontend", "docs/quickdoc/index.html": "doc", "docs/other.txt": "other",
+		"lib/libx.so": "lib", "mingw-dependencies.json": "config",
+	}
+	tests := []struct {
+		name     string
+		includes []string
+		present  []string
+		absent   []string
+	}{
+		{name: "no rule keeps every entry", present: []string{"bin/tool", "bin/LLDBFrontend", "docs/quickdoc/index.html", "docs/other.txt", "lib/libx.so", "mingw-dependencies.json", "bin/current"}},
+		{name: "a positive rule drops the unmatched entries", includes: []string{"docs/quickdoc/**"},
+			present: []string{"docs/quickdoc/index.html"}, absent: []string{"bin/tool", "docs/other.txt", "lib", "mingw-dependencies.json", "bin/current"}},
+		{name: "exclude rules alone keep the rest", includes: []string{"!bin/LLDBFrontend", "!mingw-dependencies.json"},
+			present: []string{"bin/tool", "docs/quickdoc/index.html", "docs/other.txt", "lib/libx.so", "bin/current"}, absent: []string{"bin/LLDBFrontend", "mingw-dependencies.json"}},
+		{name: "the last matching rule decides", includes: []string{"bin/**", "!bin/LLDBFrontend"},
+			present: []string{"bin/tool", "bin/current"}, absent: []string{"bin/LLDBFrontend", "docs", "lib"}},
+		{name: "a later positive rule restores an excluded entry", includes: []string{"!bin/*", "bin/tool"},
+			present: []string{"bin/tool"}, absent: []string{"bin/LLDBFrontend", "bin/current", "docs", "lib"}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			root := t.TempDir()
+			archive := filepath.Join(root, "assets.tar.gz")
+			entries := []tarTestEntry{{name: "docs/quickdoc/", mode: 0o755}}
+			for _, name := range slices.Sorted(maps.Keys(files)) {
+				entries = append(entries, tarTestEntry{name: name, content: files[name], mode: 0o644})
+			}
+			entries = append(entries, tarTestEntry{name: "bin/current", link: "tool"})
+			writeTarGz(t, archive, entries...)
+			transform := archiveTree(0)
+			transform.Includes = test.includes
+			layout := LayoutAssets{Inputs: []Reference{{Artifact: "archive"}}, Assets: []LayoutAsset{{Sources: []int{0}, Transform: transform}}}
+			catalogue := Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", archive)}}
+			output, _ := writeExecution(t, layoutTreeRecipe("payload", 0, layout), catalogue)
+			for _, name := range test.present {
+				if name == "bin/current" {
+					assertLink(t, filepath.Join(output, "payload/bin/current"), "tool")
+					continue
+				}
+				assertContent(t, filepath.Join(output, "payload", filepath.FromSlash(name)), files[name])
+			}
+			for _, name := range test.absent {
+				assertAbsent(t, filepath.Join(output, "payload", filepath.FromSlash(name)))
+			}
+			jarOutput, _ := writeExecution(t, layoutJarRecipe(layoutWithoutLink(t, root, transform)), catalogue)
+			_, jarEntries := readArchive(t, filepath.Join(jarOutput, "lib/layout.jar"))
+			for name := range files {
+				_, present := jarEntries[name]
+				if present != slices.Contains(test.present, name) {
+					t.Errorf("jar entry %s present = %v", name, present)
+				}
+			}
+		})
+	}
+}
+
+// layoutWithoutLink writes the archive of TestLayoutArchiveTreeIncludes again without its link, because jar entries
+// accept no link, and returns a layout over it.
+func layoutWithoutLink(t *testing.T, root string, transform *LayoutTransform) LayoutAssets {
+	t.Helper()
+	archive := filepath.Join(root, "assets.tar.gz")
+	writeTarGz(t, archive,
+		tarTestEntry{name: "bin/tool", content: "tool", mode: 0o644}, tarTestEntry{name: "bin/LLDBFrontend", content: "frontend", mode: 0o644},
+		tarTestEntry{name: "docs/quickdoc/index.html", content: "doc", mode: 0o644}, tarTestEntry{name: "docs/other.txt", content: "other", mode: 0o644},
+		tarTestEntry{name: "lib/libx.so", content: "lib", mode: 0o644}, tarTestEntry{name: "mingw-dependencies.json", content: "config", mode: 0o644})
+	return LayoutAssets{Inputs: []Reference{{Artifact: "archive"}}, Assets: []LayoutAsset{{Sources: []int{0}, Transform: transform}}}
+}
+
+func TestLayoutArchiveTreeIncludesSelectTheMappingAfterTheFilter(t *testing.T) {
+	root := t.TempDir()
+	archive := filepath.Join(root, "assets.tar.gz")
+	writeTarGz(t, archive, tarTestEntry{name: "candidate/bin/tool", content: "dropped", mode: 0o644}, tarTestEntry{name: "fallback/bin/tool", content: "kept", mode: 0o644})
+	transform := archiveTree(0, LayoutMapping{Pattern: "candidate/**", StripComponents: 1}, LayoutMapping{Pattern: "fallback/**", StripComponents: 1})
+	transform.Includes = []string{"!candidate/**"}
+	layout := LayoutAssets{Inputs: []Reference{{Artifact: "archive"}}, Assets: []LayoutAsset{{Sources: []int{0}, Transform: transform}}}
+	output, _ := writeExecution(t, layoutTreeRecipe("payload", 0, layout), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", archive)}})
+	assertContent(t, filepath.Join(output, "payload/bin/tool"), "kept")
+}
+
+func TestLayoutExecutablePatterns(t *testing.T) {
+	t.Run("archive entries that match get the executable bits", func(t *testing.T) {
+		root := t.TempDir()
+		archive := filepath.Join(root, "assets.tar.gz")
+		writeTarGz(t, archive, tarTestEntry{name: "bin/ninja", content: "ninja", mode: 0o644}, tarTestEntry{name: "bin/readme.txt", content: "text", mode: 0o644},
+			tarTestEntry{name: "LLDB.framework/Resources/lldb", content: "lldb", mode: 0o600}, tarTestEntry{name: "bin/current", link: "ninja"})
+		transform := archiveTree(0)
+		transform.Executables = []string{"bin/ninja", "LLDB.framework/Resources/*"}
+		layout := LayoutAssets{Inputs: []Reference{{Artifact: "archive"}}, Assets: []LayoutAsset{{Sources: []int{0}, Transform: transform}}}
+		output, _ := writeExecution(t, layoutTreeRecipe("payload", 0, layout), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", archive)}})
+		assertMode(t, filepath.Join(output, "payload/bin/ninja"), 0o755)
+		assertMode(t, filepath.Join(output, "payload/bin/readme.txt"), 0o644)
+		assertMode(t, filepath.Join(output, "payload/LLDB.framework/Resources/lldb"), 0o711)
+		assertLink(t, filepath.Join(output, "payload/bin/current"), "ninja")
+	})
+	t.Run("a mapped archive matches the pattern before the mapping", func(t *testing.T) {
+		root := t.TempDir()
+		archive := filepath.Join(root, "helper.tar.gz")
+		writeTarGz(t, archive, tarTestEntry{name: "mac/aarch64/helper", content: "helper", mode: 0o644}, tarTestEntry{name: "linux/x64/helper", content: "other", mode: 0o644})
+		transform := archiveTree(0, LayoutMapping{Pattern: "mac/aarch64/**", StripComponents: 2, Destination: "bin/mac/aarch64"})
+		transform.Executables = []string{"mac/aarch64/*"}
+		layout := LayoutAssets{Inputs: []Reference{{Artifact: "archive"}}, Assets: []LayoutAsset{{Sources: []int{0}, Transform: transform}}}
+		output, _ := writeExecution(t, layoutTreeRecipe("payload", 0, layout), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", archive)}})
+		assertMode(t, filepath.Join(output, "payload/bin/mac/aarch64/helper"), 0o755)
+		assertAbsent(t, filepath.Join(output, "payload/bin/linux"))
+	})
+	t.Run("a zip without Unix modes gets the default mode plus the bits", func(t *testing.T) {
+		root := t.TempDir()
+		archive := filepath.Join(root, "assets.zip")
+		writeZip(t, archive, zipTestEntry{name: "bin/tool.exe", content: "tool"}, zipTestEntry{name: "bin/tool.dll", content: "dll"})
+		transform := archiveTree(0)
+		transform.Executables = []string{"bin/*.exe"}
+		layout := LayoutAssets{Inputs: []Reference{{Artifact: "archive"}}, Assets: []LayoutAsset{{Sources: []int{0}, Transform: transform}}}
+		output, _ := writeExecution(t, layoutTreeRecipe("payload", 0, layout), Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("archive", archive)}})
+		assertMode(t, filepath.Join(output, "payload/bin/tool.exe"), 0o755)
+		assertMode(t, filepath.Join(output, "payload/bin/tool.dll"), 0o644)
+	})
+	t.Run("tree entries that match get the executable bits and links stay links", func(t *testing.T) {
+		source := t.TempDir()
+		writeTestFile(t, filepath.Join(source, "DotFiles/run.sh"), []byte("run"))
+		writeTestFile(t, filepath.Join(source, "DotFiles/notes.txt"), []byte("notes"))
+		if err := os.Symlink("run.sh", filepath.Join(source, "DotFiles/current")); err != nil {
+			t.Fatal(err)
+		}
+		transform := treeMap(LayoutMapping{})
+		transform.Executables = []string{"DotFiles/*.sh"}
+		layout := LayoutAssets{Inputs: []Reference{{Artifact: "tree"}}, Assets: []LayoutAsset{{Sources: []int{0}, Transform: transform}}}
+		output, _ := writeExecution(t, layoutTreeRecipe("payload", 0, layout), Catalogue{Version: Version, Artifacts: []Artifact{directoryArtifact("tree", source)}})
+		assertMode(t, filepath.Join(output, "payload/DotFiles/run.sh"), 0o755)
+		assertMode(t, filepath.Join(output, "payload/DotFiles/notes.txt"), 0o644)
+		assertLink(t, filepath.Join(output, "payload/DotFiles/current"), "run.sh")
+	})
+}
+
+func TestLayoutIncludesAndExecutablesValidation(t *testing.T) {
+	archive := fileArtifact("archive", "archive.zip")
+	directory := directoryArtifact("tree", "tree")
+	tests := []struct {
+		name      string
+		transform *LayoutTransform
+		artifact  Artifact
+		message   string
+	}{
+		{"includes on tree-map", func() *LayoutTransform { t := treeMap(LayoutMapping{}); t.Includes = []string{"bin/**"}; return t }(), directory, "layout includes require archive-tree"},
+		{"an invalid include", func() *LayoutTransform { t := archiveTree(0); t.Includes = []string{"["}; return t }(), archive, "invalid include"},
+		{"an empty exclude include", func() *LayoutTransform { t := archiveTree(0); t.Includes = []string{"!"}; return t }(), archive, "invalid include"},
+		{"executables on gzip-xml-archive", func() *LayoutTransform { t := gzipXMLArchive(); t.Executables = []string{"*"}; return t }(), archive, "executable patterns require archive-tree or tree-map"},
+		{"an invalid executable pattern", func() *LayoutTransform { t := archiveTree(0); t.Executables = []string{"{a"}; return t }(), archive, "invalid executable pattern"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			layout := LayoutAssets{Inputs: []Reference{{Artifact: test.artifact.ID}}, Assets: []LayoutAsset{{Destination: "out", Sources: []int{0}, Transform: test.transform}}}
+			_, err := Plan(layoutJarRecipe(layout), Catalogue{Version: Version, Artifacts: []Artifact{test.artifact}})
+			if err == nil || !strings.Contains(err.Error(), test.message) {
+				t.Fatalf("got %v, want %q", err, test.message)
+			}
+		})
+	}
+	t.Run("executables on inline-text", func(t *testing.T) {
+		asset := LayoutAsset{Destination: "out", Transform: &LayoutTransform{Kind: "inline-text", Text: "a", Executables: []string{"*"}}}
+		if err := validateLayoutAsset(asset, layoutTreeFormat, nil); err == nil || !strings.Contains(err.Error(), "executable patterns require") {
+			t.Fatalf("accepted executables on inline-text: %v", err)
+		}
+	})
 }
 
 func TestLayoutPlanRejectsInvalidPayloads(t *testing.T) {

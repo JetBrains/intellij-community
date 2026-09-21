@@ -76,6 +76,28 @@ def _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_pat
         "//conditions:default": [],
     })
 
+_DEV_MAIN_CLASS = "org.jetbrains.intellij.build.devServer.DevMainKt"
+_PREBUILT_DEV_MAIN_CLASS = "org.jetbrains.intellij.build.devServer.PreBuiltDevMain"
+_BEFORE_RUN_DEV_MAIN_CLASS = "org.jetbrains.intellij.build.devServer.BeforeRunDevMain"
+
+def _before_run_launch(main_class, before_run_main_class, before_run_runtime_deps):
+    """How a launcher starts: `main_class` directly, or `BeforeRunDevMain` over `before_run_main_class` and then `main_class`.
+
+    `BeforeRunDevMain` starts `DevMainKt` unless `-Dintellij.build.dev.server.main.class` names another launcher, so
+    only a launcher that is not `DevMainKt` passes the property.
+    """
+    runtime_deps = ["@community//platform/bootstrap/dev"]
+    if not before_run_main_class:
+        return struct(main_class = main_class, runtime_deps = runtime_deps, jvm_flags = [])
+    jvm_flags = ["-Dintellij.build.dev.server.before.run.main.class=" + before_run_main_class]
+    if main_class != _DEV_MAIN_CLASS:
+        jvm_flags.append("-Dintellij.build.dev.server.main.class=" + main_class)
+    return struct(
+        main_class = _BEFORE_RUN_DEV_MAIN_CLASS,
+        runtime_deps = runtime_deps + before_run_runtime_deps,
+        jvm_flags = jvm_flags,
+    )
+
 def intellij_dev_binary(
         name,
         visibility,
@@ -99,14 +121,10 @@ def intellij_dev_binary(
     if additional_modules:
         all_jvm_flags = all_jvm_flags + ["-Dadditional.modules=\"" + additional_modules + "\""]
 
-    main_class = "org.jetbrains.intellij.build.devServer.DevMainKt"
-    runtime_deps = ["@community//platform/bootstrap/dev"]
-    if before_run_main_class:
-        main_class = "org.jetbrains.intellij.build.devServer.BeforeRunDevMain"
-        runtime_deps = runtime_deps + before_run_runtime_deps
-        all_jvm_flags = all_jvm_flags + [
-            "-Dintellij.build.dev.server.before.run.main.class=" + before_run_main_class,
-        ]
+    launch = _before_run_launch(_DEV_MAIN_CLASS, before_run_main_class, before_run_runtime_deps)
+    main_class = launch.main_class
+    runtime_deps = launch.runtime_deps
+    all_jvm_flags = all_jvm_flags + launch.jvm_flags
 
     # The archives the assembly would otherwise download at launch, as runfiles for the host platform,
     # with their manifests. `preloaded_downloads_exhaustive_on` names the platforms where the declared set
@@ -144,12 +162,16 @@ def intellij_dev_prebuilt_binary(
         program_args = [],
         visibility = None,
         local_home_tool = None,
-        data = []):
+        data = [],
+        before_run_main_class = "",
+        before_run_runtime_deps = []):
     """Launches a built distribution or a linked local home without packaging it.
 
     The distribution declares its product and additional modules.
     When it supplies local metadata, local_home_tool prepares a temporary home from its component runfiles.
     `data` is the launcher's extra runfiles, on top of the distribution and its config.
+    With `before_run_main_class`, `BeforeRunDevMain` runs that class over `before_run_runtime_deps` first, then
+    `PreBuiltDevMain`, as `intellij_dev_binary` does before `DevMainKt`.
     """
     ide_config = name + "_ide_config"
 
@@ -163,15 +185,16 @@ def intellij_dev_prebuilt_binary(
 
     local_home_data = [local_home_tool] if local_home_tool else []
     local_home_flags = ["-Didea.dev.local.home.tool=$(rlocationpath %s)" % local_home_tool] if local_home_tool else []
+    launch = _before_run_launch(_PREBUILT_DEV_MAIN_CLASS, before_run_main_class, before_run_runtime_deps)
 
     java_binary(
         name = name,
         visibility = visibility,
-        runtime_deps = ["@community//platform/bootstrap/dev"],
-        main_class = "org.jetbrains.intellij.build.devServer.PreBuiltDevMain",
+        runtime_deps = launch.runtime_deps,
+        main_class = launch.main_class,
         tags = tags,
         data = data + [dist_target, ide_config] + local_home_data,
-        jvm_flags = _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_path) + local_home_flags + [
+        jvm_flags = _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_path) + local_home_flags + launch.jvm_flags + [
             "-D%s=$(rlocationpath %s)" % (DEV_IDE_CONFIG_PATH_PROPERTY, ide_config),
             # Not a build-time input: `AppMode.getDevIdeaProjectDir` and the webview native bridge read it at runtime,
             # and a dev launch has it only because `DevMainImpl` sets it from the project root it just built against.

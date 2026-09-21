@@ -9,9 +9,16 @@ import java.lang.invoke.MethodType;
 import java.net.URL;
 import java.net.URLClassLoader;
 
+/**
+ * Runs the main class {@code -Dintellij.build.dev.server.before.run.main.class} names, then the launcher.
+ * <p>
+ * The launcher is {@code DevMainKt}, or the class {@code -Dintellij.build.dev.server.main.class} names: a split
+ * distribution passes {@link PreBuiltDevMain}.
+ */
 @ApiStatus.Internal
 public final class BeforeRunDevMain {
   private static final String BEFORE_RUN_MAIN_CLASS_PROPERTY = "intellij.build.dev.server.before.run.main.class";
+  private static final String MAIN_CLASS_PROPERTY = "intellij.build.dev.server.main.class";
 
   private BeforeRunDevMain() { }
 
@@ -32,6 +39,13 @@ public final class BeforeRunDevMain {
         .invokeExact(rawArgs);
     }
 
-    DevMainKt.main(rawArgs);
+    var mainClassName = System.getProperty(MAIN_CLASS_PROPERTY);
+    if (mainClassName == null || mainClassName.isBlank()) {
+      DevMainKt.main(rawArgs);
+      return;
+    }
+    MethodHandles.lookup()
+      .findStatic(classLoader.loadClass(mainClassName), "main", MethodType.methodType(void.class, String[].class))
+      .invokeExact(rawArgs);
   }
 }

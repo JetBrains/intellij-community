@@ -87,6 +87,8 @@ type request struct {
 	markers []string
 	// versionSuffix is what the layout appends to the IDE build version, empty for a layout that stamps it unchanged.
 	versionSuffix string
+	// compatibleBuildRange overrides the since/until constraint generation.
+	compatibleBuildRange string
 	// reserializedOutput, when set, receives the final descriptor after one more `descriptorxml` round trip. That is
 	// the form the plugin classpath record embeds (`generatePluginClassPathFromOrderedAssets` of `orderedAssets.kt`).
 	reserializedOutput string
@@ -192,6 +194,14 @@ func patch(parsed request) (string, error) {
 	pluginVersion += parsed.versionSuffix
 	compatibleBuildRange := stamps.RangeNewerWithSameBaseline
 	switch {
+	case parsed.compatibleBuildRange == "EXACT":
+		compatibleBuildRange = stamps.RangeExact
+	case parsed.compatibleBuildRange == "RESTRICTED_TO_SAME_RELEASE":
+		compatibleBuildRange = stamps.RangeRestrictedToSameRelease
+	case parsed.compatibleBuildRange == "NEWER_WITH_SAME_BASELINE":
+		compatibleBuildRange = stamps.RangeNewerWithSameBaseline
+	case parsed.compatibleBuildRange != "":
+		return "", fmt.Errorf("unknown compatible build range: %s", parsed.compatibleBuildRange)
 	case parsed.exactVersion:
 		compatibleBuildRange = stamps.RangeExact
 	case parsed.isEap:
@@ -410,6 +420,8 @@ func parseRequest(lines []string) (request, error) {
 			parsed.markers = append(parsed.markers, value)
 		case "--version-suffix":
 			parsed.versionSuffix = value
+		case "--compatible-build-range":
+			parsed.compatibleBuildRange = value
 		case "--reserialized-output":
 			parsed.reserializedOutput = value
 		case "--platform-descriptor":

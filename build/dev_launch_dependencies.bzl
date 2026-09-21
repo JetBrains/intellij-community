@@ -127,6 +127,13 @@ def jcef_url(platform, jcef_build):
 def lib_ghostty_vt_url(version):
     return "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/libghostty-vt/%s/libghostty-vt.zip.zst" % version
 
+# CommunityRepositoryModules.jSerialCommDownloadUrl - the content hash is the version. Keep in lockstep with
+# `JSERIALCOMM_NATIVE_HASH` in CommunityRepositoryModules.kt.
+_JSERIALCOMM_NATIVE_HASH = "9a7813435b79aa2e23c7f2a78f1b66b48c0504c4"
+
+def jserialcomm_url():
+    return "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jSerialComm/%s/jSerialComm.zip" % _JSERIALCOMM_NATIVE_HASH
+
 def _file_name(url):
     name = url.rpartition("/")[2]
     if not name or "?" in name or "#" in name:
@@ -314,7 +321,7 @@ def _only_select(platforms, value, default):
 
 # What a dev-mode assembly downloads, of the groups community owns.
 COMMUNITY_DEV_LAUNCH_REPOS = merge_repo_sets(
-    _shared_repos(["libghostty", "libwebp", "maven", "restarter"]),
+    _shared_repos(["libghostty", "libwebp", "maven", "restarter", "jserialcomm"]),
     _per_platform_repos("jcef"),
 )
 
@@ -333,6 +340,12 @@ def _dev_launch_deps_community_impl(module_ctx):
     dev_launch_deps_repo(
         name = "dev_launch_libghostty",
         urls = [lib_ghostty_vt_url(pinned(community, _COMMUNITY_DEPENDENCIES, "libGhosttyVtVersion"))],
+    )
+
+    # CommunityRepositoryModules serial-monitor native library. One zip for every platform.
+    dev_launch_deps_repo(
+        name = "dev_launch_jserialcomm",
+        urls = [jserialcomm_url()],
     )
     dev_launch_deps_repo(
         name = "dev_launch_libwebp",

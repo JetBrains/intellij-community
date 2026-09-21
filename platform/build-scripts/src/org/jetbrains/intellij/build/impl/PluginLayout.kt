@@ -21,6 +21,7 @@ import org.jetbrains.intellij.build.LazySource
 import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
+import org.jetbrains.intellij.build.CompatibleBuildRange
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
 import org.jetbrains.intellij.build.impl.BuildUtils.checkedReplace
 import java.nio.file.Files
@@ -96,6 +97,9 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       !hasCustomVersion -> ""
       else -> (versionEvaluator as? DataPluginVersionEvaluator)?.versionSuffix
     }
+
+  val compatibleBuildRange: CompatibleBuildRange?
+    get() = (versionEvaluator as? DataPluginVersionEvaluator)?.compatibleBuildRange
 
   var directoryNameSetExplicitly: Boolean = false
   var bundlingRestrictions: PluginBundlingRestrictions = PluginBundlingRestrictions.NONE
@@ -223,6 +227,15 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
   internal var executablePatterns: PersistentMap<SupportedDistribution, PersistentList<String>> = persistentMapOf()
     private set
+
+  /**
+   * The patterns [PluginLayoutBuilder.withPlatformExecutable] registered, one list per distribution it named.
+   *
+   * A plain map, unlike [executablePatterns]: a caller outside the layout builders is not expected to know
+   * `kotlinx.collections.immutable`.
+   */
+  @Internal
+  fun getExecutablePatterns(): Map<SupportedDistribution, List<String>> = executablePatterns
 
   val hasPlatformSpecificResources: Boolean
     get() = platformResourceGenerators.isNotEmpty() ||
@@ -686,9 +699,12 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     /**
      * Concatenates `META-INF/services` files with the same name from different modules together.
      * By default, the first service file silently wins.
+     *
+     * The dev distribution omits the merge. Its jar writer keeps the first service file of a name and reports the
+     * collision, which is the default this method replaces.
      */
     fun mergeServiceFiles() {
-      withPatch { patcher, context ->
+      layout.withPatch(DeclaredPluginLayoutPatcher(DevPluginLayoutAssetSpec.OMITTED) { patcher, _, context ->
         val discoveredServiceFiles = LinkedHashMap<String, LinkedHashSet<Pair<String, Path>>>()
 
         for (moduleName in layout.includedModules.asSequence().filter { it.relativeOutputFile == layout.mainJarName }.map { it.moduleName }.distinct()) {
@@ -720,7 +736,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
             content = content,
           )
         }
-      }
+      })
     }
 
     /**
@@ -817,15 +833,24 @@ fun interface PluginVersionEvaluator {
 interface DataPluginVersionEvaluator : PluginVersionEvaluator {
   /** What this evaluator appends to the IDE build version. */
   val versionSuffix: String
+  val compatibleBuildRange: CompatibleBuildRange? get() = null
 }
 
-/** [DataPluginVersionEvaluator] with nothing beyond the suffix. */
-class SuffixedPluginVersion(override val versionSuffix: String) : DataPluginVersionEvaluator {
+/** [DataPluginVersionEvaluator] with nothing beyond the suffix and an optional range override. */
+class SuffixedPluginVersion(
+  override val versionSuffix: String,
+  override val compatibleBuildRange: CompatibleBuildRange? = null,
+) : DataPluginVersionEvaluator {
   override fun evaluate(
     pluginXmlSupplier: () -> String,
     ideBuildVersion: String,
     context: BuildContext,
-  ): PluginVersionEvaluatorResult = PluginVersionEvaluatorResult(pluginVersion = ideBuildVersion + versionSuffix)
+  ): PluginVersionEvaluatorResult = PluginVersionEvaluatorResult(
+    pluginVersion = ideBuildVersion + versionSuffix,
+    sinceUntil = compatibleBuildRange?.let {
+      getCompatiblePlatformVersionRange(it, context.buildNumber)
+    }
+  )
 }
 
 internal fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')

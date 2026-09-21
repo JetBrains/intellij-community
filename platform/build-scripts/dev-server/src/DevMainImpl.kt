@@ -7,6 +7,7 @@ import com.intellij.platform.buildData.productInfo.CustomCommandLaunchData
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProductInProcess
+import org.jetbrains.intellij.build.dev.customCommandSystemProperties
 import org.jetbrains.intellij.build.dev.getIdeSystemProperties
 import org.jetbrains.intellij.build.dev.readCustomCommand
 import org.jetbrains.intellij.build.dev.resolveAdditionalJvmArguments
@@ -113,17 +114,7 @@ private fun buildDevImpl(rawArgs: Array<String>): BuildDevInfo {
 }
 
 private fun getCommandSystemProperties(runDir: Path, command: CustomCommandLaunchData): VmProperties {
-  val result = command.resolveAdditionalJvmArguments(runDir).asSequence()
-    .filter { it.startsWith("-D") }
-    .map { it.removePrefix("-D") }
-    .associateBy(
-      { it.substringBefore('=') },
-      {
-        val result = it.substringAfter('=', "")
-        check('$' !in result) { "Unsubstituted macro in JVM argument: $it" }
-        result
-      })
-  return VmProperties(result)
+  return VmProperties(customCommandSystemProperties(command.resolveAdditionalJvmArguments(runDir)))
 }
 
 private fun getAdditionalPluginMainModules(): List<String> {

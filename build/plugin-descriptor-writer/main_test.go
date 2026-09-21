@@ -235,6 +235,53 @@ func TestAnExactVersionPinsBothEnds(t *testing.T) {
 	}
 }
 
+// `--compatible-build-range` is the range the layout states (`DataPluginVersionEvaluator.compatibleBuildRange`). It
+// replaces the `--eap` fallback, so an EAP build keeps `NEWER_WITH_SAME_BASELINE` when the layout states it.
+func TestAStatedCompatibleBuildRangeReplacesTheEapFallback(t *testing.T) {
+	dir := t.TempDir()
+	source := filepath.Join(dir, "plugin.xml")
+	output := filepath.Join(dir, "plugin.out.xml")
+	write(t, source, "<idea-plugin><id>a</id></idea-plugin>")
+
+	code := run([]string{
+		"--out=" + output, "--main-module=intellij.example", "--source=" + source,
+		"--build-number-file=" + buildNumberFile(t, dir, "263.100.5"),
+		"--release-date=20260101", "--release-version=2026300",
+		"--eap=true", "--version-suffix=-IJ", "--compatible-build-range=NEWER_WITH_SAME_BASELINE",
+	})
+	if code != 0 {
+		t.Fatalf("exit %d", code)
+	}
+	got := read(t, output)
+	if !strings.Contains(got, `<version>263.100.5-IJ</version>`) {
+		t.Errorf("got:\n%s", got)
+	}
+	if !strings.Contains(got, `since-build="263.100" until-build="263.*"`) {
+		t.Errorf("got:\n%s", got)
+	}
+}
+
+// A range name the writer does not know fails the run: the rule and `CompatibleBuildRange` stay on one spelling.
+func TestAnUnknownCompatibleBuildRangeIsRefused(t *testing.T) {
+	dir := t.TempDir()
+	source := filepath.Join(dir, "plugin.xml")
+	output := filepath.Join(dir, "plugin.out.xml")
+	write(t, source, "<idea-plugin><id>a</id></idea-plugin>")
+
+	code := run([]string{
+		"--out=" + output, "--main-module=intellij.example", "--source=" + source,
+		"--build-number-file=" + buildNumberFile(t, dir, "263.100.5"),
+		"--release-date=20260101", "--release-version=2026300",
+		"--compatible-build-range=SAME_RELEASE",
+	})
+	if code == 0 {
+		t.Fatal("exit 0, want a failure")
+	}
+	if _, err := os.Stat(output); !os.IsNotExist(err) {
+		t.Errorf("output written: %v", err)
+	}
+}
+
 // An option the parser does not know fails the run. That keeps the rule and this binary on one spelling: a rule that
 // grows an option reaches this parser or fails here.
 func TestAnUnknownOptionIsRefused(t *testing.T) {

@@ -57,18 +57,28 @@ func TestOwnedTreeMetadataEncodingAndStrictVersion(test *testing.T) {
 
 func TestLayoutTransformExcludesEncoding(t *testing.T) {
 	for _, test := range []struct {
+		kind              string
 		excludes          []string
 		directoryExcludes []string
+		includes          []string
+		executables       []string
 		want              string
 	}{
 		{want: `{"kind":"tree-map"}`},
-		{excludes: []string{}, directoryExcludes: []string{}, want: `{"kind":"tree-map"}`},
+		{excludes: []string{}, directoryExcludes: []string{}, includes: []string{}, executables: []string{}, want: `{"kind":"tree-map"}`},
 		{excludes: []string{"*.pyc"}, want: `{"kind":"tree-map","excludes":["*.pyc"]}`},
 		{directoryExcludes: []string{"tests"}, want: `{"kind":"tree-map","directoryExcludes":["tests"]}`},
 		{excludes: []string{"*.pyc"}, directoryExcludes: []string{"tests", "**/tests"},
 			want: `{"kind":"tree-map","excludes":["*.pyc"],"directoryExcludes":["tests","**/tests"]}`},
+		{kind: "archive-tree", includes: []string{"bin/**", "!bin/LLDBFrontend"}, executables: []string{"bin/*"},
+			want: `{"kind":"archive-tree","includes":["bin/**","!bin/LLDBFrontend"],"executables":["bin/*"]}`},
+		{executables: []string{"DotFiles/*.sh"}, want: `{"kind":"tree-map","executables":["DotFiles/*.sh"]}`},
 	} {
-		transform := &LayoutTransform{Kind: "tree-map", Excludes: test.excludes, DirectoryExcludes: test.directoryExcludes}
+		kind := test.kind
+		if kind == "" {
+			kind = "tree-map"
+		}
+		transform := &LayoutTransform{Kind: kind, Excludes: test.excludes, DirectoryExcludes: test.directoryExcludes, Includes: test.includes, Executables: test.executables}
 		data, err := json.Marshal(transform)
 		if err != nil || string(data) != test.want {
 			t.Fatalf("transform encoding = %s: %v, want %s", data, err, test.want)

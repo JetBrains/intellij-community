@@ -1,5 +1,6 @@
 package org.jetbrains.intellij.build.dev
 
+import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
@@ -212,6 +213,63 @@ internal class DevPluginLayoutAssetPreparationTest {
         ), listOf(DevPluginReference("tree")))
       }.isInstanceOf(IllegalArgumentException::class.java)
     }
+  }
+
+  @Test
+  fun `archive includes and executable patterns change the preparation signature`() {
+    val archive = DevPluginLayoutAssetTransform.archiveTree()
+    val tree = DevPluginLayoutAssetTransform.treeMap(listOf(DevPluginLayoutAssetMapping()))
+    fun signature(value: DevPluginLayoutAssetTransform, input: String): String {
+      return devPluginPreparationOperationSignature(DevPluginPreparationOperation(
+        id = "layout-assets:native", kind = "layout-assets", inputs = listOf(DevPluginReference(input)), output = "native:output", manifest = "keep",
+        layoutAssets = DevPluginLayoutAssetPreparation(
+          format = "tree", root = "bin",
+          assets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0), transform = value)),
+        ),
+      ), version = 2)
+    }
+
+    assertThat(signature(archive.copy(includes = listOf("bin/**", "!bin/LLDBFrontend")), "archive")).isNotEqualTo(signature(archive, "archive"))
+    assertThat(signature(archive.copy(executables = listOf("bin/*")), "archive")).isNotEqualTo(signature(archive, "archive"))
+    assertThat(signature(tree.copy(executables = listOf("DotFiles/*.sh")), "tree")).isNotEqualTo(signature(tree, "tree"))
+    assertThat(signature(DevPluginLayoutAssetTransform.archiveTree(includes = listOf("!x"), executables = listOf("y")), "archive"))
+      .isEqualTo(signature(archive.copy(includes = listOf("!x"), executables = listOf("y")), "archive"))
+  }
+
+  @Test
+  fun `only archive-tree accepts includes and only the tree transforms accept executable patterns`() {
+    val archive = DevPluginLayoutAssetTransform.archiveTree()
+    val tree = DevPluginLayoutAssetTransform.treeMap(listOf(DevPluginLayoutAssetMapping()))
+    val invalid = listOf(
+      tree.copy(includes = listOf("bin/**")) to "tree",
+      archive.copy(includes = listOf("")) to "archive",
+      archive.copy(includes = listOf("!")) to "archive",
+      archive.copy(includes = listOf("[")) to "archive",
+      archive.copy(executables = listOf("")) to "archive",
+      archive.copy(executables = listOf("{a")) to "archive",
+      DevPluginLayoutAssetTransform.inlineText("x").copy(executables = listOf("*")) to "archive",
+    )
+    for ((transform, input) in invalid) {
+      assertThatThrownBy {
+        validateLayoutAssets(DevPluginLayoutAssetPreparation(
+          format = "tree", root = "bin",
+          assets = listOf(DevPluginLayoutAsset(destination = if (transform.kind == "inline-text") "bin/x" else "", sources = if (transform.kind == "inline-text") emptyList() else listOf(0), transform = transform)),
+        ), listOf(DevPluginReference(input)))
+      }.isInstanceOf(IllegalArgumentException::class.java)
+    }
+    validateLayoutAssets(DevPluginLayoutAssetPreparation(
+      format = "tree", root = "bin",
+      assets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0), transform = archive.copy(includes = listOf("!bin/LLDBFrontend"), executables = listOf("bin/*")))),
+    ), listOf(DevPluginReference("archive")))
+  }
+
+  @Test
+  fun `a payload asset carries no host platforms and the encoding omits them`() {
+    val asset = DevPluginLayoutAsset(destination = "bin/tool", sources = listOf(0), hostPlatforms = listOf("darwin_aarch64"))
+    assertThat(Json.encodeToString(DevPluginLayoutAsset.serializer(), asset)).isEqualTo("""{"destination":"bin/tool","sources":[0]}""")
+    assertThatThrownBy {
+      validateLayoutAssets(DevPluginLayoutAssetPreparation(format = "tree", root = "bin", assets = listOf(asset.copy(destination = ""))), listOf(DevPluginReference("archive")))
+    }.hasMessageContaining("host platforms")
   }
 
   private fun gzipXmlArchivePreparation(sources: List<Int>): DevPluginLayoutAssetPreparation {

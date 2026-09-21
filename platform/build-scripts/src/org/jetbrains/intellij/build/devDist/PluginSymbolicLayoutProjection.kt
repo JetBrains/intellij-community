@@ -462,8 +462,9 @@ private class SymbolicLayoutProjector(
     for (index in layout.platformResourceGeneratorsBundledAndDevMode.get(distribution).orEmpty().indices) {
       resourceEffect("platform-resource-generator:$index", "The selected platform generator requires inputs and output paths")
     }
+    // A platform custom asset lands below the plugin directory, so one declared file serves it as a resource slot does.
     for (index in layout.customAssets.filter { it.platformSpecific == distribution }.indices) {
-      layoutEffect("platform-custom-asset:$index", "Platform custom assets require explicit copy, extraction, mode, and link declarations")
+      resourceEffect("platform-custom-asset:$index", "Platform custom assets require explicit copy, extraction, mode, and link declarations")
     }
   }
 
