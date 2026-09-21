@@ -22,11 +22,12 @@ class FleetSlf4jServiceProvider : SLF4JServiceProvider {
     return delegate!!.loggerFactory
   }
 
-  override fun getMarkerFactory(): IMarkerFactory {
+  // SLF4J 2.0.17+ calls these two accessors before `initialize()` and accepts `null` from them
+  override fun getMarkerFactory(): IMarkerFactory? {
     return delegate!!.markerFactory
   }
 
-  override fun getMDCAdapter(): MDCAdapter {
+  override fun getMDCAdapter(): MDCAdapter? {
     return delegate!!.mdcAdapter
   }
 
