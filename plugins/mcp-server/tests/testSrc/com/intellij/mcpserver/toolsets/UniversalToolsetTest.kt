@@ -89,6 +89,32 @@ class UniversalToolsetTest : GeneralMcpToolsetTestBase() {
       .doesNotContain(null, "undefined")
   }
 
+  /**
+   * A client the IDE did not launch has no chat to name. The fields must then be absent rather than blank: a
+   * present-but-empty value would count that call into whatever bucket the empty string lands in.
+   */
+  @Test
+  fun a_call_with_no_owner_reports_no_chat_and_no_turn(@TestDisposable disposable: Disposable) {
+    val rows = FUCollectorTestCase.collectLogEvents(disposable) {
+      runBlocking(Dispatchers.Default) {
+        testMcpTool(
+          UniversalToolset::execute_tool.name,
+          buildJsonObject {
+            put("command", JsonPrimitive("reformat_file --files '[\"src/Main.java\"]'"))
+          },
+          "ok",
+        )
+      }
+    }.filter { it.group.id == "mcpserver.events" && it.event.id == "mcp.tool.call" }
+
+    assertThat(rows).isNotEmpty()
+    // The test session sets no owner key, which is the same state an external client is in.
+    assertThat(rows.map { it.event.data["launch_origin"] }.distinct()).containsExactly("EXTERNAL_CLIENT")
+    // "undefined" is what an absent value reports as; the point is that neither key is present at all.
+    assertThat(rows.flatMap { listOf(it.event.data["agent_session_id"], it.event.data["turn_id"]) })
+      .allMatch { it == null }
+  }
+
   @Test
   fun execute_tool_reformat_file(): Unit = runBlocking(Dispatchers.Default) {
     testMcpTool(

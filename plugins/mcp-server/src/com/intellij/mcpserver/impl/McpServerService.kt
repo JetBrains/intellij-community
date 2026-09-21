@@ -104,6 +104,15 @@ open class McpServerService(val cs: CoroutineScope) {
     val localAgentId: String? = null,
     val invocationMode: McpSessionInvocationMode? = null,
   ) {
+    /**
+     * Names the chat this session serves, for `McpCallOwnerTelemetryProvider` to resolve into analytics ids.
+     *
+     * Deliberately not [localAgentId]: that one already means three things, and the two surfaces disagree on which.
+     * AIR puts a thread id there and AI Assistant an agent type, so it identifies a chat on one surface only.
+     */
+    var ownerKey: String? = null
+      private set
+
     var clientTags: Set<String> = emptySet()
       private set
 
@@ -131,7 +140,14 @@ open class McpServerService(val cs: CoroutineScope) {
       this.clientTags = clientTags.toSet()
     }
 
-    internal fun withToolFilter(toolFilter: McpToolFilter): McpSessionOptions {
+    /** Returns a copy naming the chat this session serves. A blank key is no key. */
+    fun withOwnerKey(ownerKey: String?): McpSessionOptions =
+      copy().also { it.ownerKey = ownerKey?.takeIf(String::isNotBlank) }
+
+    internal fun withToolFilter(toolFilter: McpToolFilter): McpSessionOptions =
+      copy(toolFilter = toolFilter)
+
+    private fun copy(toolFilter: McpToolFilter? = this.toolFilter): McpSessionOptions {
       return McpSessionOptions(
         commandExecutionMode = commandExecutionMode,
         toolFilter = toolFilter,
@@ -139,7 +155,7 @@ open class McpServerService(val cs: CoroutineScope) {
         invocationMode = invocationMode,
         elicitationKind = elicitationKind,
         clientTags = clientTags,
-      )
+      ).also { it.ownerKey = ownerKey }
     }
 
     @Deprecated("ABI compat with 261.22158 that doesn't have `localAgentId`", level = DeprecationLevel.HIDDEN)
@@ -510,7 +526,8 @@ open class McpServerService(val cs: CoroutineScope) {
             invocationMode = baseSessionOptions.invocationMode,
             elicitationKind = baseSessionOptions.elicitationKind,
             clientTags = clientTags,
-          ).let { options -> headerFilter?.let(options::withToolFilter) ?: options }
+          ).withOwnerKey(baseSessionOptions.ownerKey)
+            .let { options -> headerFilter?.let(options::withToolFilter) ?: options }
         }
         else {
           baseSessionOptions

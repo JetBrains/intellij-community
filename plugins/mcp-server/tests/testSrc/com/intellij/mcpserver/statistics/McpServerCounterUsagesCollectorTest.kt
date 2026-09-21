@@ -14,7 +14,7 @@ class McpServerCounterUsagesCollectorTest {
     val fields = event.getFields()
 
     assertThat(group.id).isEqualTo("mcpserver.events")
-    assertThat(group.version).isEqualTo(11)
+    assertThat(group.version).isEqualTo(12)
     assertThat(fields.map { it.name }).containsExactly(
       "tool_call_id",
       "min_severity",
@@ -49,6 +49,8 @@ class McpServerCounterUsagesCollectorTest {
 
     assertThat(event.getFields().map { it.name }).contains(
       "tool_call_id",
+      "agent_session_id",
+      "turn_id",
       "tool_name",
       "toolset",
       "outcome",
@@ -60,6 +62,20 @@ class McpServerCounterUsagesCollectorTest {
       "argument_bytes",
       "result_bytes",
     )
+  }
+
+  /**
+   * The platform caches one hash per raw string per recorder and ignores the short/full flag, so an id reported at
+   * two widths emits whichever form was computed first and fails the other field's rule. These two ids are also
+   * reported by `agent.workbench` and `llm.chat.agents`, both short, so this side has to stay short as well.
+   */
+  @Test
+  fun the_chat_and_turn_ids_are_reported_at_the_width_the_owning_groups_use() {
+    val event = McpServerCounterUsagesCollector.group.events.single { it.eventId == "mcp.tool.call" }
+    val joinIds = event.getFields().filter { it.name == "agent_session_id" || it.name == "turn_id" }
+
+    assertThat(joinIds.map { it.name }).containsExactlyInAnyOrder("agent_session_id", "turn_id")
+    assertThat(joinIds).allMatch { (it as PrimitiveEventField<*>).validationRule == listOf("{regexp#short_hash}") }
   }
 
   /**
