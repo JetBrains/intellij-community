@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.wm.ex.isIndexingActivitiesSuppressedSync
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.SmartList
@@ -32,6 +33,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.LibraryFileSetData
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.SdkFileSetData
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.core.fileIndex.impl.getEntityPointer
 import com.intellij.workspaceModel.ide.getPresentableLibraryName
 import kotlinx.coroutines.CoroutineScope
@@ -101,12 +103,32 @@ class ProjectEntityIndexingService(
   }
 
   private fun processWfiEvent(event: WorkspaceFileIndexChangedEvent): ScanningParameters {
-    val iterators = ArrayList<IndexableFilesIterator>()
-    val wfi = WorkspaceFileIndex.getInstance(project)
+    val wfi = WorkspaceFileIndexEx.getInstance(project)
 
-    val removedExclusions = event.removedExclusions.mapNotNull { wfi.findFileSet(it, true, true, false, true, true, false, true); }
-    generateIteratorsFromWFIChangedEvent(event.registeredFileSets, iterators)
-    generateIteratorsFromWFIChangedEvent(removedExclusions, iterators)
+    val fileSets = LinkedHashSet<WorkspaceFileSet>(event.registeredFileSets)
+    if (event.removedExclusions.isNotEmpty()) {
+      for (root in event.removedExclusions) {
+        wfi.findFileSet(root,
+                        true,
+                        true,
+                        false,
+                        true,
+                        true,
+                        false,
+                        true)
+          ?.let(fileSets::add)
+      }
+      // The full scan enumerates every file set the same way, and an exclusion is removed rarely.
+      val removedRoots = event.removedExclusions.toSet()
+      wfi.visitFileSets { fileSet, _ ->
+        if (fileSet.kind.isIndexable && VfsUtilCore.isUnder(fileSet.root, removedRoots)) {
+          fileSets.add(fileSet)
+        }
+      }
+    }
+
+    val iterators = ArrayList<IndexableFilesIterator>()
+    generateIteratorsFromWFIChangedEvent(fileSets, iterators)
 
     return if (iterators.isEmpty()) {
       CancelledScanning
