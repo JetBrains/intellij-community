@@ -402,6 +402,7 @@ internal class McpSessionHandler(
                 .put("mcp.client.name", clientVersion.name)
                 .put("mcp.client.version", clientVersion.version)
                 .put("mcp.call.id", additionalData.callId.toLong())
+                .put("mcp.tool_call.id", additionalData.toolCallId.value)
                 .put("mcp.session.id", session.sessionId)
                 .build()
             )
@@ -494,6 +495,7 @@ internal class McpSessionHandler(
               }
               finally {
                 McpServerCounterUsagesCollector.logMcpToolCall(
+                  toolCallId = additionalData.toolCallId,
                   descriptor = mcpTool.descriptor,
                   outcome = outcome,
                   durationMs = callMark.elapsedNow().inWholeMilliseconds,
