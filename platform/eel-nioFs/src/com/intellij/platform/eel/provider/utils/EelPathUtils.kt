@@ -34,6 +34,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.net.URI
 import java.nio.file.AccessMode
 import java.nio.file.Path
@@ -93,6 +94,7 @@ object EelPathUtils {
   }
 
   @JvmStatic
+  @Throws(IOException::class)
   fun createTemporaryDirectory(eelApi: EelApi, prefix: String = "", suffix: String = "", deleteOnExit: Boolean = false): Path {
     return runBlocking { createTemporaryDirectoryImpl(eelApi, prefix, suffix, deleteOnExit) }
   }

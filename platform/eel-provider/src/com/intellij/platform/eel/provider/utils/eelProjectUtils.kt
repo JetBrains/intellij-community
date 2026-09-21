@@ -11,6 +11,7 @@ import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.EelPathUtils.isPathLocal
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -36,6 +37,7 @@ object EelProjectUtils {
 
   @JvmStatic
   @JvmOverloads
+  @Throws(IOException::class)
   @RequiresBackgroundThread(generateAssertion = false)
   fun createTemporaryFile(project: Project?, prefix: String = "", suffix: String = "", deleteOnExit: Boolean = true): Path {
     if (project == null || isProjectLocal(project)) {
@@ -52,6 +54,7 @@ object EelProjectUtils {
 
   @JvmStatic
   @JvmOverloads
+  @Throws(IOException::class)
   @OptIn(ExperimentalPathApi::class)
   @RequiresBackgroundThread(generateAssertion = false)
   fun createTemporaryDirectory(project: Project?, prefix: String = "", suffix: String = "", deleteOnExit: Boolean = false): Path {
