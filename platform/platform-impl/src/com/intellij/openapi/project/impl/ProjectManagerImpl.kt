@@ -79,8 +79,8 @@ import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.VetoableProjectManagerListener
-import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.PreparedProjectCloseBatch
+import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.getProjectDataPathRoot
 import com.intellij.openapi.project.impl.ProjectImpl.Companion.LIGHT_PROJECT_NAME
@@ -1214,7 +1214,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
    */
   private suspend fun attachToExistingOrOpenInTheSameFrame(projectToClose: Project, options: OpenProjectTask, projectDir: Path): Boolean {
     if (options.forceReuseFrame || WelcomeUtils.noCheckOpenConfirmation(projectToClose)) {
-      return !closeAndDisposeKeepingFrame(projectToClose)
+      return !closeAndDisposeKeepingFrame(projectToClose, options.forceReuseFrame)
     }
 
     val processor = ProjectAttachProcessor.getProcessor(projectToClose, projectDir, options.project)
@@ -1262,12 +1262,17 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
   }
 
-  private suspend fun closeAndDisposeKeepingFrame(project: Project): Boolean {
+  private suspend fun closeAndDisposeKeepingFrame(project: Project, enableReuse: Boolean = true): Boolean {
     return withContext(Dispatchers.EDT) {
       try {
         val windowManager = serviceAsync<WindowManager>() as WindowManagerEx
         writeIntentReadAction {
-          windowManager.withFrameReuseEnabled().use {
+          if (enableReuse) {
+            windowManager.withFrameReuseEnabled().use {
+              closeProjectWithConfirmation(project)
+            }
+          }
+          else {
             closeProjectWithConfirmation(project)
           }
         }
