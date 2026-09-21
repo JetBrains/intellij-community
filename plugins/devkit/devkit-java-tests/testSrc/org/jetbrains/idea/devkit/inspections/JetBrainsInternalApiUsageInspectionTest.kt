@@ -7,10 +7,7 @@ import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import org.jetbrains.idea.devkit.util.PsiUtil
 
-// the quotes are escaped, because the text goes into the descr attribute of an expected highlighting tag
-private const val LINK = """<a href=\"https://plugins.jetbrains.com/docs/intellij/api-internal.html\">JetBrains internal APIs</a>"""
-
-private const val WARNING = "JetBrains Marketplace does not publish a plugin version that uses $LINK. " +
+private const val WARNING = "JetBrains Marketplace does not publish a plugin version that uses JetBrains internal APIs. " +
                             "Such APIs are not allowed to use in plugins."
 
 internal class JetBrainsInternalApiUsageInspectionTest : JavaCodeInsightFixtureTestCase() {

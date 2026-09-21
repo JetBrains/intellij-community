@@ -5,9 +5,12 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiPackage;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -154,7 +157,7 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
           return Kind.ADDITIONAL_DEPRECATED;
         }
 
-        if (effectiveClass.hasAnnotation(ApiStatus.Internal.class.getCanonicalName())) {
+        if (isMarkedWith(effectiveClass, ApiStatus.Internal.class.getCanonicalName())) {
           return Kind.INTERNAL_API;
         }
 
@@ -162,7 +165,7 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
           return Kind.SCHEDULED_FOR_REMOVAL_API;
         }
 
-        if (effectiveClass.hasAnnotation(ApiStatus.Experimental.class.getCanonicalName())) {
+        if (isMarkedWith(effectiveClass, ApiStatus.Experimental.class.getCanonicalName())) {
           return Kind.EXPERIMENTAL_API;
         }
 
@@ -201,5 +204,24 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
         return null;
       }
     };
+  }
+
+  /**
+   * Checks whether {@code psiClass} is marked with {@code annotationFqn} itself, or whether any of its containing classes
+   * or its package is marked with it.
+   * <p>
+   * Only the package of the class is taken into account, not the enclosing packages, as in the {@code UnstableApiUsage} inspection.
+   */
+  private static boolean isMarkedWith(@NotNull PsiClass psiClass, @NotNull String annotationFqn) {
+    for (PsiClass containingClass = psiClass; containingClass != null; containingClass = containingClass.getContainingClass()) {
+      if (containingClass.hasAnnotation(annotationFqn)) {
+        return true;
+      }
+    }
+
+    if (!(psiClass.getContainingFile() instanceof PsiClassOwner classOwner)) return false;
+
+    final PsiPackage psiPackage = JavaPsiFacade.getInstance(psiClass.getProject()).findPackage(classOwner.getPackageName());
+    return psiPackage != null && psiPackage.hasAnnotation(annotationFqn);
   }
 }

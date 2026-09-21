@@ -2,11 +2,17 @@
     <id>com.intellij.myPlugin</id>
     <extensionPoints>
         <extensionPoint name="internalApiEP" interface="foo.MyInternalEP" dynamic="true"/>
+        <extensionPoint name="internalPackageApiEP" interface="internal.MyEpInInternalPackage" dynamic="true"/>
+        <extensionPoint name="internalOuterClassApiEP" interface="foo.MyInternalOuter$MyNestedEP" dynamic="true"/>
         <extensionPoint name="stableApiEP" interface="foo.MyStableEP" dynamic="true"/>
     </extensionPoints>
 
     <extensions defaultExtensionNs="com.intellij">
         <error descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Internal. JetBrains Marketplace does not publish a plugin version that uses JetBrains internal APIs. Such APIs are not allowed to use in plugins."><myPlugin.internalApiEP implementation="foo.MyInternalEP" <error descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Internal. JetBrains Marketplace does not publish a plugin version that uses JetBrains internal APIs. Such APIs are not allowed to use in plugins.">internalAttribute="DoNotUse"</error>/></error>
+
+        <error descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Internal. JetBrains Marketplace does not publish a plugin version that uses JetBrains internal APIs. Such APIs are not allowed to use in plugins."><myPlugin.internalPackageApiEP implementation="internal.MyEpInInternalPackage"/></error>
+
+        <error descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Internal. JetBrains Marketplace does not publish a plugin version that uses JetBrains internal APIs. Such APIs are not allowed to use in plugins."><myPlugin.internalOuterClassApiEP implementation="foo.MyInternalOuter$MyNestedEP"/></error>
 
         <myPlugin.stableApiEP implementation="foo.MyStableEP" stableAttribute="value"/>
     </extensions>

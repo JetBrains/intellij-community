@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/jetBrainsExtensionsUsage")
-internal class JetBrainsExtensionsUsageInspectionTest : JavaCodeInsightFixtureTestCase() {
+internal class ExtensionsUsageInspectionTest : JavaCodeInsightFixtureTestCase() {
 
   override fun getBasePath(): String = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/jetBrainsExtensionsUsage"
 
@@ -45,6 +45,40 @@ internal class JetBrainsExtensionsUsageInspectionTest : JavaCodeInsightFixtureTe
       public class MyStableEP {
         @com.intellij.util.xmlb.annotations.Attribute
         public String stableAttribute;
+      }""")
+    myFixture.addClass("""
+      package foo;
+      import org.jetbrains.annotations.ApiStatus.Internal;
+
+      @Internal
+      public class MyInternalOuter {
+        public static class MyNestedEP {
+        }
+      }""")
+    myFixture.addFileToProject("internal/package-info.java", """
+      @org.jetbrains.annotations.ApiStatus.Internal
+      package internal;""".trimIndent())
+    myFixture.addClass("""
+      package internal;
+
+      public class MyEpInInternalPackage {
+      }""")
+    myFixture.addClass("""
+      package foo;
+      import org.jetbrains.annotations.ApiStatus.Experimental;
+
+      @Experimental
+      public class MyExperimentalOuter {
+        public static class MyNestedEP {
+        }
+      }""")
+    myFixture.addFileToProject("experimental/package-info.java", """
+      @org.jetbrains.annotations.ApiStatus.Experimental
+      package experimental;""".trimIndent())
+    myFixture.addClass("""
+      package experimental;
+
+      public class MyEpInExperimentalPackage {
       }""")
   }
 
