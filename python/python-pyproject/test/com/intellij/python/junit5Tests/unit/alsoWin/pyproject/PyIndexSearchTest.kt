@@ -1,5 +1,6 @@
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject
 
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.pyproject.PY_PROJECT_TOML
@@ -69,7 +70,8 @@ internal class PyIndexSearchTest {
       Files.createSymbolicLink(root.resolve("link"), root.resolve("dir"))
       true
     }
-    catch (_: IOException) {
+    catch (e: IOException) {
+      if (!SystemInfoRt.isWindows) throw e
       false // Windows refuses without the privilege.
     }
 
