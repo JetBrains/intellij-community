@@ -6,8 +6,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.editor.impl.RangeMarkerImpl
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
@@ -64,7 +64,7 @@ internal class TerminalBlocksDecorator(
         decorations[block]?.let {
           it.backgroundHighlighter.isGreedyToRight = false
           it.cornersHighlighter.isGreedyToRight = false
-          (it.bottomInlay as RangeMarkerImpl).isStickingToRight = false
+          (it.bottomInlay as RangeMarkerEx).setStickingToRight(false)
         }
       }
 
