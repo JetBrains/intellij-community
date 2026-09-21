@@ -3,6 +3,7 @@ package com.intellij.driver.sdk
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
+import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.Window
 
@@ -35,5 +36,7 @@ fun Driver.guessOpenedProject(): Project? {
 }
 
 fun Driver.hasVisibleWindow(): Boolean {
-  return utility(Window::class).getWindows().any { window -> window.isShowing() }
+  return withContext(OnDispatcher.EDT) {
+    utility(Window::class).getWindows().any { window -> window.isShowing() }
+  }
 }
