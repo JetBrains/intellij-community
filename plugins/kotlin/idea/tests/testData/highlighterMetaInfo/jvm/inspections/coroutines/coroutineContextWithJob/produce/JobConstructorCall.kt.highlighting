@@ -9,6 +9,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalCoroutinesApi
 fun CoroutineScope.test() {
-    produce(<!HIGHLIGHTING("severity='WARNING'; descr='Passing 'CoroutineContext' with a 'Job' to 'produce' builder can lead to structured concurrency violations'")!>Job()<!>) { send("Hello") }
+    <!HIGHLIGHTING("severity='WARNING'; descr='[DEPRECATION]'")!>produce<!>(<!HIGHLIGHTING("severity='WARNING'; descr='Passing 'CoroutineContext' with a 'Job' to 'produce' builder can lead to structured concurrency violations'")!>Job()<!>) { send("Hello") }
 }
 // TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutineContextWithJobInspection
