@@ -666,6 +666,10 @@ class GHGQLDeserializationAssumptionsTest {
     val s: String?,
   )
 
+  data class BooleanHolder(
+    val b: Boolean,
+  )
+
   @Test
   fun `deserializing a missing value instead of a list is fine`() {
     val result = assertDoesNotThrow { mapper.readValue("""{}""", ListHolder::class.java) }
@@ -752,6 +756,20 @@ class GHGQLDeserializationAssumptionsTest {
   fun `deserializing an absent field to nullable string`() {
     val result = assertDoesNotThrow { mapper.readValue("""{}""", StringHolderWithNullable::class.java) }
     assertNull(result.s)
+  }
+
+  // Jackson 3 enables FAIL_ON_NULL_FOR_PRIMITIVES by default, which would make an absent primitive a required creator property.
+  // The GitHub mapper keeps the Jackson 2 behavior, see IJPL-256217.
+  @Test
+  fun `deserializing an absent field to a primitive boolean yields false`() {
+    val result = assertDoesNotThrow { mapper.readValue("""{}""", BooleanHolder::class.java) }
+    assertThat(result.b).isFalse()
+  }
+
+  @Test
+  fun `deserializing a null to a primitive boolean yields false`() {
+    val result = assertDoesNotThrow { mapper.readValue("""{"b":null}""", BooleanHolder::class.java) }
+    assertThat(result.b).isFalse()
   }
 }
 

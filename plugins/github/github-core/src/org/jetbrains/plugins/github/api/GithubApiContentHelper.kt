@@ -45,6 +45,10 @@ object GithubApiContentHelper {
     .defaultDateFormat(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX"))
     .defaultTimeZone(TimeZone.getDefault())
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    // Jackson 3 enables this feature by default. With it, the Kotlin module marks every non-nullable primitive constructor parameter
+    // as required, and a REST response that omits such a field fails to deserialize. Keep the Jackson 2 behavior: an absent
+    // primitive gets its default value (IJPL-256217).
+    .configure(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES, false)
     .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
     .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
     .changeDefaultPropertyInclusion { JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.NON_NULL) }

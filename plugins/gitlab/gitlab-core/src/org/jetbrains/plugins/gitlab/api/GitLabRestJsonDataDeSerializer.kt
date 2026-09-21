@@ -31,6 +31,10 @@ object GitLabRestJsonDataDeSerializer : JsonDataSerializer, JsonDataDeserializer
   internal fun gitlabJacksonMapperBuilder(): JsonMapper.Builder =
     jacksonMapperBuilder { disable(KotlinFeature.StrictNullChecks) }
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+      // Jackson 3 enables this feature by default. With it, the Kotlin module marks every non-nullable primitive constructor parameter
+      // as required, and GitLab omits such fields (e.g. `mergeable` in the merge request list). Keep the Jackson 2 behavior: an absent
+      // primitive gets its default value (IJPL-256217).
+      .configure(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES, false)
       .configure(EnumFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE, true)
       .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
       .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
