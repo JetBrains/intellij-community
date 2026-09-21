@@ -238,7 +238,6 @@ class _SpecialForm(_Final):
     def __ror__(self, other: Any) -> _SpecialForm: ...
 
 Union: _SpecialForm
-Protocol: _SpecialForm
 Callable: _SpecialForm
 Type: _SpecialForm
 NoReturn: _SpecialForm
@@ -472,6 +471,11 @@ class _Generic:
 
 Generic: type[_Generic]
 
+@type_check_only
+class _Protocol: ...
+
+Protocol: type[_Protocol]
+
 class _ProtocolMeta(ABCMeta):
     if sys.version_info >= (3, 12):
         def __init__(cls, *args: Any, **kwargs: Any) -> None: ...
@@ -603,10 +607,8 @@ class Awaitable(Protocol[_T_co]):
 _SendT_nd_contra = TypeVar("_SendT_nd_contra", contravariant=True)
 _ReturnT_nd_co = TypeVar("_ReturnT_nd_co", covariant=True)
 
-class Coroutine(Awaitable[_ReturnT_nd_co], Generic[_YieldT_co, _SendT_nd_contra, _ReturnT_nd_co]):
-    __name__: str
-    __qualname__: str
-
+@runtime_checkable
+class Coroutine(Awaitable[_ReturnT_nd_co], Protocol[_YieldT_co, _SendT_nd_contra, _ReturnT_nd_co]):
     @abstractmethod
     def send(self, value: _SendT_nd_contra, /) -> _YieldT_co: ...
 

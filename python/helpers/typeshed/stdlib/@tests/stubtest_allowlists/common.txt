@@ -396,7 +396,6 @@ typing.type_check_only  # typing decorator that is not available at runtime
 # Details of runtime definition don't need to be in stubs
 typing._Final
 typing._Final.__init_subclass__
-typing\.Protocol
 typing(_extensions)?\._TypedDict
 typing(_extensions)?\.Any.*
 typing(_extensions)?\.TypedDict

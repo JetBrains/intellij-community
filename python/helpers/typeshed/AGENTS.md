@@ -32,6 +32,12 @@ To run all tests:
 
 See `tests/README.md` for more information about running tests.
 
+## Issues
+
+When also opening a pull request, only open issues for complex cases where
+more discussion is expected. In simple or uncontroversial cases, opening only
+a pull request is preferred.
+
 ## Pull Requests
 
 When opening pull requests, do the following:
@@ -43,5 +49,7 @@ When opening pull requests, do the following:
 - Use a concise PR description:
   - Either link to an issue or describe the problem briefly, never both.
   - Limit the summary of changes to one sentence, unless the PR is complex.
+  - Include links to the "upstream" implementation code and/or API
+    documentation if possible.
   - Don't include a testing plan.
 - Add the name of the agent used to the PR description.
