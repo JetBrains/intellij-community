@@ -2,21 +2,14 @@
 package com.intellij.openapi.editor.impl.caret
 
 import com.intellij.openapi.editor.Caret
-import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.impl.caret.model.CaretAnimationSettings
-import com.intellij.openapi.editor.impl.caret.model.CaretEasing
 import com.intellij.openapi.editor.impl.caret.model.CaretPlacement
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.time.Duration.Companion.milliseconds
-
-/// MARK: what the animation asks the editor for
 
 /**
  * Measures where every caret has to be painted right now.
@@ -25,23 +18,6 @@ import kotlin.time.Duration.Companion.milliseconds
 internal fun EditorImpl.caretPlacements(): List<CaretPlacement> {
   return caretModel.allCarets.map { caret -> caretPlacement(caret) }
 }
-
-internal fun EditorImpl.caretAnimationSettings(): CaretAnimationSettings {
-  val configuredBlinkPeriod = settings.caretBlinkPeriod.milliseconds
-  val blinkPeriod = configuredBlinkPeriod.coerceAtLeast(MIN_BLINK_PERIOD)
-  val blinksSmoothly = !shouldDisableAnimations() && settings.isSmoothCaretBlinking
-  val configuredMoveDuration = Registry.intValue("editor.smooth.caret.duration", 120)
-  val moveDurationMs = configuredMoveDuration.coerceAtLeast(1)
-  return CaretAnimationSettings(
-    blinkPeriod = blinkPeriod,
-    isBlinking = settings.isBlinkCaret,
-    blinksSmoothly = blinksSmoothly,
-    easing = caretEasing(),
-    moveDuration = moveDurationMs.milliseconds,
-  )
-}
-
-/// MARK: geometry details
 
 @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun EditorImpl.caretPlacement(caret: Caret): CaretPlacement {
@@ -104,19 +80,3 @@ private val Caret.visualColumnAdjustment: Int
       0
     }
   }
-
-/// MARK: settings details
-
-private fun EditorImpl.caretEasing(): CaretEasing {
-  return when (settings.caretEasing) {
-    EditorSettings.CaretEasing.SNAPPY, null -> CaretEasing.SNAPPY
-    EditorSettings.CaretEasing.GLIDING -> CaretEasing.GLIDING
-  }
-}
-
-/// MARK: constants
-
-/**
- * A blink faster than this is a strobe rather than a caret, so the configured period is floored here.
- */
-private val MIN_BLINK_PERIOD = 10.milliseconds

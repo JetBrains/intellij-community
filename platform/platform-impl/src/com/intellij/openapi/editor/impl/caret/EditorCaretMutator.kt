@@ -5,13 +5,18 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.caret.model.CaretAnimationSettings
 import com.intellij.openapi.editor.impl.caret.model.CaretCursor
+import com.intellij.openapi.editor.impl.caret.model.CaretEasing
 import com.intellij.openapi.editor.impl.caret.model.CaretFrameInterval
 import com.intellij.openapi.editor.impl.caret.model.CaretTick
 import com.intellij.openapi.editor.impl.view.animation.AnimationClock
 import com.intellij.openapi.editor.impl.view.animation.AnimationTimeMark
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.DrawUtil.isSimplifiedUI
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 //   caretMoved() |> state.updateAndGet { retarget } |> ensureLoop()
 //                                                        v
@@ -45,37 +51,13 @@ internal class EditorCaretMutator internal constructor(
   private val coroutineScope: CoroutineScope = editor.coroutineScope
   private val state = MutableStateFlow(CaretAnimationState.initial())
   private val settings = AtomicReference(editor.caretAnimationSettings())
+  private val updateCursor = AtomicBoolean(false)
+  private val mouseIsInDrag = AtomicBoolean(false)
+  private val gainedFocus = AtomicBoolean(false)
   private val disposed = AtomicBoolean(false)
 
   init {
     editor.document.addDocumentListener(BulkUpdateListener(), this)
-  }
-
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun caretMoved() {
-    val placements = editor.caretPlacements()
-    val isCaretShown = editor.isCaretShown(caretCursor())
-    val repaintMetrics = editor.view.caretRepaintMetrics
-    val tick = tick(CaretFrameInterval.MOVEMENT)
-    val next = state.updateAndGet {
-      it.retarget(placements, tick, isCaretShown, repaintMetrics)
-    }
-    if (next.isMotionSettled()) {
-      advanceNow(tick)
-    } else {
-      ensureLoop()
-    }
-  }
-
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun caretMovedImmediately() {
-    val placements = editor.caretPlacements()
-    val repaintMetrics = editor.view.caretRepaintMetrics
-    val tick = tick(CaretFrameInterval.MOVEMENT)
-    state.update {
-      it.snapTo(placements, tick, repaintMetrics)
-    }
-    advanceNow(tick)
   }
 
   /**
@@ -107,6 +89,9 @@ internal class EditorCaretMutator internal constructor(
   }
 
   fun setVisible(visible: Boolean): Boolean {
+    if (visible) {
+      gainedFocus.set(true)
+    }
     val previousState = state.getAndUpdate {
       it.withShown(visible, AnimationClock.markAnimationNow())
     }
@@ -131,19 +116,25 @@ internal class EditorCaretMutator internal constructor(
     ensureLoop()
   }
 
-  /**
-   * Shows the caret at full opacity, without restarting the quiet period.
-   */
-  fun showFullyOpaque() {
-    state.update(CaretAnimationState::showFullyOpaque)
+  fun setMouseIsInDrag(value: Boolean) {
+    mouseIsInDrag.set(value)
   }
 
-  /**
-   * Marks the caret as active now, which holds the blink off for one quiet period.
-   */
-  fun recordActivity() {
-    state.update {
-      it.withActivityAt(AnimationClock.markAnimationNow())
+  fun updateCaretCursor() {
+    updateCursor.set(true)
+    var repaintNeeded = false
+    val newState = state.updateAndGet {
+      if (it.caretCursor().isShown()) {
+        // marks the caret as active now, which holds the blink off for one quiet period
+        it.withActivityAt(AnimationClock.markAnimationNow())
+      } else {
+        // shows the caret at full opacity, without restarting the quiet period
+        repaintNeeded = true
+        it.showFullyOpaque()
+      }
+    }
+    if (repaintNeeded) {
+      repaint(newState.caretCursor())
     }
   }
 
@@ -152,6 +143,42 @@ internal class EditorCaretMutator internal constructor(
     state.update {
       it.withRunning(false)
     }
+  }
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun caretMoved() {
+    if (!editor.isPurePaintingMode && updateCursor.getAndSet(false)) {
+      if (shouldSetCursorPositionImmediately()) {
+        caretMovedImmediately()
+      } else {
+        caretMovedAnimated()
+      }
+    }
+  }
+
+  private fun caretMovedAnimated() {
+    val placements = editor.caretPlacements()
+    val isCaretShown = editor.isCaretShown(caretCursor())
+    val repaintMetrics = editor.view.caretRepaintMetrics
+    val tick = tick(CaretFrameInterval.MOVEMENT)
+    val next = state.updateAndGet {
+      it.retarget(placements, tick, isCaretShown, repaintMetrics)
+    }
+    if (next.isMotionSettled()) {
+      advanceNow(tick)
+    } else {
+      ensureLoop()
+    }
+  }
+
+  private fun caretMovedImmediately() {
+    val placements = editor.caretPlacements()
+    val repaintMetrics = editor.view.caretRepaintMetrics
+    val tick = tick(CaretFrameInterval.MOVEMENT)
+    state.update {
+      it.snapTo(placements, tick, repaintMetrics)
+    }
+    advanceNow(tick)
   }
 
   /**
@@ -294,6 +321,39 @@ internal class EditorCaretMutator internal constructor(
     )
   }
 
+  private fun shouldSetCursorPositionImmediately(): Boolean {
+    return gainedFocus.getAndSet(false) ||
+           mouseIsInDrag.get() ||
+           !editor.settings.isSmoothCaretMovement() ||
+           shouldDisableAnimations()
+  }
+
+  private fun EditorImpl.caretAnimationSettings(): CaretAnimationSettings {
+    val configuredBlinkPeriod = settings.caretBlinkPeriod.milliseconds
+    val blinkPeriod = configuredBlinkPeriod.coerceAtLeast(MIN_BLINK_PERIOD)
+    val blinksSmoothly = !shouldDisableAnimations() && settings.isSmoothCaretBlinking
+    val configuredMoveDuration = Registry.intValue("editor.smooth.caret.duration", 120)
+    val moveDurationMs = configuredMoveDuration.coerceAtLeast(1)
+    return CaretAnimationSettings(
+      blinkPeriod = blinkPeriod,
+      isBlinking = settings.isBlinkCaret,
+      blinksSmoothly = blinksSmoothly,
+      easing = caretEasing(),
+      moveDuration = moveDurationMs.milliseconds,
+    )
+  }
+
+  private fun EditorImpl.caretEasing(): CaretEasing {
+    return when (settings.caretEasing) {
+      EditorSettings.CaretEasing.SNAPPY, null -> CaretEasing.SNAPPY
+      EditorSettings.CaretEasing.GLIDING -> CaretEasing.GLIDING
+    }
+  }
+
+  private fun shouldDisableAnimations(): Boolean {
+    return isSimplifiedUI()
+  }
+
   private inner class BulkUpdateListener : DocumentListener {
     override fun bulkUpdateStarting(document: Document) {
       val tick = tick(CaretFrameInterval.MOVEMENT)
@@ -307,5 +367,10 @@ internal class EditorCaretMutator internal constructor(
   companion object {
     private val LOG = logger<EditorCaretMutator>()
     private val DISPATCHER: CoroutineContext = Dispatchers.Default.limitedParallelism(1, "EditorCaretMutator")
+
+    /**
+     * A blink faster than this is a strobe rather than a caret, so the configured period is floored here.
+     */
+    private val MIN_BLINK_PERIOD = 10.milliseconds
   }
 }

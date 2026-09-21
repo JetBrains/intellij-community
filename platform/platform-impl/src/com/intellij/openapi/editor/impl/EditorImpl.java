@@ -175,7 +175,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.DirtyUI;
-import com.intellij.ui.DrawUtil;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IslandsState;
@@ -300,7 +299,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TooManyListenersException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -451,7 +449,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myKeepSelectionOnMousePress;
   private boolean myFocusKeepSelectionOnMousePress;
 
-  private boolean myUpdateCursor;
   private final EditorScrollingPositionKeeper myScrollingPositionKeeper;
   private boolean myRestoreScrollingPosition;
   private int myRangeToRepaintStart;
@@ -519,10 +516,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   // Reset on mouse press event.
   private boolean myCurrentDragIsSubstantial;
   private boolean myForcePushHappened;
-  private boolean myMouseIsInDrag;
   private boolean myIsCurrentlyInFocus = true;
   private volatile boolean myIsInputFocusOwner;
-  private final AtomicBoolean gainedFocus = new AtomicBoolean(false);
   private final MyFocusListener myFocusListener = new MyFocusListener();
 
   private @Nullable VisualPosition mySuppressedByBreakpointsLastPressPosition;
@@ -908,7 +903,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                               " opposite=" + (e.getOppositeComponent() == null ? "null" : e.getOppositeComponent().getClass().getSimpleName()));
       }
       caretMutator.setVisible(true);
-      gainedFocus.set(true);
       for (Caret caret : myCaretModel.getAllCarets()) {
         int caretLine = caret.getLogicalPosition().line;
         repaintLines(caretLine, caretLine);
@@ -2652,14 +2646,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    if (myUpdateCursor && !myPurePaintingMode) {
-      if (shouldSetCursorPositionImmediately()) {
-        caretMutator.caretMovedImmediately();
-      } else {
-        caretMutator.caretMoved();
-      }
-      myUpdateCursor = false;
-    }
+    caretMutator.caretMoved();
 
     EditorPainterCache cache = canPaintFromContentAnimationCache() ? myContentAnimationCache : null;
     myView.paint(g, cache);
@@ -3233,7 +3220,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                            || !myLastPressedOnGutter // Small drags aren't a problem in the editor, only on the gutter.
                            || Math.abs(myLastMousePressedPoint.x - point.x) >= sensitivity
                            || Math.abs(myLastMousePressedPoint.y - point.y) >= sensitivity;
-      myMouseIsInDrag = myMouseDragStarted;
+      setMouseIsInDrag(myMouseDragStarted);
       if (!myMouseDragStarted) {
         return;
       }
@@ -3598,30 +3585,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void updateCaretCursor() {
-    myUpdateCursor = true;
-    if (caretMutator.caretCursor().isShown()) {
-      caretMutator.recordActivity();
-    }
-    else {
-      caretMutator.showFullyOpaque();
-      repaintCaretCursor();
-    }
+    caretMutator.updateCaretCursor();
   }
 
   private void repaintCaretCursor() {
     myView.repaintCarets(caretMutator.caretCursor());
   }
 
-  @ApiStatus.Internal
-  public boolean shouldDisableAnimations() {
-    return DrawUtil.isSimplifiedUI();
-  }
-
-  private boolean shouldSetCursorPositionImmediately() {
-    return gainedFocus.getAndSet(false) ||
-           myMouseIsInDrag ||
-           !getSettings().isSmoothCaretMovement() ||
-           shouldDisableAnimations();
+  private void setMouseIsInDrag(boolean value) {
+    caretMutator.setMouseIsInDrag(value);
   }
 
   @Override
@@ -4634,7 +4606,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myMousePressArea = null;
       if (MOUSE_PRESS_LOG.isTraceEnabled()) {
         MOUSE_PRESS_LOG.trace("[press #" + myMousePressSeq + "] CLEAR by mouseReleased, prev=" + myLastMousePressedLocation +
-                              " source=" + e.getSource().getClass().getSimpleName() + " inDrag=" + myMouseIsInDrag);
+                              " source=" + e.getSource().getClass().getSimpleName());
       }
       myLastMousePressedLocation = null;
       Runnable processMouseReleased = () -> {
@@ -4670,7 +4642,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       if (MOUSE_PRESS_LOG.isTraceEnabled() && myLastMousePressedLocation != null) {
         MOUSE_PRESS_LOG.trace("[press #" + myMousePressSeq + "] mouseExited while pressed, pressedLoc=" + myLastMousePressedLocation +
-                              " inDrag=" + myMouseIsInDrag + " source=" + e.getSource().getClass().getSimpleName());
+                              " source=" + e.getSource().getClass().getSimpleName());
       }
       runMouseExitedCommand(e);
       myGutterComponent.mouseExited(e);
@@ -4699,7 +4671,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myMouseDragStarted = false;
       myDragStarted = false;
       myDragSelectionStarted = false;
-      myMouseIsInDrag = false;
+      setMouseIsInDrag(false);
       myForcePushHappened = false;
       clearDnDContext();
 
@@ -4758,7 +4730,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void runMouseReleasedCommand(@NotNull MouseEvent e) {
-      myMouseIsInDrag = false;
+      setMouseIsInDrag(false);
       myMultiSelectionInProgress = false;
       myDragOnGutterSelectionStartLine = -1;
       myScrollingTimer.stop();
