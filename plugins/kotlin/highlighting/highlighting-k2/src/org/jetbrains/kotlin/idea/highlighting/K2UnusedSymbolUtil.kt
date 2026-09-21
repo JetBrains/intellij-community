@@ -74,6 +74,7 @@ import org.jetbrains.kotlin.asJava.toPsiParameters
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
@@ -844,14 +845,20 @@ object K2UnusedSymbolUtil {
     fun createQuickFixes(declaration: KtNamedDeclaration): List<IntentionAction> {
         if (declaration is KtParameter) {
             if (declaration.isLoopParameter) {
-                return emptyList()
+                return when {
+                    declaration.name == "_" -> {
+                        emptyList()
+                    }
+                    declaration.languageVersionSettings.supportsFeature(LanguageFeature.UnnamedLocalVariables) -> {
+                        listOf(RenameElementFix(declaration, "_"))
+                    }
+                    else -> {
+                        emptyList()
+                    }
+                }
             }
             if (declaration.isCatchParameter) {
-                return if (declaration.name == "_") {
-                    emptyList()
-                } else {
-                    listOf(RenameElementFix(declaration, "_"))
-                }
+                return listOf(RenameElementFix(declaration, "_"))
             }
             val ownerFunction = declaration.ownerFunction
             if (ownerFunction is KtPropertyAccessor && ownerFunction.isSetter) {

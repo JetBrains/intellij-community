@@ -13501,6 +13501,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/renameToUnderscore/lambdaParameterNoRemoveParameter.kt");
         }
 
+        @TestMetadata("loopParameter.kt")
+        public void testLoopParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/renameToUnderscore/loopParameter.kt");
+        }
+
         @TestMetadata("noActionForCommonFunction.kt")
         public void testNoActionForCommonFunction() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/renameToUnderscore/noActionForCommonFunction.kt");
