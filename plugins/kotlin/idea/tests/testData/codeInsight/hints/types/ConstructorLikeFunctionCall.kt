@@ -1,7 +1,7 @@
 // MODE: all
 package a
 
-val f1/*<# : |[b.Foo:kotlin.fqn.class]Foo #>*/ = Foo()
+val f1 = Foo()
 val f2/*<# : |[b.Foo:kotlin.fqn.class]Foo #>*/ = foo()
 
 fun Foo(): b.Foo = b.Foo()

@@ -4,5 +4,5 @@ fun foo() {
 
     val c = object : A() {}
     val b = A()
-    val d/*<# : |(|) |->| |[foo.A:kotlin.fqn.class]A #>*/ = { A() }
+    val d/*<# : |(|) -> |[LocalClass.kt:40]A #>*/ = { A() }
 }

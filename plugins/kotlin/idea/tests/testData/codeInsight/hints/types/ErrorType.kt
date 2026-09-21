@@ -1,3 +1,3 @@
 // MODE: all
 // NO_HINTS
-val x = arrayListOf<>()
+val x/*<# : |[kotlin.collections.ArrayList:kotlin.fqn.class]ArrayList|<|> #>*/ = arrayListOf<>()

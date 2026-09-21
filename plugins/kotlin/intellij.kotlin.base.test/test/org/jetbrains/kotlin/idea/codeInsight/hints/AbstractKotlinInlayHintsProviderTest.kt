@@ -47,12 +47,8 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
     }
 
     open fun doTest(testPath: String) {
-        val defaultFile = File(testPath)
-        val k2File = File(testPath.replace(".kt", ".k2.kt"))
-            .takeIf(File::exists)
-
-        configureDependencies(defaultFile)
-        val file = k2File ?: defaultFile
+        val file = File(testPath)
+        configureDependencies(file)
         IgnoreTests.runTestIfNotDisabledByFileDirective(file.toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2) {
             doTestProviders(file = file)
         }

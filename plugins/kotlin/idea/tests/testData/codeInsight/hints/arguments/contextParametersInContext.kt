@@ -4,7 +4,7 @@ context(n: Int)
 fun foo(): Int = n
 
 fun bar(){
-    context(<hint text="with:"/>0) {
-        foo()
+    context(/*<# [jar://kotlin-stdlib-sources.jar!/commonMain/kotlin/contextParameters/Context.kt:*]with| = #>*/0) {
+        foo(/*<# [contextParametersInContext.kt:77]n| = |[contextParametersInContext.kt:131]context| «  #>*/)
     }
 }

@@ -8,5 +8,5 @@ fun fooCtx(v: Int) {}
 
 context(ctx: Context2, ctx1: Context1)
 fun example() {
-    fooCtx(<hint text="v:"/>1)
+    fooCtx(/*<# [contextParametersUnusedMultipleWithArgument.kt:145]v| = #>*/1)
 }

@@ -3,6 +3,6 @@ import java.util.Collections
 
 typealias A = kotlin.Int
 fun m(l: java.util.List<A>) {
-    val x/*<# : |A! #>*/ = l[0]
+    val x/*<# : |[A:kotlin.fqn.class]A|! #>*/ = l[0]
 }
-val singleton/*<# : |(Mutable)Set<String!> #>*/ = Collections.singleton("scotch")
+val singleton/*<# : |[kotlin.collections.Set:kotlin.fqn.class]Set|<|[kotlin.String:kotlin.fqn.class]String|!|> #>*/ = Collections.singleton("scotch")
