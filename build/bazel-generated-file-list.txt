@@ -1330,6 +1330,7 @@ plugins/grazie/markdown
 plugins/grazie/properties
 plugins/grazie/src
 plugins/grazie/src/test
+plugins/grazie/todo
 plugins/grazie/xml
 plugins/grazie/yaml
 plugins/groovy

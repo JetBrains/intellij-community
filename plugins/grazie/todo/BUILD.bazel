@@ -1,0 +1,71 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.grazie.todo` start
+content_module_jar(module = ":todo")
+### auto-generated section `dev intellij.grazie.todo` end
+
+### auto-generated section `build intellij.grazie.todo` start
+jvm_library(
+    name = "todo",
+    srcs = glob(
+        [
+            "src/main/kotlin/**/*.kt",
+            "src/main/kotlin/**/*.java",
+            "src/main/kotlin/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grazie.todo",
+    resource_strip_prefix = "src/main/resources",
+    resources = glob(
+        ["src/main/resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/grazie/src:core",
+        "//platform/core-api:core",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/indexing-api:indexing",
+        "//platform/projectModel-api:projectModel",
+        "//platform/todo",
+        "//platform/util",
+        "//libraries/jetbrains/annotations",
+    ],
+)
+
+jvm_library(
+    name = "todo_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grazie.todo",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":todo",
+        "//plugins/grazie/src:core_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-ex:editor-ex_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/todo:todo_test_lib",
+        "//platform/util:util_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+    ],
+)
+### auto-generated section `build intellij.grazie.todo` end
+
+### auto-generated section `iml intellij.grazie.todo` start
+exports_files(
+    [
+        "intellij.grazie.todo.iml",
+        "src/main/resources/intellij.grazie.todo.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.grazie.todo` end

@@ -29,6 +29,7 @@
 
   <content namespace="jetbrains">
     <module name="intellij.grazie.core" loading="embedded"/>
+    <module name="intellij.grazie.todo" loading="optional"/>
     <module name="intellij.grazie.java"/>
     <module name="intellij.grazie.json"/>
     <module name="intellij.grazie.markdown"/>

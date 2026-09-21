@@ -1,0 +1,17 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.grazie.core"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.todo"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij.grazie">
+    <problemFilter language="" implementationClass="com.intellij.grazie.todo.TodoCommentProblemFilter"/>
+  </extensions>
+</idea-plugin>

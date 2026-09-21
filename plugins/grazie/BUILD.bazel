@@ -6,6 +6,7 @@ dev_dist_plugin(
     content_modules = [
         # do not sort,
         "intellij.grazie.core",
+        "intellij.grazie.todo",
         "intellij.grazie.java",
         "intellij.grazie.json",
         "intellij.grazie.markdown",
@@ -24,6 +25,7 @@ dev_dist_plugin(
         "intellij.grazie.json",
         "intellij.grazie.markdown",
         "intellij.grazie.properties",
+        "intellij.grazie.todo",
         "intellij.grazie.xml",
         "intellij.grazie.yaml",
         "intellij.libraries.ai.grazie.rule.engine",
@@ -117,6 +119,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//plugins/grazie/src:core",
+        "//plugins/grazie/todo",
         "//plugins/grazie/java",
         "//plugins/grazie/json",
         "//plugins/grazie/markdown",
@@ -144,6 +147,7 @@ jvm_library(
         # do not sort,
         ":grazie",
         "//plugins/grazie/src:core_test_lib",
+        "//plugins/grazie/todo:todo_test_lib",
         "//plugins/grazie/java:java_test_lib",
         "//plugins/grazie/json:json_test_lib",
         "//plugins/grazie/markdown:markdown_test_lib",
