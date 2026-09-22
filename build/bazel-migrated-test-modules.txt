@@ -167,6 +167,7 @@ intellij.platform.tests
 intellij.platform.threadDumpParser.tests
 intellij.platform.uast.tests
 intellij.platform.util.coroutines.tests
+intellij.platform.util.nanoxml.tests
 intellij.platform.util.progress.tests
 intellij.platform.util.rt.tests
 intellij.platform.util.tests

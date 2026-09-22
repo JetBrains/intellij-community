@@ -739,6 +739,8 @@ jvm_library(
         "//platform/util/coroutines:coroutines-tests_test_lib",
         "//platform/util/progress:progress-tests",
         "//platform/util/progress:progress-tests_test_lib",
+        "//platform/util/nanoxml:nanoxml-tests",
+        "//platform/util/nanoxml:nanoxml-tests_test_lib",
         "//platform/testFramework/junit5.jimfs",
         "//platform/testFramework/junit5.jimfs:junit5.jimfs_test_lib",
         "//platform/whatsNew",
