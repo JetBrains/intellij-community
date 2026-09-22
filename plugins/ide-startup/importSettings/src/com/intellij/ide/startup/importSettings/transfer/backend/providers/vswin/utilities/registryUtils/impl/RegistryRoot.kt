@@ -1,16 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.providers.vswin.utilities.registryUtils.impl
 
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.registryUtils.IRegistryKey
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.registryUtils.IRegistryRoot
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.system.WindowsRegistry
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.throwIfNotAlive
-import com.sun.jna.platform.win32.Advapi32
-import com.sun.jna.platform.win32.Advapi32Util
-import com.sun.jna.platform.win32.WinReg
 
-typealias WinRegAction<T> = (WinReg.HKEY) -> T
+typealias WinRegAction<T> = (WindowsRegistry.Key) -> T
 
 private val logger = logger<RegistryKey>()
 class RegistryKey internal constructor(val key: String, private val registryRoot: RegistryRoot): IRegistryKey {
@@ -22,42 +20,45 @@ class RegistryKey internal constructor(val key: String, private val registryRoot
         return RegistryKey("$key\\$child", registryRoot)
     }
 
-    override fun getStringValue(value: String): String? = tryExecuteWithHKEY(key, value) {
-        if (!Advapi32Util.registryValueExists(it, key, value)) {
-            return@tryExecuteWithHKEY null
-        }
-        return@tryExecuteWithHKEY Advapi32Util.registryGetStringValue(it, key, value)
+    override fun getStringValue(value: String): String? = tryExecuteWithKey(key, value) { root ->
+        root.open(key)?.use { it.getString(value) }
     }
-    override fun getKeys(): List<String>? = tryExecuteWithHKEY(key) { Advapi32Util.registryGetKeys(it, key) }?.toList()
-    override fun getValues(): Map<String, Any>? = tryExecuteWithHKEY(key) {
-      if (!Advapi32Util.registryKeyExists(it, key)) return@tryExecuteWithHKEY null
-      Advapi32Util.registryGetValues(it, key)
-    }
+    override fun getKeys(): List<String>? = tryExecuteWithKey(key) { root -> root.open(key)?.use { it.subKeys().toList() } }
+    override fun getValues(): Map<String, Any>? = tryExecuteWithKey(key) { root -> root.open(key)?.use { it.values() } }
 
-    private fun <T> tryExecuteWithHKEY(vararg args: String, action: WinRegAction<T>): T? {
-        return registryRoot.executeWithHKEY {
+    private fun <T> tryExecuteWithKey(vararg args: String, action: WinRegAction<T?>): T? {
+        return registryRoot.executeWithKey {
             try {
-                return@executeWithHKEY action(it)
+                return@executeWithKey action(it)
             }
-            catch (t: com.sun.jna.platform.win32.Win32Exception) {
+            catch (t: WindowsRegistry.RegistryException) {
                 logger.info("registry arguments: ${args.joinToString()}")
                 logger.warn("Failed to work with registry", t)
-                return@executeWithHKEY null
+                return@executeWithKey null
             }
         }
     }
 }
 
-open class RegistryRoot(private val hKey: WinReg.HKEY, private val lifetime: Lifetime) : IRegistryRoot {
+/** A registry root that owns an open [WindowsRegistry.Key]. The key closes when the [lifetime] ends. */
+open class RegistryRoot(private val key: WindowsRegistry.Key, private val lifetime: Lifetime) : IRegistryRoot {
+    companion object {
+        /** The `HKEY_CURRENT_USER` hive. */
+        fun currentUser(lifetime: Lifetime): RegistryRoot {
+            val key = requireNotNull(WindowsRegistry.Key.open(WindowsRegistry.Hive.CURRENT_USER, "")) { "HKEY_CURRENT_USER is not available" }
+            return RegistryRoot(key, lifetime)
+        }
+    }
+
     init {
       lifetime.onTermination {
           closeRoot()
       }
     }
 
-    fun <T> executeWithHKEY(action: WinRegAction<T>): T {
+    fun <T> executeWithKey(action: WinRegAction<T>): T {
         lifetime.throwIfNotAlive()
-        return action(hKey)
+        return action(key)
     }
 
     override fun fromKey(key: String): IRegistryKey {
@@ -65,6 +66,6 @@ open class RegistryRoot(private val hKey: WinReg.HKEY, private val lifetime: Lif
     }
 
     protected open fun closeRoot() {
-        Advapi32.INSTANCE.RegCloseKey(hKey)
+        key.close()
     }
 }

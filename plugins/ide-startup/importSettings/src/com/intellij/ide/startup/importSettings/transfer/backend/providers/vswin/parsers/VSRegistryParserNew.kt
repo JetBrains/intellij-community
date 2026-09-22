@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers
 
 import com.intellij.ide.RecentProjectMetaInfo
@@ -18,9 +18,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.util.createDocumentBuilder
 import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.system.WindowsRegistry
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.sun.jna.platform.win32.Win32Exception
-import com.sun.jna.platform.win32.WinReg
 import org.w3c.dom.Node
 import tools.jackson.core.json.JsonReadFeature
 import tools.jackson.databind.json.JsonMapper
@@ -73,7 +72,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
     PrivateRegistryRoot.getOrCreate(detourFile, veryBadLifetime)
   }
   else {
-    RegistryRoot(WinReg.HKEY_CURRENT_USER, veryBadLifetime)
+    RegistryRoot.currentUser(veryBadLifetime)
   }.fromKey("SOFTWARE\\Microsoft\\VisualStudio\\${hive.hiveString}")
   private val registryRootKeyConfig = registryRootKey.withSuffix("_Config")
 
@@ -181,7 +180,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
       try {
         registryRootKey.inChild("Profile").getStringValue("AutoSaveFile")
       }
-      catch (_: Win32Exception) {
+      catch (_: WindowsRegistry.RegistryException) {
         throw VSProfileSettingsFileNotFound(
           "A problem occurred while trying to work with registry. Probably key does not exist.")
       } ?: throw Exception("Unknown registry error")

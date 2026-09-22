@@ -1,10 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities
 
 import com.intellij.ide.startup.importSettings.db.WindowsEnvVariables
 import com.intellij.openapi.diagnostic.logger
-import com.sun.jna.platform.win32.Advapi32Util
-import com.sun.jna.platform.win32.WinReg
+import com.intellij.util.system.WindowsRegistry
 import kotlin.io.path.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -24,12 +23,7 @@ class VSPossibleVersionsEnumerator {
 
   private fun enumOldPossibleVersions(): List<VSHive> {
     val registry = try {
-      val key = "SOFTWARE\\Microsoft\\VisualStudio"
-      if (Advapi32Util.registryKeyExists(WinReg.HKEY_CURRENT_USER, key)) {
-        Advapi32Util.registryGetKeys(WinReg.HKEY_CURRENT_USER, key)
-      } else {
-        emptyArray()
-      }
+      WindowsRegistry.subKeys(WindowsRegistry.Hive.CURRENT_USER, "SOFTWARE\\Microsoft\\VisualStudio")
     }
     catch (t: Throwable) {
       logger.warn(t)
