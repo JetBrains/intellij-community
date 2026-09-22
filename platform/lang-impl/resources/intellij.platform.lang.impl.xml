@@ -512,6 +512,8 @@
 
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager" open="true"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>
+    <applicationService serviceInterface="com.intellij.ide.actions.NewProjectEntryPoint"
+                        serviceImplementation="com.intellij.ide.actions.NewProjectEntryPointImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager" open="true"
                         serviceImplementation="com.intellij.openapi.module.impl.ModuleTypeManagerImpl"/>
     <canBeSelectedInProjectPaneProvider

@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JRootPane;
 import java.awt.Dimension;
+import java.nio.file.Path;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -28,7 +29,24 @@ public class NewProjectWizard extends AbstractProjectWizard {
   private final StepSequence mySequence = new StepSequence();
 
   public NewProjectWizard(@Nullable Project project, @NotNull ModulesProvider modulesProvider, @Nullable String defaultPath) {
+    this(project, modulesProvider, defaultPath, null);
+  }
+
+  /**
+   * @param defaultPath     the project directory, or {@code null}. It sets the project name too.
+   * @param defaultLocation the directory that the Location field shows at start, or {@code null}.
+   *                        It sets no project name, and the user cannot change the location.
+   *                        {@code defaultPath} takes precedence.
+   */
+  public NewProjectWizard(@Nullable Project project,
+                          @NotNull ModulesProvider modulesProvider,
+                          @Nullable String defaultPath,
+                          @Nullable Path defaultLocation) {
     super(IdeCoreBundle.message(project == null ? "title.new.project" : "title.add.module"), project, defaultPath);
+    if (defaultLocation != null && !myWizardContext.isProjectFileDirectorySet()) {
+      myWizardContext.setProjectFileDirectory(defaultLocation, false);
+      myWizardContext.setProjectLocationLocked(true);
+    }
     init(modulesProvider);
   }
 

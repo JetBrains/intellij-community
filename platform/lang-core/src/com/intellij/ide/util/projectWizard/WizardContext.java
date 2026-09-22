@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemDependent;
@@ -43,6 +44,7 @@ public class WizardContext extends UserDataHolderBase {
   private StorageScheme myProjectStorageFormat = StorageScheme.DIRECTORY_BASED;
   private ModulesProvider myModulesProvider;
   private boolean myProjectFileDirectorySetExplicitly;
+  private boolean myProjectLocationLocked;
   private String myDefaultModuleName = "untitled";
   private int myScreen = 1;
 
@@ -132,6 +134,19 @@ public class WizardContext extends UserDataHolderBase {
   public void setProjectFileDirectory(@Nullable Path projectFileDirectory, boolean explicitly) {
     myProjectFileDirectorySetExplicitly = explicitly;
     myProjectFileDirectory = projectFileDirectory == null ? null : projectFileDirectory.normalize();
+  }
+
+  /**
+   * Returns {@code true} if the caller of the wizard gave the project location, and the user cannot change it.
+   */
+  @ApiStatus.Internal
+  public boolean isProjectLocationLocked() {
+    return myProjectLocationLocked;
+  }
+
+  @ApiStatus.Internal
+  public void setProjectLocationLocked(boolean locked) {
+    myProjectLocationLocked = locked;
   }
 
   public String getCompilerOutputDirectory() {

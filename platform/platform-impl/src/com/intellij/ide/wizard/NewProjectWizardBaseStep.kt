@@ -172,6 +172,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
           .bindText(pathProperty.toUiPathProperty())
           .align(AlignX.FILL)
           .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
+          .enabled(!context.isProjectLocationLocked)
           .whenTextChangedFromUi { logLocationChanged() }
           .locationComment(context, locationProperty)
       }

@@ -28,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.nio.file.Path
 
 @Service
 private class NewProjectActionService(private val coroutineScope: CoroutineScope) {
@@ -38,7 +39,7 @@ private class NewProjectActionService(private val coroutineScope: CoroutineScope
     return job?.isActive == true
   }
 
-  fun actionPerformed(project: Project?) {
+  fun actionPerformed(project: Project?, location: Path?) {
     if (isActionInProgress()) {
       thisLogger().warn("Previous execution hasn't finished yet")
       return
@@ -50,7 +51,7 @@ private class NewProjectActionService(private val coroutineScope: CoroutineScope
         thisLogger().warn("Failed to execute initProjectGenerator", it)
       }
       val wizard = withContext(Dispatchers.EDT) {
-        NewProjectWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, null)
+        NewProjectWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, null, location)
       }
       createNewProjectAsync(wizard)
     }
@@ -79,7 +80,7 @@ open class NewProjectAction : AnAction(), DumbAware, NewProjectOrModuleAction {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    service<NewProjectActionService>().actionPerformed(e.project)
+    service<NewProjectActionService>().actionPerformed(e.project, e.getData(NewProjectEntryPoint.PROJECT_LOCATION))
   }
 
   override fun update(e: AnActionEvent) {
