@@ -161,10 +161,16 @@ internal class DirectorySearchEngineTest {
     val engine = object : DirectorySearchEngine {
       override fun canSearch(findModel: FindModel): Boolean = canSearch(findModel)
 
+      override fun canSearchNames(): Boolean = false
+
       override fun getWeight(directory: VirtualFile): Int = weight(directory)
 
       override fun searchDirectory(directory: VirtualFile, findModel: FindModel, consumer: Consumer<in Collection<VirtualFile>>) {
         expand(directory, consumer)
+      }
+
+      override fun searchNames(directory: VirtualFile, pathPattern: String, consumer: Consumer<VirtualFile>) {
+        error("Name search is not supported.")
       }
     }
     DirectorySearchEngine.EP_NAME.point.registerExtension(engine, disposable)

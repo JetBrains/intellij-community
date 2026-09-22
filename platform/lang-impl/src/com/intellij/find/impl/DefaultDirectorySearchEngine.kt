@@ -3,6 +3,7 @@ package com.intellij.find.impl
 
 import com.intellij.find.DirectorySearchEngine
 import com.intellij.find.FindModel
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.VirtualFile
 import java.util.function.Consumer
 
@@ -15,9 +16,15 @@ import java.util.function.Consumer
 internal class DefaultDirectorySearchEngine : DirectorySearchEngine {
   override fun canSearch(findModel: FindModel): Boolean = true
 
+  override fun canSearchNames(): Boolean = false
+
   override fun getWeight(directory: VirtualFile): Int = 0
 
   override fun searchDirectory(directory: VirtualFile, findModel: FindModel, consumer: Consumer<in Collection<VirtualFile>>) {
     consumer.accept(directory.children.asList())
+  }
+
+  override fun searchNames(directory: VirtualFile, pathPattern: String, consumer: Consumer<VirtualFile>) {
+    thisLogger().error("This searcher cannot search names at the moment")
   }
 }

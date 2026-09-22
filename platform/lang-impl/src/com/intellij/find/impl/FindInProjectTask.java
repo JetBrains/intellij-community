@@ -553,7 +553,12 @@ final class FindInProjectTask {
               // will be checked against the WSM and requested scope later when this search task deals with individual files.
               // MAYBE-ANK: While it is searcher's responsibility to work at least faster than the default implementation if it
               // claims positive weight, it is also a good idea to not pass directories with excludes and indexed files into them.
-              DirectorySearchEngine.selectDirectorySearchEngine(file, directorySearchEngines).searchDirectory(file, findModel, searchItemsDeque::addAll);
+              DirectorySearchEngine directorySearchEngine = DirectorySearchEngine.selectDirectorySearchEngine(file, directorySearchEngines);
+              if (directorySearchEngine != null) {
+                directorySearchEngine.searchDirectory(file, findModel, searchItemsDeque::addAll);
+              } else {
+                LOG.error("At least DefaultDirectorySearchEngine must be available. No directory search engine for " + file);
+              }
             }
             return true;
           }

@@ -38,6 +38,8 @@ class EelDirectorySearchEngine @VisibleForTesting constructor(private val edges:
     return findModel.fileFilter?.none { it in "![]{}\\" } != false
   }
 
+  override fun canSearchNames(): Boolean = false
+
   override fun getWeight(directory: VirtualFile): Int {
     if (!directory.isDirectory) return -1
     val path = directory.fileSystem.getNioPath(directory) ?: return -1
@@ -96,6 +98,10 @@ class EelDirectorySearchEngine @VisibleForTesting constructor(private val edges:
     if (!completed) {
       consumer.accept(directory.children.asList())
     }
+  }
+
+  override fun searchNames(directory: VirtualFile, pathPattern: String, consumer: Consumer<VirtualFile>) {
+    LOG.error("This searcher cannot search names at the moment")
   }
 
   private fun resolveFileIgnoreVanishedOrThrow(path: EelPath): VirtualFile? {

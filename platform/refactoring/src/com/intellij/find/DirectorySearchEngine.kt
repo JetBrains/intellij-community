@@ -4,16 +4,18 @@ package com.intellij.find
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
-import java.util.Objects
 import java.util.function.Consumer
 
 /**
- * Supplies files and directories for Find in Files and Replace in Files.
+ * Supplies files and directories for content and name searches.
  *
- * The caller uses this sequence for each search:
+ * The caller uses this sequence for each content search:
  * 1. It calls [canSearch] once for each engine and excludes engines that return `false`.
  * 2. For each directory, it calls [getWeight] on each remaining engine.
  * 3. It calls [searchDirectory] on the engine with the highest nonnegative weight.
+ *
+ * For each name search, the caller calls [canSearchNames] once per engine.
+ * It then selects an engine with [getWeight] for each directory and calls [searchNames].
  *
  * `DirectorySearchEngine` methods can run concurrently for different search requests.
  */
@@ -25,6 +27,13 @@ interface DirectorySearchEngine {
    * This method runs outside a read action.
    */
   fun canSearch(findModel: FindModel): Boolean
+
+  /**
+   * Returns whether this engine can search for file and directory names.
+   * The caller invokes this method once for each name search before it calls [getWeight] or [searchNames].
+   * This method runs outside a read action.
+   */
+  fun canSearchNames(): Boolean
 
   /**
    * Returns a nonnegative weight if this engine can handle [directory] for the request, or a negative weight otherwise.
@@ -45,13 +54,28 @@ interface DirectorySearchEngine {
    */
   fun searchDirectory(directory: VirtualFile, findModel: FindModel, consumer: Consumer<in Collection<VirtualFile>>)
 
+  /**
+   * Searches [directory] and its descendants for files and directories that may match [pathPattern].
+   * The engine can also send [directory] to [consumer].
+   *
+   * [pathPattern] is a fuzzy path pattern without a leading or trailing slash.
+   * It uses `/` as a path separator and can contain partial names, `*` wildcards, and spaces.
+   * The caller converts backslashes to slashes and removes line and column suffixes.
+   * The path can start at a search root above [directory].
+   * Matching ignores case and allows other path components between the pattern's components.
+   *
+   * Send every possible match to [consumer]. The caller checks the results and accepts extra candidates.
+   * All calls to [consumer] must finish before this method returns.
+   */
+  fun searchNames(directory: VirtualFile, pathPattern: String, consumer: Consumer<VirtualFile>)
+
   @ApiStatus.Internal
   companion object {
     @JvmStatic
     fun selectDirectorySearchEngine(
       directory: VirtualFile,
       engines: List<DirectorySearchEngine>,
-    ): DirectorySearchEngine {
+    ): DirectorySearchEngine? {
       var bestEngine: DirectorySearchEngine? = null
       var bestWeight = -1
       for (engine in engines) {
@@ -61,7 +85,7 @@ interface DirectorySearchEngine {
           bestWeight = weight
         }
       }
-      return Objects.requireNonNull(bestEngine, "No directory search engine for $directory")!!
+      return bestEngine
     }
 
     @ApiStatus.Internal

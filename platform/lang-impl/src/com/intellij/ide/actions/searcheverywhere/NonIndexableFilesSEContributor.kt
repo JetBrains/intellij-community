@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
+import com.intellij.find.DirectorySearchEngine
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.GotoActionBase
 import com.intellij.ide.actions.GotoFileItemProvider
@@ -14,6 +15,7 @@ import com.intellij.openapi.application.readActionUndispatched
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 import com.intellij.openapi.project.DumbAware
@@ -194,6 +196,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
       .withMatchingMode(MatchingMode.IGNORE_CASE)
       .preferringStartMatches()
       .build()
+    val directorySearchEngines = DirectorySearchEngine.EP_NAME.extensionList.filter { it.canSearchNames() }
 
     // search everywhere has limit of entries it allows contibutor to contribute.
     // We want to send good matches first, and only send others later if didn't find enough
@@ -239,8 +242,6 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
             ParallelQueueProcessor.createRunning(
               scope = this@launch, jobsNumber = MAX_JOBS, initialItems = state.roots, workerJobYieldTimeout = 50.milliseconds
             ) processor@{ handle, item ->
-              val shouldProcessSelf = state.processItem(item, handle)
-
               fun processResult(file: VirtualFile) {
                 val pathFromNonIndexableRoot = state.getPathFromRoot(file)
                 if (pathFromNonIndexableRoot == null) {
@@ -259,8 +260,25 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
                 } // else - file doesn't match pattern, skip
               }
 
-              if (shouldProcessSelf) {
-                processResult(item.file)
+              val bestEngine = when {
+                directorySearchEngines.isEmpty() -> null
+                !item.getSubtreeProcessingMode().shouldProcessChildren -> null
+                else -> DirectorySearchEngine.selectDirectorySearchEngine(item.file, directorySearchEngines)
+              }
+
+              val handled: Boolean = try {
+                bestEngine?.searchNames(item.file, pathPattern, ::processResult) != null
+              }
+              catch (_: Throwable) {
+                checkCanceled()
+                false
+              }
+
+              if (!handled) {
+                val shouldProcessSelf = state.processItem(item, handle)
+                if (shouldProcessSelf) {
+                  processResult(item.file)
+                }
               }
             }
           }
