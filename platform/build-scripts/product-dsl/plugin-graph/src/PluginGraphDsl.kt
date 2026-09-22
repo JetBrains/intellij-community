@@ -247,6 +247,10 @@ value class GraphScope @PublishedApi internal constructor(
   val ProductNode.allowsMissing: EdgeInvoker<ContentModuleNode>
     get() = EdgeInvoker.Companion.create(EDGE_ALLOWS_MISSING, id)
 
+  /** Product → Target (a product implementation module, loaded by the core classloader) */
+  val ProductNode.implementationTargets: EdgeInvoker<TargetNode>
+    get() = EdgeInvoker.Companion.create(EDGE_PRODUCT_IMPLEMENTATION_TARGET, id)
+
   // endregion
 
   // region Forward Edge Properties (PluginNode)

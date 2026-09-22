@@ -43,6 +43,7 @@ fun discoverAllProducts(projectRoot: Path, outputProvider: ModuleOutputProvider)
         .filter(::isModuleSetPluginModuleName)
         .map { TargetName(it) }
         .toList(),
+      coreClassloaderModules = productProperties.productLayout.productImplementationModules.map { TargetName(it) },
     )
   }
 }

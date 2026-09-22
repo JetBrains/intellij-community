@@ -135,6 +135,34 @@ class UnusedEmbeddedLibraryModuleValidatorTest {
   }
 
   @Test
+  fun `product implementation target justifies embedding`() {
+    val graph = pluginGraph {
+      product("IDEA") {
+        includesModuleSet("core")
+        implementationTarget("intellij.idea.customization")
+      }
+      moduleSet("core") { module("intellij.libraries.core.only", EMBEDDED) }
+      target("intellij.idea.customization") { dependsOn("intellij.libraries.core.only") }
+      moduleWithDeps("intellij.libraries.core.only")
+    }
+
+    assertThat(analyzeUnusedEmbeddedLibraryModules(graph).violations).isEmpty()
+  }
+
+  @Test
+  fun `same graph without the implementation target reports the library`() {
+    val graph = pluginGraph {
+      product("IDEA") { includesModuleSet("core") }
+      moduleSet("core") { module("intellij.libraries.core.only", EMBEDDED) }
+      target("intellij.idea.customization") { dependsOn("intellij.libraries.core.only") }
+      moduleWithDeps("intellij.libraries.core.only")
+    }
+
+    assertThat(analyzeUnusedEmbeddedLibraryModules(graph).violations.map { it.module })
+      .containsExactly("intellij.libraries.core.only")
+  }
+
+  @Test
   fun `optional and required platform consumers do not justify embedding`() {
     val graph = pluginGraph {
       product("IDEA") { includesModuleSet("core") }

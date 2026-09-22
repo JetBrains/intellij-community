@@ -35,6 +35,7 @@ Product --bundlesTest--> Plugin (test plugin)
 Product --includesModuleSet--> ModuleSet
 Product --containsContent(loadingMode)--> ContentModule
 Product --allowsMissing--> ContentModule (allowed missing in validation)
+Product --implementationTargets--> Target (productImplementationModules; core classloader, no descriptor)
 Plugin --containsContent(loadingMode)--> ContentModule
 Plugin --containsContentTest(loadingMode)--> ContentModule
 Plugin --mainTarget--> Target (plugin's build target)

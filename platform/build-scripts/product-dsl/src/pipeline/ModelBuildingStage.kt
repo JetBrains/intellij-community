@@ -8,6 +8,7 @@ import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.EDGE_ALLOWS_MISSING
 import com.intellij.platform.pluginGraph.EDGE_BUNDLES
+import com.intellij.platform.pluginGraph.EDGE_PRODUCT_IMPLEMENTATION_TARGET
 import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.TargetName
@@ -696,6 +697,7 @@ internal object ModelBuildingStage {
     //   - EDGE_INCLUDES_MODULE_SET links products to module sets
     //   - EDGE_CONTAINS_CONTENT links products to additional content modules
     //   - EDGE_ALLOWS_MISSING marks allowed missing dependencies
+    //   - EDGE_PRODUCT_IMPLEMENTATION_TARGET links products to their core-classloader implementation modules
     //
     // DEPENDS ON: Phase 1 (plugins must exist before bundling)
     //
@@ -710,6 +712,19 @@ internal object ModelBuildingStage {
 
       for (pluginModule in product.bundledModuleSetPluginModules) {
         builder.linkProductBundlesPlugin(productName = product.name, pluginName = pluginModule, isTest = false)
+      }
+
+      // Product implementation modules: packed into the product main jar, so the core classloader loads them.
+      // They carry no descriptor, so no content edge can name them, and nothing in the content closure depends on
+      // them - they are roots. `addTarget` upserts the vertex here, before Phase 6 (`addJpsDependencies`) snapshots
+      // the target index, so their .iml dependencies still get EDGE_TARGET_DEPENDS_ON edges.
+      // Declared above the `spec` check on purpose: the loading rule does not come from the content spec.
+      for (implementationModule in product.coreClassloaderModules) {
+        builder.addEdge(
+          source = productId,
+          target = builder.addTarget(implementationModule),
+          edgeType = EDGE_PRODUCT_IMPLEMENTATION_TARGET,
+        )
       }
 
       val spec = product.spec ?: continue

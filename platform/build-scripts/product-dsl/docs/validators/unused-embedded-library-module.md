@@ -9,7 +9,7 @@ Validates that `intellij.libraries.*` content modules use `embedded` loading onl
 ## Inputs
 
 - Slot: `Slots.CONTENT_MODULE_PLAN` (production and test content-module dependency edges in the graph).
-- Graph: products, recursive module sets, plugin content, loading modes, content-module dependencies, and backing JPS target dependencies.
+- Graph: products, recursive module sets, plugin content, loading modes, content-module dependencies, backing JPS target dependencies, and `EDGE_PRODUCT_IMPLEMENTATION_TARGET` (the product implementation modules of `productLayout.productImplementationModules`).
 
 ## Rules
 
@@ -17,6 +17,10 @@ Validates that `intellij.libraries.*` content modules use `embedded` loading onl
 - For each product, start from embedded non-library product/module-set content.
 - Traverse production content-module dependencies only while every dependency remains embedded product/module-set content in that product.
 - Traverse production JPS dependencies from backing targets of embedded product/module-set content, stopping at descriptor-backed content that is not embedded in that product.
+- Also start that JPS walk from each product implementation module. The product main jar packs such a module, so the
+  core classloader loads it exactly like embedded content, but it carries no descriptor and therefore has no content
+  node - only `EDGE_PRODUCT_IMPLEMENTATION_TARGET` names it. A plugin main target is NOT such a root: it gets its own
+  classloader.
 - A library is justified when this traversal reaches it in at least one product.
 - Plugin content, test dependencies, and optional or required platform content do not justify core-classloader loading.
 - Embedded library chains and cycles without a reachable non-library platform root remain violations.

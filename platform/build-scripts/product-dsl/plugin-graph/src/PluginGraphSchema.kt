@@ -141,8 +141,20 @@ const val EDGE_CONTAINS_CONTENT_TEST_WITH_NAMESPACE: Int = 16
  */
 const val EDGE_PLUGIN_DECLARES_ALIAS: Int = 17
 
+/**
+ * Edge type: Product has a product implementation module Target.
+ *
+ * The source is the product, the target is a JPS module of `productLayout.productImplementationModules`.
+ * Such a module is packed into the product main jar, so the core classloader loads it, but it carries no
+ * descriptor and is therefore not a content module. This edge is the only way the graph can name it.
+ *
+ * It is deliberately NOT [EDGE_MAIN_TARGET]: a plugin main target does not share the core classloader,
+ * and a rule that reasons about that loader must tell the two apart.
+ */
+const val EDGE_PRODUCT_IMPLEMENTATION_TARGET: Int = 18
+
 /** Number of edge types (for array sizing) */
-internal const val EDGE_TYPE_COUNT: Int = 18
+internal const val EDGE_TYPE_COUNT: Int = 19
 
 // endregion
 
@@ -628,7 +640,7 @@ internal fun edgeTargetWrapper(edgeId: Int): (Int) -> TypedNode {
     EDGE_BUNDLES, EDGE_BUNDLES_TEST, EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN, EDGE_PLUGIN_DECLARES_ALIAS -> ::PluginNode
     EDGE_CONTAINS_CONTENT, EDGE_CONTAINS_CONTENT_TEST, EDGE_CONTAINS_MODULE, EDGE_ALLOWS_MISSING, EDGE_PLUGIN_XML_DEPENDS_ON_CONTENT_MODULE -> ::ContentModuleNode
     EDGE_INCLUDES_MODULE_SET, EDGE_NESTED_SET -> ::ModuleSetNode
-    EDGE_BACKED_BY, EDGE_MAIN_TARGET, EDGE_TARGET_DEPENDS_ON -> ::TargetNode
+    EDGE_BACKED_BY, EDGE_MAIN_TARGET, EDGE_TARGET_DEPENDS_ON, EDGE_PRODUCT_IMPLEMENTATION_TARGET -> ::TargetNode
     EDGE_CONTENT_MODULE_DEPENDS_ON, EDGE_CONTENT_MODULE_DEPENDS_ON_TEST -> ::ContentModuleNode
     else -> throw IllegalArgumentException("Unknown edge type: $edgeId")
   }
@@ -647,7 +659,7 @@ internal fun edgeSourceWrapper(edgeId: Int): (Int) -> TypedNode {
     EDGE_MAIN_TARGET, EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN, EDGE_PLUGIN_XML_DEPENDS_ON_CONTENT_MODULE -> ::PluginNode
     EDGE_PLUGIN_DECLARES_ALIAS -> ::PluginNode
     EDGE_TARGET_DEPENDS_ON -> ::TargetNode
-    EDGE_ALLOWS_MISSING -> ::ProductNode
+    EDGE_ALLOWS_MISSING, EDGE_PRODUCT_IMPLEMENTATION_TARGET -> ::ProductNode
     EDGE_CONTENT_MODULE_DEPENDS_ON, EDGE_CONTENT_MODULE_DEPENDS_ON_TEST -> ::ContentModuleNode
     else -> throw IllegalArgumentException("Unknown edge type: $edgeId")
   }

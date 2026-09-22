@@ -51,6 +51,14 @@ data class DiscoveredProduct(
   @JvmField val spec: org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec?,
   @JvmField val pluginXmlPath: String?,
   @JvmField val bundledModuleSetPluginModules: List<TargetName> = emptyList(),
+  /**
+   * JPS modules packed into the product main jar, from `productLayout.productImplementationModules`.
+   *
+   * They are loaded by the core classloader, but they are not content modules, so no content edge of the
+   * plugin graph can express them. An analysis that reasons about the core classloader has to take them as
+   * extra roots; see `UnusedEmbeddedLibraryAnalysis`.
+   */
+  @JvmField val coreClassloaderModules: List<TargetName> = emptyList(),
 )
 
 /**

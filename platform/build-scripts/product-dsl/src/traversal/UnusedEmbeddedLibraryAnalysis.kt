@@ -41,6 +41,10 @@ internal data class UnusedEmbeddedLibraryModuleViolation(
 /**
  * Finds library content modules which are embedded in module sets but are not reachable from
  * embedded, non-library product content through an all-embedded production dependency path.
+ *
+ * Two kinds of root share the core classloader and therefore justify an embedded library:
+ * embedded non-library product/module-set content, and the product implementation modules of
+ * `productLayout.productImplementationModules`, which the product main jar packs.
  */
 internal fun analyzeUnusedEmbeddedLibraryModules(graph: PluginGraph): UnusedEmbeddedLibraryModulesResult {
   return graph.query {
@@ -157,6 +161,16 @@ private fun GraphScope.collectLibrariesUsedByEmbeddedProductTargets(
         }
       }
     }
+
+  // A product implementation module is packed into the product main jar, so the core classloader loads it just
+  // like embedded content. It carries no descriptor, so it has no content node and `backedBy` cannot reach it -
+  // the product names its target directly. Without this root, a library that only such a module needs looks
+  // unused, and demoting it would be a real NoClassDefFoundError.
+  product.implementationTargets { target ->
+    if (visited.add(target.id)) {
+      queue.add(target)
+    }
+  }
 
   while (queue.isNotEmpty()) {
     queue.removeFirst().dependsOn { dependency ->

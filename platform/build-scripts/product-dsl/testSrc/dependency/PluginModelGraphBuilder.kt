@@ -20,6 +20,7 @@ import com.intellij.platform.pluginGraph.EDGE_MAIN_TARGET
 import com.intellij.platform.pluginGraph.EDGE_NESTED_SET
 import com.intellij.platform.pluginGraph.EDGE_PLUGIN_DECLARES_ALIAS
 import com.intellij.platform.pluginGraph.EDGE_PLUGIN_XML_DEPENDS_ON_CONTENT_MODULE
+import com.intellij.platform.pluginGraph.EDGE_PRODUCT_IMPLEMENTATION_TARGET
 import com.intellij.platform.pluginGraph.EDGE_TARGET_DEPENDS_ON
 import com.intellij.platform.pluginGraph.PLUGIN_DEP_LEGACY_MASK
 import com.intellij.platform.pluginGraph.PLUGIN_DEP_MODERN_MASK
@@ -341,6 +342,15 @@ internal class GraphProductBuilder(
   fun allowsMissing(moduleName: String) {
     val moduleId = builder.getOrCreateModule(ContentModuleName(moduleName))
     builder.addEdge(productId, moduleId, EDGE_ALLOWS_MISSING)
+  }
+
+  /**
+   * Declare a product implementation module: a JPS module the product main jar packs, so the core classloader
+   * loads it. It has no descriptor, so it is a target and not a content module.
+   */
+  fun implementationTarget(name: String) {
+    val targetId = builder.getOrCreateTarget(TargetName(name))
+    builder.addEdge(productId, targetId, EDGE_PRODUCT_IMPLEMENTATION_TARGET)
   }
 }
 
