@@ -12,7 +12,6 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.utils.TextStyleDomain
-import com.intellij.grazie.utils.getAffectedGlobalRules
 import com.intellij.ide.CommonActionsManager
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.openapi.Disposable
@@ -140,13 +139,7 @@ class GrazieTreeComponent(
         }
     }
 
-    val affectedGlobalRules = getAffectedGlobalRules(language)
-    splitIntoCategories(
-      0,
-      rules.filter { it.globalId !in affectedGlobalRules },
-      root
-    )
-
+    splitIntoCategories(0, rules, root)
     val state = GrazieConfig.get()
     model.setRoot(root)
     root.resetMark(apply(state))

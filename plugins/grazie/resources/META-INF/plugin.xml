@@ -46,10 +46,6 @@
                          key="spelling"
                          bundle="messages.SpellCheckerBundle" />
 
-    <statusBarWidgetFactory implementation="com.intellij.grazie.ide.ui.widget.GrazieStatusBarWidgetFactory"
-                            id="GrazieStatusBarWidget"
-                            order="before LineSeparator, after Position"/>
-
     <applicationService serviceImplementation="com.intellij.grazie.GrazieConfig"/>
     <applicationService serviceImplementation="com.intellij.grazie.GrazieFolderConfig"/>
 
@@ -135,22 +131,6 @@
       <language/>
       <bundleName>messages.GrazieBundle</bundleName>
       <categoryKey>intention.category.natural.languages</categoryKey>
-      <className>com.intellij.grazie.ide.inspection.ai.RephraseAction</className>
-      <descriptionDirectoryName>RephraseAction</descriptionDirectoryName>
-    </intentionAction>
-
-    <intentionAction>
-      <language/>
-      <bundleName>messages.GrazieBundle</bundleName>
-      <categoryKey>intention.category.natural.languages</categoryKey>
-      <className>com.intellij.grazie.ide.inspection.ai.TranslateAction</className>
-      <descriptionDirectoryName>TranslateAction</descriptionDirectoryName>
-    </intentionAction>
-
-    <intentionAction>
-      <language/>
-      <bundleName>messages.GrazieBundle</bundleName>
-      <categoryKey>intention.category.natural.languages</categoryKey>
       <className>com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieMassApplyAction</className>
       <descriptionDirectoryName>GrazieMassApplyAction</descriptionDirectoryName>
     </intentionAction>
@@ -159,7 +139,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">
-    <cloudConnector implementation="com.intellij.grazie.cloud.DefaultGrazieCloudConnector" order="last"/>
     <textExtractor language="TEXT" implementationClass="com.intellij.grazie.text.PlainTextExtractor"/>
 
     <problemFilter language="" implementationClass="com.intellij.grazie.text.CodeProblemFilter"/>

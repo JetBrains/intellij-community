@@ -96,7 +96,7 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
     }
 
     // state.processing doesn't have a constant default value, so we always report it
-    metrics.add(PROCESSING.metric(GrazieConfig.get().processing))
+    metrics.add(PROCESSING.metric(Processing.Local))
     if (state.styleProfile != DEFAULT_STATE.styleProfile) {
       metrics.add(WRITING_STYLE.metric(state.getTextStyle().id.uppercase()))
     }

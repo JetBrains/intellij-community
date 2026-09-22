@@ -152,7 +152,6 @@ class ReportingTest : BasePlatformTestCase() {
       "Ignore 'S' in this sentence", // then the built-in general context action
       "Configure rule 'something'…",
       "Accept all writing suggestions…",
-      "Enable Cloud mode for deeper checks",
       "mock intention", // normal intentions are at the bottom
     )
   }

@@ -7,8 +7,6 @@ $500 (dollars)
 'Ndrangheta
 'Needs fixed' type construction
 'One the one hand' (On the one hand)
-'Please' comma
-'Since' used for time intervals
 'Thank the' + noun
 'Thank' + Proper noun
 'The' or 'a' before a punctuation
@@ -109,24 +107,16 @@ A lot of money is getting spend (spent) these days
 A new year has begun
 A week long (week-long) vacation
 A word contains an underscore
-A word repeated too often
 A would not do it
 AM in the morning (AM)
 ARTICLE ADJECTIVE of
 ATM machine (ATM)
-Abbreviation dots
-Ableism
-Absolute date issues
 Adapt to v. adopt to
-Add a space between number and unit of measurement
 Add diacritics
 Additional (Additionally)
-Adjective position issues
 Adverb instead of an adjective
 Adverb instead of noun
-Adverb placed incorrectly
 Adverb repetition: e.g. 'also see also'
-Adverb/adjective confusion
 After auxiliary 'do', use the base form of a verb
 Aftermarket
 Agreement error: Non-third person/past tense verb with 'he/she/it' or a pronoun
@@ -168,24 +158,6 @@ AstraZeneca
 At 7 clock (o'clock)
 Auxiliary verb + ambiguous past tense
 Auxiliary verb + found/saw
-Auxiliary+main verb form compatibility
-Avoid colloquialism
-Avoid condescending language
-Avoid double negation
-Avoid emoticons and emoji
-Avoid exclamations
-Avoid expressive punctuation
-Avoid gender-specific nouns
-Avoid male pronouns in gender-neutral contexts
-Avoid prepositional chains that use “of”
-Avoid shortened word forms
-Avoid subject ellipsis
-Avoid tautology
-Avoid violent language
-Avoid weak adverbs
-Avoid wordiness
-Avoid words with racial connotations or undertones
-Avoid “of” when redundant
 Awaiting for - incorrect
 Axed v asked
 Band Aid (Band-Aid)
@@ -217,15 +189,8 @@ Capitalize file extensions
 Carnegie Mellon
 Change two hyphens to em dash
 Chat GPT (ChatGPT)
-Check for comma before 'etc.'
-Check for serial (Oxford) commas
 Check for wrong words/phrases: $match
-Check full and contracted word forms
 Check multi-word spelling and capitalization
-Check period and comma placement relative to closing quotation marks
-Check pronouns in compound subjects
-Check punctuation relative to closing quotation marks
-Check verb agreement with compound 'or' subjects
 Checks if hyphenated words were spelled with dashes (e.g., 'T — shirt' instead 'T-shirt').
 Checks if the two types of apostrophes (' and ’) are used consistently in a text.
 Checks that a sentence starts with an uppercase letter
@@ -412,7 +377,6 @@ Collocation: waiting (to) finish
 Collocation: waiting after (for) someone
 Collocation: we call/you would call
 Collocation: yell on/at
-Colons with lists
 Comma after 'Oh my god'
 Comma after 'for god's sake
 Comma after 'go for it'
@@ -423,18 +387,13 @@ Comma after by default at the beginning of a sentence.
 Comma before 'so/but/and MD + PRP + VB'
 Comma before 'so/but/and please'
 Comma before closing parenthesis
-Comma before conjunction between clauses
 Comma in 'Me myself and I'
 Comma in 'act 2 scene 5'
 Comma in 'oh oh'
 Comma in 'ok ok'
 Comma in 'very very good'
 Commas after conjunctive/linking adverbs in front of a new sentence.
-Commas around linking phrases
-Commas around relative clauses
 Common typos
-Commonly confused words
-Comparative and superlative forms
 Comparison with 'as'
 Comparison with 'than', e.g. 'bigger then (than)'
 Comparison with 'the same ... as'
@@ -464,19 +423,16 @@ Compound adjective: new look
 Compound adjective: out of body
 Compound adjective: rags to riches
 Compound adjective: wall to wall
-Conditional issues
 Confusion of cyrillic and latin letters
 Confusion of mans/men
 Confusion of mars/Mars
 Contraction errors: e.g. did'nt (didn't)
 Copy (and) paste
-Correct punctuation when rendering direct speech
 Correct use of 'cc'
 Creative Writing: E-Prime: 'to be' as the main verb
 Creative Writing: E-Prime: all 'to be' forms
 Côte d’Azur
 DT VBZ they're (their) NN
-Dangling or misplaced modifier
 Delta Air Lines
 Dependent
 Determiners preceding geographical terms
@@ -504,15 +460,12 @@ Enumerations with dashes: 1.2.-
 Erdogan (Erdoğan)
 Erwin Schroedinger (Schrödinger)
 Everything went good (well) until I checked out the competition
-Excessive colon
-Excessive comma
 Excited for (about)
 Extreme adjectives
 Fall is among (upon) us
 February of 2005 (February 2005)
 FedEx
 Forest (Forrest) Gump
-Format large numbers
 Fox News
 French's => French people
 Frequently Asked Questions
@@ -520,7 +473,6 @@ Further ado instead of further adieu
 Future date, but verb in past tense
 Future date, but verb in past tense (US)
 Geiger counter
-Gerund vs. infinitive
 GitHub
 GitHub
 Gmail
@@ -532,7 +484,6 @@ Great (,) thanks
 Great(,) please ...
 Great(,) that is ...
 Grey's Anatomy
-Group the characters in IBAN
 HIPPA (HIPAA)
 HIV virus (HIV)
 Had + verb present tense
@@ -576,8 +527,6 @@ How many cards are (is) that?
 How's the whether (weather)?
 Hyphen in 'click through rate'
 Hyphen in 'must have/see'
-Hyphen used instead of a dash at the sentence start
-Hyphen vs. en dash vs. em dash
 Hyphen, n-dash and m-dash
 Hyphenated words: $match
 Hyphens in 'pre- and post-noun'
@@ -685,11 +634,7 @@ In the recent years (in recent years)
 In the us (US)
 In this regards (regard)
 Inconsistent case: She'S (She's)
-Incorrect article usage
 Incorrect possessive form after a number
-Incorrect pronoun form
-Incorrect relative pronoun choice
-Incorrect sentence negation
 Incorrect use of 'is' vs. 'are'
 IndMys, (a|the) derivative of Alpha-3 code for India and Malaysia...
 Indian English replacements
@@ -725,8 +670,6 @@ Jesus Chris (Christ)
 Jimmy (Jimi) Hendrix
 Jimmy Buffet (Buffett)
 Johns Hopkins University
-Joining sentences with comma
-Joining words or separating words with a hyphen or space
 Kama Sutra
 Katharina (Katherina) Reiche
 Kellogg's
@@ -745,7 +688,6 @@ Let + object
 Let me trough (through)!
 Let's go to the movie some time (sometime)
 Let's talk on skype (Skype)
-Let’s vs. Lets
 Light-year as a unit of time
 LinkedIn
 Lmk if that fits your schedule ass (as) well
@@ -760,7 +702,6 @@ L’Oréal
 Mabey vs. Maybe
 Mac OS (macOS)
 Manege (manège or manage)
-Markers requiring specific tense
 Mary (Merry) Christmas
 Materiel (matériel or material)
 Mathematics: +- - ±
@@ -776,10 +717,8 @@ Microsoft product names
 Microsoft product names (style rules)
 Misplaced space
 Missing 'as' in 'as well as or better than'
-Missing 'to' before infinitive
 Missing 'to': It's possible do it
 Missing article check (ML)
-Missing articles
 Missing comma 'first come first serve'
 Missing comma after introductory phrase
 Missing comma after pronoun
@@ -789,7 +728,6 @@ Missing comma between day of month and year
 Missing definite article in the date
 Missing definite article referring to a time period
 Missing definite article referring to a time period
-Missing dot
 Missing hyphen in 'An American born scientist'
 Missing hyphen in 'billion dollar'
 Missing hyphen in 'fund raise'
@@ -800,7 +738,6 @@ Missing hyphens in '5 year old'
 Missing hyphens in compounds
 Missing noun after an adjective
 Missing noun: 'The is the'
-Missing object
 Missing past tense for 'used to...'
 Missing past tense with '...last year/month/etc.'
 Missing period after an abbreviation
@@ -811,12 +748,9 @@ Missing preposition: allow (to) do
 Missing preposition: explain (to)
 Missing punctuation after an interjection
 Missing question mark
-Missing question mark
-Missing sentence verb
 Missing space after closing quote
 Missing space between numeric value and unit (e.g., 25 km)
 Missing space between sentences
-Missing subject
 Missing verb (some cases)
 Missing verb after 'don't'
 Missing verb: PRONOUN + NOUN (VERB)
@@ -845,7 +779,6 @@ Node JS (Node.js)
 Non-infinitive verb after did/does
 Non-infinitive verb after modal verbs
 Non-infinitive verb with 'eager to...'
-Non-infinitive verbs after 'to'
 Non-standard character in a word
 Non-standard comma
 Non-standard contractions '(I've a...)'
@@ -856,7 +789,6 @@ Noun following 'who'
 Noun vs verb
 Now are (is) the time
 Number + 'week's time' (weeks' time)
-Number ending
 Number starting a sentence
 Numbers in words
 Numeral (dozen, hundred, thousand, million) without a determiner or a number
@@ -879,17 +811,13 @@ Pleaser (Please) let me know when you need these
 Plural form of numbers in 'two dozens of' (two dozen)
 Plural of Pokémon
 Plural verb after 'this' or 'that'
-Plurals in compound nouns
 Pokémon
 Pokémon Go
-Polarity item violations
 Ponzi scheme
 Portland Trailblazers (Trail Blazers)
 Position of currency symbols: '100$' ($100)
-Positive writing
 Possessive apostrophe error
 Possessive apostrophe error
-Possessive apostrophe issues
 Possessive form instead of plural
 Possessive pronoun with apostrophe
 Possible agreement error 'there was' + plural noun
@@ -909,10 +837,7 @@ Possible wordiness: be a X one
 Possibly needless 'that'
 Potentially missing comma after year
 PowerShell
-Prefer active voice for improved readability
-Prefer clear language
 Preposition + who (whom)
-Preposition issues
 Profanity
 Profanity
 Progressive forms of non-progressive verbs (doubt, believe, understand)
@@ -920,12 +845,7 @@ Pronoun + noun
 Proper name spelling and capitalization
 Proper noun: Markdown
 Proper spelling of LanguageTool
-Punctuation in 'e.g.' or 'i.e.'
-Punctuation markedness
-Punctuation/whitespace issues
-Quantifier-noun compatibility
 Queen's Gambit
-Question word confusion
 Ramstein/Rammstein
 Readability: Four nouns in a row
 Readability: Three nouns in a row
@@ -937,7 +857,6 @@ Recommended compounds (smartphone, website, …)
 Red-Nosed Reindeer
 Redundant 'plus': 100+ and more
 Regarding to (regard to/regarding)
-Relative date issues
 Remove comma after Oxford list, before predicate
 Rep: thank you for
 Repeated verb forms
@@ -969,19 +888,15 @@ Sarcasm
 Sau Paulo (São Paulo)
 Schindler's List
 Schitt's Creek
-Sentence capitalization consistency
 Sentence ending with 'the' or 'a'
 Sentence is a fragment
 Sentence starting with 'And' or 'But'
-Sentence subordination commas
 She bents (bends)
 She brought some things that isn't (aren't) on the list
 She is good-educated (well-educated).
 She it (is) happy
 She turned 25 year (years) old.
 Short superlatives
-Shorten relative clauses
-Similar word confusion
 Singles(') Day
 Singular verb after 'these' or 'those'
 Smart ellipsis (…)
@@ -995,10 +910,6 @@ Sound (sounds) great
 Space character at the beginning of paragraph
 Space character at the end of paragraph
 SpaceX
-Spell out large round numbers
-Spell out numbers
-Spell out numbers that start a sentence
-Spell out symbols meaning 'and'
 Spelling differences between English variants (US, GB, Oxford spelling, etc.)
 Spelling mistakes in proper nouns (2 tokens)
 Spelling mistakes in proper nouns (3 tokens)
@@ -1011,12 +922,9 @@ Statistical Style Analysis: Overused Noun
 Statistical Style Analysis: Overused Verb
 Studies like this relies (rely) on current data
 Style: 'possible' after 'possibility'
-Stylize names that contain initials
-Subject-verb agreement
 Subject-verb agreement
 Subject-verb agreement error after conjunction
 Subject-verb agreement plural
-Subject-verb inversion
 Successive sentences beginning with the same word
 Such torn foolery (tomfoolery) is inexcusable
 Suggest diacritics for '$match'
@@ -1029,9 +937,7 @@ Superfluous article before 'much', e.g. 'a much work'
 T-rex (T. rex)
 THE + RELATIVE + OF, e.g. the worse (worst) of
 TL DR (TL;DR)
-Tag question issues
 Take it personal (personally)
-Tense issues in dependent clauses
 Th (The/thorium)
 Than (Thank) you
 Thank (Thanks)
@@ -1096,9 +1002,6 @@ Typography for hypotheses
 Typos that result in swear words
 U're (You're)
 Uncle Bens -> Ben's
-Uncommon preposition
-Unexpected adjective
-Unexpected verb
 Unite Kingdom -> United Kingdom
 Unite State -> United States
 Unites (United)
@@ -1111,10 +1014,6 @@ Ursula von der Leyen
 Usage of German quotes („“)
 Use 'to' before the base form of a verb
 Use an adverb or a compound adjective, not an adjective
-Use consistent verb forms in connected phrases
-Use dashes instead of hyphens between phrases
-Use en dashes for ranges
-Use neutral honorifics
 Use of 'a' vs. 'an'
 Use of continuous form with non-action verbs
 Use of past form with 'going to ...'
@@ -1126,7 +1025,6 @@ VBG they're (their)
 VBG you're (your)
 VBZ IN they're (their) NN
 Verb missing after personal pronoun and adverb at beginning of sentence.
-Verb tense issues
 Verb with 's
 Victoria's Secret
 Walter Reed Hospital
@@ -1173,8 +1071,6 @@ Wien vs Vienna
 Windows (proper noun)
 Winter 20211 (2021)
 Word contains a ligature
-Word or phrase repetition
-Word order issues
 Word order: 'Hopefully' starting a sentence
 Word order: 'more a ...' instead of 'a more ...'
 Word order: Wrong position of adverb, e.g. 'Always I am happy. (I am always happy.)'

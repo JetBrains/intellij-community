@@ -1,7 +1,6 @@
 package com.intellij.grazie.text;
 
 import ai.grazie.nlp.langs.Language;
-import ai.grazie.rules.settings.Setting;
 import com.intellij.grazie.GrazieConfig;
 import com.intellij.grazie.utils.TextStyleDomain;
 import com.intellij.grazie.utils.TextUtilsKt;
@@ -107,13 +106,6 @@ public abstract class Rule {
    */
   public boolean isEnabledByDefault(TextStyleDomain domain) {
     return true;
-  }
-
-  /**
-   * @return an optional featured rule setting to open from "Rule X settings" quick fix.
-   */
-  public @Nullable Setting getFeaturedSetting() {
-    return null;
   }
 
   public final boolean isCurrentlyEnabled(TextContent content) {

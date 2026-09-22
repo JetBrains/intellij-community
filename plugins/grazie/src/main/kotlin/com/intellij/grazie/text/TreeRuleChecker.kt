@@ -15,8 +15,6 @@ import ai.grazie.rules.RuleMatch
 import ai.grazie.rules.document.Delimiter
 import ai.grazie.rules.document.DocumentRule
 import ai.grazie.rules.document.DocumentSentence
-import ai.grazie.rules.settings.RuleSetting
-import ai.grazie.rules.settings.Setting
 import ai.grazie.rules.settings.TextStyle
 import ai.grazie.rules.toolkit.LanguageToolkit
 import ai.grazie.rules.tree.Parameter
@@ -26,8 +24,6 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.detection.toAvailableLang
-import com.intellij.grazie.ide.inspection.ai.RephraseAction
 import com.intellij.grazie.ide.inspection.auto.AutoFix
 import com.intellij.grazie.ide.ui.configurable.StyleConfigurable.Companion.ruleEngineLanguages
 import com.intellij.grazie.jlanguage.Lang
@@ -35,7 +31,6 @@ import com.intellij.grazie.rule.ParsedSentence
 import com.intellij.grazie.rule.RuleIdeClient
 import com.intellij.grazie.rule.SentenceBatcher
 import com.intellij.grazie.rule.SentenceTokenizer
-import com.intellij.grazie.style.ConfigureSuggestedParameter
 import com.intellij.grazie.style.TextLevelFix
 import com.intellij.grazie.text.TextContent.TextDomain
 import com.intellij.grazie.utils.HighlightingUtil
@@ -115,7 +110,7 @@ class TreeRuleChecker private constructor() {
       }
 
       val toolkit = LanguageToolkit.forLanguage(language)
-      return toolkit.publishedRules().map(::toGrazieRule)
+      return toolkit.publishedRules().filter { it.supportsFlatTrees() }.map(::toGrazieRule)
     }
 
     @JvmStatic
@@ -159,7 +154,6 @@ class TreeRuleChecker private constructor() {
         }
 
         override fun getUrl(): URL? = rule.url
-        override fun getFeaturedSetting(): Setting = RuleSetting(rule)
         override fun isEnabledByDefault(domain: TextStyleDomain): Boolean =
           rule.isRuleEnabledByDefault(GrazieConfig.get().getTextStyle(domain), RuleIdeClient.INSTANCE)
 
@@ -622,11 +616,8 @@ class TreeRuleChecker private constructor() {
                 suggestion.quickFixText,
               )
             }
-            else {
-              ConfigureSuggestedParameter(suggestion, domain, match.rule().language().toAvailableLang(), suggestion.quickFixText)
-            }
+            else null
           }
-          ActionSuggestion.RephraseAround -> RephraseAction()
           else -> null
         }
       }
