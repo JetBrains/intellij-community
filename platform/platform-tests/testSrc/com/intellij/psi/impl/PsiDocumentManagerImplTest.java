@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -945,6 +945,28 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       assertTrue(documentCommitCallback.get());
     }));
     PlatformTestUtil.waitForFuture(f, 10_000);
+  }
+
+  public void testPerformForCommittedDocumentWithoutReadAccessSchedulesActionOnEdt() {
+    PsiFile psiFile = findFile(createFile());
+    Document document = getDocument(psiFile);
+    assertTrue(getPsiDocumentManager().isCommitted(document));
+
+    AtomicInteger runCount = new AtomicInteger();
+    AtomicBoolean ranOnEdt = new AtomicBoolean();
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
+      getPsiDocumentManager().performForCommittedDocument(document, () -> {
+        ranOnEdt.set(ApplicationManager.getApplication().isDispatchThread());
+        runCount.incrementAndGet();
+      });
+      assertEquals("the action must not run on a thread without read access", 0, runCount.get());
+    });
+    PlatformTestUtil.waitForFuture(future, 10_000);
+
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    assertEquals("the action must run one time only", 1, runCount.get());
+    assertTrue("the action must run on the EDT", ranOnEdt.get());
   }
 
   public void testPerformWhenAllCommittedDoesNotRaceWithBackgroundLightCommitsResultingInExceptions(){

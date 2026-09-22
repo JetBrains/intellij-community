@@ -412,6 +412,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
 
   @Override
   public void performForCommittedDocument(@NotNull Document doc, @NotNull Runnable action) {
+    if (!ApplicationManager.getApplication().isReadAccessAllowed() && !InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+      ApplicationManager.getApplication().invokeLater(action);
+      return;
+    }
     Document document = getTopLevelDocument(doc);
     if (isCommitted(document)) {
       action.run();
