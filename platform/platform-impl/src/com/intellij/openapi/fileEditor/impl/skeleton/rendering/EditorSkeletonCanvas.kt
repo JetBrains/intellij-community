@@ -1,12 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+
 package com.intellij.openapi.fileEditor.impl.skeleton.rendering
 
+import com.intellij.openapi.application.UI
 import com.intellij.ui.scale.JBUIScale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import sun.awt.SunToolkit
 import java.awt.Canvas
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -44,7 +50,7 @@ internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
         }
       }
       finally {
-        synchronized(treeLock) {
+        withContext(NonCancellable + Dispatchers.UI) {
           bufferStrategy?.dispose()
         }
       }
@@ -56,20 +62,32 @@ internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
       val w = width
       val h = height
       if (!isDisplayable || w <= 0 || h <= 0) return
-      val buffer = bufferStrategy ?: run {
-        createBufferStrategy(2)
-        bufferStrategy
+      tryWithAwtLock {
+        val buffer = bufferStrategy ?: run {
+          createBufferStrategy(2)
+          bufferStrategy
+        }
+        val graphics = buffer.drawGraphics as Graphics2D
+        try {
+          paintFrame(graphics, w, h, JBUIScale.scale(1f))
+        }
+        finally {
+          graphics.dispose()
+        }
+        if (!buffer.contentsRestored()) {
+          buffer.show()
+        }
       }
-      val graphics = buffer.drawGraphics as Graphics2D
-      try {
-        paintFrame(graphics, w, h, JBUIScale.scale(1f))
-      }
-      finally {
-        graphics.dispose()
-      }
-      if (!buffer.contentsRestored()) {
-        buffer.show()
-      }
+    }
+  }
+
+  private inline fun tryWithAwtLock(action: () -> Unit) {
+    if (!SunToolkit.awtTryLock()) return
+    try {
+      action()
+    }
+    finally {
+      SunToolkit.awtUnlock()
     }
   }
 }
