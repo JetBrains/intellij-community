@@ -68,9 +68,11 @@ open class RemDevDriverRunner : DriverRunner {
 
     // should be run before the actual frontend start as otherwise we miss IdeLaunchEvent
     val frontendDriverWithLogging =
-      DriverWithDetailedLogging(RemDevFrontendDriver(JmxHost(address = remoteDevDriverOptions.frontendOptions.address)) {
-        backendRun.driver::beforeCall
-      })
+      DriverWithDetailedLogging(RemDevFrontendDriver(JmxHost(address = remoteDevDriverOptions.frontendOptions.address),
+                                                     beforeCall = {
+                                                       // applying the same beforeCall to the frontend's driver
+                                                       backendRun.driver.beforeCall?.invoke(this)
+                                                     }))
 
     val (frontendStartResult, frontendProcess, frontendRunContext) = try {
       IDEFrontendHandler(context.frontendIDEContext,
