@@ -68,11 +68,17 @@ class UvCli(private val runtime: PyToolRuntime) {
    *   `.python-version`, VCS init, etc.
    * @param kind The project layout/kind. These uv flags are mutually exclusive, so at most one is
    *   passed. See [UvInitKind].
+   * @param python Passes `--python`: the version `requires-python` and `.python-version` are written from. Left null,
+   *   uv derives both from whichever interpreter it defaults to — the newest one in an empty directory, but any version
+   *   its own preference order lands on once a `.python-version` or a `requires-python` above applies. So a caller that
+   *   knows the version the user asked for must name it here, or the project is pinned to something else. uv only
+   *   records the request, so a version it has yet to download is accepted.
    */
-  suspend fun init(name: String? = null, bare: Boolean = false, kind: UvInitKind? = null): PyResult<String> {
+  suspend fun init(name: String? = null, bare: Boolean = false, kind: UvInitKind? = null, python: String? = null): PyResult<String> {
     val arguments = buildList {
       if (bare) add("--bare")
       kind?.let { add(it.flag) }
+      python?.let { addAll(listOf("--python", it)) }
       if (name != null) add(name)
     }.toTypedArray()
     return runtime.executeAndHandleErrors("init", *arguments, transformer = ZeroCodeStdoutTransformer)

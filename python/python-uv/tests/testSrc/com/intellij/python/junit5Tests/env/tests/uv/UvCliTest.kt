@@ -25,6 +25,7 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
+import kotlin.io.path.readText
 import kotlin.time.Duration.Companion.seconds
 
 @PyEnvTestCase
@@ -55,6 +56,15 @@ class UvCliTest {
      * yanks 5.0.
      */
     private val CYCLE_TEST_PACKAGE: PinnedPackage = PinnedPackage(name = "cowsay", version = "5.0")
+
+    /**
+     * A language level far enough below anything uv would default to that `init` naming it is unambiguous evidence the
+     * request was honoured. Never resolved to an interpreter — `uv init --python` records the constraint only.
+     */
+    private const val REQUESTED_LANGUAGE_LEVEL: String = "3.9"
+
+    /** The file `uv init` pins the project's interpreter in, alongside `requires-python`. */
+    private const val PYTHON_VERSION_FILE: String = ".python-version"
   }
 
   @BeforeEach
@@ -100,6 +110,40 @@ class UvCliTest {
 
     // THEN uv creates a src/ package layout and no flat root main.py
     assertSrcPackageLayout(packagedProjectPath)
+  }
+
+  /**
+   * Covers PY-92387: `init(python = …)` must record the named version in both files uv derives a project's Python from.
+   * The new-project wizard's `uv init` is the one that writes them — the later one in `setupNewUvSdkAndEnv` is skipped
+   * because `pyproject.toml` already exists — so a version dropped here is a project pinned to something the user did
+   * not pick.
+   *
+   * [REQUESTED_LANGUAGE_LEVEL] is asserted to differ from what uv defaults to, because a request that happens to equal
+   * the default would be recorded by the broken code too, and the test would prove nothing.
+   */
+  @Test
+  fun testInitRecordsRequestedPythonVersion(@TempDir requestedVersionTempDir: Path): Unit = timeoutRunBlocking(60.seconds) {
+    // GIVEN a fresh, empty project directory
+    val projectPath = requestedVersionTempDir.toRealPath().resolve("requested_version_project")
+    Files.createDirectories(projectPath)
+    val uvCli = uvContext.globalRuntime.withWorkingDirectory(projectPath).uvCli()
+
+    val defaultVersion = uvCli.python().find(showVersion = true, system = true).getOrThrow()
+    assertFalse(defaultVersion.startsWith("$REQUESTED_LANGUAGE_LEVEL.")) {
+      "uv defaults to $defaultVersion, so requesting $REQUESTED_LANGUAGE_LEVEL no longer discriminates; pick another level"
+    }
+
+    // WHEN initializing with an explicit version. uv only records the request here — it resolves no interpreter and
+    // downloads nothing — so this holds whether or not the machine has that version.
+    uvCli.init(python = REQUESTED_LANGUAGE_LEVEL).getOrThrow()
+
+    // THEN both files uv writes name the requested version rather than uv's default
+    val pyProjectToml = projectPath.resolve(PY_PROJECT_TOML).readText()
+    val requiresPython = pyProjectToml.lineSequence().firstOrNull { it.startsWith("requires-python") }
+    assertEquals("""requires-python = ">=$REQUESTED_LANGUAGE_LEVEL"""", requiresPython) {
+      "requires-python should name the requested version, got:\n$pyProjectToml"
+    }
+    assertEquals(REQUESTED_LANGUAGE_LEVEL, projectPath.resolve(PYTHON_VERSION_FILE).readText().trim())
   }
 
   private fun assertSrcPackageLayout(projectPath: Path) {

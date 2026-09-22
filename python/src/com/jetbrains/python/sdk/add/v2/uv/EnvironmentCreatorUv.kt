@@ -303,7 +303,12 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
       ExecOptions()
     ).withWorkingDirectory(baseDir.toNioPath())
 
-    return runtime.uvCli().init().mapSuccess {
+    // This runs before `setupEnvSdk`, so it is this `uv init` that writes `requires-python` and `.python-version`, and
+    // the one afterwards is skipped because `pyproject.toml` now exists. Named nothing, uv would pin both to whichever
+    // interpreter it defaults to, and the environment `setupEnvSdk` then builds on the chosen version is undone by the
+    // next sync that reads those two files back. Null is left for the case where the combo offered nothing to pick, and
+    // `setupEnvSdk` omits `--python` for it too.
+    return runtime.uvCli().init(python = pythonVersion.get()?.languageLevel()).mapSuccess {
       // Refresh so the just-created project structure is visible in VFS as a source root for the welcome step.
       VfsUtil.markDirtyAndRefresh(false, true, true, baseDir)
 
