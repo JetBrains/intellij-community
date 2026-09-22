@@ -14,6 +14,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -66,7 +67,7 @@ internal object JBPopupRenderer : PopupRenderer {
     override fun Popup(
         popupPositionProvider: PopupPositionProvider,
         properties: PopupProperties,
-        onDismissRequest: (() -> Unit)?,
+        onDismissRequest: ((inputMode: InputMode) -> Unit)?,
         onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
         onKeyEvent: ((KeyEvent) -> Boolean)?,
         cornerSize: CornerSize,
@@ -88,7 +89,7 @@ internal object JBPopupRenderer : PopupRenderer {
     override fun Popup(
         popupPositionProvider: PopupPositionProvider,
         properties: PopupProperties,
-        onDismissRequest: (() -> Unit)?,
+        onDismissRequest: ((inputMode: InputMode) -> Unit)?,
         onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
         onKeyEvent: ((KeyEvent) -> Boolean)?,
         cornerSize: CornerSize,
@@ -110,7 +111,7 @@ internal object JBPopupRenderer : PopupRenderer {
 @Composable
 private fun JBPopup(
     popupPositionProvider: PopupPositionProvider,
-    onDismissRequest: (() -> Unit)? = null,
+    onDismissRequest: ((inputMode: InputMode) -> Unit)? = null,
     properties: PopupProperties = PopupProperties(),
     onPreviewKeyEvent: ((KeyEvent) -> Boolean)? = null,
     onKeyEvent: ((KeyEvent) -> Boolean)? = null,
@@ -129,9 +130,10 @@ private fun JBPopup(
     val parentBoundsInRoot = remember { mutableStateOf<IntRect?>(null) }
     val popupRectangle = remember { mutableStateOf<Rectangle?>(null) }
     var isVisible by remember { mutableStateOf<Boolean?>(null) }
+    var dismissedWith by remember { mutableStateOf(InputMode.Touch) }
     LaunchedEffect(isVisible) {
         if (isVisible == false) {
-            currentOnDismissRequest?.invoke()
+            currentOnDismissRequest?.invoke(dismissedWith)
         }
     }
 
@@ -202,6 +204,7 @@ private fun JBPopup(
                         currentOnDismissRequest != null
 
                 if (dismissed) {
+                    dismissedWith = InputMode.Keyboard
                     isVisible = false
                 }
                 // A focusable popup swallows Escape whether or not it dismissed, matching Compose. A

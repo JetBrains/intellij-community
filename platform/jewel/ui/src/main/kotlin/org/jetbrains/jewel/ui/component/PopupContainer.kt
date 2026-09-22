@@ -21,6 +21,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -82,7 +83,7 @@ import org.jetbrains.jewel.ui.theme.popupContainerStyle
  */
 @Composable
 public fun PopupContainer(
-    onDismissRequest: () -> Unit,
+    onDismissRequest: (inputMode: InputMode) -> Unit,
     horizontalAlignment: Alignment.Horizontal,
     modifier: Modifier = Modifier,
     useIntrinsicWidth: Boolean = false,
@@ -103,6 +104,52 @@ public fun PopupContainer(
 ) {
     PopupContainerImpl(
         onDismissRequest = onDismissRequest,
+        horizontalAlignment = horizontalAlignment,
+        useIntrinsicWidth = useIntrinsicWidth,
+        modifier = modifier,
+        maxHeight = maxHeight,
+        style = style,
+        popupProperties = popupProperties,
+        popupPositionProvider = popupPositionProvider,
+        onPreviewKeyEvent = onPreviewKeyEvent,
+        onKeyEvent = onKeyEvent,
+        adContent = adContent,
+        content = content,
+    )
+}
+
+/**
+ * Compatibility overload whose `onDismissRequest` cannot say what caused the dismissal.
+ *
+ * Use the overload whose `onDismissRequest` receives the [InputMode] that caused it. Parameters match that overload.
+ */
+@Composable
+@Deprecated(
+    message = "Use the overload whose onDismissRequest reports the dismissal InputMode.",
+    level = DeprecationLevel.HIDDEN,
+)
+public fun PopupContainer(
+    onDismissRequest: () -> Unit,
+    horizontalAlignment: Alignment.Horizontal,
+    modifier: Modifier = Modifier,
+    useIntrinsicWidth: Boolean = false,
+    maxHeight: Dp = Dp.Unspecified,
+    style: PopupContainerStyle = JewelTheme.popupContainerStyle,
+    popupProperties: PopupProperties = PopupProperties(focusable = true),
+    popupPositionProvider: PopupPositionProvider =
+        AnchorVerticalMenuPositionProvider(
+            contentOffset = style.metrics.offset,
+            contentMargin = style.metrics.menuMargin,
+            alignment = horizontalAlignment,
+            density = LocalDensity.current,
+        ),
+    onPreviewKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    onKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    adContent: (@Composable () -> Unit)? = null,
+    content: @Composable () -> Unit,
+) {
+    PopupContainerImpl(
+        onDismissRequest = { onDismissRequest() },
         horizontalAlignment = horizontalAlignment,
         useIntrinsicWidth = useIntrinsicWidth,
         modifier = modifier,
@@ -170,7 +217,7 @@ public fun PopupContainer(
     content: @Composable () -> Unit,
 ) {
     PopupContainerImpl(
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = { onDismissRequest() },
         horizontalAlignment = horizontalAlignment,
         useIntrinsicWidth = false,
         modifier = modifier,
@@ -234,7 +281,7 @@ public fun PopupContainer(
     content: @Composable () -> Unit,
 ) {
     PopupContainerImpl(
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = { onDismissRequest() },
         horizontalAlignment = horizontalAlignment,
         useIntrinsicWidth = false,
         modifier = modifier,
@@ -251,7 +298,7 @@ public fun PopupContainer(
 
 @Composable
 private fun PopupContainerImpl(
-    onDismissRequest: () -> Unit,
+    onDismissRequest: (inputMode: InputMode) -> Unit,
     horizontalAlignment: Alignment.Horizontal,
     useIntrinsicWidth: Boolean,
     modifier: Modifier = Modifier,
