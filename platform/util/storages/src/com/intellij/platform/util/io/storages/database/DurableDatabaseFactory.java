@@ -2,6 +2,7 @@
 package com.intellij.platform.util.io.storages.database;
 
 import com.intellij.platform.util.io.storages.StorageFactory;
+import com.intellij.platform.util.io.storages.database.impl.BlocksDatabaseImpl;
 import com.intellij.platform.util.io.storages.database.impl.DurableDatabaseImpl;
 import com.intellij.platform.util.io.storages.database.impl.DurableDatabaseWithScheduledHousekeeping;
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory;
@@ -77,11 +78,13 @@ public record DurableDatabaseFactory(int chunkSize,
   /** Opens or creates a database in the specified directory */
   @Override
   public @NotNull DurableDatabase open(@NotNull Path databaseDirectory) throws IOException {
-    var blocksDatabase = new BlocksDatabaseFactory(chunkSize, fsyncOnFlush, fsyncOnClose).open(databaseDirectory);
+    var blocksDatabase = BlocksDatabaseImpl.open(databaseDirectory.toAbsolutePath(), chunkSize, fsyncOnFlush, fsyncOnClose);
+
     var database = new DurableDatabaseImpl(blocksDatabase);
     if (housekeepingConfiguration == null) {
       return database;
     }
+
     try {
       return new DurableDatabaseWithScheduledHousekeeping(
         database,

@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 /// Provides named block stores over database chunks
 @ApiStatus.Internal
@@ -176,6 +177,72 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
   private void fsync() throws IOException {
     databaseChunks.fsync();
     databaseCatalog.fsync();
+  }
+
+  /// @return the sealed chunks that may be ready for retirement
+  @NotNull List<DatabaseChunk> chunksForRetirementCheck() {
+    synchronized (databaseLock) {
+      ensureNotClosed();
+      return databaseChunks.sealedChunks();
+    }
+  }
+
+  /// Retires a sealed chunk that contains only retired blocks
+  void retireChunkIfUnused(@NotNull DatabaseChunk chunk,
+                           @NotNull BooleanSupplier cancellationRequested) throws IOException {
+    if (!cancellationRequested.getAsBoolean()) {
+      retireIfUnused(chunk);
+    }
+  }
+
+  /// Retires the chunk if it is sealed and contains only retired blocks.
+  /// Retirement hides the chunk and its blocks from the database API. The database keeps the chunk resources until close.
+  ///
+  /// @return true if the chunk is retired successfully, false if some preconditions for retirement are not met
+  @SuppressWarnings("UnusedReturnValue")
+  private boolean retireIfUnused(@NotNull DatabaseChunk chunk) throws IOException {
+    synchronized (databaseLock) {
+      ensureNotClosed();
+      if (!chunk.containsOnlyRetiredBlocks()) {
+        return false;
+      }
+
+      var catalogChunkInfo = databaseCatalog.chunks().stream()
+        .filter(info -> info.chunkId() == chunk.chunkId())
+        .findFirst()
+        .orElseThrow(() -> new IllegalStateException("Unknown chunkId(=" + chunk.chunkId() + ")"));
+      var retirementPublished = false;
+      try {
+        var catalogState = catalogChunkInfo.state();
+        if (catalogState != DatabaseCatalog.ChunkState.SEALED) {
+          return false;
+        }
+
+        if (chunk.state() != DatabaseCatalog.ChunkState.SEALED) {
+          throw unexpectedChunkState(chunk, catalogState);
+        }
+
+        chunk.retire();
+
+        databaseCatalog.markChunkRetired(chunk.chunkId());
+        databaseCatalog.flush();
+        retirementPublished = true;
+      }
+      finally {
+        if (retirementPublished) {
+          databaseBlocks.removeChunkBlocks(chunk);
+          databaseChunks.postponeForRelease(chunk);
+        }
+      }
+      return true;
+    }
+  }
+
+  private static @NotNull IllegalStateException unexpectedChunkState(@NotNull DatabaseChunk chunk,
+                                                                     @NotNull DatabaseCatalog.ChunkState catalogState) {
+    return new IllegalStateException(
+      "Chunk " + chunk.chunkId() + " state is " + chunk.state() + ", catalog state is " + catalogState
+    );
   }
 
   /// @return the data version after checking that the store is current

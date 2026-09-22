@@ -19,7 +19,22 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/** One data chunk of a database. */
+import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.RETIRED;
+
+/// Chunk is a fixed-size file mmapped as a single memory region: it is used to allocate [DatabaseBlock]s inside it.
+/// [BlocksDatabaseImpl] consists of such chunks, while each chunk contains some (variable-size) [DatabaseBlock]s;
+///
+/// Chunk **lifecycle**:
+/// - [ChunkState#ACTIVE]: a new chunk started in this state -- active chunk accepts (=allocates) blocks until it is not
+///   (almost) exhausted. The database can keep more than one chunk active, and the decision when to seal the active
+///   chunk is an implementation detail of blocks allocation strategy;
+/// - [ChunkState#SEALED]: a chunk no longer accepts new blocks -- but existing blocks in the chunk are still valid,
+///   and accessible for both read & write;
+/// - [ChunkState#RETIRED]: if the chunk is sealed, and _all_ its blocks are [LifecycleState#RETIRED] => chunk itself could
+///   be retired, which means it should NOT be accessed anymore, and could be unmapped and removed anytime;
+///
+/// **Thread-safety**: blocks allocation and chunk state transitions are thread-safe, protected by exclusive lock.
+/// Access to the allocated blocks' memory segments is not protected -- allocating code is responsible for that, if needed.
 final class DatabaseChunk implements Closeable, Flushable {
 
   private final @NotNull ChunkIdentity chunkId;
@@ -152,6 +167,20 @@ final class DatabaseChunk implements Closeable, Flushable {
   @NotNull List<DatabaseBlock> blocks() {
     synchronized (lock) {
       return List.copyOf(blocks);
+    }
+  }
+
+  boolean containsOnlyRetiredBlocks() {
+    synchronized (lock) {
+      if (blocks.isEmpty()) {
+        return false;
+      }
+      for (var block : blocks) {
+        if (block.state() != RETIRED) {
+          return false;
+        }
+      }
+      return true;
     }
   }
 

@@ -5,6 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +18,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -48,6 +51,12 @@ final class DatabaseChunks implements Closeable, Flushable {
   /// GuardedBy(lock)
   private final ArrayDeque<DatabaseChunk> activeChunks = new ArrayDeque<>();
 
+  /// Retired chunks awaiting resource deallocation, by chunkId.
+  /// Retirement hides these chunks from the database API. Their mappings remain valid until the database closes.
+  ///
+  /// GuardedBy(lock)
+  private final Int2ObjectMap<DatabaseChunk> chunksPendingForRelease = new Int2ObjectOpenHashMap<>();
+
   /// GuardedBy(lock)
   private boolean closed;
 
@@ -71,7 +80,7 @@ final class DatabaseChunks implements Closeable, Flushable {
     try {
       chunks.openRegisteredChunks();
       //TODO RC: this method failures shouldn't prevent DB opening
-      chunks.deleteUnusedChunkFiles();
+      chunks.deleteOrphanChunkFiles();
       return chunks;
     }
     catch (IOException openingFailure) {
@@ -172,6 +181,15 @@ final class DatabaseChunks implements Closeable, Flushable {
     }
   }
 
+  @NotNull List<DatabaseChunk> sealedChunks() {
+    synchronized (lock) {
+      return chunksById.values().stream()
+        .filter(chunk -> chunk.state() == SEALED)
+        .sorted(Comparator.comparingInt(DatabaseChunk::chunkId))
+        .toList();
+    }
+  }
+
   /** Completes the file-first seal transition before removing a chunk from the active queue */
   private void sealForAllocation(@NotNull DatabaseChunk chunk) throws IOException {
     if (chunk.state() != ACTIVE) {
@@ -189,6 +207,16 @@ final class DatabaseChunks implements Closeable, Flushable {
       throw new IllegalStateException("Unknown chunkId(=" + chunkId + ")");
     }
     return chunkInfo;
+  }
+
+  /// Makes chunk (which should be already retired) unavailable for outside observers, and puts it into queue for resource releasing
+  void postponeForRelease(@NotNull DatabaseChunk chunkToRelease) {
+    synchronized (lock) {
+      if (!chunksById.remove(chunkToRelease.chunkId(), chunkToRelease)) {
+        throw new IllegalArgumentException("Unknown chunkId(=" + chunkToRelease.chunkId() + ")");
+      }
+      chunksPendingForRelease.put(chunkToRelease.chunkId(), chunkToRelease);
+    }
   }
 
   int chunkSize() {
@@ -262,8 +290,8 @@ final class DatabaseChunks implements Closeable, Flushable {
     LOG.info("Recovered chunk " + chunkInfo.chunkId() + " state " + headerState + ": " + chunk.storagePath());
   }
 
-  /** Removes canonical files for unregistered and retired chunks. */
-  void deleteUnusedChunkFiles() throws IOException {
+  /// Removes files that have chunk-like names, but not known as chunks: likely remnants of unfinished previous cleanup(s).
+  void deleteOrphanChunkFiles() throws IOException {
     synchronized (lock) {
       var liveChunkIds = new IntOpenHashSet();
       var retiredChunkIds = new IntOpenHashSet();
@@ -279,7 +307,10 @@ final class DatabaseChunks implements Closeable, Flushable {
       try (DirectoryStream<Path> files = Files.newDirectoryStream(databaseDirectory)) {
         for (var file : files) {
           var chunkId = parseChunkId(file.getFileName().toString());
-          if (chunkId > 0 && !liveChunkIds.contains(chunkId) && Files.isRegularFile(file)) {
+          if (chunkId > 0 &&
+              !liveChunkIds.contains(chunkId) &&
+              !chunksPendingForRelease.containsKey(chunkId) &&
+              Files.isRegularFile(file)) {
             Files.delete(file);
             var reason = retiredChunkIds.contains(chunkId) ? "retired" : "unregistered";
             LOG.info("Deleted " + reason + " chunk " + chunkId + ": " + file);
@@ -355,10 +386,19 @@ final class DatabaseChunks implements Closeable, Flushable {
         return;
       }
       try {
-        IOUtil.closeAllSafely(chunksById.values().toArray(DatabaseChunk[]::new));
+        var chunks = new DatabaseChunk[chunksById.size() + chunksPendingForRelease.size()];
+        var index = 0;
+        for (var chunk : chunksById.values()) {
+          chunks[index++] = chunk;
+        }
+        for (var chunk : chunksPendingForRelease.values()) {
+          chunks[index++] = chunk;
+        }
+        IOUtil.closeAllSafely(chunks);
       }
       finally {
         chunksById.clear();
+        chunksPendingForRelease.clear();
         closed = true;
       }
     }

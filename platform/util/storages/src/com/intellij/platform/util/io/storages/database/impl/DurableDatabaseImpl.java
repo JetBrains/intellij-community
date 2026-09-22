@@ -48,6 +48,9 @@ public final class DurableDatabaseImpl implements DurableDatabase {
   /// Creates a facade that owns the specified block database
   public DurableDatabaseImpl(@NotNull BlocksDatabase blocksDatabase) {
     this.blocksDatabase = blocksDatabase;
+    if (blocksDatabase instanceof BlocksDatabaseImpl implementation) {
+      housekeepingCoordinator.register(new RetireUnusedChunksHousekeeper(implementation));
+    }
   }
 
   @NotNull HousekeepingRegistration registerHousekeeper(@NotNull Housekeeper housekeeper) {

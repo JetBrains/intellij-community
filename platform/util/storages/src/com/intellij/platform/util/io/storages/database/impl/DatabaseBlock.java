@@ -197,6 +197,7 @@ final class DatabaseBlock {
     return role;
   }
 
+  /// if returns [LifecycleState#RETIRED] => the block can be already unmapped, hence can't be safely accessed
   @NotNull LifecycleState state() {
     return BlockHeaderLayout.readState(blockSegment);
   }

@@ -47,11 +47,12 @@ final class DatabaseBlocks implements Closeable {
         //Recovery/clean up after possible crash:
 
         if (block.state() == ALLOCATED) {
-          block.discard();//block is allocated, but requestor hasn't finished block initialization => discard
+          //block is allocated, but requestor hasn't finished block initialization => discard
+          block.discard();
         }
-        //Also part of recovery: normally, if block is removed from the store => it must be RETIRED already;
-        // but if DB was crashed some blocks could be left in active/sealed state => fix that:
         if (!currentStoreIds.contains(block.storeId())) {
+          //active/sealed blocks belongs to removed store: normally, if the block is removed from the store, it must be
+          // RETIRED already; but if DB was crashed, some blocks could be left in active/sealed state => fix that:
           block.retireForStoreDrop();
         }
       }
@@ -97,6 +98,26 @@ final class DatabaseBlocks implements Closeable {
   @Nullable DatabaseBlock findBlock(int blockId) {
     synchronized (lock) {
       return blocksById.get(blockId);
+    }
+  }
+
+  void removeChunkBlocks(@NotNull DatabaseChunk chunk) {
+    synchronized (lock) {
+      for (var block : chunk.blocks()) {
+        if (blocksById.get(block.blockId()) != block) {
+          throw new IllegalStateException("Unknown blockId(=" + block.blockId() + ") in chunk " + chunk.chunkId());
+        }
+      }
+      for (var block : chunk.blocks()) {
+        blocksById.remove(block.blockId());
+        var storeBlocks = blocksByStoreId.get(block.storeId());
+        if (storeBlocks == null || !storeBlocks.remove(block)) {
+          throw new IllegalStateException("Block " + block.blockId() + " is absent from storeId(=" + block.storeId() + ")");
+        }
+        if (storeBlocks.isEmpty()) {
+          blocksByStoreId.remove(block.storeId());
+        }
+      }
     }
   }
 
