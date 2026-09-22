@@ -30,6 +30,7 @@ package net.n3.nanoxml;
 
 
 import java.io.Reader;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -321,7 +322,14 @@ public final class StdXMLParser {
     if (systemID != null) {
       Reader reader = this.reader.openStream(publicID.toString(), systemID);
       this.reader.startNewStream(reader);
-      this.reader.setSystemID(systemID);
+
+      try {
+        this.reader.setSystemID(systemID);
+      }
+      catch (MalformedURLException e) {
+        // a system ID is document content, and not always a URL. Keep the system ID of the document.
+      }
+
       this.reader.setPublicID(publicID.toString());
       validator.parseDTD(publicID.toString(), this.reader, entityResolver, true);
     }
