@@ -181,7 +181,14 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     FilePosition filePosition = getErrorFilePosition(location);
     GradleIssueFailure issueFailure = GradleIssueFailure.createIssueFailure(error);
     GradleIssueData issueData = GradleIssueData.createIssueData(Path.of(projectPath), issueFailure, buildEnvironment, filePosition);
-    return ContainerUtil.mapNotNull(GradleIssueChecker.getKnownIssuesCheckList(), it -> it.check(issueData));
+    return ContainerUtil.mapNotNull(GradleIssueChecker.getKnownIssuesCheckList(), it -> {
+      try {
+        return it.check(issueData);
+      } catch (Exception e) {
+        LOG.error("Unable to apply issue checker: " + it.getClass().getCanonicalName(), e);
+        return null;
+      }
+    });
   }
 
   public static @Nullable FilePosition getErrorFilePosition(
