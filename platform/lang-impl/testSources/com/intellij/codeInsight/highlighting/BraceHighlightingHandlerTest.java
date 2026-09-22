@@ -76,8 +76,18 @@ public class BraceHighlightingHandlerTest extends LightPlatformCodeInsightTestCa
 
     StringBuilder result = new StringBuilder(hostEditor.getDocument().getCharsSequence());
     markers.stream()
-      .sorted(Comparator.comparingInt(it -> -it.first))
+      .sorted(Comparator.<Pair<Integer, String>>comparingInt(it -> it.first).reversed()
+                .thenComparingInt(it -> markerOrder(it.second)))
       .forEach(it -> result.insert(it.first, it.second));
     return result.toString();
+  }
+
+  private static int markerOrder(@NotNull String marker) {
+    return switch (marker) {
+      case "<brace>" -> 0;
+      case "</brace>" -> 1;
+      case "<caret>" -> 2;
+      default -> throw new IllegalArgumentException("Unknown marker: " + marker);
+    };
   }
 }
