@@ -108,7 +108,7 @@ internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
   }
 
   override fun getAllSources(): List<PluginUpdateSource> {
-    val sources = RepositoryHelper.getCustomPluginRepositoryHosts()
+    val sources: MutableList<Repository> = RepositoryHelper.getCustomPluginRepositoryHosts()
       .map { createRepository(it) }.distinctBy { it.host }.toMutableList()
     sources.add(createRepository(null))
     return sources
@@ -156,8 +156,8 @@ internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
 
 @Serializable
 private data class Repository(
-  override val host: @NlsSafe String,
-  override val isMarketplace: Boolean,
+  val host: @NlsSafe String,
+  val isMarketplace: Boolean,
   val isNightlyRepository: Boolean,
 ) : PluginUpdateSource {
 
@@ -204,7 +204,7 @@ internal data class XmlSerializableRepository(
 
 private const val CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins.custom.built.in.repository.url"
 
-private fun createRepository(initialHost: String?): PluginUpdateSource {
+private fun createRepository(initialHost: String?): Repository {
   val isMarketplace = initialHost == null
   val host = normalizeHost(initialHost)
   return Repository(host,
@@ -231,7 +231,8 @@ internal fun isNightlyRepository(host: String, isInternalMode: Boolean): Boolean
 }
 
 private fun PluginUpdateSource.toXmlSerializableRepository(): XmlSerializableRepository {
-  return XmlSerializableRepository(host, isMarketplace, (this as Repository).isNightlyRepository)
+  val repository = this as Repository
+  return XmlSerializableRepository(repository.host, repository.isMarketplace, repository.isNightlyRepository)
 }
 
 @ApiStatus.Internal

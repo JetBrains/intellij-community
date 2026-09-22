@@ -2,7 +2,6 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -13,9 +12,6 @@ import org.jetbrains.annotations.Nls
 @Serializable
 @ApiStatus.Internal
 sealed interface PluginUpdateSource {
-  val host: @NlsSafe String
-  val isMarketplace: Boolean
-
   val presentableName: @Nls String
 
   /**
