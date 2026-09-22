@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.getLibraryRoots
 import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.module.JpsModuleReference
 import java.nio.file.Path
 
 private val JAR_NAME_WITH_VERSION_PATTERN = "(.*)-\\d+(?:\\.\\d+)*\\.jar*".toPattern()
@@ -44,15 +45,40 @@ fun isSeparateLibraryJar(fileName: String): Boolean {
          (fileName.startsWith("maven-") && mavenLibrariesNotForcedInSeparateJars.none { fileName.contains(it) })
 }
 
+/**
+ * Which library files are already on their way into which target jar.
+ *
+ * Two libraries of one plugin can name the same artifact. The first one to be packed into a target takes the file, and
+ * the second contributes nothing to that target. The decision is made twice: first by jar identity from the project
+ * model, so that a library that contributes nothing is never resolved, and then by resolved file for the libraries that
+ * are. A dry layout under an explicit Bazel input manifest depends on the first: resolving a library declares it, and
+ * the plan declares only the libraries that contribute a file.
+ */
 @Internal
 class LibraryFileCopyTracker {
   private val copiedFiles = HashSet<CopiedForKey>()
+  private val copiedIdentities = HashSet<CopiedForKey>()
 
   fun markLibraryFileForCopy(file: Path, targetFile: Path?): Boolean {
     return copiedFiles.add(CopiedForKey(file, targetFile))
   }
 
   fun getLibraryFiles(library: JpsLibrary, targetFile: Path?, outputProvider: ModuleOutputProvider): MutableList<Path> {
+    val reference = library.createReference()
+    val parentReference = reference.parentReference
+    val identities = outputProvider.getLibraryJarIdentities(
+      libraryName = reference.libraryName,
+      moduleLibraryModuleName = if (parentReference is JpsModuleReference) parentReference.moduleName else null,
+    )
+    // Every identity is marked, not only the first new one, so the check stays a plain loop.
+    var contributes = identities.isEmpty()
+    for (identity in identities) {
+      contributes = copiedIdentities.add(CopiedForKey(identity, targetFile)) || contributes
+    }
+    if (!contributes) {
+      return mutableListOf()
+    }
+
     val files = getLibraryRoots(library, outputProvider).toMutableList()
     val iterator = files.iterator()
     while (iterator.hasNext()) {
@@ -67,4 +93,4 @@ class LibraryFileCopyTracker {
 }
 
 // null targetFile means main jar
-private data class CopiedForKey(@JvmField val file: Path, @JvmField val targetFile: Path?)
+private data class CopiedForKey(@JvmField val file: Any, @JvmField val targetFile: Path?)

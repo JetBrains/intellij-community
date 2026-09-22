@@ -57,6 +57,19 @@ interface ModuleOutputProvider {
   fun findDeclaredLibraryRoots(libraryName: String, moduleLibraryModuleName: String? = null): List<Path> =
     findLibraryRoots(libraryName = libraryName, moduleLibraryModuleName = moduleLibraryModuleName)
 
+  /**
+   * One stable identity per jar of a library, read from the project model and not from a file.
+   *
+   * Two libraries that name the same artifact report the same identity for it. The packer decides with these whether a
+   * library still contributes a file to a jar, so a library whose every jar another library already packed is never
+   * resolved. That matters under an explicit Bazel input manifest: resolving a library declares it, and a build that
+   * packs nothing of a library must not need it declared.
+   *
+   * Defaults to the resolved roots. A provider that can answer from its model overrides this.
+   */
+  fun getLibraryJarIdentities(libraryName: String, moduleLibraryModuleName: String? = null): List<String> =
+    findLibraryRoots(libraryName = libraryName, moduleLibraryModuleName = moduleLibraryModuleName).map { it.toString() }
+
   fun getModuleOutputRoots(module: JpsModule, forTests: Boolean = false): List<Path>
 
   /**

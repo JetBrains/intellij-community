@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
@@ -73,16 +74,21 @@ internal class JpsModuleOutputProvider(
 
   override fun findModulesWithSourceFile(relativePath: String): List<JpsModule> = state.findModulesWithSourceFile(relativePath)
 
-  override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
-    val project = state.project
+  private fun findLibrary(libraryName: String, moduleLibraryModuleName: String?): JpsLibrary {
     val module = moduleLibraryModuleName?.let { findRequiredModule(it) }
-    val library = if (module == null) {
-      project.libraryCollection.findLibrary(libraryName) ?: error("Could not find project-level library $libraryName")
+    if (module == null) {
+      return state.project.libraryCollection.findLibrary(libraryName) ?: error("Could not find project-level library $libraryName")
     }
-    else {
-      module.libraryCollection.findLibrary(libraryName) ?: error("Could not find module-level library $libraryName in module ${module.name}")
-    }
+    return module.libraryCollection.findLibrary(libraryName) ?: error("Could not find module-level library $libraryName in module ${module.name}")
+  }
 
+  // The model paths, with no file check: an identity is compared, not read.
+  override fun getLibraryJarIdentities(libraryName: String, moduleLibraryModuleName: String?): List<String> {
+    return findLibrary(libraryName = libraryName, moduleLibraryModuleName = moduleLibraryModuleName).getPaths(JpsOrderRootType.COMPILED).map { it.toString() }
+  }
+
+  override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
+    val library = findLibrary(libraryName = libraryName, moduleLibraryModuleName = moduleLibraryModuleName)
     val libraryMoniker = "library '$libraryName' " + if (moduleLibraryModuleName == null) "(project level)" else "(in module '$moduleLibraryModuleName'"
 
     val paths = library.getPaths(JpsOrderRootType.COMPILED)

@@ -2,10 +2,59 @@
 package org.jetbrains.intellij.build.impl
 
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.jps.model.JpsElementFactory
+import org.jetbrains.jps.model.java.JpsJavaLibraryType
+import org.jetbrains.jps.model.java.JpsJavaModuleType
+import org.jetbrains.jps.model.module.JpsModule
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 
 internal class LibraryFileCopyTrackerTest {
+  @Test
+  fun `a library whose every jar another library packed into the same target is not resolved`() {
+    val project = JpsElementFactory.getInstance().createModel().project
+    val module = project.addModule("intellij.sample", JpsJavaModuleType.INSTANCE)
+    val engine = module.libraryCollection.addLibrary("engine", JpsJavaLibraryType.INSTANCE)
+    val detect = module.libraryCollection.addLibrary("detect", JpsJavaLibraryType.INSTANCE)
+    val engineJar = Path.of("/maven/engine-1.jar")
+    val detectJar = Path.of("/maven/detect-1.jar")
+    val provider = IdentityOutputProvider(
+      module = module,
+      identities = mapOf("engine" to listOf("@lib//:engine-1.jar", "@lib//:detect-1.jar"), "detect" to listOf("@lib//:detect-1.jar")),
+      roots = mapOf("engine" to listOf(engineJar, detectJar), "detect" to listOf(detectJar)),
+    )
+    val moduleJar = Path.of("/dist/plugins/sample/lib/sample.jar")
+    val otherJar = Path.of("/dist/plugins/sample/lib/other.jar")
+    val tracker = LibraryFileCopyTracker()
+
+    assertThat(tracker.getLibraryFiles(library = engine, targetFile = moduleJar, outputProvider = provider)).containsExactly(engineJar, detectJar)
+    assertThat(tracker.getLibraryFiles(library = detect, targetFile = moduleJar, outputProvider = provider)).isEmpty()
+    // Another target still takes the file, and only then is the library resolved.
+    assertThat(tracker.getLibraryFiles(library = detect, targetFile = otherJar, outputProvider = provider)).containsExactly(detectJar)
+    assertThat(provider.resolved).containsExactly("engine", "detect")
+  }
+
+  @Test
+  fun `a library that shares one jar is resolved and contributes the rest`() {
+    val project = JpsElementFactory.getInstance().createModel().project
+    val module = project.addModule("intellij.sample", JpsJavaModuleType.INSTANCE)
+    val first = module.libraryCollection.addLibrary("first", JpsJavaLibraryType.INSTANCE)
+    val second = module.libraryCollection.addLibrary("second", JpsJavaLibraryType.INSTANCE)
+    val shared = Path.of("/maven/shared-1.jar")
+    val own = Path.of("/maven/own-1.jar")
+    val provider = IdentityOutputProvider(
+      module = module,
+      identities = mapOf("first" to listOf("@lib//:shared-1.jar"), "second" to listOf("@lib//:shared-1.jar", "@lib//:own-1.jar")),
+      roots = mapOf("first" to listOf(shared), "second" to listOf(shared, own)),
+    )
+    val moduleJar = Path.of("/dist/plugins/sample/lib/sample.jar")
+    val tracker = LibraryFileCopyTracker()
+
+    assertThat(tracker.getLibraryFiles(library = first, targetFile = moduleJar, outputProvider = provider)).containsExactly(shared)
+    assertThat(tracker.getLibraryFiles(library = second, targetFile = moduleJar, outputProvider = provider)).containsExactly(own)
+  }
+
   @Test
   fun `tracks library copies by final target file`() {
     val tracker = LibraryFileCopyTracker()
@@ -41,4 +90,37 @@ internal class LibraryFileCopyTrackerTest {
     assertThat(isSeparateLibraryJar("jcp-agent-spawner-sessions-api-0.3.1.jar")).isFalse()
     assertThat(isSeparateLibraryJar("jcp-agent-spawner-tasks-api-0.3.1.jar")).isFalse()
   }
+}
+
+/** Answers identities from a table and records which libraries a caller resolved. */
+private class IdentityOutputProvider(
+  private val module: JpsModule,
+  private val identities: Map<String, List<String>>,
+  private val roots: Map<String, List<Path>>,
+) : ModuleOutputProvider {
+  @JvmField val resolved: MutableList<String> = ArrayList()
+
+  override val useTestCompilationOutput: Boolean = false
+
+  override fun findModule(name: String): JpsModule? = module.takeIf { it.name == name }
+
+  override fun findRequiredModule(name: String): JpsModule = requireNotNull(findModule(name))
+
+  override fun getModuleImlFile(module: JpsModule): Path = error("Not needed")
+
+  override fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProductionSources: Boolean): Path? = null
+
+  override fun getLibraryJarIdentities(libraryName: String, moduleLibraryModuleName: String?): List<String> {
+    assertThat(moduleLibraryModuleName).isEqualTo(module.name)
+    return identities.getValue(libraryName)
+  }
+
+  override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
+    resolved.add(libraryName)
+    return roots.getValue(libraryName)
+  }
+
+  override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> = emptyList()
+
+  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? = null
 }
