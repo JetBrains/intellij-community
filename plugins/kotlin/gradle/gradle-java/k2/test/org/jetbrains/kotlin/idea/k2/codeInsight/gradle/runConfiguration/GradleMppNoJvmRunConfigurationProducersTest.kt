@@ -16,10 +16,10 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.plugins.gradle.execution.test.producer.GradleTestRunConfigurationProducerTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.Test
+import org.junit.runners.Parameterized
 
 /**
  * See paired [org.jetbrains.kotlin.idea.k2.codeInsight.gradle.runConfiguration.GradleMppJvmRunConfigurationProducersTest4].
@@ -39,8 +39,6 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     //// ALL IN CLASS /////
 
     @Test
-    // The test is incompatible with Gradle 9.0 - KTIJ-34799
-    @TargetVersions("<9.0")
     fun allTestsInJsClass() {
         assertConfigurationFromContext<KotlinMultiplatformJsTestClassGradleConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest --tests "org.jetbrains.JsTests"""",
@@ -52,8 +50,6 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     }
 
     @Test
-    // The test is incompatible with Gradle 9.0 - KTIJ-34799
-    @TargetVersions("<9.0")
     fun allTestsInNativeClass() {
         assertConfigurationFromContext<KotlinMultiplatformNativeTestClassGradleConfigurationProducer>(
             """:cleanNativeTest :nativeTest --tests "org.jetbrains.NativeTests"""",
@@ -67,8 +63,6 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     //// METHOD /////
 
     @Test
-    // The test is incompatible with Gradle 9.0 - KTIJ-34799
-    @TargetVersions("<9.0")
     fun testForJsMethod() {
         assertConfigurationFromContext<KotlinMultiplatformJsTestMethodGradleConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest --tests "org.jetbrains.JsTests.jsTest"""",
@@ -80,8 +74,6 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     }
 
     @Test
-    // The test is incompatible with Gradle 9.0 - KTIJ-34799
-    @TargetVersions("<9.0")
     fun testForNativeMethod() {
         assertConfigurationFromContext<KotlinMultiplatformNativeTestMethodGradleConfigurationProducer>(
             """:cleanNativeTest :nativeTest --tests "org.jetbrains.NativeTests.nativeTest"""",
@@ -95,8 +87,6 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     //// ALL IN PACKAGE /////
 
     @Test
-    // The test is incompatible with Gradle 9.0 - KTIJ-34799
-    @TargetVersions("<9.0")
     fun allTestsInJsPackage() {
         assertConfigurationFromContext<KotlinMultiplatformAllInPackageConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest --tests "org.jetbrains.*"""",
@@ -108,8 +98,6 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     }
 
     @Test
-    // The test is incompatible with Gradle 9.0 - KTIJ-34799
-    @TargetVersions("<9.0")
     fun allTestsInNativePackage() {
         assertConfigurationFromContext<KotlinMultiplatformAllInPackageConfigurationProducer>(
             """:cleanNativeTest :nativeTest --tests "org.jetbrains.*"""",
@@ -124,8 +112,6 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     //// ALL IN DIRECTORY /////
 
     @Test
-    // The test is incompatible with Gradle 9.0 - KTIJ-34799
-    @TargetVersions("<9.0")
     fun allTestsInJsDirectory() {
         assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest""",
@@ -138,8 +124,6 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     }
 
     @Test
-    // The test is incompatible with Gradle 9.0 - KTIJ-34799
-    @TargetVersions("<9.0")
     fun allTestsInNativeDirectory() {
         assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
             """:cleanNativeTest :nativeTest""",
@@ -155,8 +139,6 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     //// ALL IN MODULE /////
 
     @Test
-    // The test is incompatible with Gradle 9.0 - KTIJ-34799
-    @TargetVersions("<9.0")
     fun allTestsInJsModule() {
         assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest""",
@@ -170,8 +152,6 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     }
 
     @Test
-    // The test is incompatible with Gradle 9.0 - KTIJ-34799
-    @TargetVersions("<9.0")
     fun allTestsInNativeModule() {
         assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
             """:cleanNativeTest :nativeTest""",
@@ -295,5 +275,17 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
             ModuleData("project.jsTest", jsTestModuleDir, jsTestModuleTesSuite),
             ModuleData("project.nativeTest", nativeTestModuleDir, nativeTestModuleTesSuite)
         )
+    }
+
+    companion object {
+        // The tests are incompatible with Gradle 9.0 - KTIJ-34799
+        private const val LATEST_GRADLE_VERSION_BEFORE_9 = "8.14.5"
+
+        /**
+         * Override the [BASE_GRADLE_VERSION] parameter provider in [GradleTestRunConfigurationProducerTestCase]
+         */
+        @Parameterized.Parameters(name = "with Gradle-{0}")
+        @JvmStatic
+        fun tests(): Collection<Array<out String>> = arrayListOf(arrayOf(LATEST_GRADLE_VERSION_BEFORE_9))
     }
 }
