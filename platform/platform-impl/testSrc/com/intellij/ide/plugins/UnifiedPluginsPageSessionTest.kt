@@ -827,6 +827,21 @@ internal class UnifiedPluginsPageSessionTest {
     }
 
   @Test
+  fun `page refresh recalculates plugin updates`(): Unit =
+    uiTest {
+      val updateRecalculationCount = AtomicInteger()
+      val session = createSession(null, recalculatePluginUpdates = updateRecalculationCount::incrementAndGet)
+      try {
+        session.refresh()
+
+        assertThat(updateRecalculationCount).hasValue(1)
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
   fun `programmatic selection accumulates plugins from separately published sources`(): Unit =
     uiTest {
       val first = CustomPluginRepository("first", PluginSource.LOCAL)
@@ -899,6 +914,7 @@ internal class UnifiedPluginsPageSessionTest {
     pluginStatesReadiness: suspend () -> Unit = {},
     sessionInitializationReadiness: suspend (LegacyPluginUiHost) -> Unit = { it.awaitSessionInitialization() },
     pluginUpdates: Flow<PluginUpdatesEvent> = emptyFlow(),
+    recalculatePluginUpdates: () -> Unit = {},
     internalGroupLoader: suspend () -> UnifiedPluginInternalGroup? = { null },
     internalLoadingDelay: Duration = 100.milliseconds,
     updateAllExecutor: UnifiedPluginUpdateAllExecutor = UnifiedPluginUpdateAllExecutor { _, _ -> },
@@ -913,6 +929,7 @@ internal class UnifiedPluginsPageSessionTest {
       repositoryDataProviderFactory = { repositoryProvider },
       marketplaceDataProviderFactory = { _, _ -> marketplaceProvider },
       pluginUpdates = pluginUpdates,
+      recalculatePluginUpdates = recalculatePluginUpdates,
       customizer = null,
       pluginStatesReadiness = pluginStatesReadiness,
       sessionInitializationReadiness = sessionInitializationReadiness,

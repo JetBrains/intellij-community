@@ -651,6 +651,11 @@ Untested: No focused test verifies that Internal ignores the legacy Show All que
     `plugin updates re-enrich cached models without repository refetch`
   )
 
+- A page refresh must request a new plugin update calculation. This includes a refresh after a custom repository change.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `page refresh recalculates plugin updates`
+  )
+
 ## Failure and Recovery
 
 - A refresh must retain usable source content while the new request loads.

@@ -127,6 +127,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     DefaultUnifiedPluginMarketplaceDataProvider(host, getActiveProject(), cache)
   },
   pluginUpdates: Flow<PluginUpdatesEvent> = PluginUpdatesService.getInstance().updatesFlow(),
+  private val recalculatePluginUpdates: () -> Unit = { PluginUpdatesService.getInstance().recalculateUpdates() },
   private val customizer: PluginManagerCustomizer? = PluginManagerCustomizer.getInstance(),
   pluginStatesReadiness: suspend () -> Unit = { customizer?.awaitPluginStatesLoaded() },
   sessionInitializationReadiness: suspend (LegacyPluginUiHost) -> Unit = { it.awaitSessionInitialization() },
@@ -688,8 +689,9 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     renderControllerState()
   }
 
-  private fun refresh() {
+  internal fun refresh() {
     pageSource.refresh()
+    recalculatePluginUpdates()
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
