@@ -5,6 +5,7 @@ import com.intellij.ide.CopyPasteUtil
 import com.intellij.ide.bookmark.BookmarksListener
 import com.intellij.ide.bookmark.FileBookmarksListener
 import com.intellij.ide.projectView.ProjectViewNode
+import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper
 import com.intellij.ide.scratch.RootType
 import com.intellij.ide.ui.VirtualFileAppearanceListener
 import com.intellij.ide.util.treeView.AbstractTreeNode
@@ -25,6 +26,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.platform.projectView.pane.ProjectViewPaneModel
+import com.intellij.platform.projectView.settings.ProjectViewPaneOption
+import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
 import com.intellij.problems.ProblemListener
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -375,6 +378,7 @@ private class UpdateSession(
 
   private suspend fun reduceToAreaDirs(files: Set<VirtualFile>): Set<VirtualFile> {
     if (files.isEmpty()) return emptySet()
+    val flattenPackages = ProjectViewPaneSettingsService.getInstance(project).isOptionSelected(ProjectViewPaneOption.FlattenPackages)
     return readAction {
       val result = HashSet<VirtualFile>()
       for (file in files) {
@@ -382,9 +386,36 @@ private class UpdateSession(
         val dir = if (file.isDirectory) file else file.parent
         if (dir != null && ProjectFileNode.findArea(dir, project) != null) {
           result.add(dir)
+          if (flattenPackages) {
+            flatPackageListOwner(dir)?.let { result.add(it) }
+          }
         }
       }
       result
+    }
+  }
+
+  /**
+   * The directory that owns the flat package list [dir] belongs to, or `null` when [dir] is not a package.
+   *
+   * In Flatten Packages mode a package is a child of the node of that directory, not of the node of its
+   * own parent directory, because [com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper]
+   * collects the whole package hierarchy into one flat list. A new or removed package therefore changes
+   * the child list of the owner, so the update has to reach it. The owner is the first ancestor whose own
+   * parent is not a package, which is the source root in a plain layout.
+   *
+   * The legacy pane reloaded the whole tree in this case, see
+   * `ProjectViewPsiTreeChangeListener.childrenChanged`.
+   */
+  @RequiresReadLock
+  private fun flatPackageListOwner(dir: VirtualFile): VirtualFile? {
+    val helper = ProjectViewDirectoryHelper.getInstance(project)
+    var directory = PsiManager.getInstance(project).findDirectory(dir) ?: return null
+    if (helper.skipDirectory(directory)) return null // not a package, so its node is an ordinary child
+    while (true) {
+      val parent = directory.parentDirectory ?: return null
+      if (helper.skipDirectory(parent)) return directory.virtualFile
+      directory = parent
     }
   }
 
