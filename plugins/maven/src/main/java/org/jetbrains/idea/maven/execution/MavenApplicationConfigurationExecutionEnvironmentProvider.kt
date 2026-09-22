@@ -27,8 +27,11 @@ import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.task.ExecuteRunConfigurationTask
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.Contract
 import org.jetbrains.idea.maven.execution.MavenExecutionEnvironmentProviderUtil.patchVmParameters
 import org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -37,6 +40,12 @@ import java.io.File
 class MavenApplicationConfigurationExecutionEnvironmentProvider : MavenExecutionEnvironmentProvider {
   override fun isApplicable(task: ExecuteRunConfigurationTask): Boolean {
     return task.getRunProfile() is ApplicationConfiguration
+  }
+
+  @Contract("null, _ -> null; !null, _ -> !null")
+  private fun toTargetStringPath(path: String?, project: Project): String? {
+    if (path == null) return null
+    return project.getEelDescriptor().getPath(path).toString()
   }
 
   override fun createExecutionEnvironment(
@@ -89,14 +98,14 @@ class MavenApplicationConfigurationExecutionEnvironmentProvider : MavenExecution
       throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
     }
 
-    val workingDirectory = ProgramParametersUtil.getWorkingDir(applicationConfiguration, project, module)
+    val workingDirectory = toTargetStringPath(ProgramParametersUtil.getWorkingDir(applicationConfiguration, project, module), project)
 
     val goals = ArrayList(runnerParameters.goals)
     if (StringUtil.isNotEmpty(workingDirectory)) {
       goals.add("-Dexec.workingdir=$workingDirectory")
     }
     goals.add("-Dexec.args=" + execArgs.parametersString)
-    goals.add("-Dexec.executable=" + FileUtil.toSystemDependentName(execExecutable))
+    goals.add("-Dexec.executable=${toTargetStringPath(execExecutable, project)}")
     goals.add("exec:exec")
     runnerParameters.setGoals(goals)
 
