@@ -2,6 +2,7 @@ package com.intellij.ide.starter.driver.engine
 
 import com.intellij.driver.client.impl.DriverImpl
 import com.intellij.driver.client.impl.JmxHost
+import com.intellij.driver.sdk.ManualWaitForIndicators
 import com.intellij.driver.sdk.getOpenProjects
 import com.intellij.driver.sdk.waitForIndicators
 import com.intellij.ide.starter.coroutine.CommonScope.scopeForProcesses
@@ -42,6 +43,7 @@ class LocalDriverRunner : DriverRunner {
         pauseOnIndicators?.let { timeout ->
           if (isConnected) {
             getOpenProjects().forEach {
+              @OptIn(ManualWaitForIndicators::class)
               waitForIndicators(it, timeout, false)
             }
           }
