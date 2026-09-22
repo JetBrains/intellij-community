@@ -113,17 +113,23 @@ internal class CaretMotionMachine private constructor(
         val rebased = trajectoriesFrom(previous, placements, CaretTrajectory::aimedAt)
         phase.withTrajectories(rebased)
       }
-      snapping || holdsSamePlaces(placements) -> restingPhase(placements, tick)
-      // A move that starts from rest follows one shared easing curve from here.
-      isAtRest -> CaretMotionPhase.Easing(
-        trajectories = trajectoriesFrom(previous, placements, CaretTrajectory::restartedAt),
-        startTime = tick.now,
-      )
-      // A move interrupted mid-flight keeps its velocity and bends towards the new targets.
-      else -> CaretMotionPhase.Pursuit(
-        trajectories = trajectoriesFrom(previous, placements, CaretTrajectory::aimedAt),
-        settling = phase.settling,
-      )
+      snapping || holdsSamePlaces(placements) -> {
+        restingPhase(placements, tick)
+      }
+      isAtRest -> {
+        // A move that starts from rest follows one shared easing curve from here.
+        CaretMotionPhase.Easing(
+          trajectories = trajectoriesFrom(previous, placements, CaretTrajectory::restartedAt),
+          startTime = tick.now,
+        )
+      }
+      else -> {
+        // A move interrupted mid-flight keeps its velocity and bends towards the new targets.
+        CaretMotionPhase.Pursuit(
+          trajectories = trajectoriesFrom(previous, placements, CaretTrajectory::aimedAt),
+          settling = phase.settling,
+        )
+      }
     }
   }
 
@@ -133,7 +139,7 @@ internal class CaretMotionMachine private constructor(
     rebase: (CaretTrajectory, CaretPlacement) -> CaretTrajectory,
   ): Map<Caret, CaretTrajectory> {
     return placements.associate { placement ->
-      placement.caret to rebasedTrajectory(previous[placement.caret], placement, rebase)
+      placement.caret() to rebasedTrajectory(previous[placement.caret()], placement, rebase)
     }
   }
 
@@ -151,7 +157,7 @@ internal class CaretMotionMachine private constructor(
 
   private fun restingPhase(placements: List<CaretPlacement>, tick: CaretTick): CaretMotionPhase {
     val trajectories = placements.associate { placement ->
-      placement.caret to CaretTrajectory.restingAt(placement)
+      placement.caret() to CaretTrajectory.restingAt(placement)
     }
     return CaretMotionPhase.Easing(trajectories, startTime = tick.now, settling = Settling.COMPLETE)
   }
@@ -159,7 +165,7 @@ internal class CaretMotionMachine private constructor(
   /// MARK: target comparisons
 
   private fun targetFor(placement: CaretPlacement): CaretPlacement? {
-    return phase.trajectories[placement.caret]?.target
+    return phase.trajectories[placement.caret()]?.target
   }
 
   /**
@@ -201,6 +207,18 @@ internal class CaretMotionMachine private constructor(
     }
   }
 
+  /**
+   * Every frame this easing move will paint, or `null` when there is nothing worth prefetching into the cache.
+   */
+  private fun CaretMotionPhase.framesWorthPrefetching(settings: CaretAnimationSettings): List<CaretRectangle>? {
+    val hasEasingInProgress = trajectories.isNotEmpty() && isEasing && !isSettled
+    return if (hasEasingInProgress) {
+      plannedFrames(settings)
+    } else {
+      null
+    }
+  }
+
   companion object {
     val DORMANT: CaretMotionMachine = CaretMotionMachine(
       phase = CaretMotionPhase.DORMANT,
@@ -217,17 +235,5 @@ internal class CaretMotionMachine private constructor(
     private const val URGENCY_DECAY = 0.8
 
     private const val FULL_URGENCY = 1.0
-  }
-}
-
-/**
- * Every frame this easing move will paint, or `null` when there is nothing worth prefetching into the cache.
- */
-private fun CaretMotionPhase.framesWorthPrefetching(settings: CaretAnimationSettings): List<CaretRectangle>? {
-  val hasEasingInProgress = trajectories.isNotEmpty() && isEasing && !isSettled
-  return if (hasEasingInProgress) {
-    plannedFrames(settings)
-  } else {
-    null
   }
 }

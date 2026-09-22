@@ -35,10 +35,10 @@ internal class CaretTrajectory private constructor(
   fun pursued(approachFactor: Double, damping: Double): CaretTrajectory {
     val dampedVelocity = velocity.damped(damping)
     val raw = rawPositionAfter(approachFactor, dampedVelocity)
-    val overshotX = didOvershoot(target.x, position.x, raw.x)
-    val overshotY = didOvershoot(target.y, position.y, raw.y)
-    val nextX = if (overshotX) target.x else raw.x
-    val nextY = if (overshotY) target.y else raw.y
+    val overshotX = didOvershoot(target.x(), position.x, raw.x)
+    val overshotY = didOvershoot(target.y(), position.y, raw.y)
+    val nextX = if (overshotX) target.x() else raw.x
+    val nextY = if (overshotY) target.y() else raw.y
     return CaretTrajectory(
       target = target,
       position = Point2D.Double(nextX, nextY),
@@ -67,8 +67,8 @@ internal class CaretTrajectory private constructor(
    * Where one pursuit step lands before the result is clamped to the target.
    */
   private fun rawPositionAfter(approachFactor: Double, dampedVelocity: Velocity): Point2D {
-    val remainingX = target.x - position.x
-    val remainingY = target.y - position.y
+    val remainingX = target.x() - position.x
+    val remainingY = target.y() - position.y
     val approachedX = position.x + remainingX * approachFactor
     val approachedY = position.y + remainingY * approachFactor
     val approached = Point2D.Double(approachedX, approachedY)
@@ -79,8 +79,8 @@ internal class CaretTrajectory private constructor(
     if (ease >= 1.0) {
       return target.toPoint()
     }
-    val travelX = target.x - startPos.x
-    val travelY = target.y - startPos.y
+    val travelX = target.x() - startPos.x
+    val travelY = target.y() - startPos.y
     return Point2D.Double(startPos.x + travelX * ease, startPos.y + travelY * ease)
   }
 

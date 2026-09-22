@@ -1691,16 +1691,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     // update area available for soft wrapping on the component shown/hidden
     myPanel.addHierarchyListener(_ -> mySoftWrapModel.getApplianceManager().updateAvailableArea());
-
     myPanel.addComponentListener(new ComponentAdapter() {
       @DirtyUI
       @Override
       public void componentResized(@NotNull ComponentEvent e) {
         myMarkupModel.recalcEditorDimensions();
         myMarkupModel.repaint();
-        if (!isRightAligned()) return;
-        updateCaretCursor();
-        repaintCarets(caretMutator.caretCursor());
+        if (isRightAligned()) {
+          CaretCursor caretCursor = updateCaretCursor();
+          repaintCarets(caretCursor);
+        }
       }
     });
   }
@@ -1965,10 +1965,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void isInsertModeChanged(ObservableStateListener.PropertyChangeEvent event) {
     assertIsDispatchThread();
-
     Object oldValue = extractOldValueOrLog(event, false);
     myPropertyChangeSupport.firePropertyChange(PROP_INSERT_MODE, oldValue, event.getNewValue());
-
     repaintCarets(caretMutator.caretCursor());
   }
 
@@ -3556,8 +3554,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     caretMutator.reinitSettings();
   }
 
-  void updateCaretCursor() {
-    caretMutator.updateCaretCursor();
+  @NotNull CaretCursor updateCaretCursor() {
+    return caretMutator.updateCaretCursor();
   }
 
   @ApiStatus.Internal
