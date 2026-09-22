@@ -22,6 +22,25 @@ internal class PluginModelEventPublisherTest {
   }
 
   @Test
+  fun `published enablement event owns an immutable state snapshot`() {
+    val events = mutableListOf<PluginModelEvent>()
+    val publisher = PluginModelEventPublisher(events::add)
+    val pluginId = PluginId.getId("plugin.id")
+    val enabledStates = mutableMapOf(pluginId to false)
+
+    publisher.enablementChanged(enabledStates)
+    enabledStates[pluginId] = true
+
+    assertThat(events).containsExactly(
+      PluginModelEvent.InventoryInvalidated(
+        PluginInventoryChangeReason.ENABLE_DISABLE,
+        setOf(pluginId),
+        mapOf(pluginId to false),
+      )
+    )
+  }
+
+  @Test
   fun `empty plugin id set requests a complete inventory refresh`() {
     val events = mutableListOf<PluginModelEvent>()
     val publisher = PluginModelEventPublisher(events::add)

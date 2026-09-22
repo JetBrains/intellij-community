@@ -418,6 +418,11 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
     `unified rows use toggle for plugin enablement`
   )
+- An enablement change must update local rows and refresh derived row data without reloading local inventory.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginLocalSourceCoordinatorTest.kt (
+    `enablement change updates rows without reloading inventory`;
+    `enablement change survives an in-flight refresh`
+  )
 
 - Activating row content must select the plugin without invoking its primary action.
 - Enter and Space on a focused row must select the plugin without invoking its primary action.

@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.newui.PluginOperationTerminalResult
 import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.ide.plugins.newui.PluginUpdatesEvent
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.text.HtmlChunk
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -99,6 +100,72 @@ internal class UnifiedPluginLocalSourceCoordinatorTest {
     assertThat(item.contentRevision).isEqualTo(2)
     assertThat(provider.loadCount).isEqualTo(1)
     assertThat(provider.enrichCount).isEqualTo(2)
+    coordinator.close()
+  }
+
+  @Test
+  fun `enablement change updates rows without reloading inventory`() = runTest {
+    val events = MutableSharedFlow<PluginModelEvent>(extraBufferCapacity = 1)
+    val inventoryEntry = inventoryItem("custom.plugin", "Custom")
+    val dependencyError = HtmlChunk.text("Disabled dependency")
+    val provider = FakeLocalDataProvider(inventory(installed = listOf(inventoryEntry))).apply {
+      errors = mapOf(inventoryEntry.model.pluginId to listOf(dependencyError))
+    }
+    val coordinator = coordinator(provider, hostEvents = events)
+    coordinator.start()
+    runCurrent()
+    val before = coordinator.state.value.sections.single { it.id == PluginSectionId.Installed }.items.single()
+    assertThat(before.rowInput?.errors).containsExactly(dependencyError)
+
+    provider.errors = emptyMap()
+    val event = PluginModelEvent.InventoryInvalidated(
+      PluginInventoryChangeReason.ENABLE_DISABLE,
+      setOf(inventoryEntry.model.pluginId),
+      mapOf(inventoryEntry.model.pluginId to false),
+    )
+    assertThat(events.tryEmit(event)).isTrue()
+    runCurrent()
+
+    val after = coordinator.state.value.sections.single { it.id == PluginSectionId.Installed }.items.single()
+    assertThat(after.modelHandle?.model).isSameAs(before.modelHandle?.model)
+    assertThat(after.rowInput?.installedPlugin).isSameAs(before.rowInput?.installedPlugin)
+    assertThat(after.rowInput?.enabled).isFalse()
+    assertThat(after.rowInput?.errors).isEmpty()
+    assertThat(after.contentRevision).isGreaterThan(before.contentRevision)
+    assertThat(coordinator.state.value.mayEstablishSelection).isFalse()
+    assertThat(provider.loadCount).isEqualTo(1)
+    assertThat(provider.enrichCount).isEqualTo(2)
+    coordinator.close()
+  }
+
+  @Test
+  fun `enablement change survives an in-flight refresh`() = runTest {
+    val events = MutableSharedFlow<PluginModelEvent>(extraBufferCapacity = 1)
+    val inventoryEntry = inventoryItem("custom.plugin", "Custom")
+    val localInventory = inventory(installed = listOf(inventoryEntry))
+    val refreshedInventory = CompletableDeferred<UnifiedPluginInventory>()
+    val provider = FakeLocalDataProvider(localInventory) { call ->
+      if (call == 1) localInventory else refreshedInventory.await()
+    }
+    val coordinator = coordinator(provider, hostEvents = events)
+    coordinator.start()
+    runCurrent()
+
+    coordinator.refresh()
+    runCurrent()
+    assertThat(events.tryEmit(PluginModelEvent.InventoryInvalidated(
+      PluginInventoryChangeReason.ENABLE_DISABLE,
+      setOf(inventoryEntry.model.pluginId),
+      mapOf(inventoryEntry.model.pluginId to false),
+    ))).isTrue()
+    runCurrent()
+    refreshedInventory.complete(localInventory)
+    runCurrent()
+
+    val item = coordinator.state.value.sections.single { it.id == PluginSectionId.Installed }.items.single()
+    assertThat(item.rowInput?.enabled).isFalse()
+    assertThat(provider.loadCount).isEqualTo(2)
+    assertThat(provider.enrichCount).isEqualTo(3)
     coordinator.close()
   }
 
@@ -536,6 +603,7 @@ internal class UnifiedPluginLocalSourceCoordinatorTest {
   ) : UnifiedPluginLocalDataProvider {
     var loadCount = 0
     var enrichCount = 0
+    var errors: Map<PluginId, List<HtmlChunk>> = emptyMap()
 
     override suspend fun loadInventory(): UnifiedPluginInventory {
       loadCount++
@@ -554,7 +622,7 @@ internal class UnifiedPluginLocalSourceCoordinatorTest {
         updates = updates,
         contentRevision = contentRevision,
         enabledStates = plugins.associate { it.model.pluginId to true },
-        errors = emptyMap(),
+        errors = errors,
         installationStates = emptyMap(),
         restrictions = emptyMap(),
       )

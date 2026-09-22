@@ -920,7 +920,7 @@ open class MyPluginModel @JvmOverloads constructor(
     if (result.pluginNamesToSwitch.isEmpty()) {
       applyChangedStates(result.changedStates)
       updateEnabledStateInUi()
-      invalidateAfterEnableDisable(result.changedStates.keys)
+      invalidateAfterEnableDisable(result.changedStates)
     }
     else {
       askToUpdateDependencies(action, result.pluginNamesToSwitch, result.pluginsIdsToSwitch)
@@ -938,7 +938,7 @@ open class MyPluginModel @JvmOverloads constructor(
       if (it.pluginNamesToSwitch.isEmpty()) {
         applyChangedStates(it.changedStates)
         updateEnabledStateInUi()
-        invalidateAfterEnableDisable(it.changedStates.keys)
+        invalidateAfterEnableDisable(it.changedStates)
       }
       else {
         askToUpdateDependencies(action, it.pluginNamesToSwitch, it.pluginsIdsToSwitch)
@@ -961,13 +961,13 @@ open class MyPluginModel @JvmOverloads constructor(
     if (result.changedStates.isNotEmpty()) {
       applyChangedStates(result.changedStates)
       updateEnabledStateInUi()
-      invalidateAfterEnableDisable(result.changedStates.keys)
+      invalidateAfterEnableDisable(result.changedStates)
     }
   }
 
-  private fun invalidateAfterEnableDisable(pluginIds: Collection<PluginId>) {
-    if (pluginIds.isNotEmpty()) {
-      myEventPublisher.inventoryInvalidated(PluginInventoryChangeReason.ENABLE_DISABLE, pluginIds)
+  private fun invalidateAfterEnableDisable(enabledStates: Map<PluginId, Boolean>) {
+    if (enabledStates.isNotEmpty()) {
+      myEventPublisher.enablementChanged(enabledStates)
     }
   }
 
@@ -1024,7 +1024,7 @@ open class MyPluginModel @JvmOverloads constructor(
                                                                               descriptor.pluginId)
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       setStatesByIds(pluginsToEnable, true)
-      invalidateAfterEnableDisable(pluginsToEnable)
+      invalidateAfterEnableDisable(pluginsToEnable.associateWith { true })
     }
   }
 

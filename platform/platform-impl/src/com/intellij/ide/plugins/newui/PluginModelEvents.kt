@@ -7,10 +7,14 @@ import java.util.UUID
 
 @ApiStatus.Internal
 sealed interface PluginModelEvent {
-  /** Empty [pluginIds] means that the complete inventory may have changed. */
+  /**
+   * Empty [pluginIds] means that the complete inventory may have changed.
+   * [enabledStates] contains the changed values when [reason] is [PluginInventoryChangeReason.ENABLE_DISABLE].
+   */
   data class InventoryInvalidated(
     val reason: PluginInventoryChangeReason,
     val pluginIds: Set<PluginId>,
+    val enabledStates: Map<PluginId, Boolean> = emptyMap(),
   ) : PluginModelEvent
 
   data class OperationStarted(
@@ -110,6 +114,18 @@ internal class PluginModelEventPublisher(private val sink: PluginModelEventSink)
     pluginIds: Collection<PluginId> = emptySet(),
   ) {
     sink.onEvent(PluginModelEvent.InventoryInvalidated(reason, pluginIds.toSet()))
+  }
+
+  fun enablementChanged(enabledStates: Map<PluginId, Boolean>) {
+    if (enabledStates.isEmpty()) return
+    val snapshot = enabledStates.toMap()
+    sink.onEvent(
+      PluginModelEvent.InventoryInvalidated(
+        PluginInventoryChangeReason.ENABLE_DISABLE,
+        snapshot.keys.toSet(),
+        snapshot,
+      )
+    )
   }
 
   fun operationStarted(sessionId: String, context: PluginOperationContext, presentationModel: PluginUiModel) {

@@ -78,9 +78,11 @@ internal class UnifiedPluginLocalSourceCoordinator(
   private var contentRevision = 0L
   private var requestToken = 0L
   private var inventoryStale = false
+  private var enablementEnrichmentPending = false
   private var updateAllTargets: List<UnifiedPluginUpdateAllTarget> = emptyList()
   private var updateAllRevision = 0L
   private val manualUpdates = HashMap<PluginId, UnifiedPluginManualUpdateState>()
+  private val enabledStateOverrides = HashMap<PluginId, Boolean>()
 
   val state: StateFlow<UnifiedPluginLocalSourceState> = mutableState.asStateFlow()
 
@@ -136,7 +138,11 @@ internal class UnifiedPluginLocalSourceCoordinator(
   private fun acceptHostEvent(event: PluginModelEvent) {
     val manualUpdateChanged = acceptManualUpdateEvent(event)
     if (event is PluginModelEvent.InventoryInvalidated) {
-      startReload()
+      if (!acceptEnablementChange(event)) {
+        enabledStateOverrides.clear()
+        enablementEnrichmentPending = false
+        startReload()
+      }
     }
     else {
       val installingChanged = installingLedger.accept(event)
@@ -145,6 +151,38 @@ internal class UnifiedPluginLocalSourceCoordinator(
       }
     }
     hostEventObserver(event)
+  }
+
+  private fun acceptEnablementChange(event: PluginModelEvent.InventoryInvalidated): Boolean {
+    if (event.reason != PluginInventoryChangeReason.ENABLE_DISABLE || event.enabledStates.isEmpty()) return false
+    enabledStateOverrides.putAll(event.enabledStates)
+
+    val currentSnapshot = snapshot
+    if (currentSnapshot != null) {
+      val updatedSnapshot = currentSnapshot.withEnabledStates(event.enabledStates, contentRevision + 1)
+      if (updatedSnapshot != currentSnapshot) {
+        contentRevision++
+        snapshot = updatedSnapshot
+        publish(updatedSnapshot, currentStatus(), mayEstablishSelection = false)
+      }
+    }
+    requestEnablementEnrichment()
+    return true
+  }
+
+  private fun requestEnablementEnrichment() {
+    val currentInventory = inventory
+    if (currentInventory == null) {
+      enablementEnrichmentPending = requestKind != null
+      return
+    }
+    if (requestKind == null) {
+      enablementEnrichmentPending = false
+      startEnrichment(currentInventory, RequestKind.EnablementEnrichment)
+    }
+    else {
+      enablementEnrichmentPending = true
+    }
   }
 
   private fun acceptManualUpdateEvent(event: PluginModelEvent): Boolean {
@@ -199,6 +237,7 @@ internal class UnifiedPluginLocalSourceCoordinator(
   }
 
   private fun startReload() {
+    enablementEnrichmentPending = false
     requestJob?.cancel()
     val token = ++requestToken
     val updatesAtRequest = updateRevision
@@ -221,14 +260,20 @@ internal class UnifiedPluginLocalSourceCoordinator(
     }
   }
 
-  private fun startEnrichment(currentInventory: UnifiedPluginInventory) {
+  private fun startEnrichment(
+    currentInventory: UnifiedPluginInventory,
+    kind: RequestKind = RequestKind.Enrichment,
+  ) {
+    enablementEnrichmentPending = false
     requestJob?.cancel()
     val token = ++requestToken
     val updatesAtRequest = updateRevision
     val updates = latestUpdates
     val revision = ++contentRevision
-    requestKind = RequestKind.Enrichment
-    publish(snapshot, PluginSectionStatus.Loading(showingStaleContent = snapshot != null))
+    requestKind = kind
+    if (kind != RequestKind.EnablementEnrichment) {
+      publish(snapshot, PluginSectionStatus.Loading(showingStaleContent = snapshot != null))
+    }
     requestJob = scope.launch {
       try {
         val enriched = dataProvider.enrich(currentInventory, updates, revision)
@@ -249,12 +294,19 @@ internal class UnifiedPluginLocalSourceCoordinator(
     requestJob = null
     requestKind = null
     inventory = command.inventory
-    snapshot = command.snapshot
+    val loadedSnapshot = command.snapshot.withEnabledStates(enabledStateOverrides, contentRevision)
+    snapshot = loadedSnapshot
     if (completedRequestKind == RequestKind.Reload) {
       inventoryStale = false
     }
     if (command.updateRevision != updateRevision) {
+      enablementEnrichmentPending = false
       startEnrichment(command.inventory)
+      return
+    }
+    if (enablementEnrichmentPending) {
+      enablementEnrichmentPending = false
+      startEnrichment(command.inventory, RequestKind.EnablementEnrichment)
       return
     }
     val status = if (inventoryStale || command.inventory.unavailableSides.isNotEmpty()) {
@@ -263,7 +315,11 @@ internal class UnifiedPluginLocalSourceCoordinator(
     else {
       PluginSectionStatus.Ready
     }
-    publish(command.snapshot, status)
+    publish(
+      loadedSnapshot,
+      status,
+      mayEstablishSelection = completedRequestKind != RequestKind.EnablementEnrichment,
+    )
   }
 
   private fun acceptFailed(command: Command.Failed) {
@@ -275,10 +331,16 @@ internal class UnifiedPluginLocalSourceCoordinator(
       inventoryStale = true
     }
     LOG.warn("Failed to load local plugins for the unified Plugins page", command.cause)
+    if (enablementEnrichmentPending && inventory != null) {
+      enablementEnrichmentPending = false
+      startEnrichment(checkNotNull(inventory), RequestKind.EnablementEnrichment)
+      return
+    }
     val error = PluginSectionError(loadErrorMessage, retryable = true)
     publish(
       snapshot,
       if (snapshot == null) PluginSectionStatus.Failed(error) else PluginSectionStatus.Degraded(error),
+      mayEstablishSelection = failedRequestKind != RequestKind.EnablementEnrichment,
     )
   }
 
@@ -336,11 +398,40 @@ internal class UnifiedPluginLocalSourceCoordinator(
   private enum class RequestKind {
     Reload,
     Enrichment,
+    EnablementEnrichment,
   }
 
   private companion object {
     val LOG = logger<UnifiedPluginLocalSourceCoordinator>()
   }
+}
+
+private fun UnifiedPluginLocalSnapshot.withEnabledStates(
+  enabledStates: Map<PluginId, Boolean>,
+  contentRevision: Long,
+): UnifiedPluginLocalSnapshot {
+  if (enabledStates.isEmpty()) return this
+
+  fun update(items: List<PluginItemState>): List<PluginItemState> {
+    var changed = false
+    val updatedItems = items.map { item ->
+      val enabled = enabledStates[item.pluginId]
+      val input = item.rowInput
+      if (enabled == null || input == null || enabled == input.enabled) {
+        item
+      }
+      else {
+        changed = true
+        item.copy(contentRevision = contentRevision, rowInput = input.copy(enabled = enabled))
+      }
+    }
+    return if (changed) updatedItems else items
+  }
+
+  val installedItems = update(installedItems)
+  val bundledItems = update(bundledItems)
+  return if (installedItems === this.installedItems && bundledItems === this.bundledItems) this
+  else copy(installedItems = installedItems, bundledItems = bundledItems)
 }
 
 internal fun updateAllInstallingItem(
