@@ -29,6 +29,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.function.LongConsumer
 import kotlin.concurrent.thread
+import kotlin.random.Random
 
 @UsePMarkerImplementation
 class SnapshotMarkerEngineImplTest {
@@ -854,6 +855,62 @@ class SnapshotMarkerEngineImplTest {
   }
 
   @Test
+  fun `root aggregates survive random marker and text operations`() {
+    val seed = 0x5EED
+    val random = Random(seed)
+    val maxMeasure = 10
+    val maxCharsPerOperation = 10
+    val document = DocumentImpl("abcdefghij", true)
+    val rootStore = document.rangeMarkers.rootStore()
+    var markerIds = mutableListOf<Long>()
+    var nextMarkerId = 1L
+    rootStore.rootReference(document.core.snapshot())
+
+    repeat(10_000) { iteration ->
+      when (random.nextInt(6)) {
+        0 -> {
+          val markerId = nextMarkerId++
+          val offset = random.nextInt(document.textLength + 1)
+          val measure = random.nextInt(maxMeasure)
+          val spec = nonGreedySpec().copy(isStickingToRight = random.nextBoolean())
+          rootStore.updateRoot(document.core.snapshot()) {
+            it.insert(markerId, offset, offset, spec, flavorFlags = 0, measure = measure)
+          }
+        }
+        1 -> if (markerIds.isNotEmpty()) {
+          val markerId = markerIds.removeAt(random.nextInt(markerIds.size))
+          rootStore.updateRoot(document.core.snapshot()) { it.remove(markerId) }
+        }
+        2 -> if (markerIds.isNotEmpty()) {
+          val markerId = markerIds[random.nextInt(markerIds.size)]
+          val measure = random.nextInt(maxMeasure)
+          rootStore.updateRoot(document.core.snapshot()) { it.updateMeasure(markerId, measure) }
+        }
+        3 -> {
+          val offset = random.nextInt(document.textLength + 1)
+          document.insertString(offset, " ".repeat(random.nextInt(maxCharsPerOperation + 1)))
+        }
+        4 -> if (document.textLength > 0) {
+          val startOffset = random.nextInt(document.textLength)
+          val endOffset = minOf(document.textLength, startOffset + 1 + random.nextInt(maxCharsPerOperation))
+          document.deleteString(startOffset, endOffset)
+        }
+        else -> if (document.textLength > 0) {
+          val startOffset = random.nextInt(document.textLength)
+          val endOffset = minOf(document.textLength, startOffset + 1 + random.nextInt(maxCharsPerOperation))
+          val targetOffset = random.nextInt(document.textLength + 1)
+          if (targetOffset !in startOffset..endOffset) {
+            document.moveText(startOffset, endOffset, targetOffset)
+          }
+        }
+      }
+
+      val root = rootStore.rootReference(document.core.snapshot()).get()
+      markerIds = assertPrefixAggregates(root, document.textLength, "Seed $seed, iteration $iteration")
+    }
+  }
+
+  @Test
   fun `marker spec delegates transformation to its policy`() {
     var receivedPatch: DocumentTextPatch? = null
     val invalidatedMarkerIds = ArrayList<Long>()
@@ -1164,6 +1221,24 @@ class SnapshotMarkerEngineImplTest {
     startOffset: Int,
     endOffset: Int,
   ): List<Long> = root.overlappingIterator(startOffset, endOffset, tastePreference).asSequence().map { it.markerId }.toList()
+
+  private fun assertPrefixAggregates(root: PMarkerRoot, textLength: Int, failureMessage: String): MutableList<Long> {
+    val entries = root.overlappingIterator(0, textLength, tastePreference = 0).asSequence().toList()
+    var expectedSum = 0
+    var index = 0
+
+    while (index < entries.size) {
+      val offset = entries[index].nodeStart
+      assertEquals(expectedSum, root.getPrefixAggregate(offset - 1), failureMessage)
+      while (index < entries.size && entries[index].nodeStart == offset) {
+        expectedSum += entries[index].measure
+        index++
+      }
+      assertEquals(expectedSum, root.getPrefixAggregate(offset), failureMessage)
+    }
+    assertEquals(expectedSum, root.getPrefixAggregate(textLength + 1), failureMessage)
+    return entries.mapTo(mutableListOf()) { it.markerId }
+  }
 
   private fun currentRootContains(fixture: Fixture, markerId: Long): Boolean =
     fixture.rootStore.containsMarkerId(fixture.document.core.snapshot(), markerId)
