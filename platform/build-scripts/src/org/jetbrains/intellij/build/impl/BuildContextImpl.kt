@@ -51,6 +51,7 @@ import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.jarCache.JarCacheManager
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.intellij.build.jarCache.NonCachingJarCacheManager
+import org.jetbrains.intellij.build.productLayout.PTY4J_PLUGIN_MODULE
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.intellij.build.productRunner.createDevModeProductRunner
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -465,11 +466,14 @@ class BuildContextImpl internal constructor(
     jvmArgs.add("-Didea.vendor.name=${applicationInfo.shortCompanyName}")
     jvmArgs.add("-Didea.paths.selector=${systemSelector}")
 
-    // require bundled JNA dispatcher lib
-    jvmArgs.add("-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".quoteIfNeeded())
-    jvmArgs.add("-Djna.nosys=true")
-    jvmArgs.add("-Djna.noclasspath=true")
-    jvmArgs.add("-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".quoteIfNeeded())
+    // `intellij.pty4j.plugin` owns the JNA and pty4j copies and places `lib/jna` and `lib/pty4j`
+    if (getBundledPluginModules().contains(PTY4J_PLUGIN_MODULE)) {
+      // require bundled JNA dispatcher lib
+      jvmArgs.add("-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".quoteIfNeeded())
+      jvmArgs.add("-Djna.nosys=true")
+      jvmArgs.add("-Djna.noclasspath=true")
+      jvmArgs.add("-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".quoteIfNeeded())
+    }
     jvmArgs.add("-Dio.netty.allocator.type=pooled")
 
     // require bundled Skiko

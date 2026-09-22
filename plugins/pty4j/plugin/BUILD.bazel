@@ -1,0 +1,104 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
+
+### auto-generated section `dev intellij.pty4j.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.libraries.jna",
+        "intellij.libraries.pty4j",
+    ],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = [
+        "intellij.libraries.jna",
+        "intellij.libraries.pty4j",
+    ],
+    main_module = "intellij.pty4j.plugin",
+)
+
+dev_dist_complex_plugin(
+    artifact_inputs = {
+        "//libraries/jna:jna.jar": "intellij.libraries.jna",
+        "//libraries/pty4j:pty4j.jar": "intellij.libraries.pty4j",
+        "//plugins/pty4j/plugin:plugin.jar": "intellij.pty4j.plugin",
+    },
+    descriptor = "//plugins/pty4j/plugin:intellij.pty4j.plugin_dev_descriptor",
+    execution_version = 3,
+    libraries = {
+        "@lib//:libraries-pty4j-pty4j": "@lib//:libraries-pty4j-pty4j",
+    },
+    main_module = "intellij.pty4j.plugin",
+    platform_values = {
+        "darwin_aarch64": {
+            "layoutSignature": "efppal0spmjnup08a7o51beyg",
+        },
+        "darwin_x64": {
+            "layoutSignature": "dznt8bf95zyt486pvoky1wjfj",
+        },
+        "linux_aarch64": {
+            "layoutSignature": "c5m0sd4dd3orq0dze0dagocw",
+        },
+        "linux_x64": {
+            "layoutSignature": "3r80mq690vuab6d9j5sc93y9l",
+        },
+        "windows_aarch64": {
+            "layoutSignature": "7w5zzcv1uyvs23mpywhkv3e7n",
+        },
+        "windows_x64": {
+            "layoutSignature": "8ed13xij3pfyt7x10304hg7a0",
+        },
+    },
+    platforms = [
+        "windows_x64",
+        "windows_aarch64",
+        "darwin_x64",
+        "darwin_aarch64",
+        "linux_x64",
+        "linux_aarch64",
+    ],
+    resource_inputs = {
+        "@lib//:net.java.dev.jna/jna-platform-5.19.1.jar": "@lib//:net.java.dev.jna/jna-platform-5.19.1.jar",
+        "@lib//:net.java.dev.jna/jna-5.19.1.jar": "@lib//:net.java.dev.jna/jna-5.19.1.jar",
+    },
+)
+### auto-generated section `dev intellij.pty4j.plugin` end
+
+### auto-generated section `build intellij.pty4j.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.pty4j.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["@lib//:kotlin-stdlib"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.pty4j.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+### auto-generated section `build intellij.pty4j.plugin` end
+
+### auto-generated section `iml intellij.pty4j.plugin` start
+exports_files(
+    [
+        "intellij.pty4j.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.pty4j.plugin` end

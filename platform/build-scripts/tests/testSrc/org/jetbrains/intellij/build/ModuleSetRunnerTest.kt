@@ -19,7 +19,7 @@ class ModuleSetRunnerTest {
     val librarySource = sources.getValue(ModuleSetSourceLabels.LIBRARIES)
     assertThat(librarySource.sourceFile).endsWith("/LibraryModuleSets.kt")
     val libraries = librarySource.moduleSets.single { it.name == "libraries.platform" }
-    assertThat(libraries.modules.map { it.moduleId.name }).contains("intellij.libraries.jna")
+    assertThat(libraries.modules.map { it.moduleId.name }).contains("intellij.libraries.guava")
 
     val moduleSetNames = sources.values.flatMap { source -> source.moduleSets.map { it.name } }
     assertThat(moduleSetNames).doesNotHaveDuplicates()

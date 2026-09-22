@@ -18,12 +18,20 @@ import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 /**
+ * The main module of the bundled plugin that owns the JNA and pty4j copies.
+ *
+ * A product that bundles it ships `lib/jna/<arch>` and `lib/pty4j`, and its launcher gets the `jna.*` and `pty4j.*` JVM arguments.
+ */
+const val PTY4J_PLUGIN_MODULE: String = "intellij.pty4j.plugin"
+
+/**
  * Default bundled plugins for all products.
  */
 val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.dev",
   "intellij.java.aetherDependencyResolver.plugin",
   "intellij.jcef.plugin",
+  PTY4J_PLUGIN_MODULE,
   "intellij.platform.bookmarks.plugin",
   "intellij.grid.core.plugin",
   "intellij.platform.navbar.plugin",

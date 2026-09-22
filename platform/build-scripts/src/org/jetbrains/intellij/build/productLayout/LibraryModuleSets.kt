@@ -38,9 +38,11 @@ object LibraryModuleSets {
    * versus `module` decides whether the library *also* enters the core classloader. Demote a library in
    * place — keep it next to its family instead of moving it to another set.
    *
-   * **Note:** UI/IDE-specific libraries (JCEF, Jediterm, PTY4J, SSH) have been moved to `librariesIde()`,
+   * **Note:** UI/IDE-specific libraries (JCEF, Jediterm, SSH) have been moved to `librariesIde()`,
    * and the OpenTelemetry wrappers to `CoreModuleSets.telemetry()` / `CoreModuleSets.telemetryImpl()` - they
    * belong next to the telemetry modules that are their only reason to exist.
+   * JNA and pty4j are content of the bundled plugin `intellij.pty4j.plugin`, because the `jnidispatch` native
+   * binds to one classloader per JVM. A consumer names `intellij.libraries.jna` in its `<dependencies>`.
    *
    * @see librariesIde for UI and IDE-specific libraries
    * @see CoreModuleSets.telemetry for the OpenTelemetry API/SDK wrappers and the telemetry API
@@ -120,7 +122,6 @@ object LibraryModuleSets {
     embeddedModule("intellij.libraries.jaxen")
     embeddedModule("intellij.libraries.jbr")
     embeddedModule("intellij.libraries.jcip")
-    module("intellij.libraries.jna")
     embeddedModule("intellij.libraries.jsoup")
     module("intellij.libraries.jsonpath")
     embeddedModule("intellij.libraries.jsvg")
@@ -250,6 +251,7 @@ object LibraryModuleSets {
   /**
    * UI and IDE-specific library modules.
    * Contains libraries for browser embedding, terminal UI, SSH, and other IDE features.
+   * pty4j is content of the bundled plugin `intellij.pty4j.plugin`, next to JNA.
    *
    * **Typical use cases:** Full IDEs with user interface (IDEA, PyCharm, WebStorm, etc.)
    * **Typical NON-users:** CodeServer (analysis-only tool), headless tools, pure analysis products
@@ -263,7 +265,6 @@ object LibraryModuleSets {
     embeddedModule("intellij.libraries.jgoodies.forms")
     module("intellij.libraries.jsch.agent.proxy")
     embeddedModule("intellij.libraries.miglayout.swing")
-    module("intellij.libraries.pty4j")
     module("intellij.libraries.sshj")
     embeddedModule("intellij.libraries.swingx")
     embeddedModule("intellij.libraries.winp")

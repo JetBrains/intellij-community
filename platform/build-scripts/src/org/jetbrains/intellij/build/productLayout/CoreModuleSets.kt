@@ -285,7 +285,9 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.ide.codeinsight.inline")
     embeddedModule("intellij.platform.pasta")
     embeddedModule("intellij.platform.diagnostic.startUpPerformanceReporter")
-    requiredModule("intellij.platform.ide.util.io.native")
+    // optional: it depends on `intellij.libraries.pty4j`, which the bundled plugin `intellij.pty4j.plugin` holds.
+    // A product without that plugin skips this module at startup.
+    module("intellij.platform.ide.util.io.native")
     requiredModule("intellij.platform.ide.osCertificates")
     // keeps marketplace-zip-signer out of the core classloader - loaded only when a plugin signature is verified
     module("intellij.platform.ide.pluginSignatureVerifier")

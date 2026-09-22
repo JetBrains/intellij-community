@@ -1,6 +1,7 @@
 <idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <plugin id="com.intellij.modules.pty4j"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.proxy.vole"/>
     <module name="intellij.libraries.pty4j"/>
