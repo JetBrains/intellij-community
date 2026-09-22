@@ -53,6 +53,7 @@ private val UnifiedPluginQueryAttribute.searchFilterKind: UnifiedPluginSearchFil
     UnifiedPluginQueryAttribute.Category -> UnifiedPluginSearchFilterKind.CATEGORY
     UnifiedPluginQueryAttribute.Tag -> UnifiedPluginSearchFilterKind.TAG
     UnifiedPluginQueryAttribute.Repository -> UnifiedPluginSearchFilterKind.REPOSITORY
+    UnifiedPluginQueryAttribute.UpdateSource,
     UnifiedPluginQueryAttribute.Sort -> null
   }
 

@@ -10,14 +10,16 @@ internal class UnifiedPluginsQueryTest {
   fun `parses compact and separated attributes plus installed filters`() {
     val query = UnifiedPluginsQuery.parse(
       "Kotlin /vendor:JetBrains /vendor: \"Acme Tools\" /category:\"Programming Language\" /tag:\"Developer Tools\" " +
-      "/repository: \"https://plugins.example.test/list.xml\" /enabled /invalid"
+      "/repository: \"https://plugins.example.test/list.xml\" /updatesFrom: \"Unknown source\" /enabled /invalid"
     )
 
     assertThat(query.vendors).containsExactly("JetBrains", "Acme Tools")
     assertThat(query.categories).containsExactly("Programming Language")
     assertThat(query.tags).containsExactly("Developer Tools")
     assertThat(query.repositories).containsExactly("https://plugins.example.test/list.xml")
+    assertThat(query.updateSources).containsExactly("Unknown source")
     assertThat(query.effectiveInstalledFilter).isEqualTo(UnifiedPluginInstalledFilter.Invalid)
+    assertThat(query.hasInstalledConstraint).isTrue()
     assertThat(query.hasPopupFilter).isTrue()
   }
 
@@ -158,6 +160,20 @@ internal class UnifiedPluginsQueryTest {
     assertThat(conflicting.marketplace.eligible).isFalse()
     assertThat(conflicting.repositories.eligible).isFalse()
     assertThat(conflicting.sortVisible).isFalse()
+  }
+
+  @Test
+  fun `update source constraint routes only to local sections`() {
+    val route = PluginsQueryState(
+      "Kotlin /updatesFrom:\"Unknown source\"",
+      "Kotlin /updatesFrom:\"Unknown source\"",
+    ).sourceRoute()
+
+    assertThat(route.local).isEqualTo(UnifiedPluginSourceProjection(true, "Kotlin /updatesFrom:\"Unknown source\""))
+    assertThat(route.internal.eligible).isFalse()
+    assertThat(route.marketplace.eligible).isFalse()
+    assertThat(route.repositories.eligible).isFalse()
+    assertThat(route.marketplaceMode).isEqualTo(UnifiedPluginMarketplaceSourceMode.Inactive)
   }
 
   @Test

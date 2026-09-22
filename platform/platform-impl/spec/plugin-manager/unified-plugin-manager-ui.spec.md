@@ -189,7 +189,7 @@ This specification covers the page structure, section model, search, source load
     `initial Marketplace navigation skips Suggested loading`
   )
 
-- An installed filter must exclude Marketplace, Internal, and custom repository results.
+- An installed filter or update-source constraint must exclude Marketplace, Internal, and custom repository results.
 - A repository filter must show only the selected custom repositories.
 - Text, Vendor, Category, and Tag constraints must apply to each eligible source under that source's rules.
 - A query with installed-status and Repository constraints must leave every filtered source ready and empty.
@@ -382,6 +382,22 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
 - A manual collapse of either section must remain effective during later source updates.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (
     `Suggested and Marketplace start expanded and preserve manual collapses`
+  )
+
+- A query that targets only local sections must expand Installed and Bundled.
+- A Repository filter must expand each selected custom repository section.
+- Automatic expansion must not expand Installing or change the selection.
+- A manual collapse must remain effective while text, facets, or sorting change in the same automatic expansion context.
+- A navigation scope change must preserve that collapse while an explicit local filter stays active.
+- A changed local filter or update source must start a new automatic expansion context.
+- A newly selected repository must expand. An unchanged selected repository must retain its manual collapse.
+- When an automatic expansion context ends, each section must restore its session expansion state.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (
+    `installed filter expands local sections without changing the Installing section`;
+    `local automatic collapse follows its semantic filter context`;
+    `Installed navigation scope does not restart an explicit local filter context`;
+    `update source value starts a new local automatic expansion context`;
+    `repository filters expand new sections and retain collapses for selected repositories`
   )
 
 - Search controls and section expansion actions must be keyboard reachable and have accessible names.
@@ -675,5 +691,5 @@ The linked tests need no setup beyond the standard module test command.
 
 ## Open Questions
 
-- Initial selection outside search and filtered-result expansion are not stable contracts.
+- Initial selection outside search is not a stable contract.
 - Duplicate handling between Marketplace and custom repository sections needs a stable contract and end-to-end coverage.

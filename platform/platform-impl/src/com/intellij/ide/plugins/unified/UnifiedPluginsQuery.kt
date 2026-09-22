@@ -11,6 +11,7 @@ internal enum class UnifiedPluginQueryAttribute(val prefix: String) {
   Category("/category:"),
   Tag(SearchWords.TAG.value),
   Repository(SearchWords.REPOSITORY.value),
+  UpdateSource(SearchWords.PLUGIN_UPDATE_SOURCE.value),
   Sort(SearchWords.SORT_BY.value),
 }
 
@@ -86,6 +87,7 @@ internal class UnifiedPluginsQuery private constructor(
   val categories: Set<String> = attributeValues(UnifiedPluginQueryAttribute.Category)
   val tags: Set<String> = attributeValues(UnifiedPluginQueryAttribute.Tag)
   val repositories: Set<String> = attributeValues(UnifiedPluginQueryAttribute.Repository)
+  val updateSources: Set<String> = attributeValues(UnifiedPluginQueryAttribute.UpdateSource)
   val effectiveInstalledFilter: UnifiedPluginInstalledFilter? = parts.asReversed().firstNotNullOfOrNull { part ->
     (part as? UnifiedPluginQueryPart.Command)?.command?.installedFilter
   }
@@ -95,7 +97,10 @@ internal class UnifiedPluginsQuery private constructor(
     .toCollection(LinkedHashSet())
 
   val hasInstalledConstraint: Boolean
-    get() = effectiveInstalledFilter != null || commands.any { it in INSTALLED_ONLY_COMMANDS }
+    get() = effectiveInstalledFilter != null || installedOnlyCommands.isNotEmpty() || updateSources.isNotEmpty()
+
+  val installedOnlyCommands: Set<UnifiedPluginQueryCommand>
+    get() = commands.filterTo(LinkedHashSet()) { it in INSTALLED_ONLY_COMMANDS }
 
   val requestsSuggested: Boolean
     get() = UnifiedPluginQueryCommand.Suggested in commands

@@ -645,6 +645,139 @@ internal class UnifiedPluginsPageControllerTest {
   }
 
   @Test
+  fun `installed filter expands local sections without changing the Installing section`() {
+    val controller = UnifiedPluginsPageController(
+      initialSections = listOf(
+        section(PluginSectionId.Installing, itemCount = 3),
+        section(PluginSectionId.Installed, itemCount = 5),
+        section(PluginSectionId.Bundled, itemCount = 5),
+      ),
+      initialQuery = PluginsQueryState("/outdated", "/outdated"),
+    )
+
+    assertThat(controller.state.value.section(PluginSectionId.Installing).expanded).isFalse()
+    assertThat(controller.state.value.section(PluginSectionId.Installed).expanded).isTrue()
+    assertThat(controller.state.value.section(PluginSectionId.Bundled).expanded).isTrue()
+    assertThat(controller.state.value.selectedOccurrence).isEqualTo(occurrence(PluginSectionId.Installing, "plugin.1"))
+
+    controller.setQuery(PluginsQueryState(revision = 1))
+
+    assertThat(controller.state.value.section(PluginSectionId.Installed).expanded).isFalse()
+    assertThat(controller.state.value.section(PluginSectionId.Bundled).expanded).isFalse()
+  }
+
+  @Test
+  fun `local automatic collapse follows its semantic filter context`() {
+    val controller = UnifiedPluginsPageController(
+      initialSections = listOf(
+        section(PluginSectionId.Installed, itemCount = 5),
+        section(PluginSectionId.Bundled, itemCount = 5),
+      ),
+      initialQuery = PluginsQueryState("/outdated", "/outdated"),
+    )
+    controller.setSectionExpanded(PluginSectionId.Installed, false)
+
+    controller.setQuery(
+      PluginsQueryState(
+        "/outdated Kotlin /vendor:JetBrains",
+        "/outdated Kotlin /vendor:JetBrains",
+        revision = 1,
+      )
+    )
+    assertThat(controller.state.value.section(PluginSectionId.Installed).expanded).isFalse()
+    assertThat(controller.state.value.section(PluginSectionId.Bundled).expanded).isTrue()
+
+    controller.setQuery(PluginsQueryState("/disabled Kotlin", "/disabled Kotlin", revision = 2))
+    assertThat(controller.state.value.section(PluginSectionId.Installed).expanded).isTrue()
+    assertThat(controller.state.value.section(PluginSectionId.Bundled).expanded).isTrue()
+  }
+
+  @Test
+  fun `Installed navigation scope does not restart an explicit local filter context`() {
+    val controller = UnifiedPluginsPageController(
+      initialSections = listOf(section(PluginSectionId.Installed, itemCount = 5)),
+      initialQuery = PluginsQueryState(
+        "/updatesFrom:Unknown",
+        "/updatesFrom:Unknown",
+        scope = PluginsQueryScope.Installed,
+      ),
+    )
+    controller.setSectionExpanded(PluginSectionId.Installed, false)
+
+    controller.setQuery(
+      PluginsQueryState(
+        "Kotlin /updatesFrom:Unknown",
+        "Kotlin /updatesFrom:Unknown",
+        revision = 1,
+        scope = PluginsQueryScope.Unified,
+      )
+    )
+
+    assertThat(controller.state.value.section(PluginSectionId.Installed).expanded).isFalse()
+  }
+
+  @Test
+  fun `update source value starts a new local automatic expansion context`() {
+    val controller = UnifiedPluginsPageController(
+      initialSections = listOf(section(PluginSectionId.Installed, itemCount = 5)),
+      initialQuery = PluginsQueryState("/updatesFrom:Unknown", "/updatesFrom:Unknown"),
+    )
+    controller.setSectionExpanded(PluginSectionId.Installed, false)
+
+    controller.setQuery(PluginsQueryState("Kotlin /updatesFrom:Unknown", "Kotlin /updatesFrom:Unknown", revision = 1))
+    assertThat(controller.state.value.section(PluginSectionId.Installed).expanded).isFalse()
+
+    controller.setQuery(PluginsQueryState("Kotlin /updatesFrom:Marketplace", "Kotlin /updatesFrom:Marketplace", revision = 2))
+    assertThat(controller.state.value.section(PluginSectionId.Installed).expanded).isTrue()
+  }
+
+  @Test
+  fun `repository filters expand new sections and retain collapses for selected repositories`() {
+    val firstRepository = PluginSectionId.CustomRepository("first")
+    val secondRepository = PluginSectionId.CustomRepository("second")
+    val controller = UnifiedPluginsPageController(
+      initialSections = listOf(
+        section(firstRepository, itemCount = 5),
+        section(secondRepository, itemCount = 5),
+      ),
+      initialQuery = PluginsQueryState("query", "query"),
+    )
+    controller.setSectionExpanded(firstRepository, true)
+    controller.setQuery(PluginsQueryState("/repository:first", "/repository:first", revision = 1))
+    assertThat(controller.state.value.section(firstRepository).expanded).isTrue()
+    assertThat(controller.state.value.section(secondRepository).expanded).isFalse()
+    controller.setSectionExpanded(firstRepository, false)
+
+    controller.setQuery(PluginsQueryState("Kotlin /repository:first", "Kotlin /repository:first", revision = 2))
+    assertThat(controller.state.value.section(firstRepository).expanded).isFalse()
+
+    controller.setQuery(
+      PluginsQueryState(
+        "/repository:first /repository:second",
+        "/repository:first /repository:second",
+        revision = 3,
+      )
+    )
+    assertThat(controller.state.value.section(firstRepository).expanded).isFalse()
+    assertThat(controller.state.value.section(secondRepository).expanded).isTrue()
+
+    controller.setQuery(PluginsQueryState("/repository:second", "/repository:second", revision = 4))
+    controller.setQuery(
+      PluginsQueryState(
+        "/repository:first /repository:second",
+        "/repository:first /repository:second",
+        revision = 5,
+      )
+    )
+    assertThat(controller.state.value.section(firstRepository).expanded).isTrue()
+    assertThat(controller.state.value.section(secondRepository).expanded).isTrue()
+
+    controller.setQuery(PluginsQueryState("query", "query", revision = 6))
+    assertThat(controller.state.value.section(firstRepository).expanded).isTrue()
+    assertThat(controller.state.value.section(secondRepository).expanded).isFalse()
+  }
+
+  @Test
   fun `expansion persists while a section is absent`() {
     val repositoryId = PluginSectionId.CustomRepository("repository")
     val controller = UnifiedPluginsPageController(

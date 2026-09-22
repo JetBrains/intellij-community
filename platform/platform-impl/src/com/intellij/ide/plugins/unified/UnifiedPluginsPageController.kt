@@ -27,6 +27,8 @@ internal class UnifiedPluginsPageController(
   private var installingExpansionDefaultHandled = false
   private var nextInsertionOrder = 0L
   private var query = initialQuery
+  private var automaticExpansionContext = query.automaticExpansionContext()
+  private val automaticallyCollapsedSections = HashSet<PluginSectionId>()
   private var searchControls = UnifiedPluginsSearchControlsState()
   private var selectedOccurrences: List<PluginOccurrenceId> = emptyList()
   private var initialSelectionPending = true
@@ -108,11 +110,21 @@ internal class UnifiedPluginsPageController(
       if (sectionId == PluginSectionId.Installing) {
         installingExpansionDefaultHandled = true
       }
-      val expansionChanged = if (expanded) {
-        expandedSections.add(sectionId)
+      val expansionChanged = if (automaticExpansionContext.targets(sectionId)) {
+        if (expanded) {
+          automaticallyCollapsedSections.remove(sectionId)
+        }
+        else {
+          automaticallyCollapsedSections.add(sectionId)
+        }
       }
       else {
-        expandedSections.remove(sectionId)
+        if (expanded) {
+          expandedSections.add(sectionId)
+        }
+        else {
+          expandedSections.remove(sectionId)
+        }
       }
       if (!expansionChanged) return
       selectedOccurrences = emptyList()
@@ -150,7 +162,7 @@ internal class UnifiedPluginsPageController(
         val itemIndex = section.displayItems.indexOfFirst { it.pluginId == pluginId }
         if (itemIndex < 0) return false
         if (itemIndex >= section.collapsedItemLimit) {
-          expandedSections.add(section.id)
+          expandSectionForReveal(section.id)
         }
       }
       selectedOccurrences = normalizeSelection(occurrenceIds)
@@ -168,7 +180,7 @@ internal class UnifiedPluginsPageController(
     }
     sectionInsertionOrder.computeIfAbsent(section.id) { nextInsertionOrder++ }
     sections[section.id] = section.copy(
-      expanded = section.id in expandedSections,
+      expanded = isSectionExpanded(section.id),
       categoryGroups = emptyList(),
       collapsedItemLimit = collapsedItemLimit,
     )
@@ -192,6 +204,7 @@ internal class UnifiedPluginsPageController(
       }
     }
     query = updatedQuery
+    updateAutomaticExpansionContext(updatedQuery.automaticExpansionContext())
     if (normalizedQueryChanged) {
       sectionItemOrders.clear()
       selectedOccurrences = emptyList()
@@ -203,7 +216,7 @@ internal class UnifiedPluginsPageController(
 
   private fun publish(establishSelection: Boolean) {
     val visibleSections = visibleSections().map { section ->
-      val expanded = section.id in expandedSections
+      val expanded = isSectionExpanded(section.id)
       section.copy(
         expanded = expanded,
         categoryGroups = if (section.id == PluginSectionId.Bundled && expanded && query.normalizedQuery.isEmpty()) {
@@ -264,7 +277,7 @@ internal class UnifiedPluginsPageController(
         return section
       }
     }
-    val mode = if (section.id == PluginSectionId.Bundled && query.normalizedQuery.isEmpty() && section.id in expandedSections) {
+    val mode = if (section.id == PluginSectionId.Bundled && query.normalizedQuery.isEmpty() && isSectionExpanded(section.id)) {
       PluginSectionItemOrderMode.ExpandedBundled
     }
     else {
@@ -303,7 +316,7 @@ internal class UnifiedPluginsPageController(
   private fun orderBundledItems(section: PluginSectionState): PluginSectionState {
     if (section.id != PluginSectionId.Bundled || query.normalizedQuery.isNotEmpty()) return section
     val collapsedOrder = orderCollapsedBundledItems(section.items)
-    if (section.id !in expandedSections) return section.copy(items = collapsedOrder)
+    if (!isSectionExpanded(section.id)) return section.copy(items = collapsedOrder)
 
     val itemsByCategory = LinkedHashMap<String, MutableList<PluginItemState>>()
     for (item in collapsedOrder) {
@@ -367,6 +380,36 @@ internal class UnifiedPluginsPageController(
     }
   }
 
+  private fun isSectionExpanded(sectionId: PluginSectionId): Boolean {
+    return if (automaticExpansionContext.targets(sectionId)) {
+      sectionId !in automaticallyCollapsedSections
+    }
+    else {
+      sectionId in expandedSections
+    }
+  }
+
+  private fun expandSectionForReveal(sectionId: PluginSectionId) {
+    if (automaticExpansionContext.targets(sectionId)) {
+      automaticallyCollapsedSections.remove(sectionId)
+    }
+    else {
+      expandedSections.add(sectionId)
+    }
+  }
+
+  private fun updateAutomaticExpansionContext(updatedContext: AutomaticExpansionContext) {
+    val previousContext = automaticExpansionContext
+    if (previousContext is AutomaticExpansionContext.Repositories &&
+        updatedContext is AutomaticExpansionContext.Repositories) {
+      automaticallyCollapsedSections.retainAll(updatedContext.sectionIds)
+    }
+    else if (previousContext != updatedContext) {
+      automaticallyCollapsedSections.clear()
+    }
+    automaticExpansionContext = updatedContext
+  }
+
   private fun sectionRank(sectionId: PluginSectionId): Int {
     return when (sectionId) {
       PluginSectionId.Installing -> 0
@@ -388,6 +431,50 @@ internal class UnifiedPluginsPageController(
 
     val REQUIRED_SECTION_IDS: Set<PluginSectionId> = DEFAULT_SECTIONS.mapTo(HashSet(), PluginSectionState::id)
   }
+}
+
+private sealed interface AutomaticExpansionContext {
+  fun targets(sectionId: PluginSectionId): Boolean
+
+  data object None : AutomaticExpansionContext {
+    override fun targets(sectionId: PluginSectionId): Boolean = false
+  }
+
+  data class Local(val key: LocalAutomaticExpansionKey) : AutomaticExpansionContext {
+    override fun targets(sectionId: PluginSectionId): Boolean {
+      return sectionId == PluginSectionId.Installed || sectionId == PluginSectionId.Bundled
+    }
+  }
+
+  data class Repositories(val repositoryIds: Set<String>) : AutomaticExpansionContext {
+    val sectionIds: Set<PluginSectionId> = repositoryIds.mapTo(HashSet()) { PluginSectionId.CustomRepository(it) }
+
+    override fun targets(sectionId: PluginSectionId): Boolean = sectionId in sectionIds
+  }
+}
+
+private data class LocalAutomaticExpansionKey(
+  val installedFilter: UnifiedPluginInstalledFilter?,
+  val installedOnlyCommands: Set<UnifiedPluginQueryCommand>,
+  val updateSources: Set<String>,
+)
+
+private fun PluginsQueryState.automaticExpansionContext(): AutomaticExpansionContext {
+  val route = sourceRoute()
+  if (route.local.eligible && !route.internal.eligible && !route.marketplace.eligible && !route.repositories.eligible) {
+    val parsedQuery = UnifiedPluginsQuery.parse(normalizedQuery)
+    return AutomaticExpansionContext.Local(
+      LocalAutomaticExpansionKey(
+        installedFilter = parsedQuery.effectiveInstalledFilter,
+        installedOnlyCommands = parsedQuery.installedOnlyCommands,
+        updateSources = parsedQuery.updateSources,
+      )
+    )
+  }
+  if (route.repositories.eligible && route.selectedRepositoryIds.isNotEmpty()) {
+    return AutomaticExpansionContext.Repositories(route.selectedRepositoryIds)
+  }
+  return AutomaticExpansionContext.None
 }
 
 private enum class PluginSectionItemOrderMode {
