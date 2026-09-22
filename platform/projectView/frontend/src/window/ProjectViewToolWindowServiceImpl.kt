@@ -321,8 +321,13 @@ internal class ProjectViewToolWindowServiceImpl(
   override suspend fun save() {
     // Not sure if this thing can be invoked under a modal state, but it better run fast regardless.
     withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
-      for (pane in panes.values) {
-        savePaneState(pane)
+      // Only save the current pane, because other panes either:
+      // 1. already saved their state when they were hidden the last time or,
+      // 2. even worse, may have never been loaded, which means they have empty states,
+      // and we don't want to overwrite whatever was loaded from the persistent storage.
+      val currentPane = currentPaneFlow.value
+      if (currentPane != null) {
+        savePaneState(currentPane)
       }
     }
   }
