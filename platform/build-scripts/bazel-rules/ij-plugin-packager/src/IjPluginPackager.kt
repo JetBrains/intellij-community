@@ -14,6 +14,7 @@ import org.jetbrains.bazel.jvm.WorkRequestReaderWithoutDigest
 import org.jetbrains.bazel.jvm.processRequests
 import org.jetbrains.intellij.build.io.readEntryFromZip
 import java.io.Writer
+import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
@@ -153,7 +154,7 @@ object IjPluginPackager {
         if (!isIncludedFromModuleOutput(filePath) || filePath == PLUGIN_DESCRIPTOR_ENTRY_NAME) {
           return@addEntriesFromJar null
         }
-        dataFetcher()
+        moduleOutputEntry(packager, filePath, dataFetcher)
       }
       contentModulesToMergeWithMainJar.forEach { contentModule ->
         val jar = contentModule.jars.singleOrNull()
@@ -162,7 +163,7 @@ object IjPluginPackager {
           if (!isIncludedFromModuleOutput(filePath)) {
             return@addEntriesFromJar null
           }
-          dataFetcher()
+          moduleOutputEntry(packager, filePath, dataFetcher)
         }
       }
     }
@@ -250,7 +251,14 @@ object IjPluginPackager {
             if (!isIncludedFromModuleOutput(filePath)) {
               return@addEntriesFromJar null
             }
-            if (!first && (containMultipleLibraries && isSkippedWhileMergingLibraries(filePath) || isSkippedFromLibraries(filePath))) {
+            if (first) {
+              return@addEntriesFromJar moduleOutputEntry(it, filePath, dataFetcher)
+            }
+            if (containMultipleLibraries && isSkippedWhileMergingLibraries(filePath) || isSkippedFromLibraries(filePath)) {
+              return@addEntriesFromJar null
+            }
+            if (filePath == MANIFEST_ENTRY_NAME && it.containsEntry(MANIFEST_ENTRY_NAME)) {
+              // the module output kept its own manifest, and a JAR holds one manifest
               return@addEntriesFromJar null
             }
             dataFetcher()
@@ -269,6 +277,21 @@ object IjPluginPackager {
 
   private fun isIncludedFromModuleOutput(filePath: String): Boolean {
     return filePath != "icon-robots.txt" && !filePath.endsWith("/icon-robots.txt")
+  }
+
+  /**
+   * Returns the content of an entry of a module output JAR to be included in [packager], or `null` if the entry should be skipped.
+   * The manifest loses the attributes a jar tool wrote for the build (see [patchModuleOutputManifest]), and a manifest yields to one that
+   * an earlier JAR already put into [packager].
+   */
+  private fun moduleOutputEntry(packager: PluginJarPackager, filePath: String, dataFetcher: () -> ByteBuffer): ByteBuffer? {
+    if (filePath != MANIFEST_ENTRY_NAME) {
+      return dataFetcher()
+    }
+    if (packager.containsEntry(MANIFEST_ENTRY_NAME)) {
+      return null
+    }
+    return patchModuleOutputManifest(dataFetcher())
   }
 
   /**

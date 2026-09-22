@@ -26,6 +26,9 @@ internal class PluginJarPackager(private val outputJarPath: Path) : AutoCloseabl
     fun patchEntry(filePath: String, dataFetcher: () -> ByteBuffer): ByteBuffer?
   }
 
+  /** Returns `true` if an entry with [relativePath] was already added to the JAR. */
+  fun containsEntry(relativePath: String): Boolean = addedFilePaths.containsKey(relativePath)
+
   fun addFile(relativePath: String, content: ByteArray, presentableOrigin: String) {
     checkAddedFile(relativePath, presentableOrigin)
     packageIndexBuilder.addFile(relativePath)

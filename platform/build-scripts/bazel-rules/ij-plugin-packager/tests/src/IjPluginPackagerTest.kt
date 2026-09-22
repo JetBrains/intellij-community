@@ -17,6 +17,7 @@ import java.io.StringWriter
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
+import java.util.zip.ZipFile
 import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.writeText
 
@@ -245,6 +246,127 @@ internal class IjPluginPackagerTest {
         file("ContentModuleDependency.class", "content module dependency")
       }
     })
+  }
+
+  @Test
+  fun dropsManifestsThatAJarToolWroteIntoModuleOutputJars(@TempDir tempDirectory: Path) {
+    // the rules_kotlin backend writes such a manifest into every module output jar; the JPS backend writes none
+    val toolManifest = "Manifest-Version: 1.0\r\nCreated-By: singlejar\r\nTarget-Label: //some:module\r\nInjecting-Rule-Kind: kt_jvm_library\r\n\r\n"
+    val inputDirectory = tempDirectory.resolve("input")
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          file("MANIFEST.MF", toolManifest)
+          file("plugin.xml", """
+            <idea-plugin>
+              <id>my.plugin</id>
+              <content>
+                <module name="module.with.package"/>
+                <module name="module.with.library"/>
+              </content>
+            </idea-plugin>
+          """.trimIndent())
+        }
+      }
+      // a content module with a package and without libraries is merged into the main jar
+      zip("module-with-package.jar") {
+        dir("META-INF") {
+          file("MANIFEST.MF", toolManifest)
+        }
+        file("module.with.package.xml", """<idea-plugin package="my.plugin.content"/>""")
+      }
+      zip("module-with-library.jar") {
+        dir("META-INF") {
+          file("MANIFEST.MF", toolManifest)
+        }
+        file("module.with.library.xml", "<idea-plugin></idea-plugin>")
+      }
+      zip("library.jar") {
+        dir("META-INF") {
+          file("MANIFEST.MF", "library manifest")
+        }
+        file("Library.class", "library")
+      }
+    }.generate(inputDirectory)
+
+    val outputDirectory = tempDirectory.resolve("output")
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar",
+        "--content_module",
+        "module.with.package:input/module-with-package.jar",
+        "--content_module",
+        "module.with.library:input/module-with-library.jar,input/library.jar",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    val descriptorEntries = zipEntryNames(outputDirectory.resolve("lib/descriptor.jar"))
+    assertFalse(MANIFEST_ENTRY_NAME in descriptorEntries, descriptorEntries.toString())
+    assertTrue("module.with.package.xml" in descriptorEntries, descriptorEntries.toString())
+    outputDirectory.resolve("lib/modules").assertMatches(directoryContent {
+      zip("module.with.library.jar") {
+        file("__index__")
+        dir("META-INF") {
+          file("MANIFEST.MF", "library manifest")
+        }
+        file("module.with.library.xml", "<idea-plugin></idea-plugin>")
+        file("Library.class", "library")
+      }
+    })
+  }
+
+  @Test
+  fun keepsTheManifestAttributesOfTheModuleItself(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          // the manifest a module ships as a resource, with the attributes the rules_kotlin backend adds to it
+          file("MANIFEST.MF", "Manifest-Version: 1.0\r\nCreated-By: singlejar\r\nTarget-Label: //some:module\r\nMain-Class: org.example.Main\r\n\r\n")
+          file("plugin.xml", "<idea-plugin><id>my.plugin</id><content><module name=\"agent.module\"/></content></idea-plugin>")
+        }
+      }
+      zip("agent-module.jar") {
+        dir("META-INF") {
+          // the manifest a module ships as a resource, as the JPS backend packs it
+          file("MANIFEST.MF", "Premain-Class: agent.Main\n")
+        }
+        file("agent.module.xml", "<idea-plugin></idea-plugin>")
+      }
+      zip("library.jar") {
+        dir("META-INF") {
+          file("MANIFEST.MF", "library manifest")
+        }
+        file("Library.class", "library")
+      }
+    }.generate(inputDirectory)
+
+    val outputDirectory = tempDirectory.resolve("output")
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar",
+        "--content_module",
+        "agent.module:input/agent-module.jar,input/library.jar",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    assertEquals("Manifest-Version: 1.0\r\nMain-Class: org.example.Main\r\n\r\n", readZipEntry(outputDirectory.resolve("lib/descriptor.jar"), MANIFEST_ENTRY_NAME))
+    // the module keeps its own manifest byte for byte, and the library manifest yields to it
+    assertEquals("Premain-Class: agent.Main\n", readZipEntry(outputDirectory.resolve("lib/modules/agent.module.jar"), MANIFEST_ENTRY_NAME))
+  }
+
+  private fun zipEntryNames(jar: Path): Set<String> {
+    return ZipFile(jar.toFile()).use { zip -> zip.entries().asSequence().map { it.name }.toSet() }
+  }
+
+  private fun readZipEntry(jar: Path, name: String): String? {
+    return ZipFile(jar.toFile()).use { zip -> zip.getEntry(name)?.let { entry -> zip.getInputStream(entry).use { it.readAllBytes().decodeToString() } } }
   }
 
   @Test
