@@ -155,15 +155,6 @@ Untested: No focused test verifies state isolation across two page sessions.
 
 ## Install and Update
 
-- Before the trust check starts, an operation must load incomplete Marketplace details.
-- An operation must stop before the trust check when complete Marketplace details are unavailable.
-- The page must report the failure when complete Marketplace details are unavailable.
-  [@test] ../../testSrc/com/intellij/ide/plugins/newui/PluginActionDescriptorTest.kt (
-    `install loads incomplete Marketplace details before the operation`;
-    `install reports when Marketplace details cannot load`;
-    `install reports when loaded Marketplace details remain incomplete`
-  )
-
 - A retained Update action must use the current descriptors after a source refresh.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
     `reused update button resolves the refreshed descriptor`

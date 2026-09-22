@@ -25,7 +25,6 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.Configurable.TopComponentController
 import com.intellij.openapi.options.ConfigurationException
@@ -76,6 +75,14 @@ import java.util.TreeSet
 import java.util.function.Consumer
 import javax.swing.Icon
 import javax.swing.JComponent
+
+internal fun shouldRegisterNonMarketplaceComponent(
+  installing: Boolean,
+  registeredInLegacyInstallingGroup: Boolean,
+  registerInstallingWithoutGroup: Boolean,
+): Boolean {
+  return !installing || registeredInLegacyInstallingGroup || registerInstallingWithoutGroup
+}
 
 @ApiStatus.Internal
 open class MyPluginModel @JvmOverloads constructor(
@@ -315,24 +322,8 @@ open class MyPluginModel @JvmOverloads constructor(
     controller: UiPluginManagerController,
     progressSink: PluginInstallationProgressSink = PluginInstallationProgressSink.NONE,
   ): InstallPluginResult? {
-    val requestedActionDescriptor = updateDescriptor ?: descriptor
-    val actionDescriptor = loadPluginActionDescriptor(requestedActionDescriptor, controller)
-    if (actionDescriptor == null) {
-      withContext(Dispatchers.EDT + operationUi.modalityState.asContextElement()) {
-        Messages.showErrorDialog(
-          operationUi.getParentComponent(),
-          IdeBundle.message(
-            "plugins.configurable.plugin.details.loading.failed",
-            requestedActionDescriptor.name ?: requestedActionDescriptor.pluginId.idString,
-          ),
-          IdeBundle.message("title.plugin.installation"),
-        )
-      }
-      return null
-    }
-    val operationDescriptor = if (updateDescriptor == null) actionDescriptor else descriptor
-    val operationUpdateDescriptor = if (updateDescriptor == null) null else actionDescriptor
     return withContext(Dispatchers.EDT + operationUi.modalityState.asContextElement()) {
+      val actionDescriptor: PluginUiModel = updateDescriptor ?: descriptor
       if (!PluginManagerMain.checkThirdPartyPluginsAllowed(listOf(actionDescriptor.getDescriptor()))) {
         return@withContext null
       }
@@ -340,12 +331,12 @@ open class MyPluginModel @JvmOverloads constructor(
       val indicatorProgressSink = progressSink.withDownloadProgressIndicator(bgProgressIndicator)
       val projectNotNull = tryToFindProject()
 
-      val info = InstallPluginInfo(bgProgressIndicator, operationDescriptor, this@MyPluginModel, operationUpdateDescriptor == null)
+      val info = InstallPluginInfo(bgProgressIndicator, descriptor, this@MyPluginModel, updateDescriptor == null)
       val installResult = runPluginInstallation(
         projectNotNull,
         bgProgressIndicator,
-        operationDescriptor,
-        operationUpdateDescriptor,
+        descriptor,
+        updateDescriptor,
         controller,
         operationUi,
         installationScope,
@@ -1409,42 +1400,5 @@ open class MyPluginModel @JvmOverloads constructor(
     private fun createTextChunk(message: @Nls String): HtmlChunk.Element {
       return HtmlChunk.span().addText(message)
     }
-  }
-}
-
-internal fun shouldRegisterNonMarketplaceComponent(
-  installing: Boolean,
-  registeredInLegacyInstallingGroup: Boolean,
-  registerInstallingWithoutGroup: Boolean,
-): Boolean {
-  return !installing || registeredInLegacyInstallingGroup || registerInstallingWithoutGroup
-}
-
-internal suspend fun loadPluginActionDescriptor(
-  descriptor: PluginUiModel,
-  controller: UiPluginManagerController,
-): PluginUiModel? {
-  if (!descriptor.isFromMarketplace || descriptor.detailsLoaded) return descriptor
-  val loadedDescriptor = withContext(Dispatchers.IO) {
-    controller.loadPluginDetails(descriptor)
-  }
-  return when {
-    loadedDescriptor == null -> {
-      logger<MyPluginModel>().warn("Could not load complete plugin details for ${descriptor.pluginId}: the controller returned null")
-      null
-    }
-    loadedDescriptor.pluginId != descriptor.pluginId -> {
-      logger<MyPluginModel>().warn(
-        "Could not load complete plugin details for ${descriptor.pluginId}: the controller returned a descriptor for ${loadedDescriptor.pluginId}"
-      )
-      null
-    }
-    !loadedDescriptor.detailsLoaded -> {
-      logger<MyPluginModel>().warn(
-        "Could not load complete plugin details for ${descriptor.pluginId}: the controller returned an incomplete descriptor"
-      )
-      null
-    }
-    else -> loadedDescriptor
   }
 }

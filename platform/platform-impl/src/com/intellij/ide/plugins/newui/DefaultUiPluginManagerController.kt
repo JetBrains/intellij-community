@@ -193,10 +193,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     val context = getContextElement(modalityState)
     return withContext(context) {
       val isUpdate = updateDescriptor != null
-      val actionDescriptor = loadPluginActionDescriptor(
-        updateDescriptor ?: descriptor,
-        DefaultUiPluginManagerController,
-      ) ?: return@withContext InstallPluginResult.FAILED
+      val actionDescriptor: PluginUiModel = if (isUpdate) updateDescriptor else descriptor
       val replacePendingUpdate = isUpdate && InstalledPluginsState.getInstance().updatedPluginDescriptors.any {
         it.pluginId == actionDescriptor.pluginId && it.version != actionDescriptor.version
       }
