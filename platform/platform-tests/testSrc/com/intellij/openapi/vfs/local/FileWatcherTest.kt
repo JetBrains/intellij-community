@@ -247,25 +247,30 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watch(side)
     assertEvents(
       { arrayOf(subFile, sideFile).forEach { it.writeText("first content") } },
-      mapOf(subFile to 'U', sideFile to 'U'))
+      mapOf(subFile to 'U', sideFile to 'U')
+    )
 
     assertEvents(
       { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("new content") } },
-      mapOf(subFile to 'U', sideFile to 'U'))
+      mapOf(subFile to 'U', sideFile to 'U')
+    )
 
     val requestForTopDir = watch(top)
     assertEvents(
       { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("newer content") } },
-      mapOf(topFile to 'U', subFile to 'U', sideFile to 'U'))
+      mapOf(topFile to 'U', subFile to 'U', sideFile to 'U')
+    )
     unwatch(requestForTopDir)
 
     assertEvents(
       { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("newest content") } },
-      mapOf(subFile to 'U', sideFile to 'U'))
+      mapOf(subFile to 'U', sideFile to 'U')
+    )
 
     assertEvents(
       { arrayOf(topFile, subFile, sideFile).forEach { it.deleteExisting() } },
-      mapOf(topFile to 'D', subFile to 'D', sideFile to 'D'))
+      mapOf(topFile to 'D', subFile to 'D', sideFile to 'D')
+    )
   }
 
   // ensure that flat roots set via symbolic paths behave correctly and do not report dirty files returned from other recursive roots
@@ -516,7 +521,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
         dir.createDirectories()
         arrayOf(file1, file2).forEach { it.writeText("text") }
       },
-      mapOf(file1 to 'U', file2 to 'U'))
+      mapOf(file1 to 'U', file2 to 'U')
+    )
   }
 
   @Test fun testWatchRootRecreation() {
@@ -533,7 +539,10 @@ class FileWatcherTest : BareTestFixtureTestCase() {
         if (OS.CURRENT == OS.Linux) TimeoutUtil.sleep(1500)  // implementation specific
         arrayOf (file1, file2).forEach { it.writeText("text") }
       },
-      mapOf(file1 to 'U', file2 to 'U'))
+      mapOf(file1 to 'U', file2 to 'U')
+    )
+    // ensuring the events still come after the root is restored
+    assertEvents({ arrayOf (file1, file2).forEach { it.writeText("…") } }, mapOf(file1 to 'U', file2 to 'U'))
   }
 
   @Test fun testWatchNonExistingRoot() {
