@@ -54,7 +54,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="search.everywhere.coroutine.based.goto"
-                 defaultValue="false"
+                 defaultValue="true"
                  restartRequired="false"
                  description="Use the coroutine based goto providers in Search Everywhere. Such a provider drives the ChooseByName model itself and computes the item presentation on a background thread. When the key is off, Search Everywhere wraps the legacy SearchEverywhereContributor instead."/>
 
