@@ -7,8 +7,8 @@ import com.intellij.openapi.fileEditor.impl.skeleton.layout.Editor
 import com.intellij.openapi.fileEditor.impl.skeleton.layout.Gutter
 import com.intellij.openapi.fileEditor.impl.skeleton.layout.components.EditorSkeletonPanel
 import com.intellij.openapi.fileEditor.impl.skeleton.layout.components.Layout.HORIZONTAL
-import com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonCanvas
 import com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonColorManager
+import com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.ui.paint.use
@@ -24,7 +24,7 @@ import javax.swing.JComponent
 import kotlin.math.ceil
 
 /**
- * Shows a file editor skeleton on a canvas that renders outside the EDT.
+ * Shows a file editor skeleton with a renderer selected for the current toolkit.
  * The skeleton fades in over [skeletonDelayMs], then pulses when animation is enabled.
  * [nowMs] supplies the clock for rendering frames with a fixed timeline.
  */
@@ -34,14 +34,14 @@ class EditorSkeleton(
   val skeletonDelayMs: Long,
   nowMs: () -> Long = System::currentTimeMillis,
 ) : JComponent() {
+  private val renderer: EditorSkeletonRenderer = EditorSkeletonRenderer.create()
   private val colorManager = EditorSkeletonColorManager(
     skeletonDelayMs = skeletonDelayMs,
-    nowMs = nowMs,
+    nowMs = { renderer.frameTimeMs(nowMs()) },
     animationEnabled = RegistryManager.getInstance().`is`(ANIMATION_ENABLED_KEY),
     animationDurationMs = RegistryManager.getInstance().intValue(ANIMATION_DURATION_KEY).toLong(),
   )
 
-  private val canvas = EditorSkeletonCanvas()
   private val skeletonPanel = EditorSkeletonPanel(HORIZONTAL, fillLast = true) {
     Gutter()
     Editor()
@@ -55,11 +55,11 @@ class EditorSkeleton(
     layout = BorderLayout()
     isOpaque = false
     preferredSize = JBDimension(skeletonPanel.preferredWidth, skeletonPanel.preferredHeight)
-    add(canvas, BorderLayout.CENTER)
+    add(renderer.component, BorderLayout.CENTER)
   }
 
   internal fun startAnimation() {
-    canvas.startRendering(cs, ::paintFrame)
+    renderer.startRendering(cs, ::paintFrame)
   }
 
   fun paintFrame(g: Graphics2D, width: Int, height: Int, scale: Float = JBUIScale.scale(1f)) {

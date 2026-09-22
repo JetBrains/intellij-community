@@ -11,9 +11,11 @@ import java.awt.Canvas
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.time.Duration.Companion.milliseconds
 
-internal class EditorSkeletonCanvas : Canvas() {
+internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
+  override val component: Canvas
+    get() = this
+
   private val renderingStarted = AtomicBoolean()
 
   init {
@@ -32,13 +34,13 @@ internal class EditorSkeletonCanvas : Canvas() {
 
   override fun update(g: Graphics) {}
 
-  fun startRendering(cs: CoroutineScope, paintFrame: (Graphics2D, Int, Int, Float) -> Unit) {
+  override fun startRendering(cs: CoroutineScope, paintFrame: (Graphics2D, Int, Int, Float) -> Unit) {
     if (!renderingStarted.compareAndSet(false, true)) return
     cs.launch(Dispatchers.Default) {
       try {
         while (isActive) {
           renderFrame(paintFrame)
-          delay(TICK_MS)
+          delay(EditorSkeletonRenderer.TICK_MS)
         }
       }
       finally {
@@ -69,9 +71,5 @@ internal class EditorSkeletonCanvas : Canvas() {
         buffer.show()
       }
     }
-  }
-
-  private companion object {
-    val TICK_MS = 8.milliseconds
   }
 }
