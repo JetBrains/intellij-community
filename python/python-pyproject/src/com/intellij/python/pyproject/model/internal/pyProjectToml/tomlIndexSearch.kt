@@ -2,7 +2,6 @@
 package com.intellij.python.pyproject.model.internal.pyProjectToml
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VFileProperty
@@ -22,7 +21,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import kotlin.io.path.name
 
 /**
  * Finds every [PY_PROJECT_TOML] under [roots] with the VFS filename index.
@@ -189,5 +187,3 @@ private class PyProjectTomlPathFilter(
  * set [PRUNED_SCAN_DIRS_NO_DOT] holds the rest, so the two tests together cover the whole list.
  */
 internal fun String.isPrunedName(): Boolean = startsWith(".") || this in PRUNED_SCAN_DIRS_NO_DOT
-
-private val log = fileLogger()
