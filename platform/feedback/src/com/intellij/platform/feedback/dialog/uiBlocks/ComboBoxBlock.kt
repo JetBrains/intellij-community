@@ -13,15 +13,33 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.toMutableProperty
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.put
+import org.jetbrains.annotations.NonNls
 
-class ComboBoxBlock(@NlsContexts.Label private val myLabel: String,
-                    private val myItems: List<String>,
-                    private val myJsonElementName: String) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
+class ComboBoxBlock private constructor(
+  @NlsContexts.Label private val myLabel: String,
+  private val myItems: List<ComboBoxItemData>,
+  private val myJsonElementName: String,
+  @Suppress("UNUSED_PARAMETER") marker: Unit,
+) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
 
-  private var myProperty: String? = ""
+  @Suppress("HardCodedStringLiteral")
+  constructor(
+    @NlsContexts.Label myLabel: String,
+    myItems: List<String>,
+    myJsonElementName: String,
+  ) : this(myLabel, myItems.map { ComboBoxItemData(it, it) }, myJsonElementName, Unit)
+
+  constructor(
+    @NlsContexts.Label label: String,
+    items: Collection<ComboBoxItemData>,
+    jsonElementName: String,
+  ) : this(label, items.toList(), jsonElementName, Unit)
+
+  private var myProperty: ComboBoxItemData? = null
   private var myComment: @NlsContexts.DetailedDescription String? = null
   private var myColumnSize: Int = COMBOBOX_COLUMN_SIZE
   private var myRandomizeOptionOrder: Boolean = false
@@ -40,7 +58,7 @@ class ComboBoxBlock(@NlsContexts.Label private val myLabel: String,
         }.bottomGap(BottomGap.NONE)
       }
       row {
-        comboBox(items)
+        comboBox(items, textListCellRenderer { it?.label.orEmpty() })
           .apply {
             if (!myUseWrappingLabel) {
               label(createBoldJBLabel(myLabel), LabelPosition.TOP)
@@ -70,14 +88,14 @@ class ComboBoxBlock(@NlsContexts.Label private val myLabel: String,
   override fun collectBlockTextDescription(stringBuilder: StringBuilder) {
     stringBuilder.apply {
       appendLine(myLabel)
-      appendLine(myProperty)
+      appendLine(myProperty?.label.orEmpty())
       appendLine()
     }
   }
 
   override fun collectBlockDataToJson(jsonObjectBuilder: JsonObjectBuilder) {
     jsonObjectBuilder.apply {
-      put(myJsonElementName, myProperty)
+      put(myJsonElementName, myProperty?.jsonValue.orEmpty())
     }
   }
 
@@ -109,4 +127,11 @@ class ComboBoxBlock(@NlsContexts.Label private val myLabel: String,
     myRandomizeOptionOrder = true
     return this
   }
+}
+
+data class ComboBoxItemData(
+  @NlsContexts.Label val label: String,
+  @NonNls val jsonValue: String,
+) {
+  override fun toString(): String = label
 }

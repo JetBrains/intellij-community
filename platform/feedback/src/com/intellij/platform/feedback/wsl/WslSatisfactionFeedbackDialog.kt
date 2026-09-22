@@ -13,6 +13,7 @@ import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxGroupBlock
 import com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxItemData
 import com.intellij.platform.feedback.dialog.uiBlocks.ComboBoxBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.ComboBoxItemData
 import com.intellij.platform.feedback.dialog.uiBlocks.DescriptionBlock
 import com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
 import com.intellij.platform.feedback.dialog.uiBlocks.RatingBlock
@@ -103,10 +104,11 @@ internal class WslSatisfactionFeedbackDialog(
     ComboBoxBlock(
       WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.comparison.label"),
       listOf(
-        WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.comparison.less"),
-        WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.comparison.same"),
-        WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.comparison.more"),
-        WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.comparison.unsure"),
+        ComboBoxItemData(WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.comparison.less"), "Less often"),
+        ComboBoxItemData(WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.comparison.same"),
+                         "About the same as before"),
+        ComboBoxItemData(WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.comparison.more"), "More often"),
+        ComboBoxItemData(WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.comparison.unsure"), "Hard to say"),
       ),
       "freeze_comparison",
     ).useWrappingLabel(),
@@ -114,11 +116,15 @@ internal class WslSatisfactionFeedbackDialog(
     ComboBoxBlock(
       WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.frequency.label"),
       listOf(
-        WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.frequency.several.day"),
-        WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.frequency.once.day"),
-        WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.frequency.several.week"),
-        WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.frequency.monthly"),
-        WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.frequency.rarely"),
+        ComboBoxItemData(WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.frequency.several.day"),
+                         "Several times a day"),
+        ComboBoxItemData(WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.frequency.once.day"), "About once a day"),
+        ComboBoxItemData(WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.frequency.several.week"),
+                         "Several times a week"),
+        ComboBoxItemData(WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.frequency.monthly"),
+                         "Once or several times a month"),
+        ComboBoxItemData(WslSatisfactionFeedbackBundle.message("wsl.satisfaction.dialog.freeze.frequency.rarely"),
+                         "Rarely or almost never"),
       ),
       "freeze_frequency",
     ).useWrappingLabel(),
