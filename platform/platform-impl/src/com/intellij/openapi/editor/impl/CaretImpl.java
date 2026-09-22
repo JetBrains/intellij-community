@@ -1755,6 +1755,9 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
     private void documentChanged(@NotNull DocumentEvent event) {
       int oldOffset = offsetBeforeChange;
+      if (oldOffset < event.getOffset()) {
+        return;
+      }
       int newOffset = getStartOffset();
       boolean replacedPoint = event.getOffset() < oldOffset && oldOffset < event.getOffset() + event.getOldLength();
       if (replacedPoint && !event.getDocument().isInBulkUpdate() && event.isWholeTextReplaced()) {
