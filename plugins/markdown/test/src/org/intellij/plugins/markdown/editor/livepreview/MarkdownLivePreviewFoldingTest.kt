@@ -34,6 +34,7 @@ import com.intellij.testFramework.fixtures.EditorMouseFixture
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
@@ -601,11 +602,44 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
     waitForImageInlays(3)
     assertEquals(listOf("![a](image.png)", "![b](image.png)", "![c](image.png)"), concealed().filter { it.startsWith("![") })
-    assertEquals("• a\n\n> b\n\n# c\n\ntail", visibleText())
+    assertEquals("• a\n\nb\n\n# c\n\ntail", visibleText())
     assertEquals(
       listOf(0, 2, 4),
       imageInlays().map { myFixture.editor.document.getLineNumber(it.offset) }.sorted(),
     )
+  }
+
+  fun testBlockquoteCaretRevealsAndRestoresMarkers() {
+    val content = "> first\n> second\n\ntail"
+    configure("$content<caret>")
+    assertEquals("first\nsecond\n\ntail", visibleText())
+
+    moveCaretTo(content.indexOf("first"))
+    assertEquals(content, visibleText())
+
+    moveCaretTo(content.indexOf("second"))
+    assertEquals(content, visibleText())
+
+    moveCaretTo(content.length)
+    assertEquals("first\nsecond\n\ntail", visibleText())
+  }
+
+  fun testNestedBlockquoteCaretRevealsAndRestoresMarkers() {
+    val content = "> outer\n> > inner\n> last\n\ntail"
+    configure("$content<caret>")
+    assertEquals("outer\ninner\nlast\n\ntail", visibleText())
+
+    moveCaretTo(content.indexOf("outer"))
+    assertEquals("> outer\n> inner\n> last\n\ntail", visibleText())
+
+    moveCaretTo(content.indexOf("inner"))
+    assertEquals(content, visibleText())
+
+    moveCaretTo(content.indexOf("last"))
+    assertEquals("> outer\n> inner\n> last\n\ntail", visibleText())
+
+    moveCaretTo(content.length)
+    assertEquals("outer\ninner\nlast\n\ntail", visibleText())
   }
 
   fun testImageWithoutAltTextShowsTheGenericPlaceholder() {
@@ -1285,7 +1319,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     }
   }
 
-  /** What the reader sees: every concealed range replaced by its fold placeholder. */
+  /** Returns the logical text with markup removed. Blank quote placeholders only reserve visual space. */
   private fun visibleText(): String {
     val editor = myFixture.editor
     val text = editor.document.charsSequence
@@ -1293,7 +1327,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     var offset = 0
     for (region in concealedLivePreviewRegions(editor)) {
       if (region.startOffset > offset) result.append(text, offset, region.startOffset)
-      result.append(region.placeholderText)
+      if (region.placeholderText.any { !it.isWhitespace() }) result.append(region.placeholderText)
       offset = maxOf(offset, region.endOffset)
     }
     result.append(text, offset, text.length)
@@ -1307,7 +1341,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
   private fun thematicBreakHighlighters(): List<RangeHighlighter> =
     myFixture.editor.markupModel.allHighlighters
-      .filter { it.isValid && it.customRenderer != null }
+      .filter { it.isValid && it.customRenderer != null && it.textAttributesKey == MarkdownHighlighterColors.HRULE }
       .sortedWith(compareBy({ it.startOffset }, { it.endOffset }))
 
   private fun imageInlays(): List<Inlay<out MarkdownLivePreviewImageInlayRenderer>> {

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.backend.editor.livepreview
 
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
@@ -12,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewDocumentVersion
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewRange
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewUtils
@@ -58,10 +60,14 @@ private const val BULLET_PLACEHOLDERS = "•◦▪"
  */
 @ApiStatus.Internal
 fun computeLivePreviewSpecs(file: PsiFile, editor: Editor): MarkdownLivePreviewSpecSet {
+  val blockQuotes by lazy { BlockQuoteSpecBuilder(file.viewProvider.contents, editor.document) }
   val elements = SyntaxTraverser.psiTraverser(file)
     .expand { PsiUtilCore.getElementType(it) !in NoDescendTypes }
     .asSequence()
-    .mapNotNull { it.toDecorationSpecs(editor) }
+    .mapNotNull {
+      if (PsiUtilCore.getElementType(it) == MarkdownElementTypes.BLOCK_QUOTE) blockQuotes.create(it.textRange)
+      else it.toDecorationSpecs(editor)
+    }
     .sortedWith(compareBy({ it.range.startOffset }, { it.range.endOffset }))
     .toList()
   val version = MarkdownLivePreviewDocumentVersion.capture(editor.document, file.project)
@@ -89,6 +95,86 @@ private fun PsiElement.toDecorationSpecs(editor: Editor): MarkdownLivePreviewSpe
     MarkdownTokenTypes.SETEXT_2 -> toSetextCodeSpanUnderlineSpec()
     else -> null
   }
+}
+
+/** Indexes blockquote markers once and creates specs in PSI traversal order. */
+private class BlockQuoteSpecBuilder(source: CharSequence, private val document: Document) {
+  private val markersByLine = HashMap<Int, List<Int>>()
+  private val markersByDepth = mutableListOf<MutableList<MarkdownLivePreviewRange>>()
+  private val quoteEnds = ArrayDeque<Int>()
+
+  init {
+    for (line in 0 until document.lineCount) {
+      val lineEnd = document.getLineEndOffset(line)
+      val markers = source.blockQuoteMarkerOffsets(document.getLineStartOffset(line), lineEnd)
+      if (markers.isEmpty()) continue
+      markersByLine[line] = markers
+      for ((depth, offset) in markers.withIndex()) {
+        if (depth == markersByDepth.size) markersByDepth.add(mutableListOf())
+        markersByDepth[depth].add(MarkdownLivePreviewRange(offset, source.blockQuoteMarkerEnd(offset, lineEnd)))
+      }
+    }
+  }
+
+  fun create(blockQuoteRange: TextRange): MarkdownLivePreviewSpec.BlockQuote? {
+    while (quoteEnds.isNotEmpty() && quoteEnds.last() <= blockQuoteRange.startOffset) quoteEnds.removeLast()
+    quoteEnds.addLast(blockQuoteRange.endOffset)
+
+    val firstLine = document.getLineNumber(blockQuoteRange.startOffset)
+    val firstLineMarkers = markersByLine[firstLine] ?: return null
+    val firstMarkerIndex = firstLineMarkers.binarySearch(blockQuoteRange.startOffset).let { if (it < 0) -it - 1 else it }
+    if (firstMarkerIndex == firstLineMarkers.size) return null
+
+    val markers = markersByDepth.getOrNull(maxOf(firstMarkerIndex, quoteEnds.size - 1)) ?: return null
+    val start = markers.firstAtOrAfter(blockQuoteRange.startOffset)
+    val end = markers.firstAtOrAfter(blockQuoteRange.endOffset)
+    if (start == end) return null
+    val rangeEnd = document.getLineEndOffset(document.getLineNumber(markers[end - 1].endOffset))
+    return MarkdownLivePreviewSpec.BlockQuote(
+      MarkdownLivePreviewRange(document.getLineStartOffset(firstLine), rangeEnd),
+      markers.subList(start, end).toList(),
+    )
+  }
+
+  private fun List<MarkdownLivePreviewRange>.firstAtOrAfter(offset: Int): Int {
+    val index = binarySearchBy(offset) { it.startOffset }
+    return if (index < 0) -index - 1 else index
+  }
+}
+
+private fun CharSequence.blockQuoteMarkerOffsets(lineStart: Int, lineEnd: Int): List<Int> =
+  buildList {
+    var offset = lineStart
+    while (offset < lineEnd) {
+      while (offset < lineEnd && this@blockQuoteMarkerOffsets[offset] in " \t") offset++
+      when {
+        offset >= lineEnd -> break
+        this@blockQuoteMarkerOffsets[offset] == '>' -> {
+          add(offset)
+          offset++
+          if (offset < lineEnd && this@blockQuoteMarkerOffsets[offset] in " \t") offset++
+        }
+        else -> {
+          val markerEnd = this@blockQuoteMarkerOffsets.listMarkerEnd(offset, lineEnd)
+          if (markerEnd == offset) break
+          offset = markerEnd
+        }
+      }
+    }
+  }
+
+private fun CharSequence.blockQuoteMarkerEnd(offset: Int, lineEnd: Int): Int {
+  val markerEnd = offset + 1
+  return if (markerEnd < lineEnd && this[markerEnd] in " \t") markerEnd + 1 else markerEnd
+}
+
+private fun CharSequence.listMarkerEnd(offset: Int, lineEnd: Int): Int {
+  var cursor = offset
+  if (this[cursor] !in "-+*") {
+    while (cursor < lineEnd && this[cursor].isDigit()) cursor++
+    if (cursor == offset || cursor >= lineEnd || this[cursor] !in ".)") return offset
+  }
+  return if (cursor + 1 < lineEnd && this[cursor + 1] in " \t") cursor + 1 else offset
 }
 
 private fun PsiElement.isInsideTable(): Boolean = PsiTreeUtil.getParentOfType(this, MarkdownTable::class.java) != null

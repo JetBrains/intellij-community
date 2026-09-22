@@ -30,8 +30,9 @@ internal data class MarkdownLivePreviewPresentation(
  *
  * The presentation factory creates this value from one backend spec.
  * Its folds describe every source range that the reconciler must hide.
+ * The reconciler tracks each instance within one presentation.
  */
-internal data class MarkdownLivePreviewElementPresentation(
+internal class MarkdownLivePreviewElementPresentation(
   val spec: MarkdownLivePreviewSpec,
   val folds: List<MarkdownLivePreviewFold>,
 )
@@ -95,6 +96,7 @@ internal class MarkdownLivePreviewPresentationFactory(project: Project, editor: 
   private val elementRenderers: Map<Class<out MarkdownLivePreviewSpec>, MarkdownLivePreviewElementRenderer> = mapOf(
     MarkdownLivePreviewSpec.Conceal::class.java to MarkdownLivePreviewConcealRenderer(),
     MarkdownLivePreviewSpec.Bullet::class.java to MarkdownLivePreviewBulletRenderer(),
+    MarkdownLivePreviewSpec.BlockQuote::class.java to MarkdownLivePreviewBlockQuoteRenderer(editor),
     MarkdownLivePreviewSpec.HorizontalRule::class.java to MarkdownLivePreviewHorizontalRuleRenderer(editor),
     MarkdownLivePreviewSpec.TaskCheckbox::class.java to MarkdownLivePreviewCheckboxRenderer(project, editor),
     MarkdownLivePreviewSpec.Image::class.java to MarkdownLivePreviewImageRenderer(project, editor),

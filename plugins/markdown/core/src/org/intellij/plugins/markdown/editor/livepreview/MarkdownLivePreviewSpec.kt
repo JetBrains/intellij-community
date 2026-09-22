@@ -98,6 +98,13 @@ sealed interface MarkdownLivePreviewSpec {
     val conceals: List<MarkdownLivePreviewRange>,
   ) : MarkdownLivePreviewSpec
 
+  /** Conceals blockquote markers and paints a vertical rule across the blockquote. */
+  @Serializable
+  data class BlockQuote(
+    override val range: MarkdownLivePreviewRange,
+    val markerRanges: List<MarkdownLivePreviewRange>,
+  ) : MarkdownLivePreviewSpec
+
   /** Conceals a full logical line and paints it as a horizontal rule. */
   @Serializable
   data class HorizontalRule(override val range: MarkdownLivePreviewRange) : MarkdownLivePreviewSpec
