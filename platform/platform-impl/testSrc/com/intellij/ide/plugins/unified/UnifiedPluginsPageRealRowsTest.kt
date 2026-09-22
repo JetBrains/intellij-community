@@ -533,6 +533,72 @@ internal class UnifiedPluginsPageRealRowsTest {
   }
 
   @Test
+  fun `new query reveals its default selection after the previous anchor disappears`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UI) {
+      val factory = RecordingRowFactory()
+      val initialItems = (1..20).map { item("initial.$it") }
+      val controller = UnifiedPluginsPageController(
+        initialSections = listOf(section(PluginSectionId.Installed, *initialItems.toTypedArray())),
+      )
+      controller.setSectionExpanded(PluginSectionId.Installed, true)
+      val view = createView(factory)
+      view.render(controller.state.value)
+      prepareForScrolling(view)
+
+      val scrollPane = componentsOfType(view.component, JBScrollPane::class.java).single()
+      scrollToComponent(scrollPane, factory.row(PluginSectionId.Installed, initialItems[9]).component)
+      val query = PluginsQueryState("replacement", "replacement", revision = 1)
+      controller.setQuery(query)
+      view.render(controller.state.value)
+
+      val resultItems = (1..20).map { item("result.$it") }
+      controller.replaceSourceState(
+        query = query,
+        updatedSections = listOf(section(PluginSectionId.Installed, *resultItems.toTypedArray())),
+        mayEstablishSelection = true,
+      )
+      view.render(controller.state.value)
+
+      val selectedRow = factory.row(PluginSectionId.Installed, resultItems.first())
+      assertThat(selectedRow.selected).isTrue()
+      assertRowVisibleBelowStickyHeader(scrollPane, selectedRow.component)
+      view.close()
+    }
+
+  @Test
+  fun `new query moves its selected anchor below the sticky header`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val factory = RecordingRowFactory()
+    val initialItems = (1..20).map { item("plugin.$it") }
+    val controller = UnifiedPluginsPageController(
+      initialSections = listOf(section(PluginSectionId.Installed, *initialItems.toTypedArray())),
+    )
+    controller.setSectionExpanded(PluginSectionId.Installed, true)
+    val view = createView(factory)
+    view.render(controller.state.value)
+    prepareForScrolling(view)
+
+    val scrollPane = componentsOfType(view.component, JBScrollPane::class.java).single()
+    val retainedAnchor = initialItems[9]
+    scrollToComponent(scrollPane, factory.row(PluginSectionId.Installed, retainedAnchor).component)
+    val query = PluginsQueryState("plugin 10", "plugin 10", revision = 1)
+    controller.setQuery(query)
+    view.render(controller.state.value)
+
+    val resultItems = initialItems.drop(9)
+    controller.replaceSourceState(
+      query = query,
+      updatedSections = listOf(section(PluginSectionId.Installed, *resultItems.toTypedArray())),
+      mayEstablishSelection = true,
+    )
+    view.render(controller.state.value)
+
+    val selectedRow = factory.row(PluginSectionId.Installed, retainedAnchor)
+    assertThat(selectedRow.selected).isTrue()
+    assertRowVisibleBelowStickyHeader(scrollPane, selectedRow.component)
+    view.close()
+  }
+
+  @Test
   fun `filtered one-row sections do not shrink real rows below preferred height`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val factory = RecordingRowFactory()
     val firstItem = item("first.plugin")
@@ -689,6 +755,13 @@ internal class UnifiedPluginsPageRealRowsTest {
   private fun componentOffset(scrollPane: JBScrollPane, component: JComponent): Int {
     val point = SwingUtilities.convertPoint(component, Point(), scrollPane.viewport.view)
     return point.y - scrollPane.viewport.viewPosition.y
+  }
+
+  private fun assertRowVisibleBelowStickyHeader(scrollPane: JBScrollPane, component: JComponent) {
+    val bounds = SwingUtilities.convertRectangle(component, Rectangle(component.size), scrollPane.viewport.view)
+    val viewRect = scrollPane.viewport.viewRect
+    assertThat(bounds.y).isGreaterThanOrEqualTo(viewRect.y + JBUI.scale(40))
+    assertThat(bounds.y + bounds.height).isLessThanOrEqualTo(viewRect.y + viewRect.height)
   }
 
   private fun <T : Component> componentsOfType(root: Component, type: Class<T>): List<T> {

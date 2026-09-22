@@ -66,7 +66,7 @@ targets:
 # Unified Plugin Manager UI
 
 Status: Active
-Date: 2026-09-18
+Date: 2026-09-22
 
 ## Purpose
 
@@ -440,6 +440,12 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
     `installing publication preserves empty selection across later source updates`
   )
 
+- When a new search query sets a default selection, the selected row must be visible below the sticky header.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
+    `new query reveals its default selection after the previous anchor disappears`;
+    `new query moves its selected anchor below the sticky header`
+  )
+
 - Shift-selection may cross section headers but must skip plugins from the other selection group.
 - Select All must select all compatible rendered rows.
 
@@ -669,5 +675,5 @@ The linked tests need no setup beyond the standard module test command.
 
 ## Open Questions
 
-- Initial selection, selected-item reveal, and filtered-result expansion are not stable contracts.
+- Initial selection outside search and filtered-result expansion are not stable contracts.
 - Duplicate handling between Marketplace and custom repository sections needs a stable contract and end-to-end coverage.

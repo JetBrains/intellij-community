@@ -112,6 +112,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
   private var stickySectionView: SectionView? = null
   private var renderedState: UnifiedPluginsPageState? = null
   private var renderedSearchControls: UnifiedPluginsSearchControlsState? = null
+  private var pendingSelectionRevealRevision: Long? = null
   private var handlingViewportChange = false
   private var rendering = false
   private var updatingSearchField = false
@@ -191,6 +192,10 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun render(state: UnifiedPluginsPageState) {
     val viewportAnchor = captureViewportAnchor()
+    val previousQueryRevision = renderedState?.query?.revision
+    if (previousQueryRevision != null && previousQueryRevision != state.query.revision) {
+      pendingSelectionRevealRevision = state.query.revision
+    }
     renderedState = state
     rendering = true
     try {
@@ -236,6 +241,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     layoutRenderedSections()
     restoreViewportAnchor(viewportAnchor)
     updateStickyHeader()
+    revealPendingSelection()
     sectionsPanel.repaint()
     scheduleResultsAnnouncement()
   }
@@ -276,6 +282,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     rowFactory?.rowsRendered(emptyList())
     sectionViews.values.forEach { it.setRealRows(emptyList()) }
     renderedState = null
+    pendingSelectionRevealRevision = null
   }
 
   private fun reconcileRealRows(state: UnifiedPluginsPageState) {
@@ -373,6 +380,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
         layoutRenderedSections()
       }
       updateStickyHeader()
+      revealPendingSelection()
     }
     finally {
       handlingViewportChange = false
@@ -383,6 +391,38 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     renderedState?.let(::reconcileRealRows)
     layoutRenderedSections()
     updateStickyHeader()
+    revealPendingSelection()
+  }
+
+  private fun revealPendingSelection() {
+    val state = renderedState ?: return
+    if (pendingSelectionRevealRevision != state.query.revision) return
+    val occurrenceId = state.selectedOccurrence ?: return
+    if (!revealOccurrence(occurrenceId)) return
+
+    pendingSelectionRevealRevision = null
+    updateStickyHeader()
+  }
+
+  private fun revealOccurrence(occurrenceId: PluginOccurrenceId): Boolean {
+    val bounds = sectionViews[occurrenceId.sectionId]?.occurrenceBounds(occurrenceId, sectionsPanel) ?: return false
+    val viewport = scrollPane.viewport
+    val viewRect = viewport.viewRect
+    if (viewRect.isEmpty) return false
+
+    val stickyHeaderHeight = stickySectionView?.headerPreferredHeight?.takeIf { stickyHeaderHost.isVisible } ?: 0
+    val visibleTop = viewRect.y + stickyHeaderHeight
+    val visibleBottom = viewRect.y + viewRect.height
+    val availableHeight = (viewRect.height - stickyHeaderHeight).coerceAtLeast(0)
+    val targetY = when {
+      bounds.y < visibleTop -> bounds.y - stickyHeaderHeight
+      bounds.height > availableHeight -> bounds.y - stickyHeaderHeight
+      bounds.y + bounds.height > visibleBottom -> bounds.y + bounds.height - viewRect.height
+      else -> return true
+    }
+    val maximumY = (sectionsPanel.height - viewport.extentSize.height).coerceAtLeast(0)
+    viewport.viewPosition = Point(viewport.viewPosition.x, targetY.coerceIn(0, maximumY))
+    return true
   }
 
   private fun updateStickyHeader() {
