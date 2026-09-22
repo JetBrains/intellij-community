@@ -1,12 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject
 
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.modifyContentRootEntity
+import com.intellij.platform.workspace.jps.entities.modifyExcludeUrlEntity
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.entities
@@ -18,15 +21,20 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.util.io.createDirectories
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
-import java.util.concurrent.CopyOnWriteArrayList
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Proves that a relocated exclusion starts no model build (PY-91841).
@@ -37,17 +45,13 @@ import kotlin.time.Duration.Companion.seconds
  * workspace model event and gives it to the decision of the tracker.
  */
 @TestApplication
+@Subsystems.IDE
+@Layers.Functional
+@Timeout(30)
 internal class PyWsmTriggerTest {
   private val pathFixture = tempPathFixture()
   private val projectFixture = projectFixture(pathFixture)
 
-  /**
-   * The source of every entity here. `toRebuildRequest` reads a source only to tell a python entity from a
-   * platform one, and neither case of this test reaches that point.
-   *
-   * Do not declare an `EntitySource` in this module. `AllIntellijEntitiesGenerationTest` reads the sources of
-   * every module for one, and it then wants a generated source root that a test module has not got.
-   */
   private val source = NonPersistentEntitySource
 
   private lateinit var workspaceModel: WorkspaceModel
@@ -116,6 +120,38 @@ internal class PyWsmTriggerTest {
     assertThat(request!!.reason).contains("no longer excluded")
   }
 
+  @ParameterizedTest
+  @ValueSource(booleans = [false, true])
+  fun testReplacingAnExclusionRebuildsOnlyWhenItsUrlChanges(changeUrl: Boolean): Unit = timeoutRunBlocking {
+    val oldDirectory = checkNotNull(
+      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(pathFixture.get().resolve("first/out"))
+    )
+    val newUrl = workspaceModel.getVirtualFileUrlManager()
+      .getOrCreateFromUrl("file://" + pathFixture.get().resolve("second/out").createDirectories())
+    val event = captureExclusionEvent {
+      workspaceModel.update("replace the exclusion") { storage ->
+        storage.modifyExcludeUrlEntity(storage.contentRootOf("first").excludedUrls.single()) {
+          if (changeUrl) url = newUrl
+          else entitySource = OrphanageWorkerEntitySource
+        }
+      }
+    }
+
+    val replacement = event.getChanges(ExcludeUrlEntity::class.java).single()
+    assertInstanceOf(EntityChange.Replaced::class.java, replacement)
+    assertThat(replacement.oldEntity!!.url).isEqualTo(excluded)
+    assertThat(replacement.newEntity!!.url).isEqualTo(if (changeUrl) newUrl else excluded)
+    val request = event.toRebuildRequest()
+    if (changeUrl) {
+      assertThat(request).isNotNull()
+      assertThat(request!!.directoriesToLoad).containsExactly(oldDirectory)
+      assertThat(request.reason).contains("no longer excluded", excluded.url)
+    }
+    else {
+      assertThat(request).isNull()
+    }
+  }
+
   private fun com.intellij.platform.workspace.storage.MutableEntityStorage.contentRootOf(module: String): ContentRootEntity =
     entities<ModuleEntity>().single { it.name == module }.contentRoots.single()
 
@@ -125,30 +161,18 @@ internal class PyWsmTriggerTest {
    * A project emits an event of its own, so the event of [change] must be selected and not taken first.
    */
   private suspend fun CoroutineScope.captureExclusionEvent(change: suspend () -> Unit): VersionedStorageChange {
-    val events = CopyOnWriteArrayList<VersionedStorageChange>()
-    val collector = launch {
-      workspaceModel.eventLog.collect { events.add(it) }
+    val before = workspaceModel.currentSnapshot
+    val event = async(start = CoroutineStart.UNDISPATCHED) {
+      workspaceModel.eventLog.first {
+        it.storageBefore === before && it.getChanges(ExcludeUrlEntity::class.java).isNotEmpty()
+      }
     }
     try {
-      delay(1.seconds) // Let the collector subscribe. `eventLog` is a plain flow, so it reports no subscription.
-      // The flow replays the event of the setup, so only an event after this point belongs to [change].
-      val beforeChange = events.size
       change()
-      delay(2.seconds) // The event arrives after the update returns.
-      val withExclusions = events.drop(beforeChange)
-        .filter { it.addedExcludeUrls().isNotEmpty() || it.removedExcludeUrls().isNotEmpty() }
-      assertThat(withExclusions)
-        .describedAs(
-          "exactly one event after the change must carry an exclusion change. " +
-          "${events.size - beforeChange} events arrived, " +
-          "exclude changes ${events.map { e -> e.getChanges(ExcludeUrlEntity::class.java).map { it.javaClass.simpleName } }}, " +
-          "content root changes ${events.map { e -> e.getChanges(ContentRootEntity::class.java).map { it.javaClass.simpleName } }}"
-        )
-        .hasSize(1)
-      return withExclusions.single()
+      return event.await()
     }
     finally {
-      collector.cancel()
+      event.cancel()
     }
   }
 }

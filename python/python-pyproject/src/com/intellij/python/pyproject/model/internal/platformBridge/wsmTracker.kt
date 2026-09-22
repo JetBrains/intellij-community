@@ -16,25 +16,31 @@ import com.intellij.python.pyproject.model.internal.workspaceBridge.isPythonEnti
  * names. An event that leaves both sets equal cannot change the model, so it must not cost a build.
  */
 internal fun VersionedStorageChange.toRebuildRequest(): RebuildRequest? {
-  val excludeChanges = getChanges(ExcludeUrlEntity::class.java)
-  val added = excludeChanges.filterIsInstance<EntityChange.Added<ExcludeUrlEntity>>().associateBy { it.newEntity.url.url }
-  val removed = excludeChanges.filterIsInstance<EntityChange.Removed<ExcludeUrlEntity>>().associateBy { it.oldEntity.url.url }
+  val added = LinkedHashMap<String, ExcludeUrlEntity>()
+  val removed = LinkedHashMap<String, ExcludeUrlEntity>()
+  for (change in getChanges(ExcludeUrlEntity::class.java)) {
+    when (change) {
+      is EntityChange.Added -> added[change.newEntity.url.url] = change.newEntity
+      is EntityChange.Removed -> removed[change.oldEntity.url.url] = change.oldEntity
+      is EntityChange.Replaced -> {
+        removed[change.oldEntity.url.url] = change.oldEntity
+        added[change.newEntity.url.url] = change.newEntity
+      }
+    }
+  }
 
-  // A url in both maps only moved to another content root. `ensureNoSrcIntersectsWithOtherRoots` relocates an
-  // excluded url that way, and `collectExcludedPaths` reads the union over every content root. The set of
-  // excluded paths is therefore the same after such a pair, and a build would repeat the previous build.
-  // The directory also stays excluded, so a subtree load of it would fill the VFS with a build output.
-  // This pairing is sound only while `collectExcludedPaths` reads one union over every content root.
+  // A URL in both maps stays excluded, including after a move to another content root or a source change.
+  // This pairing requires `collectExcludedPaths` to read the union over all content roots.
   val unExcluded = removed.filterKeys { it !in added }
   val newlyExcluded = added.filterKeys { it !in removed }
 
   if (unExcluded.isNotEmpty()) {
-    val directories = unExcluded.values.mapNotNullTo(LinkedHashSet()) { it.oldEntity.url.virtualFile }
+    val directories = unExcluded.values.mapNotNullTo(LinkedHashSet()) { it.url.virtualFile }
     return RebuildRequest(directories, describe("no longer excluded", unExcluded.keys))
   }
   if (newlyExcluded.isNotEmpty()) {
     // A rebuild excludes a virtualenv of its own, and that write must not start a new rebuild.
-    val fromPlatform = newlyExcluded.filterValues { !it.newEntity.entitySource.isPythonEntity }
+    val fromPlatform = newlyExcluded.filterValues { !it.entitySource.isPythonEntity }
     if (fromPlatform.isNotEmpty()) {
       return RebuildRequest(emptySet(), describe("newly excluded", fromPlatform.keys))
     }
