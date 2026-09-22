@@ -915,9 +915,26 @@ internal fun createProductProperties(
   else {
     productConfiguration.className
   }
-  return spanBuilder("create product properties").setAttribute("className", className).use {
+  val properties = spanBuilder("create product properties").setAttribute("className", className).use {
     doCreateProductProperties(classLoader = classLoader, className = className, classPathFiles = classPathFiles, projectDir = projectDir, platformPrefix = platformPrefix)
   }
+  productConfiguration.rootModule?.let { applyRootModule(properties = properties, rootModule = it, className = className) }
+  return properties
+}
+
+/**
+ * Points the modular loader of [properties] at [rootModule], the `rootModule` of a `build/dev-build.json` key.
+ *
+ * The class keeps its default root module in the distribution, because a wrapper `product-modules.xml` includes it.
+ * A product without a modular loader has no root module to replace, so the key is an error.
+ */
+@VisibleForTesting
+internal fun applyRootModule(properties: ProductProperties, rootModule: String, className: String) {
+  checkNotNull(properties.rootModuleForModularLoader) {
+    "`rootModule` of $className needs a product with `rootModuleForModularLoader`"
+  }
+  properties.rootModuleForModularLoader = rootModule
+  properties.productLayout.productImplementationModules += rootModule
 }
 
 private val lookup = MethodHandles.lookup()

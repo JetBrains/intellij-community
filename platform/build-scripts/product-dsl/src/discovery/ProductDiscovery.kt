@@ -33,6 +33,13 @@ data class ProductConfiguration(
   @JvmField val modules: List<String>,
   @JvmField @SerialName("class") val className: String,
   @JvmField val pluginXmlPath: String? = null,
+  /**
+   * The root module of the modular loader, when the product replaces the default of its class.
+   *
+   * A frontend debug wrapper names the `product-modules.xml` that bundles a plugin the base product does not ship.
+   * The dev build applies it once, when it constructs the `ProductProperties`. The product must have a modular loader.
+   */
+  @JvmField val rootModule: String? = null,
 )
 
 /**
