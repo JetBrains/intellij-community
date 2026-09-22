@@ -7,11 +7,14 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.storage.entities
+import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.ProjectRootEntity
 import com.intellij.workspaceModel.ide.registerProjectRoot
+import com.intellij.workspaceModel.ide.unregisterProjectRoot
 import kotlinx.coroutines.flow.filter
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
+import java.nio.file.Path
 
 @Internal
 class ProjectRootsSynchronizer : ProjectActivity {
@@ -27,6 +30,27 @@ class ProjectRootsSynchronizer : ProjectActivity {
       for (root in roots) {
         registerProjectRoot(project, virtualFileUrlManager.storeAndGet(root))
       }
+    }
+
+    /**
+     * Removes the project root of [projectDir] from the workspace model and from [ProjectRootPersistentStateComponent].
+     *
+     * `ProjectManagerImpl` adds both on every open, and [doRegister] puts the entity back from the component.
+     * A caller that wants the root gone must therefore remove both.
+     *
+     * The model change goes last, so the listener of [ProjectRootsSynchronizer] rewrites the persisted list
+     * from the model afterwards.
+     */
+    suspend fun doUnregister(project: Project, projectDir: Path) {
+      val workspaceModel = project.serviceAsync<WorkspaceModel>()
+      val url = projectDir.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())
+      val component = project.serviceAsync<ProjectRootPersistentStateComponent>()
+      val isRegistered = workspaceModel.currentSnapshot.entities<ProjectRootEntity>().any { it.root == url }
+      if (!isRegistered && !component.projectRootUrls.contains(url.url)) {
+        return
+      }
+      component.removeProjectRoot(url.url)
+      unregisterProjectRoot(project, url)
     }
   }
 
