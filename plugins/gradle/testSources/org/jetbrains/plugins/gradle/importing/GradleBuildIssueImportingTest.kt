@@ -203,7 +203,7 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
       brokenFile: BrokenFile,
       assert: BuildViewNodeAssertion.() -> Unit,
     ) {
-      if (gradleDsl == GradleDsl.KOTLIN && GradleVersionUtil.isGradleOlderThan(gradleVersion, "6.8")) {
+      if (gradleDsl == GradleDsl.KOTLIN && GradleVersionUtil.isGradleOlderThan(gradleVersion, "4.10")) {
         // For old Gradle versions there are no information about exception location with Kotlin scripts:
         //   at Settings_gradle.<init>(Unknown Source)
         //   at Build_gradle.<init>(Unknown Source)
