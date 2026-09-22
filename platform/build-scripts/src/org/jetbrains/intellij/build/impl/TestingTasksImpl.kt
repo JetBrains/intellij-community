@@ -1510,4 +1510,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.findUsagesMl.tests",
   "intellij.gradle.completion.tests",
   "intellij.gradle.java.maven.tests",
+  "intellij.platform.util.nanoxml.tests",
 )

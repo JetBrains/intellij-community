@@ -72,7 +72,7 @@ public final class FormsParsing {
 
   public static void parse(final InputStream is, final IXMLBuilder builder) {
     try (is) {
-      parse(new MyXMLReader(is), builder);
+      parse(new StdXMLReader(is), builder);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -123,17 +123,6 @@ public final class FormsParsing {
     @Override
     public boolean isExternalEntity(String name) {
       return false;
-    }
-  }
-
-  private static final class MyXMLReader extends StdXMLReader {
-    MyXMLReader(InputStream stream) throws IOException {
-      super(stream);
-    }
-
-    @Override
-    public Reader openStream(String publicId, String systemId) {
-      return new StringReader(" ");
     }
   }
 

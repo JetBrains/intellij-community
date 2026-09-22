@@ -90,7 +90,7 @@ public class StdXMLReader {
 
     currentReader = new StackedReader();
     readers = new ArrayDeque<>();
-    Reader reader = openStream(publicID, systemIDasURL.toString());
+    Reader reader = resolveStream(publicID, systemIDasURL.toString());
     currentReader.lineReader = new LineNumberReader(reader);
     currentReader.pbReader = new PushbackReader(currentReader.lineReader, 2);
   }
@@ -318,7 +318,34 @@ public class StdXMLReader {
   }
 
   /**
-   * Opens a stream from a public and system ID.
+   * Opens a stream for an external ID, such as the external subset of a {@code <!DOCTYPE>} declaration.
+   * <p>
+   * This implementation does not resolve the ID. It returns a blank reader, so the DTD is treated as empty.
+   * <p>
+   * To resolve an ID, override this method and open content that the override chose:
+   * <pre>
+   * new StdXMLReader(documentReader) {
+   *   &#64;Override
+   *   public Reader openStream(String publicID, String systemID) throws IOException {
+   *     if (!MY_DTD.equals(systemID)) return super.openStream(publicID, systemID);
+   *     return new InputStreamReader(MY_BUNDLED_DTD.openStream(), StandardCharsets.UTF_8);
+   *   }
+   * }
+   * </pre>
+   * The override does not open the system ID as given.
+   *
+   * @param publicID the public ID, which may be null
+   * @param systemID the system ID, which is never null
+   * @throws IOException if an error occurred while opening the stream
+   */
+  public Reader openStream(String publicID, String systemID) throws IOException {
+    return new StringReader(" ");
+  }
+
+  /**
+   * Opens the content named by a public and system ID.
+   * <p>
+   * Only the {@link #StdXMLReader(String, String)} constructor uses this method, to load the document itself.
    *
    * @param publicID the public ID, which may be null
    * @param systemID the system ID, which is never null
@@ -326,7 +353,8 @@ public class StdXMLReader {
    * @throws FileNotFoundException if the system ID refers to a local file which does not exist
    * @throws IOException           if an error occurred while opening the stream
    */
-  public Reader openStream(String publicID, String systemID) throws MalformedURLException, FileNotFoundException, IOException {
+  private Reader resolveStream(String publicID, String systemID)
+    throws MalformedURLException, FileNotFoundException, IOException {
     URL url = new URL(currentReader.systemId, systemID);
 
     if (url.getRef() != null) {
