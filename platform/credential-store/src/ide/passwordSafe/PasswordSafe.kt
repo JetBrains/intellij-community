@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.passwordSafe
 
 import com.intellij.credentialStore.CredentialAttributes
@@ -9,10 +9,9 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 
 /**
- * [See the documentation](https://plugins.jetbrains.com/docs/intellij/persisting-sensitive-data.html).
+ * See [the documentation](https://plugins.jetbrains.com/docs/intellij/persisting-sensitive-data.html).
  */
-@Suppress("DEPRECATION", "removal")
-abstract class PasswordSafe : CredentialStore, PasswordStorage {
+abstract class PasswordSafe : CredentialStore {
   companion object {
     @JvmStatic
     val instance: PasswordSafe

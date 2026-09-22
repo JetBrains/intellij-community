@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore
 
 import com.intellij.util.Ephemeral
@@ -22,10 +22,7 @@ interface CredentialStore {
 
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
-  fun getPassword(attributes: CredentialAttributes): String? {
-    val credentials = get(attributes)
-    return credentials?.getPasswordAsString()
-  }
+  fun getPassword(attributes: CredentialAttributes): String? = get(attributes)?.getPasswordAsString()
 
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
@@ -36,6 +33,5 @@ interface CredentialStore {
   suspend fun getAsync(attributes: CredentialAttributes): Ephemeral<Credentials> =
     ephemeral(runAsync { get(attributes) }.await() )
 
-  suspend fun <T : Any> ephemeral(value: T?): Ephemeral<T> =
-    StaticEphemeral(value)
+  suspend fun <T : Any> ephemeral(value: T?): Ephemeral<T> = StaticEphemeral(value)
 }

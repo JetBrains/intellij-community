@@ -75,7 +75,6 @@ e:com.intellij.credentialStore.ProviderType
 - s:values():com.intellij.credentialStore.ProviderType[]
 a:com.intellij.ide.passwordSafe.PasswordSafe
 - com.intellij.credentialStore.CredentialStore
-- com.intellij.ide.passwordSafe.PasswordStorage
 - sf:Companion:com.intellij.ide.passwordSafe.PasswordSafe$Companion
 - <init>():V
 - sf:getInstance():com.intellij.ide.passwordSafe.PasswordSafe
@@ -86,6 +85,3 @@ a:com.intellij.ide.passwordSafe.PasswordSafe
 - a:setRememberPasswordByDefault(Z):V
 f:com.intellij.ide.passwordSafe.PasswordSafe$Companion
 - f:getInstance():com.intellij.ide.passwordSafe.PasswordSafe
-com.intellij.ide.passwordSafe.PasswordStorage
-- a:get(com.intellij.credentialStore.CredentialAttributes):com.intellij.credentialStore.Credentials
-- a:set(com.intellij.credentialStore.CredentialAttributes,com.intellij.credentialStore.Credentials):V
