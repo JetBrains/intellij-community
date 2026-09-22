@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -14,6 +15,8 @@ import org.jetbrains.annotations.Nls
 sealed interface PluginUpdateSource {
   val host: @NlsSafe String
   val isMarketplace: Boolean
+
+  val presentableName: @Nls String
 
   /**
    * When sorting from most useful sources, use this field
@@ -34,5 +37,5 @@ sealed interface PluginUpdateSource {
 
 @ApiStatus.Internal
 fun PluginUpdateSource?.getPresentableName(): @Nls(capitalization = Nls.Capitalization.Sentence) String {
-  return PluginUpdateSourceServiceImpl.getPresentableName(this)
+  return this?.presentableName ?: IdeBundle.message("plugin.update.source.presentable.name.unknown")
 }

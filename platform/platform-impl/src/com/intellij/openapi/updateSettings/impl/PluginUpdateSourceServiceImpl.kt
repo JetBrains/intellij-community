@@ -23,6 +23,7 @@ import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.util.Random
@@ -33,14 +34,6 @@ internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
 
   companion object {
     fun getImplInstance(): PluginUpdateSourceServiceImpl = PluginUpdateSourceService.getInstance() as PluginUpdateSourceServiceImpl
-
-    fun getPresentableName(updateSourceId: PluginUpdateSource?): @NlsSafe String {
-      return when {
-        updateSourceId == null -> IdeBundle.message("plugin.update.source.presentable.name.unknown")
-        updateSourceId.isMarketplace -> IdeBundle.message("plugin.update.source.presentable.name.marketplace")
-        else -> updateSourceId.host
-      }
-    }
   }
 
   override fun getPluginUpdateSourceId(pluginId: PluginId): PluginUpdateSource? {
@@ -167,6 +160,12 @@ private data class Repository(
   override val isMarketplace: Boolean,
   val isNightlyRepository: Boolean,
 ) : PluginUpdateSource {
+
+  override val presentableName: @Nls String
+    get() = when {
+      isMarketplace -> IdeBundle.message("plugin.update.source.presentable.name.marketplace")
+      else -> host
+    }
 
   override fun canInstallUpdatesFrom(other: PluginUpdateSource): Boolean {
     if (other !is Repository) return false
