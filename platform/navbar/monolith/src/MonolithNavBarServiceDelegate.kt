@@ -1,10 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.navbar.monolith
 
+import com.intellij.ide.trustedProjects.TrustedFiles
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
+import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
+import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.platform.navbar.backend.NavBarItem
@@ -15,6 +18,7 @@ import com.intellij.platform.navbar.backend.impl.pathToItem
 import com.intellij.platform.navbar.backend.impl.toVmItems
 import com.intellij.platform.navbar.frontend.NavBarServiceDelegate
 import com.intellij.platform.navbar.frontend.fireOnIdeActivity
+import com.intellij.psi.PsiFile
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -49,6 +53,16 @@ internal class MonolithNavbarServiceDelegate(private val project: Project) : Nav
     val navigationRequest = readAction {
       pointer.dereference()?.navigationRequest()
     } ?: return
+
+    val virtualFile = when (navigationRequest) {
+      is SourceNavigationRequest -> navigationRequest.file
+      is RawNavigationRequest -> (navigationRequest.navigatable as? PsiFile)?.virtualFile
+      else -> null
+    }
+
+    virtualFile?.let {
+      TrustedFiles.markExternallyOpenedIfOutsideProject(it, project)
+    }
 
     project.serviceAsync<NavigationService>().navigate(navigationRequest)
   }

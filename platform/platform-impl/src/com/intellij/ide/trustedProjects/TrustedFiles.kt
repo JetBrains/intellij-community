@@ -132,6 +132,21 @@ object TrustedFiles {
       }
     }
   }
+
+  /**
+   * Marks [file] like [markExternallyOpened] when it lies outside the roots of [project].
+   *
+   * A navigation UI that can reach any local file, for example the navigation bar, calls this method
+   * for the file it opens. A file inside the project roots is governed by the project trust,
+   * so its mark would only take a slot in the store.
+   */
+  @ApiStatus.Internal
+  @JvmStatic
+  fun markExternallyOpenedIfOutsideProject(file: VirtualFile, project: Project) {
+    val nioPath = file.fileSystem.getNioPath(file) ?: return
+    if (TrustedProjectsLocator.locateProject(project).projectRoots.any { nioPath.startsWith(it) }) return
+    markExternallyOpened(file)
+  }
 }
 
 /**
