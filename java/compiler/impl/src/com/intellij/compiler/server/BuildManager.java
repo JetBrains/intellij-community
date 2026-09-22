@@ -1483,7 +1483,6 @@ public final class BuildManager implements Disposable {
 
     cmdLine.addParameter("-Djava.awt.headless=true");
 
-    attachJnaBootLibraryIfNeeded(project, cmdLine);
     if (Registry.is("jps.build.use.workspace.model")) {
       // todo: upload workspace model to remote side because it runs with eel
       var globalCacheId = "Local";
@@ -1853,22 +1852,6 @@ public final class BuildManager implements Disposable {
     }
 
     return processHandler;
-  }
-
-  private static void attachJnaBootLibraryIfNeeded(
-    @NotNull Project project,
-    @NotNull BuildCommandLineBuilder cmdLine
-  ) {
-    // it's impossible to use a Windows DLL inside a non-local environment
-    if (!(EelProviderUtil.getEelDescriptor(project) instanceof LocalEelDescriptor)) {
-      return;
-    }
-    var jnaBootLibraryPath = System.getProperty("jna.boot.library.path");
-    if (jnaBootLibraryPath != null) {
-      cmdLine.addPathParameter("-Djna.boot.library.path=", jnaBootLibraryPath);
-      cmdLine.addParameter("-Djna.nosys=true");
-      cmdLine.addParameter("-Djna.noclasspath=true");
-    }
   }
 
   private static void showSnapshotNotificationAfterFinish(@NotNull Project project) {

@@ -48,9 +48,6 @@ public class _FirstInSuiteTest extends TestCase {
     UITestUtil.replaceIdeEventQueueSafely();
     SwingUtilities.invokeAndWait(() -> System.out.println("EDT is " + Thread.currentThread()));
 
-    // force platform JNA load
-    Class.forName("com.sun.jna.Native");
-
     String tempDirectory = FileUtilRt.getTempDirectory();
     String[] list = new File(tempDirectory).list();
     assert list != null;

@@ -42,6 +42,5 @@
     <orderEntry type="module" module-name="intellij.libraries.compose.runtime.desktop" />
     <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" />
     <orderEntry type="module" module-name="intellij.libraries.jbr" />
-    <orderEntry type="module" module-name="intellij.libraries.jna" />
   </component>
 </module>
