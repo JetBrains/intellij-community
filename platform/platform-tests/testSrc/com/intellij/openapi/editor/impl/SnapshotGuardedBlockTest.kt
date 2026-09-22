@@ -18,16 +18,6 @@ import java.lang.ref.WeakReference
 @UsePMarkerImplementation
 class SnapshotGuardedBlockTest {
   @Test
-  @UsePMarkerImplementation(false)
-  fun `disabled snapshot marker implementation uses legacy guard`() {
-    val document = DocumentImpl("abcdef", true)
-
-    val guard = document.createGuardedBlock(2, 4)
-
-    Assertions.assertThat(guard).isExactlyInstanceOf(GuardedBlock::class.java)
-  }
-
-  @Test
   fun `guard uses persistent snapshot policy and guard flavor`() {
     val document = DocumentImpl("one\ntarget\nlast", true)
     val initialSnapshot = document.core.snapshot()

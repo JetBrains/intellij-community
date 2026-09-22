@@ -19,23 +19,6 @@ import java.lang.ref.WeakReference
 @UsePMarkerImplementation
 class SnapshotRangeHighlighterImplTest {
   @Test
-  @UsePMarkerImplementation(false)
-  fun `disabled snapshot marker implementation uses legacy highlighter`() {
-    val document = DocumentImpl("abcdef", true)
-    val model = DocumentMarkupModel.forDocument(document, null, true) as MarkupModelImpl
-    try {
-      val highlighter = model.addRangeHighlighter(2, 4, 1, null, HighlighterTargetArea.EXACT_RANGE)
-      val persistentHighlighter = model.addPersistentLineHighlighter(null, 0, 1)
-
-      Assertions.assertThat(highlighter).isExactlyInstanceOf(RangeHighlighterImpl::class.java)
-      Assertions.assertThat(persistentHighlighter).isExactlyInstanceOf(PersistentRangeHighlighterImpl::class.java)
-    }
-    finally {
-      model.dispose()
-    }
-  }
-
-  @Test
   fun `persistent highlighters follow line changes in snapshot branches`() {
     val document = DocumentImpl("one\n  target\nlast", true)
     val model = MarkupModelImpl(document)

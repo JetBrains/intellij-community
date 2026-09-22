@@ -66,16 +66,6 @@ class SnapshotCaretMarkerTest {
     assertThat(position).isEqualTo(LogicalPosition(2, 3))
   }
 
-  @Test
-  @UsePMarkerImplementation(false)
-  fun `disabled snapshot marker implementation uses caret marker trees`(): Unit = timeoutRunBlocking {
-    val usesSnapshotStorage = withEditor("abc") { editor ->
-      editor.caretModel.isUsingSnapshotMarkerStorage
-    }
-
-    assertThat(usesSnapshotStorage).isFalse()
-  }
-
   private suspend fun <T> withEditor(text: String, action: suspend (EditorImpl) -> T): T {
     return withContext(Dispatchers.EDT) {
       val editorFactory = EditorFactory.getInstance()

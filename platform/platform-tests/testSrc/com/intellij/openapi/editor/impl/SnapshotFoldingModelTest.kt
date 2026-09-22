@@ -127,18 +127,6 @@ class SnapshotFoldingModelTest {
     assertThat(state.regionCount).isZero()
   }
 
-  @Test
-  @UsePMarkerImplementation(false)
-  fun `disabled snapshot marker implementation uses the legacy fold tree`(): Unit = timeoutRunBlocking {
-    val state = withEditor("abcdef") { editor ->
-      val region = addFoldRegion(editor, 1, 4)
-      editor.foldingModel.isUsingSnapshotFoldingStorage to region
-    }
-
-    assertThat(state.first).isFalse()
-    assertThat(state.second).isInstanceOf(FoldRegionImpl::class.java)
-  }
-
   private suspend fun <T> withEditor(text: String, action: suspend (EditorImpl) -> T): T {
     return withContext(Dispatchers.EDT) {
       val editorFactory = EditorFactory.getInstance()

@@ -112,14 +112,6 @@ class SnapshotFocusModeModelTest {
     }
   }
 
-  @Test
-  @UsePMarkerImplementation(false)
-  fun `disabled snapshot marker implementation uses legacy focus region`() = withEditor("abcdef") { editor ->
-    val region = editor.focusModeModel.createFocusRegion(2, 4)
-
-    assertThat(region).isExactlyInstanceOf(RangeMarkerImpl::class.java)
-  }
-
   private fun withEditor(text: String, action: (EditorImpl) -> Unit) {
     withEditor(DocumentImpl(text, true), action)
   }

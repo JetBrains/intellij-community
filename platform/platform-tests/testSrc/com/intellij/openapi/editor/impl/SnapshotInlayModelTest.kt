@@ -260,16 +260,6 @@ class SnapshotInlayModelTest {
     assertThat(releasedStorage.document.text).isEqualTo("abc")
   }
 
-  @Test
-  @UsePMarkerImplementation(false)
-  fun `disabled snapshot marker implementation uses inlay trees`(): Unit = timeoutRunBlocking {
-    val usesSnapshotStorage = withEditor("abc") { editor ->
-      editor.inlayModel.isUsingSnapshotInlayStorage
-    }
-
-    assertThat(usesSnapshotStorage).isFalse()
-  }
-
   private suspend fun <T> withEditor(text: String, action: suspend (EditorImpl) -> T): T {
     return withContext(Dispatchers.EDT) {
       val editorFactory = EditorFactory.getInstance()

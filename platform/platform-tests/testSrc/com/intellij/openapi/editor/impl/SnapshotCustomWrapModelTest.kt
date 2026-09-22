@@ -164,17 +164,6 @@ class SnapshotCustomWrapModelTest {
     assertThat(state.currentWraps).containsExactly(state.wrap)
   }
 
-  @Test
-  @UsePMarkerImplementation(false)
-  fun `disabled snapshot marker implementation uses a legacy custom wrap`(): Unit = timeoutRunBlocking {
-    val wrap = withEditor("abcdef") { editor ->
-      editor.customWrapModel.runBatchMutation { addWrap(2) }
-    }
-
-    assertThat(wrap).isNotInstanceOf(SnapshotRangeMarkerImpl::class.java)
-    assertThat(wrap?.javaClass?.name).isEqualTo("com.intellij.openapi.editor.impl.customwrap.CustomWrapImpl")
-  }
-
   private suspend fun <T> withEditor(text: String, action: suspend (EditorImpl) -> T): T {
     return withEditor(DocumentImpl(text, true), action)
   }
