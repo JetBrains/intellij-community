@@ -27,7 +27,6 @@ import com.intellij.python.pyproject.model.internal.workspaceBridge.rebuildProje
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -99,10 +98,10 @@ internal class PyProjectModelSyncService(private val project: Project, private v
 
   /** Tracks changes from before the initial scan until the session ends. */
   private suspend fun trackChanges() {
-    knownRoots = setOf(project.stateStore.projectBasePath)
+    val projectBasePath = project.stateStore.projectBasePath
+    knownRoots = setOf(projectBasePath)
     project.workspaceModel.eventLog
-      .mapNotNull { it.toRebuildRequest() }
-      .map { PendingRebuild.Directories(it.directoriesToLoad, it.reason) }
+      .mapNotNull { it.toRebuildRequest(projectBasePath) }
       .mergeRebuildRequests(pyProjectTomlChanges { knownRoots }, DEBOUNCE)
       .collectRebuilds { batch ->
         when (batch) {

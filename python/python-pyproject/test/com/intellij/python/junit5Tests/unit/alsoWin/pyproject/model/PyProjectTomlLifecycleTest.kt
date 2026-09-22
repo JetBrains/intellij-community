@@ -102,7 +102,7 @@ internal class PyProjectTomlLifecycleTest {
     // To be unlocked when WSM updated with new module
     val wsmTrackedDef = CompletableDeferred<Unit>()
     val tracker = scope.launch(start = CoroutineStart.UNDISPATCHED) {
-      f.project.workspaceModel.eventLog.mapNotNull { it.toRebuildRequest() }.collect {
+      f.project.workspaceModel.eventLog.mapNotNull { it.toRebuildRequest(f.root.toNioPath()) }.collect {
         scope.launch {
           // Project rebuild doesn't work in tests, so we listen for WSM and update it explicitly
           f.reloadProject() // <-- Reload 2

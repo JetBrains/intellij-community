@@ -13,6 +13,10 @@ import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.api.ModelRebuiltListener
 import com.intellij.python.pyproject.model.api.isPyProjectTomlBased
@@ -32,6 +36,9 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.replaceService
+import com.intellij.workspaceModel.ide.NonPersistentEntitySource
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
@@ -54,6 +61,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.io.IOException
@@ -65,6 +73,8 @@ import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
+@Subsystems.IDE
+@Layers.Functional
 @Timeout(30)
 internal class PyProjectSyncLifecycleTest {
   private val pathFixture = tempPathFixture()
@@ -122,10 +132,60 @@ internal class PyProjectSyncLifecycleTest {
     }
   }
 
+  @ParameterizedTest
+  @ValueSource(booleans = [false, true])
+  fun testNewExternalRootIsScannedAfterStartup(
+    newModule: Boolean,
+    @TempDir externalRoot: Path,
+    @TestDisposable disposable: Disposable,
+  ): Unit = timeoutRunBlocking {
+    val workspace = gateWorkspace(disposable)
+    val project = projectFixture.get()
+    val rebuilt = Channel<List<String>>(Channel.UNLIMITED)
+    project.messageBus.connect(disposable).subscribe(MODEL_REBUILD, ModelRebuiltListener {
+      rebuilt.trySend(project.modules.filter { it.isPyProjectTomlBased }.map { it.name }.sorted())
+    })
+    val service = PyProjectModelSyncService(project, this)
+    try {
+      workspace.ready.complete(Unit)
+      service.start()
+      assertThat(rebuilt.receive()).isEmpty()
+      if (!newModule) {
+        workspace.update("add a module without roots") { storage ->
+          storage addEntity ModuleEntity("external", emptyList(), NonPersistentEntitySource)
+        }
+        assertThat(rebuilt.receive()).isEmpty()
+      }
+      val nested = externalRoot.resolve("fresh/nested").createDirectories()
+      nested.resolve(PY_PROJECT_TOML).writeText("[project]\nname = \"external-package\"\nversion = \"1.0\"\n")
+      assertThat(findPyProjectTomlFilesInIndex(setOf(externalRoot), emptySet())).isEmpty()
+      val url = workspace.getVirtualFileUrlManager().getOrCreateFromUrl("file://$externalRoot")
+      workspace.update("attach an external root") { storage ->
+        val root = ContentRootEntity(url, emptyList(), NonPersistentEntitySource)
+        if (newModule) {
+          storage addEntity ModuleEntity("external", emptyList(), NonPersistentEntitySource) { contentRoots = listOf(root) }
+        }
+        else {
+          storage.modifyModuleEntity(storage.entities<ModuleEntity>().single { it.name == "external" }) {
+            contentRoots = listOf(root)
+          }
+        }
+      }
+      while (rebuilt.receive() != listOf("external-package")) { }
+      assertThat(project.modules.filter { it.isPyProjectTomlBased }.map { it.name }).containsExactly("external-package")
+      assertThat(service.initialized).isTrue()
+    }
+    finally {
+      service.stop()
+      coroutineContext.job.children.toList().joinAll()
+      rebuilt.cancel()
+    }
+  }
+
   @Test
   fun testWorkspaceSubscriptionFollowsCollection(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
     val workspace = gateWorkspace(disposable)
-    val requests = projectFixture.get().workspaceModel.eventLog.mapNotNull { it.toRebuildRequest() }
+    val requests = projectFixture.get().workspaceModel.eventLog.mapNotNull { it.toRebuildRequest(pathFixture.get()) }
     assertEquals(0, workspace.subscriptions.value)
     val tracker = launch(start = CoroutineStart.UNDISPATCHED) {
       requests.collect()

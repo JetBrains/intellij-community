@@ -15,6 +15,7 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.python.pyproject.model.internal.platformBridge.PendingRebuild
 import com.intellij.python.pyproject.model.internal.platformBridge.toRebuildRequest
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -33,6 +34,7 @@ import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
@@ -100,7 +102,7 @@ internal class PyWsmTriggerTest {
     assertThat(event.removedExcludeUrls()).describedAs("the event must remove the url").containsExactly(excluded.url)
     assertThat(event.addedExcludeUrls()).describedAs("the event must add the url again").containsExactly(excluded.url)
 
-    assertThat(event.toRebuildRequest())
+    assertThat(event.toRebuildRequest(pathFixture.get()))
       .describedAs("a relocated exclusion leaves the set of excluded paths equal, so it must start no build")
       .isNull()
   }
@@ -116,7 +118,7 @@ internal class PyWsmTriggerTest {
     assertThat(event.removedExcludeUrls()).containsExactly(excluded.url)
     assertThat(event.addedExcludeUrls()).describedAs("nothing adds the url back").isEmpty()
 
-    val request = event.toRebuildRequest()
+    val request = event.toRebuildRequest(pathFixture.get())
     assertThat(request).describedAs("a real un-exclusion must start a build").isNotNull()
     assertThat(request!!.reason).contains("no longer excluded")
   }
@@ -142,15 +144,69 @@ internal class PyWsmTriggerTest {
     assertInstanceOf(EntityChange.Replaced::class.java, replacement)
     assertThat(replacement.oldEntity!!.url).isEqualTo(excluded)
     assertThat(replacement.newEntity!!.url).isEqualTo(if (changeUrl) newUrl else excluded)
-    val request = event.toRebuildRequest()
+    val request = event.toRebuildRequest(pathFixture.get())
     if (changeUrl) {
       assertThat(request).isNotNull()
-      assertThat(request!!.directoriesToLoad).containsExactly(oldDirectory)
-      assertThat(request.reason).contains("no longer excluded", excluded.url)
+      assertThat(assertInstanceOf(PendingRebuild.Directories::class.java, request).directoriesToLoad).containsExactly(oldDirectory)
+      assertThat(request!!.reason).contains("no longer excluded", excluded.url)
     }
     else {
       assertThat(request).isNull()
     }
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["add", "replace", "remove"])
+  fun testExternalRootChangesRequestAFullScan(change: String, @TempDir externalRoot: Path): Unit = timeoutRunBlocking {
+    val externalUrl = workspaceModel.getVirtualFileUrlManager().getOrCreateFromUrl("file://$externalRoot")
+    if (change == "remove") {
+      workspaceModel.update("add the external root") { storage ->
+        storage.modifyContentRootEntity(storage.contentRootOf("second")) { url = externalUrl }
+      }
+    }
+    val event = captureEvent {
+      workspaceModel.update("change the external root") { storage ->
+        when (change) {
+          "add" -> storage.modifyModuleEntity(storage.entities<ModuleEntity>().single { it.name == "second" }) {
+            contentRoots = contentRoots + ContentRootEntity(externalUrl, emptyList(), source)
+          }
+          "replace" -> storage.modifyContentRootEntity(storage.contentRootOf("second")) { url = externalUrl }
+          "remove" -> storage.removeEntity(storage.contentRootOf("second"))
+          else -> error("Unknown change: $change")
+        }
+      }
+    }
+    assertInstanceOf(PendingRebuild.FullScan::class.java, event.toRebuildRequest(pathFixture.get()))
+  }
+
+  @Test
+  fun testRootWithinTheProjectNeedsNoScan(): Unit = timeoutRunBlocking {
+    val root = workspaceModel.getVirtualFileUrlManager().getOrCreateFromUrl("file://" + pathFixture.get().resolve("nested"))
+    val event = captureEvent {
+      workspaceModel.update("add a nested content root") { storage ->
+        storage.modifyModuleEntity(storage.entities<ModuleEntity>().single { it.name == "second" }) {
+          contentRoots = contentRoots + ContentRootEntity(root, emptyList(), source)
+        }
+      }
+    }
+    assertThat(event.toRebuildRequest(pathFixture.get())).isNull()
+  }
+
+  @Test
+  fun testRelocatingAnExternalRootNeedsNoScan(@TempDir externalRoot: Path): Unit = timeoutRunBlocking {
+    val externalUrl = workspaceModel.getVirtualFileUrlManager().getOrCreateFromUrl("file://$externalRoot")
+    workspaceModel.update("add the external root") { storage ->
+      storage.modifyContentRootEntity(storage.contentRootOf("second")) { url = externalUrl }
+    }
+    val event = captureEvent {
+      workspaceModel.update("move the external root to another module") { storage ->
+        storage.removeEntity(storage.contentRootOf("second"))
+        storage.modifyModuleEntity(storage.entities<ModuleEntity>().single { it.name == "first" }) {
+          contentRoots = contentRoots + ContentRootEntity(externalUrl, emptyList(), source)
+        }
+      }
+    }
+    assertThat(event.toRebuildRequest(pathFixture.get())).isNull()
   }
 
   @Test
@@ -160,9 +216,8 @@ internal class PyWsmTriggerTest {
         storage.modifyModuleEntity(storage.entities<ModuleEntity>().single { it.name == "second" }) { name = "renamed" }
       }
     }
-    val request = event.toRebuildRequest()
-    assertThat(request).isNotNull()
-    assertThat(request!!.directoriesToLoad).isEmpty()
+    val request = assertInstanceOf(PendingRebuild.Directories::class.java, event.toRebuildRequest(pathFixture.get()))
+    assertThat(request.directoriesToLoad).isEmpty()
     assertThat(request.reason).contains("renamed")
   }
 
