@@ -43,6 +43,7 @@ import com.intellij.openapi.editor.impl.TabCharacterPaintMode;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapEx;
+import com.intellij.openapi.editor.impl.view.animation.EditorPainterCache;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -178,17 +179,32 @@ public final class EditorPainter implements TextDrawingCallback {
   }
 
   private final EditorView myView;
+  private final EditorPainterCache myCache;
 
-  EditorPainter(EditorView view) {
+  EditorPainter(@NotNull EditorView view, @NotNull EditorPainterCache cache) {
     myView = view;
+    myCache = cache;
   }
 
   void paint(Graphics2D g) {
-    new Session(myView, g).paint();
+    boolean painted = myCache.paintFromCache(g);
+    Session session = new Session(myView, myCache, g);
+    if (painted) {
+      CaretCursor caretCursor = myView.getEditor().getCaretCursor(true);
+      if (caretCursor != null) {
+        session.paintCaret(caretCursor, g.getClipBounds().y);
+      }
+    } else {
+      session.paint();
+    }
   }
 
-  void paintCaret(Graphics2D g, CaretCursor caretCursor, int yShift) {
-    new Session(myView, g).paintCaret(caretCursor, yShift);
+  void invalidate(@Nullable Rectangle clip) {
+    myCache.invalidate(clip);
+  }
+
+  void prefetchCaretFrames(@NotNull List<CaretRectangle> locations) {
+    myCache.cacheCaretFrames(locations);
   }
 
   @NotNull List<Rectangle> caretRectanglesForLocations(@NotNull List<CaretRectangle> locations) {
@@ -269,6 +285,7 @@ public final class EditorPainter implements TextDrawingCallback {
 
   private static final class Session {
     private final EditorView myView;
+    private final EditorPainterCache myCache;
     private final EditorImpl myEditor;
     private final Document myDocument;
     private final CharSequence myText;
@@ -308,11 +325,11 @@ public final class EditorPainter implements TextDrawingCallback {
     private final ScaleContext myScaleContext;
     private MarginPositions myMarginPositions;
     private final CaretDataInView myCaretDataInView;
-    private final boolean myIsBuildingCache;
     private boolean myBrokenFragmentRangeReported;
 
-    private Session(EditorView view, Graphics2D g) {
+    Session(EditorView view, EditorPainterCache cache, Graphics2D g) {
       myView = view;
+      myCache = cache;
       myEditor = myView.getEditor();
       myDocument = myView.getDocument();
       myText = myDocument.getImmutableCharSequence();
@@ -346,12 +363,11 @@ public final class EditorPainter implements TextDrawingCallback {
       myMarginColumns = myEditor.getSettings().getRightMargin(myEditor.getProject());
       myScaleContext = ScaleContext.create(myGraphics);
       myCaretDataInView = myEditor.isPaintSelection()? new CaretDataInView(myCaretModel, myStartOffset, myEndOffset) : null;
-      myIsBuildingCache = myEditor.isCurrentlyBuildingCache();
     }
 
-    private void paint() {
-      if (!myIsBuildingCache) {
-        myEditor.invalidateAnimationCaches(myClip);
+    void paint() {
+      if (!myCache.isCurrentlyBuildingCache()) {
+        myCache.invalidate(myClip);
       }
       if (myEditor.getContentComponent().isOpaque()) {
         myGraphics.setColor(myBackgroundColor);
@@ -1571,7 +1587,7 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private void paintCaret() {
-      if (myIsBuildingCache) return;
+      if (myCache.isCurrentlyBuildingCache()) return;
       if (myEditor.isPurePaintingMode()) return;
       if (myEditor.isStickyLinePainting()) return; // suppress caret painting on sticky lines panel
       CaretCursor caretCursor = myEditor.getCaretCursor(true);
@@ -1581,7 +1597,7 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     /// @noinspection GraphicsSetClipInspection
-    private void paintCaret(CaretCursor caretCursor, int yShift) {
+    void paintCaret(CaretCursor caretCursor, int yShift) {
       Graphics2D g = IdeBackgroundUtil.getOriginalGraphics(myGraphics);
       EditorSettings settings = myEditor.getSettings();
       Color caretColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_COLOR);

@@ -356,8 +356,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private Cursor myDefaultCursor;
   boolean myCursorSetExternally;
 
-  private boolean myIsCurrentlyBuildingCache = false;
-  private final @NotNull EditorPainterCache myContentAnimationCache;
+  private final @NotNull EditorPainterCache myPainterCache;
   private final @NotNull EditorCaretMutator caretMutator;
 
   private static final Integer SCROLL_PANE_LAYER = 0;
@@ -694,9 +693,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorModel = new EditorModelImpl(this);
 
-    myView = new EditorView(this, myEditorModel);
-    myContentAnimationCache = new EditorPainterCache(this);
-    Disposer.register(myDisposable, myContentAnimationCache);
+    myPainterCache = new EditorPainterCache(this);
+    Disposer.register(myDisposable, myPainterCache);
+    myView = new EditorView(this, myEditorModel, myPainterCache);
 
     myTextDrawingCallback = new EditorTextDrawingCallback(myView);
 
@@ -1551,7 +1550,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       isReleased = true;
       // Stop background frames before the editor models they read are disposed.
       Disposer.dispose(caretMutator);
-      Disposer.dispose(myContentAnimationCache);
+      Disposer.dispose(myPainterCache);
       myDisposalTimestampNanos = System.nanoTime();
       mySizeAdjustmentStrategy.cancelAllRequests();
       cancelAutoResetForMouseSelectionState();
@@ -2478,22 +2477,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myView.setPaintCallback(callback);
   }
 
-  @ApiStatus.Internal
-  public boolean isCurrentlyBuildingCache() {
-    return myIsCurrentlyBuildingCache;
-  }
-
-  @ApiStatus.Internal
-  public void setCurrentlyBuildingCache(boolean isCurrentlyBuildingCache) {
-    myIsCurrentlyBuildingCache = isCurrentlyBuildingCache;
-  }
-
   /**
    * Drops the cached content behind {@code clip}, or all of it when {@code clip} is {@code null}.
    */
   @ApiStatus.Internal
   public void invalidateAnimationCaches(@Nullable Rectangle clip) {
-    myContentAnimationCache.invalidate(clip);
+    myView.invalidateAnimationCaches(clip);
   }
 
   /**
@@ -2501,7 +2490,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    */
   @ApiStatus.Internal
   public void prefetchCaretFrames(@NotNull List<CaretRectangle> locations) {
-    myContentAnimationCache.cacheCaretFrames(locations);
+    myView.prefetchCaretFrames(locations);
   }
 
   @Override
@@ -2638,8 +2627,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     caretMutator.caretMoved();
 
-    EditorPainterCache cache = canPaintFromContentAnimationCache() ? myContentAnimationCache : null;
-    myView.paint(g, cache);
+    myView.paint(g);
 
     boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
     if (myBackgroundImageSet != isBackgroundImageSet) {
@@ -2647,13 +2635,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       updateOpaque(myScrollPane.getHorizontalScrollBar());
       updateOpaque(myScrollPane.getVerticalScrollBar());
     }
-  }
-
-  private boolean canPaintFromContentAnimationCache() {
-    return !isCurrentlyBuildingCache() &&
-           !isStickyLinePainting() &&
-           !isPaintingDumbBuffer() &&
-           !isPurePaintingMode();
   }
 
   @NotNull Color getDisposedBackground() {

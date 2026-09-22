@@ -55,6 +55,7 @@ internal class EditorPainterCache(
   private val entries = CacheEntryList()
   private var lastBuildAt: AnimationTimeMark? = null
   private var cooldownUntil: AnimationTimeMark? = null
+  private var isCurrentlyBuildingCache: Boolean = false
 
   init {
     if (isCacheEnabled) {
@@ -96,12 +97,15 @@ internal class EditorPainterCache(
   }
 
   /**
-   * Paints the cached content behind [rect], instead of repainting the editor. The caller paints the caret on top.
+   * Paints the cached content behind [graphics.getClipBounds()], instead of repainting the editor. The caller paints the caret on top.
    * Returns `false` when nothing usable is cached, so the caller has to repaint after all.
    */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun paintFromCache(graphics: Graphics2D, rect: Rectangle2D): Boolean {
-    if (!isCacheEnabled || editor.isDisposed || !ensureOpaqueContent()) {
+  fun paintFromCache(graphics: Graphics2D): Boolean {
+    if (!isCacheEnabled || editor.isDisposed) {
+      return false
+    }
+    if (!canPaintFromCache() || !ensureOpaqueContent()) {
       return false
     }
     val currentPixelGrid = EditorPixelGrid.forGraphics(graphics)
@@ -109,6 +113,7 @@ internal class EditorPainterCache(
       clear()
       return false
     }
+    val rect = graphics.clipBounds
     val visiblePart = rect.visibleRectangle() ?: return false
     val visibleRect = currentPixelGrid.align(visiblePart)
     val entry = entries.findContaining(visibleRect)
@@ -159,6 +164,10 @@ internal class EditorPainterCache(
   override fun dispose() {
     requests.value = null
     clear()
+  }
+
+  fun isCurrentlyBuildingCache(): Boolean {
+    return isCurrentlyBuildingCache
   }
 
   private fun serveRequests() {
@@ -257,16 +266,22 @@ internal class EditorPainterCache(
 
   private fun renderToImage(rectangle: Rectangle2D): BufferedImage {
     val image = createEditorImage(editor, rectangle.width, rectangle.height)
-    editor.isCurrentlyBuildingCache = true
+    isCurrentlyBuildingCache = true
     try {
       createImageGraphics(editor, image, rectangle).use { graphics ->
         editor.paint(graphics)
       }
-    }
-    finally {
-      editor.isCurrentlyBuildingCache = false
+    } finally {
+      isCurrentlyBuildingCache = false
     }
     return image
+  }
+
+  private fun canPaintFromCache(): Boolean {
+    return !isCurrentlyBuildingCache() &&
+           !editor.isStickyLinePainting &&
+           !editor.isPaintingDumbBuffer &&
+           !editor.isPurePaintingMode
   }
 
   private fun ensureOpaqueContent(): Boolean {

@@ -19,7 +19,6 @@ internal fun EditorImpl.caretPlacements(): List<CaretPlacement> {
   return caretModel.allCarets.map { caret -> caretPlacement(caret) }
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun EditorImpl.caretPlacement(caret: Caret): CaretPlacement {
   val isRtl = caret.isAtRtlLocation
   val visualPosition = caret.visualPosition
@@ -30,7 +29,7 @@ private fun EditorImpl.caretPlacement(caret: Caret): CaretPlacement {
     x = origin.x,
     y = origin.y,
     logicalPosition = caret.logicalPosition,
-    visualColumnAdjustment = caret.visualColumnAdjustment,
+    visualColumnAdjustment = caret.visualColumnAdjustment(),
     isAtBoundary = isAtBoundary,
     width = caretWidth(visualPosition, origin.x, isRtl, isAtBoundary),
     isRtl = isRtl,
@@ -41,7 +40,6 @@ private fun EditorImpl.caretPlacement(caret: Caret): CaretPlacement {
  * How wide the caret is: the distance to the neighbouring column, capped at one space where an inline inlay makes
  * that distance arbitrarily wide.
  */
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun EditorImpl.caretWidth(
   visualPosition: VisualPosition,
   originX: Double,
@@ -69,14 +67,13 @@ private fun VisualPosition.nextColumn(isRtl: Boolean): VisualPosition {
 /**
  * How far the caret sits from the start of the visual line its logical position maps to.
  */
-private val Caret.visualColumnAdjustment: Int
-  get() {
-    val anchor = editor.logicalToVisualPosition(logicalPosition)
-    val onAnchorLine = anchor.line == visualPosition.line
-    val afterAnchor = visualPosition.column > anchor.column
-    return if (onAnchorLine && afterAnchor) {
-      visualPosition.column - anchor.column
-    } else {
-      0
-    }
+private fun Caret.visualColumnAdjustment(): Int {
+  val anchor = editor.logicalToVisualPosition(logicalPosition)
+  val onAnchorLine = anchor.line == visualPosition.line
+  val afterAnchor = visualPosition.column > anchor.column
+  return if (onAnchorLine && afterAnchor) {
+    visualPosition.column - anchor.column
+  } else {
+    0
   }
+}
