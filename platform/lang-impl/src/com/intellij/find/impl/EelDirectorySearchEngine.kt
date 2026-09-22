@@ -5,7 +5,9 @@ import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.find.DirectorySearchEngine
 import com.intellij.find.DirectorySearchEngine.FileSearchCandidate
 import com.intellij.find.FindModel
+import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.registry.RegistryManager
@@ -25,7 +27,7 @@ import java.util.function.Consumer
 /**
  * Streams candidate files from a remote directory through EEL.
  * The caller applies the scope and file filters, then searches the candidates for occurrences.
- * If the remote search fails, this engine supplies the directory's children for further expansion.
+ * The engine reports a remote name search failure to the caller.
  */
 @ApiStatus.Internal
 class EelDirectorySearchEngine @VisibleForTesting constructor(private val edges: EelSearchEdges) : DirectorySearchEngine {
@@ -39,7 +41,7 @@ class EelDirectorySearchEngine @VisibleForTesting constructor(private val edges:
     return findModel.fileFilter?.none { it in "![]{}\\" } != false
   }
 
-  override fun canSearchNames(): Boolean = false
+  override fun canSearchNames(): Boolean = RegistryManager.getInstance().`is`("find.in.files.eel.remote.search")
 
   override fun getWeight(directory: VirtualFile): Int {
     if (!directory.isDirectory) return -1
@@ -102,7 +104,26 @@ class EelDirectorySearchEngine @VisibleForTesting constructor(private val edges:
   }
 
   override fun searchNames(directory: VirtualFile, pathPattern: String, consumer: Consumer<FileSearchCandidate>) {
-    LOG.error("This searcher cannot search names at the moment")
+    val nameFilter = GotoFileItemProvider.getMandatorySubsequence(pathPattern)
+    runBlockingCancellable {
+      val nioRoot = directory.fileSystem.getNioPath(directory) ?: throw IOException("No NIO path for $directory")
+      val eelRoot = edges.eelPathOf(nioRoot)
+      val searchApi = edges.searchApiOf(eelRoot.descriptor) ?: throw IOException("No search API for ${eelRoot.descriptor}")
+      consumer.accept(FileSearchCandidate.fromPath(nioRoot))
+      searchApi.search(EelSearchOptions(
+        roots = listOf(eelRoot),
+        nameFilter = nameFilter,
+        excludeGlobs = ignoredNameGlobs(),
+        yieldDirectories = true,
+        followSymlinks = true,
+      )).collect { event ->
+        if (event is EelSearchEvent.Hit) {
+          val nioPath = edges.nioPathOf(event.path)
+          if (!nioPath.startsWith(nioRoot)) throw IOException("Search returned $nioPath outside $nioRoot")
+          consumer.accept(FileSearchCandidate.fromPath(nioPath))
+        }
+      }
+    }
   }
 
   private fun resolveFileIgnoreVanishedOrThrow(path: EelPath): VirtualFile? {
@@ -122,4 +143,11 @@ class EelDirectorySearchEngine @VisibleForTesting constructor(private val edges:
   companion object {
     private val LOG = logger<EelDirectorySearchEngine>()
   }
+}
+
+private fun ignoredNameGlobs(): List<String> {
+  return FileTypeManager.getInstance().ignoredFilesList.split(';')
+    .map { it.trim() }
+    .filter { it.isNotEmpty() && it.all { c -> c.isLetterOrDigit() || c in "_.*?-~" } }
+    .flatMap { listOf(it, "**/$it") }
 }

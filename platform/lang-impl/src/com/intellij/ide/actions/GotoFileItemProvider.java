@@ -47,6 +47,7 @@ import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.ProcessorWithThrottledCancellationCheck;
 import com.intellij.util.text.matching.MatchedFragment;
 import com.intellij.util.text.matching.MatchingMode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -370,6 +371,17 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       .withMatchingMode(MatchingMode.IGNORE_CASE)
       .preferringStartMatches()
       .build();
+  }
+
+  /**
+   * The characters every haystack accepted by {@link #getQualifiedNameMatcher} must contain, in order:
+   * {@code '*'} is a wildcard and {@code ' '} a separator the matcher never requires in the haystack,
+   * everything else is mandatory. Kept next to the matcher construction so the two cannot drift apart;
+   * used as a coarse server-side pre-filter that must over-match, never under-match.
+   */
+  @ApiStatus.Internal
+  public static @NotNull String getMandatorySubsequence(@NotNull String pattern) {
+    return pattern.replace("*", "").replace(" ", "");
   }
 
   private static @NotNull String removeSlashes(@NotNull String s) {

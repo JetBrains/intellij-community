@@ -2,6 +2,7 @@
 package com.intellij.find.impl
 
 import com.intellij.find.DirectorySearchEngine
+import com.intellij.find.DirectorySearchEngine.FileSearchCandidate
 import com.intellij.find.FindInProjectSearchEngine
 import com.intellij.find.FindModel
 import com.intellij.find.FindModelExtension
@@ -49,6 +50,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -83,6 +85,7 @@ internal class EelDirectorySearchEngineTest {
   fun `unsupported queries cannot use the engine`() {
     val engine = engine { error("The query check must not connect") }
     assertThat(engine.canSearch(contentModel())).isTrue()
+    assertThat(engine.canSearchNames()).isTrue()
     for (query in listOf("", "multi\nline", "multi\rline", "caf\u00e9")) {
       assertThat(engine.canSearch(contentModel().apply { stringToFind = query })).isFalse()
     }
@@ -97,6 +100,7 @@ internal class EelDirectorySearchEngineTest {
   fun `the registry gate disables the engine`() {
     val engine = engine { error("The disabled engine must not connect") }
     assertThat(engine.canSearch(contentModel())).isFalse()
+    assertThat(engine.canSearchNames()).isFalse()
   }
 
   @Test
@@ -167,6 +171,78 @@ internal class EelDirectorySearchEngineTest {
 
     val candidates = engine { api }.streamAll(root) { firstCandidateSeen.complete(Unit) }
     assertThat(candidates).containsExactly(hitFile.path)
+  }
+
+  @Test
+  fun `name search streams the root, files, and directories`(): Unit = timeoutRunBlocking {
+    val root = baseDir.newVirtualDirectory("root")
+    val file = baseDir.newVirtualFile("root/file.txt")
+    val directory = baseDir.newVirtualDirectory("root/dir")
+    val api = FakeEelSearchApi(flowOf(
+      EelSearchEvent.Hit(eelPath("root/file.txt"), "root/file.txt", 0L, false),
+      EelSearchEvent.Skipped(eelPath("root/locked"), EelSearchEvent.Skipped.Reason.IO_ERROR, isDirectory = true),
+      EelSearchEvent.Truncated,
+      EelSearchEvent.Hit(eelPath("root/dir"), "root/dir", 0L, true),
+    ))
+
+    assertThat(engine { api }.streamNames(root, "rft")).containsExactly(root.toNioPath(), file.toNioPath(), directory.toNioPath())
+    val request = api.requests.single()
+    assertThat(request.roots).containsExactly(eelPath("root"))
+    assertThat(request.nameFilter).isEqualTo("rft")
+    assertThat(request.content).isNull()
+    assertThat(request.excludeGlobs).contains(".git", "**/.git")
+    assertThat(request.yieldDirectories).isTrue()
+    assertThat(request.followSymlinks).isTrue()
+  }
+
+  @Test
+  fun `name search rejects a hit outside the root`(): Unit = timeoutRunBlocking {
+    val root = baseDir.newVirtualDirectory("root")
+    val api = FakeEelSearchApi(flowOf(
+      EelSearchEvent.Hit(EelPath.parse("/outside/file.txt", descriptor), "outside/file.txt", 0L, false),
+    ))
+
+    assertThatThrownBy {
+      engine { api }.streamNames(root, "file")
+    }.isInstanceOf(IOException::class.java)
+  }
+
+  @Test
+  fun `name search reports missing search support`(): Unit = timeoutRunBlocking {
+    val root = baseDir.newVirtualDirectory("root")
+
+    assertThatThrownBy {
+      engine { null }.streamNames(root, "file")
+    }.isInstanceOf(IOException::class.java)
+  }
+
+  @Test
+  fun `name search cancellation during connection or streaming stops the search`(): Unit = timeoutRunBlocking {
+    val root = baseDir.newVirtualDirectory("root")
+    val connecting = engine { throw CancellationException("The search was cancelled") }
+    val streaming = engine { FakeEelSearchApi(flow { throw CancellationException("The search was cancelled") }) }
+    for (engine in listOf(connecting, streaming)) {
+      assertThatThrownBy {
+        ProgressManager.getInstance().runProcess({ engine.streamNames(root, "file") }, EmptyProgressIndicator())
+      }.isInstanceOf(ProcessCanceledException::class.java)
+    }
+  }
+
+  @Test
+  fun `name search consumer cancellation stops the stream`(): Unit = timeoutRunBlocking {
+    val root = baseDir.newVirtualDirectory("root")
+    val first = baseDir.newVirtualFile("root/first.txt")
+    baseDir.newVirtualFile("root/second.txt")
+    val api = FakeEelSearchApi(flowOf(hit("root/first.txt"), hit("root/second.txt")))
+    val consumed = mutableListOf<Path>()
+
+    assertThatThrownBy {
+      engine { api }.streamNames(root, "file") { file ->
+        consumed.add(file)
+        if (file != root.toNioPath()) throw ProcessCanceledException()
+      }
+    }.isInstanceOf(ProcessCanceledException::class.java)
+    assertThat(consumed).containsExactly(root.toNioPath(), first.toNioPath())
   }
 
   @Test
@@ -373,6 +449,20 @@ internal class EelDirectorySearchEngineTest {
       candidates
     }
   }, EmptyProgressIndicator())
+
+  private fun EelDirectorySearchEngine.streamNames(
+    root: VirtualFile,
+    nameFilter: String,
+    consumer: (Path) -> Unit = {},
+  ): List<Path> {
+    val candidates = mutableListOf<Path>()
+    searchNames(root, nameFilter) { candidate ->
+      val path = (candidate as FileSearchCandidate.FromPath).path
+      candidates.add(path)
+      consumer(path)
+    }
+    return candidates
+  }
 
   private fun register(engine: DirectorySearchEngine) {
     DirectorySearchEngine.EP_NAME.point.registerExtension(engine, disposable)
