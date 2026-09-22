@@ -1,6 +1,6 @@
 *:com.intellij.find.DirectorySearchEngine
 - a:canSearch(com.intellij.find.FindModel):Z
-- a:getWeight(com.intellij.openapi.vfs.VirtualFile,com.intellij.find.FindModel):I
+- a:getWeight(com.intellij.openapi.vfs.VirtualFile):I
 - a:searchDirectory(com.intellij.openapi.vfs.VirtualFile,com.intellij.find.FindModel,java.util.function.Consumer):V
 *:com.intellij.find.FindInProjectSearchEngine
 - a:createSearcher(com.intellij.find.FindModel,com.intellij.openapi.project.Project):com.intellij.find.FindInProjectSearchEngine$FindInProjectSearcher

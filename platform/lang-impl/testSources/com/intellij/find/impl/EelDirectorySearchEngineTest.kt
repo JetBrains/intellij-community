@@ -104,8 +104,8 @@ internal class EelDirectorySearchEngineTest {
     val root = baseDir.newVirtualDirectory("root")
     val file = baseDir.newVirtualFile("root/file.txt")
     val localEngine = engine(LocalEelDescriptor) { error("Local directories must not connect") }
-    assertThat(localEngine.getWeight(root, contentModel())).isNegative()
-    assertThat(engine { error("Files must not connect") }.getWeight(file, contentModel())).isNegative()
+    assertThat(localEngine.getWeight(root)).isNegative()
+    assertThat(engine { error("Files must not connect") }.getWeight(file)).isNegative()
   }
 
   @Test

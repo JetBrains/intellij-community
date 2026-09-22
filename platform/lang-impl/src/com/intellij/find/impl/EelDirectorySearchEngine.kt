@@ -38,7 +38,7 @@ class EelDirectorySearchEngine @VisibleForTesting constructor(private val edges:
     return findModel.fileFilter?.none { it in "![]{}\\" } != false
   }
 
-  override fun getWeight(directory: VirtualFile, findModel: FindModel): Int {
+  override fun getWeight(directory: VirtualFile): Int {
     if (!directory.isDirectory) return -1
     val path = directory.fileSystem.getNioPath(directory) ?: return -1
     return if (edges.descriptorOf(path) === LocalEelDescriptor) -1 else 1

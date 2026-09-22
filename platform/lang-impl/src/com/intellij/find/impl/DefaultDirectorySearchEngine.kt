@@ -15,7 +15,7 @@ import java.util.function.Consumer
 internal class DefaultDirectorySearchEngine : DirectorySearchEngine {
   override fun canSearch(findModel: FindModel): Boolean = true
 
-  override fun getWeight(directory: VirtualFile, findModel: FindModel): Int = 0
+  override fun getWeight(directory: VirtualFile): Int = 0
 
   override fun searchDirectory(directory: VirtualFile, findModel: FindModel, consumer: Consumer<in Collection<VirtualFile>>) {
     consumer.accept(directory.children.asList())

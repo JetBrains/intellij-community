@@ -161,7 +161,7 @@ internal class DirectorySearchEngineTest {
     val engine = object : DirectorySearchEngine {
       override fun canSearch(findModel: FindModel): Boolean = canSearch(findModel)
 
-      override fun getWeight(directory: VirtualFile, findModel: FindModel): Int = weight(directory)
+      override fun getWeight(directory: VirtualFile): Int = weight(directory)
 
       override fun searchDirectory(directory: VirtualFile, findModel: FindModel, consumer: Consumer<in Collection<VirtualFile>>) {
         expand(directory, consumer)

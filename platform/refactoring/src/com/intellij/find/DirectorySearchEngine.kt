@@ -31,7 +31,7 @@ interface DirectorySearchEngine {
    * The choice among engines with equal weights is unspecified. The default engine has weight `0`.
    * This method runs inside or outside a read action.
    */
-  fun getWeight(directory: VirtualFile, findModel: FindModel): Int
+  fun getWeight(directory: VirtualFile): Int
 
   /**
    * Adds batches of descendants of [directory] to the shared search queue through [consumer].

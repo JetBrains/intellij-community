@@ -608,7 +608,7 @@ final class FindInProjectTask {
     DirectorySearchEngine bestEngine = null;
     var bestWeight = -1;
     for (var engine : engines) {
-      var weight = engine.getWeight(directory, findModel);
+      var weight = engine.getWeight(directory);
       if (weight > bestWeight) {
         bestEngine = engine;
         bestWeight = weight;
