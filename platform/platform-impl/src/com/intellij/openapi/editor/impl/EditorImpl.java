@@ -1138,24 +1138,27 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void moveCaretIntoViewIfCoveredByToolWindowBelow(@NotNull VisibleAreaEvent e) {
-    EditorThreading.run(() -> {
-      Rectangle oldRectangle = e.getOldRectangle();
-      Rectangle newRectangle = e.getNewRectangle();
-      if (!myScrollingToCaret &&
-          oldRectangle != null &&
-          oldRectangle.height != newRectangle.height &&
-          oldRectangle.y == newRectangle.y &&
-          newRectangle.height > 0) {
-        int caretY = myView.visualLineToY(myCaretModel.getVisualPosition().line);
-        if (caretY < oldRectangle.getMaxY() && caretY > newRectangle.getMaxY()) {
-          myScrollingToCaret = true;
-          ApplicationManager.getApplication().invokeLater(() -> {
-            myScrollingToCaret = false;
-            if (!isReleased) EditorUtil.runWithAnimationDisabled(this, () -> myScrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE));
-          }, ModalityState.any());
-        }
+    Rectangle oldRectangle = e.getOldRectangle();
+    Rectangle newRectangle = e.getNewRectangle();
+    if (!myScrollingToCaret &&
+        oldRectangle != null &&
+        oldRectangle.height != newRectangle.height &&
+        oldRectangle.y == newRectangle.y &&
+        newRectangle.height > 0) {
+      int caretY = myView.visualLineToY(myCaretModel.getVisualPosition().line);
+      if (caretY < oldRectangle.getMaxY() && caretY > newRectangle.getMaxY()) {
+        myScrollingToCaret = true;
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myScrollingToCaret = false;
+          if (!isReleased) {
+            EditorUtil.runWithAnimationDisabled(
+              this,
+              () -> myScrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
+            );
+          }
+        }, ModalityState.any());
       }
-    });
+    }
   }
 
   /**
@@ -1960,7 +1963,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setInsertMode(boolean mode) {
     assertIsDispatchThread();
-    EditorThreading.run(() -> myState.setInsertMode(mode));
+    myState.setInsertMode(mode);
   }
 
   private void isInsertModeChanged(ObservableStateListener.PropertyChangeEvent event) {
@@ -1978,7 +1981,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setColumnMode(boolean mode) {
     assertIsDispatchThread();
-    EditorThreading.run(() -> myState.setColumnMode(mode));
+    myState.setColumnMode(mode);
   }
 
   private void isColumnModeChanged(ObservableStateListener.PropertyChangeEvent event) {
@@ -2000,25 +2003,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull VisualPosition xyToVisualPosition(@NotNull Point p) {
-    return EditorThreading.compute(() -> myView.xyToVisualPosition(p));
+    return myView.xyToVisualPosition(p);
   }
 
   @Override
   public @NotNull VisualPosition xyToVisualPosition(@NotNull Point2D p) {
-    return EditorThreading.compute(() -> myView.xyToVisualPosition(p));
+    return myView.xyToVisualPosition(p);
   }
 
   @Override
   public @NotNull Point2D offsetToPoint2D(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
-    return EditorThreading.compute(() -> myView.offsetToXY(offset, leanTowardsLargerOffsets, beforeSoftWrap));
+    return myView.offsetToXY(offset, leanTowardsLargerOffsets, beforeSoftWrap);
   }
 
   @Override
   public @NotNull Point offsetToXY(int offset, boolean leanForward, boolean beforeSoftWrap) {
-    return EditorThreading.compute(() -> {
-      Point2D point2D = offsetToPoint2D(offset, leanForward, beforeSoftWrap);
-      return new Point((int)point2D.getX(), (int)point2D.getY());
-    });
+    Point2D point2D = offsetToPoint2D(offset, leanForward, beforeSoftWrap);
+    return new Point((int) point2D.getX(), (int) point2D.getY());
   }
 
   @Override
@@ -2028,7 +2029,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
-    return EditorThreading.compute(() -> myView.offsetToVisualPosition(offset, leanForward, beforeSoftWrap));
+    return myView.offsetToVisualPosition(offset, leanForward, beforeSoftWrap);
   }
 
   public int offsetToVisualColumnInFoldRegion(@NotNull FoldRegion region, int offset, boolean leanTowardsLargerOffsets) {
@@ -2067,7 +2068,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull LogicalPosition xyToLogicalPosition(@NotNull Point p) {
-    return EditorThreading.compute(() -> myView.xyToLogicalPosition(p));
+    return myView.xyToLogicalPosition(p);
   }
 
   private int logicalToVisualLine(int logicalLine) {
@@ -2083,23 +2084,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull Point logicalPositionToXY(@NotNull LogicalPosition pos) {
-    return EditorThreading.compute(() -> {
-      VisualPosition visible = logicalToVisualPosition(pos);
-      return visualPositionToXY(visible);
-    });
+    VisualPosition visible = logicalToVisualPosition(pos);
+    return visualPositionToXY(visible);
   }
 
   @Override
   public @NotNull Point visualPositionToXY(@NotNull VisualPosition visible) {
-    return EditorThreading.compute(() -> {
-      Point2D point2D = myView.visualPositionToXY(visible);
-      return new Point((int)point2D.getX(), (int)point2D.getY());
-    });
+    Point2D point2D = myView.visualPositionToXY(visible);
+    return new Point((int) point2D.getX(), (int) point2D.getY());
   }
 
   @Override
   public @NotNull Point2D visualPositionToPoint2D(@NotNull VisualPosition visible) {
-    return EditorThreading.compute(() -> myView.visualPositionToXY(visible));
+    return myView.visualPositionToXY(visible);
   }
 
   /**
@@ -2117,12 +2114,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int findNearestDirectionBoundary(int offset, boolean lookForward) {
-    return EditorThreading.compute(() -> myView.findNearestDirectionBoundary(offset, lookForward));
+    return myView.findNearestDirectionBoundary(offset, lookForward);
   }
 
   @Override
   public int visualLineToY(int line) {
-    return EditorThreading.compute(() -> myView.visualLineToY(line));
+    return myView.visualLineToY(line);
   }
 
   @Override
@@ -2689,7 +2686,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @Nullable JComponent getPermanentHeaderComponent() {
-    return EditorThreading.compute(() -> getUserData(PERMANENT_HEADER));
+    return getUserData(PERMANENT_HEADER);
   }
 
   @Override
@@ -2791,7 +2788,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int getMaxWidthInRange(int startOffset, int endOffset) {
-    return EditorThreading.compute(() -> myView.getMaxWidthInRange(startOffset, endOffset));
+    return myView.getMaxWidthInRange(startOffset, endOffset);
   }
 
   public boolean isPaintSelection() {
@@ -2876,10 +2873,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public @NotNull Dimension getPreferredSize() {
-    return EditorThreading.compute(() -> isReleased ? new Dimension()
-                                               : Registry.is("idea.true.smooth.scrolling.dynamic.scrollbars")
-                                                 ? new Dimension(getPreferredWidthOfVisibleLines(), myView.getPreferredHeight())
-                                                 : myView.getPreferredSize());
+    if (isReleased) {
+      return new Dimension();
+    }
+    if (Registry.is("idea.true.smooth.scrolling.dynamic.scrollbars")) {
+      return new Dimension(getPreferredWidthOfVisibleLines(), myView.getPreferredHeight());
+    }
+    return myView.getPreferredSize();
   }
 
   /* When idea.true.smooth.scrolling=true, this method is used to compute the width of currently visible line range
@@ -2932,7 +2932,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull Dimension getContentSize() {
-    return EditorThreading.compute(() -> isReleased ? new Dimension() : myView.getPreferredSize());
+    if (isReleased) {
+      return new Dimension();
+    }
+    return myView.getPreferredSize();
   }
 
   @Override
@@ -2973,12 +2976,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos) {
-    return EditorThreading.compute(() -> myView.logicalToVisualPosition(logicalPos, false));
+    return myView.logicalToVisualPosition(logicalPos, false);
   }
 
   @Override
   public @NotNull LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos) {
-    return EditorThreading.compute(() -> myView.visualToLogicalPosition(visiblePos));
+    return myView.visualToLogicalPosition(visiblePos);
   }
 
   private int offsetToLogicalLine(int offset) {
