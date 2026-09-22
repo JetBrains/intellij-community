@@ -5,6 +5,7 @@ import com.intellij.execution.filters.FileHyperlinkInfo
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.mock.MockProjectEx
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -214,9 +215,11 @@ class TerminalCrossProjectFileHyperlinkNavigatorTest {
       val handled = navigator.navigate(terminalProject, hyperlinkInfo, null)
 
       assertThat(handled).isTrue()
-      assertThat(capturedDescriptor?.line).isEqualTo(1)
-      assertThat(capturedDescriptor?.column).isEqualTo(2)
-      assertThat(capturedDescriptor?.offset).isNotNegative()
+      readAction {
+        assertThat(capturedDescriptor?.line).isEqualTo(1)
+        assertThat(capturedDescriptor?.column).isEqualTo(2)
+        assertThat(capturedDescriptor?.offset).isNotNegative()
+      }
     }
   }
 
