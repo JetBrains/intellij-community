@@ -53,6 +53,7 @@ import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTask
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Function
+import kotlin.io.path.pathString
 
 /**
  * This is the low-level Gradle execution API that connects and interacts with the Gradle daemon using the Gradle tooling API.
@@ -159,7 +160,7 @@ object GradleExecutionHelper {
   private fun setupProjectDirectory(context: GradleExecutionContextImpl) {
     val projectFile = Path.of(context.projectPath)
     val projectDirectory = projectFile.parent
-    if (projectFile.endsWith(GradleConstants.EXTENSION) && projectDirectory != null && Files.isRegularFile(projectFile)) {
+    if (projectFile.pathString.endsWith(GradleConstants.EXTENSION) && projectDirectory != null && Files.isRegularFile(projectFile)) {
       val settings = context.settings
       val arguments = settings.arguments
       if (!arguments.contains("-b") && !arguments.contains("--build-file")) {
