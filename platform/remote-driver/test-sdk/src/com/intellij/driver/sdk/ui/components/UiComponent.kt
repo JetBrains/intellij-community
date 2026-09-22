@@ -16,6 +16,7 @@ import com.intellij.driver.sdk.ui.remote.SearchService
 import com.intellij.driver.sdk.waitAny
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForOne
+import com.intellij.driver.sdk.withoutPauseOnIndicators
 import com.intellij.openapi.diagnostic.logger
 import org.intellij.lang.annotations.Language
 import java.awt.Color
@@ -58,7 +59,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     override val context: String = data.parentSearchContext.context + data.xpath
 
     override fun findAll(xpath: String): List<Component> {
-      return withComponent { searchService.findAll(xpath, it) }
+      return withoutPauseOnIndicators { withComponent { searchService.findAll(xpath, it) } }
     }
   }
 
@@ -102,7 +103,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   open fun waitReady(timeout: Duration = DEFAULT_FIND_TIMEOUT) {}
 
-  private fun findThisComponent(timeout: Duration? = DEFAULT_FIND_TIMEOUT): Component {
+  private fun findThisComponent(timeout: Duration? = DEFAULT_FIND_TIMEOUT): Component = withoutPauseOnIndicators {
     val findTimeout = timeout ?: DEFAULT_FIND_TIMEOUT
     val found = waitForOne(
       message = "Find $this in ${data.parentSearchContext.contextAsString}",
@@ -114,7 +115,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     // and such a search reads [component] again. Without the cache the search starts an infinite recursion.
     cachedComponent = found
     waitReadyOnce(findTimeout)
-    return found
+    found
   }
 
   /**

@@ -4,6 +4,7 @@ import com.intellij.driver.client.impl.DriverImpl
 import com.intellij.driver.client.impl.JmxHost
 import com.intellij.driver.sdk.ManualWaitForIndicators
 import com.intellij.driver.sdk.getOpenProjects
+import com.intellij.driver.sdk.isPauseOnIndicatorsSuppressed
 import com.intellij.driver.sdk.waitForIndicators
 import com.intellij.ide.starter.coroutine.CommonScope.scopeForProcesses
 import com.intellij.ide.starter.ide.IDETestContext
@@ -41,7 +42,7 @@ class LocalDriverRunner : DriverRunner {
     val driver = DriverWithDetailedLogging(
       driver = DriverImpl(JmxHost(address = driverOptions.address), isRemDevMode = false) {
         pauseOnIndicators?.let { timeout ->
-          if (isConnected) {
+          if (isConnected && !isPauseOnIndicatorsSuppressed()) {
             getOpenProjects().forEach {
               @OptIn(ManualWaitForIndicators::class)
               waitForIndicators(it, timeout, false)

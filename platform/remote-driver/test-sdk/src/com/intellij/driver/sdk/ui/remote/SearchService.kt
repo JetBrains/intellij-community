@@ -9,6 +9,7 @@ import com.intellij.driver.sdk.remoteDev.BeControlComponentBase
 import com.intellij.driver.sdk.remoteDev.getBackendRef
 import com.intellij.driver.sdk.remoteDev.getFrontendRef
 import com.intellij.driver.sdk.remoteDev.validateBeControlElement
+import com.intellij.driver.sdk.withoutPauseOnIndicators
 import org.intellij.lang.annotations.Language
 import org.w3c.dom.Element
 import org.w3c.dom.NodeList
@@ -24,17 +25,18 @@ class SearchService(
 ) {
   private val xPath = XPathFactory.newInstance().newXPath()
 
-  fun findAllText(component: Component): TextDataList {
-    return swingHierarchyService.findAllText(component)
+  fun findAllText(component: Component): TextDataList = withoutPauseOnIndicators {
+    swingHierarchyService.findAllText(component)
   }
 
-  fun findAll(@Language("xpath") xpath: String, component: Component? = null, onlyFrontend: Boolean = false): List<Component> {
-    var matchingElements = getSwingHierarchyDOMAndFindMatchingElements(xpath, component, onlyFrontend)
-    if (matchingElements.isNotEmpty() && matchingElements.all { isBeControl(it) && !validateBeControlElement(it) }) {
-      matchingElements = getSwingHierarchyDOMAndFindMatchingElements(xpath, component, true)
+  fun findAll(@Language("xpath") xpath: String, component: Component? = null, onlyFrontend: Boolean = false): List<Component> =
+    withoutPauseOnIndicators {
+      var matchingElements = getSwingHierarchyDOMAndFindMatchingElements(xpath, component, onlyFrontend)
+      if (matchingElements.isNotEmpty() && matchingElements.all { isBeControl(it) && !validateBeControlElement(it) }) {
+        matchingElements = getSwingHierarchyDOMAndFindMatchingElements(xpath, component, true)
+      }
+      matchingElements.mapNotNull { reconstructComponent(it) }
     }
-    return matchingElements.mapNotNull { reconstructComponent(it) }
-  }
 
   private fun reconstructComponent(element: Element): Component? {
     if (isBeControl(element)) {
