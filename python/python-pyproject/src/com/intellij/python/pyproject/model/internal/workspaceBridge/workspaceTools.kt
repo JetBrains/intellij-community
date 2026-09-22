@@ -149,7 +149,9 @@ private suspend fun tryRebuildProjectModel(project: Project, files: FSWalkInfoWi
   var clashTime = Duration.ZERO
   val updateTime = measureTime {
     project.workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { projectStorage ->
-      val namesNow = projectStorage.entities<ModuleEntity>().map { it.name }.toSet()
+      val namesNow = projectStorage.entities<ModuleEntity>()
+        .filterNot { it.isStaleRegistration() }
+        .map { it.name }.toSet()
       if (namesNow != allModuleNames && !lastAttempt) {
         applied = false
         return@update

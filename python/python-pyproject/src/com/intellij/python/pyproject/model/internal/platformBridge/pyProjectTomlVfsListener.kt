@@ -5,8 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.AsyncFileListener
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.internal.pyProjectToml.isPrunedName
-import com.intellij.util.containers.CollectionFactory
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
@@ -185,12 +184,9 @@ private fun VFileEvent.removesDirectory(): Boolean = this is VFileDeleteEvent &&
  * event kept here could never reach a module. The three rules therefore agree.
  */
 private class EventFilter(knownRoots: Set<Path>) {
-  /**
-   * The roots as a canonical path each, in a set that follows the case rule of the filesystem.
-   * The set is built once per batch, so the walk up costs one lookup for each level.
-   */
-  private val roots: Set<String> =
-    knownRoots.mapTo(CollectionFactory.createFilePathSet()) { FileUtil.toCanonicalPath(it.toString()) }
+  /** The roots resolved through the VFS once per event batch. */
+  private val roots: Set<VirtualFile> =
+    knownRoots.mapNotNullTo(HashSet()) { LocalFileSystem.getInstance().findFileByNioFile(it) }
 
   fun isIgnored(event: VFileEvent): Boolean {
     val name = when (event) {
@@ -220,7 +216,7 @@ private class EventFilter(knownRoots: Set<Path>) {
       val directory = current
       // The name comes first, so the rule holds for a root too. See the note on this class.
       if (directory.name.isPrunedName()) return true
-      if (directory.path in roots) return false
+      if (directory in roots) return false
       current = directory.parent
     }
     return true
