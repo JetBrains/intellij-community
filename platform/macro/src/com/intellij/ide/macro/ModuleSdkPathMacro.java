@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.macro;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
@@ -20,8 +19,8 @@ public class ModuleSdkPathMacro extends Macro implements PathMacro {
   @Override
   public @NotNull String getDescription() {
     return PlatformUtils.isPyCharm()
-      ? ExecutionBundle.message("project.interpreter.path")
-      : ExecutionBundle.message("module.sdk.path");
+      ? MacroBundle.message("project.interpreter.path")
+      : MacroBundle.message("module.sdk.path");
   }
 
   @Override

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.macro;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -23,7 +22,7 @@ public class FilePromptMacro extends PromptingMacro implements SecondQueueExpand
 
   @Override
   public @NotNull String getDescription() {
-    return ExecutionBundle.message("shows.a.file.chooser.dialog");
+    return MacroBundle.message("shows.a.file.chooser.dialog");
   }
 
   @Override
