@@ -237,29 +237,31 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
               scope = this@launch, jobsNumber = MAX_JOBS, initialItems = state.roots, workerJobYieldTimeout = 50.milliseconds
             ) processor@{ handle, item ->
               val shouldProcessSelf = state.processItem(item, handle)
-              if (!shouldProcessSelf) return@processor
 
-              val file = item.file
-              val filePath = file.path
-              val rootOfFile = state.getPathRootOfPath(filePath)
-              if (rootOfFile == null) {
-                LOG.warn("File $file that was yielded as a file under a non-indexable root didn't match any non-indexable roots; Continue search...")
-                return@processor
+              fun processResult(file: VirtualFile) {
+                val filePath = file.path
+                val rootOfFile = state.getPathRootOfPath(filePath)
+                if (rootOfFile == null) {
+                  LOG.warn("File $file that was yielded as a file under a non-indexable root didn't match any non-indexable roots; Continue search...")
+                  return
+                }
+
+                val pathFromNonIndexableRoot = filePath.substring(rootOfFile.lastIndexOf("/") + 1)
+
+                if (pathMatcher.matches(pathFromNonIndexableRoot)) {
+                  val matchingDegree = nameMatcher.matchingDegree(file.name)
+                  if (matchingDegree <= 0) {
+                    // suboptimal match, process later, after "optimal" matches
+                    suboptimalMatches.add(file)
+                  } else {
+                    state.emitResult(file, matchingDegree)
+                  }
+                } // else - file doesn't match pattern, skip
               }
 
-              val pathFromNonIndexableRoot = filePath.substring(rootOfFile.lastIndexOf("/") + 1)
-
-              if (!pathMatcher.matches(pathFromNonIndexableRoot)) {
-                return@processor // file doesn't match pattern, skip
+              if (shouldProcessSelf) {
+                processResult(item.file)
               }
-
-              val matchingDegree = nameMatcher.matchingDegree(file.name)
-              if (matchingDegree <= 0) {
-                suboptimalMatches.add(file)
-                return@processor // suboptimal match, process later, after "optimal" matches
-              }
-
-              state.emitResult(file, matchingDegree)
             }
           }
 
