@@ -8,11 +8,13 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BusyObject;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.runner.RunWith;
 
 import java.awt.Dialog;
 import java.awt.GraphicsEnvironment;
@@ -20,6 +22,7 @@ import java.awt.Window;
 
 import static org.junit.Assume.assumeFalse;
 
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class ActivityMonitorTest extends LightPlatformTestCase {
   private UiActivityMonitorImpl myMonitor;
 
