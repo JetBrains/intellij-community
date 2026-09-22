@@ -71,7 +71,7 @@ private val logger = fileLogger()
 /**
  * Collect all excluded folder paths from the workspace model.
  *
- * The result is one set over every content root. `findTrigger` of the tracker relies on that union: it
+ * The result is one set over every content root. `toRebuildRequest` of the tracker relies on that union: it
  * ignores a url that one change removes and another adds, because the union then stays equal. A result per
  * content root would break that reasoning.
  */

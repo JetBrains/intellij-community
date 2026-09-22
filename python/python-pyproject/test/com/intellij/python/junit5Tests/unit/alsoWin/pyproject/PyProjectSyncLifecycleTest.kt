@@ -20,8 +20,8 @@ import com.intellij.python.pyproject.model.internal.MODEL_REBUILD
 import com.intellij.python.pyproject.model.internal.platformBridge.PendingRebuild
 import com.intellij.python.pyproject.model.internal.platformBridge.PyProjectModelSyncService
 import com.intellij.python.pyproject.model.internal.platformBridge.collectRebuilds
-import com.intellij.python.pyproject.model.internal.platformBridge.createWsmTracker
 import com.intellij.python.pyproject.model.internal.platformBridge.loadSubtreesIntoVfs
+import com.intellij.python.pyproject.model.internal.platformBridge.toRebuildRequest
 import com.intellij.python.pyproject.model.internal.pyProjectToml.findPyProjectTomlFilesInIndex
 import com.intellij.python.pyproject.model.spi.PyProjectManager
 import com.intellij.testFramework.ExtensionTestUtil
@@ -34,15 +34,19 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.replaceService
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import org.apache.tuweni.toml.TomlTable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -118,9 +122,13 @@ internal class PyProjectSyncLifecycleTest {
   }
 
   @Test
-  fun testWorkspaceSubscriptionIsReadyOnReturn(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+  fun testWorkspaceSubscriptionFollowsCollection(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
     val workspace = gateWorkspace(disposable)
-    val tracker = createWsmTracker(projectFixture.get()) { _, _ -> }
+    val requests = projectFixture.get().workspaceModel.eventLog.mapNotNull { it.toRebuildRequest() }
+    assertEquals(0, workspace.subscriptions.value)
+    val tracker = launch(start = CoroutineStart.UNDISPATCHED) {
+      requests.collect()
+    }
     try {
       assertEquals(1, workspace.subscriptions.value)
     }

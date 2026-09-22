@@ -29,7 +29,7 @@ import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.api.ModelRebuiltListener
 import com.intellij.python.pyproject.model.internal.MODEL_REBUILD
-import com.intellij.python.pyproject.model.internal.platformBridge.createWsmTracker
+import com.intellij.python.pyproject.model.internal.platformBridge.toRebuildRequest
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
@@ -38,7 +38,9 @@ import com.intellij.testFramework.utils.vfs.createFile
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
@@ -99,11 +101,13 @@ internal class PyProjectTomlLifecycleTest {
 
     // To be unlocked when WSM updated with new module
     val wsmTrackedDef = CompletableDeferred<Unit>()
-    val tracker = scope.createWsmTracker(f.project) { _, _ ->
-      scope.launch {
-        // Project rebuild doesn't work in tests, so we listen for WSM and update it explicitly
-        f.reloadProject() // <-- Reload 2
-        wsmTrackedDef.complete(Unit)
+    val tracker = scope.launch(start = CoroutineStart.UNDISPATCHED) {
+      f.project.workspaceModel.eventLog.mapNotNull { it.toRebuildRequest() }.collect {
+        scope.launch {
+          // Project rebuild doesn't work in tests, so we listen for WSM and update it explicitly
+          f.reloadProject() // <-- Reload 2
+          wsmTrackedDef.complete(Unit)
+        }
       }
     }
     try {

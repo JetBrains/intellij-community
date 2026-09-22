@@ -26,10 +26,12 @@ import com.intellij.python.pyproject.model.internal.pyProjectToml.findPyProjectT
 import com.intellij.python.pyproject.model.internal.workspaceBridge.collectExcludedPaths
 import com.intellij.python.pyproject.model.internal.workspaceBridge.rebuildProjectModel
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -107,8 +109,10 @@ internal class PyProjectModelSyncService(private val project: Project, private v
     try {
       knownRoots = setOf(project.stateStore.projectBasePath)
       subscribeToPyProjectTomlChanges(vfsListenerDisposable, { knownRoots }, requests::add)
-      createWsmTracker(project) { unExcluded, reason ->
-        requests.add(RebuildRequest(unExcluded, reason))
+      launch(start = CoroutineStart.UNDISPATCHED) {
+        project.workspaceModel.eventLog
+          .mapNotNull { it.toRebuildRequest() }
+          .collect(requests::add)
       }
       requests.batches(DEBOUNCE)
         .onStart { emit(PendingRebuild(emptySet(), "the start of the sync", reloadProjectRoots = true)) }

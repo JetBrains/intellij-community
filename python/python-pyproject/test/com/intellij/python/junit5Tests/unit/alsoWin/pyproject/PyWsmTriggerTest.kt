@@ -11,7 +11,7 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.python.pyproject.model.internal.platformBridge.findTrigger
+import com.intellij.python.pyproject.model.internal.platformBridge.toRebuildRequest
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -42,7 +42,7 @@ internal class PyWsmTriggerTest {
   private val projectFixture = projectFixture(pathFixture)
 
   /**
-   * The source of every entity here. `findTrigger` reads a source only to tell a python entity from a
+   * The source of every entity here. `toRebuildRequest` reads a source only to tell a python entity from a
    * platform one, and neither case of this test reaches that point.
    *
    * Do not declare an `EntitySource` in this module. `AllIntellijEntitiesGenerationTest` reads the sources of
@@ -95,7 +95,7 @@ internal class PyWsmTriggerTest {
     assertThat(event.removedExcludeUrls()).describedAs("the event must remove the url").containsExactly(excluded.url)
     assertThat(event.addedExcludeUrls()).describedAs("the event must add the url again").containsExactly(excluded.url)
 
-    assertThat(event.findTrigger())
+    assertThat(event.toRebuildRequest())
       .describedAs("a relocated exclusion leaves the set of excluded paths equal, so it must start no build")
       .isNull()
   }
@@ -111,9 +111,9 @@ internal class PyWsmTriggerTest {
     assertThat(event.removedExcludeUrls()).containsExactly(excluded.url)
     assertThat(event.addedExcludeUrls()).describedAs("nothing adds the url back").isEmpty()
 
-    val trigger = event.findTrigger()
-    assertThat(trigger).describedAs("a real un-exclusion must start a build").isNotNull()
-    assertThat(trigger!!.reason).contains("no longer excluded")
+    val request = event.toRebuildRequest()
+    assertThat(request).describedAs("a real un-exclusion must start a build").isNotNull()
+    assertThat(request!!.reason).contains("no longer excluded")
   }
 
   private fun com.intellij.platform.workspace.storage.MutableEntityStorage.contentRootOf(module: String): ContentRootEntity =
