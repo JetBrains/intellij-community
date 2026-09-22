@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
@@ -42,6 +41,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
+import com.intellij.refactoring.rename.RenamePsiElementProcessorCore.TextOccurrenceSearchStrings;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
@@ -184,10 +184,10 @@ public final class RenameUtil {
         if (!processTextOccurrences(searchForInComments, searchScope, stringToSearch, stringToReplace, processor)) return false;
       }
 
-      final Pair<String, String> additionalStringToSearch = elementProcessor.getTextOccurrenceSearchStrings(searchForInComments, newName);
-      if (additionalStringToSearch != null && !additionalStringToSearch.first.isEmpty()) {
-        if (!processTextOccurrences(searchForInComments, searchScope, additionalStringToSearch.first, additionalStringToSearch.second,
-                                    processor
+      final TextOccurrenceSearchStrings additionalStringToSearch = elementProcessor.getTextOccurrenceSearchStrings(searchForInComments, newName);
+      if (additionalStringToSearch != null && !additionalStringToSearch.toSearch().isEmpty()) {
+        if (!processTextOccurrences(searchForInComments, searchScope, additionalStringToSearch.toSearch(),
+                                    additionalStringToSearch.toReplace(), processor
         )) return false;
       }
     }

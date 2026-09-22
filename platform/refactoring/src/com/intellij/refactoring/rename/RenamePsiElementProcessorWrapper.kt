@@ -1,13 +1,14 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Pass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
+import com.intellij.refactoring.rename.RenamePsiElementProcessorCore.TextOccurrenceSearchStrings
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 
@@ -94,7 +95,7 @@ abstract class RenamePsiElementProcessorWrapper(val processor: RenamePsiElementP
     return processor.getQualifiedNameAfterRename(element, newName, nonJava)
   }
 
-  override fun getTextOccurrenceSearchStrings(element: PsiElement, newName: String): Pair<String, String>? {
+  override fun getTextOccurrenceSearchStrings(element: PsiElement, newName: String): TextOccurrenceSearchStrings? {
     return processor.getTextOccurrenceSearchStrings(element, newName)
   }
 

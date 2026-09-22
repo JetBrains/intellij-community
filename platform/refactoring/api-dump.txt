@@ -489,7 +489,7 @@ a:com.intellij.refactoring.rename.RenamePsiElementProcessorBase
 - getPostRenameCallback(com.intellij.psi.PsiElement,java.lang.String,com.intellij.refactoring.listeners.RefactoringElementListener):java.lang.Runnable
 - getPostRenameCallback(com.intellij.psi.PsiElement,java.lang.String,java.util.Collection,java.util.Map,com.intellij.refactoring.listeners.RefactoringElementListener):java.lang.Runnable
 - getQualifiedNameAfterRename(com.intellij.psi.PsiElement,java.lang.String,Z):java.lang.String
-- getTextOccurrenceSearchStrings(com.intellij.psi.PsiElement,java.lang.String):com.intellij.openapi.util.Pair
+- getTextOccurrenceSearchStrings(com.intellij.psi.PsiElement,java.lang.String):com.intellij.refactoring.rename.RenamePsiElementProcessorCore$TextOccurrenceSearchStrings
 - isInplaceRenameSupported():Z
 - isToSearchForTextOccurrences(com.intellij.psi.PsiElement):Z
 - isToSearchInComments(com.intellij.psi.PsiElement):Z
@@ -521,7 +521,7 @@ a:com.intellij.refactoring.rename.RenamePsiElementProcessorWrapper
 - getPostRenameCallback(com.intellij.psi.PsiElement,java.lang.String,com.intellij.refactoring.listeners.RefactoringElementListener):java.lang.Runnable
 - f:getProcessor():com.intellij.refactoring.rename.RenamePsiElementProcessorBase
 - getQualifiedNameAfterRename(com.intellij.psi.PsiElement,java.lang.String,Z):java.lang.String
-- getTextOccurrenceSearchStrings(com.intellij.psi.PsiElement,java.lang.String):com.intellij.openapi.util.Pair
+- getTextOccurrenceSearchStrings(com.intellij.psi.PsiElement,java.lang.String):com.intellij.refactoring.rename.RenamePsiElementProcessorCore$TextOccurrenceSearchStrings
 - hashCode():I
 - isInplaceRenameSupported():Z
 - isToSearchForTextOccurrences(com.intellij.psi.PsiElement):Z

@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.SearchScope;
@@ -27,9 +26,6 @@ import java.util.Map;
  * questions of an element, and {@link RenamePsiElementProcessor} adds the dialog which asks them.
  * {@link HeadlessRenamePsiElementProcessor} adds the answer of every question instead, so the engine of a
  * rename with no user reads that one alone.
- * <p>
- * The callback of {@link #getPostRenameCallback} runs inside a write action, after the write of every
- * element. Every other contract sits on the method itself.
  */
 @ApiStatus.Experimental
 public interface RenamePsiElementProcessorCore {
@@ -58,9 +54,24 @@ public interface RenamePsiElementProcessorCore {
     return ReferencesSearch.search(element, searchScope).findAll();
   }
 
-  /** The extra string to search in a text occurrence, and the string to write instead of it. */
+  /**
+   * An extra string a text occurrence holds, and the string a rename writes instead of it.
+   *
+   * @param toSearch  the string to look for, beyond the description of the element itself
+   * @param toReplace the string to write in its place
+   */
+  @ApiStatus.Experimental
+  record TextOccurrenceSearchStrings(@NotNull String toSearch, @NotNull String toReplace) {
+  }
+
+  /**
+   * The extra strings of a text occurrence of {@code element}, or null when it has none.
+   * <p>
+   * A rename reads this only when it searches text occurrences, so a caller which searches none
+   * never reaches it.
+   */
   @RequiresReadLock
-  default @Nullable Pair<String, String> getTextOccurrenceSearchStrings(@NotNull PsiElement element, @NotNull String newName) {
+  default @Nullable TextOccurrenceSearchStrings getTextOccurrenceSearchStrings(@NotNull PsiElement element, @NotNull String newName) {
     return null;
   }
 
@@ -74,7 +85,17 @@ public interface RenamePsiElementProcessorCore {
     return null;
   }
 
-  /** The step to run after the write of every element, or null for no step. */
+  /**
+   * The step to run after the write of every element, or null for no step.
+   * <p>
+   * This method runs on the EDT, inside the write action of the rename, and before the write of
+   * {@code element}. So it sees the element as it is under its old name.
+   * <p>
+   * The {@link Runnable} it returns runs later, on the EDT and inside that same write action, after
+   * every element of the rename is written, after the documents are committed, and after the
+   * {@link RefactoringElementListener} events fire. So it sees the code whole, and under the new
+   * name. It may write PSI. It must not show a dialog, and it must not start background work.
+   */
   @RequiresWriteLock
   default @Nullable Runnable getPostRenameCallback(@NotNull PsiElement element,
                                                    @NotNull String newName,
@@ -85,6 +106,9 @@ public interface RenamePsiElementProcessorCore {
   /**
    * Gets a callback associated with a single renamed element.
    * All callbacks will be run after renaming of all elements is done.
+   * <p>
+   * The threading of this method and of the callback it returns is the one of
+   * {@link #getPostRenameCallback(PsiElement, String, RefactoringElementListener)}.
    *
    * @param element         that was renamed.
    * @param newName         of the {@code element}.

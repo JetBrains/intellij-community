@@ -63,8 +63,15 @@
 - getPostRenameCallback(com.intellij.psi.PsiElement,java.lang.String,com.intellij.refactoring.listeners.RefactoringElementListener):java.lang.Runnable
 - getPostRenameCallback(com.intellij.psi.PsiElement,java.lang.String,java.util.Collection,java.util.Map,com.intellij.refactoring.listeners.RefactoringElementListener):java.lang.Runnable
 - getQualifiedNameAfterRename(com.intellij.psi.PsiElement,java.lang.String,Z):java.lang.String
-- getTextOccurrenceSearchStrings(com.intellij.psi.PsiElement,java.lang.String):com.intellij.openapi.util.Pair
+- getTextOccurrenceSearchStrings(com.intellij.psi.PsiElement,java.lang.String):com.intellij.refactoring.rename.RenamePsiElementProcessorCore$TextOccurrenceSearchStrings
 - renameElement(com.intellij.psi.PsiElement,java.lang.String,com.intellij.usageView.UsageInfo[],com.intellij.refactoring.listeners.RefactoringElementListener):V
+*f:com.intellij.refactoring.rename.RenamePsiElementProcessorCore$TextOccurrenceSearchStrings
+- java.lang.Record
+- <init>(java.lang.String,java.lang.String):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- toReplace():java.lang.String
+- toSearch():java.lang.String
 *:com.intellij.refactoring.rename.Renamer
 - a:getPresentableText():java.lang.String
 - a:performRename():V

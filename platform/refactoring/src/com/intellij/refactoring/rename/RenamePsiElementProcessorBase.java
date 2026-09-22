@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -76,7 +75,7 @@ public abstract class RenamePsiElementProcessorBase implements RenamePsiElementP
   }
 
   @Override
-  public @Nullable Pair<String, String> getTextOccurrenceSearchStrings(@NotNull PsiElement element, @NotNull String newName) {
+  public @Nullable TextOccurrenceSearchStrings getTextOccurrenceSearchStrings(@NotNull PsiElement element, @NotNull String newName) {
     return RenamePsiElementProcessorCore.super.getTextOccurrenceSearchStrings(element, newName);
   }
 
