@@ -386,6 +386,8 @@ object ITNProxy {
             append(builder, "report.automatic.tag", it)
           }
         }
+
+        append(builder, "jetbrainsd.version", LastKnownDaemonVersion.version.get())
       }
     }
 
