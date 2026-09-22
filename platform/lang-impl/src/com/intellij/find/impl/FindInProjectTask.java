@@ -553,7 +553,7 @@ final class FindInProjectTask {
               // will be checked against the WSM and requested scope later when this search task deals with individual files.
               // MAYBE-ANK: While it is searcher's responsibility to work at least faster than the default implementation if it
               // claims positive weight, it is also a good idea to not pass directories with excludes and indexed files into them.
-              selectDirectorySearchEngine(file, directorySearchEngines).searchDirectory(file, findModel, searchItemsDeque::addAll);
+              DirectorySearchEngine.selectDirectorySearchEngine(file, directorySearchEngines).searchDirectory(file, findModel, searchItemsDeque::addAll);
             }
             return true;
           }
@@ -602,21 +602,6 @@ final class FindInProjectTask {
       }
     );
   }
-
-  private @NotNull DirectorySearchEngine selectDirectorySearchEngine(@NotNull VirtualFile directory,
-                                                                     @NotNull List<? extends DirectorySearchEngine> engines) {
-    DirectorySearchEngine bestEngine = null;
-    var bestWeight = -1;
-    for (var engine : engines) {
-      var weight = engine.getWeight(directory);
-      if (weight > bestWeight) {
-        bestEngine = engine;
-        bestWeight = weight;
-      }
-    }
-    return Objects.requireNonNull(bestEngine, "No directory search engine for " + directory);
-  }
-
 
   /**
    * @return list of search 'items'. Item contains 1 or more files:
