@@ -8,6 +8,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.project.projectId
 import com.intellij.python.black.common.PyBlackToolConfigurationDto
 import com.intellij.python.pytools.common.PyToolActionSource
+import com.intellij.python.pytools.common.ProjectLevelPyToolApi
 import com.intellij.python.pytools.common.PyToolApi
 import com.intellij.python.pytools.common.PyToolEventKind
 import com.intellij.python.pytools.common.PyToolDescriptorDto
@@ -29,7 +30,7 @@ internal class BlackFormatterConfigurable(
 ) : BoundConfigurable(message("black.configurable.name")) {
   private val request = PyToolRequest(project.projectId(), BLACK_TOOL_ID)
   private val configuration = runWithModalProgressBlocking(project, message("black.configurable.name")) {
-    PyToolApi.getInstance().getConfiguration<PyBlackToolConfigurationDto>(request)
+    ProjectLevelPyToolApi.getInstance().getConfiguration<PyBlackToolConfigurationDto>(request)
   }
   private var storedArguments = configuration.arguments
 
@@ -64,9 +65,8 @@ internal class BlackFormatterConfigurable(
   override fun apply() {
     super.apply()
     runWithModalProgressBlocking(project, message("black.configurable.name")) {
-      val api = PyToolApi.getInstance()
-      api.setConfiguration(PyToolSetConfigurationRequest(request, configuration.copy(arguments = storedArguments)))
-      api.logEvent(PyToolLogEventRequest(request, PyToolActionSource.SETTINGS_DETAIL, PyToolEventKind.CONFIGURATION_CHANGED))
+      ProjectLevelPyToolApi.getInstance().setConfiguration(PyToolSetConfigurationRequest(request, configuration.copy(arguments = storedArguments)))
+      PyToolApi.getInstance().logEvent(PyToolLogEventRequest(request, PyToolActionSource.SETTINGS_DETAIL, PyToolEventKind.CONFIGURATION_CHANGED))
     }
   }
 

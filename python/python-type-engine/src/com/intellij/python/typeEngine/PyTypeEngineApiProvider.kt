@@ -14,7 +14,8 @@ import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProvider
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUsageCollector
-import com.intellij.python.pytools.backend.PyTool
+import com.intellij.python.pytools.backend.ProjectLevelPyTool
+import com.intellij.python.pytools.backend.setEnabledOn
 import com.intellij.python.pytools.backend.PyToolsState
 import com.intellij.python.typeEngine.common.PyTypeEngineApi
 import com.intellij.python.typeEngine.common.PyTypeEngineEvent
@@ -70,16 +71,15 @@ private object PyTypeEngineApiImpl : PyTypeEngineApi {
   override suspend fun select(request: PyTypeEngineSelectionRequest): PyTypeEngineStateDto {
     val project = request.projectId.findProject()
     val toolsState = PyToolsState.getInstance(project)
-    PyTool.findByPackageName(request.selected.packageName)?.let { tool ->
+    ProjectLevelPyTool.findByPackageName(request.selected.packageName)?.let { tool ->
       if (!toolsState.isEnabled(tool)) {
-        toolsState.setEnabled(tool, true)
+        tool.setEnabledOn(project, true)
       }
     }
     request.disabledToolPackages.forEach { packageName ->
-      PyTool.findByPackageName(packageName)?.let { tool ->
+      ProjectLevelPyTool.findByPackageName(packageName)?.let { tool ->
         if (toolsState.isEnabled(tool)) {
-          toolsState.setEnabled(tool, false)
-          tool.onEnabledChanged(project, false)
+          tool.setEnabledOn(project, false)
         }
       }
     }

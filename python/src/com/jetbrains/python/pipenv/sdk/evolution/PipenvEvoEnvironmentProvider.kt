@@ -52,7 +52,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
  * `virtualenv` package write too. Claiming it would attribute another tool's environment to pipenv.
  */
 internal class PipenvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
-  override val tool: PyTool<*> get() = PipEnvPyTool.getInstance()
+  override val tool: PyTool get() = PipEnvPyTool.getInstance()
   override val label: String get() = com.intellij.python.sdk.backend.PySdkBundle.message("evolution.node.label.pipenv")
   override val icon get() = PythonCommunityImplPipenvCommonIcons.Pipenv
   override val toolId: ToolId get() = PIPENV_TOOL_ID

@@ -6,7 +6,7 @@ package com.intellij.python.pytools.backend.statistics
  * Each [com.intellij.python.pytools.backend.PyTool] populates every field it owns.
  * Fields that the tool does not own stay null and are reported as `UNSURE`.
  *
- * The default [com.intellij.python.pytools.backend.PyTool.configurationFusSnapshot] fills [enabled] and [customPath].
+ * The default [com.intellij.python.pytools.backend.ProjectLevelPyTool.configurationFusSnapshot] fills [enabled] and [customPath].
  * This data is enough for tools without LSP feature flags.
  * LSP-backed tools override and `copy(...)` the default to add their feature fields.
  */

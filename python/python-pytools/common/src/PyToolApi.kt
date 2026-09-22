@@ -7,7 +7,6 @@ import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.serialization.Serializable
-import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @Serializable
@@ -19,18 +18,6 @@ data class PyToolRequest(val projectId: ProjectId, val toolId: PyToolId)
 
 @Serializable
 data class PyToolsRequest(val projectId: ProjectId, val toolIds: List<PyToolId>)
-
-@Serializable
-data class PyToolEnabledStateDto(val toolId: PyToolId, val enabled: Boolean)
-
-@Serializable
-data class PyToolSetEnabledRequest(val tool: PyToolRequest, val enabled: Boolean)
-
-@Serializable(with = PyToolConfigurationSerializer::class)
-interface PyToolConfigurationDto
-
-@Serializable
-data class PyToolSetConfigurationRequest(val tool: PyToolRequest, val configuration: PyToolConfigurationDto)
 
 @Serializable
 enum class PyToolActionSource { SETTINGS_TABLE, SETTINGS_DETAIL }
@@ -66,7 +53,6 @@ data class PyToolStateDto(
   val version: String?,
   val canInstall: Boolean,
   val latestVersion: String? = null,
-  val configuration: PyToolConfigurationDto? = null,
   val selectedAsTypeEngine: Boolean = false,
 )
 
@@ -119,14 +105,15 @@ data class PyToolSdkInstallRequest(
   val dependencyGroup: PyToolDependencyGroupDto?,
 )
 
-/** Backend tool lifecycle. No EEL, filesystem, SDK, cache, process, manager, or backend entity crosses the wire. */
+/**
+ * Backend tool lifecycle: where a tool resolves, what version it is, installing and upgrading it.
+ *
+ * Enabling a tool and its configuration are a configurable tool's own concern and live on
+ * [ProjectLevelPyToolApi]. No EEL, filesystem, SDK, cache, process, manager, or backend entity crosses the wire.
+ */
 @ApiStatus.Internal
 @Rpc
 interface PyToolApi : RemoteApi<Unit> {
-  suspend fun isStateInitialized(projectId: ProjectId): Boolean
-  suspend fun initializeState(projectId: ProjectId)
-  suspend fun observeEnabledStates(projectId: ProjectId): Flow<List<PyToolEnabledStateDto>>
-  suspend fun getConfiguration(request: PyToolRequest): PyToolConfigurationDto?
   suspend fun getStates(request: PyToolsRequest): List<PyToolStateDto>
   /**
    * The resolved paths only, so the settings pages can show a known path at once.
@@ -144,8 +131,6 @@ interface PyToolApi : RemoteApi<Unit> {
    * costs a `<path> --version` run otherwise, which is why [getStates] never resolves it on its own.
    */
   suspend fun getVersion(request: PyToolRequest): String?
-  suspend fun setEnabled(request: PyToolSetEnabledRequest): PyToolStateDto
-  suspend fun setConfiguration(request: PyToolSetConfigurationRequest): PyToolStateDto
   suspend fun validatePath(request: PyToolPathRequest): PyToolValidationDto
   suspend fun setPath(request: PyToolSetPathRequest): PyToolStateDto
   suspend fun install(request: PyToolRequest): PyToolOperationResultDto
@@ -158,10 +143,4 @@ interface PyToolApi : RemoteApi<Unit> {
   companion object {
     suspend fun getInstance(): PyToolApi = RemoteApiProviderService.resolve(remoteApiDescriptor<PyToolApi>())
   }
-}
-
-@ApiStatus.Internal
-suspend inline fun <reified C : PyToolConfigurationDto> PyToolApi.getConfiguration(request: PyToolRequest): C {
-  return getConfiguration(request) as? C
-         ?: error("Unexpected configuration for Python tool: ${request.toolId.value}")
 }

@@ -4,7 +4,7 @@ package com.intellij.python.pytools.frontend.ui
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
 import com.intellij.python.pytools.frontend.PyToolFrontend as PyTool
-import com.intellij.python.pytools.frontend.ExternalPyToolFrontend as ExternalPyTool
+import com.intellij.python.pytools.frontend.ProjectLevelPyToolFrontend
 import com.intellij.python.pytools.frontend.ui.configuration.PyExternalToolsConfigurable
 
 /**
@@ -15,7 +15,7 @@ import com.intellij.python.pytools.frontend.ui.configuration.PyExternalToolsConf
 internal class PyExternalToolsSearchableOptionContributor : SearchableOptionContributor() {
   override fun processOptions(processor: SearchableOptionProcessor) {
     val displayName = PyToolsUiBundle.message("settings.external.tools.title")
-    for (tool in PyTool.extensionList.filterIsInstance<ExternalPyTool<*>>()) {
+    for (tool in PyTool.extensionList.filterIsInstance<ProjectLevelPyToolFrontend<*>>()) {
       processor.addOptions(
         tool.presentableName,
         null,

@@ -94,7 +94,7 @@ private fun firstRootPathOf(module: Module): String? =
  * the promise for any other caller.
  */
 @ApiStatus.Internal
-fun pyLspModulesToServeWith(module: Module, pyTool: PyTool<*>): List<Module> {
+fun pyLspModulesToServeWith(module: Module, pyTool: PyTool): List<Module> {
   val keys = pyLspServeKeys(module.project, pyTool)
   return pyLspServeGroupOf(module, pyLspServedModules(module.project)) { keys[it] ?: pyLspServeKeyWithoutVersion(it) }
 }
@@ -113,7 +113,7 @@ fun pyLspModulesToServeWith(module: Module, pyTool: PyTool<*>): List<Module> {
  * keys fires [PY_LSP_SERVE_KEYS_CHANGED], and each provider then checks its running servers again.
  */
 @ApiStatus.Internal
-fun pyLspServeKeys(project: Project, pyTool: PyTool<*>): Map<Module, PyLspServeKey> =
+fun pyLspServeKeys(project: Project, pyTool: PyTool): Map<Module, PyLspServeKey> =
   pyLspServeKeysView(project, pyTool).keys
 
 /**
@@ -123,7 +123,7 @@ fun pyLspServeKeys(project: Project, pyTool: PyTool<*>): Map<Module, PyLspServeK
  * event. It reads the interpreters, so it takes no read lock of its own around that part.
  */
 @ApiStatus.Internal
-suspend fun pyLspRefreshServeKeys(project: Project, pyTool: PyTool<*>): Map<Module, PyLspServeKey> =
+suspend fun pyLspRefreshServeKeys(project: Project, pyTool: PyTool): Map<Module, PyLspServeKey> =
   project.service<PyLspServeKeyCache>().refreshedKeys(pyTool)
 
 /**
@@ -137,7 +137,7 @@ class PyLspServeKeysView(val keys: Map<Module, PyLspServeKey>, val isFresh: Bool
 
 /** [pyLspServeKeys] together with whether the answer still fits the project. Never blocks. */
 @ApiStatus.Internal
-fun pyLspServeKeysView(project: Project, pyTool: PyTool<*>): PyLspServeKeysView =
+fun pyLspServeKeysView(project: Project, pyTool: PyTool): PyLspServeKeysView =
   project.service<PyLspServeKeyCache>().view(pyTool)
 
 /**
@@ -175,7 +175,7 @@ private class PyLspServeKeyCache(private val project: Project, private val cs: C
   /** The tools with a refresh in flight, so a hot read path does not queue one refresh per call. */
   private val refreshing: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
-  fun view(pyTool: PyTool<*>): PyLspServeKeysView {
+  fun view(pyTool: PyTool): PyLspServeKeysView {
     val toolName = pyTool.packageName.name
     val snapshot = snapshotRefOf(toolName).get()
     val fresh = snapshot.stamp == stampOf(toolName)
@@ -192,7 +192,7 @@ private class PyLspServeKeyCache(private val project: Project, private val cs: C
     return PyLspServeKeysView(snapshot.keys, fresh)
   }
 
-  suspend fun refreshedKeys(pyTool: PyTool<*>): Map<Module, PyLspServeKey> {
+  suspend fun refreshedKeys(pyTool: PyTool): Map<Module, PyLspServeKey> {
     val toolName = pyTool.packageName.name
     val ref = snapshotRefOf(toolName)
     val stamp = stampOf(toolName)
@@ -249,7 +249,7 @@ private class PyLspServeKeyCache(private val project: Project, private val cs: C
    * this ran. That exception is a cancellation, so it ends this refresh and the snapshot keeps its
    * last answer. The stamp does not move, so the next read schedules another refresh.
    */
-  private suspend fun computeKeys(pyTool: PyTool<*>): Map<Module, PyLspServeKey> {
+  private suspend fun computeKeys(pyTool: PyTool): Map<Module, PyLspServeKey> {
     val model = readAction {
       pyLspServedModules(project)
         .filterNot { it.isDisposed }
@@ -274,7 +274,7 @@ data class PyLspServeKey(val workspaceRoot: String?, val toolVersion: String?)
  * lock. [pyLspServeKeys] answers the same question from a snapshot for a caller that holds one.
  */
 @ApiStatus.Internal
-fun pyLspServeKeyOf(module: Module, pyTool: PyTool<*>): PyLspServeKey =
+fun pyLspServeKeyOf(module: Module, pyTool: PyTool): PyLspServeKey =
   PyLspServeKey(pyLspWorkspaceRootOf(module), pyLspToolVersionOf(module, pyTool))
 
 /**
@@ -372,14 +372,14 @@ private fun sharesTreeWith(one: String, other: String): Boolean =
  * restarts the clients once that changes.
  */
 @ApiStatus.Internal
-fun pyLspToolVersionOf(module: Module, pyTool: PyTool<*>): String? {
+fun pyLspToolVersionOf(module: Module, pyTool: PyTool): String? {
   val sdk = module.pythonSdk ?: return null
   return pyLspToolVersionOf(sdk, module.project, pyTool)
 }
 
 /** [pyLspToolVersionOf] for an interpreter that no module has to own. */
 @ApiStatus.Internal
-fun pyLspToolVersionOf(sdk: Sdk, project: Project, pyTool: PyTool<*>): String? =
+fun pyLspToolVersionOf(sdk: Sdk, project: Project, pyTool: PyTool): String? =
   PythonPackageManager.forSdk(project, sdk).getInstalledToolPackage(pyTool)?.version
 
 /**

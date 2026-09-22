@@ -12,6 +12,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.project.projectId
+import com.intellij.python.pytools.common.ProjectLevelPyToolApi
 import com.intellij.python.pytools.common.PyToolApi
 import com.intellij.python.pytools.common.PyToolEnabledStateDto
 import com.intellij.python.pytools.common.PyToolId
@@ -127,7 +128,7 @@ class PyLspToolAdvertiserService(private val project: Project, private val cs: C
         // Mirror the External Tools page's "Enable" toggle: flip the framework-level state and
         // run the tool's lifecycle hook (which starts the LSP server).
         cs.launch {
-          val state = PyToolApi.getInstance().setEnabled(
+          val state = ProjectLevelPyToolApi.getInstance().setEnabled(
             PyToolSetEnabledRequest(PyToolRequest(project.projectId(), tool.toolId), true),
           )
           PyToolsFrontendState.getInstance(project).apply(

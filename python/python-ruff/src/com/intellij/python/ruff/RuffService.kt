@@ -206,7 +206,7 @@ class RuffService(val project: Project, val cs: CoroutineScope) {
    * A server that reports no version counts as one unknown Ruff, so the query runs one time, as
    * before.
    *
-   * [PyTool.onExecutableChanged] restarts the servers when the Ruff of a module can have changed, so
+   * [ProjectLevelPyTool.onExecutableChanged] restarts the servers when the Ruff of a module can have changed, so
    * that they initialize and report again. These changes call it: a new custom path, an install or an
    * upgrade through [PyTool.manager], a new module SDK, and a new Ruff version in an SDK. The IDE sees
    * a Ruff that changes outside the IDE only when it reloads the package list of that SDK.

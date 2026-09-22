@@ -6,7 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.project.projectId
-import com.intellij.python.pytools.common.PyToolApi
+import com.intellij.python.pytools.common.ProjectLevelPyToolApi
 import com.intellij.python.pytools.common.PyToolEnabledStateDto
 import com.intellij.python.pytools.common.PyToolId
 import fleet.rpc.client.durable
@@ -24,7 +24,7 @@ class PyToolsFrontendState(project: Project, scope: CoroutineScope) {
   init {
     scope.launch {
       durable {
-        val api = PyToolApi.getInstance()
+        val api = ProjectLevelPyToolApi.getInstance()
         if (!api.isStateInitialized(project.projectId())) {
           api.initializeState(project.projectId())
         }

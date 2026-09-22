@@ -61,7 +61,7 @@ class PyToolsState : PersistentStateComponent<PyToolsState.State> {
 
   fun isEnabled(toolId: PyToolId): Boolean = getEntry(toolId).enabled
 
-  fun isEnabled(tool: PyTool<*>): Boolean = isEnabled(PyToolId(tool.packageName.name))
+  fun isEnabled(tool: PyTool): Boolean = isEnabled(PyToolId(tool.packageName.name))
 
   fun setEnabled(toolId: PyToolId, value: Boolean) {
     state.persist(toolId, getEntry(toolId).copy(enabled = value))
@@ -69,7 +69,7 @@ class PyToolsState : PersistentStateComponent<PyToolsState.State> {
     publish()
   }
 
-  fun setEnabled(tool: PyTool<*>, value: Boolean): Unit = setEnabled(PyToolId(tool.packageName.name), value)
+  fun setEnabled(tool: PyTool, value: Boolean): Unit = setEnabled(PyToolId(tool.packageName.name), value)
 
   fun enabledStates(): StateFlow<List<PyToolEnabledStateDto>> = enabledState.asStateFlow()
 

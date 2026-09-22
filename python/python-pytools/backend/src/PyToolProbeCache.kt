@@ -23,7 +23,7 @@ import java.nio.file.Path
 @ApiStatus.Internal
 interface PyToolProbeCache {
   /** The managed tools installed on [eel]'s machine. Empty when none is installed. */
-  suspend fun listing(eel: EelApi): Map<PyTool<*>, InstalledInfo>
+  suspend fun listing(eel: EelApi): Map<PyTool, InstalledInfo>
 
   /**
    * The version [tool] reports at [path] on [eelDescriptor]'s machine, from the cache or by running the tool now.
@@ -32,7 +32,7 @@ interface PyToolProbeCache {
    * not re-run on every repaint. This is the version of an already-resolved executable; validating a path the
    * user just typed stays uncached, because the answer is about the file as it is right now.
    */
-  suspend fun version(eelDescriptor: EelDescriptor, tool: PyTool<*>, path: Path): Version?
+  suspend fun version(eelDescriptor: EelDescriptor, tool: PyTool, path: Path): Version?
 
   /** Drop the cached listing and every cached version of [eelDescriptor]'s machine (no-op if unresolved). */
   fun invalidate(eelDescriptor: EelDescriptor)

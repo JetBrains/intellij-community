@@ -6,7 +6,7 @@ import com.intellij.platform.lsp.api.stopAndRestartClientsIfNeeded
 import com.intellij.platform.lsp.api.stopClients
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProvider
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
-import com.intellij.python.pytools.backend.isActiveOn
+import com.intellij.python.lsp.core.isActiveOn
 import com.intellij.python.ty.TyLspIntegrationProvider
 import com.intellij.python.ty.TyPyTool
 

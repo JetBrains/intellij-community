@@ -9,7 +9,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.python.pytools.common.PyToolConfigurationDto
 import com.intellij.python.pytools.common.PyToolSdkStateDto
-import com.intellij.python.pytools.frontend.ExternalPyToolFrontend as ExternalPyTool
+import com.intellij.python.pytools.frontend.ProjectLevelPyToolFrontend
 import com.intellij.python.pytools.frontend.ui.PyToolsUiBundle
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.ActionLink
@@ -342,7 +342,7 @@ internal class PyExternalToolRowPanel(
   }
 }
 
-private fun <C : PyToolConfigurationDto> ExternalPyTool<C>.summaryFor(
+private fun <C : PyToolConfigurationDto> ProjectLevelPyToolFrontend<C>.summaryFor(
   project: Project,
   configuration: PyToolConfigurationDto?,
 ): String {

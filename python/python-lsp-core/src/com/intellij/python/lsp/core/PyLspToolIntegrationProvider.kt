@@ -73,7 +73,6 @@ import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.asGeneralCommandLine
 import com.intellij.python.lsp.core.utils.PyLspToolVersionTracker
 import com.intellij.python.pytools.backend.PyTool
-import com.intellij.python.pytools.backend.isActiveOn
 import com.intellij.python.pytools.common.PY_EXTERNAL_TOOLS_SETTINGS_ID
 import com.intellij.python.sdk.backend.toolExecutableWithBaseArgs
 import com.intellij.ui.JBColor
@@ -200,7 +199,7 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
   fun presentableName(lspClient: LspClient): @NlsSafe String = lspClient.initializeResult?.serverInfo?.name
                                                                ?: lspClient.descriptor.presentableName
 
-  protected open fun subscribeOnChanges(pyTool: PyTool<*>, project: Project, parentDisposable: Disposable) {
+  protected open fun subscribeOnChanges(pyTool: PyLspTool<*>, project: Project, parentDisposable: Disposable) {
     val executableChanged = PyToolChangeDebouncer(project.service<PyLspService>().cs) { pyTool.onExecutableChanged(project) }
     val connection = project.messageBus.connect(parentDisposable)
     connection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, LspPackageListener(pyTool, project, executableChanged))
@@ -311,7 +310,7 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
    * server when the tool leaves every interpreter that a server can run against.
    */
   inner class LspPackageListener(
-    val pyTool: PyTool<*>,
+    val pyTool: PyTool,
     val project: Project,
     private val executableChanged: PyToolChangeDebouncer,
   ) : PythonPackageManagementListener {
@@ -401,7 +400,7 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
  * The interpreters are read outside the read action, because [PythonPackageManager.forSdk] creates a
  * manager on the first call and does first-touch I/O.
  */
-private suspend fun PyLspToolIntegrationProvider.LspPackageListener.noServedModuleHolds(pyTool: PyTool<*>): Boolean {
+private suspend fun PyLspToolIntegrationProvider.LspPackageListener.noServedModuleHolds(pyTool: PyTool): Boolean {
   val sdks = readAction { pyLspServedModules(project).mapNotNull { it.pythonSdk } }
   return sdks.none { pyLspToolVersionOf(it, project, pyTool) != null }
 }

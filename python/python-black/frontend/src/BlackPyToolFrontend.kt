@@ -7,12 +7,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.python.black.common.PyBlackToolConfigurationDto
 import com.intellij.python.pytools.common.PyToolId
 import com.intellij.python.pytools.common.PyToolDescriptorDto
-import com.intellij.python.pytools.frontend.ExternalPyToolFrontend
+import com.intellij.python.pytools.frontend.ProjectLevelPyToolFrontend
 import com.intellij.python.black.common.icons.PythonBlackCommonIcons
 import com.intellij.python.black.frontend.PyBlackFrontendBundle.message
 import javax.swing.Icon
 
-internal class BlackPyToolFrontend : ExternalPyToolFrontend<PyBlackToolConfigurationDto> {
+internal class BlackPyToolFrontend : ProjectLevelPyToolFrontend<PyBlackToolConfigurationDto> {
   override val presentableName: String = "Black"
   override val description: String get() = message("black.tool.description")
   override val toolId: PyToolId = BLACK_TOOL_ID

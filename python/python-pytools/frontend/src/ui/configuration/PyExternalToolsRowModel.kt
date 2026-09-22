@@ -21,7 +21,7 @@ import com.intellij.python.pytools.common.PyToolValidationDto
 import com.intellij.python.pytools.common.PyToolsRequest
 import com.intellij.python.pytools.frontend.PyToolFrontend as PyTool
 import com.intellij.python.pytools.frontend.ui.PyToolsUiBundle
-import com.intellij.python.pytools.frontend.ExternalPyToolFrontend as ExternalPyTool
+import com.intellij.python.pytools.frontend.ProjectLevelPyToolFrontend
 import com.intellij.python.pytools.frontend.icons.PythonPytoolsFrontendIcons
 import com.intellij.util.SlowOperations
 import kotlinx.coroutines.CoroutineScope
@@ -111,7 +111,7 @@ internal class ToolRow(
   var configurationLoaded: Boolean = false,
   var selectedAsTypeEngine: Boolean = false,
 ) {
-  val detailConfigurableProvider: ExternalPyTool<*>? = tool as? ExternalPyTool<*>
+  val detailConfigurableProvider: ProjectLevelPyToolFrontend<*>? = tool as? ProjectLevelPyToolFrontend<*>
 }
 
 /**
@@ -321,8 +321,6 @@ internal fun ToolRow.applyBackendState(
   belowMinVersionMessage = computeBelowMinMessage(tool, minimumSupportedVersion, version)
   canInstall = state.canInstall
   latestVersion = state.latestVersion?.let(Version::parseVersion)
-  configuration = state.configuration
-  configurationLoaded = true
   selectedAsTypeEngine = state.selectedAsTypeEngine
 }
 

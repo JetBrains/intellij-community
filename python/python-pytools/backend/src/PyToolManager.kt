@@ -18,10 +18,10 @@ import java.nio.file.Path
  */
 interface PyToolManager {
   /** Installs [tool] into the environment described by [eel]; returns the resolved executable path. */
-  suspend fun install(tool: PyTool<*>, eel: EelApi): PyResult<Path>
+  suspend fun install(tool: PyTool, eel: EelApi): PyResult<Path>
 
   /** Upgrades [tool] to the latest version in the environment described by [eel]. */
-  suspend fun upgrade(tool: PyTool<*>, eel: EelApi): PyResult<Path>
+  suspend fun upgrade(tool: PyTool, eel: EelApi): PyResult<Path>
 
   /**
    * Whether this tool can be installed onto [eelDescriptor]'s machine from the IDE. Default `true`
@@ -37,12 +37,12 @@ interface PyToolManager {
  * [PyTool.manager] is this object are exactly the ones the generic uv/pip backend manages.
  */
 object PackagePyToolManager : PyToolManager {
-  override suspend fun install(tool: PyTool<*>, eel: EelApi): PyResult<Path> =
+  override suspend fun install(tool: PyTool, eel: EelApi): PyResult<Path> =
     GenericPyToolManagerProvider.managerFor(eel)?.install(tool) ?: noInstaller(tool)
 
-  override suspend fun upgrade(tool: PyTool<*>, eel: EelApi): PyResult<Path> =
+  override suspend fun upgrade(tool: PyTool, eel: EelApi): PyResult<Path> =
     GenericPyToolManagerProvider.managerFor(eel)?.upgrade(tool) ?: noInstaller(tool)
 
-  private fun noInstaller(tool: PyTool<*>): PyResult<Path> =
+  private fun noInstaller(tool: PyTool): PyResult<Path> =
     PyResult.localizedError(message("python.tool.install.no.installer", tool.packageName.name))
 }

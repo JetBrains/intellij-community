@@ -9,6 +9,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.project.projectId
 import com.intellij.python.lsp.core.common.PyLspToolConfigurationDto
 import com.intellij.python.pytools.common.PyToolActionSource
+import com.intellij.python.pytools.common.ProjectLevelPyToolApi
 import com.intellij.python.pytools.common.PyToolApi
 import com.intellij.python.pytools.common.PyToolEventKind
 import com.intellij.python.pytools.common.PyToolLogEventRequest
@@ -29,7 +30,7 @@ private class PyLspToolDetailConfigurable(
   private val request = PyToolRequest(project.projectId(), tool.toolId)
   private val settings: PyLspToolConfigurationDto by lazy {
     val configuration = runWithModalProgressBlocking(project, PyToolsUiBundle.message("settings.external.tools.apply.progress")) {
-      PyToolApi.getInstance().getConfiguration<PyLspToolConfigurationDto>(request)
+      ProjectLevelPyToolApi.getInstance().getConfiguration<PyLspToolConfigurationDto>(request)
     }
     configuration.copy()
   }
@@ -51,9 +52,8 @@ private class PyLspToolDetailConfigurable(
   override fun apply() {
     super.apply()
     runWithModalProgressBlocking(project, PyToolsUiBundle.message("settings.external.tools.apply.progress")) {
-      val api = PyToolApi.getInstance()
-      api.setConfiguration(PyToolSetConfigurationRequest(request, settings))
-      api.logEvent(PyToolLogEventRequest(request, PyToolActionSource.SETTINGS_DETAIL, PyToolEventKind.CONFIGURATION_CHANGED))
+      ProjectLevelPyToolApi.getInstance().setConfiguration(PyToolSetConfigurationRequest(request, settings))
+      PyToolApi.getInstance().logEvent(PyToolLogEventRequest(request, PyToolActionSource.SETTINGS_DETAIL, PyToolEventKind.CONFIGURATION_CHANGED))
     }
   }
 }

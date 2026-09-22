@@ -57,7 +57,7 @@ internal class VenvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
    * `PyToolEvoEnvironmentProvider`, because this node is *always* available rather than available when an executable
    * resolves — but it still takes its name and its statistics identity from the tool rather than spelling them out.
    */
-  private val tool: PyTool<*> get() = PipPyTool.getInstance()
+  private val tool: PyTool get() = PipPyTool.getInstance()
 
   override val toolId: ToolId get() = VENV_TOOL_ID
 

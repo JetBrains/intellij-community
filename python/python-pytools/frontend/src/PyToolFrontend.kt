@@ -38,8 +38,11 @@ interface PyToolFrontend {
   }
 }
 
-/** Marks a tool that appears on the External Tools page and supplies its detail controls. */
-interface ExternalPyToolFrontend<C : PyToolConfigurationDto> : PyToolFrontend {
+/**
+ * The frontend half of a `ProjectLevelPyTool`: the tools shown on the External Tools page, with the detail
+ * controls that page expands. Implemented by the same set of tools as its backend counterpart.
+ */
+interface ProjectLevelPyToolFrontend<C : PyToolConfigurationDto> : PyToolFrontend {
   /** The configuration DTO class that this frontend accepts. */
   val configurationClass: Class<C>
 

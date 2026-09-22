@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.python.black.configuration.BlackFormatterConfiguration
+import com.intellij.python.pytools.backend.ProjectLevelPyTool
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.PyToolsState
 import com.intellij.python.black.common.PyBlackToolConfigurationDto
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
  * the PSF. It reformats source into a single, consistent style, leaving little to configure.
  */
 @ApiStatus.Internal
-class BlackPyTool : PyTool<PyBlackToolConfigurationDto> {
+class BlackPyTool : ProjectLevelPyTool<PyBlackToolConfigurationDto> {
   override val packageName: PyPackageName = PyPackageName.from("black")
   override val minimumSupportedVersion: Version = Version(23, 11, 0)
 

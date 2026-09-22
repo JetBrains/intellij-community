@@ -48,7 +48,7 @@ import kotlin.io.path.pathString
 private const val VERSIONS_KEY: String = "uv.supportedPythonVersions"
 
 internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
-  override val tool: PyTool<*> get() = UvPyTool.getInstance()
+  override val tool: PyTool get() = UvPyTool.getInstance()
   override val label: String get() = PySdkBundle.message("evolution.node.label.uv")
   override val icon get() = PythonUvCommonIcons.UV
   override val toolId: ToolId get() = UV_TOOL_ID

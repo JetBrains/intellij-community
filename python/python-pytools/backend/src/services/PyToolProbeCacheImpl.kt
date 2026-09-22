@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit
 internal class PyToolProbeCacheImpl(private val coroutineScope: CoroutineScope) : PyToolProbeCache {
   private data class VersionKey(val machineInternalName: String, val fusId: String, val path: String)
 
-  private val listingCache: AsyncCache<String, Map<PyTool<*>, InstalledInfo>> = Caffeine.newBuilder()
+  private val listingCache: AsyncCache<String, Map<PyTool, InstalledInfo>> = Caffeine.newBuilder()
     .expireAfterWrite(10, TimeUnit.MINUTES)
     .buildAsync()
 
@@ -40,13 +40,13 @@ internal class PyToolProbeCacheImpl(private val coroutineScope: CoroutineScope) 
     .expireAfterWrite(10, TimeUnit.MINUTES)
     .buildAsync()
 
-  override suspend fun listing(eel: EelApi): Map<PyTool<*>, InstalledInfo> {
+  override suspend fun listing(eel: EelApi): Map<PyTool, InstalledInfo> {
     // No resolvable machine (shouldn't normally happen): list without caching.
     val machine = eel.descriptor.getResolvedEelMachine() ?: return list(eel)
     return listingCache.get(machine.internalName) { _, _ -> coroutineScope.future { list(eel) } }.await()
   }
 
-  override suspend fun version(eelDescriptor: EelDescriptor, tool: PyTool<*>, path: Path): Version? {
+  override suspend fun version(eelDescriptor: EelDescriptor, tool: PyTool, path: Path): Version? {
     val machine = eelDescriptor.getResolvedEelMachine() ?: return probe(tool, path)
     val key = VersionKey(machine.internalName, tool.fusId, path.toString())
     return versionCache.get(key) { _, _ -> coroutineScope.future { Optional.ofNullable(probe(tool, path)) } }
@@ -61,8 +61,8 @@ internal class PyToolProbeCacheImpl(private val coroutineScope: CoroutineScope) 
     versionCache.synchronous().asMap().keys.removeIf { it.machineInternalName == machine.internalName }
   }
 
-  private suspend fun list(eel: EelApi): Map<PyTool<*>, InstalledInfo> =
+  private suspend fun list(eel: EelApi): Map<PyTool, InstalledInfo> =
     GenericPyToolManagerProvider.managerFor(eel)?.list().orEmpty()
 
-  private suspend fun probe(tool: PyTool<*>, path: Path): Version? = tool.validateCustomPath(path).getOrNull()
+  private suspend fun probe(tool: PyTool, path: Path): Version? = tool.validateCustomPath(path).getOrNull()
 }

@@ -45,7 +45,7 @@ private fun EelOsFamily.executableName(binaryName: String): String = when (this)
  * The receiver is the interpreter because that is what determines where to look: the answer is a property of this
  * environment, not of the tool. Only local interpreters are supported for now.
  */
-fun PythonInterpreter.findToolExecutable(tool: PyTool<*>, executableName: String = tool.packageName.name): Path? =
+fun PythonInterpreter.findToolExecutable(tool: PyTool, executableName: String = tool.packageName.name): Path? =
   pythonBinaryPath?.let { binary ->
     val osFamily = binary.getEelDescriptor().osFamily
     binary.resolveSibling(osFamily.executableName(executableName)).takeIf { it.isExecutable() }

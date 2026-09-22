@@ -156,7 +156,7 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
   internal abstract val interpreterType: InterpreterType
 
   /** The tool this creator installs; drives [installExecutable] via [performToolInstallation]. */
-  internal abstract val pyTool: PyTool<*>
+  internal abstract val pyTool: PyTool
 
   internal abstract val toolValidator: ToolValidator<P>
 

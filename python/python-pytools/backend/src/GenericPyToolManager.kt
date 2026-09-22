@@ -14,16 +14,16 @@ import java.nio.file.Path
  */
 interface GenericPyToolManager {
   /** Installs [tool]; returns the resolved executable path. */
-  suspend fun install(tool: PyTool<*>): PyResult<Path>
+  suspend fun install(tool: PyTool): PyResult<Path>
 
   /** Upgrades [tool] to the latest version. */
-  suspend fun upgrade(tool: PyTool<*>): PyResult<Path>
+  suspend fun upgrade(tool: PyTool): PyResult<Path>
 
   /**
    * All managed tools installed in this manager's environment, keyed by [PyTool], with their installed
    * and latest available version (the latest resolved from PyPI). Empty when no managed tool is installed.
    */
-  suspend fun list(): Map<PyTool<*>, InstalledInfo>
+  suspend fun list(): Map<PyTool, InstalledInfo>
 }
 
 /**

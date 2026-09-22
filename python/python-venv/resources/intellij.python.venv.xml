@@ -20,7 +20,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <python.community.common.toolToIconMapper implementation="com.intellij.python.venv.PyReqToolIdToIconMapper"/>
-    <!-- Deliberately not an ExternalPyTool or PackageManagerPyTool, so pip stays off both settings pages. -->
+    <!-- Deliberately not an ProjectLevelPyTool or PackageManagerPyTool, so pip stays off both settings pages. -->
     <python.pytools.pyTool implementation="com.intellij.python.venv.PipPyTool"/>
   </extensions>
 

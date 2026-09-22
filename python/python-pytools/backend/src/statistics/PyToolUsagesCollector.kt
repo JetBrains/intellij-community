@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
+import com.intellij.python.pytools.backend.ProjectLevelPyTool
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.common.PyToolActionSource
 import com.intellij.util.ThreeState
@@ -15,10 +16,10 @@ class PyToolUsagesCollector : CounterUsagesCollector() {
   object Helper {
     /**
      * Single emit point for `configuration.changed`. The tool itself supplies the field values
-     * via [PyTool.configurationFusSnapshot], so every call site only needs the tool reference
-     * plus the originating UI [source].
+     * via [ProjectLevelPyTool.configurationFusSnapshot], so every call site only needs the tool
+     * reference plus the originating UI [source].
      */
-    fun logConfigurationChanged(project: Project, tool: PyTool<*>, source: PyToolActionSource) {
+    fun logConfigurationChanged(project: Project, tool: ProjectLevelPyTool<*>, source: PyToolActionSource) {
       val s = tool.configurationFusSnapshot(project)
       CONFIGURATION_CHANGED.log(
         project,
@@ -39,10 +40,10 @@ class PyToolUsagesCollector : CounterUsagesCollector() {
       DISABLE_RULE.log(project, forFile)
     }
 
-    fun logToolInstalled(project: Project, tool: PyTool<*>, source: PyToolActionSource) {
+    fun logToolInstalled(project: Project, tool: PyTool, source: PyToolActionSource) {
       TOOL_INSTALLED.log(project, tool.fusId, source)
     }
-    fun logToolUpdated(project: Project, tool: PyTool<*>, source: PyToolActionSource) {
+    fun logToolUpdated(project: Project, tool: PyTool, source: PyToolActionSource) {
       TOOL_UPDATED.log(project, tool.fusId, source)
     }
   }

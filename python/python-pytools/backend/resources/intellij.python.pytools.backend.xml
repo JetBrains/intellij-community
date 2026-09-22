@@ -36,6 +36,8 @@
                         serviceImplementation="com.intellij.python.pytools.backend.services.PyToolProbeCacheImpl"/>
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.python.pytools.backend.PyToolApiProvider"
                                             apiInterfaces="com.intellij.python.pytools.common.PyToolApi"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.python.pytools.backend.ProjectLevelPyToolApiProvider"
+                                            apiInterfaces="com.intellij.python.pytools.common.ProjectLevelPyToolApi"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.python.pytools.backend.statistics.PyToolUsagesCollector"/>
   </extensions>
 </idea-plugin>

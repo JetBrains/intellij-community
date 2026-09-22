@@ -54,7 +54,7 @@ private const val UVX_COMMAND: String = "uvx"
  * pyright-langserver).
  */
 suspend fun ModuleOrProject.toolExecutableWithBaseArgs(
-  tool: PyTool<*>,
+  tool: PyTool,
   executableName: String = tool.packageName.name,
   workingDir: Path? = null,
 ): PyResult<Pair<BinaryToExec, List<String>>> {
@@ -84,7 +84,7 @@ suspend fun ModuleOrProject.toolExecutableWithBaseArgs(
 
 /** Runs [tool] here with [args], returning its stdout, or its stderr as the failure. */
 suspend fun ModuleOrProject.executeTool(
-  tool: PyTool<*>,
+  tool: PyTool,
   args: Args,
   execOptions: ExecOptions = ExecOptions(),
 ): PyResult<String> = withContext(Dispatchers.IO) {
@@ -103,7 +103,7 @@ suspend fun ModuleOrProject.executeTool(
 
 /** Runs [tool] here, handing the live process to [processSemiInteractiveFun] instead of collecting its output. */
 suspend fun <T> ModuleOrProject.executeToolInteractive(
-  tool: PyTool<*>,
+  tool: PyTool,
   args: Args,
   workingDir: Path? = null,
   execOptions: ExecOptions = ExecOptions(),
@@ -119,7 +119,7 @@ suspend fun <T> ModuleOrProject.executeToolInteractive(
 }
 
 /** [tool]'s own reported version, as run here — `<tool> --version`, parsed. */
-suspend fun ModuleOrProject.resolveToolVersion(tool: PyTool<*>): PyResult<Version> {
+suspend fun ModuleOrProject.resolveToolVersion(tool: PyTool): PyResult<Version> {
   val versionOutput = executeTool(tool, Args("--version")).getOr { return it }
   return versionOutput.parseVersion(tool.packageName.name)
 }

@@ -28,14 +28,14 @@ fun PyExecutable.setCustomExecutablePath(eelDescriptor: EelDescriptor, path: Pat
 
 /**
  * Tell every open project that resolves this tool on [eelDescriptor]'s machine that its executable
- * changed. See [PyTool.onExecutableChanged].
+ * changed. See [ProjectLevelPyTool.onExecutableChanged].
  *
  * Both the custom path store and the detection cache are application-level and keyed by machine. So
  * a change there reaches every project that resolves the tool on that machine. It must not disturb a
  * project that resolves the tool on another machine, because its servers and caches are still correct.
  */
 @ApiStatus.Internal
-fun PyTool<*>.notifyExecutableChanged(eelDescriptor: EelDescriptor) {
+fun PyTool.notifyExecutableChanged(eelDescriptor: EelDescriptor) {
   val machine = eelDescriptor.getResolvedEelMachine() ?: return
   for (project in ProjectManager.getInstance().openProjects) {
     // openProjects can hand back one that is already closing.
@@ -43,7 +43,7 @@ fun PyTool<*>.notifyExecutableChanged(eelDescriptor: EelDescriptor) {
     if (project.getEelDescriptor().getResolvedEelMachine() != machine) continue
     // A failure in one project must not keep the projects after it on the old binary.
     try {
-      onExecutableChanged(project)
+      (this as? ProjectLevelPyTool<*>)?.onExecutableChanged(project)
     }
     catch (e: CancellationException) {
       throw e
@@ -76,7 +76,7 @@ suspend fun findExecutableInPath(eelApi: EelApi, executableName: String): Path? 
  * The tool listing and the versions [PyToolProbeCache] holds for that machine go for the same reason: an install
  * adds a tool to the listing, and an upgrade changes the version behind an unchanged path.
  */
-private fun PyTool<*>.invalidateCachesAfter(result: PyResult<Path>, eel: EelApi) {
+private fun PyTool.invalidateCachesAfter(result: PyResult<Path>, eel: EelApi) {
   if (result !is Result.Success) return
   val cache = PyExecutableCache.getInstance()
   executables.forEach { cache.invalidate(eel.descriptor, it) }
@@ -89,7 +89,7 @@ private fun PyTool<*>.invalidateCachesAfter(result: PyResult<Path>, eel: EelApi)
  * path, or an error when the tool has no installer ([PyTool.manager] is `null`). On success the tool's cached
  * detection is invalidated ([invalidateCachesAfter]) so callers see the new binary immediately.
  */
-suspend fun PyTool<*>.performToolInstallation(eel: EelApi): PyResult<Path> =
+suspend fun PyTool.performToolInstallation(eel: EelApi): PyResult<Path> =
   (manager?.install(this, eel) ?: PyResult.localizedError(message("python.tool.install.no.installer", packageName.name)))
     .also { invalidateCachesAfter(it, eel) }
 
@@ -98,6 +98,6 @@ suspend fun PyTool<*>.performToolInstallation(eel: EelApi): PyResult<Path> =
  * [PyTool.manager]. Returns the resolved executable path, or an error when the tool has no installer. On success
  * the tool's cached detection is invalidated ([invalidateCachesAfter]) so a moved/upgraded binary is re-resolved.
  */
-suspend fun PyTool<*>.performToolUpgrade(eel: EelApi): PyResult<Path> =
+suspend fun PyTool.performToolUpgrade(eel: EelApi): PyResult<Path> =
   (manager?.upgrade(this, eel) ?: PyResult.localizedError(message("python.tool.install.no.installer", packageName.name)))
     .also { invalidateCachesAfter(it, eel) }

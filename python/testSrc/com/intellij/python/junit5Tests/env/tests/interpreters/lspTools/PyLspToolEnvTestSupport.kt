@@ -170,7 +170,7 @@ internal class PyLspToolEnvFixtures {
  */
 internal suspend fun Module.enableLspToolAndInstall(
   project: Project,
-  pyTool: PyTool<*>,
+  pyTool: PyTool,
   toolInstalled: AtomicBoolean,
   configure: () -> Unit,
 ) {

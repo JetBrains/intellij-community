@@ -7,17 +7,12 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.project.findProject
-import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.python.pytools.common.PyToolApi
-import com.intellij.python.pytools.common.PyToolConfigurationDto
 import com.intellij.python.pytools.common.PyToolDescriptorDto
-import com.intellij.python.pytools.common.PyToolEnabledStateDto
 import com.intellij.python.pytools.common.PyToolEventKind
 import com.intellij.python.pytools.common.PyToolId
 import com.intellij.python.pytools.common.PyToolLogEventRequest
-import com.intellij.python.pytools.common.PyToolSetEnabledRequest
-import com.intellij.python.pytools.common.PyToolSetConfigurationRequest
 import com.intellij.python.pytools.common.PyToolOperationResultDto
 import com.intellij.python.pytools.common.PyToolPathDto
 import com.intellij.python.pytools.common.PyToolPathKind
@@ -49,25 +44,6 @@ internal class PyToolApiProvider : RemoteApiProvider {
 }
 
 private object PyToolApiImpl : PyToolApi {
-  override suspend fun isStateInitialized(projectId: ProjectId): Boolean =
-    PyToolsState.getInstance(projectId.findProject()).isInitialized()
-
-  override suspend fun initializeState(projectId: ProjectId) {
-    val project = projectId.findProject()
-    val entries = PyTool.EP_NAME.extensionList.mapNotNull { tool ->
-      tool.migrateLegacyState(project)?.let { PyToolEnabledStateDto(PyToolId(tool.packageName.name), it.enabled) }
-    }
-    PyToolsState.getInstance(project).initialize(entries)
-  }
-
-  override suspend fun observeEnabledStates(projectId: ProjectId) =
-    PyToolsState.getInstance(projectId.findProject()).enabledStates()
-
-  override suspend fun getConfiguration(request: PyToolRequest): PyToolConfigurationDto? {
-    val project = request.projectId.findProject()
-    return requireTool(request).configurationState(project)
-  }
-
   override suspend fun getStates(request: PyToolsRequest): List<PyToolStateDto> {
     val project = request.projectId.findProject()
     val eel = project.getEelDescriptor().toEelApi()
@@ -78,7 +54,7 @@ private object PyToolApiImpl : PyToolApi {
     // version until the slowest tool had answered.
     return coroutineScope {
       executables.map { executable ->
-        async { state(project, executable, installed = (executable as? PyTool<*>)?.let { installed[it] }) }
+        async { buildToolState(project, executable, installed = (executable as? PyTool)?.let { installed[it] }) }
       }.awaitAll()
     }
   }
@@ -121,7 +97,7 @@ private object PyToolApiImpl : PyToolApi {
    * cached `<path> --version` run otherwise.
    */
   private suspend fun resolveVersion(project: Project, executable: PyExecutable, path: Path): String? {
-    val tool = executable as? PyTool<*> ?: return null
+    val tool = executable as? PyTool ?: return null
     val descriptor = project.getEelDescriptor()
     val managed = PyToolProbeCache.getInstance().listing(descriptor.toEelApi())[tool]
       ?.takeIf { it.path.normalize() == path.normalize() }
@@ -144,22 +120,7 @@ private object PyToolApiImpl : PyToolApi {
     val path = request.path?.let { EelPath.parse(it, descriptor).asNioPath() }
     tool.setCustomExecutablePath(descriptor, path)
     tool.notifyExecutableChanged(descriptor)
-    return state(project, tool)
-  }
-
-  override suspend fun setEnabled(request: PyToolSetEnabledRequest): PyToolStateDto {
-    val project = request.tool.projectId.findProject()
-    val tool = requireTool(request.tool)
-    PyToolsState.getInstance(project).setEnabled(request.tool.toolId, request.enabled)
-    tool.onEnabledChanged(project, request.enabled)
-    return state(project, tool)
-  }
-
-  override suspend fun setConfiguration(request: PyToolSetConfigurationRequest): PyToolStateDto {
-    val project = request.tool.projectId.findProject()
-    val tool = requireTool(request.tool)
-    tool.applyConfigurationStateIfCompatible(project, request.configuration)
-    return state(project, tool)
+    return buildToolState(project, tool)
   }
 
   override suspend fun install(request: PyToolRequest): PyToolOperationResultDto =
@@ -196,7 +157,8 @@ private object PyToolApiImpl : PyToolApi {
     val project = request.tool.projectId.findProject()
     val tool = requireTool(request.tool)
     when (request.event) {
-      PyToolEventKind.CONFIGURATION_CHANGED -> PyToolUsagesCollector.Helper.logConfigurationChanged(project, tool, request.source)
+      PyToolEventKind.CONFIGURATION_CHANGED ->
+        (tool as? ProjectLevelPyTool<*>)?.let { PyToolUsagesCollector.Helper.logConfigurationChanged(project, it, request.source) }
       PyToolEventKind.INSTALLED -> PyToolUsagesCollector.Helper.logToolInstalled(project, tool, request.source)
       PyToolEventKind.UPDATED -> PyToolUsagesCollector.Helper.logToolUpdated(project, tool, request.source)
     }
@@ -204,14 +166,14 @@ private object PyToolApiImpl : PyToolApi {
 
   private suspend fun operate(
     request: PyToolRequest,
-    operation: suspend (Project, PyTool<*>) -> PyResult<Path>,
+    operation: suspend (Project, PyTool) -> PyResult<Path>,
   ): PyToolOperationResultDto {
     val project = request.projectId.findProject()
     val tool = requireTool(request)
     return when (val result = operation(project, tool)) {
       is Result.Success -> {
         val path = result.result
-        val dto = state(project, tool, knownPath = path)
+        val dto = buildToolState(project, tool, knownPath = path)
         // The user just asked for this install or upgrade, so resolving the new version here is worth a process.
         PyToolOperationResultDto.Success(dto.takeIf { it.version != null } ?: dto.copy(version = resolveVersion(project, tool, path)))
       }
@@ -219,71 +181,6 @@ private object PyToolApiImpl : PyToolApi {
     }
   }
 
-  private suspend fun state(
-    project: Project,
-    executable: PyExecutable,
-    knownPath: Path? = null,
-    installed: InstalledInfo? = null,
-  ): PyToolStateDto {
-    val descriptor = project.getEelDescriptor()
-    val custom = executable.getCustomExecutablePath(descriptor)
-    val path = custom ?: knownPath ?: PyExecutableCache.getInstance().get(descriptor, executable)
-    // What the manager reports counts only when the path resolved above is the very file it installed. Another
-    // path can hold a different build of the tool, or another program altogether, and an upgrade through the
-    // manager would not touch it. A path the manager reports through a symlink compares unequal here, which
-    // costs a version probe but never reports a version or an upgrade of a different file.
-    val managed = installed?.takeIf { path != null && it.path.normalize() == path.normalize() }
-    val details = when (executable) {
-      is PyTool<*> -> PyToolDetails(
-        // Only the version the manager already knows. Running `<path> --version` for every tool of a page
-        // costs a process per tool, so a version the manager cannot supply is asked for through getVersion,
-        // where the page shows it.
-        version = managed?.installedVersion,
-        minimumSupportedVersion = executable.minimumSupportedVersion?.toCompactString(),
-        canInstall = executable.manager?.canInstall(descriptor) == true,
-        configuration = executable.configurationState(project),
-        selectedAsTypeEngine = executable.isSelectedAsTypeEngine(project),
-      )
-      else -> PyToolDetails()
-    }
-    return PyToolStateDto(
-      toolId = PyToolId(executable.fusId),
-      descriptor = PyToolDescriptorDto(details.minimumSupportedVersion),
-      enabled = PyToolsState.getInstance(project).isEnabled(PyToolId(executable.fusId)),
-      path = when {
-        custom != null -> PyToolPathDto(custom.toString(), PyToolPathKind.CUSTOM)
-        path != null -> PyToolPathDto(path.toString(), PyToolPathKind.DETECTED)
-        else -> null
-      },
-      version = details.version,
-      canInstall = details.canInstall,
-      // `uv tool list --outdated` repeats the installed version when a tool is up to date; report an
-      // upgrade only when the latest one is actually newer.
-      latestVersion = managed?.latestVersion?.takeIf {
-        PyPackageVersionComparator.STR_COMPARATOR.compare(it, managed.installedVersion) > 0
-      },
-      configuration = details.configuration,
-      selectedAsTypeEngine = details.selectedAsTypeEngine,
-    )
-  }
-
-  private fun requireTool(request: PyToolRequest): PyTool<*> =
+  private fun requireTool(request: PyToolRequest): PyTool =
     PyTool.findByPackageName(request.toolId.value) ?: error("Unknown Python tool: " + request.toolId.value)
 }
-
-private fun <C : PyToolConfigurationDto> PyTool<C>.applyConfigurationStateIfCompatible(
-  project: Project,
-  state: PyToolConfigurationDto,
-) {
-  val currentState = configurationState(project) ?: return
-  if (!currentState.javaClass.isInstance(state)) return
-  applyConfigurationState(project, currentState.javaClass.cast(state))
-}
-
-private data class PyToolDetails(
-  val version: String? = null,
-  val minimumSupportedVersion: String? = null,
-  val canInstall: Boolean = false,
-  val configuration: PyToolConfigurationDto? = null,
-  val selectedAsTypeEngine: Boolean = false,
-)

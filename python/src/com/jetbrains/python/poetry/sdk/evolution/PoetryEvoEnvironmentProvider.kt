@@ -48,7 +48,7 @@ import kotlin.io.path.pathString
 private const val VERSIONS_KEY: String = "poetry.systemPythons"
 
 internal class PoetryEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
-  override val tool: PyTool<*> get() = PoetryPyTool.getInstance()
+  override val tool: PyTool get() = PoetryPyTool.getInstance()
   override val label: String get() = PySdkBundle.message("evolution.node.label.poetry")
   override val icon get() = PythonCommunityImplPoetryCommonIcons.Poetry
   override val toolId: ToolId get() = POETRY_TOOL_ID

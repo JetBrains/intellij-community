@@ -5,11 +5,11 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.python.lsp.core.common.PyLspToolConfigurationDto
 import com.intellij.python.pytools.common.PyToolDescriptorDto
-import com.intellij.python.pytools.frontend.ExternalPyToolFrontend
+import com.intellij.python.pytools.frontend.ProjectLevelPyToolFrontend
 import org.jetbrains.annotations.Nls
 
 /** Defines the common controls and feature summary for an LSP tool. */
-interface LspPyToolFrontend : ExternalPyToolFrontend<PyLspToolConfigurationDto> {
+interface LspPyToolFrontend : ProjectLevelPyToolFrontend<PyLspToolConfigurationDto> {
   override val configurationClass: Class<PyLspToolConfigurationDto>
     get() = PyLspToolConfigurationDto::class.java
 

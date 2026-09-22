@@ -45,7 +45,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 private const val ENVS_TTL_MS: Long = 30_000
 
 internal class HatchEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
-  override val tool: PyTool<*> get() = HatchPyTool.getInstance()
+  override val tool: PyTool get() = HatchPyTool.getInstance()
   override val label: String get() = PySdkBundle.message("evolution.node.label.hatch")
   override val icon get() = PythonHatchCommonIcons.Logo
   override val toolId: ToolId get() = HATCH_TOOL_ID

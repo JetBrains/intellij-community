@@ -2,15 +2,20 @@
 package com.intellij.python.pytools.backend
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
-import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.python.pytools.backend.statistics.PyToolFusSnapshot
-import com.intellij.python.pytools.common.PyToolConfigurationDto
 import com.jetbrains.python.packaging.PyPackageName
 
-/** Defines the backend behavior and state for a Python tool. */
-interface PyTool<C : PyToolConfigurationDto> : PyExecutable {
+/**
+ * A Python tool the IDE can locate, install and upgrade.
+ *
+ * What it resolves to is per Eel machine, as [PyExecutable] describes: the custom path and the detection
+ * cache are keyed by machine, so the same tool is one binary on the host and another in WSL or a container.
+ * Nothing here is per project, which is why no member takes one.
+ *
+ * Everything scoped to a project — the enabled flag, the configuration, the lifecycle hooks — belongs to
+ * [ProjectLevelPyTool], which a tool that has any of it mixes in. A package manager does not.
+ */
+interface PyTool : PyExecutable {
   /** The normalized Python package that installs this tool. */
   val packageName: PyPackageName
 
@@ -38,64 +43,11 @@ interface PyTool<C : PyToolConfigurationDto> : PyExecutable {
    */
   val minimumSupportedVersion: Version? get() = null
 
-  /**
-   * Migrates the old project state when [PyToolsState] has no stored state.
-   *
-   * The implementation must reset the old state. This reset makes the migration one-way.
-   */
-  fun migrateLegacyState(project: Project): PyToolsState.ToolEntry? = null
-
-  /** Handles an applied change to the enabled state. An LSP tool can start or stop its server here. */
-  fun onEnabledChanged(project: Project, enabled: Boolean) {}
-
-  /**
-   * Invoked when the executable this tool would run may have changed. Any persisting is already done
-   * and the detection cache already dropped, so an implementation resolving the tool here sees the
-   * new binary.
-   *
-   * These changes invoke it:
-   * - An edit of the custom path, and an install or an upgrade through [manager]. The path store, the
-   *   detection cache and such an install are application-level and keyed by Eel machine. So each of
-   *   these changes reaches every open [project] that resolves this tool on that machine. See
-   *   [notifyExecutableChanged].
-   * - For an LSP tool, a new SDK of a module, and a new installed version of the tool in an SDK. The
-   *   Python LSP integration sends these, and each reaches only the [project] it belongs to. It
-   *   merges a burst of these changes into one call.
-   *
-   * A tool that runs a server implements this, because the server it started is still the old binary
-   * and nothing else restarts it. So does a tool that caches anything derived from its binary, because
-   * the new binary can answer differently.
-   */
-  fun onExecutableChanged(project: Project) {}
-
-  /**
-   * Returns true when the project uses this tool as its type engine.
-   *
-   * An active type engine remains active when its separate enabled state is false.
-   */
-  fun isSelectedAsTypeEngine(project: Project): Boolean = false
-
-  /** Returns the serializable tool configuration for the frontend. */
-  fun configurationState(project: Project): C? = null
-
-  /** Applies a serializable tool configuration from the frontend. */
-  fun applyConfigurationState(project: Project, state: C) {}
-
-  /**
-   * Returns all configuration data that this tool records for feature usage statistics.
-   *
-   * The default snapshot contains the enabled state and the presence of a custom path. A tool can add its feature settings.
-   */
-  fun configurationFusSnapshot(project: Project): PyToolFusSnapshot = PyToolFusSnapshot(
-    enabled = PyToolsState.getInstance(project).isEnabled(this),
-    customPath = getCustomExecutablePath(project.getEelDescriptor()) != null,
-  )
-
   companion object {
-    val EP_NAME: ExtensionPointName<PyTool<*>> = ExtensionPointName.create("com.intellij.python.pytools.pyTool")
+    val EP_NAME: ExtensionPointName<PyTool> = ExtensionPointName.create("com.intellij.python.pytools.pyTool")
 
     /** Finds a tool by its normalized Python package name. */
-    fun findByPackageName(packageName: String): PyTool<*>? {
+    fun findByPackageName(packageName: String): PyTool? {
       val normalized = PyPackageName.from(packageName).name
       return EP_NAME.extensionList.firstOrNull { it.packageName.name == normalized }
     }
@@ -107,10 +59,4 @@ interface PyTool<C : PyToolConfigurationDto> : PyExecutable {
 }
 
 /** Marks a backend tool as a package manager that the Package Managers page can detect. */
-interface PackageManagerPyTool : PyTool<PyToolConfigurationDto>
-
-/** Returns true when the user enabled this tool for the project. */
-fun PyTool<*>.isEnabledOn(project: Project): Boolean = PyToolsState.getInstance(project).isEnabled(this)
-
-/** Returns true when the tool is enabled or selected as the project type engine. */
-fun PyTool<*>.isActiveOn(project: Project): Boolean = isEnabledOn(project) || isSelectedAsTypeEngine(project)
+interface PackageManagerPyTool : PyTool

@@ -27,7 +27,7 @@ import kotlinx.coroutines.withContext
 
 class ToolValidator<P : PathHolder>(
   val fileSystem: FileSystem<P>,
-  val tool: PyTool<*>,
+  val tool: PyTool,
   override val backProperty: ObservableMutableProperty<ValidatedPath.Executable<P>?>,
   propertyGraph: PropertyGraph,
   val toolValidator: suspend (P) -> PyResult<Version> = { fileSystem.getBinaryToExec(it).getToolVersion(tool.fusId) },

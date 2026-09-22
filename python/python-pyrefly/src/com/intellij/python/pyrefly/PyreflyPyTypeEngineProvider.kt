@@ -8,7 +8,7 @@ import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProvider
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider
 import com.intellij.python.pyrefly.typeEngine.PyreflyLspTypeEngineProvider
-import com.intellij.python.pytools.backend.isActiveOn
+import com.intellij.python.lsp.core.isActiveOn
 
 internal class PyreflyPyTypeEngineProvider : PyTypeEngineProvider {
   override val pyTypeEngineType: PyTypeEngineType

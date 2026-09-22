@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Version
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.project.projectId
+import com.intellij.python.pytools.common.ProjectLevelPyToolApi
 import com.intellij.python.pytools.common.PyToolApi
 import com.intellij.python.pytools.common.PyToolSdkDto
 import com.intellij.python.pytools.common.PyToolSetEnabledRequest
@@ -15,7 +16,7 @@ import com.intellij.python.pytools.common.PyToolRequest
 import com.intellij.python.pytools.common.PyToolsRequest
 import com.intellij.python.pytools.frontend.PyToolFrontend as PyTool
 import com.intellij.python.pytools.frontend.PyToolsFrontendState
-import com.intellij.python.pytools.frontend.ExternalPyToolFrontend as ExternalPyTool
+import com.intellij.python.pytools.frontend.ProjectLevelPyToolFrontend
 import com.intellij.python.pytools.common.PyToolActionSource
 import com.intellij.python.pytools.common.PyToolEventKind
 import com.intellij.python.pytools.common.PyToolEnabledStateDto
@@ -59,7 +60,7 @@ internal interface RowHost : PathActionHost {
 
 /**
  * The External Tools page body: a scrollable vertical stack of [PyExternalToolRowPanel]s (one per
- * [ExternalPyTool]) that replaces the former table. Owns the row list, the probe orchestration, and
+ * [ProjectLevelPyToolFrontend]) that replaces the former table. Owns the row list, the probe orchestration, and
  * the page lifecycle hooks ([onShown] / [isModified] / [apply] / [reset] / [disposeUIResources])
  * that the configurable delegates to, plus the settings-search select/scroll behaviour.
  *
@@ -85,7 +86,7 @@ internal class PyExternalToolsList(
    * baseline, so a seeded row is not modified and Apply sends no `setEnabled` for it.
    */
   private val rows: List<ToolRow> = PyTool.extensionList
-    .filterIsInstance<ExternalPyTool<*>>()
+    .filterIsInstance<ProjectLevelPyToolFrontend<*>>()
     .sortedBy { it.presentableName.lowercase() }
     .map { tool ->
       val enabled = enabledStates.isEnabled(tool.toolId)
@@ -227,6 +228,7 @@ internal class PyExternalToolsList(
       scope.launch { loadPath(row) }
       scope.launch { loadConfiguration(row) }
       scope.launch { loadState(row) }
+      scope.launch { loadConfiguration(row) }
     }
     scope.launch { probeAllSdks() }
   }
@@ -251,7 +253,7 @@ internal class PyExternalToolsList(
   private suspend fun loadConfiguration(row: ToolRow) {
     // A tool that reports no configuration leaves the row uninformed on purpose: the state settles it, and
     // until then the header says nothing rather than claiming the tool has no features selected.
-    row.configuration = PyToolApi.getInstance().getConfiguration(
+    row.configuration = ProjectLevelPyToolApi.getInstance().getConfiguration(
       PyToolRequest(project.projectId(), row.tool.toolId),
     ) ?: return
     row.configurationLoaded = true
@@ -349,7 +351,7 @@ internal class PyExternalToolsList(
       project,
       PyToolsUiBundle.message("settings.external.tools.apply.progress"),
     ) {
-      PyToolApi.getInstance().setEnabled(
+      ProjectLevelPyToolApi.getInstance().setEnabled(
         PyToolSetEnabledRequest(PyToolRequest(project.projectId(), row.tool.toolId), row.staged.enabled),
       )
     }

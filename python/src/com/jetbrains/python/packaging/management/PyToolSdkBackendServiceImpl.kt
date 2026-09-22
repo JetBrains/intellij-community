@@ -24,7 +24,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.sdk.pythonSdk
 
 internal class PyToolSdkBackendServiceImpl : PyToolSdkBackendService {
-  override suspend fun getStates(project: Project, tool: PyTool<*>): List<PyToolSdkStateDto> =
+  override suspend fun getStates(project: Project, tool: PyTool): List<PyToolSdkStateDto> =
     projectSdks(project).map { sdk -> sdkState(tool, sdk) }
 
   override suspend fun getDependencyGroups(project: Project, request: PyToolSdkRequest): List<PyToolDependencyGroupDto> {
@@ -36,7 +36,7 @@ internal class PyToolSdkBackendServiceImpl : PyToolSdkBackendService {
 
   override suspend fun install(
     project: Project,
-    tool: PyTool<*>,
+    tool: PyTool,
     request: PyToolSdkInstallRequest,
   ): PyToolSdkOperationResultDto {
     val sdk = requireSdk(project, request.target.sdk)
@@ -49,7 +49,7 @@ internal class PyToolSdkBackendServiceImpl : PyToolSdkBackendService {
     }
   }
 
-  private suspend fun sdkState(tool: PyTool<*>, sdk: Sdk): PyToolSdkStateDto {
+  private suspend fun sdkState(tool: PyTool, sdk: Sdk): PyToolSdkStateDto {
     val path = sdk.pythonInterpreterAsync().findToolExecutable(tool)
     val version = path?.let {
       when (val result = tool.validateCustomPath(it)) {

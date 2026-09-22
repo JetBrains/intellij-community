@@ -22,7 +22,7 @@ const val LSP_TOOLS_STORAGE_FILE: String = "pyLspTools.xml"
  * discovery, and custom paths.
  */
 interface PyLspToolSettings {
-  @Deprecated("replaced with PyToolState", ReplaceWith("PyTool.isEnabledOn(project)"))
+  @Deprecated("replaced with PyToolState", ReplaceWith("ProjectLevelPyTool.isEnabledOn(project)"))
   var enabled: Boolean
   var inspections: Boolean
   var completions: Boolean?

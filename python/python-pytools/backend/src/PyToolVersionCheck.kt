@@ -69,6 +69,6 @@ suspend fun BinaryToExec.getToolVersion(toolVersionPrefix: String): PyResult<Ver
  */
 @ApiStatus.Internal
 @PyInternalExecApi
-suspend fun PyTool<*>.validateCustomPath(path: Path): PyResult<Version> {
+suspend fun PyTool.validateCustomPath(path: Path): PyResult<Version> {
   return BinOnEel(path).getToolVersion(packageName.name)
 }

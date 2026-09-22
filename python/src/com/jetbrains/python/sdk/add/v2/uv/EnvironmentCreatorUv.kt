@@ -88,7 +88,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
   errorSink: ErrorSink,
 ) : CustomNewEnvironmentCreator<P>(model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.UV
-  override val pyTool: PyTool<*> = UvPyTool.getInstance()
+  override val pyTool: PyTool = UvPyTool.getInstance()
   override val pyToolPresentableName: String = "uv"
   override val toolValidator: ToolValidator<P> = model.uvViewModel.toolValidator
   override val globalSitePackage: Boolean get() = model.uvViewModel.inheritSitePackages.get()

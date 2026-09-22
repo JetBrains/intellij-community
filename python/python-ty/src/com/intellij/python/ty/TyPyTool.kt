@@ -8,7 +8,7 @@ import com.intellij.python.lsp.core.PyLspTool
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.pytools.backend.PyTool
-import com.intellij.python.pytools.backend.isActiveOn
+import com.intellij.python.lsp.core.isActiveOn
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon

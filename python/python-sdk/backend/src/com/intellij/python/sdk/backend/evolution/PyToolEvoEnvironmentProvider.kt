@@ -30,7 +30,7 @@ abstract class PyToolEvoEnvironmentProvider : PyEvoEnvironmentProvider {
    * The tool behind this node. A property rather than a constructor parameter so the lookup stays lazy: providers are
    * instantiated when the extension list is first read, which is not a good time to reach for a service.
    */
-  protected abstract val tool: PyTool<*>
+  protected abstract val tool: PyTool
 
   abstract override val label: @Nls String
 

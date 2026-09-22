@@ -125,7 +125,7 @@ internal sealed interface CliCommandResult {
 internal suspend fun runCliCommand(
   moduleOrProject: ModuleOrProject,
   service: PyPackagingToolWindowService,
-  tool: PyTool<*>,
+  tool: PyTool,
   args: List<String>,
 ): CliCommandResult =
   when (val result = tool.executeOn(moduleOrProject, Args(*args.toTypedArray()))) {
