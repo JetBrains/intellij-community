@@ -55,6 +55,15 @@ interface WelcomeRightTabContentProvider {
   class ThemePreviewSample(
     val fileName: String,
     val text: @NlsSafe String,
+    /**
+     * Maps a `<tag>` in [text] to the external name of the colour-scheme key that paints it.
+     *
+     * A lexer alone colours keywords, strings, numbers, comments and punctuation. It cannot tell a class
+     * from a field, because that needs analysis, and the welcome screen has no project to analyse. So the
+     * sample states its own semantics, the way the colour-scheme settings preview marks up its demo text.
+     * The tags are cut out of the text before it reaches the editor.
+     */
+    val highlightTags: Map<String, String> = emptyMap(),
   )
 
   fun getFeatureButtonModels(project: Project): List<FeatureButtonModel>

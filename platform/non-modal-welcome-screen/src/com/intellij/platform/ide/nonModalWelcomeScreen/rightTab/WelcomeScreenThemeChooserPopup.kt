@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
+import com.intellij.application.options.colors.highlighting.HighlightData
+import com.intellij.application.options.colors.highlighting.HighlightsExtractor
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafReference
 import com.intellij.openapi.Disposable
@@ -9,6 +11,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.ui.popup.JBPopup
@@ -157,15 +160,26 @@ internal class WelcomeScreenThemeChooserPopup(
   }
 
   /**
-   * Read-only editor beside the list. It needs no project and no backend: the highlighter comes from the
-   * file type alone, so it is lexer-based.
+   * Read-only editor beside the list. It needs no project and no backend. The highlighter comes from the
+   * file type, so it is lexer-based, and the sample declares the rest of its colours through tags.
    *
    * The editor follows [EditorColorsManager.TOPIC] rather than being redrawn by the chooser, because a
    * preview applies the theme for real and that is what changes the global scheme.
    */
   private fun createCodePreview(sample: WelcomeRightTabContentProvider.ThemePreviewSample, parent: Disposable): JComponent {
+    val highlighterFactory = EditorHighlighterFactory.getInstance()
+
+    // Building a highlighter for the file name first loads the language support, which is what registers
+    // the attribute keys the tags name below. Resolving a name earlier would hand back a bare key,
+    // without the fallback the language gives it, and nothing would paint it.
+    highlighterFactory.createEditorHighlighter(EditorColorsManager.getInstance().globalScheme, sample.fileName, null)
+
+    val tags = sample.highlightTags.mapValues { TextAttributesKey.createTextAttributesKey(it.value) }
+    val declaredHighlights = mutableListOf<HighlightData>()
+    val text = HighlightsExtractor(tags).extractHighlights(sample.text, declaredHighlights)
+
     val editorFactory = EditorFactory.getInstance()
-    val document = editorFactory.createDocument(sample.text)
+    val document = editorFactory.createDocument(text)
     val editor = editorFactory.createViewer(document, null, EditorKind.PREVIEW) as EditorEx
     Disposer.register(parent) { editorFactory.releaseEditor(editor) }
 
@@ -190,12 +204,18 @@ internal class WelcomeScreenThemeChooserPopup(
     fun applyGlobalScheme() {
       val scheme = EditorColorsManager.getInstance().globalScheme
       editor.colorsScheme = scheme
-      editor.highlighter = EditorHighlighterFactory.getInstance()
-        .createEditorHighlighter(scheme, sample.fileName, null)
+      editor.highlighter = highlighterFactory.createEditorHighlighter(scheme, sample.fileName, null)
       editor.backgroundColor = scheme.defaultBackground
     }
 
     applyGlobalScheme()
+
+    // Added once, not per scheme: each highlighter carries the scheme key rather than resolved colours,
+    // so it repaints itself when the theme changes. Each one also lays an erase marker over the lexer's
+    // own attributes underneath, which is what lets a declared colour win.
+    for (highlight in declaredHighlights) {
+      highlight.addHighlToView(editor, EditorColorsManager.getInstance().globalScheme, emptyMap())
+    }
     ApplicationManager.getApplication().messageBus.connect(parent)
       .subscribe(EditorColorsManager.TOPIC, EditorColorsListener { applyGlobalScheme() })
 
