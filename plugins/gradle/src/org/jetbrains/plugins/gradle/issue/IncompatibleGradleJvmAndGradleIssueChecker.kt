@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.issue
 import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.issue.BuildIssue
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.util.lang.JavaVersion
 import org.gradle.internal.jvm.UnsupportedJavaRuntimeException
@@ -81,10 +82,20 @@ class IncompatibleGradleJvmAndGradleIssueChecker : GradleIssueChecker {
       }
     }
     val buildEnvironment = issueData.buildEnvironment
-    if (buildEnvironment != null) {
+    if (buildEnvironment != null && gradleVersion.hasCorrectJavaEnvironment()) {
       return ExternalSystemJdkUtil.getJavaVersion(buildEnvironment.java.javaHome.path)
     }
     return null
+  }
+
+  /**
+   * The modern versions of Gradle Tooling API is incompatible with the BuildEnvironment older than 2.6.
+   */
+  private fun GradleVersion?.hasCorrectJavaEnvironment(): Boolean {
+    if (this == null) {
+      return false
+    }
+    return GradleVersionUtil.isGradleAtLeast(this, "2.6")
   }
 
   private fun isUnsupportedClassVersionIssue(rootCause: GradleIssueFailure): Boolean {
