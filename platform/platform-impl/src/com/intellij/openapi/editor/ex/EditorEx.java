@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.impl.EditorHighlightingPredicate;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -91,7 +92,8 @@ public interface EditorEx extends Editor {
    *
    * @return the markup model instance.
    * @see com.intellij.openapi.editor.markup.MarkupEditorFilter
-   * @see com.intellij.openapi.editor.impl.EditorImpl#setHighlightingPredicate(java.util.function.Predicate)
+   * @see com.intellij.openapi.editor.impl.EditorImpl#addHighlightingPredicate(Key, EditorHighlightingPredicate)
+   * @see com.intellij.openapi.editor.impl.EditorImpl#removeHighlightingPredicate(Key)
    * @see com.intellij.openapi.editor.impl.DocumentMarkupModel#forDocument(Document, Project, boolean)
    */
   @NotNull
@@ -305,6 +307,7 @@ public interface EditorEx extends Editor {
   /**
    * Registers a function which will be applied to a line number to obtain additional text fragments. The fragments returned by the
    * function will be drawn in the editor after end of the line (together with fragments returned by {@link EditorLinePainter} extensions).
+   * @noinspection TypeParameterExtendsFinalClass -- cannot clean up because used in external plugins
    */
   void registerLineExtensionPainter(@NotNull IntFunction<? extends @NotNull Collection<? extends LineExtensionInfo>> lineExtensionPainter);
 

@@ -321,7 +321,8 @@ public interface Editor extends UserDataHolder {
     int startY = visualLineToY(visualLine);
     int startOffset = visualPositionToOffset(new VisualPosition(visualLine, 0));
     FoldRegion foldRegion = getFoldingModel().getCollapsedRegionAtOffset(startOffset);
-    int endY = startY + (foldRegion instanceof CustomFoldRegion ? ((CustomFoldRegion)foldRegion).getHeightInPixels() : getLineHeight());
+    int height = foldRegion instanceof CustomFoldRegion custom ? custom.getHeightInPixels() : getLineHeight();
+    int endY = startY + height;
     return new int[]{startY, endY};
   }
 
