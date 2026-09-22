@@ -141,7 +141,7 @@ open class LspIntentionAction(protected val lspClient: LspClient, private val in
   /**
    * @param uriToDocumentMap it's guaranteed that it contains `Document` objects for URIs from this [workspaceEdit]
    */
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   protected open fun applyWorkspaceEdit(workspaceEdit: WorkspaceEdit, uriToDocumentMap: Map<String, Document>) {
     workspaceEdit.changes?.let { changes ->
       changes.entries.forEach { entry ->

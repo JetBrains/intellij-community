@@ -84,7 +84,7 @@ internal suspend fun compilerOutputPathForTests(module: Module): List<Path> = re
 }
 
 interface TargetModuleCreator {
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun createExtractedModule(originalModule: Module, directory: VirtualFile): ExtractedModuleData
 
   class ExtractedModuleData(val module: Module, val directoryToMoveClassesTo: VirtualFile?)
@@ -293,7 +293,7 @@ class ExtractModuleService(
     return dependentModules
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   private fun extractModule(
     directory: VirtualFile,
     module: Module,

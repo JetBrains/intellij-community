@@ -51,7 +51,7 @@ internal class LspTypedActionHandler(originalHandler: TypedActionHandler?) : Typ
 
 internal class LspOnTypeFormattingEnterHandler : EnterHandlerDelegate {
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   override fun postProcessEnter(file: PsiFile, editor: Editor, dataContext: DataContext): EnterHandlerDelegate.Result {
     val virtualFile = file.originalFile.virtualFile ?: return EnterHandlerDelegate.Result.Continue
     if (!shouldPerformOnTypeFormatting(editor)) return EnterHandlerDelegate.Result.Continue
@@ -67,7 +67,7 @@ private fun shouldPerformOnTypeFormatting(editor: Editor): Boolean {
   return isOnTypeFormattingAllowed(editor)
 }
 
-@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresWriteLock
 private fun performOnTypeFormatting(editor: Editor, virtualFile: VirtualFile, charTyped: Char) {
   val project = editor.project ?: return
   if (virtualFile is VirtualFileWindow) return

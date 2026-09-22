@@ -187,7 +187,7 @@ class ArtifactManagerBridge(private val project: Project, coroutineScope: Corout
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun commit(artifactModel: ArtifactModifiableModelBridge) = commitMs.addMeasuredTime {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()
@@ -401,7 +401,7 @@ class ArtifactManagerBridge(private val project: Project, coroutineScope: Corout
     }
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun dropMappings(selector: (ArtifactEntity) -> Boolean) = dropMappingsMs.addMeasuredTime {
     // XXX @RequiresWriteLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()

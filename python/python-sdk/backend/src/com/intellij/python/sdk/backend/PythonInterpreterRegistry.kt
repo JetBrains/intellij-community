@@ -430,7 +430,7 @@ private fun findSdkToAdopt(pythonBinaryPath: PythonBinary, existingSdks: List<Sd
   return candidates.firstOrNull { it.name == name } ?: candidates.first()
 }
 
-@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresWriteLock
 private fun makeSureNameIsUnique(sdk: Sdk) {
   val name = sdk.name
   var i = 1

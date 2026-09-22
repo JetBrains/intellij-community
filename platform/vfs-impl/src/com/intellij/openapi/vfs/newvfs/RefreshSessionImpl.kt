@@ -307,7 +307,7 @@ internal class RefreshSessionImpl internal constructor(
   /**
    * Can work in both EDT and BGT
    */
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   private fun fireEventsInWriteAction(events: List<CompoundVFileEvent>, appliers: AsyncEventSupport.ChangeAppliers, excludeAsyncListeners: Boolean) {
     val manager = VirtualFileManager.getInstance() as VirtualFileManagerImpl
 
@@ -347,7 +347,7 @@ internal class RefreshSessionImpl internal constructor(
   }
 
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun fireEventsInBackgroundWriteAction(events: List<CompoundVFileEvent>, appliers: AsyncEventSupport.ChangeAppliers, excludeAsyncListeners: Boolean) {
     try {
@@ -368,7 +368,7 @@ internal class RefreshSessionImpl internal constructor(
     mySemaphore.up()
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   private fun doFireEvents(events: List<CompoundVFileEvent>, appliers: AsyncEventSupport.ChangeAppliers, excludeAsyncListeners: Boolean) {
     var t = System.nanoTime()
     fireEventsInWriteAction(events, appliers, excludeAsyncListeners)

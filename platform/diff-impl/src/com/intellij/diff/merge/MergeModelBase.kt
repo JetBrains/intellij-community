@@ -285,7 +285,7 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
   //
   // Actions
   //
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun replaceChange(index: Int, newContent: List<CharSequence>) {
     LOG.assertTrue(isInsideCommand)
     val outputStartLine = getLineStart(index)
@@ -299,7 +299,7 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
     }
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun appendChange(index: Int, newContent: List<CharSequence>) {
     LOG.assertTrue(isInsideCommand)
     val outputStartLine = getLineStart(index)

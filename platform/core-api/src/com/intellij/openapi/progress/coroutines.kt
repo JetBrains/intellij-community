@@ -716,7 +716,7 @@ private fun rememberElements(job: BlockingJob, context: CoroutineContext) {
 /**
  * Assigns a title to a Write action. Intended to be invoked with write lock
  */
-@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresWriteLock
 @ApiStatus.Experimental
 fun withWriteActionTitle(title: @NlsContexts.ModalProgressTitle String, action: () -> Unit) {
   service<LockingProgressSupport>().withWriteActionProgress(title, action)

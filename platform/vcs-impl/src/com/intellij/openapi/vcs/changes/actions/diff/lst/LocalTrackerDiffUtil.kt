@@ -609,7 +609,7 @@ object LocalTrackerDiffUtil {
     protected val LocalTrackerChange.isFromActiveChangelist get() = changelistId == activeChangelistId
     protected val activeChangelistId get() = provider.localRequest.changelistId
 
-    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+    @RequiresWriteLock
     protected abstract fun doPerform(
       e: AnActionEvent,
       tracker: PartialLocalLineStatusTracker,

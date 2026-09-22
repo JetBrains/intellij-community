@@ -315,7 +315,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     return _state.getAndUpdate { it.tryIncrementDumbCounter() }.incrementWillChangeDumbState
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   private fun doIncrementStateCounter(): Boolean {
     val old = _state.getAndUpdate { it.incrementDumbCounter() }
     val isStateChanged = old.isSmart
@@ -412,7 +412,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     return _state.getAndUpdate { it.tryDecrementDumbCounter() }.decrementWillChangeDumbState
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   private fun doDecrementDumbCounter(): Boolean {
     val new = _state.updateAndGet { it.decrementDumbCounter() }
     val isStateChanged = new.isSmart

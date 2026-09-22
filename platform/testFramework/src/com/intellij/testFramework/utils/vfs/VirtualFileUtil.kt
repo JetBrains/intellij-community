@@ -59,7 +59,7 @@ fun VirtualFile.getDirectory(relativePath: @SystemIndependent String): VirtualFi
   return directory
 }
 
-@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresWriteLock
 fun VirtualFile.createFile(relativePath: @SystemIndependent String): VirtualFile {
   val file = findFile(relativePath)
   if (file != null) {
@@ -72,7 +72,7 @@ fun VirtualFile.createFile(relativePath: @SystemIndependent String): VirtualFile
   return findOrCreateFile(relativePath)
 }
 
-@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresWriteLock
 fun VirtualFile.createDirectory(relativePath: @SystemIndependent String): VirtualFile {
   val directory = findDirectory(relativePath)
   if (directory != null) {
@@ -85,22 +85,22 @@ fun VirtualFile.createDirectory(relativePath: @SystemIndependent String): Virtua
   return findOrCreateDirectory(relativePath)
 }
 
-@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresWriteLock
 fun VirtualFile.deleteRecursively() {
   delete(fileSystem)
 }
 
-@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresWriteLock
 fun VirtualFile.deleteChildrenRecursively(predicate: (VirtualFile) -> Boolean) {
   children.filter(predicate).forEach { it.delete(fileSystem) }
 }
 
-@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresWriteLock
 fun VirtualFile.deleteRecursively(relativePath: @SystemIndependent String) {
   findFileOrDirectory(relativePath)?.deleteRecursively()
 }
 
-@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresWriteLock
 fun VirtualFile.deleteChildrenRecursively(relativePath: @SystemIndependent String, predicate: (VirtualFile) -> Boolean) {
   findFileOrDirectory(relativePath)?.deleteChildrenRecursively(predicate)
 }

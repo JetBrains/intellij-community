@@ -175,7 +175,7 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun insert() {
     ThreadingAssertions.assertEventDispatchThread()
     ThreadingAssertions.assertWriteAccess()

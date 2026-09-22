@@ -32,7 +32,7 @@ class PythonSdkAdditionalDataMigrationActivity : ProjectActivity, DumbAware {
   }
 }
 
-@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresWriteLock
 private fun migratePythonSdkAdditionalData(project: Project, sdks: List<Sdk>) {
   val projectSdk = ProjectRootManager.getInstance(project).projectSdk
   for (sdk in sdks) {

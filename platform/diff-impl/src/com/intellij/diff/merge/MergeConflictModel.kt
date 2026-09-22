@@ -169,7 +169,7 @@ class MergeConflictModel(
    * the output, for example the multi-file merge dialog, must save only when this returns true. Otherwise it would write the
    * seeded merge base back to the file. See `MultipleFileMergeDialog.resolveAutomatically`.
    */
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun resolveAllChangesAutomatically(): Boolean {
     val autoResolvableChanges = getAutoResolvableChanges()
     if (autoResolvableChanges.isEmpty()) return false
@@ -207,7 +207,7 @@ class MergeConflictModel(
     wasReviewed = true
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun resolveChangeAutomatically(index: Int, side: ThreeSide): LineRange? {
     val change = getByIndex(index)
 
@@ -232,7 +232,7 @@ class MergeConflictModel(
     }
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun replaceChangeWithAi(index: Int, newContentLines: List<String>): LineRange? {
     val change = getByIndex(index)
     if (change.isResolved) return null
@@ -252,7 +252,7 @@ class MergeConflictModel(
    * @param force If true, resets the change regardless of its resolved state. If false,
    *              only resets the change if it is already marked as resolved.
    */
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun resetResolvedChange(index: Int, force: Boolean = false) {
     val change = getByIndex(index)
     if (!force && !change.isResolved) return
@@ -269,7 +269,7 @@ class MergeConflictModel(
     resultModel.invalidateChange(change.index)
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   private fun replaceWithNewContent(index: Int, newContent: CharSequence): LineRange {
     val change = getByIndex(index)
     val newContentLines: Array<String> = LineTokenizer.tokenize(newContent, false)
@@ -278,7 +278,7 @@ class MergeConflictModel(
     return LineRange(resultModel.getLineStart(change.index), resultModel.getLineEnd(change.index))
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun replaceChange(index: Int, side: Side, resolveChange: Boolean): LineRange? {
     val change = getByIndex(index)
     if (change.isResolved(side)) return null
@@ -324,19 +324,19 @@ class MergeConflictModel(
     return LineRange(newLineStart, newLineEnd)
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun resetAllChanges() {
     getAllChanges().forEach { change: TextMergeChange -> resetResolvedChange(change.index, force = true) }
     mergeRequest.resetOutputContent()
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   private fun replaceAllChanges(side: Side) {
     getAllChanges().forEach { change: TextMergeChange -> replaceChange(change.index, side, true) }
     chosenSide = side
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun markAllChangesResolved() {
     getAllChanges().forEach { change: TextMergeChange -> markChangeResolved(change.index) }
   }

@@ -54,7 +54,7 @@ internal abstract class ApplySelectedChangesActionBase protected constructor(
     viewer.executeMergeCommand(title, selectedChanges.size > 1, selectedChanges, Runnable { apply(side, selectedChanges) })
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   protected abstract fun apply(side: ThreeSide, changes: List<TextMergeChange>)
 
   fun isSomeChangeSelected(side: ThreeSide): Boolean {

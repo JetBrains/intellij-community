@@ -121,7 +121,7 @@ internal class SdkModificatorBridgeImpl(
     modifiedSdkEntity.roots = mutableListOf()
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   override fun commitChanges() {
     ThreadingAssertions.assertWriteAccess()
     if (thisLogger().isTraceEnabled) {

@@ -28,7 +28,7 @@ fun Document.getVirtualFile(): VirtualFile {
 /**
  * @see com.intellij.psi.PsiDocumentManager.commitDocument
  */
-@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresWriteLock
 fun Document.commitToPsi(project: Project) {
   PsiDocumentManager.getInstance(project).commitDocument(this)
 }
@@ -36,7 +36,7 @@ fun Document.commitToPsi(project: Project) {
 /**
  * @see com.intellij.openapi.fileEditor.FileDocumentManager.saveDocument
  */
-@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresWriteLock
 fun Document.saveToDisk() {
   FileDocumentManager.getInstance().saveDocument(this)
 }
@@ -44,7 +44,7 @@ fun Document.saveToDisk() {
 /**
  * @see com.intellij.openapi.fileEditor.FileDocumentManager.reloadFromDisk
  */
-@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresWriteLock
 fun Document.reloadFromDisk() {
   FileDocumentManager.getInstance().reloadFromDisk(this)
 }

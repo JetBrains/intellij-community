@@ -16,7 +16,7 @@ object CodeReviewFilesUtil {
    */
   @ApiStatus.Experimental
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun closeFilesSafely(manager: FileEditorManager, files: Collection<VirtualFile>) {
     // otherwise the exception is thrown when removing an editor tab
     (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {

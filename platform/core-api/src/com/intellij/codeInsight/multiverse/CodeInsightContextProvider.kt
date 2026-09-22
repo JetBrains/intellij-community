@@ -55,7 +55,7 @@ interface CodeInsightContextProvider {
 
   @ApiStatus.NonExtendable
   fun interface Invalidator {
-    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+    @RequiresWriteLock
     fun requestInvalidation()
   }
 }

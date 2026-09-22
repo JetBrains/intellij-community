@@ -9,9 +9,9 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface ModifiableModuleModelBridge : ModifiableModuleModel {
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun prepareForCommit()
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun collectChanges(): MutableEntityStorage
 }

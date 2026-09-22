@@ -30,7 +30,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * ends up without an interpreter. The project SDK and explicit module SDK references are then re-pointed to the renamed SDK.
  */
 @Internal
-@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresWriteLock
 fun Project.renameSdk(oldName: String, newName: String): PyResult<Unit> {
   val jdkTable = ProjectJdkTable.getInstance()
   val sdk = jdkTable.findJdk(oldName)

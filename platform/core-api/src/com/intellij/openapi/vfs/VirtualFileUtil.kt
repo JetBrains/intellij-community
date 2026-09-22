@@ -43,7 +43,7 @@ fun VirtualFile.readText(): String {
   return VfsUtilCore.loadText(this)
 }
 
-@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresWriteLock
 fun VirtualFile.writeText(content: String) {
   VfsUtilCore.saveText(this, content)
 }
@@ -52,7 +52,7 @@ fun VirtualFile.readBytes(): ByteArray {
   return inputStream.use { it.readBytes() }
 }
 
-@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresWriteLock
 fun VirtualFile.writeBytes(content: ByteArray) {
   setBinaryContent(content)
 }
@@ -192,7 +192,7 @@ fun VirtualFile.findDirectory(relativePath: @SystemIndependent String): VirtualF
   return directory
 }
 
-@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresWriteLock
 fun VirtualFile.findOrCreateFile(relativePath: @SystemIndependent String): VirtualFile {
   val file = getResolvedVirtualFile(relativePath) { name, isLast ->
     findChild(name) ?: when (isLast) {
