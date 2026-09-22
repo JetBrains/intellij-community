@@ -24,7 +24,8 @@ class EventLogListenersManager(coroutineScope: CoroutineScope) {
   }
 
   private val subscribers = MultiMap.createConcurrent<String, StatisticsEventLogListener>()
-  private var listenersFromEP = ConcurrentCollectionFactory.createConcurrentMap<String, StatisticsEventLogListener>()
+  // Provider class name -> recorder id -> the listener that the provider supplied for that recorder.
+  private val listenersFromEP = ConcurrentCollectionFactory.createConcurrentMap<String, MutableMap<String, StatisticsEventLogListener>>()
   private val jcpListenerByRecorder = ConcurrentCollectionFactory.createConcurrentMap<String, Boolean>()
 
   init {
@@ -60,19 +61,20 @@ class EventLogListenersManager(coroutineScope: CoroutineScope) {
     StatisticsEventLogProviderUtil.getEventLogProviders().forEach { loggerProvider ->
       val recorderId = loggerProvider.recorderId
       listenerProvider.getEventLogListener(recorderId)?.let { eventLogListener ->
-        listenersFromEP[listenerProvider.javaClass.name] = eventLogListener
+        val listeners = listenersFromEP.computeIfAbsent(listenerProvider.javaClass.name) {
+          ConcurrentCollectionFactory.createConcurrentMap()
+        }
+        listeners[recorderId] = eventLogListener
         subscribe(eventLogListener, recorderId)
       }
     }
   }
 
   private fun unsubscribeExtension(listenerProvider: ExternalEventLogListenerProvider) {
-    if (listenersFromEP.isEmpty()) return
-    val listener = listenersFromEP.remove(listenerProvider.javaClass.name) ?: return
-    // Do not filter providers by isForceCollectionEnabled flag as it can be dynamic
-    StatisticsEventLogProviderUtil.getEventLogProviders().forEach {
-      unsubscribe(listener, it.recorderId)
-    }
+    // Remove each listener from the recorder that it got, because a provider can supply one listener
+    // for each recorder.
+    val listeners = listenersFromEP.remove(listenerProvider.javaClass.name) ?: return
+    listeners.forEach { (recorderId, listener) -> unsubscribe(listener, recorderId) }
   }
 
   fun notifySubscribers(recorderId: String, validatedEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?, isFromLocalRecorder: Boolean) {
