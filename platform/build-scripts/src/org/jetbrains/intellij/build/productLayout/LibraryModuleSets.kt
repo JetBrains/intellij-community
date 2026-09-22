@@ -146,7 +146,8 @@ object LibraryModuleSets {
     module("intellij.libraries.semver")
     embeddedModule("intellij.libraries.snakeyaml")
     embeddedModule("intellij.libraries.snakeyaml.engine")
-    embeddedModule("intellij.libraries.stream")
+    // not embedded: no platform module uses StreamEx, only plugins do
+    module("intellij.libraries.stream")
     // not embedded: consumed by non-embedded platform content (smRunner, buildScripts.downloader) and by plugins
     module("intellij.libraries.teamcity.service.messages")
     embeddedModule("intellij.libraries.velocity")
