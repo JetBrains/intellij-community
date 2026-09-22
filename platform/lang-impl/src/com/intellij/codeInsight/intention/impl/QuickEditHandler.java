@@ -63,7 +63,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.UIUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -172,7 +171,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
     myEditChangesHandler = getHandler(injectedFile, editor, shreds, myNewDocument);
     Disposer.register(this, myEditChangesHandler);
 
-    StreamEx.of(shreds).map(it -> it.getHost()).nonNull().distinct().forEach(h -> {
+    shreds.stream().map(it -> it.getHost()).filter(Objects::nonNull).distinct().forEach(h -> {
       Set<QuickEditHandler> editHandlers = h.getCopyableUserData(QUICK_EDIT_HANDLERS);
       if (editHandlers == null) {
         editHandlers = new SmartHashSet<>();

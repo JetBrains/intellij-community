@@ -17,7 +17,6 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere ({@code com.intellij.platform.searchEverywhere}).
@@ -72,7 +73,7 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
     ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(
       () -> {
         PsiManager psiManager = PsiManager.getInstance(myProject);
-        StreamEx<VirtualFile> stream = StreamEx.of(history);
+        Stream<VirtualFile> stream = history.stream();
         if (!StringUtil.isEmptyOrSpaces(searchString)) {
           stream = stream.filter(file -> matcher.matches(file.getName()));
         }
@@ -85,9 +86,9 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
             String name = vf.getName();
             return f == null ? null : new FoundItemDescriptor<Object>(f, matcher.matchingDegree(name));
           })
-          .nonNull()
+          .filter(Objects::nonNull)
           .sorted(comparator.reversed())
-          .into(res);
+          .forEachOrdered(res::add);
 
         ContainerUtil.process(res, consumer);
       }, progressIndicator);

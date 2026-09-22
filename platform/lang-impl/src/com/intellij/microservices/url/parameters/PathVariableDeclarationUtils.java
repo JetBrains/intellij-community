@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PartiallyKnownString;
 import com.intellij.util.SmartList;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,8 +51,8 @@ public final class PathVariableDeclarationUtils {
     if (!(maybeComplexVariable instanceof UrlPath.PathSegment.Composite)) return Collections.emptyList();
     SmartList<TextRange> result = new SmartList<>();
     int position = 0;
-    for (UrlPath.PathSegment.Variable variable :
-      StreamEx.of(((UrlPath.PathSegment.Composite)maybeComplexVariable).getSegments()).select(UrlPath.PathSegment.Variable.class)) {
+    for (UrlPath.PathSegment segment : ((UrlPath.PathSegment.Composite)maybeComplexVariable).getSegments()) {
+      if (!(segment instanceof UrlPath.PathSegment.Variable variable)) continue;
       String variableName = variable.getVariableName();
       if (variableName == null) continue;
       int start = pks.findIndexOfInKnown(variableName, position);

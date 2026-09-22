@@ -3,15 +3,16 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import one.util.streamex.EntryStream;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public final class SubmissionTracker {
@@ -66,11 +67,11 @@ public final class SubmissionTracker {
   }
 
   private String callerTrace() {
-    return StreamEx
-      .of(new Throwable().getStackTrace())
+    return Arrays.stream(new Throwable().getStackTrace())
       .dropWhile(ste -> ste.getClassName().contains("NonBlockingReadAction") || ste.getClassName().equals(getClass().getName()))
       .limit(10)
-      .joining("\n");
+      .map(StackTraceElement::toString)
+      .collect(Collectors.joining("\n"));
   }
 
   void unregisterSubmission(@Nullable String startTrace) {
@@ -82,12 +83,11 @@ public final class SubmissionTracker {
   }
 
   private static void reportTooManyUnidentifiedSubmissions(Map<String, Integer> traces) {
-    String mostFrequentTraces = EntryStream
-      .of(traces)
-      .sortedByInt(e -> -e.getValue())
+    String mostFrequentTraces = traces.entrySet().stream()
+      .sorted(Comparator.comparingInt(e -> -e.getValue()))
       .map(e -> e.getValue() + " occurrences of " + e.getKey())
       .limit(10)
-      .joining("\n\n");
+      .collect(Collectors.joining("\n\n"));
 
     if (LOG.isDebugEnabled()) {
       LOG.debug(mostFrequentTraces);

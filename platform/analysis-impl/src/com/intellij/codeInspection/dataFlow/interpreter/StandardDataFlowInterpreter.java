@@ -22,14 +22,13 @@ import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
-import one.util.streamex.IntStreamEx;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -204,10 +203,12 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
 
   private @NotNull Set<Instruction> getJoinInstructions() {
     Set<Instruction> joinInstructions = new HashSet<>();
-    StreamEx.of(myInstructions)
-      .remove(Instruction::isLinear)
-      .flatMap(inst -> IntStreamEx.of(inst.getSuccessorIndexes()).elements(myInstructions))
-      .into(joinInstructions);
+    for (Instruction inst : myInstructions) {
+      if (inst.isLinear()) continue;
+      for (int successorIndex : inst.getSuccessorIndexes()) {
+        joinInstructions.add(myInstructions[successorIndex]);
+      }
+    }
     for (int index = 0; index < myInstructions.length - 1; index++) {
       Instruction instruction = myInstructions[index];
       if (instruction instanceof FinishElementInstruction finishInstruction && !finishInstruction.mayFlushSomething()) {
@@ -323,14 +324,13 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
       }
     }
     Object key = curState.getMergeabilityKey();
-    DfaMemoryStateImpl mergedState =
-      StreamEx.of(processed).filterBy(DfaMemoryState::getMergeabilityKey, key)
-        .foldLeft(curState, (s1, s2) -> {
-          s1.merge(s2);
-          return s1;
-        });
-    mergedState.widen();
-    instructionState = new DfaInstructionState(instructionState.getInstruction(), mergedState);
+    for (DfaMemoryState state : processed) {
+      if (Objects.equals(state.getMergeabilityKey(), key)) {
+        curState.merge(state);
+      }
+    }
+    curState.widen();
+    instructionState = new DfaInstructionState(instructionState.getInstruction(), curState);
     myWasForciblyMerged = true;
     return instructionState;
   }

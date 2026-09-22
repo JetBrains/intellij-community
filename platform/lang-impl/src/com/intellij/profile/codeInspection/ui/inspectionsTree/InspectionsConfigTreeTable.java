@@ -31,7 +31,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.IconTableCellRenderer;
-import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -278,12 +277,13 @@ public final class InspectionsConfigTreeTable extends TreeTable {
     }
 
     private @Nullable Boolean isEnabled(@NotNull List<HighlightDisplayKey> selectedInspectionsNodes) {
-      return selectedInspectionsNodes
+      List<Boolean> states = selectedInspectionsNodes
         .stream()
         .map(key -> mySettings.getInspectionProfile().getTools(key.getShortName(), mySettings.getProject()))
         .flatMap(tools -> tools.isEnabled() ? tools.getTools().stream().map(ScopeToolState::isEnabled) : Stream.of(false))
         .distinct()
-        .collect(MoreCollectors.onlyOne()).orElse(null);
+        .toList();
+      return states.size() == 1 ? states.getFirst() : null;
     }
 
     @Override

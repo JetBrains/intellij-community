@@ -28,7 +28,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -277,9 +276,9 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
                                                       @Nullable GlobalSearchScope scope) {
     Query<VirtualFile> query = PlatformPackageUtil.getDirectoriesByPackageName(packageName, false, module.getProject());
 
-    return StreamEx.of(query.findAll()).filter(scope == null ? Predicates.alwaysTrue() : file -> scope.contains(file))
+    return query.findAll().stream().filter(scope == null ? Predicates.alwaysTrue() : file -> scope.contains(file))
       .<PsiFileSystemItem>map(PsiManager.getInstance(module.getProject())::findDirectory)
-      .nonNull()
+      .filter(Objects::nonNull)
       .toList();
   }
 

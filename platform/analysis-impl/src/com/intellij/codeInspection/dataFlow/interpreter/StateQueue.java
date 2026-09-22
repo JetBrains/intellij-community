@@ -7,7 +7,6 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -15,11 +14,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class StateQueue {
   private static final int FORCE_MERGE_THRESHOLD = 100;
@@ -101,15 +102,21 @@ public class StateQueue {
   private List<DfaMemoryState> forceMerge(List<DfaMemoryState> states) {
     if (states.size() < FORCE_MERGE_THRESHOLD) return states;
     myWasForciblyMerged = true;
-    Collection<List<DfaMemoryState>> groups = StreamEx.of(states).groupingBy(DfaMemoryState::getMergeabilityKey).values();
-    return StreamEx.of(groups)
-      .flatMap(group -> StreamEx.ofSubLists(group, 2)
-        .map(pair -> {
-          if (pair.size() == 2) {
-            pair.get(0).merge(pair.get(1));
-          }
-          return pair.get(0);
-        })).distinct().toListAndThen(StateQueue::squash);
+    Collection<List<DfaMemoryState>> groups = states.stream().collect(Collectors.groupingBy(DfaMemoryState::getMergeabilityKey)).values();
+    List<DfaMemoryState> result = new ArrayList<>();
+    Set<DfaMemoryState> seen = new HashSet<>();
+    for (List<DfaMemoryState> group : groups) {
+      for (int i = 0; i < group.size(); i += 2) {
+        DfaMemoryState first = group.get(i);
+        if (i + 1 < group.size()) {
+          first.merge(group.get(i + 1));
+        }
+        if (seen.add(first)) {
+          result.add(first);
+        }
+      }
+    }
+    return squash(result);
   }
 
   public boolean wasForciblyMerged() {

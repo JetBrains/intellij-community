@@ -88,7 +88,6 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopupUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -111,6 +110,8 @@ import java.awt.event.HierarchyBoundsAdapter;
 import java.awt.event.HierarchyBoundsListener;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
+import java.util.Objects;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
@@ -602,7 +603,10 @@ public final class DebuggerUIUtil {
   }
 
   public static @NotNull @NlsContexts.PopupAdvertisement String getSelectionShortcutsAdText(String... actionNames) {
-    String text = StreamEx.of(actionNames).map(DebuggerUIUtil::getActionShortcutText).nonNull().collect(NlsMessages.joiningOr());
+    String text = Arrays.stream(actionNames)
+      .map(DebuggerUIUtil::getActionShortcutText)
+      .filter(Objects::nonNull)
+      .collect(NlsMessages.joiningOr());
     return StringUtil.isEmpty(text) ? "" : XDebuggerBundle.message("ad.extra.selection.shortcut", text);
   }
 

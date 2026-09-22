@@ -17,16 +17,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.util.SequentialTask;
-import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.intellij.modcommand.ModCommandExecutor.BatchExecutionResult;
 import static com.intellij.modcommand.ModCommandExecutor.Result;
@@ -160,10 +161,10 @@ public abstract class PerformFixesModalTask implements SequentialTask {
     }
     @Nls String message = LangBundle.message("executor.error.some.actions.failed") + "\n";
     int total = myResultCount.values().stream().mapToInt(i -> i).sum();
-    return message + EntryStream.of(myResultCount) //NON-NLS
-      .reverseSorted(Map.Entry.comparingByValue())
-      .mapKeyValue((result, count) -> LangBundle.message("executor.one.of.actions", count, total, result.getMessage()))
-      .joining("\n");
+    return message + myResultCount.entrySet().stream() //NON-NLS
+      .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+      .map(entry -> LangBundle.message("executor.one.of.actions", entry.getValue(), total, entry.getKey().getMessage()))
+      .collect(Collectors.joining("\n"));
   }
 
   private @Nullable Pair<CommonProblemDescriptor, Boolean> nextDescriptor() {

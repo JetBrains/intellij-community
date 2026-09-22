@@ -4,7 +4,6 @@ package com.intellij.codeInspection.dataFlow.memory;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,7 +75,14 @@ final class EqClassImpl extends SortedIntSet implements EqClass {
     if (size() == 1) {
       return getVariable(0);
     }
-    return StreamEx.of(iterator()).min(CANONICAL_VARIABLE_COMPARATOR).orElse(null);
+    DfaVariableValue min = null;
+    for (int i = 0; i < size(); i++) {
+      DfaVariableValue variable = getVariable(i);
+      if (min == null || CANONICAL_VARIABLE_COMPARATOR.compare(variable, min) < 0) {
+        min = variable;
+      }
+    }
+    return min;
   }
 
   @Override

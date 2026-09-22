@@ -107,7 +107,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1550,9 +1549,11 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     Stream<Wrapper> foreWrappers = values.stream().map(it -> it.fore);
     Stream<Wrapper> leftWrappers = values.stream().map(it -> it.left);
     Stream<Wrapper> rightWrappers = values.stream().map(it -> it.right);
-    StreamEx.of(myToolbar).append(foreWrappers).append(leftWrappers).append(rightWrappers)
+    Stream.of(Stream.of(myToolbar), foreWrappers, leftWrappers, rightWrappers)
+      .flatMap(Function.identity())
       .map(Wrapper::getTargetComponent)
-      .select(ActionToolbar.class)
+      .filter(ActionToolbar.class::isInstance)
+      .map(ActionToolbar.class::cast)
       .distinct()
       .forEach(ActionToolbar::updateActionsImmediately);
   }

@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +18,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @ApiStatus.Internal
 public final class RootFileElement extends FileElement {
@@ -50,18 +51,18 @@ public final class RootFileElement extends FileElement {
   private static List<VirtualFile> getFileSystemRoots() {
     VirtualFileManager fileManager = VirtualFileManager.getInstance();
 
-    StreamEx<Path> paths = StreamEx.of(FileSystems.getDefault().getRootDirectories().spliterator());
+    Stream<Path> paths = StreamSupport.stream(FileSystems.getDefault().getRootDirectories().spliterator(), false);
 
     if (WSLUtil.isSystemCompatible() && Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser")) {
       CompletableFuture<List<WSLDistribution>> future = WslDistributionManager.getInstance().getInstalledDistributionsFuture();
       try {
         List<WSLDistribution> distributions = future.get(200, TimeUnit.MILLISECONDS);
-        paths = paths.append(StreamEx.of(distributions).map(WSLDistribution::getUNCRootPath));
+        paths = Stream.concat(paths, distributions.stream().map(WSLDistribution::getUNCRootPath));
       }
       catch (Exception e) {
         LOG.info("Cannot fetch WSL distributions", e);
       }
     }
-    return paths.map(path -> fileManager.findFileByNioPath(path)).nonNull().toList();
+    return paths.map(path -> fileManager.findFileByNioPath(path)).filter(Objects::nonNull).toList();
   }
 }

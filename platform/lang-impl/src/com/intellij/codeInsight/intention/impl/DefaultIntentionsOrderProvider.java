@@ -5,26 +5,28 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.PriorityAction.Priority;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public final class DefaultIntentionsOrderProvider implements IntentionsOrderProvider {
 
   @Override
   public @NotNull List<IntentionActionWithTextCaching> getSortedIntentions(@NotNull CachedIntentions context,
                                                                            @NotNull List<IntentionActionWithTextCaching> intentions) {
-    return StreamEx.of(intentions)
-      .mapToEntry(intention -> getWeight(context, intention))
+    return intentions.stream()
+      .map(intention -> Map.entry(intention, getWeight(context, intention)))
       .sorted((weightedIntention1, weightedIntention2) -> {
         int intentionWeightComparison = Integer.compare(weightedIntention1.getValue(), weightedIntention2.getValue());
         if (intentionWeightComparison != 0) return -intentionWeightComparison; //desc sorting for weight
         return weightedIntention1.getKey().compareTo(weightedIntention2.getKey()); //asc sorting for text
       })
-      .keys()
-      .toList();
+      .map(Map.Entry::getKey)
+      .collect(Collectors.toCollection(ArrayList::new));
   }
 
   public static int getPriorityWeight(@NotNull IntentionActionWithTextCaching action) {

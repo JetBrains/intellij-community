@@ -124,7 +124,6 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.Dispatchers;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -166,6 +165,8 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
 import static kotlinx.coroutines.SupervisorKt.SupervisorJob;
@@ -883,11 +884,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   private static void reportErrorAfterInsert(@NotNull LookupElement item, @NotNull AssertionError ae) {
     @SuppressWarnings("RedundantTypeArguments") // type argument is needed to suppress incorrect nullability issue
-    String classes = StreamEx
+    String classes = Stream
       .<LookupElement>iterate(item, Objects::nonNull, i -> {
         return i instanceof LookupElementDecorator ? ((LookupElementDecorator<?>)i).getDelegate() : null;
       })
-      .map(le -> le.getClass().getName()).joining(" -> ");
+      .map(le -> le.getClass().getName()).collect(Collectors.joining(" -> "));
     LOG.error("When completing " + item + " (" + classes + ")", ae);
   }
 

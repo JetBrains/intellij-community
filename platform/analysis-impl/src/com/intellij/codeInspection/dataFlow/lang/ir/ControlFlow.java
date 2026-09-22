@@ -10,10 +10,10 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,13 +56,13 @@ public final class ControlFlow {
     myElementToEndOffsetMap = flow.myElementToEndOffsetMap;
     myElementToStartOffsetMap = flow.myElementToStartOffsetMap;
     myLoopNumbers = flow.myLoopNumbers;
-    myInstructions = StreamEx.of(flow.myInstructions).map(instruction -> {
+    myInstructions = ContainerUtil.map(flow.myInstructions, instruction -> {
       Instruction updated = instruction.bindToFactory(factory);
       if (updated.getIndex() == -1) {
         updated.setIndex(instruction.getIndex());
       }
       return updated;
-    }).toImmutableList();
+    });
   }
 
   public @NotNull PsiElement getPsiAnchor() {

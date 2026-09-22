@@ -29,7 +29,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.UIUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +36,7 @@ import javax.swing.JComponent;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
   @Override
@@ -81,8 +81,8 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
     for (ActionToolbarImpl toolbar : UIUtil.findComponentsOfType(component, ActionToolbarImpl.class)) {
       PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync());
     }
-    Map<Class<?>, ActionButton> actions = StreamEx.of(UIUtil.findComponentsOfType(component, ActionButton.class))
-      .toMap(button -> button.getAction().getClass(), Function.identity(), (a, b) -> null);
+    Map<Class<?>, ActionButton> actions = UIUtil.findComponentsOfType(component, ActionButton.class).stream()
+      .collect(Collectors.toMap(button -> button.getAction().getClass(), Function.identity(), (a, b) -> null));
     model.setGlobal(false);// 'Find' action puts multiline text in search field (in contrast to 'Replace' action)
     assertFalse(model.isGlobal()); // multiline selection = no-global
     assertEquals(ActionButtonComponent.PUSHED, actions.get(ToggleFindInSelectionAction.class).getPopState());

@@ -116,7 +116,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -527,8 +526,14 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
       if (restored == null) {
         return List.<ActionAndPresentation>of();
       }
-      return StreamEx.of(chooser.actions()).mapToEntry(action -> action.getPresentation(restored))
-        .nonNullValues().mapKeyValue(ActionAndPresentation::new).toList();
+      List<ActionAndPresentation> result = new ArrayList<>();
+      for (ModCommandAction action : chooser.actions()) {
+        Presentation presentation = action.getPresentation(restored);
+        if (presentation != null) {
+          result.add(new ActionAndPresentation(action, presentation));
+        }
+      }
+      return result;
     }).finishOnUiThread(ModalityState.defaultModalityState(), actions -> {
       ActionContext restored = pointer.restoreAndCheck(editor);
       if (restored == null || actions.isEmpty()) return;

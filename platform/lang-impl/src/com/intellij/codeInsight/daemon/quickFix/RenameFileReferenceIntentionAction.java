@@ -13,10 +13,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import one.util.streamex.MoreCollectors;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.List;
 
 final class RenameFileReferenceIntentionAction implements IntentionAction, LocalQuickFix {
   private final String myExistingElementName;
@@ -53,8 +54,9 @@ final class RenameFileReferenceIntentionAction implements IntentionAction, Local
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     PsiElement element = myFileReference.getElement();
     PsiElement copy = PsiTreeUtil.findSameElementInCopy(element, target);
-    return StreamEx.of(copy.getReferences()).select(FileReference.class).collect(MoreCollectors.onlyOne())
-      .map(ref -> new RenameFileReferenceIntentionAction(myExistingElementName, ref)).orElse(null);
+    List<FileReference> refs = Arrays.stream(copy.getReferences())
+      .filter(FileReference.class::isInstance).map(FileReference.class::cast).toList();
+    return refs.size() == 1 ? new RenameFileReferenceIntentionAction(myExistingElementName, refs.getFirst()) : null;
   }
 
   @Override

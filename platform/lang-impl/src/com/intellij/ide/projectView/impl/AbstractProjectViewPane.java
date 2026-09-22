@@ -95,7 +95,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
-import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.CalledInAny;
@@ -128,6 +127,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -1160,7 +1160,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
   };
 
   static @NotNull List<TreeVisitor> createVisitors(Object @NotNull ... objects) {
-    return StreamEx.of(objects).map(AbstractProjectViewPane::createVisitor).nonNull().toImmutableList();
+    return Arrays.stream(objects).map(AbstractProjectViewPane::createVisitor).filter(Objects::nonNull).toList();
   }
 
   public static @Nullable TreeVisitor createVisitor(@NotNull Object object) {

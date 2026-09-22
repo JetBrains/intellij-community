@@ -65,7 +65,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
+import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -363,8 +363,11 @@ final class PsiUpdateImpl {
         ChangedVirtualDirectory root = directory();
         Map<LightVirtualFile, VirtualFile> mapping = new HashMap<>();
         mapping.put(root, root.getOriginalFile());
-        return StreamEx.<LightVirtualFile, ChangedVirtualDirectory>ofTree(
-            root, ChangedVirtualDirectory.class, vf -> StreamEx.ofValues(vf.getAddedChildren()))
+        return JBTreeTraverser.<LightVirtualFile>from(
+            vf -> vf instanceof ChangedVirtualDirectory dir ? dir.getAddedChildren().values() : List.of())
+          .withRoot(root)
+          .preOrderDfsTraversal()
+          .toStream()
           .skip(1) // existing root
           .map(vf -> {
             if (vf.isDirectory()) {

@@ -71,7 +71,6 @@ import com.intellij.vcs.commit.SingleChangeListCommitWorkflow;
 import com.intellij.vcs.commit.SingleChangeListCommitWorkflowHandler;
 import com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi;
 import kotlin.sequences.SequencesKt;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -92,6 +91,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
@@ -477,7 +477,12 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   private static @Nullable String getHelpId(@NotNull List<? extends CommitExecutor> executors) {
-    return StreamEx.of(executors).select(HelpIdProvider.class).map(HelpIdProvider::getHelpId).nonNull().findFirst().orElse(null);
+    return executors.stream()
+      .filter(HelpIdProvider.class::isInstance)
+      .map(HelpIdProvider.class::cast)
+      .map(HelpIdProvider::getHelpId)
+      .filter(Objects::nonNull)
+      .findFirst().orElse(null);
   }
 
   private void showDetailsIfSaved() {

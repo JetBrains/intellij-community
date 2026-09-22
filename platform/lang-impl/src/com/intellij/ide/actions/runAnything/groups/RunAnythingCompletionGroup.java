@@ -6,15 +6,17 @@ import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class RunAnythingCompletionGroup<V, P extends RunAnythingProvider<V>> extends RunAnythingGroupBase {
@@ -45,11 +47,15 @@ public final class RunAnythingCompletionGroup<V, P extends RunAnythingProvider<V
   }
 
   public static Collection<RunAnythingGroup> createCompletionGroups() {
-    return StreamEx.of(RunAnythingProvider.EP_NAME.getExtensions())
-                   .map(provider -> createCompletionGroup(provider))
-                   .filter(Objects::nonNull)
-                   .distinct(group -> group.getTitle())
-                   .collect(Collectors.toList());
+    Set<String> titles = new HashSet<>();
+    List<RunAnythingGroup> groups = new ArrayList<>();
+    for (RunAnythingProvider provider : RunAnythingProvider.EP_NAME.getExtensions()) {
+      RunAnythingGroup group = createCompletionGroup(provider);
+      if (group != null && titles.add(group.getTitle())) {
+        groups.add(group);
+      }
+    }
+    return groups;
   }
 
   public static @Nullable RunAnythingGroup createCompletionGroup(@NotNull RunAnythingProvider provider) {

@@ -11,7 +11,6 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.IdempotenceChecker;
 import com.intellij.util.TimeoutUtil;
 import junit.framework.TestCase;
-import one.util.streamex.IntStreamEx;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -19,6 +18,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
 
 public class CachedValuesTest extends BasePlatformTestCase {
   private final UserDataHolderBase holder = new UserDataHolderBase();
@@ -67,7 +67,7 @@ public class CachedValuesTest extends BasePlatformTestCase {
       calcCount.set(0);
       dependency.incModificationCount();
 
-      List<? extends Future<?>> jobs = IntStreamEx.range(0, 4).mapToObj(_ -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      List<? extends Future<?>> jobs = IntStream.range(0, 4).mapToObj(_ -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
         for (int i = 0; i < 10; i++) {
           assertEquals("result", getCached.get());
         }
@@ -92,7 +92,7 @@ public class CachedValuesTest extends BasePlatformTestCase {
 
       getPsiManager().dropPsiCaches();
 
-      List<? extends Future<?>> jobs = IntStreamEx
+      List<? extends Future<?>> jobs = IntStream
         .range(0, 8)
         .mapToObj(_ -> ApplicationManager.getApplication().executeOnPooledThread(() -> assertEquals(getPsiModCount(), cv.getValue())))
         .toList();

@@ -28,7 +28,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +44,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class TemplateImpl extends TemplateBase implements SchemeElement {
   private @NlsSafe String myKey;
@@ -453,7 +453,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     RangeMarker wholeTemplate = document.createRangeMarker(start, start + text.length());
     wholeTemplate.setGreedyToLeft(true);
     wholeTemplate.setGreedyToRight(true);
-    Map<String, Variable> variableMap = StreamEx.of(getVariables()).toMap(Variable::getName, Function.identity());
+    Map<String, Variable> variableMap = getVariables().stream().collect(Collectors.toMap(Variable::getName, Function.identity()));
     Project project = updater.getProject();
     PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
     List<Segment> segments = getSegments();

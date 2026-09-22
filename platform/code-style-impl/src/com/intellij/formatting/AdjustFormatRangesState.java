@@ -5,7 +5,6 @@ import com.intellij.formatting.engine.State;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.formatter.common.ExtraRangesProvider;
 import com.intellij.util.containers.Stack;
-import one.util.streamex.StreamEx;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +36,7 @@ final class AdjustFormatRangesState extends State {
   private void processBlock(Block currentBlock) {
     if (!isInsideExtendedFormattingRanges(currentBlock)) return;
 
-    StreamEx.ofReversed(currentBlock.getSubBlocks())
+    currentBlock.getSubBlocks().reversed().stream()
       .filter(block -> ASSERT.checkChildRange(currentBlock.getTextRange(), block.getTextRange(), myModel))
       .forEach(block -> state.push(block));
 

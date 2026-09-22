@@ -19,16 +19,17 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * @author Dmitry Avdeev
@@ -193,11 +194,11 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   public static PsiReference[] filterByOffset(PsiReference[] references, int offset) {
-    return StreamEx.of(references)
+    return Arrays.stream(references)
       .flatMap(ref ->
                  ref instanceof PsiDynaReference<?> dyna
-                 ? StreamEx.of(dyna.myReferences).filter(it -> it.getRangeInElement().contains(offset))
-                 : StreamEx.of(ref)
-      ).toArray(PsiReference.EMPTY_ARRAY);
+                 ? dyna.myReferences.stream().filter(it -> it.getRangeInElement().contains(offset))
+                 : Stream.of(ref)
+      ).toArray(PsiReference[]::new);
   }
 }

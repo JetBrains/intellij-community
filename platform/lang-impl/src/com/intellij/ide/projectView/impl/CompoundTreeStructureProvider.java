@@ -11,7 +11,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +53,7 @@ public final class CompoundTreeStructureProvider implements TreeStructureProvide
         children = provider.modify(parent, children, settings);
         if (ContainerUtil.exists(children, Objects::isNull)) {
           LOG.warn("null child provided by " + provider);
-          children = StreamEx.of(children).nonNull().toImmutableList();
+          children = children.stream().filter(Objects::nonNull).toList();
         }
       }
       catch (IndexNotReadyException exception) {

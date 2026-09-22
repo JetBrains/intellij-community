@@ -57,14 +57,12 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
-import one.util.streamex.EntryStream;
 import org.jdom.Element;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -82,7 +80,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -599,9 +596,10 @@ public class RefManagerImpl extends RefManager {
         });
       }
     }
-    return myCachedSortedRefs = Collections.unmodifiableList(EntryStream.of(map)
+    return myCachedSortedRefs = map.entrySet().stream()
       .sorted((e1, e2) -> VfsUtilCore.compareByPath(e1.getKey(), e2.getKey()))
-      .values().toFlatList(Function.identity()));
+      .flatMap(e -> e.getValue().stream())
+      .toList();
   }
 
   public @NotNull List<RefElement> getElements() {

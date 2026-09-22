@@ -47,7 +47,6 @@ import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.ProcessorWithThrottledCancellationCheck;
 import com.intellij.util.text.matching.MatchedFragment;
 import com.intellij.util.text.matching.MatchingMode;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -790,6 +789,15 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   }
 
   private static @NotNull <T> List<List<T>> group(@NotNull List<T> items, @NotNull Comparator<? super T> comparator) {
-    return StreamEx.of(items).groupRuns((n1, n2) -> comparator.compare(n1, n2) == 0).toList();
+    List<List<T>> groups = new ArrayList<>();
+    List<T> current = null;
+    for (T item : items) {
+      if (current == null || comparator.compare(current.getLast(), item) != 0) {
+        current = new ArrayList<>();
+        groups.add(current);
+      }
+      current.add(item);
+    }
+    return groups;
   }
 }

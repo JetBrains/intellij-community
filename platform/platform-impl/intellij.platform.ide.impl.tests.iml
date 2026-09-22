@@ -74,7 +74,6 @@
     <orderEntry type="library" scope="TEST" name="diogen-analysis" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="slf4j-api" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="slf4j-jdk14" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.stream" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.java.compatibility" scope="TEST" />

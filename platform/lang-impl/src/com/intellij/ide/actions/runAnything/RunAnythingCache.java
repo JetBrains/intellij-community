@@ -12,11 +12,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.util.xmlb.annotations.XMap;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -78,19 +78,19 @@ public final class RunAnythingCache implements PersistentStateComponent<RunAnyth
    * Updates group visibilities store for new providers
    */
   private static void updateNewProvidersGroupVisibility(@NotNull State settings) {
-    StreamEx.of(RunAnythingProvider.EP_NAME.getExtensions())
-      .filter(provider -> provider.getCompletionGroupTitle() != null)
-      .distinct(RunAnythingProvider::getCompletionGroupTitle)
-      .filter(provider -> !settings.myKeys.containsKey(provider.getCompletionGroupTitle()))
-      .forEach(provider -> settings.myKeys.put(provider.getCompletionGroupTitle(), true));
+    for (RunAnythingProvider provider : RunAnythingProvider.EP_NAME.getExtensions()) {
+      String title = provider.getCompletionGroupTitle();
+      if (title != null && !settings.myKeys.containsKey(title)) {
+        settings.myKeys.put(title, true);
+      }
+    }
   }
 
   public static final class State {
     @XMap(entryTagName = "visibility", keyAttributeName = "group", valueAttributeName = "flag") private final @NotNull Map<String, Boolean> myKeys =
-      StreamEx.of(RunAnythingProvider.EP_NAME.getExtensions())
-              .filter(provider -> provider.getCompletionGroupTitle() != null)
-              .distinct(RunAnythingProvider::getCompletionGroupTitle)
-              .collect(Collectors.toMap(RunAnythingProvider::getCompletionGroupTitle, group -> true));
+      Arrays.stream(RunAnythingProvider.EP_NAME.getExtensions())
+            .filter(provider -> provider.getCompletionGroupTitle() != null)
+            .collect(Collectors.toMap(RunAnythingProvider::getCompletionGroupTitle, group -> true, (first, _) -> first));
 
     @XCollection(elementName = "command") private final @NotNull List<String> myCommands = new ArrayList<>();
 

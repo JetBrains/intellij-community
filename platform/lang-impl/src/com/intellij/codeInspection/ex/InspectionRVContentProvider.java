@@ -31,13 +31,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -206,9 +206,9 @@ public abstract class InspectionRVContentProvider {
     // leaving only inspection-specific frames
     Set<String> classes = ContainerUtil.newHashSet(ProblemDescriptorBase.class.getName(), InspectionManagerBase.class.getName(), ProblemsHolder.class.getName());
 
-    return StreamEx.of(throwable.getStackTrace())
+    return Arrays.stream(throwable.getStackTrace())
             .dropWhile(ste -> classes.contains(ste.getClassName()))
-            .toArray(StackTraceElement.class);
+            .toArray(StackTraceElement[]::new);
   }
 
   public void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,

@@ -5,10 +5,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.TodoFilter;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.ui.ItemRemovable;
-import one.util.streamex.StreamEx;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.List;
+import java.util.StringJoiner;
 
 final class FiltersTableModel extends AbstractTableModel implements ItemRemovable {
   private final String[] myColumnNames = {IdeBundle.message("column.todo.filters.name"), IdeBundle.message("column.todo.filter.patterns")};
@@ -46,7 +46,11 @@ final class FiltersTableModel extends AbstractTableModel implements ItemRemovabl
     var filter = myFilters.get(row);
     return switch (column) {
       case 0 -> filter.getName();
-      case 1 -> StreamEx.of(filter.iterator()).map(TodoPattern::getPatternString).joining(" | ");
+      case 1 -> {
+        var joiner = new StringJoiner(" | ");
+        filter.iterator().forEachRemaining(pattern -> joiner.add(pattern.getPatternString()));
+        yield joiner.toString();
+      }
       default -> throw new IllegalArgumentException();
     };
   }

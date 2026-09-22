@@ -18,8 +18,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
-import one.util.streamex.EntryStream;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -107,11 +105,12 @@ public final class LightModCompletionServiceImpl {
         }
       });
     }
-    EntryStream.of(sortMap)
-      .mapKeyValue((sorter, classifier) -> classifier.classify(allItems.getOrDefault(sorter, Set.of()), processingContext))
-      .flatMap(items -> StreamEx.of(items.spliterator()))
-      .map(item -> ((CompletionItemLookupElement)item).item())
-      .forEach(sink);
+    for (Map.Entry<CompletionSorterImpl, Classifier<LookupElement>> entry : sortMap.entrySet()) {
+      Iterable<LookupElement> items = entry.getValue().classify(allItems.getOrDefault(entry.getKey(), Set.of()), processingContext);
+      for (LookupElement item : items) {
+        sink.accept(((CompletionItemLookupElement)item).item());
+      }
+    }
   }
 
   private static ProcessingContext createContext(CamelHumpMatcher matcher) {

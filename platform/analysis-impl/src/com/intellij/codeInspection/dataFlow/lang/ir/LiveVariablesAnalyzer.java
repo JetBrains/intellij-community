@@ -8,12 +8,12 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Deque;
@@ -169,7 +169,8 @@ final class LiveVariablesAnalyzer {
       entryPoints = List.of(myInstructions[0]);
     }
     else {
-      entryPoints = StreamEx.of(myInstructions).select(ControlTransferInstruction.class)
+      entryPoints = Arrays.stream(myInstructions)
+        .filter(ControlTransferInstruction.class::isInstance).map(ControlTransferInstruction.class::cast)
         .filter(cti -> cti.getTransfer().getTarget().getPossibleTargets().length == 0)
         .collect(Collectors.toList());
     }

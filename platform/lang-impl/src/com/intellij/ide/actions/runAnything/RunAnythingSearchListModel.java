@@ -10,7 +10,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 @SuppressWarnings("unchecked")
@@ -95,9 +95,9 @@ public abstract class RunAnythingSearchListModel extends CollectionListModel<Obj
       Function<Map.Entry<@Nls String, List<RunAnythingProvider>>, RunAnythingGroup> mapping =
         entry -> new RunAnythingHelpGroup(entry.getKey(), entry.getValue());
 
-      myGroups = ContainerUtil.concat(ContainerUtil.map(StreamEx.of(RunAnythingProvider.EP_NAME.getExtensionList().stream())
+      myGroups = ContainerUtil.concat(ContainerUtil.map(RunAnythingProvider.EP_NAME.getExtensionList().stream()
                                      .filter(provider -> provider.getHelpGroupTitle() != null)
-                                     .groupingBy(provider -> provider.getHelpGroupTitle())
+                                     .collect(Collectors.groupingBy(provider -> provider.getHelpGroupTitle()))
                                      .entrySet(), mapping),
       RunAnythingHelpGroup.EP_NAME.getExtensionList());
     }

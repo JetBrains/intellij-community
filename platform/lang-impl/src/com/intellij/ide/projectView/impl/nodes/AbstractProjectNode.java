@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -30,7 +29,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.OptionalLong;
 import java.util.Set;
 
 public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
@@ -68,9 +66,15 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
             }
             else {
               int commonPartLen = Math.min(commonGroupsPath.size(), path.size());
-              OptionalLong firstDifference = StreamEx.zip(commonGroupsPath.subList(0, commonPartLen), path.subList(0, commonPartLen), String::equals).indexOf(false);
-              if (firstDifference.isPresent()) {
-                commonGroupsPath = commonGroupsPath.subList(0, (int)firstDifference.getAsLong());
+              int firstDifference = -1;
+              for (int i = 0; i < commonPartLen; i++) {
+                if (!commonGroupsPath.get(i).equals(path.get(i))) {
+                  firstDifference = i;
+                  break;
+                }
+              }
+              if (firstDifference >= 0) {
+                commonGroupsPath = commonGroupsPath.subList(0, firstDifference);
               }
               else if (commonPartLen < commonGroupsPath.size()) {
                 commonGroupsPath = commonGroupsPath.subList(0, commonPartLen);

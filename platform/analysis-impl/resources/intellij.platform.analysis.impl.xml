@@ -12,7 +12,6 @@
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.libraries.opentelemetry"/>
     <module name="intellij.libraries.opentelemetry.semconv"/>
-    <module name="intellij.libraries.stream"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.codeStyle"/>

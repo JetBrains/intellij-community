@@ -8,7 +8,6 @@ import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.NameUtilCore;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,11 +38,18 @@ public class ConvertToCamelCaseMacro extends MacroBase {
 
   @VisibleForTesting
   public @NotNull Result convertString(@NotNull String text) {
-    String result = StreamEx.of(splitWords(text))
-      .mapFirstOrElse(StringUtil::toLowerCase, s ->
-        Character.isLetterOrDigit(s.charAt(0)) ? StringUtil.capitalize(StringUtil.toLowerCase(s)) : "")
-      .joining();
-    return new TextResult(result);
+    List<String> words = splitWords(text);
+    StringBuilder result = new StringBuilder();
+    for (int i = 0; i < words.size(); i++) {
+      String s = words.get(i);
+      if (i == 0) {
+        result.append(StringUtil.toLowerCase(s));
+      }
+      else if (Character.isLetterOrDigit(s.charAt(0))) {
+        result.append(StringUtil.capitalize(StringUtil.toLowerCase(s)));
+      }
+    }
+    return new TextResult(result.toString());
   }
 
   protected List<@NotNull String> splitWords(String text) {

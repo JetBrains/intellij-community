@@ -1,13 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import one.util.streamex.IntStreamEx;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -123,11 +125,11 @@ public class UnmodifiableHashMapTest {
     for (int size : new int[]{0, 1, 2, 3, 4, 10, 11, 12}) {
       UnmodifiableHashMap<Integer, String> map = create(size);
       Set<Integer> keys = new java.util.HashSet<>(map.keySet());
-      assertThat(keys).isEqualTo(IntStreamEx.range(size).boxed().toSet());
+      assertThat(keys).isEqualTo(IntStream.range(0, size).boxed().collect(Collectors.toSet()));
       Set<String> values = new java.util.HashSet<>(map.values());
-      assertThat(values).isEqualTo(IntStreamEx.range(size).mapToObj(String::valueOf).toSet());
+      assertThat(values).isEqualTo(IntStream.range(0, size).mapToObj(String::valueOf).collect(Collectors.toSet()));
       Set<Map.Entry<Integer, String>> entries = new java.util.HashSet<>(map.entrySet());
-      assertThat(entries).isEqualTo(IntStreamEx.range(size).mapToEntry(i -> i, String::valueOf).toSet());
+      assertThat(entries).isEqualTo(IntStream.range(0, size).mapToObj(i -> Map.entry(i, String.valueOf(i))).collect(Collectors.toSet()));
     }
   }
 
@@ -148,8 +150,8 @@ public class UnmodifiableHashMapTest {
         keys.add(k);
         values.add(v);
       });
-      assertThat(keys).isEqualTo(IntStreamEx.range(size).boxed().toSet());
-      assertThat(values).isEqualTo(IntStreamEx.range(size).mapToObj(String::valueOf).toSet());
+      assertThat(keys).isEqualTo(IntStream.range(0, size).boxed().collect(Collectors.toSet()));
+      assertThat(values).isEqualTo(IntStream.range(0, size).mapToObj(String::valueOf).collect(Collectors.toSet()));
     }
   }
 
@@ -168,7 +170,7 @@ public class UnmodifiableHashMapTest {
 
       Set<String> parts = Set.of(content.split(", ", -1));
       assertThat(parts).hasSize(size);
-      assertThat(parts).isEqualTo(IntStreamEx.range(size).mapToObj(i -> i + "=" + i).toSet());
+      assertThat(parts).isEqualTo(IntStream.range(0, size).mapToObj(i -> i + "=" + i).collect(Collectors.toSet()));
     }
   }
 
@@ -224,8 +226,8 @@ public class UnmodifiableHashMapTest {
   }
 
   private static UnmodifiableHashMap<Integer, String> create(int size) {
-    UnmodifiableHashMap<Integer, String> map =
-      IntStreamEx.range(size < 4 ? size :size / 4 * 4).mapToEntry(i -> i, String::valueOf).toMapAndThen(UnmodifiableHashMap::fromMap);
+    UnmodifiableHashMap<Integer, String> map = UnmodifiableHashMap.fromMap(
+      IntStream.range(0, size < 4 ? size : size / 4 * 4).boxed().collect(Collectors.toMap(Function.identity(), String::valueOf)));
     while (map.size() < size) {
       map = map.with(map.size(), String.valueOf(map.size()));
     }

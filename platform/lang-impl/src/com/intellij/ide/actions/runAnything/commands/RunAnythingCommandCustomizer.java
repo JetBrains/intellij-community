@@ -5,7 +5,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,11 +42,18 @@ public abstract class RunAnythingCommandCustomizer {
   public static @NotNull GeneralCommandLine customizeCommandLine(@NotNull DataContext dataContext,
                                                                  @NotNull VirtualFile workDirectory,
                                                                  @NotNull GeneralCommandLine commandLine) {
-    return StreamEx.of(EP_NAME.getExtensions())
-                   .foldLeft(commandLine, (cmdLine, customizer) -> customizer.customizeCommandLine(workDirectory, dataContext, cmdLine));
+    GeneralCommandLine result = commandLine;
+    for (RunAnythingCommandCustomizer customizer : EP_NAME.getExtensions()) {
+      result = customizer.customizeCommandLine(workDirectory, dataContext, result);
+    }
+    return result;
   }
 
   public static @NotNull DataContext customizeContext(@NotNull DataContext dataContext) {
-    return StreamEx.of(EP_NAME.getExtensions()).foldLeft(dataContext, (context, customizer) -> customizer.customizeDataContext(context));
+    DataContext result = dataContext;
+    for (RunAnythingCommandCustomizer customizer : EP_NAME.getExtensions()) {
+      result = customizer.customizeDataContext(result);
+    }
+    return result;
   }
 }

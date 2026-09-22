@@ -5,16 +5,16 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.testFramework.LightPlatformTestCase;
-import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.IntStream;
 
 public class QueryTest extends LightPlatformTestCase {
   public void testForEachIsThreadSafeByDefault() {
-    List<String> src = IntStreamEx.range(0, 100).mapToObj(String::valueOf).toList();
+    List<String> src = IntStream.range(0, 100).mapToObj(String::valueOf).toList();
     AtomicBoolean processing = new AtomicBoolean();
     parallelQuery(src).forEach(_ -> {
       assertTrue(processing.compareAndSet(false, true));

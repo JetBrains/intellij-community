@@ -20,7 +20,6 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
-import one.util.streamex.StreamEx
 
 private val LOG = logger<PsiVFSListener>()
 
@@ -175,9 +174,17 @@ internal class PsiVFSListener(private val project: Project) {
   // grouping events of the same type together and calling fireForGrouped() for each batch
   private fun groupAndFire(events: List<VFileEvent>) {
     // group several VFileDeleteEvents together, several VFileMoveEvents together, place all other events into one-element lists
-    StreamEx.of(events)
-      .groupRuns { e1, e2 -> e1 is VFileDeleteEvent && e2 is VFileDeleteEvent || e1 is VFileMoveEvent && e2 is VFileMoveEvent }
-      .forEach { fireForGrouped(it) }
+    var start = 0
+    for (i in 1..events.size) {
+      if (i == events.size || !isSameGroup(events[i - 1], events[i])) {
+        fireForGrouped(events.subList(start, i))
+        start = i
+      }
+    }
+  }
+
+  private fun isSameGroup(e1: VFileEvent, e2: VFileEvent): Boolean {
+    return e1 is VFileDeleteEvent && e2 is VFileDeleteEvent || e1 is VFileMoveEvent && e2 is VFileMoveEvent
   }
 
   private fun fireForGrouped(subList: List<VFileEvent>) {

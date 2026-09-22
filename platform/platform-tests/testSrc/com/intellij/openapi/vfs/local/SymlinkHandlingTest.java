@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
@@ -30,6 +29,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported;
 import static com.intellij.openapi.util.io.IoTestUtil.createSymLink;
@@ -413,7 +414,8 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     VirtualFile vDir = refreshAndFind(from);
     assertNotNull(vDir);
 
-    Set<String> expectedSet = StreamEx.of(expected).map(FileUtil::toSystemIndependentName).append(vDir.getPath()).toSet();
+    Set<String> expectedSet = Stream.concat(Stream.of(expected).map(FileUtil::toSystemIndependentName), Stream.of(vDir.getPath()))
+      .collect(Collectors.toSet());
 
     Set<String> actualSet = new HashSet<>();
     VfsUtilCore.visitChildrenRecursively(vDir, new VirtualFileVisitor<Void>() {

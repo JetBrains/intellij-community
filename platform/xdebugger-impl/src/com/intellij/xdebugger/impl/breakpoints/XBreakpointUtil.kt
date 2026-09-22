@@ -15,7 +15,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
-import one.util.streamex.StreamEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -67,8 +66,8 @@ object XBreakpointUtil {
 
   @ApiStatus.Internal
   @JvmStatic
-  fun breakpointTypes(): StreamEx<XBreakpointType<*, *>> =
-    StreamEx.of(XBreakpointType.EXTENSION_POINT_NAME.extensionList)
+  fun breakpointTypes(): List<XBreakpointType<*, *>> =
+    XBreakpointType.EXTENSION_POINT_NAME.extensionList
 
   /**
    * Toggle line breakpoint with editor support:

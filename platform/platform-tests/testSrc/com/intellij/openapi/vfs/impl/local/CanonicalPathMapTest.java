@@ -5,7 +5,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.PathUtil;
-import one.util.streamex.StreamEx;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -159,8 +158,10 @@ public class CanonicalPathMapTest {
   }
 
   private static CanonicalPathMap createCanonicalPathMap(Collection<String> recursive, Collection<String> flat) {
-    NavigableSet<String> recursiveSet = StreamEx.of(recursive).into(WatchRootsUtil.createFileNavigableSet());
-    NavigableSet<String> flatSet = StreamEx.of(flat).into(WatchRootsUtil.createFileNavigableSet());
+    NavigableSet<String> recursiveSet = WatchRootsUtil.createFileNavigableSet();
+    recursiveSet.addAll(recursive);
+    NavigableSet<String> flatSet = WatchRootsUtil.createFileNavigableSet();
+    flatSet.addAll(flat);
     CanonicalPathMap pathMap = new CanonicalPathMap(recursiveSet, flatSet, WatchRootsUtil.createMappingsNavigableSet());
     pathMap.getCanonicalWatchRoots();
     return pathMap;

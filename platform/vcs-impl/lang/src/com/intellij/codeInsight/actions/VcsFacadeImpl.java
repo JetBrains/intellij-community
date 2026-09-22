@@ -41,7 +41,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -459,12 +458,13 @@ public final class VcsFacadeImpl extends VcsFacade {
 
   @Override
   public JComponent createPatchPreviewComponent(@NotNull Project project, @NotNull Map<VirtualFile, CharSequence> patch) {
-    List<Change> changes = EntryStream.of(patch).mapKeyValue((file, content) -> {
-      FilePath filePath = VcsUtil.getFilePath(file);
+    List<Change> changes = new ArrayList<>();
+    for (Map.Entry<VirtualFile, CharSequence> entry : patch.entrySet()) {
+      FilePath filePath = VcsUtil.getFilePath(entry.getKey());
       ContentRevision current = new CurrentContentRevision(filePath);
-      ContentRevision changed = new SimpleContentRevision(content.toString(), filePath, VcsBundle.message("patched.version.name"));
-      return new Change(current, changed);
-    }).toList();
+      ContentRevision changed = new SimpleContentRevision(entry.getValue().toString(), filePath, VcsBundle.message("patched.version.name"));
+      changes.add(new Change(current, changed));
+    }
     SimpleAsyncChangesBrowser browser = new SimpleAsyncChangesBrowser(project, false, false);
     browser.setChangesToDisplay(changes);
     return browser;

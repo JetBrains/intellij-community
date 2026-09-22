@@ -34,8 +34,6 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import one.util.streamex.EntryStream;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -573,10 +571,14 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     if (inputBySorter.isEmpty()) return Collections.emptyList();
 
     List<Map.Entry<CompletionSorterImpl, Classifier<LookupElement>>> entries = new ArrayList<>(myClassifiers.entrySet());
-    return EntryStream.of(entries.iterator())
-      .mapKeyValue((sorter, classifier) -> classifier.classify(inputBySorter.get(sorter), createContext()))
-      .flatMap(iterable -> StreamEx.of(iterable.iterator()))
-      .toList(); // need to collect, as the resulting Iterable can be iterated several times
+    List<LookupElement> result = new ArrayList<>(); // need to collect, as the resulting Iterable can be iterated several times
+    for (Map.Entry<CompletionSorterImpl, Classifier<LookupElement>> entry : entries) {
+      Iterable<LookupElement> classified = entry.getValue().classify(inputBySorter.get(entry.getKey()), createContext());
+      for (LookupElement element : classified) {
+        result.add(element);
+      }
+    }
+    return result;
   }
 
   private @NotNull ProcessingContext createContext() {

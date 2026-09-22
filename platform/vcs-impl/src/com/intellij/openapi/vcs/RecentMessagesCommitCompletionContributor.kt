@@ -11,7 +11,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider
-import one.util.streamex.StreamEx
 
 internal class RecentMessagesCommitCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
@@ -24,9 +23,9 @@ internal class RecentMessagesCommitCompletionContributor : CompletionContributor
     result.caseInsensitive()
       .withPrefixMatcher(PlainPrefixMatcher(TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters)))
       .addAllElements(
-        StreamEx.of(VcsConfiguration.getInstance(project).recentMessages)
-          .reverseSorted()
-          .map { lookupString: String ->
+        VcsConfiguration.getInstance(project).recentMessages
+          .sortedDescending()
+          .map { lookupString ->
             PrioritizedLookupElement.withPriority(LookupElementBuilder.create(lookupString), Int.MIN_VALUE.toDouble())
           })
   }

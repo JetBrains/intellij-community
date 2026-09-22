@@ -13,7 +13,6 @@ import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.getLineBreakCount
-import one.util.streamex.StreamEx
 import org.jetbrains.annotations.TestOnly
 
 data class IntentionPreviewDiffResult(val diffs: List<DiffInfo>, @TestOnly val newText: String) : IntentionPreviewInfo {
@@ -70,12 +69,23 @@ data class IntentionPreviewDiffResult(val diffs: List<DiffInfo>, @TestOnly val n
       return StringUtil.lineColToOffset(fileText, lineNumber, 0).let { pos -> if (pos == -1) fileText.length else pos }
     }
 
-    private fun squash(lines: List<LineFragment>): List<LineFragment> = StreamEx.of(lines)
-      .collapse({ f1, f2 -> f2.startLine1 - f1.endLine1 == 1 && f2.startLine2 - f1.endLine2 == 1 },
-                { f1, f2 ->
-                  LineFragmentImpl(f1.startLine1, f2.endLine1, f1.startLine2, f2.endLine2,
-                                   f1.startOffset1, f2.endOffset1, f1.startOffset2, f2.endOffset2)
-                }).toList()
+    private fun squash(lines: List<LineFragment>): List<LineFragment> {
+      val result = ArrayList<LineFragment>()
+      var previous: LineFragment? = null
+      for (f2 in lines) {
+        val f1 = previous
+        if (f1 != null && f2.startLine1 - f1.endLine1 == 1 && f2.startLine2 - f1.endLine2 == 1) {
+          val merged = result[result.lastIndex]
+          result[result.lastIndex] = LineFragmentImpl(merged.startLine1, f2.endLine1, merged.startLine2, f2.endLine2,
+                                                      merged.startOffset1, f2.endOffset1, merged.startOffset2, f2.endOffset2)
+        }
+        else {
+          result.add(f2)
+        }
+        previous = f2
+      }
+      return result
+    }
 
     private fun createFileNamePresentation(fileType: FileType, fileName: String?): DiffInfo? {
       fileName ?: return null

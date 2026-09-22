@@ -32,7 +32,6 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.TextWithIcon;
 import com.intellij.workspaceModel.ide.LibraryEntities;
 import com.intellij.workspaceModel.ide.SdkEntities;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +39,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import java.io.File;
+import java.util.Arrays;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.coalesce;
 
@@ -106,9 +108,9 @@ public class DefaultModuleRendererFactory extends ModuleRendererFactory {
 
     if (StringUtil.isEmpty(text) && Registry.is("index.run.configuration.jre")) {
       for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
-        Set<VirtualFile> roots = StreamEx.of(sdk.getRootProvider().getFiles(OrderRootType.CLASSES))
-          .append(sdk.getRootProvider().getFiles(OrderRootType.SOURCES))
-          .toSet();
+        Set<VirtualFile> roots = Stream.concat(Arrays.stream(sdk.getRootProvider().getFiles(OrderRootType.CLASSES)),
+                                               Arrays.stream(sdk.getRootProvider().getFiles(OrderRootType.SOURCES)))
+          .collect(Collectors.toSet());
         if (VfsUtilCore.isUnder(vFile, roots)) {
           text = "< " + sdk.getName() + " >";
           break;

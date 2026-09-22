@@ -61,7 +61,6 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,7 +119,9 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
     assert !(file instanceof PsiCompiledElement);
 
     Map<Surrounder, PsiElement[]> surrounders = computeSurrounders(editor, file);
-    StreamEx.ofValues(surrounders, s -> s.getClass().equals(surrounder.getClass()))
+    surrounders.entrySet().stream()
+      .filter(entry -> entry.getKey().getClass().equals(surrounder.getClass()))
+      .map(Map.Entry::getValue)
       .findFirst()
       .ifPresent(elements -> doSurround(project, editor, surrounder, elements));
   }

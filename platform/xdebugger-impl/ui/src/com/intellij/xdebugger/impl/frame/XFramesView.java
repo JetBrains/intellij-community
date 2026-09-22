@@ -60,7 +60,6 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -715,7 +714,9 @@ public final class XFramesView extends XDebugView {
     private static void scheduleFilesHighlighting(@NotNull List<?> values, @NotNull Project project) {
       if (!Registry.is("highlighting.passes.cache")) return;
 
-      List<VirtualFile> files = StreamEx.of(values).select(XStackFrame.class)
+      List<VirtualFile> files = values.stream()
+        .filter(XStackFrame.class::isInstance)
+        .map(XStackFrame.class::cast)
         .map(it -> ObjectUtils.doIfNotNull(it.getSourcePosition(), XSourcePosition::getFile))
         .filter(Objects::nonNull)
         .toList();

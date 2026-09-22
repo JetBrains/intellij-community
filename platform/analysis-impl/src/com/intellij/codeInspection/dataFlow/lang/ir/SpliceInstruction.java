@@ -4,11 +4,11 @@ package com.intellij.codeInspection.dataFlow.lang.ir;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * Pop several elements from the stack and replace them with some of them (possibly duplicating, swapping, removing some, etc.)
@@ -24,8 +24,8 @@ public class SpliceInstruction extends Instruction {
 
   @Override
   public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
-    List<DfaValue> removed = IntStreamEx.range(myCount).mapToObj(idx -> stateBefore.pop()).toList();
-    IntStreamEx.of(myReplacement).elements(removed).forEach(stateBefore::push);
+    List<DfaValue> removed = IntStream.range(0, myCount).mapToObj(_ -> stateBefore.pop()).toList();
+    Arrays.stream(myReplacement).mapToObj(removed::get).forEach(stateBefore::push);
     Instruction nextInstruction = interpreter.getInstruction(getIndex() + 1);
     return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, stateBefore)};
   }

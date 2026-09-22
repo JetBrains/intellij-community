@@ -33,11 +33,11 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -49,10 +49,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 
 /**
  * Invariant: qualifiers of the variables used in myEqClasses or myVariableTypes must be canonical variables
@@ -174,7 +174,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     if (!myDistinctClasses.isEmpty()) {
       result.append("\n  distincts: ");
-      String distincts = StreamEx.of(getDistinctClassPairs()).map(DistinctPairSet.DistinctPair::toString).sorted().joining(" ");
+      String distincts = getDistinctClassPairs().stream().map(DistinctPairSet.DistinctPair::toString).sorted()
+        .collect(Collectors.joining(" "));
       result.append(distincts);
     }
 
@@ -1175,38 +1176,49 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean applyDerivedVariablesEquivalence(@NotNull DfaValue left, @NotNull DfaValue right) {
-    return StreamEx.of(left, right).flatCollection(val -> val.getDfType().getDerivedVariables())
-      .allMatch(field -> {
-        DfaValue leftValue = field.createValue(myFactory, left);
-        DfaValue rightValue = field.createValue(myFactory, right);
-        DfType leftType = getDfType(leftValue);
-        DfType rightType = getDfType(rightValue);
-        // Values participated in comparison are incompatible, but could be both null
-        if (leftType == DfType.BOTTOM || rightType == DfType.BOTTOM) return true;
-        DfType result = leftType.meet(rightType);
-        if (!result.hasNonStandardEquivalence() && !applyRelation(leftValue, rightValue, false)) {
-          return false;
-        }
-        return meetDfType(leftValue, result) && meetDfType(rightValue, result);
-      });
+    for (DerivedVariableDescriptor field : left.getDfType().getDerivedVariables()) {
+      if (!applyDerivedVariableEquivalence(field, left, right)) return false;
+    }
+    for (DerivedVariableDescriptor field : right.getDfType().getDerivedVariables()) {
+      if (!applyDerivedVariableEquivalence(field, left, right)) return false;
+    }
+    return true;
+  }
+
+  private boolean applyDerivedVariableEquivalence(@NotNull DerivedVariableDescriptor field,
+                                                  @NotNull DfaValue left,
+                                                  @NotNull DfaValue right) {
+    DfaValue leftValue = field.createValue(myFactory, left);
+    DfaValue rightValue = field.createValue(myFactory, right);
+    DfType leftType = getDfType(leftValue);
+    DfType rightType = getDfType(rightValue);
+    // Values participated in comparison are incompatible, but could be both null
+    if (leftType == DfType.BOTTOM || rightType == DfType.BOTTOM) return true;
+    DfType result = leftType.meet(rightType);
+    if (!result.hasNonStandardEquivalence() && !applyRelation(leftValue, rightValue, false)) {
+      return false;
+    }
+    return meetDfType(leftValue, result) && meetDfType(rightValue, result);
   }
 
   private boolean applyDerivedInequality(@NotNull DfaValue dfaLeft, DfaValue dfaRight) {
     if (getDfType(dfaLeft).meet(getDfType(dfaRight)) == DfType.BOTTOM) return true;
     List<DerivedVariableDescriptor> variables = new ArrayList<>(dfaLeft.getDfType().getDerivedVariables());
     variables.retainAll(dfaRight.getDfType().getDerivedVariables());
-    return StreamEx.of(variables)
-      .filter(dv -> dv.equalityImpliesQualifierEquality())
-      .allMatch(dv -> {
-        DfaValue derivedLeft = dv.createValue(myFactory, dfaLeft);
-        DfaValue derivedRight = dv.createValue(myFactory, dfaRight);
-        DfType leftType = getDfType(derivedLeft);
-        DfType rightType = getDfType(derivedRight);
-        if (leftType instanceof DfConstantType && leftType.equals(rightType)) return false;
-        return derivedLeft.getDfType().hasNonStandardEquivalence() ||
-               derivedRight.getDfType().hasNonStandardEquivalence() ||
-               applyRelation(derivedLeft, derivedRight, true);
-      });
+    for (DerivedVariableDescriptor dv : variables) {
+      if (!dv.equalityImpliesQualifierEquality()) continue;
+      DfaValue derivedLeft = dv.createValue(myFactory, dfaLeft);
+      DfaValue derivedRight = dv.createValue(myFactory, dfaRight);
+      DfType leftType = getDfType(derivedLeft);
+      DfType rightType = getDfType(derivedRight);
+      if (leftType instanceof DfConstantType && leftType.equals(rightType)) return false;
+      if (!derivedLeft.getDfType().hasNonStandardEquivalence() &&
+          !derivedRight.getDfType().hasNonStandardEquivalence() &&
+          !applyRelation(derivedLeft, derivedRight, true)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private boolean applyRelation(@NotNull DfaValue dfaLeft, @NotNull DfaValue dfaRight, boolean isNegated) {
@@ -1484,10 +1496,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private void flushVariable(@NotNull DfaVariableValue variable, boolean canonicalize, boolean flushDeps, boolean markFlushed) {
     DfaVariableValue canonical = canonicalize ? canonicalize(variable) : variable;
     EqClass eqClass = canonical.getDependentVariables().isEmpty() ? null : getEqClass(canonical);
-    DfaVariableValue newCanonical =
-      eqClass == null ? null : StreamEx.of(eqClass.iterator()).without(canonical).min(EqClassImpl.CANONICAL_VARIABLE_COMPARATOR)
-        .filter(candidate -> !candidate.dependsOn(canonical))
-        .orElse(null);
+    DfaVariableValue min = null;
+    if (eqClass != null) {
+      for (DfaVariableValue candidate : eqClass) {
+        if (candidate.equals(canonical)) continue;
+        if (min == null || EqClassImpl.CANONICAL_VARIABLE_COMPARATOR.compare(candidate, min) < 0) {
+          min = candidate;
+        }
+      }
+    }
+    DfaVariableValue newCanonical = min == null || min.dependsOn(canonical) ? null : min;
     myStack.replaceAll(value -> handleStackValueOnVariableFlush(value, canonical, newCanonical));
 
     doFlush(canonical, markFlushed);
@@ -1506,8 +1524,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private void flushQualifiedMethods(@NotNull DfaVariableValue variable) {
     if (variable.isFlushableByCalls()) {
       // Flush method results on field write
-      List<DfaVariableValue> toFlush = StreamEx.of(myEqClasses).flatMap(cls -> cls == null ? null : StreamEx.of(cls.iterator()))
-        .append(myVariableTypes.keySet()).filter(DfaVariableValue::containsCalls).toList();
+      List<DfaVariableValue> toFlush = new ArrayList<>();
+      for (EqClassImpl cls : myEqClasses) {
+        if (cls == null) continue;
+        for (DfaVariableValue var : cls) {
+          if (var.containsCalls()) toFlush.add(var);
+        }
+      }
+      for (DfaVariableValue var : myVariableTypes.keySet()) {
+        if (var.containsCalls()) toFlush.add(var);
+      }
       toFlush.forEach(val -> doFlush(val, true));
     }
   }
@@ -1583,10 +1609,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       - All sentinels in the stack are the same (otherwise we may screw up the unrolled loops)
       - Top-of-stack value is the same (otherwise we may prematurely merge true/false on TOS right before jump which is very undesired)
      */
-    return StreamEx.of(myStack).<Object>mapLastOrElse(
-        val -> val instanceof DfaControlTransferValue || val == myFactory.getSentinel() ? val : null,
-        Function.identity())
-      .append(isEphemeral()).toImmutableList();
+    int size = myStack.size();
+    Object[] key = new Object[size + 1];
+    for (int i = 0; i < size; i++) {
+      DfaValue val = myStack.get(i);
+      key[i] = i == size - 1 || val instanceof DfaControlTransferValue || val == myFactory.getSentinel() ? val : null;
+    }
+    key[size] = isEphemeral();
+    return Arrays.asList(key);
   }
 
   @Override
@@ -1610,9 +1640,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void mergeStacks(DfaMemoryStateImpl other) {
-    List<DfaValue> values = StreamEx.zip(myStack, other.myStack, DfaValue::unite).toList();
-    myStack.clear();
-    values.forEach(myStack::push);
+    for (int i = 0; i < myStack.size(); i++) {
+      myStack.set(i, myStack.get(i).unite(other.myStack.get(i)));
+    }
   }
 
   private void mergeDistinctPairs(DfaMemoryStateImpl other) {
@@ -1631,7 +1661,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void mergeVariableTypes(DfaMemoryStateImpl other) {
-    Set<DfaVariableValue> vars = StreamEx.of(myVariableTypes, other.myVariableTypes).toFlatCollection(Map::keySet, HashSet::new);
+    Set<DfaVariableValue> vars = new HashSet<>();
+    vars.addAll(myVariableTypes.keySet());
+    vars.addAll(other.myVariableTypes.keySet());
     for (DfaVariableValue var : vars) {
       DfType type = getDfType(var);
       DfType otherType = other.getDfType(var);

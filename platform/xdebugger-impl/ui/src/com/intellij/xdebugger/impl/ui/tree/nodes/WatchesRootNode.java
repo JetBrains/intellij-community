@@ -30,7 +30,6 @@ import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -132,8 +131,9 @@ public class WatchesRootNode extends XValueContainerNode.Root<XValueContainer> {
     // copy evaluation result by default
     if (stackFrame == null) return;
     if (!(tree.getRoot() instanceof WatchesRootNode watchesRootNode)) return;
-    StreamEx.of(watchesRootNode.myChildren)
-      .select(ResultNode.class)
+    watchesRootNode.myChildren.stream()
+      .filter(ResultNode.class::isInstance)
+      .map(ResultNode.class::cast)
       .findFirst()
       .ifPresent(node -> myChildren.add(new ResultNode(myTree, this, node.getExpression(), node.getValueContainer())));
   }
@@ -154,8 +154,9 @@ public class WatchesRootNode extends XValueContainerNode.Root<XValueContainer> {
   }
 
   public List<XWatch> getWatches() {
-    return StreamEx.of(getWatchChildren())
-      .select(WatchNodeImpl.class)
+    return getWatchChildren().stream()
+      .filter(WatchNodeImpl.class::isInstance)
+      .map(WatchNodeImpl.class::cast)
       .filter(node -> !(node instanceof ResultNode))
       .map(WatchNodeImpl::getXWatch)
       .toList();

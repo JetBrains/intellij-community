@@ -43,7 +43,6 @@
     <module name="intellij.libraries.oro.matcher"/>
     <module name="intellij.libraries.protobuf"/>
     <module name="intellij.libraries.rd.core"/>
-    <module name="intellij.libraries.stream"/>
     <module name="intellij.libraries.swingx"/>
     <module name="intellij.libraries.winp"/>
     <module name="intellij.platform.analysis"/>

@@ -62,7 +62,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -172,8 +171,7 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
   }
 
   private BatchExecutionResult executeChooseInBatch(@NotNull ActionContext context, ModChooseAction chooser) {
-    ModCommandAction action = StreamEx.of(chooser.actions()).filter(act -> act.getPresentation(context) != null)
-      .findFirst().orElse(null);
+    ModCommandAction action = ContainerUtil.find(chooser.actions(), act -> act.getPresentation(context) != null);
     if (action == null) return Result.NOTHING;
 
     String name = chooser.title();

@@ -76,7 +76,6 @@ import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.flow.MutableStateFlow;
 import kotlinx.coroutines.flow.StateFlow;
 import kotlinx.coroutines.flow.StateFlowKt;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -372,7 +371,11 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   @Override
   public @NotNull <T extends XDebugProcess> List<? extends T> getDebugProcesses(Class<T> processClass) {
     synchronized (mySessions) {
-      return StreamEx.of(mySessions.values()).map(XDebugSessionImpl::getDebugProcess).select(processClass).toList();
+      return mySessions.values().stream()
+        .map(XDebugSessionImpl::getDebugProcess)
+        .filter(processClass::isInstance)
+        .map(processClass::cast)
+        .toList();
     }
   }
 

@@ -38,7 +38,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -167,7 +166,7 @@ public class ProjectSdksModel implements SdkModel {
   }
 
   public void disposeUIResources() {
-    StreamEx.ofValues(myProjectSdks).select(Disposable.class).forEach(Disposer::dispose);
+    myProjectSdks.values().stream().filter(Disposable.class::isInstance).map(Disposable.class::cast).forEach(Disposer::dispose);
     myProjectSdks.clear();
     myInitialized = false;
   }

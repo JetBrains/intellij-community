@@ -33,7 +33,7 @@ internal open class MonolithBreakpointTypeProxy @Deprecated("Use type.asProxy() 
   override val id: String get() = breakpointType.id
 
   override val index: Int
-    get() = XBreakpointUtil.breakpointTypes().indexOf(breakpointType).orElse(-1).toInt()
+    get() = XBreakpointUtil.breakpointTypes().indexOf(breakpointType)
   override val title: String
     get() = breakpointType.title
   override val enabledIcon: Icon

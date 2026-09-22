@@ -15,11 +15,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
@@ -157,13 +157,13 @@ public final class InjectedFileReferenceSelectioner extends AbstractWordSelectio
   }
 
   private static @NotNull BitSet createCompositeIndexesSet(@NotNull PsiElement valueElement, int indexesOffset) {
-    return StreamEx.of(valueElement.getChildren())
+    return Arrays.stream(valueElement.getChildren())
       .filter(child -> !(child instanceof LeafPsiElement))
       .map(PsiElement::getTextRange)
       .flatMapToInt(range -> IntStream.range(range.getStartOffset(), range.getEndOffset()))
       .map(index -> index - indexesOffset)
-      .atLeast(0)
-      .toBitSet();
+      .filter(index -> index >= 0)
+      .collect(BitSet::new, BitSet::set, BitSet::or);
   }
 
   private static @NotNull TextRange limitToCurrentLineAndStripWhiteSpace(@NotNull CharSequence text, int cursor, @NotNull TextRange range) {

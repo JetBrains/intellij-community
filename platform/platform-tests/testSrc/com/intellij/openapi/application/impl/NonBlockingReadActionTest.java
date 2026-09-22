@@ -44,7 +44,6 @@ import com.intellij.util.ui.UIUtil;
 import kotlin.Unit;
 import kotlinx.coroutines.CompletableJob;
 import kotlinx.coroutines.JobKt;
-import one.util.streamex.IntStreamEx;
 import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,6 +66,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
 import static com.intellij.testFramework.PlatformTestUtil.waitForPromise;
 
@@ -582,7 +582,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   public void test_submit_doesNot_fail_without_readAction_when_parent_isDisposed() throws Exception {
     try (ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 1000)) {
       for (int i = 0; i < 50; i++) {
-        List<Disposable> parents = IntStreamEx.range(100).mapToObj(_ -> Disposer.newDisposable()).toList();
+        List<Disposable> parents = IntStream.range(0, 100).mapToObj(_ -> Disposer.newDisposable()).toList();
         List<Future<?>> futures = new ArrayList<>();
         for (Disposable parent : parents) {
           futures.add(executor.submit(() -> ReadAction.nonBlocking(() -> {
@@ -629,7 +629,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   public void test_executeSynchronously_doesNot_return_null_with_not_nullable_callable() {
     try (ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 1000)) {
       for (int i = 0; i < 50; i++) {
-        List<Disposable> disposables = IntStreamEx.range(100).mapToObj(_ -> Disposer.newDisposable()).toList();
+        List<Disposable> disposables = IntStream.range(0, 100).mapToObj(_ -> Disposer.newDisposable()).toList();
         List<Future<?>> futuresList = new ArrayList<>();
         for (Disposable disposable : disposables) {
           futuresList.add(executor.submit(() -> {

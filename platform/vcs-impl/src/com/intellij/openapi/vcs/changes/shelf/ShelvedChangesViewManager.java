@@ -116,7 +116,6 @@ import com.intellij.util.ui.update.UpdateQueue;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.Dispatchers;
 import kotlin.Unit;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -137,6 +136,7 @@ import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -244,7 +244,7 @@ public class ShelvedChangesViewManager {
                                                                   @NotNull Predicate<? super ShelvedChangeList> condition) {
     TreePath[] selectionPaths = tree.getSelectionPaths();
     if (selectionPaths == null) return Collections.emptySet();
-    return StreamEx.of(selectionPaths)
+    return Arrays.stream(selectionPaths)
       .map(path -> TreeUtil.findObjectInPath(path, ShelvedChangeList.class))
       .filter(nonNull())
       .filter(condition)

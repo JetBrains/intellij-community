@@ -74,7 +74,6 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import kotlin.Unit;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +96,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Override
   public XLineBreakpointType<?>[] getLineBreakpointTypes() {
-    return XBreakpointUtil.breakpointTypes().select(XLineBreakpointType.class).toArray(XLineBreakpointType<?>[]::new);
+    return XBreakpointUtil.breakpointTypes().stream()
+      .filter(XLineBreakpointType.class::isInstance)
+      .map(type -> (XLineBreakpointType<?>)type)
+      .toArray(XLineBreakpointType<?>[]::new);
   }
 
   @Override
@@ -210,7 +212,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       }));
     }
     return Promises.collectResults(promises).then(v -> {
-      var variants = StreamEx.of(v).toFlatList(l -> l);
+      List<XLineBreakpointType.XLineBreakpointVariant> variants = new ArrayList<>();
+      for (List<? extends XLineBreakpointType.XLineBreakpointVariant> l : v) {
+        variants.addAll(l);
+      }
       if (variants.isEmpty()) {
         assert !multipleTypes;
         XLineBreakpointType type = types.getFirst();
@@ -332,8 +337,9 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @ApiStatus.Internal
   public static Collection<? extends XLineBreakpointImpl<?>> getDocumentBreakpoints(Document document, XLineBreakpointManagerProxy managerProxy) {
-    return StreamEx.of(managerProxy.getDocumentBreakpointProxies(document))
-      .select(MonolithLineBreakpointProxy.class)
+    return managerProxy.getDocumentBreakpointProxies(document).stream()
+      .filter(MonolithLineBreakpointProxy.class::isInstance)
+      .map(MonolithLineBreakpointProxy.class::cast)
       .map(MonolithLineBreakpointProxy::getBreakpoint)
       .toList();
   }

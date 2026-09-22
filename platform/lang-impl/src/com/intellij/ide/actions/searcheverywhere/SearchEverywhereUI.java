@@ -132,7 +132,6 @@ import com.intellij.util.ui.UIUtil;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 import kotlin.jvm.functions.Function2;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -1930,8 +1929,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       if (pattern.isEmpty()) return;
       boolean showResetScope = myHeader.canResetScope();
 
-      SearchEverywhereEmptyTextProvider provider = StreamEx.of(myHeader.getSelectedTab().getContributors())
-        .select(SearchEverywhereEmptyTextProvider.class)
+      SearchEverywhereEmptyTextProvider provider = myHeader.getSelectedTab().getContributors().stream()
+        .filter(SearchEverywhereEmptyTextProvider.class::isInstance)
+        .map(SearchEverywhereEmptyTextProvider.class::cast)
         .findFirst()
         .orElse(null);
 

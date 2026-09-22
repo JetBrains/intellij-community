@@ -15,7 +15,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class VcsContextWrapper implements VcsContext {
   protected final @NotNull DataContext myContext;
@@ -76,7 +76,7 @@ public class VcsContextWrapper implements VcsContext {
 
   @Override
   public @NotNull Stream<VirtualFile> getSelectedFilesStream() {
-    return StreamEx.of(VcsContextUtil.selectedFilesIterable(myContext).iterator());
+    return StreamSupport.stream(VcsContextUtil.selectedFilesIterable(myContext).spliterator(), false);
   }
 
   @Override
@@ -124,7 +124,7 @@ public class VcsContextWrapper implements VcsContext {
 
   @Override
   public @NotNull Stream<FilePath> getSelectedFilePathsStream() {
-    return StreamEx.of(VcsContextUtil.selectedFilePathsIterable(myContext).iterator());
+    return StreamSupport.stream(VcsContextUtil.selectedFilePathsIterable(myContext).spliterator(), false);
   }
 
   @Override

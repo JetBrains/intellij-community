@@ -24,7 +24,6 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageDataUtil;
 import com.intellij.usages.UsageTarget;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,12 +113,13 @@ final class VirtualFileArrayRule {
           virtualFiles = Arrays.copyOf(unwrapped, unwrapped.length, VirtualFile[].class);
         }
         else if (ContainerUtil.all(unwrapped, o -> o instanceof SyntheticLibrary)) {
-          virtualFiles = StreamEx.of(unwrapped).flatCollection(f -> ((SyntheticLibrary)f).getSourceRoots())
-            .toArray(VirtualFile.EMPTY_ARRAY);
+          virtualFiles = Arrays.stream(unwrapped).flatMap(f -> ((SyntheticLibrary)f).getSourceRoots().stream())
+            .toArray(VirtualFile[]::new);
         }
         else if (ContainerUtil.all(unwrapped, o -> o instanceof NamedLibraryElement)) {
-          virtualFiles = StreamEx.of(unwrapped).flatArray(f -> ((NamedLibraryElement)f).getOrderEntry().getRootFiles(OrderRootType.SOURCES))
-            .toArray(VirtualFile.EMPTY_ARRAY);
+          virtualFiles = Arrays.stream(unwrapped)
+            .flatMap(f -> Arrays.stream(((NamedLibraryElement)f).getOrderEntry().getRootFiles(OrderRootType.SOURCES)))
+            .toArray(VirtualFile[]::new);
         }
         return virtualFiles != null && virtualFiles.length != 0 ? virtualFiles : null;
       }

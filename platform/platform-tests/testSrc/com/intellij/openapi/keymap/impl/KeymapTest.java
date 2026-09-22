@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.testFramework.LightPlatformTestCase;
-import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +19,7 @@ import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -947,7 +947,7 @@ public class KeymapTest extends LightPlatformTestCase {
         }
       }
     };
-    List<CompletableFuture<Void>> tasks = StreamEx.constant(task, 10).map(CompletableFuture::runAsync).toList();
+    List<CompletableFuture<Void>> tasks = Stream.generate(() -> task).limit(10).map(CompletableFuture::runAsync).toList();
     for (int i = 0; i < 10000; i++) {
       grandChild.addShortcut(ACTION_1, shortcut2);
       grandChild.removeShortcut(ACTION_1, shortcut2);

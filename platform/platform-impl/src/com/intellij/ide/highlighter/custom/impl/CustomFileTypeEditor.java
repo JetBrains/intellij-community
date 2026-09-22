@@ -15,7 +15,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +30,9 @@ import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Locale;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -90,13 +91,17 @@ public final class CustomFileTypeEditor extends SettingsEditor<AbstractFileType>
     mySupportParens.setSelected(table.isHasParens());
     mySupportEscapes.setSelected(table.isHasStringEscapes());
 
-    myKeywordsLists[0].setText(StreamEx.of(table.getKeywords1()).sorted().joining("\n"));
-    myKeywordsLists[1].setText(StreamEx.of(table.getKeywords2()).sorted().joining("\n"));
-    myKeywordsLists[2].setText(StreamEx.of(table.getKeywords3()).sorted().joining("\n"));
-    myKeywordsLists[3].setText(StreamEx.of(table.getKeywords4()).sorted().joining("\n"));
+    myKeywordsLists[0].setText(sortedKeywords(table.getKeywords1()));
+    myKeywordsLists[1].setText(sortedKeywords(table.getKeywords2()));
+    myKeywordsLists[2].setText(sortedKeywords(table.getKeywords3()));
+    myKeywordsLists[3].setText(sortedKeywords(table.getKeywords4()));
     for (int i = 0; i < 4; i++) {
       myKeywordsLists[i].setCaretPosition(0);
     }
+  }
+
+  private static @NotNull String sortedKeywords(@NotNull Collection<String> keywords) {
+    return keywords.stream().sorted().collect(Collectors.joining("\n"));
   }
 
   @Override

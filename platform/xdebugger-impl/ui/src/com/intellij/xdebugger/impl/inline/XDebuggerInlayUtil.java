@@ -31,12 +31,12 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -185,11 +185,13 @@ public final class XDebuggerInlayUtil {
   }
 
   private static List<InlineDebugRenderer> clearInlaysInt(@NotNull Project project) {
-    return StreamEx.of(FileEditorManager.getInstance(project).getAllEditors())
-      .select(TextEditor.class)
-      .flatCollection(textEditor -> clearInlaysInEditor(textEditor.getEditor()))
+    return Arrays.stream(FileEditorManager.getInstance(project).getAllEditors())
+      .filter(TextEditor.class::isInstance)
+      .map(TextEditor.class::cast)
+      .flatMap(textEditor -> clearInlaysInEditor(textEditor.getEditor()).stream())
       .map(Inlay::getRenderer)
-      .select(InlineDebugRenderer.class)
+      .filter(InlineDebugRenderer.class::isInstance)
+      .map(InlineDebugRenderer.class::cast)
       .toList();
   }
 }

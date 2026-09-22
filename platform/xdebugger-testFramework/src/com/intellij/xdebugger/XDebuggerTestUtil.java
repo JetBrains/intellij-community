@@ -48,7 +48,6 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.ui.IXDebuggerSessionTab;
 import kotlin.Unit;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,9 +81,9 @@ public class XDebuggerTestUtil {
   public static List<? extends XLineBreakpointType.XLineBreakpointVariant>
   computeLineBreakpointVariants(Project project, VirtualFile file, int line, int column) {
     return ReadAction.compute(() -> {
-      List<XLineBreakpointType> types = StreamEx.of(XDebuggerUtil.getInstance().getLineBreakpointTypes())
-                                                .filter(type -> type.canPutAt(file, line, project))
-                                                .collect(Collectors.toCollection(SmartList::new));
+      List<XLineBreakpointType> types = Arrays.stream(XDebuggerUtil.getInstance().getLineBreakpointTypes())
+        .filter(type -> type.canPutAt(file, line, project))
+        .collect(Collectors.toCollection(SmartList::new));
       return XDebuggerUtilImpl.getLineBreakpointVariantsSync(project, types, XSourcePositionImpl.create(file, line, column));
     });
   }
@@ -324,10 +323,11 @@ public class XDebuggerTestUtil {
                                                                       final @NotNull XBreakpointProperties properties) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     Ref<XBreakpoint> breakpoint = Ref.create(null);
-    XBreakpointUtil.breakpointTypes()
-                   .select(breakpointType)
-                   .findFirst()
-                   .ifPresent(type -> breakpoint.set(breakpointManager.addBreakpoint(type, properties)));
+    XBreakpointUtil.breakpointTypes().stream()
+      .filter(breakpointType::isInstance)
+      .map(breakpointType::cast)
+      .findFirst()
+      .ifPresent(type -> breakpoint.set(breakpointManager.addBreakpoint(type, properties)));
     return breakpoint.get();
   }
 

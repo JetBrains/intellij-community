@@ -33,6 +33,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.SplitDebuggerMode;
@@ -54,7 +55,6 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueGroupNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -450,7 +450,9 @@ public class XDebuggerTree extends DnDAwareTree implements UiCompatibleDataProvi
     Object root = myTreeModel.getRoot();
     if (root instanceof XValueContainerNode<?> node) {
       // avoid SOE
-      StreamEx.<XValueContainerNode<?>>ofTree(node, n -> StreamEx.of(n.getLoadedChildren()))
+      JBTreeTraverser.<XValueContainerNode<?>>from(n -> n.getLoadedChildren())
+        .withRoot(node)
+        .preOrderDfsTraversal()
         .forEach(XValueContainerNode::setObsolete);
     }
   }
