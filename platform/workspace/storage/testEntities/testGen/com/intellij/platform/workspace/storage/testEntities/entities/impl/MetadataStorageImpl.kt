@@ -5690,6 +5690,32 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                   extProperties = listOf(),
                                   isAbstract = false)
     addMetadata(typeMetadata)
+    typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.WithCustomToStringEntity",
+                                  entityDataFqName = "com.intellij.platform.workspace.storage.testEntities.entities.impl.WithCustomToStringEntityData",
+                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
+                                  properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "entitySource",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.EntitySource")),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "myName",
+                                                                          valueType = primitiveTypeStringNotNullable,
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "version",
+                                                                          valueType = primitiveTypeIntNotNullable,
+                                                                          withDefault = false)),
+                                  extProperties = listOf(),
+                                  isAbstract = false)
+    addMetadata(typeMetadata)
     typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.WithListSoftLinksEntity",
                                   entityDataFqName = "com.intellij.platform.workspace.storage.testEntities.entities.impl.WithListSoftLinksEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
@@ -8318,6 +8344,8 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.VFUEntity2", metadataHash = -1507119292)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.VFUWithTwoPropertiesEntity",
                     metadataHash = 422599282)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.WithCustomToStringEntity",
+                    metadataHash = 1539850538)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.WithListSoftLinksEntity",
                     metadataHash = 2115673411)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.AnotherNameId", metadataHash = 1076243546)

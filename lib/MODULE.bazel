@@ -11817,10 +11817,10 @@ http_file(
 )
 
 http_file(
-    name = "com_jetbrains_intellij_platform-workspace-model-codegen-0_0_9_http",
-    downloaded_file_path = "workspace-model-codegen-0.0.9.jar",
-    sha256 = "78e527dfea8d79c16ea9ca875bd943d443b63bf9d0df1f253c233dc54366df35",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/intellij/platform/workspace-model-codegen/0.0.9/workspace-model-codegen-0.0.9.jar",
+    name = "com_jetbrains_intellij_platform-workspace-model-codegen-0_0_10_http",
+    downloaded_file_path = "workspace-model-codegen-0.0.10.jar",
+    sha256 = "3b91f6ac783b7b1213cdfa30edd3dab49a2a7f0d14d4b3256fc655372e81ab33",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/intellij/platform/workspace-model-codegen/0.0.10/workspace-model-codegen-0.0.10.jar",
 )
 
 http_file(

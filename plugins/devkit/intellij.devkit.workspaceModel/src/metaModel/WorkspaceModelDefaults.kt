@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Default
 import com.intellij.platform.workspace.storage.annotations.Open
 import com.intellij.platform.workspace.storage.annotations.Parent
+import com.intellij.platform.workspace.storage.annotations.ToString
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.name.ClassId
@@ -22,6 +23,7 @@ enum class WorkspaceModelDefaults(val fqName: FqName, val classId: ClassId) {
   ABSTRACT_ANNOTATION(FqName(Abstract::class.qualifiedName!!), ClassId.topLevel(FqName(Abstract::class.qualifiedName!!))),
   PARENT_ANNOTATION(FqName(Parent::class.qualifiedName!!), ClassId.topLevel(FqName(Parent::class.qualifiedName!!))),
   EQUALS_BY_ANNOTATION(FqName(EqualsBy::class.qualifiedName!!), ClassId.topLevel(FqName(EqualsBy::class.qualifiedName!!))),
+  TO_STRING_ANNOTATION(FqName(ToString::class.qualifiedName!!), ClassId.topLevel(FqName(ToString::class.qualifiedName!!))),
 
   LIST_INTERFACE(StandardNames.FqNames.list, StandardClassIds.List),
   SET_INTERFACE(StandardNames.FqNames.set, StandardClassIds.Set),

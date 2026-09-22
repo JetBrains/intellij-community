@@ -3,6 +3,7 @@ package com.intellij.devkit.workspaceModel.metaModel.impl
 
 import com.intellij.devkit.workspaceModel.metaModel.ObjMetaElementWithPsi
 import com.intellij.psi.PsiElement
+import com.intellij.workspaceModel.codegen.deft.meta.Annotated
 import com.intellij.workspaceModel.codegen.deft.meta.ExtProperty
 import com.intellij.workspaceModel.codegen.deft.meta.Obj
 import com.intellij.workspaceModel.codegen.deft.meta.ObjAnnotation
@@ -25,9 +26,6 @@ sealed class ObjPropertyBase<T : Obj, V>(
   override val content: Boolean,
   override val sourcePsi: PsiElement?
 ) : ObjProperty<T, V>, ObjMetaElementWithPsi {
-  private val mutableOverrides: MutableList<ObjProperty<T, V>> = ArrayList()
-  private val mutableOverriddenBy: MutableList<ObjProperty<T, V>> = ArrayList()
-
   override val suspend: Boolean
     get() = false
 
@@ -46,9 +44,9 @@ class OwnPropertyImpl<T : Obj, V>(
   content: Boolean,
   override val constructorParameter: Boolean,
   override val classLocalId: Int,
-  override val isKey: Boolean,
+  override val annotations: List<ObjAnnotation>,
   sourcePsi: PsiElement?
-) : ObjPropertyBase<T, V>(receiver, name, valueType, valueKind, open, mutable, content, sourcePsi), OwnProperty<T, V> {
+) : ObjPropertyBase<T, V>(receiver, name, valueType, valueKind, open, mutable, content, sourcePsi), OwnProperty<T, V>, Annotated {
 
   override fun toString(): String = "$name (${receiver.name})"
 }

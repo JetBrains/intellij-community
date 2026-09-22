@@ -3,7 +3,6 @@ package com.intellij.devkit.workspaceModel.metaModel
 
 import com.intellij.devkit.workspaceModel.metaModel.impl.CompiledObjModuleImpl
 import com.intellij.devkit.workspaceModel.metaModel.impl.ExtPropertyImpl
-import com.intellij.devkit.workspaceModel.metaModel.impl.ObjAnnotationImpl
 import com.intellij.devkit.workspaceModel.metaModel.impl.ObjClassImpl
 import com.intellij.devkit.workspaceModel.metaModel.impl.OwnPropertyImpl
 import com.intellij.openapi.project.Project
@@ -184,7 +183,7 @@ internal class WorkspaceMetaModelBuilder(
             if (kind !is ObjProperty.ValueKind.Computable ||
                 // We can't simply skip all `Computable` because some of them are SymbolicIds
                 // propertySymbol.overriddenDescriptors.isNotEmpty()
-                propertySymbol.allOverriddenSymbols.any()
+                propertySymbol.allOverriddenSymbols.any() || isCustomToString(propertySymbol)
             ) {
               try {
                 val ownProperty = createOwnProperty(propertySymbol, propertyId, objType)
@@ -254,9 +253,17 @@ internal class WorkspaceMetaModelBuilder(
     ): OwnProperty<Obj, *> {
       val hasParentAnnotation = isParent(property)
       val valueType = convertType(property.returnType, hashMapOf(), hasParentAnnotation)
-      return OwnPropertyImpl(receiver, property.name.identifier, valueType, computeKind(property),
-                             property.isAnnotatedBy(WorkspaceModelDefaults.OPEN_ANNOTATION.classId), !property.isVal, false, false,
-                             propertyId, property.isAnnotatedBy(WorkspaceModelDefaults.EQUALS_BY_ANNOTATION.classId),
+      val propertyAnnotations = getAnnotations(property)
+      return OwnPropertyImpl(receiver,
+                             property.name.identifier,
+                             valueType,
+                             computeKind(property),
+                             property.isAnnotatedBy(WorkspaceModelDefaults.OPEN_ANNOTATION.classId),
+                             !property.isVal,
+                             false,
+                             false,
+                             propertyId,
+                             propertyAnnotations,
                              property.sourcePsiSafe())
     }
 
@@ -268,11 +275,7 @@ internal class WorkspaceMetaModelBuilder(
     ): ExtProperty<*, *> {
       val hasParentAnnotation = isParent(extProperty)
       val valueType = convertType(extProperty.returnType, hashMapOf(), hasParentAnnotation)
-      val propertyAnnotations = extProperty.getter?.annotations?.mapNotNull { annotation ->
-        annotation.classId?.asSingleFqName()?.let {
-          ObjAnnotationImpl(it.asString(), it.pathSegments().map { segment -> segment.asString() })
-        }
-      } ?: emptyList()
+      val propertyAnnotations = extProperty.getter?.let { getAnnotations(it) } ?: emptyList()
 
       return ExtPropertyImpl(findObjClass(receiverClass),
                              extProperty.name.identifier,
