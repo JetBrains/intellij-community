@@ -9,13 +9,16 @@ import ai.grazie.rules.tree.TreeSupport
 import ai.grazie.rules.uk.UkrainianTreeSupport
 import ai.grazie.text.exclusions.SentenceWithExclusions
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.grazie.ide.ui.configurable.StyleConfigurable.Companion.ruleEngineLanguages
 import com.intellij.grazie.jlanguage.CACHE_SIZE
 import com.intellij.grazie.jlanguage.LazyCachingConcurrentDisambiguator
 import com.intellij.grazie.utils.HighlightingUtil
 import com.intellij.grazie.utils.HunspellUtil
-import com.intellij.openapi.progress.Cancellation.ensureActive
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.runWithCheckCanceled
 import com.intellij.util.containers.ContainerUtil
 import org.languagetool.language.English
+import java.util.SequencedMap
 
 object DependencyParser {
   private val cachedTrees = Caffeine.newBuilder()
@@ -23,30 +26,24 @@ object DependencyParser {
     .maximumSize(CACHE_SIZE)
     .build<SentenceWithLanguage, Tree>()
 
-  suspend fun parse(language: Language, sentences: List<SentenceWithExclusions>): LinkedHashMap<SentenceWithExclusions, Tree?> {
+  fun parse(language: Language, sentences: List<SentenceWithExclusions>): SequencedMap<SentenceWithExclusions, Tree?> {
     val support = obtainSupport(language) ?: return LinkedHashMap()
     val ltLanguage = HighlightingUtil.findInstalledLang(language)?.jLanguage
-    (ltLanguage?.disambiguator as? LazyCachingConcurrentDisambiguator)?.ensureInitializedAsync()
-    @Suppress("UNCHECKED_CAST")
-    return sentences.associateWith { swe ->
+    (ltLanguage?.disambiguator as? LazyCachingConcurrentDisambiguator)?.ensureInitialized()
+    return sentences.associateWithTo(LinkedHashMap()) { swe ->
       cachedTrees.get(SentenceWithLanguage(swe.sentence, language)) { swl ->
-        ensureActive()
-        Tree.createFlatTree(support, swl.sentence)
+        runWithCheckCanceled {
+          Tree.createFlatTree(support, swl.sentence) { ProgressManager.checkCanceled() }
+        }
       }
-    } as LinkedHashMap<SentenceWithExclusions, Tree?>
+    }
   }
 
-  private val lang2SupportClass = mapOf(
-    Language.ENGLISH to "ai.grazie.rules.en.EnglishTreeSupport",
-    Language.GERMAN to "ai.grazie.rules.de.GermanTreeSupport",
-    Language.UKRAINIAN to "ai.grazie.rules.uk.UkrainianTreeSupport",
-    Language.RUSSIAN to "ai.grazie.rules.ru.RussianTreeSupport"
-  )
-  private val supports: MutableMap<Language, TreeSupport> = ContainerUtil.createConcurrentSoftValueMap()
+  private val supports = ContainerUtil.createConcurrentSoftValueMap<Language, TreeSupport>()
 
   @JvmStatic
   fun obtainSupport(language: Language): TreeSupport? {
-    if (language !in lang2SupportClass) {
+    if (language !in ruleEngineLanguages) {
       return null
     }
     val ltLanguage = HighlightingUtil.findInstalledLang(language)?.jLanguage ?: return null

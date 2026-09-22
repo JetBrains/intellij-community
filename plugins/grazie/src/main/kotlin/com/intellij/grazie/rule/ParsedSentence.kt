@@ -51,7 +51,7 @@ class ParsedSentence private constructor(
 
   companion object {
     @JvmStatic
-    suspend fun getAllCheckedSentences(contexts: List<ProofreadingContext>): SequencedMap<TextContent, List<ParsedSentence>> {
+    fun getAllCheckedSentences(contexts: List<ProofreadingContext>): SequencedMap<TextContent, List<ParsedSentence>> {
       val checkedDomains = checkedDomains()
       val contents = contexts.filter { it.text.domain in checkedDomains && it.hasLanguage() }
       if (contents.isEmpty()) return LinkedHashMap()
@@ -60,7 +60,7 @@ class ParsedSentence private constructor(
     }
 
     @JvmStatic
-    suspend fun getSentences(context: ProofreadingContext): List<ParsedSentence> {
+    fun getSentences(context: ProofreadingContext): List<ParsedSentence> {
       val content = context.text
       if (HighlightingUtil.isTooLargeText(content) || !seemsNatural(content)) {
         return emptyList()
@@ -68,7 +68,7 @@ class ParsedSentence private constructor(
       return getSentences(content, content.commonParent.textRange, context.language)
     }
 
-    private suspend fun getSentences(content: TextContent, rangeInFile: TextRange, language: Language): List<ParsedSentence> {
+    private fun getSentences(content: TextContent, rangeInFile: TextRange, language: Language): List<ParsedSentence> {
       val intersectingSentences =
         SentenceTokenizer.tokenize(content).filter { token ->
           val start = content.textOffsetToFile(token.start)

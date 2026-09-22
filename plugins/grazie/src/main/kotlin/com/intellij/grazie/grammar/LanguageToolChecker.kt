@@ -7,9 +7,9 @@ import com.intellij.grazie.detection.toAvailableLang
 import com.intellij.grazie.ide.ui.components.utils.html
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
-import com.intellij.grazie.text.ExternalTextChecker
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.RuleGroup
+import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextProblem
 import com.intellij.grazie.utils.TextStyleDomain
@@ -19,6 +19,7 @@ import com.intellij.grazie.utils.trimToNull
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.runWithCheckCanceled
 import com.intellij.openapi.util.ClassLoaderUtil.computeWithClassLoader
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Predicates
@@ -26,8 +27,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
-import com.intellij.util.io.computeDetached
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.html.p
 import kotlinx.html.style
@@ -44,7 +43,7 @@ import java.util.function.Predicate
 import kotlin.coroutines.cancellation.CancellationException
 
 
-open class LanguageToolChecker : ExternalTextChecker() {
+open class LanguageToolChecker : TextChecker() {
   @ApiStatus.Internal
   class TestChecker : LanguageToolChecker()
 
@@ -54,11 +53,10 @@ open class LanguageToolChecker : ExternalTextChecker() {
     return grammarRules(LangTool.getTool(lang, TextStyleDomain.Other), lang)
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
-  override suspend fun checkExternally(context: ProofreadingContext): List<Problem> {
+  override fun check(context: ProofreadingContext): List<Problem> {
     if (!context.hasLanguage()) return emptyList()
     val domain = context.text.getTextDomain()
-    return computeDetached(Dispatchers.Default) {
+    return runWithCheckCanceled(Dispatchers.Default) {
       try {
         computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
           collectLanguageToolProblems(context.text, context.language.toAvailableLang(), domain)

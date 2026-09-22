@@ -3,9 +3,8 @@ package com.intellij.grazie.jlanguage
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.utils.FirstInvocationCancellationGuard
+import com.intellij.openapi.progress.util.runWithCheckCanceled
 import com.intellij.openapi.util.ClassLoaderUtil.runWithClassLoader
-import com.intellij.util.io.computeDetached
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import org.languagetool.AnalyzedSentence
 import org.languagetool.AnalyzedTokenReadings
@@ -37,22 +36,21 @@ internal class LazyCachingConcurrentDisambiguator(private val jLanguage: Languag
     }
   }
 
-  private fun ensureInitialized() {
+  fun ensureInitialized() {
     if (disambiguator == null) {
-      synchronized(lock) {
-        if (disambiguator == null) {
-          disambiguator = jLanguage.createDefaultDisambiguator()
+      runWithCheckCanceled(Dispatchers.Default) {
+        runWithClassLoader<Throwable>(GraziePlugin.classLoader) {
+          initializeIfNeeded()
         }
       }
     }
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
-  suspend fun ensureInitializedAsync() {
+  private fun initializeIfNeeded() {
     if (disambiguator == null) {
-      computeDetached(Dispatchers.Default) {
-        runWithClassLoader<Throwable>(GraziePlugin.classLoader) {
-          ensureInitialized()
+      synchronized(lock) {
+        if (disambiguator == null) {
+          disambiguator = jLanguage.createDefaultDisambiguator()
         }
       }
     }
