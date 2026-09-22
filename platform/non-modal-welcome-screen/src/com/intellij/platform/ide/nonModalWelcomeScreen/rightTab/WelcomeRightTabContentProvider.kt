@@ -32,6 +32,16 @@ interface WelcomeRightTabContentProvider {
   val buttonsPerRow: Int
     get() = 3
 
+  /**
+   * Whether the Theme control opens a richer chooser instead of a plain combobox popup: a list that
+   * previews the highlighted theme (reverting when dismissed without a choice, like the platform's Theme
+   * quick-switcher) with a Light/Dark switch in its header.
+   *
+   * Off by default, so products that do not opt in keep the plain combobox.
+   */
+  val isThemeChooserPopupEnabled: Boolean
+    get() = false
+
   fun getFeatureButtonModels(project: Project): List<FeatureButtonModel>
 
   /**

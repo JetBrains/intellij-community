@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -408,7 +409,7 @@ internal class WelcomeScreenRightTabImpl(
     val actions = models.mapIndexed { index, model ->
       val addBorder = index < models.size - 1
       when (model) {
-        is ComboBoxInfoPanelModel -> ComboBoxInfoPanelAction(model, addBorder)
+        is ComboBoxInfoPanelModel -> ComboBoxInfoPanelAction(model, addBorder, contentProvider.isThemeChooserPopupEnabled)
 
         is ButtonInfoPanelModel -> ButtonInfoPanelAction(model, project, coroutineScope, addBorder)
       }
@@ -697,6 +698,7 @@ private class ButtonInfoPanelModel(private val model: WelcomeRightTabContentProv
 private class ComboBoxInfoPanelAction(
   private val comboModel: ComboBoxInfoPanelModel,
   private val addBorder: Boolean,
+  private val isThemeChooserPopupEnabled: Boolean,
 ) : ExpandableComboAction(), DumbAware {
 
   private val model = comboModel.model
@@ -719,13 +721,18 @@ private class ComboBoxInfoPanelAction(
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    val selectedItem = model.itemNames().getOrNull(model.currentItemIndex()) ?: ""
-    e.presentation.setText(comboModel.itemPrefix + selectedItem, false)
+    // A brightness filter can hide the current item, so take its name directly.
+    e.presentation.setText(comboModel.itemPrefix + model.currentItemName(), false)
     e.presentation.icon = if (model is ThemeModel) ThemeModel.getIcon() else comboModel.icon
   }
 
   @Suppress("SplitModeApiUsage")
   override fun createPopup(event: AnActionEvent): JBPopup {
+    val owner = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? JComponent
+    if (model is ThemeModel && isThemeChooserPopupEnabled && owner != null) {
+      return WelcomeScreenThemeChooserPopup(model).createPopup(owner, null)
+    }
+
     val step = object : BaseListPopupStep<String>(null, model.itemNames()) {
       override fun isSpeedSearchEnabled(): Boolean = true
 
