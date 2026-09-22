@@ -8,10 +8,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.NotNull;
+import org.junit.runner.RunWith;
 
 import javax.swing.JFrame;
 import java.awt.GraphicsEnvironment;
@@ -20,6 +22,7 @@ import java.awt.event.MouseEvent;
 
 import static org.junit.Assume.assumeFalse;
 
+@RunWith(JUnit38AssumeSupportRunner.class)
 @SkipInHeadlessEnvironment
 public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
   private static final String OUR_KEYMAP_NAME = "IdeMouseEventDispatcherTestKeymap";

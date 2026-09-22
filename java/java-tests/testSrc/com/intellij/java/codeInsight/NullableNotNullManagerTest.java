@@ -18,6 +18,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
@@ -26,9 +27,11 @@ import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assume;
+import org.junit.runner.RunWith;
 
 import java.util.List;
 
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class NullableNotNullManagerTest extends LightJavaCodeInsightFixtureTestCase {
   private NullableNotNullManagerImpl myManager;
 

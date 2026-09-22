@@ -22,6 +22,7 @@ import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.propertyBased.ActionOnFile;
 import com.intellij.testFramework.propertyBased.DeleteRange;
@@ -36,6 +37,7 @@ import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.IntDistribution;
 import org.jetbrains.jetCheck.PropertyChecker;
 import org.junit.Assume;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -43,6 +45,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+@RunWith(JUnit38AssumeSupportRunner.class)
 @SkipSlowTestLocally
 public class UnivocityTest extends BaseUnivocityTest {
   @Override

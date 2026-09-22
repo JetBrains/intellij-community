@@ -3,6 +3,7 @@ package com.intellij.codeInspection.tests.kotlin;
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NonNls;
 
 import org.jetbrains.uast.ULiteralExpression;
 import org.junit.Assume;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.util.Set;
@@ -19,6 +21,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.NonNlsUastUtil.isNonNlsStringLiteral;
 import static com.intellij.jvm.analysis.internal.testFramework.JvmAnalysisTestsUastUtil.getUElementsOfTypeFromFile;
 
+@RunWith(JUnit38AssumeSupportRunner.class)
 @TestDataPath("$CONTENT_ROOT/testData/codeInspection/nonNls")
 public abstract class KotlinNonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase {
   @Override
@@ -64,4 +67,3 @@ public abstract class KotlinNonNlsUastUtilTest extends JavaCodeInsightFixtureTes
     expressions.forEach(expression -> assertTrue(isNonNlsStringLiteral(expression)));
   }
 }
-

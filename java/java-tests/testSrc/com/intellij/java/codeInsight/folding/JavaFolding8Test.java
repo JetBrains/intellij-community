@@ -4,15 +4,18 @@ import com.intellij.codeInsight.folding.impl.JavaFoldingBuilder;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assume;
+import org.junit.runner.RunWith;
 
 import java.util.Collections;
 import java.util.List;
 
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class JavaFolding8Test extends JavaFoldingTestCase {
   @NotNull
   @Override

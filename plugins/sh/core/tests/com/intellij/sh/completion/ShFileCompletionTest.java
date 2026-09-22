@@ -10,9 +10,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.sh.ShStringUtil;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +26,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assume.assumeNotNull;
 
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class ShFileCompletionTest extends BasePlatformTestCase {
   private static final String FOLDER_NAME = "example";
   private static final String FIRST_FILE_NAME = "simple1.txt";
