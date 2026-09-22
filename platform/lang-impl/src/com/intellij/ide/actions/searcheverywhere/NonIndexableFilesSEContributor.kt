@@ -269,14 +269,14 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
             state.producerCompleted()
           }
 
-          state.collectResults { file, matchingDegree ->
+          val consumerStopped = !state.collectResults { file, matchingDegree ->
             val psiItem = when {
               file.isDirectory -> psiManager.findDirectory(file)
               else -> psiManager.findFile(file)
             }
 
             val accepted = filter.accept(file)
-            if (!accepted) return@collectResults
+            if (!accepted) return@collectResults true
 
             val itemDescriptor = FoundItemDescriptor<Any>(psiItem, matchingDegree)
             val consumed = consumer.process(itemDescriptor)
@@ -284,7 +284,10 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
             if (!consumed) {
               toplevelProducerJob.cancel("consumer stopped")
             }
+            consumed
           }
+
+          if (consumerStopped) return@runBlockingCancellable
 
           if (suboptimalMatches.isEmpty() || namePattern.length < 2) return@runBlockingCancellable
 
@@ -386,11 +389,12 @@ private class SearchJobsState {
     resultsChannel.trySend(file to score)
   }
 
-  suspend fun collectResults(@RequiresReadLock(generateAssertion = false /* IJPL-115548 */) collector: (VirtualFile, Int) -> Unit) {
+  suspend fun collectResults(@RequiresReadLock(generateAssertion = false /* IJPL-115548 */) collector: (VirtualFile, Int) -> Boolean): Boolean {
     for ((file, score) in resultsChannel) {
       // Sadly, read action :( SE is to blame
-      readActionUndispatched { collector(file, score) }
+      if (!readActionUndispatched { collector(file, score) }) return false
     }
+    return true
   }
 
   fun producerCompleted() {

@@ -17,6 +17,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -75,6 +76,30 @@ open class NonIndexableFilesSEContributorTest {
 
     assertThat(items).allSatisfy { it is PsiFileSystemItem }
     return items.filterIsInstance<PsiFileSystemItem>().toSet()
+  }
+
+  @Test
+  fun `consumer rejection stops optimal and suboptimal result delivery`(): Unit = timeoutRunBlocking {
+    val root = baseDir.newVirtualDirectory("a")
+    baseDir.newVirtualFile("a/b/c/abc-first.txt")
+    baseDir.newVirtualFile("a/b/c/abc-second.txt")
+    workspaceModel.update { storage ->
+      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
+    }
+    VfsTestUtil.syncRefresh()
+    assertThat(searchNonIndexableFiles("abc").map { it.name })
+      .containsExactlyInAnyOrder("abc-first.txt", "abc-second.txt", "c")
+
+    val contributor = NonIndexableFilesSEContributor(createEvent(project))
+    Disposer.register(disposable, contributor)
+    val consumedNames = mutableListOf<String>()
+
+    contributor.fetchWeightedElements("abc", MockProgressIndicator().apply { start() }) {
+      consumedNames.add((it.item as PsiFileSystemItem).name)
+      false
+    }
+
+    assertThat(consumedNames).singleElement().isIn("abc-first.txt", "abc-second.txt")
   }
 
   @Test
@@ -329,4 +354,3 @@ private fun createEvent(project: Project): AnActionEvent {
   val projectContext = SimpleDataContext.getProjectContext(project)
   return TestActionEvent.createTestEvent(projectContext)
 }
-
