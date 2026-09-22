@@ -4,6 +4,7 @@ package com.intellij.ide.customization.java.welcomeScreen
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.DialogBackgroundImageProviderBase
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureApi
@@ -57,7 +58,19 @@ internal class IdeaWelcomeRightTabContentProvider(override val coroutineScope: C
     )
   }
 
-  private fun hasAgentPromptInput(): Boolean = WelcomeScreenFeatureUI.getForFeatureKey(IdeaFeatureKeys.AIR_SESSIONS) != null
+  /**
+   * Whether the Air plugin places its prompt input on the tab.
+   *
+   * The plugin has to be there, and its prompt has to be on. [AIR_WELCOME_SCREEN_PROMPT_REGISTRY_KEY] is the only
+   * thing that turns the prompt off, so reading the key answers for the section itself. The key is on by default,
+   * which is the default this read states as well.
+   */
+  private fun hasAgentPromptInput(): Boolean {
+    if (WelcomeScreenFeatureUI.getForFeatureKey(IdeaFeatureKeys.AIR_SESSIONS) == null) {
+      return false
+    }
+    return Registry.`is`(AIR_WELCOME_SCREEN_PROMPT_REGISTRY_KEY, true)
+  }
 
   /**
    * Builds a button for a feature a plugin owns, or returns `null` when the plugin ships no button.
@@ -83,3 +96,11 @@ internal class IdeaWelcomeRightTabContentProvider(override val coroutineScope: C
     }
   }
 }
+
+/**
+ * The registry key of the Air prompt input on the welcome right tab.
+ *
+ * Mirrors `WELCOME_SCREEN_PROMPT_REGISTRY_KEY`, which the Air plugin keeps internal. The tab itself never states
+ * which of its sections were built, so the button grid reads the key that decides the only section there is.
+ */
+private const val AIR_WELCOME_SCREEN_PROMPT_REGISTRY_KEY = "air.welcome.screen.inline.prompt"
