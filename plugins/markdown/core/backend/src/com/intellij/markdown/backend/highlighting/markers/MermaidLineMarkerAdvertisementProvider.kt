@@ -12,6 +12,7 @@ import org.intellij.plugins.markdown.extensions.jcef.mermaid.isMermaidPluginInst
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.jetbrains.annotations.Nls
+import javax.swing.Icon
 
 internal class MermaidLineMarkerAdvertisementProvider: LineMarkerProviderDescriptor() {
   override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
@@ -20,6 +21,8 @@ internal class MermaidLineMarkerAdvertisementProvider: LineMarkerProviderDescrip
     get() = MarkdownBundle.message("markdown.line.marker.mermaid.advertisement.tooltip.text")
 
   override fun getName(): @GutterName String = tooltipText
+
+  override fun getIcon(): Icon = AllIcons.Actions.Download
 
   override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
     if (isMermaidPluginInstalled()) {

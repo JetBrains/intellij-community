@@ -10,6 +10,12 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class ConfigureTextHtmlImageLineMarkerProvider : ConfigureImageLineMarkerProviderBase<PsiElement>() {
+  override fun getId(): String = ConfigureHtmlImageLineMarkerProvider::class.java.name
+
+  override fun getName(): String {
+    return MarkdownImagesBundle.message("markdown.configure.html.image.line.marker.provider.name")
+  }
+
   override fun obtainLeafElement(element: PsiElement): PsiElement? {
     if (element.elementType != MarkdownTokenTypes.HTML_TAG) {
       return null

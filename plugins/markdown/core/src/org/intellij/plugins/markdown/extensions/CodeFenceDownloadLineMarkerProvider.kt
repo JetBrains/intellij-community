@@ -18,6 +18,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettingsUtil
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.Icon
 
 @ApiStatus.Obsolete
 @ApiStatus.Internal
@@ -35,6 +36,8 @@ abstract class CodeFenceDownloadLineMarkerProvider : LineMarkerProviderDescripto
   abstract fun getExtension(): MarkdownExtensionWithDownloadableFiles?
 
   abstract val tooltipText: String
+
+  override fun getIcon(): Icon = AllIcons.Actions.Download
 
   private fun clickAction() {
     invokeLater {

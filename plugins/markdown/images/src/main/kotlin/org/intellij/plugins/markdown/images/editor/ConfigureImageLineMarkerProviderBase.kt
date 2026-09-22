@@ -56,6 +56,8 @@ abstract class ConfigureImageLineMarkerProviderBase<T : PsiElement> : LineMarker
     return MarkdownImagesBundle.message("markdown.configure.markdown.image.line.marker.provider.name")
   }
 
+  override fun getIcon(): Icon = MarkdownIcons.ImageGutter
+
   private fun processFileName(filePath: String): String? {
     try {
       // Path can be either a URL or a system path
