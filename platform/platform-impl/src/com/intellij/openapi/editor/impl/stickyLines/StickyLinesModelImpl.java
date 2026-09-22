@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -37,16 +36,11 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
   private static final Key<StickyLinesModelImpl> STICKY_LINES_MODEL_KEY = Key.create("editor.sticky.lines.model");
   private static final Key<StickyLineImpl> STICKY_LINE_IMPL_KEY = Key.create("editor.sticky.line.impl");
   private static final String STICKY_LINE_MARKER = "STICKY_LINE_MARKER";
-  private static final TextAttributesKey STICKY_LINE_ATTRIBUTE = TextAttributesKey.createTextAttributesKey(
-    STICKY_LINE_MARKER
-  );
+  private static final TextAttributesKey STICKY_LINE_ATTRIBUTE = TextAttributesKey.createTextAttributesKey(STICKY_LINE_MARKER);
 
   public static boolean isStickyLine(@NotNull RangeHighlighter highlighter) {
     TextAttributesKey key = highlighter.getTextAttributesKey();
-    if (key != null && STICKY_LINE_MARKER.equals(key.getExternalName())) {
-      return true;
-    }
-    return false;
+    return key != null && STICKY_LINE_MARKER.equals(key.getExternalName());
   }
 
   /**
@@ -109,7 +103,7 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myIsCleared;
 
-  private StickyLinesModelImpl(MarkupModelEx markupModel) {
+  private StickyLinesModelImpl(@NotNull MarkupModelEx markupModel) {
     myMarkupModel = markupModel;
     myIsCleared = false;
   }
@@ -138,8 +132,8 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
 
   @Override
   public void removeStickyLine(@NotNull StickyLine stickyLine) {
-    RangeMarker rangeMarker = ((StickyLineImpl)stickyLine).rangeMarker();
-    myMarkupModel.removeHighlighter((RangeHighlighter) rangeMarker);
+    RangeHighlighter rangeMarker = ((StickyLineImpl)stickyLine).highlighter();
+    myMarkupModel.removeHighlighter(rangeMarker);
   }
 
   @Override
@@ -154,7 +148,7 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
 
   @Override
   public @NotNull List<@NotNull StickyLine> getAllStickyLines() {
-    ArrayList<StickyLine> stickyLines = new ArrayList<>();
+    List<StickyLine> stickyLines = new ArrayList<>();
     processStickyLines(
       0,
       myMarkupModel.getDocument().getTextLength(),
@@ -221,7 +215,7 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
     );
   }
 
-  private static boolean isSuitableSource(RangeHighlighterEx highlighter, @Nullable SourceID source) {
+  private static boolean isSuitableSource(@NotNull RangeHighlighterEx highlighter, @Nullable SourceID source) {
     return source == null || source.equals(highlighter.getUserData(STICKY_LINE_SOURCE));
   }
 
@@ -248,28 +242,28 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
 
   private record StickyLineImpl(
     @NotNull Document document,
-    @NotNull RangeMarker rangeMarker,
+    @NotNull RangeHighlighter highlighter,
     @Nullable String debugText
   ) implements StickyLine {
 
     @Override
     public int primaryLine() {
-      return document.getLineNumber(rangeMarker.getStartOffset());
+      return document.getLineNumber(highlighter.getStartOffset());
     }
 
     @Override
     public int scopeLine() {
-      return document.getLineNumber(rangeMarker.getEndOffset());
+      return document.getLineNumber(highlighter.getEndOffset());
     }
 
     @Override
     public int navigateOffset() {
-      return rangeMarker.getStartOffset();
+      return highlighter.getStartOffset();
     }
 
     @Override
     public @NotNull TextRange textRange() {
-      return rangeMarker.getTextRange();
+      return highlighter.getTextRange();
     }
 
     @Override
