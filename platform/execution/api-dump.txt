@@ -961,7 +961,5 @@ com.intellij.openapi.projectRoots.JavaSdkType
 - a:getToolsPath(com.intellij.openapi.projectRoots.Sdk):java.lang.String
 - a:getVMExecutablePath(com.intellij.openapi.projectRoots.Sdk):java.lang.String
 - isDependent():Z
-f:com.intellij.openapi.projectRoots.ex.PathUtilEx
-- s:getAnyJdk(com.intellij.openapi.project.Project):com.intellij.openapi.projectRoots.Sdk
 f:com.intellij.psi.search.ExecutionSearchScopes
 - s:executionScope(java.util.Collection):com.intellij.psi.search.GlobalSearchScope

@@ -620,6 +620,7 @@
     <indexPatternBuilder implementation="com.intellij.psi.impl.search.JavaIndexPatternBuilder"/>
     <printOption implementation="com.intellij.codeEditor.printing.HyperlinksToClassesOption"/>
     <macro implementation="com.intellij.ide.macro.JavaDocPathMacro"/>
+    <macro implementation="com.intellij.ide.macro.JdkPathMacro"/>
     <macro implementation="com.intellij.ide.macro.FilePackageMacro"/>
     <macro implementation="com.intellij.ide.macro.FileFQPackage"/>
     <macro implementation="com.intellij.ide.macro.FileClassMacro"/>

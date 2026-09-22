@@ -8,11 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 
 public final class JdkPathMacro extends Macro implements PathMacro {
   @Override
@@ -32,17 +28,6 @@ public final class JdkPathMacro extends Macro implements PathMacro {
       return null;
     }
     final Sdk anyJdk = PathUtilEx.getAnyJdk(project);
-    return sdkPath(anyJdk);
-  }
-
-  static @Nullable String sdkPath(@Nullable Sdk anyJdk) {
-    if (anyJdk == null) {
-      return null;
-    }
-    String jdkHomePath = PathUtil.getLocalPath(anyJdk.getHomeDirectory());
-    if (jdkHomePath != null) {
-      jdkHomePath = jdkHomePath.replace('/', File.separatorChar);
-    }
-    return jdkHomePath;
+    return ModuleSdkPathMacro.sdkPath(anyJdk);
   }
 }

@@ -182,13 +182,6 @@ f:com.intellij.ide.macro.FileRelativePathMacro2
 - expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
 - getDescription():java.lang.String
 - getName():java.lang.String
-f:com.intellij.ide.macro.JdkPathMacro
-- com.intellij.ide.macro.Macro
-- com.intellij.ide.macro.PathMacro
-- <init>():V
-- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
-- getDescription():java.lang.String
-- getName():java.lang.String
 f:com.intellij.ide.macro.LineNumberMacro
 - com.intellij.ide.macro.EditorMacro
 - <init>():V

@@ -1070,8 +1070,6 @@ f:com.intellij.execution.wsl.WSLCommandLineOptions
 f:com.intellij.openapi.actionSystem.ExecutionDataKeys
 - sf:EXECUTION_ENVIRONMENT:com.intellij.openapi.actionSystem.DataKey
 - <init>():V
-f:com.intellij.openapi.projectRoots.ex.PathUtilEx
-- <init>():V
 f:com.intellij.psi.search.ExecutionSearchScopes
 - <init>():V
 - s:executionScope(com.intellij.openapi.project.Project,com.intellij.execution.configurations.RunProfile):com.intellij.psi.search.GlobalSearchScope
