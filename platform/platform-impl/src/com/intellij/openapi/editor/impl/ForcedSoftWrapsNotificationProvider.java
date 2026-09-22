@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -22,8 +23,12 @@ final class ForcedSoftWrapsNotificationProvider implements EditorNotificationPro
   private static final String DISABLED_NOTIFICATION_KEY = "disable.forced.soft.wraps.notification";
 
   @Override
-  public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
-                                                                                                                @NotNull VirtualFile file) {
+  public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+                                                                                                                 @NotNull VirtualFile file) {
+    // In split mode the frontend renders the editor and shows this banner itself, while the host's copy is projected on top of it,
+    // so the banner appears twice (IJPL-167724). Hiding the host's copy wouldn't affect the rendered editor's soft wraps anyway.
+    if (AppMode.isRemoteDevHost()) return null;
+
     return fileEditor -> {
       if (!(fileEditor instanceof TextEditor te)) return null;
       final Editor editor = te.getEditor();
