@@ -1,0 +1,107 @@
+{
+    "version": 3,
+    "plugin": "intellij.platform.vcs.plugin",
+    "variant": "{platform}",
+    "layoutSignature": "{platform:layoutSignature}",
+    "assets": [
+        {
+            "module": "intellij.platform.sqlite"
+        },
+        {
+            "module": "intellij.platform.vcs.log.graph"
+        },
+        {
+            "module": "intellij.platform.vcs.log.graph.impl"
+        },
+        {
+            "module": "intellij.platform.vcs.common.split"
+        },
+        {
+            "module": "intellij.platform.vcs.impl.frontend"
+        },
+        {
+            "module": "intellij.platform.vcs.frontend.split"
+        },
+        {
+            "module": "intellij.platform.vcs.protocol.split.generated"
+        },
+        {
+            "destination": "lib/intellij.libraries.sqlite.native.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.sqlite.native",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "native-select:b67205ba251a9dbedb029d5c:output",
+                        "kind": "prepared",
+                        "filter": "prepared"
+                    }
+                ],
+                "writer": {
+                    "manifest": "keep",
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/platform-vcs-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.platform.vcs.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.platform.vcs.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/native",
+            "inputs": [
+                "native-select:b67205ba251a9dbedb029d5c:output"
+            ],
+            "kind": "tree",
+            "classPath": false,
+            "scope": "distribution"
+        }
+    ],
+    "preparations": [
+        {
+            "id": "native-select:b67205ba251a9dbedb029d5c",
+            "inputs": [
+                "@lib//:libraries-sqlite-native-sqlite-native"
+            ],
+            "outputs": [
+                "native-select:b67205ba251a9dbedb029d5c:output"
+            ],
+            "modelSignature": "cl4wrg2859fx2acded5h2y16a"
+        }
+    ],
+    "operations": [
+        {
+            "id": "native-select:b67205ba251a9dbedb029d5c",
+            "kind": "native-select",
+            "input": {
+                "artifact": "@lib//:libraries-sqlite-native-sqlite-native"
+            },
+            "output": "native-select:b67205ba251a9dbedb029d5c:output",
+            "manifest": "keep",
+            "filter": "library"
+        }
+    ]
+}

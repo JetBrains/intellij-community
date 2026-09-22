@@ -26,7 +26,19 @@ dev_dist_plugin(
 )
 
 exports_files(
-    ["intellij.terminal.dev-plan.json"],
+    [
+        "intellij.terminal.CLionJetBrainsClient.dev-plan.json",
+        "intellij.terminal.DataGripJetBrainsClient.dev-plan.json",
+        "intellij.terminal.GoLandJetBrainsClient.dev-plan.json",
+        "intellij.terminal.PhpStormJetBrainsClient.dev-plan.json",
+        "intellij.terminal.PythonJetBrainsClient.dev-plan.json",
+        "intellij.terminal.RiderJetBrainsClient.dev-plan.json",
+        "intellij.terminal.RubyJetBrainsClient.dev-plan.json",
+        "intellij.terminal.RustRoverJetBrainsClient.dev-plan.json",
+        "intellij.terminal.WebStormJetBrainsClient.dev-plan.json",
+        "intellij.terminal.dev-plan.json",
+        "intellij.terminal.ideaJetBrainsClient.dev-plan.json",
+    ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev intellij.terminal` end

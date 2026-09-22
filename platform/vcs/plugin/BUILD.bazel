@@ -24,7 +24,19 @@ dev_dist_plugin(
 )
 
 exports_files(
-    ["intellij.platform.vcs.plugin.dev-plan.json"],
+    [
+        "intellij.platform.vcs.plugin.CLionJetBrainsClient.dev-plan.json",
+        "intellij.platform.vcs.plugin.DataGripJetBrainsClient.dev-plan.json",
+        "intellij.platform.vcs.plugin.GoLandJetBrainsClient.dev-plan.json",
+        "intellij.platform.vcs.plugin.PhpStormJetBrainsClient.dev-plan.json",
+        "intellij.platform.vcs.plugin.PythonJetBrainsClient.dev-plan.json",
+        "intellij.platform.vcs.plugin.RiderJetBrainsClient.dev-plan.json",
+        "intellij.platform.vcs.plugin.RubyJetBrainsClient.dev-plan.json",
+        "intellij.platform.vcs.plugin.RustRoverJetBrainsClient.dev-plan.json",
+        "intellij.platform.vcs.plugin.WebStormJetBrainsClient.dev-plan.json",
+        "intellij.platform.vcs.plugin.dev-plan.json",
+        "intellij.platform.vcs.plugin.ideaJetBrainsClient.dev-plan.json",
+    ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev intellij.platform.vcs.plugin` end

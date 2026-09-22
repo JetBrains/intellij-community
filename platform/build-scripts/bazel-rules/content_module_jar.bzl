@@ -181,7 +181,7 @@ def declare_spans(ctx, name):
         return None
     return ctx.actions.declare_file(name + ".spans.json")
 
-def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names, mnemonic, progress_message, extra_flags = [], extra_outputs = [], descriptor = None, descriptor_module = None, metadata = None, coverage_agent_manifest = False):
+def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names, mnemonic, progress_message, extra_flags = [], extra_outputs = [], descriptor = None, descriptor_module = None, descriptor_path = "META-INF/plugin.xml", metadata = None, coverage_agent_manifest = False):
     """Runs the packer over one jar, for either of this file's two rules and for `dev_plugin.bzl`.
 
     The rules differ in the jar's identity - its path, its mnemonic and its provider - and in nothing the packer
@@ -245,7 +245,7 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
     coverage_agent_sources = 0
     for module_name, module_jar in zip(merged_module_names, module_jars):
         if descriptor != None and module_name == descriptor_module:
-            args.add(descriptor, format = "patch=META-INF/plugin.xml=%s")
+            args.add(descriptor, format = "patch=" + descriptor_path + "=%s")
         args.add(module_jar, format = "module=%s")
         if coverage_agent_manifest and module_jar.basename.startswith("intellij-coverage-agent"):
             args.add("source-manifest=coverage-agent")
@@ -333,6 +333,9 @@ def _content_module_jar_impl(ctx):
         mnemonic = "PackContentModuleJar",
         progress_message = "Packing distribution jar of %{label}",
         extra_flags = ["merge-entities=true"],
+        descriptor = ctx.file.descriptor,
+        descriptor_module = module_name,
+        descriptor_path = ctx.attr.descriptor_path,
         coverage_agent_manifest = "intellij.platform.coverage.agent" in module_name,
     )
     return [
@@ -396,6 +399,14 @@ every `BUILD.bazel` that named one.
 The libraries precede every module output, and the order within decides which copy of an entry two libraries both carry
 ends up in the jar.""",
             providers = [[JavaInfo]],
+        ),
+        "descriptor": attr.label(
+            doc = "The product descriptor that replaces `META-INF/plugin.xml` in the owner module output.",
+            allow_single_file = True,
+        ),
+        "descriptor_path": attr.string(
+            doc = "The path of the product descriptor in the owner module output.",
+            default = "META-INF/plugin.xml",
         ),
         "_packer": attr.label(
             default = "//build/content-module-packer",
@@ -549,7 +560,7 @@ def content_module_jar_target_name(module):
     """
     return module.rpartition(":")[2] + "_content_module_jar"
 
-def content_module_jar(module, tags = [], visibility = ["//visibility:public"], **kwargs):
+def content_module_jar(module, name = None, tags = [], visibility = ["//visibility:public"], **kwargs):
     """Packs one content module's `lib/` jar, as a target excluded from wildcard builds.
 
     Two things the macro derives rather than have them restated 2 524 times over. `name` comes from `module`, the way
@@ -566,7 +577,7 @@ def content_module_jar(module, tags = [], visibility = ["//visibility:public"], 
         **kwargs: see `_content_module_jar`.
     """
     _content_module_jar(
-        name = content_module_jar_target_name(module),
+        name = name or content_module_jar_target_name(module),
         module = module,
         tags = tags + ["manual"],
         visibility = visibility,

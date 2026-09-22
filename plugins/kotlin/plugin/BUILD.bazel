@@ -184,6 +184,7 @@ exports_files(
     [
         "intellij.kotlin.plugin.AndroidStudio.dev-plan.json",
         "intellij.kotlin.plugin.dev-plan.json",
+        "intellij.kotlin.plugin.ideaJetBrainsClient.dev-plan.json",
         "intellij.kotlin.plugin.idea_community.dev-plan.json",
     ],
     visibility = ["//visibility:public"],

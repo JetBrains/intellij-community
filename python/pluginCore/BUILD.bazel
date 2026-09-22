@@ -210,7 +210,11 @@ dev_dist_plugin(
 )
 
 exports_files(
-    ["intellij.python.community.plugin.dev-plan.json"],
+    [
+        "intellij.python.community.plugin.PythonJetBrainsClient.dev-plan.json",
+        "intellij.python.community.plugin.dev-plan.json",
+        "intellij.python.community.plugin.ideaJetBrainsClient.dev-plan.json",
+    ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev intellij.python.community.plugin` end
