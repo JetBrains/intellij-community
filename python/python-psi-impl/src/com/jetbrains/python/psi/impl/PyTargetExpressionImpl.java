@@ -195,7 +195,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
           }
         }
       }
-      return PyUnionType.union(types);
+      return PyUnionType.unionOrUnknown(types);
     }
     type = getTypeFromComment(this);
     if (type != null) {
@@ -263,7 +263,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         .map(context::getType)
         .toList();
 
-      return PyUnionType.union(collect);
+      return PyUnionType.unionOrUnknown(collect);
     }
     if (parent instanceof PyExceptPart && ((PyExceptPart)parent).isStar() &&
         LanguageLevel.forElement(this).isAtLeast(LanguageLevel.PYTHON311)) {

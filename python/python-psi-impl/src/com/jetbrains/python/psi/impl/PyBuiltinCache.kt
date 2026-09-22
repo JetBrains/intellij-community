@@ -159,7 +159,7 @@ class PyBuiltinCache private constructor(
       unicode = if (definition) unicode.toClass() else unicode.toInstance()
     }
 
-    return PyUnionType.union(str, unicode ?: PyAnyType.unknown)
+    return PyUnionType.unionOrUnknown(str, unicode ?: PyAnyType.unknown)
   }
 
   val boolType: PyClassType?

@@ -117,7 +117,7 @@ object PyExpectedTypeJudgement {
 
       is PySliceItem -> {
         val cache = PyBuiltinCache.getInstance(expr)
-        return PyUnionType.union(cache.intType, cache.noneType)
+        return PyUnionType.unionOrUnknown(cache.intType, cache.noneType)
       }
 
       is PyStarExpression -> {
@@ -293,7 +293,7 @@ object PyExpectedTypeJudgement {
       argTypes.add(substituteTypeVars(paramType, mapping, ctx))
     }
 
-    return PyUnionType.union(argTypes)
+    return PyUnionType.unionOrUnknown(argTypes)
   }
 
   private fun fromStarArgument(callArgument: PyStarArgument, mapping: PyCallExpression.PyArgumentsMapping, ctx: TypeEvalContext): PyType? {
@@ -426,7 +426,7 @@ object PyExpectedTypeJudgement {
           if (iterableElementTypes.contains(PyAnyType.any)) {
             return createIterableType(lhs, PyAnyType.any) // simplify
           }
-          val iterableElementTypesUnion = PyUnionType.union(iterableElementTypes)
+          val iterableElementTypesUnion = PyUnionType.unionOrUnknown(iterableElementTypes)
           return createIterableType(lhs, iterableElementTypesUnion)
         }
       }
@@ -657,7 +657,7 @@ object PyExpectedTypeJudgement {
     val expectedResultType = getExpectedType(binaryExpr, ctx).takeUnless { it is PyAnyType || containsSyntheticProtocol(it) } ?: PyAnyType.any
     val syntheticType = createSyntheticDunderProtocolType(expr, methodName, Ref.create(otherOperandType), expectedResultType, ctx)
 
-    return PyUnionType.union(syntheticType, PyAnyType.any)
+    return PyUnionType.unionOrUnknown(syntheticType, PyAnyType.any)
   }
 
   /**
@@ -720,7 +720,7 @@ object PyExpectedTypeJudgement {
       PyTokenTypes.NOT_KEYWORD,
         -> syntheticType
 
-      else -> PyUnionType.union(syntheticType, PyAnyType.any)
+      else -> PyUnionType.unionOrUnknown(syntheticType, PyAnyType.any)
     }
   }
 

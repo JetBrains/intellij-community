@@ -337,7 +337,7 @@ public final class PyTypeParser {
             types.add(r.getType());
             result = result.merge(r);
           }
-          return result.withType(PyUnionType.union(types));
+          return result.withType(PyUnionType.unionOrUnknown(types));
         })
         .named("union-expr");
 
@@ -504,7 +504,7 @@ public final class PyTypeParser {
       if (!members.isEmpty()) {
         tokens.remove(0);
       }
-      return PyUnionType.union(members);
+      return PyUnionType.unionOrUnknown(members);
     }
 
     private @Nullable PyType getImplicitlyResolvedType(@NotNull List<Token<PyElementType>> tokens,

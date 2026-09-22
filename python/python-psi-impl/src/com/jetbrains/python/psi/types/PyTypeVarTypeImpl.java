@@ -120,7 +120,7 @@ public final class PyTypeVarTypeImpl implements PyTypeVarType {
   }
 
   private @Nullable PyType getBoundPromotedToClassObjectTypesIfNeeded() {
-    PyType effectiveBound = myConstraints.isEmpty() ? myBound : PyUnionType.union(myConstraints);
+    PyType effectiveBound = myConstraints.isEmpty() ? myBound : PyUnionType.unionOrUnknown(myConstraints);
     return promoteToClassObjectIfNeeded(effectiveBound);
   }
 
@@ -188,7 +188,7 @@ public final class PyTypeVarTypeImpl implements PyTypeVarType {
 
   @Override
   public @Nullable PyType getEffectiveBound() {
-    return myConstraints.isEmpty() ? myBound : PyUnionType.union(myConstraints);
+    return myConstraints.isEmpty() ? myBound : PyUnionType.unionOrUnknown(myConstraints);
   }
 
   @Override

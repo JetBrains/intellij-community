@@ -22,7 +22,7 @@ public class PyOrPatternImpl extends PyElementImpl implements PyOrPattern {
 
   @Override
   public @Nullable PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
-    return PyUnionType.union(ContainerUtil.map(getAlternatives(), it -> context.getType(it)));
+    return PyUnionType.unionOrUnknown(ContainerUtil.map(getAlternatives(), it -> context.getType(it)));
   }
 
   @Override

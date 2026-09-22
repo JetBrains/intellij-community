@@ -76,7 +76,7 @@ public final class PyDescriptorTypeUtil {
       }
     }
     if (!anyDescriptor) return null;
-    return Ref.create(PyUnionType.union(mapped));
+    return Ref.create(PyUnionType.unionOrUnknown(mapped));
   }
 
   private static @Nullable Ref<PyType> getExpectedTypeFromDunderSet(@NotNull PyQualifiedExpression expression,

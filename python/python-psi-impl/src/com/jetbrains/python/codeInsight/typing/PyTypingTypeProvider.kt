@@ -221,14 +221,14 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return Ref(param.toKeywordContainerType(type))
     }
     if (PyNames.NONE == param.defaultValueText) {
-      return Ref(PyUnionType.union(type, PyBuiltinCache.getInstance(param).noneType))
+      return Ref(PyUnionType.unionOrUnknown(type, PyBuiltinCache.getInstance(param).noneType))
     }
     if (context.typeContext.maySwitchToAST(param)) {
       val defaultValue = param.defaultValue
       if (defaultValue != null) {
         val defaultType = context.typeContext.getType(defaultValue)
         if (defaultType is PySentinelType) {
-          return Ref(PyUnionType.union(type, defaultType))
+          return Ref(PyUnionType.unionOrUnknown(type, defaultType))
         }
       }
     }
@@ -472,7 +472,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
             //    if (defaultValue != null) {
             //      val defaultType = context.typeContext.getType(defaultValue)
             //      if (defaultType is PySentinelType) {
-            //        return Ref.create(PyUnionType.union(type.get(), defaultType))
+            //        return Ref.create(PyUnionType.unionOrUnknown(type.get(), defaultType))
             //      }
             //    }
             //    return type
@@ -1799,7 +1799,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
           if (argExpr != null) {
             argType = getType(argExpr, context).derefOrUnknown()
           }
-          return Ref(PyUnionType.union(argType, PyBuiltinCache.getInstance(element).noneType))
+          return Ref(PyUnionType.unionOrUnknown(argType, PyBuiltinCache.getInstance(element).noneType))
         }
       }
       return null
@@ -2216,7 +2216,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         val rightTypeRef = getType(right, context)
         if (leftTypeRef == null && rightTypeRef == null) return null
 
-        val union = PyUnionType.union(leftTypeRef.derefOrUnknown(), rightTypeRef.derefOrUnknown())
+        val union = PyUnionType.unionOrUnknown(leftTypeRef.derefOrUnknown(), rightTypeRef.derefOrUnknown())
         return if (union != null) Ref(union) else null
       }
       return null

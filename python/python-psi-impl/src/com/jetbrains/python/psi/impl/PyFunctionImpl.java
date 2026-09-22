@@ -285,7 +285,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     final List<PyType> yieldTypes = map(visitor.getYieldExpressions(), it -> it.getYieldType(context));
     final List<PyType> sendTypes = map(visitor.getYieldExpressions(), it -> it.getSendType(context));
     if (!yieldTypes.isEmpty()) {
-      return Pair.create(PyUnionType.union(yieldTypes), PyUnionType.union(sendTypes));
+      return Pair.create(PyUnionType.unionOrUnknown(yieldTypes), PyUnionType.unionOrUnknown(sendTypes));
     }
     return null;
   }

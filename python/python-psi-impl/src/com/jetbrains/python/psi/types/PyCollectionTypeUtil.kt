@@ -186,7 +186,7 @@ object PyCollectionTypeUtil {
       valueTypes.add(PyAnyType.unknown)
     }
 
-    return Pair(PyUnionType.union(keyTypes), PyUnionType.union(valueTypes))
+    return Pair(PyUnionType.unionOrUnknown(keyTypes), PyUnionType.unionOrUnknown(valueTypes))
   }
 
   private fun getKeyValueType(sequenceElementType: PyType?): Pair<PyType?, PyType?> {

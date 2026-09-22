@@ -431,7 +431,7 @@ class PyTypedDictType private constructor(
           !extraItemsType.isUnknown -> valueTypes.add(extraItemsType)
           else -> builtinCache.objectType?.let { valueTypes.add(it) }
         }
-        return PyTypeChecker.match(expectedValueType, PyUnionType.union(valueTypes), context)
+        return PyTypeChecker.match(expectedValueType, PyUnionType.unionOrUnknown(valueTypes), context)
       }
       else {
         // A TypedDict is generally not assignable to `dict[str, X]` because `dict` is mutable and

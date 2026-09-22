@@ -107,7 +107,7 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
 
       val builtinCache = PyBuiltinCache.getInstance(expr)
       val languageLevel = LanguageLevel.forElement(expr)
-      val bytesOrUnicodeType = PyUnionType.union(
+      val bytesOrUnicodeType = PyUnionType.unionOrUnknown(
         listOfNotNull(
           builtinCache.getBytesType(languageLevel),
           builtinCache.getUnicodeType(languageLevel)

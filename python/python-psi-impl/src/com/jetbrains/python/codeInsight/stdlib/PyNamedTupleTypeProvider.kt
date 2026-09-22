@@ -137,7 +137,7 @@ private fun getFieldTypeForTypingNTFunctionInheritor(referenceExpression: PyRefe
     .map { it.type }
     .toList()
   if (fieldTypes.isEmpty()) return null
-  return PyUnionType.union(fieldTypes)
+  return PyUnionType.unionOrUnknown(fieldTypes)
 }
 
 /**

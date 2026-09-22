@@ -49,7 +49,7 @@ class PyCompositeTypeEqualityPerformanceTest : PyCodeInsightTestCase() {
   private val counter = AtomicLong()
 
   private val composites: List<Pair<String, (List<PyType?>) -> PyType>> = listOf(
-    "PyUnionType" to { members -> PyUnionType.union(members)!! },
+    "PyUnionType" to { members -> PyUnionType.unionOrUnknown(members)!! },
     "PyUnsafeUnionType" to { members -> PyUnsafeUnionType.unsafeUnion(members)!! },
     "PyIntersectionType" to { members -> PyIntersectionType.intersectionOrTop(members)!! },
   )
@@ -151,7 +151,7 @@ class PyCompositeTypeEqualityPerformanceTest : PyCodeInsightTestCase() {
   fun `composites of different kinds are never equal`() {
     val a = CountingLeaf("A")
     val b = CountingLeaf("B")
-    val union = PyUnionType.union(listOf(a, b))!!
+    val union = PyUnionType.unionOrUnknown(listOf(a, b))!!
     val intersection = PyIntersectionType.intersectionOrTop(listOf(a, b))!!
     // Same member set -> identical hashCode, so this also checks the exact-class gate precedes the fast path.
     assertEquals(union.hashCode(), intersection.hashCode())

@@ -218,7 +218,7 @@ private fun buildGetMethodType(
                             when {
                               valueTypeAndTotality == null -> default
                               valueTypeAndTotality.qualifiers.isRequired == true -> valueTypeAndTotality.type
-                              else -> PyUnionType.union(valueTypeAndTotality.type, default)
+                              else -> PyUnionType.unionOrUnknown(valueTypeAndTotality.type, default)
                             })
 }
 
@@ -242,7 +242,7 @@ private fun collectTypedDictValueType(
     return builtinCache.objectType
   }
 
-  return PyUnionType.union(nonNullTypes)
+  return PyUnionType.unionOrUnknown(nonNullTypes)
 }
 
 private fun getTypedDictTypeForCallee(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {

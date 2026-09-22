@@ -152,7 +152,7 @@ class PyLiteralType private constructor(
         is PyTupleExpression -> {
           val elements = expression.elements
           val classes = elements.mapNotNull { createFromLiteralParameter(it, context, typeRepresentation) }
-          if (elements.size == classes.size) PyUnionType.union(classes) else null
+          if (elements.size == classes.size) PyUnionType.unionOrUnknown(classes) else null
         }
         else -> createFromLiteralParameter(expression, context, typeRepresentation)
       }
@@ -309,8 +309,8 @@ class PyLiteralType private constructor(
         else {
           null to null
         }
-        val keyType = PyUnionType.union(elements.map { promoteToType(expectedKeyType, it.key) })
-        val valueType = PyUnionType.union(
+        val keyType = PyUnionType.unionOrUnknown(elements.map { promoteToType(expectedKeyType, it.key) })
+        val valueType = PyUnionType.unionOrUnknown(
           elements.mapNotNull { keyValue -> keyValue.value?.let { promoteToType(expectedValueType, it) } }
         )
         return PyCollectionTypeImpl.createTypeByQName(anchor, PyNames.DICT, false, listOf(keyType, valueType))
@@ -338,7 +338,7 @@ class PyLiteralType private constructor(
         else {
           null
         }
-        val elementType = PyUnionType.union(elements.map { promoteToType(expectedElementType, it) })
+        val elementType = PyUnionType.unionOrUnknown(elements.map { promoteToType(expectedElementType, it) })
         return PyCollectionTypeImpl.createTypeByQName(expr, className, false, listOf(elementType))
       }
     }
@@ -410,7 +410,7 @@ class PyLiteralType private constructor(
     @JvmStatic
     fun getLiteralType(expression: PyExpression, context: TypeEvalContext): PyType? {
       if (expression is PyConditionalExpression) {
-        return PyUnionType.union(
+        return PyUnionType.unionOrUnknown(
           listOf(expression.truePart, expression.falsePart).map {
             it?.let { getLiteralType(it, context) } ?: PyAnyType.unknown
           }

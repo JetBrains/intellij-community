@@ -21,7 +21,7 @@ object PyNumericTowerUtil {
     if (type is PyCompositeType) {
       val mappedMembers = type.members.map { typeArg -> expand(typeArg) }
       return when (type) {
-        is PyUnionType -> PyUnionType.union(mappedMembers)
+        is PyUnionType -> PyUnionType.unionOrUnknown(mappedMembers)
         is PyIntersectionType -> PyIntersectionType.intersectionOrTop(mappedMembers)
         is PyUnsafeUnionType -> PyUnsafeUnionType.unsafeUnion(mappedMembers)
         else -> throw IllegalStateException("Unknown type: ${type.name}")
@@ -46,6 +46,6 @@ object PyNumericTowerUtil {
       PyNames.FQN.COMPLEX -> listOf(PyBuiltinCache.getInstance(source).complexType, floatType, intType)
       else -> throw IllegalStateException("Not a numeric tower type: $classQName")
     }
-    return PyUnionType.union(members)
+    return PyUnionType.unionOrUnknown(members)
   }
 }

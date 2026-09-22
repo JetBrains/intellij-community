@@ -216,7 +216,7 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
             types.add(type)
           }
         }
-        if (types.isEmpty()) null else PyUnionType.union(types)
+        if (types.isEmpty()) null else PyUnionType.unionOrUnknown(types)
       }
     }
   }
@@ -362,7 +362,7 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
       return when (type) {
         is PyUnionType -> {
           val members = type.members.map { classObjectToInstanceType(it) }
-          if (members.any { it == null }) null else PyUnionType.union(members)
+          if (members.any { it == null }) null else PyUnionType.unionOrUnknown(members)
         }
         is PyInstantiableType<*> -> if (type.isDefinition) type.toInstance() else null
         else -> null
@@ -404,7 +404,7 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
           }
 
         val types = initialSubtypes + suggestedSubtypes
-        return Ref(if (types.isEmpty()) intersect(initial, suggested, context) else PyUnionType.union(types))
+        return Ref(if (types.isEmpty()) intersect(initial, suggested, context) else PyUnionType.unionOrUnknown(types))
       }
       else {
         if (initial is PyUnionType) {
@@ -437,7 +437,7 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
       if ((forceStrictNarrow || isStrictNarrowingAllowed) && members.isEmpty()) {
         return PyNeverType.NEVER
       }
-      return PyUnionType.union(members)
+      return PyUnionType.unionOrUnknown(members)
     }
 
     val isStrictNarrowingAllowed: Boolean
@@ -467,7 +467,7 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
         if (filteredEnumMembers.isEmpty()) {
           return Ref(PyNeverType.NEVER)
         }
-        val type = if (enumMembers.size == filteredEnumMembers.size) type1 else PyUnionType.union(filteredEnumMembers)
+        val type = if (enumMembers.size == filteredEnumMembers.size) type1 else PyUnionType.unionOrUnknown(filteredEnumMembers)
         return Ref(type)
       }
       return null
@@ -557,7 +557,7 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
           }
         }
 
-        return PyUnionType.union(members)
+        return PyUnionType.unionOrUnknown(members)
       }
       else if (typeElementNoParens is PyBinaryExpression && typeElementNoParens.operator === PyTokenTypes.OR) {
         val typeFromTypingProvider = getType(typeElementNoParens, context)

@@ -23,7 +23,7 @@ public class PyConditionalExpressionImpl extends PyElementImpl implements PyCond
     if (truePart == null || falsePart == null) {
       return null;
     }
-    return PyUnionType.union(context.getType(truePart), context.getType(falsePart));
+    return PyUnionType.unionOrUnknown(context.getType(truePart), context.getType(falsePart));
   }
 
   @Override

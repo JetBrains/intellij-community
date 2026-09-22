@@ -476,7 +476,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     }
     if (unionType.getMembers().stream().anyMatch(it -> isUnknown(it))) {
       // Always put Unknown at the end of the union
-      return renderUnion(List.of(render(PyUnionType.union(ContainerUtil.filter(unionType.getMembers(), it -> !isUnknown(it)))), visitUnknownType()));
+      return renderUnion(List.of(render(PyUnionType.unionOrUnknown(ContainerUtil.filter(unionType.getMembers(), it -> !isUnknown(it)))), visitUnknownType()));
     }
     return renderUnion(ContainerUtil.map(unionType.getMembers(), this::renderUnionMember));
   }

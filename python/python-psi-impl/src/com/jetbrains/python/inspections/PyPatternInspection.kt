@@ -68,7 +68,7 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
     if (types.isNotEmpty() && types.none { PyTypeChecker.isUnknown(it, myTypeEvalContext) }) {
       val invalidTypes = types.filter { it !is PyClassType || !it.isDefinition }
       if (invalidTypes.isNotEmpty()) {
-        val invalidTypesUnion = PyUnionType.union(invalidTypes)
+        val invalidTypesUnion = PyUnionType.unionOrUnknown(invalidTypes)
         val invalidTypeName = PythonDocumentationProvider.getTypeName(invalidTypesUnion, myTypeEvalContext)
         holder.problem(node.classNameReference,
                        PyPsiBundle.message("INSP.patterns.not.a.class", node.classNameReference.text, invalidTypeName))

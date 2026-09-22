@@ -76,7 +76,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
         leftType = Ref.deref(PyTypeAssertionEvaluator.createAssertionType(
           leftType, PyBuiltinCache.getInstance(this).getNoneType(), false, true, context));
       }
-      return PyUnionType.union(leftType, rightType);
+      return PyUnionType.unionOrUnknown(leftType, rightType);
     }
     final String referencedName = getReferencedName();
     if (PyNames.CONTAINS.equals(referencedName)) {

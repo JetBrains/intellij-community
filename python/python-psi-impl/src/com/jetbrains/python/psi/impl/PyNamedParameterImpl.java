@@ -281,7 +281,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
               }
             );
 
-            return types.isEmpty() ? null : PyUnionType.createWeakType(PyUnionType.union(types));
+            return types.isEmpty() ? null : PyUnionType.createWeakType(PyUnionType.unionOrUnknown(types));
           });
           if (assumedResult != null) {
             return assumedResult;
@@ -463,7 +463,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
     if (!usedAttributes.isEmpty()) {
       final PyStructuralType structuralType = new PyStructuralType(usedAttributes, true);
-      return noneComparison.get() ? PyUnionType.union(structuralType, PyBuiltinCache.getInstance(this).getNoneType()) : structuralType;
+      return noneComparison.get() ? PyUnionType.unionOrUnknown(structuralType, PyBuiltinCache.getInstance(this).getNoneType()) : structuralType;
     }
 
     return null;

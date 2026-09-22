@@ -458,7 +458,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     }
     // The union collapses to the common type for homogeneous enums (e.g. 'int') and widens to e.g. 'int | str' for
     // heterogeneous ones, instead of incorrectly reporting just the first member's type.
-    return PyUnionType.union(memberValueTypes);
+    return PyUnionType.unionOrUnknown(memberValueTypes);
   }
 
   /**
@@ -522,7 +522,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     }
     // The union collapses to the common type for homogeneous enums (e.g. 'int') and widens to e.g. 'int | str' for
     // heterogeneous ones, instead of incorrectly reporting just the first member's type.
-    return PyUnionType.union(memberValueTypes);
+    return PyUnionType.unionOrUnknown(memberValueTypes);
   }
 
   /**
@@ -579,7 +579,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
         }
         memberNameTypes.add(memberNameType);
       }
-      return PyUnionType.union(memberNameTypes);
+      return PyUnionType.unionOrUnknown(memberNameTypes);
     }
     // A specific enum member (e.g. MyEnum.A) carries its name as a literal value -> Literal["A"]
     if (qualifierType instanceof PyLiteralType literalType && literalType.getEnumMemberName() != null) {
@@ -597,7 +597,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
         if (!memberNameTypes.isEmpty()) {
-          return PyUnionType.union(memberNameTypes);
+          return PyUnionType.unionOrUnknown(memberNameTypes);
         }
       }
     }
@@ -641,8 +641,8 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       });
 
     final var builtins = PyBuiltinCache.getInstance(referenceTarget);
-    final PyType keyType = memberTypes.isEmpty() ? builtins.getStrType() : PyUnionType.union(memberNameTypes);
-    final PyType valueType = memberTypes.isEmpty() ? getEnumValueType(enumClass, context) : PyUnionType.union(memberTypes);
+    final PyType keyType = memberTypes.isEmpty() ? builtins.getStrType() : PyUnionType.unionOrUnknown(memberNameTypes);
+    final PyType valueType = memberTypes.isEmpty() ? getEnumValueType(enumClass, context) : PyUnionType.unionOrUnknown(memberTypes);
 
     final PyCollectionTypeImpl mappingType =
       PyCollectionTypeImpl.createTypeByQName(

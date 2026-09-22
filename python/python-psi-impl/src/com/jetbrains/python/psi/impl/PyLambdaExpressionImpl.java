@@ -97,7 +97,7 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
       .toList();
     return result.isEmpty() ? new PyFunctionTypeImpl(
       this, map(getParameterList().getParameters(), param -> PyCallableParameterImpl.psi(param, PyAnyType.getUnknown()))
-    ) : PyUnionType.union(result);
+    ) : PyUnionType.unionOrUnknown(result);
   }
 
   @Override
@@ -123,7 +123,7 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
 
     if (!yieldTypes.isEmpty()) {
       return PyTypingTypeProvider.wrapInGeneratorType(
-        PyUnionType.union(yieldTypes), PyUnionType.union(sendTypes), context.getType(body), this);
+        PyUnionType.unionOrUnknown(yieldTypes), PyUnionType.unionOrUnknown(sendTypes), context.getType(body), this);
     }
     return context.getType(body);
   }

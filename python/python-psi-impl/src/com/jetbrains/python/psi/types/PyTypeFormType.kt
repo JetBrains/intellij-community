@@ -83,7 +83,7 @@ class PyTypeFormType private constructor(
             else -> return null
           }
         }
-        return if (represented.isEmpty()) null else PyUnionType.union(represented)
+        return if (represented.isEmpty()) null else PyUnionType.unionOrUnknown(represented)
       }
       return null
     }

@@ -42,13 +42,13 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
 
     val expectedType = when {
       sequenceCaptureType.isHeterogeneousTuple() -> PyTupleType.create(this, types)
-      else -> wrapInSequenceType(PyUnionType.union(types))
+      else -> wrapInSequenceType(PyUnionType.unionOrUnknown(types))
     }
 
     if (sequenceCaptureType == null) return expectedType
     return sequenceCaptureType.compositeComponents
       .map { intersect(it, expectedType, context) }
-      .let { PyUnionType.union(it) }
+      .let { PyUnionType.unionOrUnknown(it) }
   }
 
   override fun canExcludePatternType(context: TypeEvalContext): Boolean {
@@ -67,7 +67,7 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
     if (sequenceMember is PySingleStarPattern) {
       return sequenceType.compositeComponents
         .flatMap { sequenceMember.getCapturedTypesFromSequenceType(it, context) }
-        .let { PyUnionType.union(it) }
+        .let { PyUnionType.unionOrUnknown(it) }
         .let { wrapInListType(it) }
     }
 
@@ -75,7 +75,7 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
 
     return sequenceType.compositeComponents
       .map { getElementTypeSkippingStar(it, idx, context) }
-      .let { PyUnionType.union(it) }
+      .let { PyUnionType.unionOrUnknown(it) }
   }
 
   private fun getElementTypeSkippingStar(sequence: PyType?, idx: Int, context: TypeEvalContext): PyType? {
@@ -110,7 +110,7 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
     val types = potentialMatchingTypes.mapNotNull {
       if (it.isHeterogeneousTuple()) it.takeIfSizeMatches(elements.size, hasStar) else it
     }
-    return PyUnionType.union(types)
+    return PyUnionType.unionOrUnknown(types)
   }
 
   fun wrapInListType(elementType: PyType?): PyType? {

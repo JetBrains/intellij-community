@@ -46,13 +46,13 @@ class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappin
       }
     }
 
-    val patternMappingType = wrapInMappingType(PyUnionType.union(keyTypes), PyUnionType.union(valueTypes))
+    val patternMappingType = wrapInMappingType(PyUnionType.unionOrUnknown(keyTypes), PyUnionType.unionOrUnknown(valueTypes))
 
     val matchingComponents = PyCaptureContext.getCaptureType(this, context).compositeComponents.filter { captureType: PyType? ->
       val mappingType = captureType.convertToType("typing.Mapping", this, context) ?: return@filter false
       PyTypeChecker.match(mappingType, patternMappingType, context)
     }
-    val filteredType = if (matchingComponents.isEmpty()) null else PyUnionType.union(matchingComponents)
+    val filteredType = if (matchingComponents.isEmpty()) null else PyUnionType.unionOrUnknown(matchingComponents)
 
     return filteredType ?: patternMappingType
   }
@@ -72,7 +72,7 @@ class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappin
 
     return PyCaptureContext.getCaptureType(this, context).compositeComponents
       .map { possibleMapping -> possibleMapping.getValueType(sequenceMember, context) }
-      .let { PyUnionType.union(it) }
+      .let { PyUnionType.unionOrUnknown(it) }
   }
 
   private fun wrapInMappingType(keyType: PyType?, valueType: PyType?): PyType? {

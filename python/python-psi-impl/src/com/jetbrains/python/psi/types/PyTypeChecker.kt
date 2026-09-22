@@ -594,7 +594,7 @@ object PyTypeChecker {
         return false
       }
       if (!matchHelper.match(safeActual, substitution)) {
-        safeActual = PyUnionType.union(safeActual, substitution)
+        safeActual = PyUnionType.unionOrUnknown(safeActual, substitution)
       }
     }
 
@@ -1476,7 +1476,7 @@ object PyTypeChecker {
         .filterIsInstance<PyTupleType>()
         .map { it.getElementType(index) }
         .toList()
-        .let(PyUnionType::union)
+        .let(PyUnionType::unionOrUnknown)
     }
     val tupleClass = (unionType.members.firstOrNull() as PyTupleType).pyClass
     return PyTupleType(tupleClass, newTupleElements, false)
@@ -1566,7 +1566,7 @@ object PyTypeChecker {
               val expandedTypeParameters = expandTupleTypeParameters(definitionTypeParameters, actualArguments.size)
               if (expandedTypeParameters != null) {
                 val unionTypes = actualArguments.flatMap { et -> if (et is PyUnpackedTupleType) et.elementTypes else listOf(et) }
-                elementTypes = listOf(PyUnionType.union(unionTypes)) + actualArguments
+                elementTypes = listOf(PyUnionType.unionOrUnknown(unionTypes)) + actualArguments
                 typeParameters = definitionTypeParameters + expandedTypeParameters
               }
             }
@@ -2436,7 +2436,7 @@ object PyTypeChecker {
         MatchContext(context, substitutions, false, )
       )
     }
-    return match(expectedArgumentType, PyUnionType.union(actualArgumentTypes), context, substitutions)
+    return match(expectedArgumentType, PyUnionType.unionOrUnknown(actualArgumentTypes), context, substitutions)
   }
 
   @Deprecated(message = "Use PyTypeChecker.unifyReceiver(PyType, TypeEvalContext)")
@@ -2627,7 +2627,7 @@ object PyTypeChecker {
         val afterCount = nonStarCount - starElementIndex
         val sliceTypes = (starElementIndex..<(count - afterCount)).map { assignedTupleType.getElementType(it) }
         // Widen literal types: the slice becomes a `list`, whose element type should not be a literal
-        val elementType = PyLiteralType.upcastLiteralToClass(PyUnionType.union(sliceTypes))
+        val elementType = PyLiteralType.upcastLiteralToClass(PyUnionType.unionOrUnknown(sliceTypes))
         val listClass = PyBuiltinCache.getInstance(target).getClass("list") ?: return PyAnyType.unknown
         return PyCollectionTypeImpl(listClass, false, listOf(elementType))
       }

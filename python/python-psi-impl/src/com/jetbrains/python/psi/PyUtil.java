@@ -1499,7 +1499,7 @@ public final class PyUtil {
         }
       }
 
-      return PyUnionType.union(types);
+      return PyUnionType.unionOrUnknown(types);
     }
 
     return null;

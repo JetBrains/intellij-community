@@ -1253,8 +1253,8 @@ open class PyTypeCheckerInspection : PyInspection() {
       directOperators: Set<String>,
       reflectedOperators: Set<String>,
     ): Boolean {
-      val leftUnion = PyUnionType.union(unsupportedPairs.mapTo(LinkedHashSet<PyType?>()) { it.first })
-      val rightUnion = PyUnionType.union(unsupportedPairs.mapTo(LinkedHashSet<PyType?>()) { it.second })
+      val leftUnion = PyUnionType.unionOrUnknown(unsupportedPairs.mapTo(LinkedHashSet<PyType?>()) { it.first })
+      val rightUnion = PyUnionType.unionOrUnknown(unsupportedPairs.mapTo(LinkedHashSet<PyType?>()) { it.second })
 
       val unsupportedOperatorMessage = unsupportedOperatorMessage(operatorText, operatorElement, leftUnion, rightUnion)
 
@@ -1325,7 +1325,7 @@ open class PyTypeCheckerInspection : PyInspection() {
 
         val effectiveReasons = reasons.distinctBy { it.message.description }.toMutableList()
         if (undefined.isNotEmpty()) {
-          val operandUnion = PyUnionType.union(LinkedHashSet<PyType?>(undefined))
+          val operandUnion = PyUnionType.unionOrUnknown(LinkedHashSet<PyType?>(undefined))
           explainUndefinedOperator(
             receiverType,
             if (groupByRightOperand) receiverType else operandUnion,
@@ -1338,7 +1338,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         }
         else {
           val memberUnionType = if (groupByRightOperand) rightUnionType else leftUnionType
-          val otherOperandUnion = PyUnionType.union(
+          val otherOperandUnion = PyUnionType.unionOrUnknown(
             LinkedHashSet<PyType?>(pairs.map { if (groupByRightOperand) it.first else it.second })
           )
           listOf(
@@ -1936,7 +1936,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         // First collect type parameter substitutions by matching the expected type with the union, if it's a keyword container
         // otherwise, match as usual arguments, passed to a function
         if (container.isKeywordContainer) {
-          val actualJoin = PyUnionType.union(
+          val actualJoin = PyUnionType.unionOrUnknown(
             arguments.map { myTypeEvalContext.getType(it) }
           )
           matchParameterAndArgument(expected, actualJoin, null, substitutions)

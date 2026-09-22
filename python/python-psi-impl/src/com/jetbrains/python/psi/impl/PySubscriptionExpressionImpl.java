@@ -76,7 +76,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
             }
             return tupleType.getElementType(index);
           });
-          return PyUnionType.union(possibleTypes);
+          return PyUnionType.unionOrUnknown(possibleTypes);
         }
         if (operandType instanceof PyTypedDictType typedDictType) {
           return typedDictType.isDefinition()

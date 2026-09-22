@@ -73,7 +73,7 @@ class PyCallingNonCallableInspection : PyInspection() {
       if (callee.isCallable(myTypeEvalContext) != false) return
       val calleeType = myTypeEvalContext.getType(callee)
       if (calleeType is PyUnionType && PyUnionType.isStrictSemanticsEnabled()) {
-        val uncallable = PyUnionType.union(calleeType.members.filter { it.isCallable == false })
+        val uncallable = PyUnionType.unionOrUnknown(calleeType.members.filter { it.isCallable == false })
         val message =
           PyPsiBundle.problemMessage(if (uncallable is PyUnionType) "INSP.members.are.not.callable" else "INSP.member.is.not.callable",
                                      CodifiedParam.ofType(uncallable, callee, myTypeEvalContext),

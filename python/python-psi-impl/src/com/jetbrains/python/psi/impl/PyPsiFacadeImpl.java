@@ -71,7 +71,7 @@ public final class PyPsiFacadeImpl extends PyPsiFacade {
 
   @Override
   public @Nullable PyType createUnionType(@NotNull Collection<PyType> members) {
-    return PyUnionType.union(members);
+    return PyUnionType.unionOrUnknown(members);
   }
 
   @Override

@@ -251,7 +251,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     val members = subTypes.map { buildPyType(pyElement, it)?.get() }
     if (members.all { it == null }) return null
     thisLogger().info("Pyrefly TSP: built PyUnionType with ${members.size} members")
-    return Ref.create(PyUnionType.union(members))
+    return Ref.create(PyUnionType.unionOrUnknown(members))
   }
 
   private fun buildPyModuleType(pyElement: PyTypedElement, tspType: PyreflyLsp4jServer.TspType): Ref<PyType?>? {

@@ -379,7 +379,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       }
     }
 
-    return PyUnionType.union(members);
+    return PyUnionType.unionOrUnknown(members);
   }
 
   private static @Nullable PyType getUnqualifiedReferenceTypeByControlFlow(@NotNull PyReferenceExpression refExpr,
@@ -461,7 +461,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       List<@Nullable PyType> memberTypes = ContainerUtil.map(members, PyTypeUtil::derefOrUnknown);
       return Ref.create(compositeType instanceof PyUnsafeUnionType
                         ? PyUnsafeUnionType.unsafeUnion(memberTypes)
-                        : PyUnionType.union(memberTypes));
+                        : PyUnionType.unionOrUnknown(memberTypes));
     }
 
     // Return `str` for `__doc__` if a docstring is present; otherwise fall through to the regular `object.__doc__` attribute.
@@ -486,7 +486,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         List<@Nullable Ref<PyType>> types = ContainerUtil.map(typeVarType.getConstraints(),
                                                               it -> getTypeOfMember(it, typeVarType, attrName, anchor, context, errors));
         if (ContainerUtil.and(types, Objects::isNull)) return null;
-        return Ref.create(PyUnionType.union(ContainerUtil.map(types, PyTypeUtil::derefOrUnknown)));
+        return Ref.create(PyUnionType.unionOrUnknown(ContainerUtil.map(types, PyTypeUtil::derefOrUnknown)));
       }
       else if (typeVarType.getBound() != null) {
         return getTypeOfMember(typeVarType.getBound(), typeVarType, attrName, anchor, context, errors);
@@ -679,13 +679,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
             types.add(type);
           }
         }
-        return types.isEmpty() ? null : Ref.create(PyUnionType.union(types));
+        return types.isEmpty() ? null : Ref.create(PyUnionType.unionOrUnknown(types));
       });
 
       if (typeOfLaterDefinitions == null) {
         return new ControlFlowTypeResult(deducedType, foundPrefixCall);
       }
-      PyType newType = PyUnionType.union(deducedType, typeOfLaterDefinitions.get());
+      PyType newType = PyUnionType.unionOrUnknown(deducedType, typeOfLaterDefinitions.get());
       if (Objects.equals(deducedType, newType)) {
         return new ControlFlowTypeResult(deducedType, foundPrefixCall);
       }

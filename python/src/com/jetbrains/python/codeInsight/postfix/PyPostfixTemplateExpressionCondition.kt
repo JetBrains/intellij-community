@@ -68,7 +68,7 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
       val floatType = builtinCache.floatType
       val complexType = builtinCache.complexType
       return PyTypeChecker.match(
-        PyUnionType.union(listOf(intType, floatType, complexType)), type, context
+        PyUnionType.unionOrUnknown(listOf(intType, floatType, complexType)), type, context
       )
     }
 

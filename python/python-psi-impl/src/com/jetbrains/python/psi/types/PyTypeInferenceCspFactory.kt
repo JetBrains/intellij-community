@@ -202,7 +202,7 @@ object PyTypeInferenceCspFactory {
       val iv = builder.addInferenceVariable(typeVar, si)
       typeArgumentIVs.add(iv)
       val elementTypes = elements.map { element -> buildNestedCspAndUnpack(seqExpr, element, builder, context) }
-      builder.addConstraint(iv, PyUnionType.union(elementTypes), PyVariance.CONTRAVARIANT, ConstraintPriority.MEDIUM)
+      builder.addConstraint(iv, PyUnionType.unionOrUnknown(elementTypes), PyVariance.CONTRAVARIANT, ConstraintPriority.MEDIUM)
     }
 
     if (seqExpr is PyTupleExpression) {
@@ -218,7 +218,7 @@ object PyTypeInferenceCspFactory {
   ) : PyType? {
     val nestedReturnType = buildNestedCsp(element, builder, context)
     if (nestedReturnType is PyUnpackedTupleType && expression !is PyTupleExpression) {
-      return PyUnionType.union(nestedReturnType.elementTypes)
+      return PyUnionType.unionOrUnknown(nestedReturnType.elementTypes)
     }
     return nestedReturnType
   }
@@ -268,7 +268,7 @@ object PyTypeInferenceCspFactory {
       val returnType = buildCallSiteExpressionCsp(SubstitutionsIdentifier(callSite, callableType), builder, context)
       returnTypes.add(returnType)
     }
-    return PyUnionType.union(returnTypes)
+    return PyUnionType.unionOrUnknown(returnTypes)
   }
 
   private fun buildCallSiteExpressionCsp(si: SubstitutionsIdentifier, builder: CspBuilder, context: TypeEvalContext) : PyType? {
@@ -377,7 +377,7 @@ object PyTypeInferenceCspFactory {
       // and not as a subtype of one of the given tv-constraints.
       val constraintsIV = tv.getConstraints().map { PyTypeChecker.substitute(it, ivGenericSubstitutions, context) }
       val intersectionOfConstraints = PyIntersectionType.intersectionOrTop(constraintsIV)
-      val unionOfConstraints = PyUnionType.union(constraintsIV)
+      val unionOfConstraints = PyUnionType.unionOrUnknown(constraintsIV)
       // semantics: TV approximates CV_1 ⊕ CV_2 ⊕ ... ⊕ CV_n by
       // CV_1 & CV_2 & ... & CV_n <: TV <: CV_1 | CV_2 | ... | CV_n
       builder.addConstraint(iv, intersectionOfConstraints, PyVariance.CONTRAVARIANT, ConstraintPriority.HIGH, false)
