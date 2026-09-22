@@ -87,6 +87,9 @@
       order="last"
       implementation="com.intellij.platform.searchEverywhere.providers.target.presentation.SeDefaultTargetPresentationProvider"/>
 
+    <searchEverywhere.targetItemSelectionProcessor
+      implementation="com.intellij.platform.searchEverywhere.providers.classes.SeClassesItemSelectionProcessor"/>
+
     <!-- The fallback selection processor. It navigates to whatever is left, so it must stay last. -->
     <searchEverywhere.targetItemSelectionProcessor
       order="last"
