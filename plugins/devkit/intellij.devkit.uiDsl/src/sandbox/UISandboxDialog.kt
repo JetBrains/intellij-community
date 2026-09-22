@@ -53,6 +53,7 @@ import com.intellij.devkit.uiDsl.sandbox.tests.accessibility.AccessibilityFailed
 import com.intellij.devkit.uiDsl.sandbox.tests.components.JBTabsPanel
 import com.intellij.devkit.uiDsl.sandbox.tests.components.JBTextAreaTestPanel
 import com.intellij.devkit.uiDsl.sandbox.tests.components.JEditorPaneCopyableTestPanel
+import com.intellij.devkit.uiDsl.sandbox.tests.components.JTabbedPaneTestPanel
 import com.intellij.devkit.uiDsl.sandbox.tests.components.TreeWithComplexEditors
 import com.intellij.devkit.uiDsl.sandbox.tests.dsl.CellsWithSubPanelsPanel
 import com.intellij.devkit.uiDsl.sandbox.tests.dsl.CheckBoxRadioButtonPanel
@@ -181,6 +182,7 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
       JEditorPaneCopyableTestPanel(),
       JBTabsPanel(),
       JBTextAreaTestPanel(),
+      JTabbedPaneTestPanel(),
       TreeWithComplexEditors(),
     )),
     Group("Kotlin UI DSL", children = listOf(

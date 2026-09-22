@@ -750,7 +750,6 @@
             LabelSizeDemoAction
             JEditorPaneDemoAction
             JBTabsDemo
-            JTabbedPaneDemo
             TestTooltipsAction
             ShowInlineBanner
             ToolbarDemo

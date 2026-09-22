@@ -1305,9 +1305,6 @@
     <action id="JBTabsDemo" internal="true" class="org.jetbrains.idea.devkit.internal.ui.JBTabsDemoAction">
       <add-to-group group-id="Internal.UI.Demos"/>
     </action>
-    <action id="JTabbedPaneDemo" internal="true" class="org.jetbrains.idea.devkit.internal.ui.JTabbedPaneDemoAction">
-      <add-to-group group-id="Internal.UI.Demos"/>
-    </action>
     <action id="TestTooltipsAction" internal="true" class="org.jetbrains.idea.devkit.internal.ui.TestTooltipsAction">
       <add-to-group group-id="Internal.UI.Demos"/>
     </action>
