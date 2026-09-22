@@ -640,7 +640,6 @@ private fun filterPluginItems(
   categoryRelevance: Boolean,
   cancellationCheck: () -> Unit = {},
 ): List<PluginItemState> {
-  if (!categoryRelevance && normalizedQuery.isEmpty() && sortBy == MarketplaceTabSearchSortByOptions.RELEVANCE) return items
   val unifiedQuery = UnifiedPluginsQuery.parse(normalizedQuery)
   val parser = SearchQueryParser.Installed(unifiedQuery.withoutCategoryFilters())
   val matches = items.asSequence()
@@ -686,8 +685,11 @@ private fun localPluginComparator(
     MarketplaceTabSearchSortByOptions.RELEVANCE -> Comparator { first, second ->
       val firstHasErrors = first.item.rowInput?.errors?.isNotEmpty() == true
       val secondHasErrors = second.item.rowInput?.errors?.isNotEmpty() == true
+      val firstDisabled = first.item.rowInput?.enabled == false
+      val secondDisabled = second.item.rowInput?.enabled == false
       when {
         firstHasErrors != secondHasErrors -> if (firstHasErrors) -1 else 1
+        firstDisabled != secondDisabled -> if (firstDisabled) 1 else -1
         first.relevance != second.relevance -> second.relevance.compareTo(first.relevance)
         categoryRelevance -> compareBundledItems(first.item, second.item)
         else -> 0

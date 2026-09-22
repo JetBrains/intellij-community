@@ -545,11 +545,16 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
   }
 
   @Test
-  fun `local relevance prioritizes errors while explicit sorts override that priority`() {
+  fun `local relevance prioritizes errors and enabled plugins while explicit sorts override priorities`() {
     val healthy = plugin("healthy.plugin", "Alpha Plugin").apply {
       downloads = "100"
       rating = "5"
       releaseDate = 100
+    }
+    val disabled = plugin("disabled.plugin", "Aardvark Plugin").apply {
+      downloads = "1000"
+      rating = "5"
+      releaseDate = 1000
     }
     val broken = plugin("broken.plugin", "Zulu Plugin").apply {
       downloads = "1"
@@ -561,6 +566,7 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
         PluginSectionState(
           PluginSectionId.Installed,
           items = listOf(
+            localItem(disabled, enabled = false),
             localItem(healthy, enabled = true),
             localItem(broken, enabled = true, errors = listOf(HtmlChunk.text("broken"))),
           ),
@@ -574,11 +580,12 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
       local,
     ).sections.single { it.id == PluginSectionId.Installed }.items.map { it.pluginId.idString }
 
-    assertThat(result("Plugin")).containsExactly("broken.plugin", "healthy.plugin")
-    assertThat(result("Plugin /sortBy:name")).containsExactly("healthy.plugin", "broken.plugin")
-    assertThat(result("Plugin /sortBy:downloads")).containsExactly("healthy.plugin", "broken.plugin")
-    assertThat(result("Plugin /sortBy:rating")).containsExactly("healthy.plugin", "broken.plugin")
-    assertThat(result("Plugin /sortBy:updated")).containsExactly("healthy.plugin", "broken.plugin")
+    assertThat(result("")).containsExactly("broken.plugin", "healthy.plugin", "disabled.plugin")
+    assertThat(result("Plugin")).containsExactly("broken.plugin", "healthy.plugin", "disabled.plugin")
+    assertThat(result("Plugin /sortBy:name")).containsExactly("disabled.plugin", "healthy.plugin", "broken.plugin")
+    assertThat(result("Plugin /sortBy:downloads")).containsExactly("disabled.plugin", "healthy.plugin", "broken.plugin")
+    assertThat(result("Plugin /sortBy:rating")).containsExactly("disabled.plugin", "healthy.plugin", "broken.plugin")
+    assertThat(result("Plugin /sortBy:updated")).containsExactly("disabled.plugin", "healthy.plugin", "broken.plugin")
   }
 
   @Test

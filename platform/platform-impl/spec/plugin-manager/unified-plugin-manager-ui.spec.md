@@ -256,14 +256,15 @@ This specification covers the page structure, section model, search, source load
   )
 
 - The first result for a query revision must set the plugin order in each section.
-- Relevance must initially place local plugin errors before healthy plugins, then use the existing match scores.
+- Relevance must initially place local plugins with errors before healthy plugins.
+- Within each error group, relevance must place enabled plugins before disabled plugins, then use the existing match scores.
 - Later results in the same query revision must retain the relative order of plugins that remain in a section.
 - A new plugin must append after existing plugins. A plugin that leaves and returns must resume its retained position.
 - In expanded Bundled, a new plugin must append in its category. A new category must append after existing categories.
 - The first collapsed and expanded Bundled results may set separate orders to keep categories together.
-- An explicit sort must override local error priority and control Marketplace ordering. Custom repositories must retain their source order.
+- An explicit sort must override both local priorities and control Marketplace ordering. Custom repositories must retain their source order.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
-    `local relevance prioritizes errors while explicit sorts override that priority`;
+    `local relevance prioritizes errors and enabled plugins while explicit sorts override priorities`;
     `installed relevance uses legacy name and description match scores`;
     `sort controls primary Marketplace without suppressing cached filtering`
   )
