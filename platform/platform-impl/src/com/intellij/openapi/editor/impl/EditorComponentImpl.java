@@ -52,9 +52,9 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.EditorsSplittersKt;
@@ -144,11 +144,13 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   private static final ThreadLocal<PluginDescriptor> currentDescriptor = ThreadLocal.withInitial(() -> null);
 
   private final EditorImpl editor;
+  private final EditorAccessibleText myAccessibleText;
 
   private @NotNull Point2D alignment = new Point2D.Double();
 
   public EditorComponentImpl(@NotNull EditorImpl editor) {
     this.editor = editor;
+    myAccessibleText = new EditorAccessibleText(editor);
     enableEvents(AWTEvent.KEY_EVENT_MASK | AWTEvent.INPUT_METHOD_EVENT_MASK);
     enableInputMethods(true);
     // Note: Ideally, we should always set "FocusCycleRoot" to "false", but,
@@ -772,7 +774,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
   @Override
   public int getCaretPosition() {
-    return EditorThreading.compute(() -> editor.getCaretModel().getOffset());
+    return EditorThreading.compute(() -> myAccessibleText.getCaretOffset(editor.getCaretModel().getCurrentCaret()));
   }
 
   @DirtyUI
@@ -803,15 +805,17 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       return;
     }
 
+    int offset = myAccessibleText.fromDocumentOffset(event.getOffset());
+    int length = myAccessibleText.fromDocumentOffset(event.getOffset() + event.getNewLength()) - offset;
     javax.swing.event.DocumentEvent swingEvent = new javax.swing.event.DocumentEvent() {
       @Override
       public int getOffset() {
-        return event.getOffset();
+        return offset;
       }
 
       @Override
       public int getLength() {
-        return event.getNewLength();
+        return length;
       }
 
       @Override
@@ -984,21 +988,19 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public int getEndOffset() {
-      return getLength();
+      return myAccessibleText.getLength();
     }
 
     @Override
     public int getElementIndex(int i) {
       // For the root element this asks for the index of the offset, which
       // means the line number
-      Document document = editor.getDocument();
-      return document.getLineNumber(i);
+      return myAccessibleText.getLineNumber(Math.clamp(i, 0, myAccessibleText.getLength()));
     }
 
     @Override
     public int getElementCount() {
-      Document document = editor.getDocument();
-      return document.getLineCount();
+      return myAccessibleText.getLineCount();
     }
 
     @Override
@@ -1026,14 +1028,12 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
         @Override
         public int getStartOffset() {
-          Document document = editor.getDocument();
-          return document.getLineStartOffset(i);
+          return myAccessibleText.getLineStartOffset(i);
         }
 
         @Override
         public int getEndOffset() {
-          Document document = editor.getDocument();
-          return document.getLineEndOffset(i);
+          return myAccessibleText.getLineEndOffset(i);
         }
 
         @Override
@@ -1170,8 +1170,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public int viewToModel(JTextComponent tc, Point pt) {
-      LogicalPosition logicalPosition = editor.xyToLogicalPosition(pt);
-      return editor.logicalPositionToOffset(logicalPosition);
+      return myAccessibleText.getOffsetAt(pt);
     }
 
     @Override
@@ -1243,15 +1242,11 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     AccessibleEditorComponentImpl() {
       if (editor.isDisposed()) return;
 
-      editor.getCaretModel().addCaretListener(this, editor.getDisposable());
-      editor.getDocument().addDocumentListener(this);
-
-      Disposer.register(editor.getDisposable(), new Disposable() {
-        @Override
-        public void dispose() {
-          editor.getDocument().removeDocumentListener(AccessibleEditorComponentImpl.this);
-        }
-      });
+      Disposable disposable = Disposer.newDisposable("AccessibleEditorComponentImpl");
+      EditorUtil.disposeWithEditor(editor, disposable);
+      editor.getCaretModel().addCaretListener(this, disposable);
+      editor.getDocument().addDocumentListener(this, disposable);
+      myAccessibleText.addChangeListener(this::textChanged, disposable);
     }
 
     // ---- Implements CaretListener ----
@@ -1266,8 +1261,11 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       if (caret != editor.getCaretModel().getPrimaryCaret()) {
         return;
       }
-      int dot = caret.getOffset();
-      int mark = caret.getLeadSelectionOffset();
+      caretMoved(caret);
+    }
+
+    private void caretMoved(@NotNull Caret caret) {
+      int dot = myAccessibleText.getCaretOffset(caret);
       if (myCaretPos != dot) {
         ThreadingAssertions.assertEventDispatchThread();
         firePropertyChange(ACCESSIBLE_CARET_PROPERTY,
@@ -1276,7 +1274,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         myCaretPos = dot;
       }
 
-      if (mark != dot) {
+      if (caret.getLeadSelectionOffset() != caret.getOffset()) {
         ThreadingAssertions.assertEventDispatchThread();
         firePropertyChange(ACCESSIBLE_SELECTION_PROPERTY, null,
                            getSelectedText());
@@ -1287,7 +1285,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public void documentChanged(final @NotNull DocumentEvent event) {
-      final Integer pos = event.getOffset();
+      final Integer pos = myAccessibleText.fromDocumentOffset(event.getOffset());
       if (ApplicationManager.getApplication().isDispatchThread()) {
         firePropertyChange(ACCESSIBLE_TEXT_PROPERTY, null, pos);
         if (SystemInfo.isMac) {
@@ -1302,6 +1300,11 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
           fireJTextComponentDocumentChange(event);
         });
       }
+    }
+
+    private void textChanged() {
+      firePropertyChange(ACCESSIBLE_TEXT_PROPERTY, null, 0);
+      caretMoved(editor.getCaretModel().getPrimaryCaret());
     }
 
     // ---- Implements AccessibleContext ----
@@ -1368,32 +1371,30 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public int getIndexAtPoint(Point point) {
-      LogicalPosition logicalPosition = editor.xyToLogicalPosition(point);
-      return editor.logicalPositionToOffset(logicalPosition);
+      return myAccessibleText.getOffsetAt(point);
     }
 
     @Override
     public Rectangle getCharacterBounds(int offset) {
       // Since we report the very end of the document as being 1 character past the document
       // length, we need to validate the offset passed back by the screen reader.
-      if (offset < 0 || offset > editor.getDocument().getTextLength() - 1) {
+      if (offset < 0 || offset > myAccessibleText.getLength() - 1) {
         return null;
       }
-      LogicalPosition pos = editor.offsetToLogicalPosition(offset);
-      Point point = editor.logicalPositionToXY(pos);
+      Point point = myAccessibleText.offsetToXY(offset);
       FontMetrics fontMetrics = editor.getFontMetrics(Font.PLAIN);
-      char c = editor.getDocument().getCharsSequence().subSequence(offset, offset + 1).charAt(0);
+      char c = myAccessibleText.getText(offset, offset + 1).charAt(0);
       return new Rectangle(point.x, point.y, fontMetrics.charWidth(c), fontMetrics.getHeight());
     }
 
     @Override
     public int getCharCount() {
-      return editor.getDocument().getTextLength();
+      return myAccessibleText.getLength();
     }
 
     @Override
     public int getCaretPosition() {
-      return EditorThreading.compute(() -> editor.getCaretModel().getOffset());
+      return EditorComponentImpl.this.getCaretPosition();
     }
 
     @Override
@@ -1430,17 +1431,17 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public int getSelectionStart() {
-      return EditorThreading.compute(() -> editor.getSelectionModel().getSelectionStart());
+      return EditorThreading.compute(() -> myAccessibleText.getSelectionStart());
     }
 
     @Override
     public int getSelectionEnd() {
-      return EditorThreading.compute(() -> editor.getSelectionModel().getSelectionEnd());
+      return EditorThreading.compute(() -> myAccessibleText.getSelectionEnd());
     }
 
     @Override
     public @Nullable String getSelectedText() {
-      return EditorThreading.compute(() -> editor.getSelectionModel().getSelectedText());
+      return EditorThreading.compute(() -> myAccessibleText.getSelectedText());
     }
 
     // ---- Implements AccessibleEditableText ----
@@ -1452,22 +1453,24 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public void insertTextAtIndex(int index, String s) {
-      editDocumentSafely(index, 0, s);
+      editDocumentSafely(myAccessibleText.toDocumentOffset(index), 0, s);
     }
 
     @Override
     public String getTextRange(int startIndex, int endIndex) {
-      return editor.getDocument().getCharsSequence().subSequence(startIndex, endIndex).toString();
+      return myAccessibleText.getText(startIndex, endIndex);
     }
 
     @Override
     public void delete(int startIndex, int endIndex) {
-      editDocumentSafely(startIndex, endIndex - startIndex, null);
+      TextRange range = myAccessibleText.toDocumentRange(startIndex, endIndex);
+      editDocumentSafely(range.getStartOffset(), range.getLength(), null);
     }
 
     @Override
     public void cut(int startIndex, int endIndex) {
-      editor.getSelectionModel().setSelection(startIndex, endIndex);
+      TextRange range = myAccessibleText.toDocumentRange(startIndex, endIndex);
+      editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
       DataContext dataContext = DataManager.getInstance().getDataContext(EditorComponentImpl.this);
       CutProvider cutProvider = editor.getCutProvider();
       if (cutProvider.isCutEnabled(dataContext)) {
@@ -1477,7 +1480,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public void paste(int startIndex) {
-      editor.getCaretModel().moveToOffset(startIndex);
+      editor.getCaretModel().moveToOffset(myAccessibleText.toDocumentOffset(startIndex));
       DataContext dataContext = DataManager.getInstance().getDataContext(EditorComponentImpl.this);
       PasteProvider pasteProvider = editor.getPasteProvider();
       if (pasteProvider.isPasteEnabled(dataContext)) {
@@ -1487,14 +1490,23 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public void replaceText(int startIndex, int endIndex, String s) {
-      editDocumentSafely(startIndex, endIndex - startIndex, s);
+      TextRange range = myAccessibleText.toDocumentRange(startIndex, endIndex);
+      editDocumentSafely(range.getStartOffset(), range.getLength(), s);
     }
 
     @Override
     public void selectText(int startIndex, int endIndex) {
       EditorThreading.run(() -> {
-        editor.getSelectionModel().setSelection(startIndex, endIndex);
-        editor.getCaretModel().moveToOffset(endIndex);
+        // a caret set inside a placeholder stays there, so that the caret position that a screen reader sets reads back the same
+        VisualPosition placeholderPosition = startIndex == endIndex ? myAccessibleText.getPlaceholderVisualPosition(startIndex) : null;
+        if (placeholderPosition != null) {
+          editor.getSelectionModel().removeSelection();
+          editor.getCaretModel().moveToVisualPosition(placeholderPosition);
+          return;
+        }
+        TextRange range = myAccessibleText.toDocumentRange(startIndex, endIndex);
+        editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+        editor.getCaretModel().moveToOffset(range.getEndOffset());
       });
     }
 
@@ -1552,14 +1564,12 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public @NotNull Rectangle getTextBounds(int startIndex, int endIndex) {
-      LogicalPosition startPos = editor.offsetToLogicalPosition(startIndex);
-      Point startPoint = editor.logicalPositionToXY(startPos);
+      Point startPoint = myAccessibleText.offsetToXY(startIndex);
       Rectangle rectangle = new Rectangle(startPoint);
 
-      LogicalPosition endPos = editor.offsetToLogicalPosition(endIndex);
-      Point endPoint = editor.logicalPositionToXY(endPos);
+      Point endPoint = myAccessibleText.offsetToXY(endIndex);
       FontMetrics fontMetrics = editor.getFontMetrics(Font.PLAIN);
-      char c = editor.getDocument().getCharsSequence().subSequence(endIndex - 1, endIndex).charAt(0);
+      char c = myAccessibleText.getText(endIndex - 1, endIndex).charAt(0);
       endPoint.x += fontMetrics.charWidth(c);
       endPoint.y += fontMetrics.getHeight();
       rectangle.add(endPoint);
@@ -1590,15 +1600,15 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       int offset,
       @MagicConstant(intValues = {BEFORE, HERE, AFTER})
       int direction) {
-      DocumentEx document = editor.getDocument();
-      if (offset < 0 || offset >= document.getTextLength()) {
+      int length = myAccessibleText.getLength();
+      if (offset < 0 || offset >= length) {
         return null;
       }
       switch (type) {
         case CHARACTER: {
-          if (offset + direction < document.getTextLength() && offset + direction >= 0) {
+          if (offset + direction < length && offset + direction >= 0) {
             int startOffset = offset + direction;
-            return document.getCharsSequence().subSequence(startOffset, startOffset + 1).toString();
+            return myAccessibleText.getText(startOffset, startOffset + 1);
           }
           break;
         }
@@ -1614,7 +1624,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
           if (lineStart == -1 || lineEnd == -1) {
             return null;
           }
-          return document.getCharsSequence().subSequence(lineStart, lineEnd).toString();
+          return myAccessibleText.getText(lineStart, lineEnd);
         }
 
         case LINE:
@@ -1645,19 +1655,19 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         int direction) {
       assert direction == BEFORE || direction == HERE || direction == AFTER;
 
-      DocumentEx document = editor.getDocument();
-      if (offset < 0 || offset >= document.getTextLength()) {
+      int length = myAccessibleText.getLength();
+      if (offset < 0 || offset >= length) {
         return null;
       }
 
       switch (type) {
         case CHARACTER -> {
           AccessibleTextSequence charSequence = null;
-          if (offset + direction < document.getTextLength() &&
+          if (offset + direction < length &&
               offset + direction >= 0) {
             int startOffset = offset + direction;
             charSequence = new AccessibleTextSequence(startOffset, startOffset + 1,
-                                                      document.getCharsSequence().subSequence(startOffset, startOffset + 1).toString());
+                                                      myAccessibleText.getText(startOffset, startOffset + 1));
           }
           return charSequence;
         }
@@ -1671,8 +1681,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
             return null;
           }
 
-          return new AccessibleTextSequence(lineStart, lineEnd,
-                                            document.getCharsSequence().subSequence(lineStart, lineEnd).toString());
+          return new AccessibleTextSequence(lineStart, lineEnd, myAccessibleText.getText(lineStart, lineEnd));
         }
       }
       return null;
@@ -1689,21 +1698,19 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     private int moveLineOffset(int offset, @MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction) {
       if (direction == AFTER) {
-        int lineNumber = editor.offsetToLogicalPosition(offset).line;
+        int lineNumber = myAccessibleText.getLineNumber(offset);
         lineNumber++;
-        Document document = editor.getDocument();
-        if (lineNumber == document.getLineCount()) {
+        if (lineNumber == myAccessibleText.getLineCount()) {
           return -1;
         }
-        return document.getLineStartOffset(lineNumber);
+        return myAccessibleText.getLineStartOffset(lineNumber);
       } else if (direction == BEFORE) {
-        int lineNumber = editor.offsetToLogicalPosition(offset).line;
+        int lineNumber = myAccessibleText.getLineNumber(offset);
         lineNumber--;
         if (lineNumber < 0) {
           return -1;
         }
-        Document document = editor.getDocument();
-        return document.getLineStartOffset(lineNumber);
+        return myAccessibleText.getLineStartOffset(lineNumber);
       } else {
         assert direction == HERE;
         return offset;
@@ -1716,16 +1723,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         return -1;
       }
 
-      return getLineAtOffsetStart(offset);
-    }
-
-    private int getLineAtOffsetEnd(int offset) {
-      Document document = editor.getDocument();
-      if (offset == 0) {
-        return 0;
-      }
-      int lineNumber = editor.offsetToLogicalPosition(offset).line;
-      return document.getLineEndOffset(lineNumber);
+      return myAccessibleText.getLineStartOffset(myAccessibleText.getLineNumber(offset));
     }
 
     private int getLineAtOffsetEnd(int offset, @MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction) {
@@ -1734,7 +1732,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         return -1;
       }
 
-      return getLineAtOffsetEnd(offset);
+      return myAccessibleText.getLineEndOffset(myAccessibleText.getLineNumber(offset));
     }
 
     private CaretStopPolicy resolveCaretStopPolicy(@MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction) {
@@ -1754,17 +1752,27 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     }
 
     private AccessibleTextSequence getWordOrLexeme(int offset, @MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction) {
+      if (direction == HERE) {
+        TextRange placeholder = myAccessibleText.getPlaceholderRange(offset);
+        if (placeholder != null) {
+          int start = placeholder.getStartOffset();
+          int end = placeholder.getEndOffset();
+          return new AccessibleTextSequence(start, end, myAccessibleText.getText(start, end));
+        }
+      }
+      // the word helpers below use document offsets
       boolean isCamel = editor.getSettings().isCamelWords();
       var caretStopPolicy = resolveCaretStopPolicy(direction);
-      offset = moveWordOffset(offset, direction, caretStopPolicy, isCamel);
+      offset = moveWordOffset(myAccessibleText.toDocumentOffset(offset), direction, caretStopPolicy, isCamel);
       var wordStop = caretStopPolicy.getWordStop();
       int wordStart = getWordAtOffsetStart(offset, wordStop, isCamel);
       int wordEnd = getWordAtOffsetEnd(offset, wordStop, isCamel);
       if (wordStart == -1 || wordEnd == -1 || wordStart > wordEnd) {
         return null;
       }
-      return new AccessibleTextSequence(wordStart, wordEnd,
-                                        editor.getDocument().getCharsSequence().subSequence(wordStart, wordEnd).toString());
+      int start = myAccessibleText.fromDocumentOffset(wordStart);
+      int end = myAccessibleText.fromDocumentOffset(wordEnd);
+      return new AccessibleTextSequence(start, end, myAccessibleText.getText(start, end));
     }
 
 
