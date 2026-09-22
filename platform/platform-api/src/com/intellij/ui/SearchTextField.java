@@ -27,6 +27,7 @@ import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,6 +93,9 @@ public class SearchTextField extends JPanel {
 
   public SearchTextField(boolean historyPopupEnabled, boolean clearActionEnabled, @Nullable String historyPropertyName) {
     super(new BorderLayout());
+
+    ThreadingAssertions.softAssertAwtOperationsThread();
+
     this.historyPopupEnabled = historyPopupEnabled;
 
     myModel = new MyModel();

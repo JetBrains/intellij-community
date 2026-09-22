@@ -17,6 +17,8 @@ public class Wrapper extends JPanel implements NullableComponent {
   private JComponent myHorizontalSizeReferent;
 
   public Wrapper() {
+    ThreadingAssertions.softAssertAwtOperationsThread();
+
     setLayout(new BorderLayout());
     setOpaque(false);
   }
