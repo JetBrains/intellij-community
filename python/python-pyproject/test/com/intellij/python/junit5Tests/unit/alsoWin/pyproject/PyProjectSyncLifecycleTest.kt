@@ -96,8 +96,10 @@ internal class PyProjectSyncLifecycleTest {
   fun testInitialBuildIncludesChangesDuringStartup(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
     val workspace = gateWorkspace(disposable)
     val project = projectFixture.get()
-    val rebuilt = CompletableDeferred<Unit>()
-    project.messageBus.connect(disposable).subscribe(MODEL_REBUILD, ModelRebuiltListener { rebuilt.complete(Unit) })
+    val rebuilt = CompletableDeferred<Pair<Int, List<AsyncFileListener>>>()
+    project.messageBus.connect(disposable).subscribe(MODEL_REBUILD, ModelRebuiltListener {
+      rebuilt.complete(workspace.subscriptions.value to vfsListeners())
+    })
     val service = PyProjectModelSyncService(project, this)
     try {
       service.start()
@@ -106,10 +108,8 @@ internal class PyProjectSyncLifecycleTest {
       nested.resolve(PY_PROJECT_TOML).writeText("[project]\nname = \"nested\"\nversion = \"1.0\"\n")
       VirtualFileManager.getInstance().refreshAndFindFileByNioPath(pathFixture.get())!!.refresh(false, false)
       workspace.ready.complete(Unit)
-      rebuilt.await()
+      val (activeSubscriptions, activeListeners) = rebuilt.await()
       assertEquals(listOf("nested"), project.modules.filter { it.isPyProjectTomlBased }.map { it.name })
-      val activeSubscriptions = workspace.subscriptions.value
-      val activeListeners = vfsListeners()
       service.stop()
       coroutineContext.job.children.toList().joinAll()
       assertEquals(activeSubscriptions - 1, workspace.subscriptions.value)
@@ -236,14 +236,25 @@ internal class PyProjectSyncLifecycleTest {
     }
     assertThat(findPyProjectTomlFilesInIndex(setOf(root), emptySet())).isEmpty()
     val reports = mutableListOf<Exception>()
+    val processor = object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
+        if (generateSequence(t) { it.cause }.any { it === failure }) {
+          reports.add(failure)
+          return Action.NONE
+        }
+        return super.processError(category, message, details, t)
+      }
+    }
     var found: List<Path> = emptyList()
     var attempts = 0
-    flowOf(PendingRebuild(setOf(directory), "new subtree", false))
-      .collectRebuilds(listOf(10.milliseconds), { _, error -> reports.add(error) }) { batch ->
-        attempts++
-        loadSubtreesIntoVfs(batch.directoriesToLoad)
-        found = findPyProjectTomlFilesInIndex(setOf(root), emptySet())
-      }
+    LoggedErrorProcessor.executeWith(processor).use {
+      flowOf(PendingRebuild(setOf(directory), "new subtree", false))
+        .collectRebuilds(listOf(10.milliseconds)) { batch ->
+          attempts++
+          loadSubtreesIntoVfs(batch.directoriesToLoad)
+          found = findPyProjectTomlFilesInIndex(setOf(root), emptySet())
+        }
+    }
     assertEquals(2, attempts)
     assertThat(reports).hasSize(1)
     assertThat(found).containsExactly(expected)

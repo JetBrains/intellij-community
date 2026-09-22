@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -23,10 +24,30 @@ import com.intellij.python.pyproject.model.internal.pyProjectToml.isPrunedName
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
+import kotlin.time.Duration
 
 private val log = fileLogger()
+
+/**
+ * Emits bounded batches of VFS changes.
+ * Registers the listener when collection starts and disposes it when collection stops.
+ */
+internal fun pyProjectTomlChanges(knownRoots: () -> Set<Path>): Flow<PendingRebuild> = flow {
+  val disposable = Disposer.newDisposable("PyProjectTomlChanges")
+  val requests = PendingRebuildRequests()
+  try {
+    subscribeToPyProjectTomlChanges(disposable, knownRoots, requests::add)
+    emitAll(requests.batches(Duration.ZERO))
+  }
+  finally {
+    Disposer.dispose(disposable)
+  }
+}
 
 /**
  * Calls [onChange] when a VFS change can add, remove or alter a `pyproject.toml` under [knownRoots].
@@ -38,7 +59,7 @@ private val log = fileLogger()
  * The listener is application wide, so this set is the only way to tell a change of this project from a change
  * of another project, or of a directory that no project holds.
  */
-internal fun subscribeToPyProjectTomlChanges(
+private fun subscribeToPyProjectTomlChanges(
   parentDisposable: Disposable,
   knownRoots: () -> Set<Path>,
   onChange: (RebuildRequest) -> Unit,

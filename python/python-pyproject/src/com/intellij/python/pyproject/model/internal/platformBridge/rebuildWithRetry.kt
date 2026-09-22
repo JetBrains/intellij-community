@@ -2,6 +2,7 @@
 package com.intellij.python.pyproject.model.internal.platformBridge
 
 import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.diagnostic.fileLogger
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
@@ -12,12 +13,11 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Processes batches serially and retries failed loads or rebuilds after [retryDelays].
  * After the last retry, retains the failed batch and merges it with the next emission.
- * Reports the first exception through [onFailure] and reports again only after a successful rebuild.
+ * Logs the first exception and logs again only after a successful rebuild.
  * Control-flow exceptions and errors propagate. Cancellation discards retained work; a new session loads all roots.
  */
 internal suspend fun Flow<PendingRebuild>.collectRebuilds(
   retryDelays: List<Duration> = listOf(1.seconds, 2.seconds),
-  onFailure: (PendingRebuild, Exception) -> Unit,
   rebuild: suspend (PendingRebuild) -> Unit,
 ) {
   var failedBatch: PendingRebuild? = null
@@ -35,9 +35,11 @@ internal suspend fun Flow<PendingRebuild>.collectRebuilds(
         currentCoroutineContext().ensureActive()
         val reportFailure = failedBatch == null
         failedBatch = batch
-        if (reportFailure) onFailure(batch, e)
+        if (reportFailure) log.error("Could not rebuild the pyproject.toml model (${batch.reason})", e)
       }
       if (attempt < retryDelays.size) delay(retryDelays[attempt])
     }
   }
 }
+
+private val log = fileLogger()

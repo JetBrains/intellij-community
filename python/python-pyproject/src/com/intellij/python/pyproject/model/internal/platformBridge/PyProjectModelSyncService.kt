@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
@@ -26,13 +25,10 @@ import com.intellij.python.pyproject.model.internal.pyProjectToml.findPyProjectT
 import com.intellij.python.pyproject.model.internal.workspaceBridge.collectExcludedPaths
 import com.intellij.python.pyproject.model.internal.workspaceBridge.rebuildProjectModel
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -102,36 +98,22 @@ internal class PyProjectModelSyncService(private val project: Project, private v
   }
 
   /** Tracks changes from before the initial scan until the session ends. */
-  private suspend fun trackChanges(): Unit = coroutineScope {
-    ensureActive()
-    val vfsListenerDisposable = Disposer.newDisposable("PyProjectModelSyncService")
-    val requests = PendingRebuildRequests()
-    try {
-      knownRoots = setOf(project.stateStore.projectBasePath)
-      subscribeToPyProjectTomlChanges(vfsListenerDisposable, { knownRoots }, requests::add)
-      launch(start = CoroutineStart.UNDISPATCHED) {
-        project.workspaceModel.eventLog
-          .mapNotNull { it.toRebuildRequest() }
-          .collect(requests::add)
-      }
-      requests.batches(DEBOUNCE)
-        .onStart { emit(PendingRebuild(emptySet(), "the start of the sync", reloadProjectRoots = true)) }
-        .collectRebuilds(onFailure = { batch, error ->
-          log.error("Could not rebuild the pyproject.toml model (${batch.reason})", error)
-        }) { batch ->
-          if (batch.reloadProjectRoots) {
-            loadProjectRootsIntoVfs()
-          }
-          else if (batch.directoriesToLoad.isNotEmpty()) {
-            val loaded = measureTime { loadSubtreesIntoVfs(batch.directoriesToLoad, collectExcludedPaths(project)) }
-            log.debug { "Loaded ${batch.directoriesToLoad.size} new directories into the VFS in $loaded" }
-          }
-          rebuildNow(batch.reason)
+  private suspend fun trackChanges() {
+    knownRoots = setOf(project.stateStore.projectBasePath)
+    project.workspaceModel.eventLog
+      .mapNotNull { it.toRebuildRequest() }
+      .map { PendingRebuild(it.directoriesToLoad, it.reason, reloadProjectRoots = false) }
+      .mergeRebuildRequests(pyProjectTomlChanges { knownRoots }, DEBOUNCE)
+      .collectRebuilds { batch ->
+        if (batch.reloadProjectRoots) {
+          loadProjectRootsIntoVfs()
         }
-    }
-    finally {
-      Disposer.dispose(vfsListenerDisposable)
-    }
+        else if (batch.directoriesToLoad.isNotEmpty()) {
+          val loaded = measureTime { loadSubtreesIntoVfs(batch.directoriesToLoad, collectExcludedPaths(project)) }
+          log.debug { "Loaded ${batch.directoriesToLoad.size} new directories into the VFS in $loaded" }
+        }
+        rebuildNow(batch.reason)
+      }
   }
 
   /**

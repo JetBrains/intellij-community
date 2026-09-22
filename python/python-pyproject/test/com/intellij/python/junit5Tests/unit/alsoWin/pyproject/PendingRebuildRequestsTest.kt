@@ -1,11 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject
 
+import com.intellij.idea.TestFor
 import com.intellij.mock.MockVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.pyproject.model.internal.platformBridge.PendingRebuild
 import com.intellij.python.pyproject.model.internal.platformBridge.PendingRebuildRequests
 import com.intellij.python.pyproject.model.internal.platformBridge.RebuildRequest
+import com.intellij.python.pyproject.model.internal.platformBridge.mergeRebuildRequests
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
@@ -15,7 +17,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
@@ -25,19 +30,124 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import java.io.IOException
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeSource
 
 @Subsystems.IDE
 @Layers.Functional
+@TestFor(issues = ["PY-91841"])
 @Timeout(30)
 internal class PendingRebuildRequestsTest {
   private val first = MockVirtualFile.dir("first")
   private val second = MockVirtualFile.dir("second")
   private val third = MockVirtualFile.dir("third")
+
+  @Test
+  fun testCompletedSourcesFlushTheirMergedBatch(): Unit = timeoutRunBlocking {
+    val batches = flowOf(PendingRebuild(setOf(first), "first", false))
+      .mergeRebuildRequests(flowOf(PendingRebuild(setOf(second), "second", false)), 1.days)
+
+    repeat(2) {
+      val collected = batches.toList()
+      assertThat(collected).hasSize(2)
+      assertThat(collected.first().reloadProjectRoots).isTrue()
+      assertThat(collected.last().directoriesToLoad).containsExactlyInAnyOrder(first, second)
+      assertThat(collected.last().reloadProjectRoots).isFalse()
+    }
+  }
+
+  @Test
+  fun testEmptySourcesCompleteAfterTheInitialScan(): Unit = timeoutRunBlocking {
+    val collected = emptyFlow<PendingRebuild>().mergeRebuildRequests(emptyFlow(), Duration.ZERO).toList()
+    assertThat(collected).hasSize(1)
+    assertThat(collected.single().reloadProjectRoots).isTrue()
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = [2, 101])
+  fun testBothSourcesAccumulateDuringTheInitialScan(directoryCount: Int): Unit = timeoutRunBlocking {
+    val directories = (1..directoryCount).map { MockVirtualFile.dir("dir$it") }
+    val activeSources = AtomicInteger()
+    val initialScanStarted = CompletableDeferred<Unit>()
+    val finishInitialScan = CompletableDeferred<Unit>()
+    val sent = List(2) { CompletableDeferred<Unit>() }
+    val sources = sent.mapIndexed { index, completed ->
+      flow {
+        activeSources.incrementAndGet()
+        try {
+          initialScanStarted.await()
+          directories.filterIndexed { i, _ -> i % 2 == index }.forEach {
+            emit(PendingRebuild(setOf(it), it.name, false))
+          }
+          completed.complete(Unit)
+          awaitCancellation()
+        }
+        finally {
+          activeSources.decrementAndGet()
+        }
+      }
+    }
+    val collected = async {
+      sources[0].mergeRebuildRequests(sources[1], Duration.ZERO)
+        .onEach {
+          if (!initialScanStarted.isCompleted) {
+            assertThat(activeSources.get()).isEqualTo(2)
+            assertThat(it.reloadProjectRoots).isTrue()
+            initialScanStarted.complete(Unit)
+            finishInitialScan.await()
+          }
+        }
+        .take(2).toList()
+    }
+    initialScanStarted.await()
+    sent.forEach { it.await() }
+    finishInitialScan.complete(Unit)
+    val batches = collected.await()
+    assertThat(batches).hasSize(2)
+    val pending = batches.last()
+    assertThat(pending.reloadProjectRoots).isEqualTo(directoryCount > 100)
+    if (pending.reloadProjectRoots) {
+      assertThat(pending.directoriesToLoad).isEmpty()
+    }
+    else {
+      assertThat(pending.directoriesToLoad).containsExactlyInAnyOrderElementsOf(directories)
+    }
+    assertThat(activeSources.get()).isZero()
+  }
+
+  @Test
+  fun testSourceFailureCancelsTheOtherSource() {
+    val failure = IOException("Cannot read workspace changes")
+    var otherStopped = false
+    val thrown = assertThrows<IOException> {
+      timeoutRunBlocking {
+        val otherStarted = CompletableDeferred<Unit>()
+        val failing = flow<PendingRebuild> {
+          otherStarted.await()
+          throw failure
+        }
+        val other = flow<PendingRebuild> {
+          try {
+            otherStarted.complete(Unit)
+            awaitCancellation()
+          }
+          finally {
+            otherStopped = true
+          }
+        }
+        failing.mergeRebuildRequests(other, Duration.ZERO).toList()
+      }
+    }
+    assertThat(thrown).isSameAs(failure)
+    assertThat(otherStopped).isTrue()
+  }
 
   @Test
   fun testRequestsBeforeCollectionMergeWithoutCountingDuplicates(): Unit = timeoutRunBlocking {
