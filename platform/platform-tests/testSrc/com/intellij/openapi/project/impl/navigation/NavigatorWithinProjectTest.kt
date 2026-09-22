@@ -1,15 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl.navigation
 
+import com.intellij.ide.trustedProjects.TrustedFiles
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.navigation.LocationToOffsetConverter
 import com.intellij.navigation.NavigatorWithinProject
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.containers.ComparatorUtil.max
 import org.junit.ClassRule
 import org.junit.Test
+import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.test.assertNull
 
 class NavigatorWithinProjectTest : NavigationTestBase() {
@@ -76,6 +82,26 @@ class NavigatorWithinProjectTest : NavigationTestBase() {
     with(getCurrentCharacterZeroBasedPosition()) {
       assertThat(line).isEqualTo(0)
       assertThat(column).isEqualTo(0)
+    }
+  }
+
+  @Test fun pathOutsideProjectOpensInSafeMode() {
+    lateinit var outsideFile: Path
+    runNavigationTest(
+      navigationAction = {
+        // a jetbrains:// link can name any local file, see IJPL-255702
+        outsideFile = tempDir.newPath("outside").resolve("data.txt")
+        Files.createDirectories(outsideFile.parent)
+        Files.writeString(outsideFile, "text")
+        navigateByPath(outsideFile.toString(), locationToOffsetAsCharacterOneBased)
+      }
+    ) {
+      val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsideFile))
+      assertThat(FileEditorManager.getInstance(project).isFileOpen(file)).isTrue()
+      // the trust check is off in a headless run; the mark itself does not depend on it
+      PlatformTestUtil.withSystemProperty<RuntimeException>(TrustedProjects.TRUST_HEADLESS_DISABLED_PROPERTY, "false") {
+        assertThat(TrustedFiles.isTrustDecidedByFile(file, project)).isTrue()
+      }
     }
   }
 

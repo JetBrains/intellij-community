@@ -11,6 +11,7 @@ import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContribut
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.getProjectOriginUrl
+import com.intellij.ide.trustedProjects.TrustedFiles
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -183,6 +184,7 @@ class NavigatorWithinProject(
               .firstOrNull()
           }
         } ?: return@withBackgroundProgress
+        readAction { element.containingFile?.virtualFile }?.let { TrustedFiles.markExternallyOpened(it) }
         withContext(Dispatchers.EDT) {
           PsiNavigateUtil.navigate(element)
         }
@@ -204,6 +206,7 @@ class NavigatorWithinProject(
     path = OSAgnosticPathUtil.expandUserHome(path)
     withBackgroundProgress(project, IdeBundle.message("navigate.command.search.reference.progress.title", pathText)) {
       val virtualFile = findFileByStringPath(path) ?: return@withBackgroundProgress
+      TrustedFiles.markExternallyOpened(virtualFile)
       val textEditor = withContext(Dispatchers.EDT) {
         writeIntentReadAction {
           FileEditorManager.getInstance(project).openFile(virtualFile, true).filterIsInstance<TextEditor>().firstOrNull()
