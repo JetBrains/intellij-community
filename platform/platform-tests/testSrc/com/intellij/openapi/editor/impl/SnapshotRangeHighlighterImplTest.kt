@@ -1,7 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.ex.DocumentTextPatch
+import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.impl.event.MarkupModelListener
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
@@ -9,6 +12,7 @@ import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ref.GCUtil
 import org.assertj.core.api.Assertions
@@ -18,6 +22,33 @@ import java.lang.ref.WeakReference
 @TestApplication
 @UsePMarkerImplementation
 class SnapshotRangeHighlighterImplTest {
+  @Test
+  fun `after removed listener can remove another highlighter`(@TestDisposable disposable: Disposable) {
+    val document = DocumentImpl("abcdef", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val first = model.addRangeHighlighter(1, 2, 1, null, HighlighterTargetArea.EXACT_RANGE)
+      val second = model.addRangeHighlighter(3, 4, 1, null, HighlighterTargetArea.EXACT_RANGE)
+      val removed = ArrayList<RangeHighlighter>()
+      model.addMarkupModelListener(disposable, object : MarkupModelListener {
+        override fun afterRemoved(highlighter: RangeHighlighterEx) {
+          removed.add(highlighter)
+          if (highlighter === first) {
+            model.removeHighlighter(second)
+          }
+        }
+      })
+
+      first.dispose()
+
+      Assertions.assertThat(removed).containsExactly(first, second)
+      Assertions.assertThat(model.allHighlighters).isEmpty()
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
   @Test
   fun `persistent highlighters follow line changes in snapshot branches`() {
     val document = DocumentImpl("one\n  target\nlast", true)

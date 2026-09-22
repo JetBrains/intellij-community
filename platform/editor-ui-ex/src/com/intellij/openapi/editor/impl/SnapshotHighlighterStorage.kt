@@ -38,7 +38,7 @@ internal class SnapshotHighlighterStorage(
   /** A positive value prevents structural changes during iteration on the current thread. */
   private val iteratorDepth: ThreadLocal<Int> = ThreadLocal.withInitial { 0 }
 
-  /** A positive value prevents nested changes during removal notifications on the current thread. */
+  /** A positive value prevents nested changes during before-removal notifications on the current thread. */
   private val removalDepth: ThreadLocal<Int> = ThreadLocal.withInitial { 0 }
 
   val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(document, onMarkersInvalidated = ::highlightersChanged)
@@ -95,16 +95,20 @@ internal class SnapshotHighlighterStorage(
   }
 
   fun afterRemoved(highlighter: SnapshotRangeHighlighterImpl) {
+    var removed = false
     try {
       val markerId = highlighter.idForStorage()
       val reference = highlightersById.get(markerId)
       if (reference != null && reference.get() === highlighter && highlightersById.remove(markerId, reference)) {
         model.invalidateHighlighterCache()
-        model.fireAfterRemoved(highlighter)
+        removed = true
       }
     }
     finally {
       leaveRemoval()
+    }
+    if (removed) {
+      model.fireAfterRemoved(highlighter)
     }
   }
 
