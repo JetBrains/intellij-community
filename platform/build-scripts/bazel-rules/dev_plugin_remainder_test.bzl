@@ -5,7 +5,7 @@ load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "content_module_jar", "content_module_jar_target_name")
 load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_plugin_descriptor", "dev_dist_plugin_descriptor_target_name", "dev_dist_product_info", "dev_dist_product_info_transition")
-load(":dev_plugin_remainder.bzl", "DevPluginArtifactCatalogueInfo", "DevPluginGraphInfo", "DevPluginRemainderInfo", "dev_dist_complex_plugin", "dev_dist_complex_plugin_variant", "dev_plugin_artifact_catalogue", "dev_plugin_component", "dev_plugin_file_graph", "dev_plugin_remainder_from_plan", "plan_product_error", "platform_values_error")
+load(":dev_plugin_remainder.bzl", "DevPluginArtifactCatalogueInfo", "DevPluginGraphInfo", "DevPluginRemainderInfo", "dev_dist_complex_plugin", "dev_dist_complex_plugin_variant", "dev_plugin_artifact_catalogue", "dev_plugin_component", "dev_plugin_file_graph", "dev_plugin_remainder_from_plan", "plan_product_error", "platform_values_error", "product_name_error")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo")
 
 _EMPTY_JAR = "PK\005\006" + ("\000" * 18)
@@ -285,12 +285,12 @@ def _component_test_impl(ctx):
     actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "CollectDevPluginComponent"]
     asserts.equals(env, 1, len(actions))
     action = actions[0]
-    asserts.equals(env, "plugin-test", fragment.name)
+    asserts.equals(env, ctx.attr.kind, fragment.name)
     asserts.equals(env, [remainder.directory], fragment.payload.to_list())
     for input_file in [remainder.metadata, remainder.assets, remainder.classpath]:
         asserts.true(env, input_file in action.inputs.to_list())
-    asserts.true(env, "--kind=plugin-test" in action.argv)
-    asserts.true(env, "--platform-prefix=idea" in action.argv)
+    asserts.true(env, "--kind=" + ctx.attr.kind in action.argv)
+    asserts.true(env, "--platform-prefix=" + ctx.attr.platform_prefix in action.argv)
     platform_arguments = [argument for argument in action.argv if argument.startswith("--os=") or argument.startswith("--arch=")]
     if ctx.attr.neutral:
         asserts.true(env, "--platform-neutral" in action.argv)
@@ -305,6 +305,8 @@ _component_test = analysistest.make(
     attrs = {
         "remainder": attr.label(mandatory = True, providers = [DevPluginRemainderInfo]),
         "neutral": attr.bool(doc = "Whether the component states no target platform."),
+        "kind": attr.string(default = "plugin-test", doc = "The component name the collector receives as `--kind`."),
+        "platform_prefix": attr.string(default = "idea", doc = "The product's platform prefix the collector receives as `--platform-prefix`."),
     },
 )
 
@@ -518,16 +520,22 @@ def _check_platform_values_refusals(main_module):
             fail("platform_values_error refused %s: %s" % (accepted, error))
 
 def _check_plan_product_refusals(main_module):
-    """Fails at load time when `plan_product_error` accepts a plan product that is not the product, or refuses the
-    empty one, the product itself, or the product's case-safe plan name."""
+    """Fails at load time when `plan_product_error` or the chain-product check of `product_name_error` accepts a name
+    that is not the product, or refuses the empty one, the product itself, or the product's case-safe name."""
     for refused in ["server", "ideacommunity", "Idea_community"]:
         error = plan_product_error(main_module, "Idea", refused)
         if error == None or "is not its product" not in error:
             fail("plan_product_error accepted the plan product '%s' for 'Idea': %s" % (refused, error))
+        error = product_name_error(main_module, "Idea", refused, "chain product")
+        if error == None or "names the chain product '%s', which is not its product" % refused not in error:
+            fail("product_name_error accepted the chain product '%s' for 'Idea': %s" % (refused, error))
     for accepted in ["", "Idea", "idea_community"]:
         error = plan_product_error(main_module, "Idea", accepted)
         if error != None:
             fail("plan_product_error refused '%s': %s" % (accepted, error))
+        error = product_name_error(main_module, "Idea", accepted, "chain product")
+        if error != None:
+            fail("product_name_error refused the chain product '%s': %s" % (accepted, error))
 
 def _reused_component_test_impl(ctx):
     env = analysistest.begin(ctx)
@@ -1174,6 +1182,49 @@ def dev_plugin_remainder_test_suite(name):
         )
         product_tests.append(product_folded_test)
 
+    # The case-safe form: `chain_product` names the product's case-safe name as the first element of the chain stem,
+    # so the outputs of an `Idea` chain never share a path with an `idea` chain on a case-insensitive file system.
+    # The chain still stamps the product `Idea` as its platform prefix, and it reads the baseline plan file.
+    chain_product_module = "test.%s.chain_product" % name
+    chain_product_platforms = ["linux_x64"]
+    for platform in chain_product_platforms:
+        _file(name = name + "_chain_product_raw_" + platform)
+        _file(name = chain_product_module + "." + platform + ".dev-plan.json")
+    dev_dist_complex_plugin(
+        main_module = chain_product_module,
+        product = "Idea",
+        chain_product = "idea_community",
+        product_info = ":" + product_info,
+        descriptor = ":" + normal_descriptor,
+        execution_version = 1,
+        platforms = chain_product_platforms,
+        resource_inputs = {":" + name + "_chain_product_raw_{platform}": "raw"},
+        tags = ["manual"],
+    )
+    chain_product_tests = []
+    for platform in chain_product_platforms:
+        stem = "idea_community_" + platform + "_" + chain_product_module
+        _check_chain_shape(stem)
+        chain_product_graph_test = stem + "_graph_test"
+        _graph_resolution_test(
+            name = chain_product_graph_test,
+            target_under_test = ":" + stem + "_graph",
+            projection = ":" + chain_product_module + "." + platform + ".dev-plan.json",
+            platform = platform,
+            execution_version = 1,
+            consumer = ":" + stem + "_remainder",
+        )
+        chain_product_tests.append(chain_product_graph_test)
+        chain_product_component_test = stem + "_component_test"
+        _component_test(
+            name = chain_product_component_test,
+            target_under_test = ":" + stem + "_component",
+            remainder = ":" + stem + "_remainder",
+            kind = chain_product_module,
+            platform_prefix = "Idea",
+        )
+        chain_product_tests.append(chain_product_component_test)
+
     # The graph refuses a slot value on a chain that serves every platform, and a value that cannot stand as a whole
     # JSON string leaf.
     refused_graph_tests = []
@@ -1220,5 +1271,5 @@ def dev_plugin_remainder_test_suite(name):
             plan_chain_remainder_test,
             plan_chain_component_test,
             plan_home_test,
-        ] + derived_tests + folded_tests + product_tests + refused_graph_tests,
+        ] + derived_tests + folded_tests + product_tests + chain_product_tests + refused_graph_tests,
     )

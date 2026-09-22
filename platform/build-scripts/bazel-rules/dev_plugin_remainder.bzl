@@ -863,14 +863,30 @@ def platform_values_error(main_module, platforms, platform_values):
                 return "%s on %s: %s" % (main_module, platform, error)
     return None
 
-def plan_product_error(main_module, product, plan_product):
-    """Returns why `plan_product` does not fit `product`, or None when it does.
+def product_name_error(main_module, product, name, what):
+    """Returns why the product name `name` does not fit `product`, or None when it does.
 
-    `dev_dist_complex_plugin` fails with the message at load time. A non-empty `plan_product` is the product itself, or
-    its case-safe plan name: the case-folded product key, an underscore and a suffix, such as `idea_community` for
-    `Idea`. The generator assigns a plan name to a product whose key collides with another key on a case-insensitive
-    file system. The plan file of a divergent product is named by that name, and a chain never reads the plan file of
-    another product.
+    `dev_dist_complex_plugin` fails with the message at load time. A non-empty `name` is the product itself, or its
+    case-safe name: the case-folded product key, an underscore and a suffix, such as `idea_community` for `Idea`. The
+    generator assigns a case-safe name to a product whose key collides with another key on a case-insensitive file
+    system. The plan file and the chain stem of such a product are named by that name, so two products never write
+    one output path, and a chain never reads the plan file of another product.
+
+    Args:
+        main_module: The plugin's main module, named in the message.
+        product: The `product` argument of the call.
+        name: The name to check: the `plan_product` or the `chain_product` argument of the call.
+        what: The name of the checked argument in the message, such as `plan product`.
+
+    Returns:
+        The message, or None.
+    """
+    if name and name != product and not name.startswith(product.lower() + "_"):
+        return "%s names the %s '%s', which is not its product '%s'" % (main_module, what, name, product)
+    return None
+
+def plan_product_error(main_module, product, plan_product):
+    """Returns why `plan_product` does not fit `product`, or None when it does. See `product_name_error`.
 
     Args:
         main_module: The plugin's main module, named in the message.
@@ -880,9 +896,7 @@ def plan_product_error(main_module, product, plan_product):
     Returns:
         The message, or None.
     """
-    if plan_product and plan_product != product and not plan_product.startswith(product.lower() + "_"):
-        return "%s names the plan product '%s', which is not its product '%s'" % (main_module, plan_product, product)
-    return None
+    return product_name_error(main_module, product, plan_product, "plan product")
 
 def dev_dist_complex_plugin(
         main_module,
@@ -893,6 +907,7 @@ def dev_dist_complex_plugin(
         platforms = None,
         platform_values = {},
         plan_product = "",
+        chain_product = "",
         plan_package = "",
         directory_name = "",
         artifact_inputs = {},
@@ -907,7 +922,7 @@ def dev_dist_complex_plugin(
     """Declares the execution chains of one complex plugin: one chain per platform it is bundled on, or one for all.
 
     The generator states the facts that vary per plugin. The macro derives everything that follows from them: the chain
-    stem `<product>[_<platform>]_<main module>`, the component name, the plan file label
+    stem `<chain product>[_<platform>]_<main module>`, the component name, the plan file label
     `<plan_package>:<main module>[.<plan_product>][.<platform>].dev-plan.json`, the plugin directory, and the
     descriptor's catalogue entry `descriptor:<main module>`, which every product shares. A `{platform}` token in a
     label or an ID is replaced by the chain's platform, so a plugin whose platform layouts differ only in that token is
@@ -916,10 +931,15 @@ def dev_dist_complex_plugin(
 
     Args:
         main_module: The plugin's main module. It is the component name and the plan file stem.
-        product: The product's platform prefix, the first element of every chain stem.
+        product: The product's platform prefix. It is the first element of every chain stem unless `chain_product`
+            names another one.
         plan_product: The product in the plan file name, `<main module>.<plan_product>[.<platform>].dev-plan.json`,
-            for a product whose plan text differs from the baseline product's: the product, or its case-safe plan name,
-            see `plan_product_error`. Empty for a plan file the product shares with the baseline product.
+            for a product whose plan text differs from the baseline product's: the product, or its case-safe name,
+            see `product_name_error`. Empty for a plan file the product shares with the baseline product.
+        chain_product: The first element of every chain stem, `<chain product>[_<platform>]_<main module>`: the
+            product, or its case-safe name, see `product_name_error`. Empty for the product itself. A product whose
+            key collides with another key on a case-insensitive file system states its case-safe name here, so the
+            outputs of its chains never share a path with the chains of the other product.
         plan_package: The package that holds the plan file, as an absolute label such as
             `@community//plugins/kotlin/plugin`. Empty for a plan file in the package of the call.
         product_info: The product info target that configures the descriptor and the catalogue.
@@ -955,6 +975,9 @@ def dev_dist_complex_plugin(
     error = plan_product_error(main_module, product, plan_product)
     if error:
         fail(error)
+    error = product_name_error(main_module, product, chain_product, "chain product")
+    if error:
+        fail(error)
     descriptor_id = "descriptor:" + main_module
     plan_stem = plan_package + ":" + main_module + ("." + plan_product if plan_product else "")
     for platform in platforms or [None]:
@@ -965,7 +988,7 @@ def dev_dist_complex_plugin(
             fail("%s states its descriptor %s in resource_inputs; the macro adds that entry" % (main_module, chain_descriptor))
         chain_resources[chain_descriptor] = descriptor_id
         dev_dist_complex_plugin_variant(
-            name = "_".join([product] + ([platform] if platform else []) + [main_module]),
+            name = "_".join([chain_product or product] + ([platform] if platform else []) + [main_module]),
             projection = projection,
             execution_version = execution_version,
             descriptor = chain_descriptor,
@@ -1015,7 +1038,7 @@ def dev_dist_complex_plugin_variant(
     cache policies stay separate.
 
     Args:
-        name: The chain stem, `<product>[_<platform>]_<main module>`.
+        name: The chain stem, `<chain product>[_<platform>]_<main module>`.
         projection: The plan file label, in this package or in another one. The graph resolves it for
             `target_platform`.
         execution_version: The execution version derived from the projection assets.
