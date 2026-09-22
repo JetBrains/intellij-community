@@ -70,7 +70,12 @@ public class StdXMLReader {
    * @throws MalformedURLException if the system ID does not contain a valid URL
    * @throws FileNotFoundException if the system ID refers to a local file which does not exist
    * @throws IOException           if an error occurred while opening the stream
+   * @deprecated Open the content yourself, then use {@link #StdXMLReader(InputStream)}. A parser must not do the I/O.
+   * This constructor cannot use the IDE proxy, the IDE certificates, a timeout, or a cancel, and it lets the result
+   * of an index depend on a machine outside the IDE. For a local file, pass {@code Files.newInputStream(path)}. For
+   * a remote one, download it first, for example with {@code HttpRequests}, then pass the stream.
    */
+  @Deprecated(forRemoval = true)
   public StdXMLReader(String publicID, String systemID) throws MalformedURLException, FileNotFoundException, IOException {
     URL systemIDasURL;
 
@@ -345,7 +350,8 @@ public class StdXMLReader {
   /**
    * Opens the content named by a public and system ID.
    * <p>
-   * Only the {@link #StdXMLReader(String, String)} constructor uses this method, to load the document itself.
+   * Only the deprecated {@link #StdXMLReader(String, String)} constructor uses this method, to load the document
+   * itself. It goes away with that constructor.
    *
    * @param publicID the public ID, which may be null
    * @param systemID the system ID, which is never null

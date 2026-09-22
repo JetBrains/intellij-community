@@ -23,11 +23,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 /**
  * Tests for how {@link StdXMLReader} resolves system IDs. A reader never resolves the external subset of a
  * {@code <!DOCTYPE>} declaration, and an override that wants one opens its own copy.
+ * <p>
+ * The tests that call the deprecated {@code StdXMLReader(String, String)} constructor go away with it. They are
+ * marked below.
  */
 public class StdXMLReaderTest {
   private static final String DOCUMENT = "<?xml version=\"1.0\"?><greeting who=\"world\"><nested/></greeting>";
 
-  // --- the constructor that loads a document itself ---
+  // --- the deprecated constructor loads a document itself; this group goes away with it ---
 
   @Test
   public void documentIsLoadedFromFileUrl(@TempDir Path dir) throws Exception {
@@ -107,6 +110,7 @@ public class StdXMLReaderTest {
     assertEquals(" ", readFully(reader.openStream(null, "https://example.com/other.dtd")));
   }
 
+  @SuppressWarnings("removal")
   private static StdXMLReader openDocument(String systemID) throws IOException {
     return new StdXMLReader(null, systemID);
   }
