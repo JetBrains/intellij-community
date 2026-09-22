@@ -34,7 +34,8 @@ internal class SeDefaultTargetItemSelectionProcessor : SeTargetItemSelectionProc
       return true
     }
 
-    val navigationItem = rawItem as? NavigationItem ?: return null
+    // the raw object is the ItemWithPresentation wrapper: unwrap it, like the legacy PSIPresentationBgRendererWrapper does
+    val navigationItem = PSIPresentationBgRendererWrapper.getItem(rawItem) as? NavigationItem ?: return null
     withContext(Dispatchers.EDT) {
       WriteIntentReadAction.run {
         EditSourceUtil.navigate(navigationItem, true, false)

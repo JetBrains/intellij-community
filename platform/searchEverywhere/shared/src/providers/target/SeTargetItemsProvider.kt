@@ -75,6 +75,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.MatcherWithFallback
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiAwareObject
 import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.text.matching.MatchingMode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -557,10 +558,15 @@ class SeTargetItemsProvider<T> private constructor(
   /**
    * The PSI element behind a raw target, or null when the target holds none.
    */
-  private fun psiElementOf(rawObject: Any): PsiElement? =
-    PSIPresentationBgRendererWrapper.toPsi(rawObject)
-    ?: (PSIPresentationBgRendererWrapper.getItem(rawObject) as? DataProvider)
-      ?.getData(CommonDataKeys.PSI_ELEMENT.name) as? PsiElement
+  private fun psiElementOf(rawObject: Any): PsiElement? {
+    PSIPresentationBgRendererWrapper.toPsi(rawObject)?.let { return it }
+    // mirrors AbstractGotoSEContributor.getDataProviders for a non-PSI target
+    return when (val item = PSIPresentationBgRendererWrapper.getItem(rawObject)) {
+      is DataProvider -> item.getData(CommonDataKeys.PSI_ELEMENT.name) as? PsiElement
+      is PsiAwareObject -> item.findElement(project)
+      else -> null
+    }
+  }
 
   //endregion
 
