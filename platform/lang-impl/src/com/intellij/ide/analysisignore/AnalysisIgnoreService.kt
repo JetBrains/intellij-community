@@ -85,6 +85,17 @@ class AnalysisIgnoreService(private val project: Project, coroutineScope: Corout
     }
   }
 
+  fun applyInWriteAction(file: VirtualFile) {
+    ThreadingAssertions.assertWriteAccess()
+    filesToRead.remove(file)
+    val model = WorkspaceModel.getInstance(project)
+    val record = readIfRelevant(file, model) ?: return
+    baseDirsToForget.remove(record.baseDir.url)
+    if (record.changes(model.currentSnapshot)) {
+      model.updateProjectModel(UPDATE_DESCRIPTION, updater(records = listOf(record), forgottenBaseDirUrls = emptyList()))
+    }
+  }
+
   /**
    * Removes the entity of the directory at [baseDirUrl] at once.
    */
