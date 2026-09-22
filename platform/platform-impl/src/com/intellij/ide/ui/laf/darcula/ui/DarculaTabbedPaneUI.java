@@ -15,7 +15,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +62,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import static com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.DISABLED_SELECTED_COLOR;
 import static com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.DISABLED_TEXT_COLOR;
@@ -287,33 +285,54 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
     Rectangle viewRect = viewport.getViewRect();
     Rectangle tabRect = rects[index];
     if (viewRect.contains(tabRect)) return;
-    Point tabViewPosition = new Point();
+    // Scroll only. Do not touch the viewport size: TabbedPaneScrollLayout.layoutContainer owns it, and it already resized
     int location;
-    Dimension extentSize;
     if (isTopBottom()) {
       location = tabRect.x < viewRect.x ? tabRect.x : tabRect.x + tabRect.width - viewRect.width;
       viewport.setViewPosition(new Point(Math.max(0, Math.min(viewSize.width - viewRect.width, location)), tabRect.y));
-      tabViewPosition.x = index == 0 ? 0 : tabRect.x;
-      extentSize = new Dimension(viewSize.width - tabViewPosition.x, viewRect.height);
     }
     else {
       location = tabRect.y < viewRect.y ? tabRect.y : tabRect.y + tabRect.height - viewRect.height;
       viewport.setViewPosition(new Point(tabRect.x, Math.max(0, Math.min(viewSize.height - viewRect.height, location))));
-      tabViewPosition.y = index == 0 ? 0 : tabRect.y;
-      extentSize = new Dimension(viewRect.width, viewSize.height - tabViewPosition.y);
     }
-    viewport.setExtentSize(extentSize);
 
     PointerInfo info = MouseInfo.getPointerInfo();
     if (info != null) {
       Point mouseLocation = info.getLocation();
       SwingUtilities.convertPointFromScreen(mouseLocation, tabPane);
       int oldHoverTab = hoverTab;
-      hoverTab = tabForCoordinate(tabPane, mouseLocation.x, mouseLocation.y);
+      hoverTab = tabForCoordinateNoValidate(viewport, mouseLocation);
       if (oldHoverTab != hoverTab) {
         tabPane.repaint();
       }
     }
+  }
+
+  /**
+   * See BasicTabbedPaneUI#tabForCoordinate(javax.swing.JTabbedPane, int, int, false)
+   * This method runs during a layout of {@code tabPane}, and dedicated for avoiding SOE.
+   */
+  private int tabForCoordinateNoValidate(@NotNull JViewport viewport, @NotNull Point point) {
+    // the same as the scrollableTabLayoutEnabled() branch of BasicTabbedPaneUI#tabForCoordinate:
+    // rects are in the coordinate space of the viewport view
+    var p = translatePointToTabPanel(viewport, point);
+    if (!viewport.getViewRect().contains(p)) {
+      return -1;
+    }
+
+    for (int i = 0, tabCount = Math.min(tabPane.getTabCount(), rects.length); i < tabCount; i++) {
+      if (rects[i].contains(p)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  // BasicTabbedPaneUI.translatePointToTabPanel
+  private static @NotNull Point translatePointToTabPanel(@NotNull JViewport viewport, @NotNull Point point) {
+    Point vpp = viewport.getLocation();
+    Point viewP = viewport.getViewPosition();
+    return new Point(point.x - vpp.x + viewP.x, point.y - vpp.y + viewP.y);
   }
 
   @Override
@@ -539,9 +558,14 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   }
 
   private @Nullable JViewport getScrollableTabViewport() {
-    Optional<JViewport> optional = UIUtil.findComponentsOfType(tabPane, JViewport.class).stream().filter(
-      viewport -> "TabbedPane.scrollableViewport".equals(viewport.getName())).findFirst();
-    return optional.orElse(null);
+    // BasicTabbedPaneUI.installComponents adds the viewport to tabPane directly. Do not search deeper: a nested
+    // JTabbedPane with SCROLL_TAB_LAYOUT has a viewport with the same name.
+    for (Component child : tabPane.getComponents()) {
+      if (child instanceof JViewport viewport && "TabbedPane.scrollableViewport".equals(viewport.getName())) {
+        return viewport;
+      }
+    }
+    return null;
   }
 
   @Override
