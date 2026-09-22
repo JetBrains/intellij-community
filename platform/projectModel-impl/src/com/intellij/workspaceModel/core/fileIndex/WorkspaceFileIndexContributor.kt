@@ -283,7 +283,6 @@ interface WorkspaceFileSetRegistrar {
    * @param entity the first parameter of [WorkspaceFileIndexContributor.registerFileSets] must be passed here
    */
   @ApiStatus.Internal
-  @ApiStatus.Experimental
   fun registerUnscopedExclusionCondition(
     root: VirtualFileUrl,
     condition: WorkspaceFileSetExclusionCondition,
@@ -297,7 +296,6 @@ interface WorkspaceFileSetRegistrar {
    * @param entity the first parameter of [WorkspaceFileIndexContributor.registerFileSets] must be passed here
    */
   @ApiStatus.Internal
-  @ApiStatus.Experimental
   fun registerUnscopedExcludedRoot(excludedRoot: VirtualFileUrl, directoryOnly: Boolean, entity: WorkspaceEntity)
 
   /**
