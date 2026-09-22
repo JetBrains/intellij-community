@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.SearchScope;
@@ -29,6 +30,14 @@ public class RefactoringUiService {
                                                                PsiElement context,
                                                                Editor editor) {
     return null;
+  }
+
+  /**
+   * Returns whether to show the warning when a rename starts outside the project.
+   */
+  @ApiStatus.Internal
+  public boolean shouldShowNonProjectRenameWarning(@NotNull Project project, @NotNull VirtualFile file) {
+    return true;
   }
 
   public int showReplacePromptDialog(boolean isMultipleFiles, @DialogTitle String title, Project project) {

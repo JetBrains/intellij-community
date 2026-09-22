@@ -25,6 +25,7 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.RefactoringUiService;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.UiInterceptors;
 import com.intellij.util.containers.ContainerUtil;
@@ -120,7 +121,8 @@ public class PsiElementRenameHandler implements RenameHandler {
     if (checkInProject && nameSuggestionContext != null &&
         nameSuggestionContext.isPhysical() &&
         (contextFile == null || !ScratchUtil.isScratch(contextFile)) &&
-        !PsiManager.getInstance(project).isInProject(nameSuggestionContext)) {
+        !PsiManager.getInstance(project).isInProject(nameSuggestionContext) &&
+        (contextFile == null || RefactoringUiService.getInstance().shouldShowNonProjectRenameWarning(project, contextFile))) {
       final String message = RefactoringBundle.message("dialog.message.selected.element.used.from.non.project.files");
       if (ApplicationManager.getApplication().isUnitTestMode()) throw new CommonRefactoringUtil.RefactoringErrorHintException(message);
       if (!MessageDialogBuilder.yesNo(RefactoringBundle.getCannotRefactorMessage(null), message, UIUtil.getWarningIcon()).ask(project)) {

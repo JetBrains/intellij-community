@@ -7,10 +7,12 @@ import com.intellij.find.findUsages.FindUsagesHandlerBase;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.ide.actions.WelcomeFilesRootType;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiElement;
@@ -44,6 +46,11 @@ public final class RefactoringUiServiceImpl extends RefactoringUiService {
                                                                PsiElement context,
                                                                Editor editor) {
     return new RenameDialog(project, element, context, editor);
+  }
+
+  @Override
+  public boolean shouldShowNonProjectRenameWarning(@NotNull Project project, @NotNull VirtualFile file) {
+    return !WelcomeFilesRootType.Util.INSTANCE.isWelcomeFile(project, file);
   }
 
   @Override
