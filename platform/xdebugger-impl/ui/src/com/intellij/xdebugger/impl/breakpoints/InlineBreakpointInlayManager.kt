@@ -401,7 +401,7 @@ class InlineBreakpointInlayManager(private val project: Project, parentScope: Co
   }
 
   private fun getAllExistingInlays(inlayModel: InlayModel): List<Inlay<out InlineBreakpointInlayRenderer>> {
-    return getExistingInlays(inlayModel, Int.MIN_VALUE, Int.MAX_VALUE)
+    return getExistingInlays(inlayModel, 0, Int.MAX_VALUE)
   }
 
   private fun getExistingInlays(inlayModel: InlayModel, document: Document, onlyLine: Int?): List<Inlay<out InlineBreakpointInlayRenderer>> {
