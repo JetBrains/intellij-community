@@ -459,7 +459,7 @@ private class SymbolicLayoutProjector(
     }
     // A platform slot is keyed by its index among the callbacks that serve the distribution, so the key is the same on every platform.
     val distribution = variant.distribution ?: return
-    for (index in layout.platformResourceGeneratorsBundledAndDevMode.get(distribution).orEmpty().indices) {
+    for (index in layout.declaredPlatformResourceGenerators.get(distribution).orEmpty().indices) {
       resourceEffect("platform-resource-generator:$index", "The selected platform generator requires inputs and output paths")
     }
     // A platform custom asset lands below the plugin directory, so one declared file serves it as a resource slot does.

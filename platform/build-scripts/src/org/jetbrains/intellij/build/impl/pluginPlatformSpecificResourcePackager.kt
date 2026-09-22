@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import kotlinx.collections.immutable.PersistentList
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CustomAssetShimSource
 import org.jetbrains.intellij.build.FileSource
@@ -26,14 +25,16 @@ internal fun buildPlatformSpecificPluginResources(
   isDevMode: Boolean,
 ): List<DistributionFileEntry> {
   if (!isDevMode) {
-    // Keeping old behavior: `platformResourceGenerators` were not called in dev-mode
-    for ((dist, generators) in plugin.platformResourceGenerators) {
+    // Legacy branch. Delete it together with `PluginLayout.legacyPlatformResourceGenerators`.
+    @Suppress("DEPRECATION")
+    for ((dist, generators) in plugin.legacyPlatformResourceGenerators) {
       handlePlatformResourceGenerator(dist, generators, pluginDirs, context)
     }
   }
 
-  for ((dist, generators) in plugin.platformResourceGeneratorsBundledAndDevMode) {
-    handlePlatformResourceGenerator(dist, generators, pluginDirs, context)
+  for ((dist, generators) in plugin.declaredPlatformResourceGenerators) {
+    val selected = if (isDevMode) generators.filter { it.run == DeclaredResourceGeneratorRun.BUNDLED_AND_DEV } else generators
+    handlePlatformResourceGenerator(dist, selected, pluginDirs, context)
   }
 
   val distEntries = ArrayList<DistributionFileEntry>()
@@ -53,7 +54,7 @@ internal fun buildPlatformSpecificPluginResources(
 
 private fun handlePlatformResourceGenerator(
   dist: SupportedDistribution,
-  generators: PersistentList<ResourceGenerator>,
+  generators: List<ResourceGenerator>,
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
   context: BuildContext,
 ) {
