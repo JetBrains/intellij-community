@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test
 @RunInEdt(writeIntent = true)
 class SnapshotFocusModeModelTest {
   @Test
-  fun `focus region resolves in snapshot branches`() = withEditor("abcdef") { editor ->
+  fun `focus region resolves in snapshot branches`(): Unit = withEditor("abcdef") { editor ->
     val document = editor.elfDocument as DocumentImpl
     val initialSnapshot = document.core.snapshot()
     val region = editor.focusModeModel.createFocusRegion(2, 4)
@@ -37,7 +37,7 @@ class SnapshotFocusModeModelTest {
   }
 
   @Test
-  fun `document edit updates focus region lookup`() = withEditor("abcdef") { editor ->
+  fun `document edit updates focus region lookup`(): Unit = withEditor("abcdef") { editor ->
     val document = editor.elfDocument
     val model = editor.focusModeModel
     val region = model.createFocusRegion(2, 4)
@@ -49,7 +49,7 @@ class SnapshotFocusModeModelTest {
   }
 
   @Test
-  fun `focus mode uses the innermost snapshot region`() = withEditor("aa\nbb\ncc\n") { editor ->
+  fun `focus mode uses the innermost snapshot region`(): Unit = withEditor("aa\nbb\ncc\n") { editor ->
     val model = editor.focusModeModel
     model.createFocusRegion(0, 8)
     model.createFocusRegion(3, 5)
@@ -82,7 +82,7 @@ class SnapshotFocusModeModelTest {
   }
 
   @Test
-  fun `focus region removal sends one notification`() = withEditor("abcdef") { editor ->
+  fun `focus region removal sends one notification`(): Unit = withEditor("abcdef") { editor ->
     val model = editor.focusModeModel
     val disposable = Disposer.newDisposable()
     val added = mutableListOf<Segment>()

@@ -220,7 +220,7 @@ class SnapshotFoldingModelTest {
     val regionCount: Int,
   )
 
-  private val customRenderer = object : CustomFoldRegionRenderer {
+  private val customRenderer: CustomFoldRegionRenderer = object : CustomFoldRegionRenderer {
     override fun calcWidthInPixels(region: CustomFoldRegion): Int = 10
 
     override fun calcHeightInPixels(region: CustomFoldRegion): Int = 10

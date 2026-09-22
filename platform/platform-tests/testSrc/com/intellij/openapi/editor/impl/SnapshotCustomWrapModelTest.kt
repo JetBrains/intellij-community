@@ -5,7 +5,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.CustomWrap
 import com.intellij.openapi.editor.CustomWrapModel
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
@@ -110,7 +109,7 @@ class SnapshotCustomWrapModelTest {
         }, disposable)
         model.runBatchMutation { addWrap(6) }
 
-        (editor.document as DocumentEx).moveText(6, 8, 4)
+        editor.document.moveText(6, 8, 4)
 
         MoveState(editor.document.text, model.getWraps(), events.toList())
       }

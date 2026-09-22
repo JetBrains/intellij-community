@@ -345,5 +345,5 @@ class SnapshotInlayModelTest {
     val rootStoreReference: WeakReference<SnapshotMarkerRootStore>,
   )
 
-  private val renderer = EditorCustomElementRenderer { 1 }
+  private val renderer: EditorCustomElementRenderer = EditorCustomElementRenderer { 1 }
 }
