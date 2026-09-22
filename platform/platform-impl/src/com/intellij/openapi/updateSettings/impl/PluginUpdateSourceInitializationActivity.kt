@@ -42,10 +42,7 @@ object PluginsMissingUpdateSourceNotifier {
 
   fun notify(project: Project?) {
     if (!PluginUpdateSourceService.isMissingUpdateSourceWarningEnabled()) return
-    val service = PluginUpdateSourceService.getInstance()
-    val problemPlugins = PluginManagerCore.loadedPlugins.filter { plugin ->
-      PluginUtils.isUpdateable(plugin) && service.getPluginUpdateSourceId(plugin.pluginId) == null
-    }.sortedBy { it.name }
+    val problemPlugins = getUpdateablePluginsWithoutUpdateSource(PluginManagerCore.loadedPlugins).sortedBy { it.name }
 
     val title: @NlsContexts.NotificationTitle String
     val message: @NlsContexts.NotificationContent String
@@ -162,6 +159,7 @@ object PluginUpdateSourceInitializer {
     }
 
     thisLogger().info("Initialization of plugin update sources finished successfully")
+    logUpdateablePluginsWithoutUpdateSource()
     return true
   }
 
@@ -222,8 +220,26 @@ object PluginUpdateSourceInitializer {
     }
   }
 
+  private fun logUpdateablePluginsWithoutUpdateSource() {
+    val plugins = getUpdateablePluginsWithoutUpdateSource(PluginManagerCore.loadedPlugins)
+    if (plugins.isEmpty()) {
+      thisLogger().info("No loaded updateable plugins without an update source after initialization")
+      return
+    }
+
+    val pluginNames = plugins.joinToString { "${it.pluginId.idString} (${it.name})" }
+    thisLogger().info("Loaded updateable plugins without update source after initialization: $pluginNames")
+  }
+
   private fun List<PluginUpdateSource>.singleCompatibleSourceOrNull(): PluginUpdateSource? {
     val firstSource = firstOrNull() ?: return null
     return firstSource.takeIf { all { source -> firstSource.canInstallUpdatesFrom(source) } }
+  }
+}
+
+private fun getUpdateablePluginsWithoutUpdateSource(plugins: Collection<PluginDescriptor>): List<PluginDescriptor> {
+  val service = PluginUpdateSourceService.getInstance()
+  return plugins.filter { plugin ->
+    PluginUtils.isUpdateable(plugin) && service.getPluginUpdateSourceId(plugin.pluginId) == null
   }
 }
