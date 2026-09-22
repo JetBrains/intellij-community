@@ -105,6 +105,9 @@ public final class JBZipFile implements Closeable {
 
   /**
    * Opens the given file for reading, assuming the platform's native encoding for file names.
+   * <br/>
+   * <b>BEWARE</b>: this ctor supports only zip32, it <b>disables</b> the zip64 support ({@link IOException} is thrown on zip64
+   * archives) -- use one of ctors with {@code isZip64} args to enable zip64.
    *
    * @param file the archive.
    * @throws IOException if an error occurs while reading the file.
@@ -113,7 +116,12 @@ public final class JBZipFile implements Closeable {
     this(file, DEFAULT_CHARSET);
   }
 
-  /** @deprecated Use {@link #JBZipFile(Path, boolean)} */
+  /**
+   * <b>BEWARE</b>: this ctor supports only zip32, it disables the zip64 support -- use one of ctors with {@code isZip64}
+   * args to enable zip64.
+   *
+   * @deprecated Use {@link #JBZipFile(Path, boolean)}
+   */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
@@ -125,6 +133,9 @@ public final class JBZipFile implements Closeable {
 
   /**
    * Opens the given file for reading (or writing if readonly=false), assuming the platform's native encoding for file names.
+   * <br/>
+   * <b>BEWARE</b>: this ctor supports only zip32, it <b>disables</b> the zip64 support ({@link IOException} is thrown on zip64
+   * archives) -- use one of ctors with {@code isZip64} args to enable zip64.
    *
    * @param file     file of the archive.
    * @param readonly true to open file as readonly
@@ -135,28 +146,34 @@ public final class JBZipFile implements Closeable {
   }
 
   /**
-   * Opens the given file for reading with remote I/O optimization hints.
+   * Opens the given file for reading with remote I/O optimization hints, and the specified ZIP64 expectation.
    * When {@code isRemoteIo} is {@code true}, entry reading uses larger buffers to reduce network round-trips.
    */
   @ApiStatus.Internal
-  public JBZipFile(@NotNull Path file, boolean readonly, boolean isRemoteIo) throws IOException {
-    this(file, DEFAULT_CHARSET, readonly);
+  public JBZipFile(@NotNull Path file, boolean readonly, boolean isRemoteIo, @NotNull ThreeState isZip64) throws IOException {
+    this(file, DEFAULT_CHARSET, readonly, isZip64);
     this.isRemoteIo = isRemoteIo;
   }
 
   /**
    * Opens the given file for reading, assuming the specified encoding for file names.
+   * <br/>
+   * <b>BEWARE</b>: this ctor supports only zip32, it <b>disables</b> the zip64 support ({@link IOException} is thrown on zip64
+   * archives) -- use one of ctors with {@code isZip64} args to enable zip64.
    *
    * @param file     the archive.
    * @param encoding the encoding to use for file names
    * @throws IOException if an error occurs while reading the file.
    */
   public JBZipFile(@NotNull Path file, @NotNull Charset encoding) throws IOException {
-    this(file, encoding, true);
+    this(file, encoding, /* readOnly: */ true);
   }
 
   /**
    * Opens the given file for reading (or writing if readonly=false), assuming the specified encoding for file names.
+   * <br/>
+   * <b>BEWARE</b>: this ctor supports only zip32, it <b>disables</b> the zip64 support ({@link IOException} is thrown on zip64
+   * archives) -- use one of ctors with {@code isZip64} args to enable zip64.
    *
    * @param file     the archive.
    * @param encoding the encoding to use for file names
@@ -164,7 +181,7 @@ public final class JBZipFile implements Closeable {
    * @throws IOException if an error occurs while reading the file.
    */
   public JBZipFile(@NotNull Path file, @NotNull Charset encoding, boolean readonly) throws IOException {
-    this(file, encoding, readonly, ThreeState.NO);
+    this(file, encoding, readonly, /*isZip64: */ ThreeState.NO);
   }
 
   public JBZipFile(@NotNull Path file, @NotNull Charset encoding, boolean readonly, @NotNull ThreeState isZip64) throws IOException {

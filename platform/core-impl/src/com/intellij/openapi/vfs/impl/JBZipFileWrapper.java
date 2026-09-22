@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
+import com.intellij.util.ThreeState;
 import com.intellij.util.io.zip.JBZipEntry;
 import com.intellij.util.io.zip.JBZipFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -13,12 +14,18 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+
 @ApiStatus.Internal
 final class JBZipFileWrapper implements GenericZipFile {
+  /// Feature-flag for quick rollback if something goes wrong with enabling zip64 support by default
+  private static final boolean SUPPORT_ZIP_64 = getBooleanProperty("JBZipFileWrapper.SUPPORT_ZIP_64", true);
+
   private final JBZipFile myZipFile;
 
   JBZipFileWrapper(@NotNull Path file) throws IOException {
-    myZipFile = new JBZipFile(file, /* readonly = */ true, /* isRemoteIo = */ true);
+    ThreeState isZip64 = SUPPORT_ZIP_64 ? ThreeState.UNSURE : ThreeState.NO;
+    myZipFile = new JBZipFile(file, /* readonly = */ true, /* isRemoteIo = */ true, isZip64);
   }
 
   @Override
