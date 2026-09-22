@@ -641,7 +641,9 @@ c:com.intellij.codeInsight.daemon.impl.GotoNextErrorHandler
 - com.intellij.codeInsight.CodeInsightActionHandler
 - <init>(Z):V
 f:com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
+- s:doWithIdentifierHighlightingEnabled(com.intellij.openapi.project.Project,java.lang.Runnable):V
 - s:isEnabled():Z
+- s:waitForIdentifierHighlighting(com.intellij.openapi.editor.Editor):V
 f:com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 - com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 - com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar

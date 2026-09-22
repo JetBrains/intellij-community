@@ -45,7 +45,6 @@ public final class IdentifierHighlighterPassFactory {
 
   @TestOnly
   @RequiresEdt
-  @ApiStatus.Internal
   public static void doWithIdentifierHighlightingEnabled(@NotNull Project project, @NotNull Runnable r) {
     assert ApplicationManager.getApplication().isUnitTestMode();
     ThreadingAssertions.assertEventDispatchThread();
@@ -63,7 +62,6 @@ public final class IdentifierHighlighterPassFactory {
     });
   }
 
-  @ApiStatus.Internal
   @TestOnly
   @RequiresEdt
   public static void waitForIdentifierHighlighting(@NotNull Editor editor) {
