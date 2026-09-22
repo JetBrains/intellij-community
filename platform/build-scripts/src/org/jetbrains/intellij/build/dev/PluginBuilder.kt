@@ -132,13 +132,18 @@ private fun buildPluginDescriptorsForDevMode(
       descriptorCacheContainer = platform.descriptorCacheContainer,
       context = context,
       layoutOnly = layoutOnly,
-    ) { layout, pluginDirOrFile ->
-      buildPlatformSpecificPluginResources(
-        plugin = layout,
-        pluginDirs = listOf(targetPlatform to pluginDirOrFile),
-        context = context,
-        isDevMode = true,
-      )
+    ) { _, layout, pluginDirOrFile ->
+      if (layout != null) {
+        buildPlatformSpecificPluginResources(
+          plugin = layout,
+          pluginDirs = listOf(targetPlatform to pluginDirOrFile),
+          context = context,
+          isDevMode = true,
+        )
+      }
+      else {
+        emptyList()
+      }
     }
   }
 }

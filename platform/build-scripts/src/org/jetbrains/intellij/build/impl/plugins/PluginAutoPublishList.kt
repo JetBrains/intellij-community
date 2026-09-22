@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.impl.plugins
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.TreeSet
@@ -19,7 +19,7 @@ import kotlin.io.path.useLines
  * @see [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.pluginModulesToPublish]
  */
 @ApiStatus.Internal
-class PluginAutoPublishList(private val context: BuildContext) : Predicate<PluginLayout> {
+class PluginAutoPublishList(private val context: BuildContext) : Predicate<PluginBuildResult> {
   private val expectedFile: Path = context.paths.communityHomeDir.resolve("../build/plugins-autoupload.txt")
 
   private val file: Path? by lazy {
@@ -41,7 +41,7 @@ class PluginAutoPublishList(private val context: BuildContext) : Predicate<Plugi
     } ?: emptyList()
   }
 
-  private val predicate: Predicate<PluginLayout> = Predicate<PluginLayout> { plugin ->
+  private val predicate: Predicate<PluginBuildResult> = Predicate<PluginBuildResult> { plugin ->
     if (file == null) return@Predicate false
     val productCode = context.applicationInfo.productCode
     val mainModuleName = plugin.mainModule
@@ -59,7 +59,7 @@ class PluginAutoPublishList(private val context: BuildContext) : Predicate<Plugi
     !excludedFromProduct && (includeInAllProducts || includeInProduct)
   }
 
-  override fun test(pluginLayout: PluginLayout): Boolean = predicate.test(pluginLayout)
+  override fun test(pluginBuildResult: PluginBuildResult): Boolean = predicate.test(pluginBuildResult)
 
   override fun toString(): String = "$expectedFile"
 }

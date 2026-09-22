@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.impl.plugins
 
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.buildScripts.concurrency.TaskScope
+import com.intellij.util.xml.dom.readXmlAsModel
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
@@ -56,6 +57,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.name
 
 internal fun buildNonBundledPlugins(
   pluginsToPublish: Set<PluginLayout>,
@@ -146,43 +148,53 @@ private fun buildNonBundledPlugins(
       searchableOptionSet = searchableOptionSet,
       descriptorCacheContainer = descriptorCacheContainer,
       context = context,
-    ) { plugin, pluginDirOrFile ->
-      val pluginVersion = if (plugin.mainModule == BUILT_IN_HELP_MODULE_NAME) {
+    ) { pluginBuildResult, layout, pluginDirOrFile ->
+      val pluginXml = checkNotNull(descriptorCacheContainer.forPlugin(pluginDirOrFile).getCachedFileData(PLUGIN_XML_RELATIVE_PATH)) {
+        "Patched plugin descriptor is not found for module ${pluginBuildResult.mainModule} in '$pluginDirOrFile'"
+      }
+      val pluginVersion = if (pluginBuildResult.mainModule == BUILT_IN_HELP_MODULE_NAME) {
         context.buildNumber
       }
-      else {
+      else if (layout != null) {
         val outputProvider = context.outputProvider
-        val pluginModule = outputProvider.findRequiredModule(plugin.mainModule)
+        val pluginModule = outputProvider.findRequiredModule(pluginBuildResult.mainModule)
         var cachedPluginXml: String? = null
         val pluginXmlSupplier: () -> String = {
           cachedPluginXml ?: getUnprocessedPluginXmlContent(pluginModule, outputProvider)
             .decodeToString()
             .also { cachedPluginXml = it }
         }
-        plugin.versionEvaluator.evaluate(
+        layout.versionEvaluator.evaluate(
           pluginXmlSupplier = pluginXmlSupplier,
           ideBuildVersion = context.pluginBuildNumber,
           context = context,
         ).pluginVersion
       }
+      else {
+        //this is used only for plugins built by Bazel; a Bazel rule should be used to produce zip archives for them instead, see IJPL-256345
+        readPluginVersion(pluginXml) ?: error("Cannot read the plugin version for ${pluginBuildResult.dir}")
+      }
 
-      val targetDirectory = if (context.pluginAutoPublishList.test(plugin)) {
+      val targetDirectory = if (context.pluginAutoPublishList.test(pluginBuildResult)) {
         context.nonBundledPluginsToBePublished
       }
       else {
         context.nonBundledPlugins
       }
-      val destFile = targetDirectory.resolve("${plugin.directoryName}-$pluginVersion.zip")
-      val pluginXml = checkNotNull(descriptorCacheContainer.forPlugin(pluginDirOrFile).getCachedFileData(PLUGIN_XML_RELATIVE_PATH)) {
-        "Patched plugin descriptor is not found for module ${plugin.mainModule} in '$pluginDirOrFile'"
-      }
+      val pluginDirectoryName = layout?.directoryName ?: pluginBuildResult.dir.name
+      val destFile = targetDirectory.resolve("$pluginDirectoryName-$pluginVersion.zip")
       pluginSpecs.add(PluginRepositorySpec(destFile, pluginXml))
 
-      val entries = handleCustomPlatformSpecificAssets(layout = plugin, targetPlatform = null, context = context, pluginDir = pluginDirOrFile, isDevMode = true)
+      val entries = if (layout != null) {
+        handleCustomPlatformSpecificAssets(layout = layout, targetPlatform = null, context = context, pluginDir = pluginDirOrFile, isDevMode = true)
+      }
+      else {
+        emptyList()
+      }
 
       if (isPluginArchiveEnabled) {
         archivePlugin(
-          optimizedZip = !plugin.enableSymlinksAndExecutableResources,
+          optimizedZip = layout == null || !layout.enableSymlinksAndExecutableResources,
           source = pluginDirOrFile,
           target = destFile,
           compress = compressPluginArchive,
@@ -191,7 +203,7 @@ private fun buildNonBundledPlugins(
           json = json,
         )
 
-        if (isPluginValidationEnabled && plugin.mainModule != "intellij.air.plugin") {
+        if (isPluginValidationEnabled && pluginBuildResult.mainModule != "intellij.air.plugin") {
           spanBuilder("plugin validation").use { span ->
             if (Files.notExists(destFile)) {
               span.addEvent("doesn't exist, skipped", Attributes.of(AttributeKey.stringKey("path"), destFile.invariantSeparatorsPathString))
@@ -248,6 +260,10 @@ private fun buildNonBundledPlugins(
   }
 
   return mappings
+}
+
+private fun readPluginVersion(pluginXml: ByteArray): String? {
+  return readXmlAsModel(pluginXml).getChild("version")?.content
 }
 
 private fun getOsSpecificNonBundledPluginsDirs(context: BuildContext): List<Triple<OsFamily?, JvmArchitecture?, Path>> {

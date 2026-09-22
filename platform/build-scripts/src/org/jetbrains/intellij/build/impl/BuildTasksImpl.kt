@@ -40,6 +40,7 @@ import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.add64IfNeeded
 import org.jetbrains.intellij.build.buildSearchableOptionsForAllPlugins
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.findProductModulesFile
 import org.jetbrains.intellij.build.getLibraryFileName
@@ -90,7 +91,7 @@ import kotlin.io.path.relativeTo
 
 internal const val PROPERTIES_FILE_NAME: String = "idea.properties"
 
-fun buildNonBundledPlugins(mainPluginModules: List<String>, context: BuildContext, dependencyModules: List<String> = emptyList()) {
+fun buildNonBundledPlugins(mainPluginModules: List<String>, context: BuildContext, dependencyModules: List<String> = emptyList()): List<PluginBuildResult> {
   checkProductProperties(context)
   checkPluginModules(pluginModules = mainPluginModules, fieldName = "mainPluginModules", context = context)
   copyDependenciesFile(context)
@@ -112,7 +113,7 @@ fun buildNonBundledPlugins(mainPluginModules: List<String>, context: BuildContex
     )
   }
 
-  buildNonBundledPlugins(
+  return buildNonBundledPlugins(
     pluginsToPublish = pluginsToPublish,
     compressPluginArchive = context.options.compressZipFiles,
     platformEntriesProvider = null,

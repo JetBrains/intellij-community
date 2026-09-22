@@ -269,8 +269,8 @@ internal fun buildBundledPlugins(
         descriptorCacheContainer = descriptorCacheContainer,
         context = context,
         layoutOnly = layoutOnly,
-      ) { layout, _ ->
-        if (layout.hasPlatformSpecificResources) {
+      ) { _, layout, _ ->
+        if (layout != null && layout.hasPlatformSpecificResources) {
           val pluginDirs = platformSpecificPluginDirs.map {
             it.first to it.second.resolve(layout.directoryName)
           }

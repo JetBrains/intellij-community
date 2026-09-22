@@ -49,7 +49,8 @@ internal fun buildPlugins(
   copyFiles: Boolean = true,
   layoutOnly: Boolean = false,
   additionalScrambleDescriptorsProvider: (() -> Collection<PluginBuildResult>)? = null,
-  pluginBuilt: ((PluginLayout, pluginDirOrFile: Path) -> List<DistributionFileEntry>)? = null,
+  /** The function to be called after the plugin is built that may add additional entries to its distribution; `layout` parameter is `null` for plugins built by Bazel. */
+  pluginBuilt: ((PluginBuildResult, layout: PluginLayout?, pluginDirOrFile: Path) -> List<DistributionFileEntry>)? = null,
 ): List<PluginBuildResult> {
   val scrambleTool = context.proprietaryBuildTools.scrambleTool
   val isScramblingSkipped = layoutOnly || context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
@@ -73,7 +74,7 @@ internal fun buildPlugins(
     )
   }
 
-  val resultsForPluginsBuiltByBazel = buildPluginsByBazel(pluginsBuildByBazel, targetDir, descriptorCacheContainer, searchableOptionSet, context)
+  val resultsForPluginsBuiltByBazel = buildPluginsByBazel(pluginsBuildByBazel, targetDir, descriptorCacheContainer, searchableOptionSet, context, pluginBuilt = pluginBuilt)
   val results = (resultsForPluginsBuiltInProcess + resultsForPluginsBuiltByBazel.map { it to null }).sortedBy { it.first.mainModule }
 
   val scrambleTasks = results.mapNotNull { it.second }
@@ -159,7 +160,7 @@ private fun buildPlugin(
   arch: JvmArchitecture?,
   context: BuildContext,
   copyFiles: Boolean,
-  pluginBuilt: ((PluginLayout, Path) -> List<DistributionFileEntry>)?,
+  pluginBuilt: ((PluginBuildResult, PluginLayout?, Path) -> List<DistributionFileEntry>)?,
 ): Pair<PluginBuildResult, ScrambleTask?> = taskScope {
   val directoryName = pluginLayout.directoryName
   val pluginDir = targetDir.resolve(directoryName)
@@ -190,7 +191,7 @@ private fun buildPlugin(
     )
   }
 
-  val task = spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).use {
+  val buildResult = spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).use {
     val (entries, file) = layoutDistribution(
       layout = pluginLayout,
       platformLayout = state.platformLayout,
@@ -203,21 +204,22 @@ private fun buildPlugin(
       context = context,
     )
 
+    val buildResult = PluginBuildResult(
+      mainModule = pluginLayout.mainModule,
+      dir = pluginDir,
+      os = os,
+      arch = arch,
+      distribution = entries,
+    )
     if (pluginBuilt == null) {
-      entries
+      buildResult
     }
     else {
-      entries + pluginBuilt(pluginLayout, file)
+      val additionalEntries = pluginBuilt(buildResult, pluginLayout, file)
+      buildResult.copy(distribution = entries + additionalEntries)
     }
   }
 
-  val buildResult = PluginBuildResult(
-    mainModule = pluginLayout.mainModule,
-    dir = pluginDir,
-    os = os,
-    arch = arch,
-    distribution = task,
-  )
   var scrambleTask: ScrambleTask? = null
   if (!pluginLayout.pathsToScramble.isEmpty()) {
     val attributes = Attributes.of(AttributeKey.stringKey("plugin"), directoryName)

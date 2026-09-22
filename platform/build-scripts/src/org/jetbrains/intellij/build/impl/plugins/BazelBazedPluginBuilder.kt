@@ -66,7 +66,8 @@ internal fun buildPluginsByBazel(
   targetDir: Path,
   descriptorCacheContainer: DescriptorCacheContainer,
   searchableOptionSet: SearchableOptionSetDescriptor?,
-  buildContext: BuildContext
+  buildContext: BuildContext,
+  pluginBuilt: ((PluginBuildResult, layout: PluginLayout?, pluginDirOrFile: Path) -> List<DistributionFileEntry>)?
 ): List<PluginBuildResult> {
   if (plugins.isEmpty()) return emptyList()
   val pluginsTargets = plugins.map { it.bazelTarget }
@@ -116,9 +117,15 @@ internal fun buildPluginsByBazel(
             injectSearchableOptions(injections)
           }
       }
+      storeXmlDescriptorsInCache(descriptorCacheContainer.forPlugin(pluginTargetDir), plugin.mainModule, distributionFileEntries)
       val pluginBuildResult = PluginBuildResult(plugin.mainModule, pluginTargetDir, os = null, arch = null, distributionFileEntries)
-      storeXmlDescriptorsInCache(descriptorCacheContainer.forPlugin(pluginTargetDir), pluginBuildResult)
-      pluginBuildResult
+      if (pluginBuilt != null) {
+        val additionalEntries = pluginBuilt(pluginBuildResult, null, pluginTargetDir)
+        pluginBuildResult.copy(distribution = distributionFileEntries + additionalEntries)
+      }
+      else {
+        pluginBuildResult
+      }
     }
   }
   return buildResults
@@ -174,14 +181,16 @@ private fun computeIdeStabilityLevel(buildContext: BuildContext): String {
  * Stores content of plugin and module descriptors in the cache so [org.jetbrains.intellij.build.classPath.generatePluginClassPath] and `fetchPluginDescriptorDataForHeader` can
  * find them there.
  */
-private fun storeXmlDescriptorsInCache(descriptorCacheContainer: ScopedCachedDescriptorContainer, pluginBuildResult: PluginBuildResult) {
+private fun storeXmlDescriptorsInCache(
+  descriptorCacheContainer: ScopedCachedDescriptorContainer, mainModule: String, entries: Collection<DistributionFileEntry>
+) {
   //todo optimize this either by exporting files as separate outputs from the rule or by migrating usages to use a different way to get the necessary information
-  pluginBuildResult.distribution.asSequence().filterIsInstance<ModuleOutputEntry>().forEach { entry ->
-    if (entry.owner.moduleName == pluginBuildResult.mainModule) {
+  entries.asSequence().filterIsInstance<ModuleOutputEntry>().forEach { entry ->
+    if (entry.owner.moduleName == mainModule) {
       val pluginXmlContent = readEntryFromZip(entry.path, PLUGIN_XML_RELATIVE_PATH) ?: error("Cannot find $PLUGIN_XML_RELATIVE_PATH in ${entry.path}")
       descriptorCacheContainer.put(PLUGIN_XML_RELATIVE_PATH, pluginXmlContent)
     }
-    if (entry.reason == generateInclusionReasonForContentModule(pluginBuildResult.mainModule)) {
+    if (entry.reason == generateInclusionReasonForContentModule(mainModule)) {
       val moduleDescriptorPath = "${entry.owner.moduleName}.xml"
       val moduleDescriptorContent = readEntryFromZip(entry.path, moduleDescriptorPath)
       if (moduleDescriptorContent != null) {
