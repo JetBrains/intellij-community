@@ -2,6 +2,8 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.EditorCoroutineScopeService
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
@@ -23,5 +25,24 @@ internal object EditorCoroutineScopes {
     val editorScope = containerScope.childScope("Editor")
     editorScope.coroutineContext.job.cancelOnDispose(disposable)
     return editorScope
+  }
+
+  /**
+   * A scope for a background computation that an editor setting needs, such as a per-file read action.
+   *
+   * An editor owns a scope already, so its settings compute in it, and the computation then stops when the editor is
+   * released. [project] serves the settings object that belongs to no editor, which has nothing narrower to use.
+   *
+   * [project] takes no part when [editor] is present, because the editor is what the result is reported to, and the
+   * editor scope already lives under the container that owns the editor. The two differ only for a project-less editor
+   * that a caller asks about a project: such a computation runs on the application scope, and only the release of the
+   * editor cancels it.
+   */
+  fun settingsScope(editor: EditorImpl?, project: Project?): CoroutineScope {
+    if (editor != null) {
+      return editor.coroutineScope
+    }
+    val container = project ?: ApplicationManager.getApplication()
+    return (container as ComponentManagerEx).getCoroutineScope()
   }
 }

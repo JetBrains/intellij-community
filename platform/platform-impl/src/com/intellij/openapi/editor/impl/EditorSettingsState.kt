@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
 import com.intellij.application.options.CodeStyle
@@ -9,7 +9,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -38,7 +37,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.util.PatternUtil
-import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -74,18 +72,11 @@ import java.util.concurrent.atomic.AtomicReference
  * Keep in mind that there are several exceptions to this rule (i.e., where [CustomOutValueModifier] is used)
  */
 @ApiStatus.Internal
-@ApiStatus.Experimental
-class EditorSettingsState(private val editor: EditorImpl?,
-                                   internal val project: Project?,
-                                   private val softWrapAppliancePlace: SoftWrapAppliancePlaces) : ObservableState() {
-  companion object {
-    private val LOG: Logger = logger<EditorSettingsState>()
-  }
-
-  // Use for code-style-derived properties: their defaults depend on backend-side data (e.g. .clang-format, .editorconfig)
-  // that the frontend in Remote Development cannot compute independently, so they must always be transferred.
-  private inline fun <reified T> codeStyleProperty(noinline defaultValueCalculator: () -> T): StateProperty<T> =
-    property(defaultValueCalculator(), SyncDefaultValueCalculator(defaultValueCalculator), alwaysTransfer = true)
+class EditorSettingsState(
+  private val editor: EditorImpl?,
+  internal val project: Project?,
+  private val softWrapAppliancePlace: SoftWrapAppliancePlaces,
+) : ObservableState() {
 
   // This group of settings does not have a UI
   var myAdditionalLinesCount: Int by property(Registry.intValue("editor.virtual.lines", 5))
@@ -142,22 +133,30 @@ class EditorSettingsState(private val editor: EditorImpl?,
   var tabSize: Int by property(CodeStyleSettings.getDefaults().indentOptions.TAB_SIZE)
 
   // These come from EditorSettingsExternalizable defaults.
-  var myIsVirtualSpace: Boolean by property(EditorSettingsExternalizable.getInstance().isVirtualSpace,
-                                            SyncDefaultValueCalculator { EditorSettingsExternalizable.getInstance().isVirtualSpace },
-                                            CustomOutValueModifier { if (editor != null && editor.isColumnMode) true else it })
-  var myIsCaretInsideTabs: Boolean by property(EditorSettingsExternalizable.getInstance().isCaretInsideTabs,
-                                               SyncDefaultValueCalculator { EditorSettingsExternalizable.getInstance().isCaretInsideTabs },
-                                               CustomOutValueModifier { if (editor != null && editor.isColumnMode) true else it })
+  var myIsVirtualSpace: Boolean by property(
+    initialValue = EditorSettingsExternalizable.getInstance().isVirtualSpace,
+    defaultValueCalculator = SyncDefaultValueCalculator { EditorSettingsExternalizable.getInstance().isVirtualSpace },
+    outValueModifier = CustomOutValueModifier { editor != null && editor.isColumnMode || it },
+  )
+  var myIsCaretInsideTabs: Boolean by property(
+    initialValue = EditorSettingsExternalizable.getInstance().isCaretInsideTabs,
+    defaultValueCalculator = SyncDefaultValueCalculator { EditorSettingsExternalizable.getInstance().isCaretInsideTabs },
+    outValueModifier = CustomOutValueModifier { editor != null && editor.isColumnMode || it },
+  )
   var myIsCaretBlinking: Boolean by property { EditorSettingsExternalizable.getInstance().isBlinkCaret }
   var myCaretBlinkingPeriod: Int by property { EditorSettingsExternalizable.getInstance().blinkPeriod }
   var myIsSmoothCaretBlinking: Boolean by property { EditorSettingsExternalizable.getInstance().isSmoothBlinkCaret }
-  var myIsRightMarginShown: Boolean by property(EditorSettingsExternalizable.getInstance().isRightMarginShown) {
-    if (editor != null && rightMargin == CodeStyleConstraints.MAX_RIGHT_MARGIN) false
-    else EditorSettingsExternalizable.getInstance().isRightMarginShown
+  var myIsRightMarginShown: Boolean by property(
+    initialValue = EditorSettingsExternalizable.getInstance().isRightMarginShown
+  ) {
+    if (editor != null && rightMargin == CodeStyleConstraints.MAX_RIGHT_MARGIN) {
+      false
+    } else {
+      EditorSettingsExternalizable.getInstance().isRightMarginShown
+    }
   }
   var myIsHighlightSelectionOccurrences: Boolean by property { EditorSettingsExternalizable.getInstance().isHighlightSelectionOccurrences }
   var myVerticalScrollOffset: Int by property { EditorSettingsExternalizable.getInstance().verticalScrollOffset }
-
 
   var myVerticalScrollJump: Int by property { EditorSettingsExternalizable.getInstance().verticalScrollJump }
   var myHorizontalScrollOffset: Int by property { EditorSettingsExternalizable.getInstance().horizontalScrollOffset }
@@ -177,13 +176,17 @@ class EditorSettingsState(private val editor: EditorImpl?,
   var myIsTrailingWhitespacesShown: Boolean by property { EditorSettingsExternalizable.getInstance().isTrailingWhitespacesShown }
   var myIsSelectionWhitespacesShown: Boolean by property { EditorSettingsExternalizable.getInstance().isSelectionWhitespacesShown }
   var myIndentGuidesShown: Boolean by property { EditorSettingsExternalizable.getInstance().isIndentGuidesShown }
-  var myIsAnimatedScrolling: Boolean by property(EditorSettingsExternalizable.getInstance().isSmoothScrolling,
-                                                 SyncDefaultValueCalculator { EditorSettingsExternalizable.getInstance().isSmoothScrolling },
-                                                 CustomOutValueModifier {
-                                                   if (EditorCoreUtil.isTrueSmoothScrollingEnabled()) // [P.Fatin] uses its own interpolation
-                                                     EditorSettingsExternalizable.getInstance().isSmoothScrolling
-                                                   else it
-                                                 })
+  var myIsAnimatedScrolling: Boolean by property(
+    initialValue = EditorSettingsExternalizable.getInstance().isSmoothScrolling,
+    defaultValueCalculator = SyncDefaultValueCalculator { EditorSettingsExternalizable.getInstance().isSmoothScrolling },
+    outValueModifier = CustomOutValueModifier {
+      if (EditorCoreUtil.isTrueSmoothScrollingEnabled()) { // [P.Fatin] uses its own interpolation
+        EditorSettingsExternalizable.getInstance().isSmoothScrolling
+      } else {
+        it
+      }
+    },
+  )
   var myIsAdditionalPageAtBottom: Boolean by property { EditorSettingsExternalizable.getInstance().isAdditionalPageAtBottom }
   var myIsDndEnabled: Boolean by property { EditorSettingsExternalizable.getInstance().isDndEnabled }
   var myIsWheelFontChangeEnabled: Boolean by property { EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled }
@@ -192,10 +195,13 @@ class EditorSettingsState(private val editor: EditorImpl?,
   var myIsRefrainFromScrolling: Boolean by property { EditorSettingsExternalizable.getInstance().isRefrainFromScrolling }
   var myUseSoftWraps: Boolean by property {
     val softWrapsEnabled = EditorSettingsExternalizable.getInstance().isUseSoftWraps(softWrapAppliancePlace)
-    if (!softWrapsEnabled || softWrapAppliancePlace != SoftWrapAppliancePlaces.MAIN_EDITOR || editor == null)
+    if (!softWrapsEnabled || softWrapAppliancePlace != SoftWrapAppliancePlaces.MAIN_EDITOR || editor == null) {
       return@property softWrapsEnabled
+    }
     val masks = EditorSettingsExternalizable.getInstance().softWrapFileMasks
-    if (masks.trim() == "*") return@property true
+    if (masks.trim() == "*") {
+      return@property true
+    }
     val file = FileDocumentManager.getInstance().getFile(editor.document)
     return@property file != null && fileNameMatches(file.name, masks)
   }
@@ -224,30 +230,34 @@ class EditorSettingsState(private val editor: EditorImpl?,
   // These come from AdvancedSettings
   var showingSpecialCharacters: Boolean by property { AdvancedSettings.getBoolean(EDITOR_SHOW_SPECIAL_CHARS) }
 
-
   internal var languageSupplier: (() -> Language?)? = null
     set(value) {
       field = value
       recalculateLanguage()
     }
-  private val calcLangReadActionRef: AtomicReference<Job?> = AtomicReference<Job?>()
+  private val calcLangReadActionRef: AtomicReference<Job?> = AtomicReference()
   private var language: Language? = null
-
 
   init {
     if (editor != null) {
-      CodeStyleSettingsManager.getInstance(project).subscribe(CodeStyleSettingsListener {
-        if (it.project != project ||
-            it.virtualFile != null && it.virtualFile != editor.virtualFile) return@CodeStyleSettingsListener
-        refresh(::myWrapWhenTypingReachesRightMargin)
-        refresh(::softMargins)
-        refresh(::rightMargin)
-      }, editor.disposable)
-
-
+      @Suppress("DEPRECATION")
+      val disposable = editor.disposable
+      CodeStyleSettingsManager.getInstance(project).subscribe(
+        CodeStyleSettingsListener {
+          if (it.project != project || it.virtualFile != null && it.virtualFile != editor.virtualFile) {
+            return@CodeStyleSettingsListener
+          }
+          refresh(::myWrapWhenTypingReachesRightMargin)
+          refresh(::softMargins)
+          refresh(::rightMargin)
+        },
+        disposable,
+      )
       EditorSettingsExternalizable.getInstance().addPropertyChangeListener(
         PropertyChangeListener { propertyChangeEvent: PropertyChangeEvent? ->
-          if (propertyChangeEvent == null) return@PropertyChangeListener
+          if (propertyChangeEvent == null) {
+            return@PropertyChangeListener
+          }
           when (propertyChangeEvent.propertyName) {
             EditorSettingsExternalizable.PropNames.PROP_IS_VIRTUAL_SPACE -> refresh(::myIsVirtualSpace)
             EditorSettingsExternalizable.PropNames.PROP_IS_CARET_INSIDE_TABS -> refresh(::myIsCaretInsideTabs)
@@ -278,8 +288,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
             EditorSettingsExternalizable.PropNames.PROP_ADDITIONAL_PAGE_AT_BOTTOM -> refresh(::myIsAdditionalPageAtBottom)
             EditorSettingsExternalizable.PropNames.PROP_IS_DND_ENABLED -> refresh(::myIsDndEnabled)
             EditorSettingsExternalizable.PropNames.PROP_IS_WHEEL_FONTCHANGE_ENABLED -> refresh(::myIsWheelFontChangeEnabled)
-            EditorSettingsExternalizable.PropNames.PROP_IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS -> refresh(
-              ::myIsMouseClickSelectionHonorsCamelWords)
+            EditorSettingsExternalizable.PropNames.PROP_IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS -> refresh(::myIsMouseClickSelectionHonorsCamelWords)
             EditorSettingsExternalizable.PropNames.PROP_RENAME_VARIABLES_INPLACE -> refresh(::myIsRenameVariablesInplace)
             EditorSettingsExternalizable.PropNames.PROP_REFRAIN_FROM_SCROLLING -> refresh(::myIsRefrainFromScrolling)
             EditorSettingsExternalizable.PropNames.PROP_USE_SOFT_WRAPS -> refresh(::myUseSoftWraps)
@@ -293,44 +302,53 @@ class EditorSettingsState(private val editor: EditorImpl?,
             EditorSettingsExternalizable.PropNames.PROP_SHOW_STICKY_LINES_PER_LANGUAGE -> refresh(::myStickyLinesShownForLanguage)
             EditorSettingsExternalizable.PropNames.PROP_STICKY_LINES_LIMIT -> refresh(::myStickyLinesLimit)
           }
-        }, editor.disposable)
-
-      project?.getMessageBus()?.connect(editor.disposable)?.subscribe(PsiDocumentListener.TOPIC,
-                                                                      PsiDocumentListener { document, _, _ ->
-                                                                        if (document == editor.document) {
-                                                                          recalculateLanguage()
-                                                                        }
-                                                                      })
-
-      project?.getMessageBus()?.connect(editor.disposable)?.subscribe(AdvancedSettingsChangeListener.TOPIC,
-                                                                      object : AdvancedSettingsChangeListener {
-                                                                        override fun advancedSettingChanged(id: String,
-                                                                                                            oldValue: Any,
-                                                                                                            newValue: Any) {
-                                                                          if (id == EDITOR_SHOW_SPECIAL_CHARS) {
-                                                                            refresh(::showingSpecialCharacters)
-                                                                          }
-                                                                        }
-                                                                      })
-
-      (editor.state as? ObservableState)?.addPropertyChangeListener(object : ObservableStateListener {
-        override fun propertyChanged(event: ObservableStateListener.PropertyChangeEvent) {
-          when (event.propertyName) {
-            EditorState::isColumnMode.name -> {
-              refresh(::myIsVirtualSpace)
-              refresh(::myIsCaretInsideTabs)
+        },
+        disposable,
+      )
+      project?.getMessageBus()
+        ?.connect(disposable)
+        ?.subscribe(
+          PsiDocumentListener.TOPIC,
+          PsiDocumentListener { document, _, _ ->
+            if (document == editor.document) {
+              recalculateLanguage()
+            }
+          },
+        )
+      project?.getMessageBus()
+        ?.connect(disposable)
+        ?.subscribe(
+          AdvancedSettingsChangeListener.TOPIC,
+          object : AdvancedSettingsChangeListener {
+            override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
+              if (id == EDITOR_SHOW_SPECIAL_CHARS) {
+                refresh(::showingSpecialCharacters)
+              }
+            }
+          },
+        )
+      (editor.state as? ObservableState)?.addPropertyChangeListener(
+        object : ObservableStateListener {
+          override fun propertyChanged(event: ObservableStateListener.PropertyChangeEvent) {
+            when (event.propertyName) {
+              EditorState::isColumnMode.name -> {
+                refresh(::myIsVirtualSpace)
+                refresh(::myIsCaretInsideTabs)
+              }
+            }
+          }
+        },
+        disposable,
+      )
+      addPropertyChangeListener(
+        object : ObservableStateListener {
+          override fun propertyChanged(event: ObservableStateListener.PropertyChangeEvent) {
+            if (event.propertyName == ::rightMargin.name) {
+              refresh(::myIsRightMarginShown)
             }
           }
         }
-      }, editor.disposable)
-
-      addPropertyChangeListener(object : ObservableStateListener {
-        override fun propertyChanged(event: ObservableStateListener.PropertyChangeEvent) {
-          if (event.propertyName == ::rightMargin.name) {
-            refresh(::myIsRightMarginShown)
-          }
-        }
-      })
+      )
     }
   }
 
@@ -341,9 +359,8 @@ class EditorSettingsState(private val editor: EditorImpl?,
       }.getOrLogException(LOG)
       return
     }
-
     if (calcLangReadActionRef.get() == null) {
-      val readJob = ((project ?: ApplicationManager.getApplication()) as ComponentManagerEx).getCoroutineScope()
+      val readJob = EditorCoroutineScopes.settingsScope(editor, project)
         .launch(start = CoroutineStart.LAZY, context = ClientId.coroutineContext()) {
           val result = readAction {
             languageSupplier?.invoke()
@@ -353,19 +370,20 @@ class EditorSettingsState(private val editor: EditorImpl?,
             updateLanguage(result)
           }
         }
-
       if (calcLangReadActionRef.compareAndSet(null, readJob)) {
-        editor?.let { readJob.cancelOnDispose(it.disposable) }
         readJob.start()
+      } else {
+        // A lazy job that never starts also never completes, and its parent keeps it until the parent is cancelled.
+        readJob.cancel()
       }
     }
   }
 
   private fun updateLanguage(newLanguage: Language?) {
-    if (language == newLanguage) return
-
-    language = newLanguage
-    onLanguageChanged()
+    if (language != newLanguage) {
+      language = newLanguage
+      onLanguageChanged()
+    }
   }
 
   private fun onLanguageChanged() {
@@ -375,23 +393,38 @@ class EditorSettingsState(private val editor: EditorImpl?,
     refresh(::myWrapWhenTypingReachesRightMargin)
     editor?.putUserData(EDITOR_LANGUAGE, language)
   }
-}
 
-private fun fileNameMatches(fileName: String, globPatterns: String): Boolean {
-  return globPatterns.splitToSequence(';')
-    .map { it.trim() }
-    .filter { !it.isEmpty() }
-    .any { PatternUtil.fromMask(it).matcher(fileName).matches() }
-}
-
-private fun getEditorCodeStyleSettingsOrDefaults(editor: EditorImpl): CodeStyleSettings {
-  val editorSettings = editor.getUserData(CODE_STYLE_SETTINGS)
-  val project = editor.project
-  val file = editor.virtualFile
-  return if (project != null && file != null) {
-    editorSettings ?: CodeStyle.getSettings(project, file)
+  private fun fileNameMatches(fileName: String, globPatterns: String): Boolean {
+    return globPatterns.splitToSequence(';')
+      .map { it.trim() }
+      .filter { !it.isEmpty() }
+      .any { PatternUtil.fromMask(it).matcher(fileName).matches() }
   }
-  else {
-    CodeStyle.getDefaultSettings()
+
+  private fun getEditorCodeStyleSettingsOrDefaults(editor: EditorImpl): CodeStyleSettings {
+    val editorSettings = editor.getUserData(CODE_STYLE_SETTINGS)
+    val project = editor.project
+    val file = editor.virtualFile
+    return if (project != null && file != null) {
+      editorSettings ?: CodeStyle.getSettings(project, file)
+    } else {
+      CodeStyle.getDefaultSettings()
+    }
+  }
+
+  // Use for code-style-derived properties: their defaults depend on backend-side data (e.g. .clang-format, .editorconfig)
+  // that the frontend in Remote Development cannot compute independently, so they must always be transferred.
+  private inline fun <reified T> codeStyleProperty(
+    noinline defaultValueCalculator: () -> T,
+  ): StateProperty<T> {
+    return property(
+      initialValue = defaultValueCalculator(),
+      defaultValueCalculator = SyncDefaultValueCalculator(defaultValueCalculator),
+      alwaysTransfer = true,
+    )
+  }
+
+  companion object {
+    private val LOG: Logger = logger<EditorSettingsState>()
   }
 }

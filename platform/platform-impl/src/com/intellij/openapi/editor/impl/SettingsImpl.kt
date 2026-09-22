@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
 import com.intellij.application.options.CodeStyle
@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -26,13 +25,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
@@ -42,9 +39,12 @@ private val LOG: Logger = logger<SettingsImpl>()
 internal const val EDITOR_SHOW_SPECIAL_CHARS: String = "editor.show.special.chars"
 
 @Internal
-class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: EditorKind?, project: Project?) : EditorSettings {
+class SettingsImpl internal constructor(
+  private val editor: EditorImpl?,
+  kind: EditorKind?,
+  project: Project?,
+) : EditorSettings {
   private var languageSupplier: (() -> Language?)? = null
-
   private val state: EditorSettingsState
   private var doNotRefreshEditorFlag: Boolean = false
 
@@ -52,7 +52,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
 
   @get:Deprecated("use {@link EditorKind}")
   val softWrapAppliancePlace: SoftWrapAppliancePlaces
-  private val computableSettings: ArrayList<CacheableBackgroundComputable<*>> = ArrayList<CacheableBackgroundComputable<*>>()
+  private val computableSettings: ArrayList<CacheableBackgroundComputable<*>> = ArrayList()
 
   private var indentOptionsUpdateJob: Job? = null
   private val tabSize: CacheableBackgroundComputable<Int> = object : CacheableBackgroundComputable<Int>(
@@ -386,7 +386,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
       }
     }
     else {
-      val job = (project as ComponentManagerEx).getCoroutineScope().launch {
+      val job = editor.coroutineScope.launch {
         val result = readAction {
           computeIndentOptions(project, file, editorCodeStyleSettings)
         }
@@ -394,8 +394,6 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
           result.associateWithDocument(document)
         }
       }
-      job.cancelOnDispose(editor.disposable)
-
       indentOptionsUpdateJob?.cancel()
       indentOptionsUpdateJob = job
     }
@@ -740,8 +738,6 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     state.characterGridWidth = value
   }
 
-  @ApiStatus.Internal
-  @ApiStatus.Experimental
   fun getState(): EditorSettingsState {
     return state
   }
@@ -750,7 +746,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     private var overwrittenValue: T? = null
     private var cachedValue: T? = null
     private var defaultValue: T
-    private val currentReadActionRef: AtomicReference<Job?> = AtomicReference<Job?>()
+    private val currentReadActionRef: AtomicReference<Job?> = AtomicReference()
 
     init {
       @Suppress("LeakingThis")
@@ -800,37 +796,34 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
           computeValue(project)
         }.getOrLogException(LOG) ?: defaultValue
       }
-
       if (currentReadActionRef.get() == null) {
-        val readJob = ((project ?: ApplicationManager.getApplication()) as ComponentManagerEx).getCoroutineScope()
-          .launch(start = CoroutineStart.LAZY) {
-            val result = readAction {
-              computeValue(project)
+        val readJob = EditorCoroutineScopes.settingsScope(editor, project).launch(start = CoroutineStart.LAZY) {
+          val result = readAction {
+            computeValue(project)
+          }
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            currentReadActionRef.set(null)
+            val oldGetValueResult: T
+            val newGetValueResult: T
+            synchronized(VALUE_LOCK) {
+              oldGetValueResult = overwrittenValue ?: cachedValue ?: defaultValue
+              cachedValue = result
+              defaultValue = result
+              newGetValueResult = overwrittenValue ?: cachedValue ?: defaultValue
             }
-            withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-              currentReadActionRef.set(null)
-              val oldGetValueResult: T
-              val newGetValueResult: T
-              synchronized(VALUE_LOCK) {
-                oldGetValueResult = overwrittenValue ?: cachedValue ?: defaultValue
-                cachedValue = result
-                defaultValue = result
-                newGetValueResult = overwrittenValue ?: cachedValue ?: defaultValue
-              }
-              writeIntentReadAction {
-                fireEditorRefresh(false)
-                if (oldGetValueResult != newGetValueResult) {
-                  fireValueChanged(newGetValueResult)
-                }
+            writeIntentReadAction {
+              fireEditorRefresh(false)
+              if (oldGetValueResult != newGetValueResult) {
+                fireValueChanged(newGetValueResult)
               }
             }
           }
-
+        }
         if (currentReadActionRef.compareAndSet(null, readJob)) {
-          if (editor != null) {
-            readJob.cancelOnDispose(editor.disposable)
-          }
           readJob.start()
+        } else {
+          // A lazy job that never starts also never completes, and its parent keeps it until the parent is cancelled.
+          readJob.cancel()
         }
       }
       return defaultValue
