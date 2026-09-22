@@ -1,6 +1,8 @@
 aliases_implicit.py
 aliases_recursive.py
 aliases_typealiastype.py
+annotations_future_import.py
+annotations_forward_refs.py
 callables_annotation.py
 callables_protocol.py
 classes_classvar.py
