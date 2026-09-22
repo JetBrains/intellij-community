@@ -319,7 +319,9 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.ijent")
     embeddedModule("intellij.platform.ijent.community.buildConstants")
     embeddedModule("intellij.platform.ijent.community.impl")
-    embeddedModule("intellij.platform.wsl.impl")
+    // not embedded: WSL support is optional content since IJPL-255717, and every consumer is a plugin or a test
+    // module - intellij.platform.execution.impl now depends on it, not the other way round
+    module("intellij.platform.wsl.impl")
     embeddedModule("intellij.platform.ide.bootstrap.eel")
     embeddedModule("intellij.platform.ide.bootstrap.kernel")
     embeddedModule("intellij.platform.diff")

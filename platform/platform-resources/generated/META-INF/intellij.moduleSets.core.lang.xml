@@ -320,7 +320,7 @@
     <module name="intellij.platform.ijent" loading="embedded"/>
     <module name="intellij.platform.ijent.community.buildConstants" loading="embedded"/>
     <module name="intellij.platform.ijent.community.impl" loading="embedded"/>
-    <module name="intellij.platform.wsl.impl" loading="embedded"/>
+    <module name="intellij.platform.wsl.impl"/>
     <module name="intellij.platform.ide.bootstrap.eel" loading="embedded"/>
     <module name="intellij.platform.ide.bootstrap.kernel" loading="embedded"/>
     <module name="intellij.platform.diff" loading="embedded"/>

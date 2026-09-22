@@ -569,6 +569,7 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.xml.syntax",
   "intellij.xml.ui.common",
   "intellij.platform.webide.impl",
+  "intellij.platform.wsl.impl",
   "intellij.platform.ssh",
   "intellij.platform.ssh.core",
   "intellij.platform.ssh.core.ui",
