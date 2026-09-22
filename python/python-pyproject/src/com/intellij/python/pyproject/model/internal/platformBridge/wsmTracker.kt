@@ -15,6 +15,7 @@ import com.intellij.python.pyproject.model.internal.workspaceBridge.isPythonEnti
  *
  * The model reads two things from the workspace model: the set of excluded paths, and the set of module
  * names. An event that leaves both sets equal cannot change the model, so it must not cost a build.
+ * Added or renamed platform modules request a rebuild to check for name clashes.
  */
 internal fun VersionedStorageChange.toRebuildRequest(): RebuildRequest? {
   val added = LinkedHashMap<VirtualFileUrl, ExcludeUrlEntity>()
@@ -47,13 +48,15 @@ internal fun VersionedStorageChange.toRebuildRequest(): RebuildRequest? {
     }
   }
 
-  // A module that the platform added. A module of this model carries a python entity source, and a build that
-  // reacted to its own module would never stop.
-  val newModule = getChanges(ModuleEntity::class.java)
-    .filterIsInstance<EntityChange.Added<ModuleEntity>>()
-    .firstOrNull { !it.newEntity.entitySource.isPythonEntity }
-  if (newModule != null) {
-    return RebuildRequest(emptySet(), "workspace model, the platform added the module '${newModule.newEntity.name}'")
+  for (change in getChanges(ModuleEntity::class.java)) {
+    val module = when (change) {
+      is EntityChange.Added -> change.newEntity
+      is EntityChange.Removed -> null
+      is EntityChange.Replaced -> change.newEntity.takeIf { it.name != change.oldEntity.name }
+    }
+    if (module != null && !module.entitySource.isPythonEntity) {
+      return RebuildRequest(emptySet(), "workspace model, the platform added or renamed the module '${module.name}'")
+    }
   }
   return null
 }
