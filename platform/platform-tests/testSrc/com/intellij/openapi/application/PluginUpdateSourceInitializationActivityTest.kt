@@ -2,7 +2,7 @@
 package com.intellij.openapi.application
 
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceInitializationActivity
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceInitializer
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
@@ -169,13 +169,13 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
     }
   }
 
-  private fun pluginUpdateSourcesByPluginId(): Map<String, PluginUpdateSourceId?> {
+  private fun pluginUpdateSourcesByPluginId(): Map<String, PluginUpdateSource?> {
     return TESTED_PLUGIN_IDS.associateWith { pluginId ->
       PluginUpdateSourceService.getInstance().getPersistedPluginUpdateSourceId(pluginId(pluginId))
     }
   }
 
-  private fun assertPluginUpdateSource(pluginId: String, expectedUpdateSourceId: PluginUpdateSourceId) {
+  private fun assertPluginUpdateSource(pluginId: String, expectedUpdateSourceId: PluginUpdateSource) {
     assertEquals(expectedUpdateSourceId, PluginUpdateSourceService.getInstance().getPersistedPluginUpdateSourceId(pluginId(pluginId)))
   }
 

@@ -2,7 +2,7 @@
 package com.intellij.openapi.application
 
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.updateSettings.impl.createNightlyAndMarketplacePluginUpdateSourceId
@@ -224,10 +224,10 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
                                allowBundledUpdate)
   }
 
-  private fun setPluginUpdateSources(pluginUpdateSourceId: PluginUpdateSourceId, vararg pluginIds: String) {
+  private fun setPluginUpdateSources(pluginUpdateSource: PluginUpdateSource, vararg pluginIds: String) {
     pluginIds.forEach { pluginId ->
       val id = PluginId.getId(pluginId)
-      PluginUpdateSourceService.getInstance().setPluginUpdateSourceId(id, pluginUpdateSourceId)
+      PluginUpdateSourceService.getInstance().setPluginUpdateSourceId(id, pluginUpdateSource)
       updateSourcePluginIds.add(id)
     }
   }

@@ -2,7 +2,7 @@
 package com.intellij.openapi.application
 
 import com.intellij.openapi.application.UpdateCheckerTestBase.Companion.CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.updateSettings.impl.createNightlyAndMarketplacePluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.createNightlyPluginUpdateSourceId
@@ -51,12 +51,12 @@ internal class PluginUpdateSourceCompatibilityTest {
     }
   }
 
-  private fun assertCanInstallUpdatesFrom(first: PluginUpdateSourceId, second: PluginUpdateSourceId, canInstallUpdates: Boolean) {
+  private fun assertCanInstallUpdatesFrom(first: PluginUpdateSource, second: PluginUpdateSource, canInstallUpdates: Boolean) {
     val message = "Should ${if (canInstallUpdates) "" else "not "}be able to install updates: $first from $second"
     assertEquals(canInstallUpdates, first.canInstallUpdatesFrom(second), message)
   }
 
-  private fun assertCanInstallUpdatesFromSymmetricallyOnlyWithinLists(vararg lists: List<PluginUpdateSourceId>) {
+  private fun assertCanInstallUpdatesFromSymmetricallyOnlyWithinLists(vararg lists: List<PluginUpdateSource>) {
     for (list in lists) {
       for (firstIndex in list.indices) {
         for (secondIndex in firstIndex + 1 until list.size) {

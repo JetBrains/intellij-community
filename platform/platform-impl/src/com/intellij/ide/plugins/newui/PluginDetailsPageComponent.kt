@@ -43,7 +43,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.getPresentableName
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
@@ -214,7 +214,7 @@ class PluginDetailsPageComponent private constructor(
   private var mySize: JLabel? = null
   private var myPluginId: JLabel? = null
   private var myPluginUpdateSourcePanel: JPanel? = null
-  private var myPluginUpdateSourceId: DropDownLink<PluginUpdateSourceId?>? = null
+  private var myPluginUpdateSource: DropDownLink<PluginUpdateSource?>? = null
   private var requiredPlugins: JEditorPane? = null
   private var customRepoForDebug: JLabel? = null
 
@@ -460,7 +460,7 @@ class PluginDetailsPageComponent private constructor(
     topPanel.add(suggestedFeaturesComponent, ListLayout.GrowPolicy.GROW)
 
     val unknownUpdateSourceWarning = UpdateSourceBanner.createUnknownPluginUpdateSourceWarning {
-      val popup = createUpdateSourcesPopup(myPluginUpdateSourceId!!) {
+      val popup = createUpdateSourcesPopup(myPluginUpdateSource!!) {
         updateSourceInitializedBanner?.isVisible = true
         tabbedPane?.selectedIndex = 3 //Additional Info tab
       }
@@ -973,8 +973,8 @@ class PluginDetailsPageComponent private constructor(
   }
 
   private fun initializePluginSourceIdDropDownLink(infoPanel: JPanel) {
-    val dropDownLink = object : DropDownLink<PluginUpdateSourceId?>(null, { link -> createUpdateSourcesPopup(link) }) {
-      override fun itemToString(item: PluginUpdateSourceId?): String {
+    val dropDownLink = object : DropDownLink<PluginUpdateSource?>(null, { link -> createUpdateSourcesPopup(link) }) {
+      override fun itemToString(item: PluginUpdateSource?): String {
         return item.getShortenedPresentableName()
       }
     }
@@ -988,16 +988,16 @@ class PluginDetailsPageComponent private constructor(
 
     infoPanel.add(dropDownLinkPanel)
     myPluginUpdateSourcePanel = dropDownLinkPanel
-    myPluginUpdateSourceId = dropDownLink
+    myPluginUpdateSource = dropDownLink
   }
 
-  private fun PluginUpdateSourceId?.getShortenedPresentableName(): @Nls(capitalization = Nls.Capitalization.Sentence) String {
+  private fun PluginUpdateSource?.getShortenedPresentableName(): @Nls(capitalization = Nls.Capitalization.Sentence) String {
     return StringUtil.shortenTextWithEllipsis(getPresentableName(), 40, 20)
   }
 
-  private fun createUpdateSourcesPopup(link: DropDownLink<PluginUpdateSourceId?>, onSelectionCallback: () -> Unit = {}): JBPopup {
+  private fun createUpdateSourcesPopup(link: DropDownLink<PluginUpdateSource?>, onSelectionCallback: () -> Unit = {}): JBPopup {
     val builder = JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(emptyList<PluginUpdateSourceId>())
+      .createPopupChooserBuilder(emptyList<PluginUpdateSource>())
       .setNamerForFiltering {
         it.getPresentableName()
       }
@@ -1458,7 +1458,7 @@ class PluginDetailsPageComponent private constructor(
   }
 
   internal fun updatePluginUpdateSourceUI(
-    pluginUpdateSource: PluginUpdateSourceId?,
+    pluginUpdateSource: PluginUpdateSource?,
     forceHideUpdateSourceUi: Boolean = false,
   ) {
     val currentPlugin = plugin
@@ -1469,7 +1469,7 @@ class PluginDetailsPageComponent private constructor(
       return
     }
 
-    setPluginUpdateSource(pluginUpdateSource, myPluginUpdateSourceId)
+    setPluginUpdateSource(pluginUpdateSource, myPluginUpdateSource)
 
     val isPluginUpdateSourceVisible: Boolean = (!isMarketplace && currentPlugin.isUpdateable) || installedDescriptorForMarketplace != null
     myPluginUpdateSourcePanel?.isVisible = isPluginUpdateSourceVisible
@@ -1479,7 +1479,7 @@ class PluginDetailsPageComponent private constructor(
     updateSourceInitializedBanner?.isVisible = false
   }
 
-  private fun setPluginUpdateSource(pluginUpdateSource: PluginUpdateSourceId?, component: DropDownLink<PluginUpdateSourceId?>?) {
+  private fun setPluginUpdateSource(pluginUpdateSource: PluginUpdateSource?, component: DropDownLink<PluginUpdateSource?>?) {
     component?.apply {
       selectedItem = pluginUpdateSource
       text = pluginUpdateSource.getShortenedPresentableName()

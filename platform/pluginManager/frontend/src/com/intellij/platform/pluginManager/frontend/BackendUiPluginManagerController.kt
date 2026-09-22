@@ -30,7 +30,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.platform.pluginManager.shared.rpc.PluginInstallerApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginInstallRpcEvent
@@ -339,19 +339,19 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     }
   }
 
-  override suspend fun getPendingPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSourceId? {
+  override suspend fun getPendingPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSource? {
     return PluginManagerApi.getInstance().getPendingPluginUpdateSource(sessionId, pluginId)
   }
 
-  override suspend fun getPendingPluginUpdateSources(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, PluginUpdateSourceId> {
+  override suspend fun getPendingPluginUpdateSources(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, PluginUpdateSource> {
     return PluginManagerApi.getInstance().getPendingPluginUpdateSources(sessionId, pluginIds)
   }
 
-  override suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
+  override suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSource?) {
     PluginManagerApi.getInstance().setPendingPluginUpdateSourceInSession(sessionId, pluginId, pluginUpdateSource)
   }
 
-  override suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
+  override suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSource?) {
     PluginManagerApi.getInstance().persistPluginUpdateSource(sessionId, pluginId, pluginUpdateSource)
   }
 
@@ -363,7 +363,7 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().isMissingUpdateSourceWarningEnabled() }
   }
 
-  override suspend fun getAllPluginUpdateSources(): List<PluginUpdateSourceId> {
+  override suspend fun getAllPluginUpdateSources(): List<PluginUpdateSource> {
     return PluginManagerApi.getInstance().getAllPluginUpdateSources()
   }
 

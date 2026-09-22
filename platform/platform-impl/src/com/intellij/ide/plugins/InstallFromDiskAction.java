@@ -17,7 +17,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId;
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -121,7 +121,7 @@ public class InstallFromDiskAction extends DumbAwareAction {
                                            @NotNull PluginEnabler pluginEnabler,
                                            @Nullable JComponent parentComponent,
                                            @NotNull Consumer<? super PluginInstallCallbackData> callback,
-                                           @NotNull BiConsumer<PluginId, PluginUpdateSourceId> pluginUpdateSourceCallback) {
+                                           @NotNull BiConsumer<PluginId, PluginUpdateSource> pluginUpdateSourceCallback) {
     doInstall(fileToSelect, project, tableModel, pluginEnabler, parentComponent, callback, pluginUpdateSourceCallback);
   }
 
@@ -131,7 +131,7 @@ public class InstallFromDiskAction extends DumbAwareAction {
                                 @NotNull PluginEnabler pluginEnabler,
                                 @Nullable JComponent parentComponent,
                                 @NotNull Consumer<? super PluginInstallCallbackData> callback,
-                                @NotNull BiConsumer<PluginId, PluginUpdateSourceId> pluginUpdateSourceCallback) {
+                                @NotNull BiConsumer<PluginId, PluginUpdateSource> pluginUpdateSourceCallback) {
     if (!PluginManagementPolicy.getInstance().isInstallFromDiskAllowed()) {
       var message = IdeBundle.message("action.InstallFromDiskAction.not.allowed.description");
       Messages.showErrorDialog(project, message, IdeBundle.message("action.InstallFromDiskAction.text"));
@@ -157,7 +157,7 @@ public class InstallFromDiskAction extends DumbAwareAction {
                                             @NotNull PluginEnabler pluginEnabler,
                                             @Nullable JComponent parentComponent,
                                             @NotNull Consumer<? super PluginInstallCallbackData> callback,
-                                            @NotNull BiConsumer<PluginId, PluginUpdateSourceId> pluginUpdateSourceCallback) {
+                                            @NotNull BiConsumer<PluginId, PluginUpdateSource> pluginUpdateSourceCallback) {
     PluginInstaller.installFromDisk(tableModel, pluginEnabler, file, project, parentComponent, callback, pluginUpdateSourceCallback);
   }
 
@@ -166,7 +166,7 @@ public class InstallFromDiskAction extends DumbAwareAction {
     PluginInstaller.installPluginFromCallbackData(callbackData);
   }
 
-  protected void onPluginWithUpdateSourceInstalledFromDisk(@NotNull PluginId pluginId, @NotNull PluginUpdateSourceId updateSourceId) {
+  protected void onPluginWithUpdateSourceInstalledFromDisk(@NotNull PluginId pluginId, @NotNull PluginUpdateSource updateSourceId) {
   }
 
   @RequiresEdt

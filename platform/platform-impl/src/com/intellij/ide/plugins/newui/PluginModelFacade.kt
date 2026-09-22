@@ -8,7 +8,7 @@ import com.intellij.ide.plugins.marketplace.InstallPluginResult
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import kotlinx.coroutines.CancellationException
@@ -228,19 +228,19 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     return pluginModel.isLoaded(model.pluginId)
   }
 
-  suspend fun getPendingPluginUpdateSource(pluginId: PluginId): PluginUpdateSourceId? {
+  suspend fun getPendingPluginUpdateSource(pluginId: PluginId): PluginUpdateSource? {
     return UiPluginManager.getInstance().getPendingPluginUpdateSource(pluginModel.sessionId, pluginId)
   }
 
-  fun getPendingPluginUpdateSourcesSync(pluginIds: List<PluginId>): Map<PluginId, PluginUpdateSourceId> {
+  fun getPendingPluginUpdateSourcesSync(pluginIds: List<PluginId>): Map<PluginId, PluginUpdateSource> {
     return UiPluginManager.getInstance ().getPendingPluginUpdateSourcesSync(pluginModel.sessionId, pluginIds)
   }
 
-  suspend fun setPendingPluginUpdateSourceInSession(pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
+  suspend fun setPendingPluginUpdateSourceInSession(pluginId: PluginId, pluginUpdateSource: PluginUpdateSource?) {
     UiPluginManager.getInstance().setPendingPluginUpdateSourceInSession(pluginModel.sessionId, pluginId, pluginUpdateSource)
   }
 
-  suspend fun persistPluginUpdateSource(pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?){
+  suspend fun persistPluginUpdateSource(pluginId: PluginId, pluginUpdateSource: PluginUpdateSource?){
     UiPluginManager.getInstance().persistPluginUpdateSource(pluginModel.sessionId, pluginId, pluginUpdateSource)
   }
 

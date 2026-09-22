@@ -130,9 +130,9 @@ object PluginUpdateSourceInitializer {
    * Returns if initialization was successful
    */
   private fun doInitializePlugins(): Boolean {
-    val dataMap = mutableMapOf<PluginId, MutableList<PluginUpdateSourceId>>()
+    val dataMap = mutableMapOf<PluginId, MutableList<PluginUpdateSource>>()
 
-    val updateSourceIds = mutableSetOf<PluginUpdateSourceId>()
+    val updateSourceIds = mutableSetOf<PluginUpdateSource>()
     for (host in RepositoryHelper.getCustomPluginRepositoryHosts()) {
       val updateSourceId = PluginUpdateSourceService.getInstance().createCustomRepositoryPluginUpdateSourceId(host)
       if (!updateSourceIds.add(updateSourceId)) continue
@@ -181,9 +181,9 @@ object PluginUpdateSourceInitializer {
 
   private fun initializePluginUpdateSourceIfNeeded(
     plugin: PluginDescriptor,
-    customPluginUpdateSources: List<PluginUpdateSourceId>,
+    customPluginUpdateSources: List<PluginUpdateSource>,
     safePluginIdList: List<String>,
-    marketplaceUpdateSourceId: PluginUpdateSourceId,
+    marketplaceUpdateSourceId: PluginUpdateSource,
   ) {
     val pluginId = plugin.pluginId
     val service = PluginUpdateSourceService.getInstance()
@@ -222,7 +222,7 @@ object PluginUpdateSourceInitializer {
     }
   }
 
-  private fun List<PluginUpdateSourceId>.singleCompatibleSourceOrNull(): PluginUpdateSourceId? {
+  private fun List<PluginUpdateSource>.singleCompatibleSourceOrNull(): PluginUpdateSource? {
     val firstSource = firstOrNull() ?: return null
     return firstSource.takeIf { all { source -> firstSource.canInstallUpdatesFrom(source) } }
   }

@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.marketplace.InstallPluginResult
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceServiceImpl
 import com.intellij.openapi.updateSettings.impl.createRepository
 import kotlinx.coroutines.NonCancellable
@@ -11,7 +11,7 @@ import kotlinx.coroutines.withContext
 internal class PluginUpdateSourceApplier private constructor(
   private val pluginModel: PluginUiModel,
   private val modelFacade: PluginModelFacade,
-  private val initialUpdateSource: PluginUpdateSourceId?,
+  private val initialUpdateSource: PluginUpdateSource?,
   private val wasInitialUpdateSourceExplicit: Boolean,
 ) {
 
@@ -53,7 +53,7 @@ internal class PluginUpdateSourceApplier private constructor(
       revertApplyingPluginUpdateSourceId()
     }
     else {
-      result.dependentPluginUpdateSourceIds.filter { it.key != pluginModel.pluginId }.forEach { (id, sourceId) ->
+      result.dependentPluginUpdateSources.filter { it.key != pluginModel.pluginId }.forEach { (id, sourceId) ->
         modelFacade.persistPluginUpdateSource(id, sourceId)
       }
     }

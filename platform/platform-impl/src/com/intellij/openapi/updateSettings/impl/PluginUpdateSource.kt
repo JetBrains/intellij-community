@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nls
  */
 @Serializable
 @ApiStatus.Internal
-sealed interface PluginUpdateSourceId {
+sealed interface PluginUpdateSource {
   val host: @NlsSafe String
   val isMarketplace: Boolean
 
@@ -21,10 +21,10 @@ sealed interface PluginUpdateSourceId {
    * @return if a plugin with this update source may have updates from [other] update source
    * which describes a single repository or a group of repositories
    */
-  fun canInstallUpdatesFrom(other: PluginUpdateSourceId): Boolean
+  fun canInstallUpdatesFrom(other: PluginUpdateSource): Boolean
 }
 
 @ApiStatus.Internal
-fun PluginUpdateSourceId?.getPresentableName(): @Nls(capitalization = Nls.Capitalization.Sentence) String {
+fun PluginUpdateSource?.getPresentableName(): @Nls(capitalization = Nls.Capitalization.Sentence) String {
   return PluginUpdateSourceServiceImpl.getPresentableName(this)
 }
