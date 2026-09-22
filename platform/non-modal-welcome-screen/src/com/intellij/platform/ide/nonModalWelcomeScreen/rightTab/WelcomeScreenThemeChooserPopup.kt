@@ -28,8 +28,10 @@ import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelected
 import com.intellij.util.ui.JBUI
+import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
+import javax.swing.JPanel
 import javax.swing.ListSelectionModel
 import javax.swing.ScrollPaneConstants
 import javax.swing.Timer
@@ -38,10 +40,10 @@ import javax.swing.UIManager
 /** Same debounce the platform's theme and IDE-scale quick-switchers use for apply-on-highlight. */
 private const val PREVIEW_THROTTLING_MS = 500
 
-private const val VISIBLE_ROW_COUNT = 12
+private const val VISIBLE_ROW_COUNT = 10
 
-private const val PREVIEW_WIDTH = 420
-private const val PREVIEW_HEIGHT = 260
+private const val PREVIEW_WIDTH = 360
+private const val PREVIEW_HEIGHT = 230
 
 /**
  * Theme chooser for the welcome screen's Theme control: a list that previews the highlighted theme, with a
@@ -67,6 +69,11 @@ internal class WelcomeScreenThemeChooserPopup(
   fun createPopup(owner: JComponent, onDispose: Runnable?): JBPopup {
     val previewer = model.previewer
     val snapshot = previewer.capture()
+
+    // Open on the active theme's family, rather than on whatever the last popup left behind. This has to
+    // happen before the list model is built, because that reads model.items once.
+    val initialFilter = model.currentBrightness()
+    model.brightnessFilter = initialFilter
 
     val listModel = CollectionListModel(model.items)
     val list = JBList(listModel)
@@ -105,7 +112,7 @@ internal class WelcomeScreenThemeChooserPopup(
     // The renderer the Appearance settings combobox uses, so rows match the platform's theme popup:
     // names, a Beta badge and restart hint where a theme needs one, and group separators.
     builder.setRenderer(LafManager.getInstance().getLookAndFeelCellRenderer(list))
-    builder.setNorthComponent(createBrightnessSwitch(listModel, list))
+    builder.setNorthComponent(createBrightnessSwitch(initialFilter, listModel, list))
     previewSample?.let { builder.setEastComponent(createCodePreview(it, popupDisposable)) }
     builder.setAutoselectOnMouseMove(true)
     builder.setRequestFocus(true)
@@ -124,9 +131,15 @@ internal class WelcomeScreenThemeChooserPopup(
     val popup = builder.createPopup()
     Disposer.register(popup, popupDisposable)
 
-    // The list column is sized by the popup, not by the longest theme name, so a horizontal scrollbar
-    // would only cut the rows. The builder creates its scroll pane inside createPopup, hence the order.
-    builder.scrollPane?.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+    // Both of these need the scroll pane, which the builder creates inside createPopup, hence the order.
+    builder.scrollPane?.let { scrollPane ->
+      // The popup sizes the list column, not the longest theme name, so a horizontal scrollbar would
+      // only cut the rows.
+      scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+      // visibleRowCount does not bind here, because the builder takes the height from the content. Cap
+      // the list at the height of the sample beside it, so the two columns match and the popup stays small.
+      scrollPane.preferredSize = Dimension(scrollPane.preferredSize.width, JBUI.scale(PREVIEW_HEIGHT))
+    }
 
     popup.addListener(object : JBPopupListener {
       override fun onClosed(event: LightweightWindowEvent) {
@@ -186,15 +199,26 @@ internal class WelcomeScreenThemeChooserPopup(
     ApplicationManager.getApplication().messageBus.connect(parent)
       .subscribe(EditorColorsManager.TOPIC, EditorColorsListener { applyGlobalScheme() })
 
-    editor.component.preferredSize = Dimension(JBUI.scale(PREVIEW_WIDTH), JBUI.scale(PREVIEW_HEIGHT))
-    return editor.component
+    // The size goes on a wrapper that reports it from getPreferredSize. An editor recomputes the
+    // preferred size of its own component from its content, so setting it there does not hold.
+    val wrapper = object : JPanel(BorderLayout()) {
+      override fun getPreferredSize(): Dimension =
+        Dimension(JBUI.scale(PREVIEW_WIDTH), JBUI.scale(PREVIEW_HEIGHT))
+    }
+    wrapper.isOpaque = false
+    wrapper.add(editor.component, BorderLayout.CENTER)
+    return wrapper
   }
 
   /**
    * Light/Dark switch in the popup header. Narrowing the list re-previews, which is harmless here because
    * everything in this popup is a preview until the user commits.
    */
-  private fun createBrightnessSwitch(listModel: CollectionListModel<LafReference>, list: JBList<LafReference>): JComponent {
+  private fun createBrightnessSwitch(
+    initialFilter: ThemeBrightnessFilter,
+    listModel: CollectionListModel<LafReference>,
+    list: JBList<LafReference>,
+  ): JComponent {
     val switch = SegmentedButtonComponent<ThemeBrightnessFilter> { filter ->
       val textKey = when (filter) {
         ThemeBrightnessFilter.LIGHT -> "welcome.screen.right.tab.theme.brightness.light"
@@ -208,11 +232,8 @@ internal class WelcomeScreenThemeChooserPopup(
       NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.theme.brightness.accessible.name")
     switch.border = JBUI.Borders.empty(8, 8, 4, 8)
 
-    // Always open on the active theme's family rather than whatever the last popup left behind, so the
-    // list never opens without the current theme in it. Seeded before subscribing, so this initial state
+    // The caller already put this filter on the model. Set it before subscribing, so the initial state
     // is not taken for a user action.
-    val initialFilter = model.currentBrightness()
-    model.brightnessFilter = initialFilter
     switch.selectedItem = initialFilter
 
     switch.whenItemSelected { filter ->
