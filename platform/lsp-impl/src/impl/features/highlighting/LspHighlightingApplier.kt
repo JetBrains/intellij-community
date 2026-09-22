@@ -26,13 +26,14 @@ import com.intellij.platform.lsp.api.LspBundle
 import com.intellij.platform.lsp.api.customization.LspDiagnosticsSupport
 import com.intellij.platform.lsp.api.customization.LspDocumentLinkDisabled
 import com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
-import com.intellij.platform.lsp.impl.LspCoroutineScopeService
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
+import com.intellij.platform.lsp.impl.LspCoroutineScopeService
 import com.intellij.platform.lsp.util.getRangeInDocument
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.util.ThreeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -253,18 +254,29 @@ internal class LspHighlightingApplier(private val project: Project) {
    */
   fun reportErrorsToWolf(file: VirtualFile, highlights: List<HighlightInfo>, observedGen: Long) {
     val hasErrors = highlights.any { it.severity == HighlightSeverity.ERROR }
-    val wolf = WolfTheProblemSolver.getInstance(project)
-    synchronized(filesWithWolfReportedErrors) {
+
+    val addClearNoAction: ThreeState = synchronized(filesWithWolfReportedErrors) {
       val last = fileToLastWolfWrittenGen[file] ?: -1L
-      if (observedGen < last) return
+      if (observedGen < last) return@synchronized ThreeState.UNSURE
+
       fileToLastWolfWrittenGen[file] = observedGen
       if (hasErrors) {
         filesWithWolfReportedErrors.add(file)
-        wolf.reportProblemsFromExternalSource(file, LSP_EXTERNAL_SOURCE)
+        ThreeState.YES
       }
       else if (filesWithWolfReportedErrors.remove(file)) {
-        wolf.clearProblemsFromExternalSource(file, LSP_EXTERNAL_SOURCE)
+        ThreeState.NO
       }
+      else {
+        ThreeState.UNSURE
+      }
+    }
+
+    // WolfTheProblemSolver may need read action to handle problems, do not call from synchronized block
+    when (addClearNoAction) {
+      ThreeState.YES -> WolfTheProblemSolver.getInstance(project).reportProblemsFromExternalSource(file, LSP_EXTERNAL_SOURCE)
+      ThreeState.NO -> WolfTheProblemSolver.getInstance(project).clearProblemsFromExternalSource(file, LSP_EXTERNAL_SOURCE)
+      ThreeState.UNSURE -> Unit /* do nothing */
     }
   }
 
