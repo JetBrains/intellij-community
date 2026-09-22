@@ -305,7 +305,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   boolean myDnDInProgress;
   private EditorGutterLayout myLayout = new EditorGutterLayout(this);
   private @Nullable AccessibleGutterLine myAccessibleGutterLine;
-  private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(composite -> {
+  private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(_ -> {
     if (isShowing()) repaint();
   });
   private @Nullable InterLineShiftAnimator myCurrentInterLineAnimator = null;
@@ -343,8 +343,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     myAnchorDisplayStrategy = new FoldingAnchorsOverlayStrategy(editor);
 
     Project project = myEditor.getProject();
+    //noinspection deprecation
+    Disposable disposable = editor.getDisposable();
     if (project != null) {
-      project.getMessageBus().connect(myEditor.getDisposable()).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      project.getMessageBus().connect(disposable).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
         @Override
         public void exitDumbMode() {
           updateSize();
@@ -355,7 +357,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
       AccessibleGutterLine.installListeners(this);
     }
     else {
-      ScreenReader.addPropertyChangeListener(ScreenReader.SCREEN_READER_ACTIVE_PROPERTY, editor.getDisposable(), e -> {
+      ScreenReader.addPropertyChangeListener(ScreenReader.SCREEN_READER_ACTIVE_PROPERTY, disposable, e -> {
         if ((boolean)e.getNewValue()) {
           AccessibleGutterLine.installListeners(this);
         }
@@ -364,7 +366,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     setRenderingHints();
     HOVER_STATE_LISTENER.addTo(this);
     myEditor.getCaretModel().addCaretListener(new LineNumbersRepainter());
-    Disposer.register(editor.getDisposable(), myAlphaContext.getDisposable());
+    Disposer.register(disposable, myAlphaContext.getDisposable());
   }
 
   @Override
@@ -387,8 +389,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
       .setDropHandlerWithResult(e -> {
         boolean success = true;
         Object attachedObject = e.getAttachedObject();
-        if (attachedObject instanceof GutterIconRenderer && checkDumbAware(attachedObject)) {
-          GutterDraggableObject draggableObject = ((GutterIconRenderer)attachedObject).getDraggableObject();
+        if (attachedObject instanceof GutterIconRenderer gutterRenderer && checkDumbAware(attachedObject)) {
+          GutterDraggableObject draggableObject = gutterRenderer.getDraggableObject();
           if (draggableObject != null) {
             int line = convertPointToLineNumber(e.getPoint());
             if (line != -1) {
@@ -396,8 +398,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
             }
           }
         }
-        else if (attachedObject instanceof DnDNativeTarget.EventInfo && myEditor.getSettings().isDndEnabled()) {
-          Transferable transferable = ((DnDNativeTarget.EventInfo)attachedObject).getTransferable();
+        else if (attachedObject instanceof DnDNativeTarget.EventInfo dndEventInfo && myEditor.getSettings().isDndEnabled()) {
+          Transferable transferable = dndEventInfo.getTransferable();
           if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
             success = EditorImpl.handleDrop(myEditor, transferable, e.getAction().getActionId());
           }
@@ -407,8 +409,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
       })
       .setTargetChecker(e -> {
         Object attachedObject = e.getAttachedObject();
-        if (attachedObject instanceof GutterIconRenderer && checkDumbAware(attachedObject)) {
-          GutterDraggableObject draggableObject = ((GutterIconRenderer)attachedObject).getDraggableObject();
+        if (attachedObject instanceof GutterIconRenderer gutterRenderer && checkDumbAware(attachedObject)) {
+          GutterDraggableObject draggableObject = gutterRenderer.getDraggableObject();
           if (draggableObject != null) {
             int line = convertPointToLineNumber(e.getPoint());
             if (line != -1) {
@@ -419,8 +421,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
             }
           }
         }
-        else if (attachedObject instanceof DnDNativeTarget.EventInfo && myEditor.getSettings().isDndEnabled()) {
-          Transferable transferable = ((DnDNativeTarget.EventInfo)attachedObject).getTransferable();
+        else if (attachedObject instanceof DnDNativeTarget.EventInfo dragEventInfo && myEditor.getSettings().isDndEnabled()) {
+          Transferable transferable = dragEventInfo.getTransferable();
           if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
             int line = convertPointToLineNumber(e.getPoint());
             if (line != -1) {
@@ -434,7 +436,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
       .setImageProvider(info -> {
         // [tav] temp workaround for JRE-224
         boolean inUserScale = !SystemInfo.isWindows || !StartupUiUtil.isJreHiDPI(myEditor.getComponent());
-        Image image = ImageUtil.toBufferedImage(getDragImage(getGutterRenderer(info.getPoint())), inUserScale);
+        GutterIconRenderer renderer = Objects.requireNonNull(getGutterRenderer(info.getPoint()));
+        Image image = ImageUtil.toBufferedImage(getDragImage(renderer), inUserScale);
         return new DnDImage(image, new Point(image.getWidth(null) / 2, image.getHeight(null) / 2));
       })
       .enableAsNativeTarget() // required to accept dragging from editor (as editor component doesn't use DnDSupport to implement drag-n-drop)
@@ -725,9 +728,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
               bgLineHeight = y - viewportStartY;
               y = viewportStartY + lineHeight;
             }
-
-            int visualLine = visLinesIterator.getVisualLine();
-
             if (paintText || logicalLine == -1) {
               logicalLine = visLinesIterator.getDisplayedLogicalLine();
               bg = gutterProvider.getBgColor(logicalLine, myEditor);
@@ -947,9 +947,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
             if (ExperimentalUI.isNewUI() /*&& EditorUtil.isRealFileEditor(getEditor())*/ && EditorUtil.isBreakPointsOnLineNumbers()) {
               VisualPosition visualPosition = myEditor.logicalToVisualPosition(new LogicalPosition(logicalLine, 0));
               Optional<GutterMark> breakpoint = getGutterRenderers(visualPosition.line).stream()
-                .filter(r -> r instanceof GutterIconRenderer &&
-                             ((GutterIconRenderer)r).getAlignment() == GutterIconRenderer.Alignment.LINE_NUMBERS &&
-                             ((GutterIconRenderer)r).getVerticalAlignment() != GutterIconRenderer.VerticalAlignment.BETWEEN_LINES)
+                .filter(r -> r instanceof GutterIconRenderer gutterRenderer &&
+                             gutterRenderer.getAlignment() == GutterIconRenderer.Alignment.LINE_NUMBERS &&
+                             gutterRenderer.getVerticalAlignment() != GutterIconRenderer.VerticalAlignment.BETWEEN_LINES)
                 .findFirst();
               if (breakpoint.isPresent()) {
                 iconOnTheLine = breakpoint.get().getIcon();
@@ -957,8 +957,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
               if ((myAlphaContext.isVisible() || isGutterContextMenuShown()) &&
                   Objects.equals(getClientProperty("active.line.number"), logicalLine)) {
                 Object activeIcon = getClientProperty("line.number.hover.icon");
-                if (activeIcon instanceof Icon) {
-                  hoverIcon = (Icon)activeIcon;
+                if (activeIcon instanceof Icon icon) {
+                  hoverIcon = icon;
                 }
               }
             }
@@ -1012,13 +1012,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   void updateInterLineShiftState() {
     Object activeLine = getClientProperty("active.line.number");
 
-    if (!(activeLine instanceof Integer)) {
+    if (!(activeLine instanceof Integer lineNumber)) {
       stopCurrentAnimator();
       return;
     }
 
     InterLineBreakpointConfiguration configuration =
-      InterLineBreakpointConfigurationProvider.findConfigurationForLine(myEditor, (Integer)activeLine);
+      InterLineBreakpointConfigurationProvider.findConfigurationForLine(myEditor, lineNumber);
     if (configuration == null || configuration.getAnimator() == null) {
       stopCurrentAnimator();
       return;
@@ -1078,12 +1078,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     return isAnnotationsShown() && (myGapAfterAnnotations || myTextAnnotationExtraSize > 0);
   }
 
-  boolean processGutterRangeHighlighters(int startOffset, int endOffset, @NotNull Processor<? super RangeHighlighterEx> processor) {
+  void processGutterRangeHighlighters(int startOffset, int endOffset, @NotNull Processor<? super RangeHighlighterEx> processor) {
     // we limit highlighters to process to between line starting at startOffset and line ending at endOffset
     MarkupIterator<RangeHighlighterEx> docHighlighters = myEditor.getFilteredDocumentMarkupModel().overlappingGutterIterator(startOffset, endOffset);
     MarkupIterator<RangeHighlighterEx> editorHighlighters = myEditor.getMarkupModel().overlappingGutterIterator(startOffset, endOffset);
     try (MarkupIterator<RangeHighlighterEx> iterator = MarkupIterator.mergeIterators(docHighlighters, editorHighlighters, RangeHighlighterEx.BY_AFFECTED_START_OFFSET)) {
-      return ContainerUtil.process(iterator, processor);
+      ContainerUtil.process(iterator, processor);
     }
   }
 
@@ -1149,8 +1149,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
           FontMetrics fontMetrics = getFontMetrics(font);
           gutterSize = Math.max(gutterSize, fontMetrics.stringWidth(lineText));
         }
-        else if (gutterProvider instanceof TextAnnotationGutterProvider.Filler) {
-          gutterSize = Math.max(gutterSize, ((TextAnnotationGutterProvider.Filler)gutterProvider).getWidth());
+        else if (gutterProvider instanceof TextAnnotationGutterProvider.Filler fillerProvider) {
+          gutterSize = Math.max(gutterSize, fillerProvider.getWidth());
         }
       }
       if (gutterSize > 0) {
@@ -1233,8 +1233,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     FoldRegion[] topLevelRegions = myEditor.getFoldingModel().fetchTopLevel();
     if (topLevelRegions != null) {
       for (FoldRegion region : topLevelRegions) {
-        if (region instanceof CustomFoldRegion) {
-          GutterIconRenderer renderer = ((CustomFoldRegion)region).getGutterIconRenderer();
+        if (region instanceof CustomFoldRegion customFold) {
+          GutterIconRenderer renderer = customFold.getGutterIconRenderer();
           int line = myEditor.offsetToVisualLine(region.getStartOffset());
           if (shouldBeShown(renderer)) {
             lineToGutterRenderers.put(line, List.of(renderer));
@@ -1325,8 +1325,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   private boolean isMergedWithLineNumbers(@NotNull GutterMark renderer) {
     return isLineNumbersShown() &&
-           renderer instanceof GutterIconRenderer &&
-           ((GutterIconRenderer)renderer).getAlignment() == GutterIconRenderer.Alignment.LINE_NUMBERS;
+           renderer instanceof GutterIconRenderer gutterRenderer &&
+           gutterRenderer.getAlignment() == GutterIconRenderer.Alignment.LINE_NUMBERS;
   }
 
   @Override
@@ -2255,8 +2255,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
         Object hoverIcon = getClientProperty("line.number.hover.icon");
         if (hoverIcon instanceof Icon && getClientProperty("active.line.number") != null) {
           Object hoverTooltip = getClientProperty("line.number.hover.tooltip");
-          if (hoverTooltip instanceof String) {
-            toolTip = (String) hoverTooltip;
+          if (hoverTooltip instanceof String tooltipContent) {
+            toolTip = tooltipContent;
           }
         }
         else {
@@ -2633,6 +2633,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     }
     addLoadingIconForGutterMark(info);
 
+    // todo IJPL-255575 replace the deprecated factory with AnActionEvent.createEvent
+    //noinspection removal
     AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, place, context);
     ActionUtil.performAction(action, actionEvent);
   }
@@ -2679,9 +2681,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
       if (startY < e.getY() &&
           e.getY() <= endY &&
-          renderer instanceof ActiveGutterRenderer &&
-          ((ActiveGutterRenderer)renderer).canDoAction(myEditor, e)) {
-        gutterRenderer[0] = (ActiveGutterRenderer)renderer;
+          renderer instanceof ActiveGutterRenderer activeRenderer &&
+          activeRenderer.canDoAction(myEditor, e)) {
+        gutterRenderer[0] = activeRenderer;
         layer[0] = highlighter.getLayer();
       }
       return true;
@@ -3088,8 +3090,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   }
 
   private static @NotNull LineMarkerRendererEx.Position getLineMarkerPosition(@NotNull LineMarkerRenderer renderer) {
-    if (renderer instanceof LineMarkerRendererEx) {
-      return ((LineMarkerRendererEx)renderer).getPosition();
+    if (renderer instanceof LineMarkerRendererEx rendererEx) {
+      return rendererEx.getPosition();
     }
     return LineMarkerRendererEx.Position.RIGHT;
   }

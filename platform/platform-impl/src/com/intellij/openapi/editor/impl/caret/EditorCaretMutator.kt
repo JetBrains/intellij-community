@@ -168,7 +168,8 @@ internal class EditorCaretMutator(
   }
 
   private fun caretMovedAnimated(placements: List<CaretPlacement>, repaintMetrics: CaretRepaintMetrics) {
-    val isCaretShown = editor.isCaretShown(caretCursor())
+    val caretCursor = caretCursor()
+    val isCaretShown = caretCursor.wantsToBeShown() && editor.isCaretShown()
     val tick = tick(CaretFrameInterval.MOVEMENT)
     val next = state.updateAndGet {
       it.retarget(placements, tick, isCaretShown, repaintMetrics)

@@ -2825,7 +2825,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @ApiStatus.Internal
   public @Nullable CaretCursor getCaretCursor(boolean onlyIfShown) {
     CaretCursor caretCursor = caretMutator.caretCursor();
-    return onlyIfShown && !isCaretShown(caretCursor) ? null : caretCursor;
+    if (onlyIfShown && !(caretCursor.wantsToBeShown() && isCaretShown())) {
+      return null;
+    }
+    return caretCursor;
   }
 
   @Override
@@ -2945,7 +2948,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setBorder(@Nullable Border border) {
-    if (border == null) border = JBUI.Borders.empty();
+    if (border == null) {
+      border = JBUI.Borders.empty();
+    }
     myState.setMyBorder(border);
   }
 
@@ -3106,10 +3111,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public EditorMouseEventArea getMouseEventArea(@NotNull MouseEvent e) {
     return EditorThreading.compute(() -> {
-      if (myGutterComponent != e.getSource()) return EditorMouseEventArea.EDITING_AREA;
-
+      if (myGutterComponent != e.getSource()) {
+        return EditorMouseEventArea.EDITING_AREA;
+      }
       int x = myGutterComponent.convertX(e.getX());
-
       return myGutterComponent.getEditorMouseAreaByOffset(x);
     });
   }
@@ -3655,10 +3660,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @ApiStatus.Internal
-  public boolean isCaretShown(@NotNull CaretCursor caretCursor) {
-    return caretCursor.wantsToBeShown() &&
-           !isRendererMode() &&
-           isEditorInputFocusOwner();
+  public boolean isCaretShown() {
+    return !isRendererMode() && isEditorInputFocusOwner();
   }
 
   private final class ScrollingTimer {
