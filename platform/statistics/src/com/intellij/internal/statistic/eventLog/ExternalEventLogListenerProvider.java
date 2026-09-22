@@ -28,6 +28,10 @@ public interface ExternalEventLogListenerProvider {
    * Provides implementations of {@link StatisticsEventLogListener} to be used in {@link EventLogListenersManager}
    * <br/>
    * This method will be called only once per recorder on IDE start or plugin loading (for dynamic plugins)
+   * <br/>
+   * The subscription does not depend on {@link #forceLoggingAlwaysEnabled()}, so the method must return the same
+   * instance for each call with the same recorder. {@link EventLogListenersManager} removes that instance when the
+   * plugin unloads.
    *
    * @param recorderId of a recorder which logs will trigger provided listener
    * */

@@ -55,7 +55,9 @@ class EventLogListenersManager(coroutineScope: CoroutineScope) {
   }
 
   private fun subscribeFromExtension(listenerProvider: ExternalEventLogListenerProvider) {
-    StatisticsEventLogProviderUtil.getEventLogProviders().filter { it.isLoggingAlwaysActive() }.forEach { loggerProvider ->
+    // Do not filter providers by the isLoggingAlwaysActive flag as it can be dynamic.
+    // A subscription alone delivers no event, because only an active logger notifies a subscriber.
+    StatisticsEventLogProviderUtil.getEventLogProviders().forEach { loggerProvider ->
       val recorderId = loggerProvider.recorderId
       listenerProvider.getEventLogListener(recorderId)?.let { eventLogListener ->
         listenersFromEP[listenerProvider.javaClass.name] = eventLogListener
