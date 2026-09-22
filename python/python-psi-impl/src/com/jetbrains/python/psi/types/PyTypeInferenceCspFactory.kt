@@ -376,7 +376,7 @@ object PyTypeInferenceCspFactory {
       // Note that both of these bounds are necessary to ensure that the TV will be instantiated as exactly one of the given tv-constraints
       // and not as a subtype of one of the given tv-constraints.
       val constraintsIV = tv.getConstraints().map { PyTypeChecker.substitute(it, ivGenericSubstitutions, context) }
-      val intersectionOfConstraints = PyIntersectionType.intersection(constraintsIV)
+      val intersectionOfConstraints = PyIntersectionType.intersectionOrTop(constraintsIV)
       val unionOfConstraints = PyUnionType.union(constraintsIV)
       // semantics: TV approximates CV_1 ⊕ CV_2 ⊕ ... ⊕ CV_n by
       // CV_1 & CV_2 & ... & CV_n <: TV <: CV_1 | CV_2 | ... | CV_n

@@ -716,7 +716,7 @@ object PyCallExpressionHelper {
         val allMembers = type.members.map { doGetCallType(it, callSite, arguments, context) }
         val members = allMembers.filter { it.matched }.ifEmpty { allMembers }
         CallType(
-          PyIntersectionType.intersection(members.map { it.type }),
+          PyIntersectionType.intersectionOrTop(members.map { it.type }),
           members.isNotEmpty()
         )
       }

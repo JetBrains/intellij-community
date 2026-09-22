@@ -110,7 +110,7 @@ import com.jetbrains.python.psi.types.PyClassTypeImpl
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl
 import com.jetbrains.python.psi.types.PyConcatenateType
 import com.jetbrains.python.psi.types.PyInstantiableType
-import com.jetbrains.python.psi.types.PyIntersectionType.Companion.intersection
+import com.jetbrains.python.psi.types.PyIntersectionType.Companion.intersectionOrTop
 import com.jetbrains.python.psi.types.PyLiteralStringType.Companion.create
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyModuleType
@@ -1547,7 +1547,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         val memberTypes = getIndexTypes(resolved, context)
         // An empty intersection (`Intersection[()]`) is the greatest lower bound of no types, i.e. the top type `object`.
         if (memberTypes.isEmpty()) return Ref(PyBuiltinCache.getInstance(resolved).objectType)
-        return intersection(memberTypes)?.let { Ref(it) }
+        return intersectionOrTop(memberTypes)?.let { Ref(it) }
       }
       if (resolved !is PyBinaryExpression || resolved.operator !== PyTokenTypes.AND) return null
       val left = resolved.leftExpression ?: return null
@@ -1557,7 +1557,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       val rightTypeRef = getType(right, context)
       if (leftTypeRef == null && rightTypeRef == null) return null
 
-      val intersection = intersection(leftTypeRef?.get(), rightTypeRef?.get())
+      val intersection = intersectionOrTop(leftTypeRef?.get(), rightTypeRef?.get())
       return intersection?.let { Ref(it) }
     }
 

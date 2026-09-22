@@ -22,7 +22,7 @@ object PyNumericTowerUtil {
       val mappedMembers = type.members.map { typeArg -> expand(typeArg) }
       return when (type) {
         is PyUnionType -> PyUnionType.union(mappedMembers)
-        is PyIntersectionType -> PyIntersectionType.intersection(mappedMembers)
+        is PyIntersectionType -> PyIntersectionType.intersectionOrTop(mappedMembers)
         is PyUnsafeUnionType -> PyUnsafeUnionType.unsafeUnion(mappedMembers)
         else -> throw IllegalStateException("Unknown type: ${type.name}")
       }

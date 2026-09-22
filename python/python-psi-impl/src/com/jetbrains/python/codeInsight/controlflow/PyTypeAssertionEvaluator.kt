@@ -41,7 +41,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyInstantiableType
-import com.jetbrains.python.psi.types.PyIntersectionType.Companion.intersection
+import com.jetbrains.python.psi.types.PyIntersectionType.Companion.intersectionOrTop
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyLiteralType.Companion.isNone
 import com.jetbrains.python.psi.types.PyNeverType
@@ -504,7 +504,7 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
             return PyNeverType.NEVER
           }
         }
-        return intersection(initial, suggested)
+        return intersectionOrTop(initial, suggested)
       }
 
       if (initial is PyUnionType && initial.members.size <= 5) {
@@ -516,7 +516,7 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
       if (isLiteralOrNoneType(initial) || isLiteralOrNoneType(suggested)) {
         return PyNeverType.NEVER
       }
-      return intersection(initial, suggested)
+      return intersectionOrTop(initial, suggested)
     }
 
     private fun match(expected: PyType?, actual: PyType?, context: TypeEvalContext): Boolean {

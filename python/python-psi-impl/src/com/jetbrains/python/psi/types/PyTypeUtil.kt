@@ -281,7 +281,7 @@ object PyTypeUtil {
   fun toIntersection(): Collector<PyType?, *, PyType?> {
     return Collectors.collectingAndThen(
       Collectors.toList()
-    ) { members -> PyIntersectionType.intersection(members) }
+    ) { members -> PyIntersectionType.intersectionOrTop(members) }
   }
 
   @JvmStatic
@@ -389,7 +389,7 @@ object PyTypeUtil {
    */
   private fun PyType?.rebuildLike(members: List<PyType?>): PyType? =
     when (this) {
-      is PyIntersectionType -> PyIntersectionType.intersection(members)
+      is PyIntersectionType -> PyIntersectionType.intersectionOrTop(members)
       is PyUnsafeUnionType -> if (members.isEmpty()) PyNeverType.NEVER else PyUnsafeUnionType.unsafeUnion(members)
       else -> PyUnionType.unionOrNever(members)
     }

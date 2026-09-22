@@ -67,24 +67,24 @@ class PyIntersectionType private constructor(members: Collection<PyType?>) : PyC
 
   companion object {
     @JvmStatic
-    fun intersection(vararg types: PyType?): PyType? {
-      return intersection(types.toList())
+    fun intersectionOrTop(vararg types: PyType?): PyType? {
+      return intersectionOrTop(types.toList())
     }
 
     /**
      * Constructs an intersection of the given types.
      *
-     * If the resulting intersection would be empty, returns [PyTopType], which is the natural colapse of an intersection.
+     * An intersection of no types constrains nothing, so an empty result collapses to [PyTopType].
      */
     @JvmStatic
-    fun intersection(types: Collection<PyType?>): PyType? {
+    fun intersectionOrTop(types: Collection<PyType?>): PyType? {
       return intersectionOrDefault(types, PyTopType)
     }
 
     /**
-     * Constructs an intersection of the given types, falling back to Unknown instead of [PyTopType].
+     * Constructs an intersection of the given types, but collapses an empty result to Unknown instead of [PyTopType].
      *
-     * An intersection of no types is the type that constrains nothing, i.e. the top type.
+     * Use this when an empty result means "nothing was found", not "nothing constrains the type".
      */
     @JvmStatic
     fun intersectionOrUnknown(types: Collection<PyType?>): PyType? {
