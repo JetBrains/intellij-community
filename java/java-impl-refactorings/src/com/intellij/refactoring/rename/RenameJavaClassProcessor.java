@@ -6,7 +6,6 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCompiledElement;
@@ -153,13 +152,13 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-  public @Nullable Pair<String, String> getTextOccurrenceSearchStrings(final @NotNull PsiElement element, final @NotNull String newName) {
+  public @Nullable TextOccurrenceSearchStrings getTextOccurrenceSearchStrings(final @NotNull PsiElement element, final @NotNull String newName) {
     if (element instanceof PsiClass aClass && aClass.getParent() instanceof PsiClass) {
       final String dollaredStringToSearch = ClassUtil.getJVMClassName(aClass);
       final String dollaredStringToReplace =
         dollaredStringToSearch == null ? null : RefactoringUtil.getNewInnerClassName(aClass, dollaredStringToSearch, newName);
       if (dollaredStringToReplace != null) {
-        return Pair.create(dollaredStringToSearch, dollaredStringToReplace);
+        return new TextOccurrenceSearchStrings(dollaredStringToSearch, dollaredStringToReplace);
       }
     }
     return null;

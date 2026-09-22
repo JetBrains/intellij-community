@@ -100,12 +100,18 @@ public final class SuperMethodWarningUtil {
   }
 
   /**
-   * The methods {@code method} overrides, and no question to the user.
-   * <p>
+   * Retrieves a collection of super methods for the specified method in the given class, considering
+   * a collection of elements to ignore during the search.
+   *
    * It runs on EDT for a rename with a user, and on a background thread inside a read action for a
    * rename with no user. The search for a sibling below goes under a modal progress only on EDT. A
    * modal progress on a background thread stops the interface of a person who asked for nothing, and
    * it needs the write thread to enter the modality.
+   *
+   * @param method the method for which super methods are to be retrieved; must not be null
+   * @param aClass the class containing the method; used to determine certain aspects of the search
+   * @param ignore a collection of elements to exclude from the resulting set of super methods; must not be null
+   * @return a collection of super methods for the specified method, excluding those present in the ignore list; never null
    */
   @VisibleForTesting
   @ApiStatus.Internal
