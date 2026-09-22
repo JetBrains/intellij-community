@@ -8,11 +8,9 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.CaretVisualAttributes;
 import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.Inlay;
@@ -38,11 +36,12 @@ import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.caret.model.CaretCursor;
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
-import com.intellij.openapi.editor.impl.caret.model.CaretRepaintMetrics;
 import com.intellij.openapi.editor.impl.TabCharacterPaintMode;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
+import com.intellij.openapi.editor.impl.caret.model.CaretRepaintMetrics;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapEx;
+import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheKey;
 import com.intellij.openapi.editor.impl.view.animation.EditorPainterCache;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -59,11 +58,8 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.CachingPainter;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.LinePainter2D;
@@ -76,8 +72,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.floats.FloatList;
@@ -101,9 +95,7 @@ import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
-import java.awt.geom.GeneralPath;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -117,13 +109,7 @@ import java.util.function.Consumer;
 public final class EditorPainter implements TextDrawingCallback {
 
   private static final Logger LOG = Logger.getInstance(EditorPainter.class);
-
-  private static final Color CARET_LIGHT = Gray._255;
-  private static final Color CARET_DARK = Gray._0;
-  private static final int CARET_DIRECTION_MARK_SIZE = 3;
   private static final Object ourCachedDot = ObjectUtils.sentinel("space symbol");
-  private static final int CARET_REPAINT_RECTANGLE_MARGIN = 1;
-  private static final int CARET_CACHE_RECTANGLE_MARGIN = CARET_REPAINT_RECTANGLE_MARGIN + 1;
 
   @ApiStatus.Internal
   public static final Stroke IME_COMPOSED_TEXT_UNDERLINE_STROKE = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{0, 2, 0, 2}, 0);
@@ -145,26 +131,24 @@ public final class EditorPainter implements TextDrawingCallback {
   @ApiStatus.Internal
   public static void fillRectExact(final Graphics2D g, final Rectangle2D r, final Color color) {
     var transform = g.getTransform();
-
-    Point2D topLeft = transform.transform(new Point2D.Double(r.getX(), r.getY()), null);
-    Point2D bottomRight = transform.transform(new Point2D.Double(r.getX() + r.getWidth(), r.getY() + r.getHeight()), null);
-
+    Point2D.Double topLeftPoint = new Point2D.Double(r.getX(), r.getY());
+    Point2D.Double bottomRightPoint = new Point2D.Double(r.getX() + r.getWidth(), r.getY() + r.getHeight());
+    Point2D topLeft = transform.transform(topLeftPoint, null);
+    Point2D bottomRight = transform.transform(bottomRightPoint, null);
     int left   = (int) Math.floor(topLeft.getX());
     int top    = (int) Math.floor(topLeft.getY());
     int right  = (int) Math.ceil(bottomRight.getX());
     int bottom = (int) Math.ceil(bottomRight.getY());
-
     int pWidth  = right - left;
     int pHeight = bottom - top;
-    if (pWidth <= 0 || pHeight <= 0) return;
-
+    if (pWidth <= 0 || pHeight <= 0) {
+      return;
+    }
     var oldAA = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
     g.setTransform(new AffineTransform());
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-
     g.setColor(color);
     g.fillRect(left, top, pWidth, pHeight);
-
     g.setTransform(transform);
     if (oldAA != null) {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAA);
@@ -179,113 +163,61 @@ public final class EditorPainter implements TextDrawingCallback {
   }
 
   private final EditorView myView;
+  private final EditorCaretPainter myCaretPainter;
   private final EditorPainterCache myCache;
 
-  EditorPainter(@NotNull EditorView view, @NotNull EditorPainterCache cache) {
+  EditorPainter(
+    @NotNull EditorView view,
+    @NotNull EditorCaretPainter caretPainter,
+    @NotNull EditorPainterCache cache
+  ) {
     myView = view;
+    myCaretPainter = caretPainter;
     myCache = cache;
   }
 
   void paint(Graphics2D g) {
     boolean painted = myCache.paintFromCache(g);
-    Session session = new Session(myView, myCache, g);
     if (painted) {
-      CaretCursor caretCursor = myView.getEditor().getCaretCursor(true);
-      if (caretCursor != null) {
-        session.paintCaret(caretCursor, g.getClipBounds().y);
-      }
+      myCaretPainter.paintCaret(g, 0);
     } else {
-      session.paint();
+      new Session(myView, myCache, myCaretPainter, g).paint();
     }
   }
 
-  void invalidate(@Nullable Rectangle clip) {
+  void repaintCarets(@NotNull CaretCursor caretCursor) {
+    myCaretPainter.repaintCarets(caretCursor);
+  }
+
+  void invalidateCache(@Nullable Rectangle clip) {
     myCache.invalidate(clip);
   }
 
-  void prefetchCaretFrames(@NotNull List<CaretRectangle> locations) {
-    myCache.cacheCaretFrames(locations);
-  }
-
-  @NotNull List<Rectangle> caretRectanglesForLocations(@NotNull List<CaretRectangle> locations) {
-    return caretRectanglesForLocations(locations, CARET_CACHE_RECTANGLE_MARGIN, myView.getCaretRepaintMetrics());
-  }
-
-  void repaintCarets(@NotNull CaretCursor caretCursor) {
-    var locations = caretCursor.locations();
-    var metrics = caretCursor.repaintMetrics();
-    var editor = myView.getEditor();
-    for (var rectangle : caretRectanglesForLocations(locations, CARET_REPAINT_RECTANGLE_MARGIN, metrics)) {
-      editor.getContentComponent().repaintCaret(
-        rectangle.x, rectangle.y, rectangle.width, rectangle.height
-      );
+  void prefetchCaretFrames(@NotNull List<CaretRectangle> locations, @NotNull CaretRepaintMetrics repaintMetrics) {
+    EditorAnimationCacheKey key = EditorAnimationCacheKey.of(locations);
+    if (myCache.canCacheKey(key)) {
+      List<Rectangle> rectangles = myCaretPainter.caretRectanglesForLocations(locations, repaintMetrics);
+      myCache.cacheFrames(key, rectangles);
     }
   }
 
   @Override
-  public void drawChars(@NotNull Graphics g, char @NotNull [] data, int start, int end, int x, int y, @NotNull Color color, @NotNull FontInfo fontInfo) {
+  public void drawChars(
+    @NotNull Graphics g,
+    char @NotNull [] data,
+    int start, int end, int x, int y,
+    @NotNull Color color,
+    @NotNull FontInfo fontInfo
+  ) {
     g.setFont(fontInfo.getFont());
     g.setColor(color);
     g.drawChars(data, start, end - start, x, y);
   }
 
-  /**
-   * The tightest integer-pixel rectangle (in user space) that covers everything the caret draws at a given location:
-   * the caret bar itself plus its direction mark, extended upward by {@code topOverhang} and down to {@code caretHeight}.
-   * <p>
-   * The horizontal bounds are computed with {@code floor}/{@code ceil} around the fractional caret x, so the returned
-   * rectangle always encloses the ideal geometry without clipping it. This is the exact bounds only; it does not
-   * account for the plus-minus-one-pixel error introduced by fractional scaling &mdash; callers that paint or request
-   * repaints under such scaling should use {@link #caretRectangleForLocationAndGrow} to overextend it.
-   */
-  private static Rectangle exactCaretRectangleForLocation(
-    CaretRectangle location,
-    int topOverhang,
-    int caretHeight
-  ) {
-    float x = (float)location.getX();
-    int y = (int)location.getY() - topOverhang;
-    float width = location.getWidth() + CARET_DIRECTION_MARK_SIZE;
-    int xStart = (int)Math.floor(x - width);
-    int xEnd = (int)Math.ceil(x + width);
-    return new Rectangle(xStart, y, xEnd - xStart, caretHeight);
-  }
-
-  /**
-   * {@link #exactCaretRectangleForLocation} grown by {@code grow} pixels on every side.
-   * <p>
-   * Due to how fractional scaling works (mostly on Windows), the exact rectangle in user space can map to physical
-   * pixels with a plus-minus-one-pixel error, so painting/repainting exactly the tight bounds leaves thin uncovered
-   * strips ("tango" and the trail of dots). The fix is to consistently work with slightly larger rectangles: cache a
-   * bit more than we repaint, and repaint a bit more than the exact bounds.
-   *
-   * @param grow number of pixels to expand the rectangle by on each side
-   */
-  private static Rectangle caretRectangleForLocationAndGrow(
-    CaretRectangle location,
-    int topOverhang,
-    int caretHeight,
-    int grow
-  ) {
-    var rectangle = exactCaretRectangleForLocation(location, topOverhang, caretHeight);
-    rectangle.grow(grow, grow);
-    return rectangle;
-  }
-
-  private static @NotNull List<Rectangle> caretRectanglesForLocations(
-    @NotNull List<CaretRectangle> locations,
-    int grow,
-    @NotNull CaretRepaintMetrics metrics
-  ) {
-    return ContainerUtil.map(
-      locations,
-      location -> caretRectangleForLocationAndGrow(location, metrics.caretTopOverhang, metrics.caretHeight, grow)
-    );
-  }
-
   private static final class Session {
     private final EditorView myView;
     private final EditorPainterCache myCache;
+    private final EditorCaretPainter myCaretPainter ;
     private final EditorImpl myEditor;
     private final Document myDocument;
     private final CharSequence myText;
@@ -328,9 +260,10 @@ public final class EditorPainter implements TextDrawingCallback {
     private SelectionVisualModel mySelectionModelView = null;
     private boolean myBrokenFragmentRangeReported;
 
-    Session(EditorView view, EditorPainterCache cache, Graphics2D g) {
+    Session(EditorView view, EditorPainterCache cache, EditorCaretPainter caretPainter, Graphics2D g) {
       myView = view;
       myCache = cache;
+      myCaretPainter = caretPainter;
       myEditor = myView.getEditor();
       myDocument = myView.getDocument();
       myText = myDocument.getImmutableCharSequence();
@@ -370,6 +303,7 @@ public final class EditorPainter implements TextDrawingCallback {
       if (!myCache.isCurrentlyBuildingCache()) {
         myCache.invalidate(myClip);
       }
+
       if (myEditor.getContentComponent().isOpaque()) {
         myGraphics.setColor(myBackgroundColor);
         myGraphics.fillRect(myClip.x, myClip.y, myClip.width, myClip.height);
@@ -507,6 +441,12 @@ public final class EditorPainter implements TextDrawingCallback {
             myGraphics.fillRect(x, y, 1, myClip.y + myClip.height + myYShift - y);
           }
         }
+      }
+    }
+
+    private void paintCaret() {
+      if (!myCache.isCurrentlyBuildingCache()) {
+        myCaretPainter.paintCaret(myGraphics, myYShift);
       }
     }
 
@@ -1590,184 +1530,6 @@ public final class EditorPainter implements TextDrawingCallback {
       TextAttributes attributes = new TextAttributes();
       attributes.setBackgroundColor(processor.backgroundColor);
       return attributes;
-    }
-
-    private static Color withOpacity(Color color, float opacity) {
-      return ColorUtil.toAlpha(color, (int)(color.getAlpha() * opacity));
-    }
-
-    private void paintCaret() {
-      if (myCache.isCurrentlyBuildingCache()) return;
-      if (myEditor.isPurePaintingMode()) return;
-      if (myEditor.isStickyLinePainting()) return; // suppress caret painting on sticky lines panel
-      CaretCursor caretCursor = myEditor.getCaretCursor(true);
-      if (caretCursor != null) {
-        paintCaret(caretCursor, 0);
-      }
-    }
-
-    /// @noinspection GraphicsSetClipInspection
-    void paintCaret(CaretCursor caretCursor, int yShift) {
-      Graphics2D g = IdeBackgroundUtil.getOriginalGraphics(myGraphics);
-      EditorSettings settings = myEditor.getSettings();
-      Color caretColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
-      if (caretColor == null) caretColor = new JBColor(CARET_DARK, CARET_LIGHT);
-      int minX = myInsets.left;
-      int caretHeight = caretCursor.repaintMetrics().caretHeight;
-      int topOverhang = caretCursor.repaintMetrics().caretTopOverhang;
-      float opacity = caretCursor.blinkOpacity();
-      for (CaretRectangle location : caretCursor.locations()) {
-        float x = (float)location.getX();
-        int y = (int)location.getY() - topOverhang + myYShift + yShift;
-        Caret caret = location.getCaret();
-        CaretVisualAttributes attr = caret == null ? CaretVisualAttributes.getDefault() : caret.getVisualAttributes();
-        Color caretWithOpacity = withOpacity(attr.getColor() != null ? attr.getColor() : caretColor, opacity);
-        g.setColor(caretWithOpacity);
-        boolean isRtl = location.isRtl();
-        float width = location.getWidth();
-        float startX = Math.max(minX, isRtl ? x - width : x);
-
-        CaretVisualAttributes.Shape shape = attr.getShape();
-        switch (shape) {
-          case DEFAULT -> {
-            if (myEditor.isInsertMode() != settings.isBlockCursor()) {
-              float lineWidth = JBUIScale.scale(attr.getWidth(settings.getLineCursorWidth())) * myEditor.getScale();
-              // fully cover extra character's pixel which can appear due to antialiasing
-              // see IDEA-148843 for more details
-              if (x > minX && lineWidth > 1) x -= 1 / JBUIScale.sysScale(g);
-              paintCaretBar(g, caret, x, y, lineWidth, caretHeight, isRtl);
-            }
-            else {
-              paintCaretBlock(g, startX, y, width, caretHeight);
-              paintCaretText(g, caret, caretColor, opacity, startX, y, topOverhang, isRtl);
-            }
-          }
-          case BLOCK -> {
-            paintCaretBlock(g, startX, y, width, caretHeight);
-            paintCaretText(g, caret, caretColor, opacity, startX, y, topOverhang, isRtl);
-          }
-          case BAR -> {
-            // Don't draw if thickness is zero. This allows a plugin to "hide" carets, e.g. to visually emulate a block selection as a
-            // selection rather than as multiple carets with discrete selections
-            if (attr.getThickness() > 0) {
-              int barWidth = Math.max((int)(width * attr.getThickness()), JBUIScale.scale(settings.getLineCursorWidth()));
-              if (!isRtl && x > minX && barWidth > 1 && barWidth < (width / 2)) x -= 1 / JBUIScale.sysScale(g);
-              paintCaretBar(g, caret, isRtl ? x - barWidth : x, y, barWidth, caretHeight, isRtl);
-              Shape savedClip = g.getClip();
-              g.setClip(new Rectangle2D.Float(isRtl ? x - barWidth : x, y, barWidth, caretHeight));
-              paintCaretText(g, caret, caretColor, opacity, startX, y, topOverhang, isRtl);
-              g.setClip(savedClip);
-            }
-          }
-          case UNDERSCORE -> {
-            if (attr.getThickness() > 0) {
-              int underscoreHeight = Math.max((int)(caretHeight * attr.getThickness()), 1);
-              paintCaretUnderscore(g, startX, y + caretHeight - underscoreHeight, width, underscoreHeight);
-              Shape oldClip = g.getClip();
-              g.setClip(new Rectangle2D.Float(startX, y + caretHeight - underscoreHeight, width, underscoreHeight));
-              paintCaretText(g, caret, caretColor, opacity, startX, y, topOverhang, isRtl);
-              g.setClip(oldClip);
-            }
-          }
-          case BOX -> paintCaretBox(g, startX, y, width, caretHeight);
-        }
-      }
-    }
-
-    private void paintCaretBar(@NotNull Graphics2D g, @Nullable Caret caret, float x, float y, float w, float h, boolean isRtl) {
-      var old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-      boolean shouldDrawRtl = myDocument.getTextLength() > 0 && caret != null &&
-                              !myView.getTextLayoutCache().getLineLayout(caret.getLogicalPosition().line).isLtr();
-
-      GeneralPath caretShape = new GeneralPath();
-
-      float radius = IslandsState.Companion.isEnabled() ? Math.min(w / 2, CARET_DIRECTION_MARK_SIZE) : 0.0f;
-
-      caretShape.moveTo(x, y + radius);
-
-      if (shouldDrawRtl && isRtl) {
-        caretShape.moveTo(x, y + CARET_DIRECTION_MARK_SIZE);
-        caretShape.lineTo(x - CARET_DIRECTION_MARK_SIZE, y);
-        caretShape.lineTo(x + radius, y);
-      } else {
-        caretShape.quadTo(x, y, x + radius, y);
-      }
-
-      if (shouldDrawRtl && !isRtl) {
-        caretShape.lineTo(x + w + CARET_DIRECTION_MARK_SIZE, y);
-        caretShape.lineTo(x + w, y + CARET_DIRECTION_MARK_SIZE);
-      } else {
-        caretShape.lineTo(x + w - radius, y);
-        caretShape.quadTo(x + w, y, x + w, y + radius);
-      }
-
-      caretShape.lineTo(x + w, y + h - radius);
-      caretShape.quadTo(x + w, y + h, x + w - radius, y + h);
-      caretShape.lineTo(x + radius, y + h);
-      caretShape.quadTo(x, y + h, x, y + h - radius);
-
-      caretShape.closePath();
-      g.fill(caretShape);
-
-      if (old != null) {
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
-      }
-    }
-
-    private static void paintCaretBlock(@NotNull Graphics2D g, float x, float y, float w, float h) {
-      g.fill(new Rectangle2D.Float(x, y, w, h));
-    }
-
-    private static void paintCaretUnderscore(@NotNull Graphics2D g, float x, float y, float w, float h) {
-      g.fill(new Rectangle2D.Float(x, y, w, h));
-    }
-
-    private static void paintCaretBox(@NotNull Graphics2D g, float x, float y, float w, float h) {
-      if (w > 2) {
-        final float outlineWidth = (float) PaintUtil.alignToInt(1, g);
-        final Area area = new Area(new Rectangle2D.Float(x, y, w, h));
-        area.subtract(new Area(new Rectangle2D.Float(x + outlineWidth, y + outlineWidth, w - (2 * outlineWidth), h - (2 * outlineWidth))));
-        g.fill(area);
-      }
-      else {
-        paintCaretBlock(g, x, y, w, h);
-      }
-    }
-
-    private void paintCaretText(@NotNull Graphics2D g,
-                                @Nullable Caret caret,
-                                @NotNull Color caretColor,
-                                float opacity,
-                                float x,
-                                float y,
-                                int topOverhang,
-                                boolean isRtl) {
-      if (caret != null) {
-        var config = GraphicsUtil.setupAAPainting(g);
-        try {
-          int targetVisualColumn = caret.getVisualPosition().column - (isRtl ? 1 : 0);
-          for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView,
-                                                                                                  caret.getVisualLineStart(),
-                                                                                                  false)) {
-            if (fragment.getCurrentInlay() != null) continue;
-            int startVisualColumn = fragment.getStartVisualColumn();
-            int endVisualColumn = fragment.getEndVisualColumn();
-            if (startVisualColumn <= targetVisualColumn && targetVisualColumn < endVisualColumn) {
-              g.setColor(withOpacity(ColorUtil.isDark(caretColor) ? CARET_LIGHT : CARET_DARK, opacity));
-              fragment.draw(x, y + topOverhang + myAscent,
-                            fragment.visualColumnToOffset(targetVisualColumn - startVisualColumn),
-                            fragment.visualColumnToOffset(targetVisualColumn + 1 - startVisualColumn)).accept(g);
-              break;
-            }
-          }
-          ComplexTextFragment.flushDrawingCache(g);
-        }
-        finally {
-          config.restore();
-        }
-      }
     }
 
     private interface MarginWidthConsumer {

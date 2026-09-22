@@ -45,7 +45,7 @@ import kotlin.time.Duration.Companion.milliseconds
 //   A settled move has no motion left. It skips the loop:
 //   caretMoved() |> state.updateAndGet { retarget } |> advanceNow(tick) |> advanceStep(prefetching = false)
 //                                                                       |> propagateStep() |> repaintCarets()
-internal class EditorCaretMutator internal constructor(
+internal class EditorCaretMutator(
   private val editor: EditorImpl,
 ) : Disposable {
   private val coroutineScope: CoroutineScope = editor.coroutineScope
@@ -282,7 +282,7 @@ internal class EditorCaretMutator internal constructor(
     }
     val prefetch = step.prefetch
     if (prefetch != null) {
-      editor.prefetchCaretFrames(prefetch)
+      editor.prefetchCaretFrames(prefetch, nextState.repaintMetrics())
     }
     // Erasing the previous locations also erases the carets that were removed, because the caretCursor still holds them.
     if (step.moved) {
@@ -295,10 +295,7 @@ internal class EditorCaretMutator internal constructor(
   }
 
   private fun repaint(caretCursor: CaretCursor) {
-    if (disposed.get()) {
-      return
-    }
-    editor.view.repaintCarets(caretCursor)
+    editor.repaintCarets(caretCursor)
   }
 
   /**

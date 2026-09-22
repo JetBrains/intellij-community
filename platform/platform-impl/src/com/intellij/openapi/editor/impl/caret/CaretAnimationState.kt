@@ -44,6 +44,10 @@ internal class CaretAnimationState private constructor(
     return version
   }
 
+  fun repaintMetrics(): CaretRepaintMetrics {
+    return repaintMetrics
+  }
+
   /**
    * How long the previous frame actually took, floored at one frame interval so that a long pause does not make the
    * next frame jump.

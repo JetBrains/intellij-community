@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImageUtil.createEditorImage
 import com.intellij.openapi.editor.impl.EditorImageUtil.createImageGraphics
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.impl.caret.model.CaretRectangle
 import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStatistics.recordHit
 import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStatistics.recordMiss
 import com.intellij.openapi.editor.impl.view.animation.EditorPainterCache.Companion.THRASH_COOLDOWN
@@ -64,34 +63,38 @@ internal class EditorPainterCache(
     debugWindow = EditorAnimationCacheDebugWindow.createIfSupported(editor, entries)
   }
 
+  fun canCacheKey(key: EditorAnimationCacheKey): Boolean {
+    if (!isCacheEnabled) {
+      return false
+    }
+    val cachedKey = lastCacheKey.get()
+    if (key == cachedKey) {
+      // Also drop whatever waits here, because the carets have moved past it.
+      requests.value = null
+      return false
+    }
+    return true
+  }
+
   /**
-   * Caches the editor content behind [locations], so that [paintFromCache] can restore it instead of repainting the
+   * Caches the editor content behind [rectangles], so that [paintFromCache] can restore it instead of repainting the
    * content. A request for content the cache already holds costs nothing beyond the key, which is the steady state of
    * a move: every frame of one move asks for the same zone.
    *
-   * A single zone covering the bounding box of [locations] is cached, not one zone per caret. Swing coalesces all
+   * A single zone covering the bounding box of [rectangles] is cached, not one zone per caret. Swing coalesces all
    * pending repaint requests for a component into their bounding box, so that box is the smallest clip
    * [paintFromCache] can ever be asked for. Caching the carets individually would leave the gaps between them
    * uncached, and no single zone would contain the clip, so every multi-caret repaint would miss.
    */
-  fun cacheCaretFrames(locations: List<CaretRectangle>) {
+  fun cacheFrames(key: EditorAnimationCacheKey, rectangles: List<Rectangle2D>) {
     if (!isCacheEnabled) {
       return
     }
-    val requestKey = EditorAnimationCacheKey.of(locations)
-    val cachedKey = lastCacheKey.get()
-    if (requestKey == cachedKey) {
-      // Also drop whatever waits here, because the carets have moved past it.
-      requests.value = null
-      return
-    }
     requests.update { pending: CacheRequest? ->
-      if (pending?.isDuplicate(requestKey) == true) {
+      if (pending?.isDuplicate(key) == true) {
         pending
       } else {
-        CacheRequest(requestKey) {
-          caretCacheRectangles(locations)
-        }
+        CacheRequest(key, rectangles)
       }
     }
   }
@@ -206,16 +209,6 @@ internal class EditorPainterCache(
     }.getOrHandleException { e ->
       LOG.error("An exception occurred while building editor animation cache", e)
     }
-  }
-
-  /**
-   * The areas that [locations] need cached. Measured when the request reaches the EDT, so that the geometry belongs to
-   * the frame the cache is actually built for.
-   */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  private fun caretCacheRectangles(locations: List<CaretRectangle>): List<Rectangle2D> {
-    val caretRectangles = editor.view.caretRectanglesForLocations(locations)
-    return caretRectangles.map { rectangle -> rectangle.coerceAtLeastEmpty() }
   }
 
   private fun isWithinCooldown(): Boolean {

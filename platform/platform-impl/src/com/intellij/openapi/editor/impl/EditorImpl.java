@@ -121,6 +121,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.caret.EditorCaretMutator;
 import com.intellij.openapi.editor.impl.caret.model.CaretCursor;
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
+import com.intellij.openapi.editor.impl.caret.model.CaretRepaintMetrics;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModel;
@@ -649,8 +650,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     };
 
     myIndentsModel = new IndentsModelImpl(this);
-    caretMutator = new EditorCaretMutator(this);
-    Disposer.register(myDisposable, caretMutator);
 
     myState.setVerticalScrollBarOrientation(VERTICAL_SCROLLBAR_RIGHT);
 
@@ -694,8 +693,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorModel = new EditorModelImpl(this);
 
     myPainterCache = new EditorPainterCache(this);
-    Disposer.register(myDisposable, myPainterCache);
+    caretMutator = new EditorCaretMutator(this);
     myView = new EditorView(this, myEditorModel, myPainterCache);
+    Disposer.register(myDisposable, myPainterCache);
+    Disposer.register(myDisposable, caretMutator);
 
     myTextDrawingCallback = new EditorTextDrawingCallback(myView);
 
@@ -1699,7 +1700,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myMarkupModel.repaint();
         if (!isRightAligned()) return;
         updateCaretCursor();
-        repaintCaretCursor();
+        repaintCarets(caretMutator.caretCursor());
       }
     });
   }
@@ -1968,7 +1969,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Object oldValue = extractOldValueOrLog(event, false);
     myPropertyChangeSupport.firePropertyChange(PROP_INSERT_MODE, oldValue, event.getNewValue());
 
-    repaintCaretCursor();
+    repaintCarets(caretMutator.caretCursor());
   }
 
   @Override
@@ -2489,8 +2490,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * Asks the animation cache to hold the content behind {@code locations}, so the frames that follow can be blitted.
    */
   @ApiStatus.Internal
-  public void prefetchCaretFrames(@NotNull List<CaretRectangle> locations) {
-    myView.prefetchCaretFrames(locations);
+  public void prefetchCaretFrames(@NotNull List<CaretRectangle> locations, @NotNull CaretRepaintMetrics repaintMetrics) {
+    myView.prefetchCaretFrames(locations, repaintMetrics);
   }
 
   @Override
@@ -3559,8 +3560,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     caretMutator.updateCaretCursor();
   }
 
-  private void repaintCaretCursor() {
-    myView.repaintCarets(caretMutator.caretCursor());
+  @ApiStatus.Internal
+  public void repaintCarets(@NotNull CaretCursor caretCursor) {
+    if (isDisposed()) return;
+    myView.repaintCarets(caretCursor);
   }
 
   private void setMouseIsInDrag(boolean value) {

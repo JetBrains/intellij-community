@@ -34,14 +34,6 @@ internal fun Rectangle2D.coerceAtLeastEmpty(): Rectangle2D {
   return Rectangle2D.Double(newX, newY, newWidth, newHeight)
 }
 
-internal fun Rectangle.coerceAtLeastEmpty(): Rectangle {
-  val newX = x.coerceAtLeast(0)
-  val newY = y.coerceAtLeast(0)
-  val newWidth = (width + (x - newX)).coerceAtLeast(0)
-  val newHeight = (height + (y - newY)).coerceAtLeast(0)
-  return Rectangle(newX, newY, newWidth, newHeight)
-}
-
 internal fun Rectangle2D.intersectWithVisibleArea(visibleArea: Rectangle): Rectangle2D? {
   if (!intersects(visibleArea)) {
     return null
