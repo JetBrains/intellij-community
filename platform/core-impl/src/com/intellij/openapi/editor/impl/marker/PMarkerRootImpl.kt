@@ -58,10 +58,10 @@ open class PMarkerRootImpl private constructor(
     markerReference: SnapshotMarkerReference?,
     measure: Int,
   ): PMarkerRoot {
-    require(startOffset >= 0) { "startOffset must be non-negative" }
-    require(endOffset >= startOffset) { "endOffset must not precede startOffset" }
+    require(startOffset >= 0) { "startOffset must be non-negative but got: $startOffset" }
+    require(endOffset >= startOffset) { "endOffset must not precede startOffset, but got: ($startOffset, $endOffset)" }
     val existingState = states.getUnchecked(markerId)
-    require(existingState == null || existingState is AbsentNode) { "Marker $markerId already exists" }
+    require(existingState == null || existingState is AbsentNode) { "Marker $markerId already exists: $existingState" }
 
     val editor = MapBatchEditor(states, persistentMarkerCount)
     editor.putValid(
@@ -329,8 +329,8 @@ open class PMarkerRootImpl private constructor(
     tastePreference: Int,
     processor: Processor<in MarkerEntry>,
   ): Boolean {
-    require(startOffset >= 0) { "startOffset must be non-negative" }
-    require(endOffset >= startOffset) { "endOffset must not precede startOffset" }
+    require(startOffset >= 0) { "startOffset must be non-negative but got: $startOffset" }
+    require(endOffset >= startOffset) { "endOffset must not precede startOffset, but got: ($startOffset, $endOffset)" }
     return processRangeMarkersOverlappingWith(
       rootId,
       ancestorDelta = 0,
@@ -366,8 +366,8 @@ open class PMarkerRootImpl private constructor(
   }
 
   override fun overlappingIterator(startOffset: Int, endOffset: Int, tastePreference: Int): Iterator<MarkerEntry> {
-    require(startOffset >= 0) { "startOffset must be non-negative" }
-    require(endOffset >= startOffset) { "endOffset must not precede startOffset" }
+    require(startOffset >= 0) { "startOffset must be non-negative but got: $startOffset" }
+    require(endOffset >= startOffset) { "endOffset must not precede startOffset, but got: ($startOffset, $endOffset)" }
     val requiredFlavorFlags = tastePreference and ALL_FLAVOR_FLAGS
 
     return object : Iterator<MarkerEntry> {
@@ -636,15 +636,15 @@ open class PMarkerRootImpl private constructor(
       val startOffset = patch.startOffset()
       val endOffset = patch.endOffset()
       val newLength = patch.newFragment().length
-      require(startOffset >= 0) { "DocumentTextPatch startOffset must be non-negative" }
-      require(endOffset >= startOffset) { "DocumentTextPatch endOffset must not precede startOffset" }
-      require(endOffset <= beforeText.length()) { "DocumentTextPatch range exceeds source text length" }
+      require(startOffset >= 0) { "startOffset must be non-negative but got: $startOffset" }
+      require(endOffset >= startOffset) { "endOffset must not precede startOffset, but got: ($startOffset, $endOffset)" }
+      require(endOffset <= beforeText.length()) { "DocumentTextPatch range exceeds source text length: $endOffset > ${beforeText.length()}" }
       require(afterText.length().toLong() == beforeText.length().toLong() - (endOffset - startOffset) + newLength) {
         "DocumentTextPatch is inconsistent with the target text length"
       }
-      require(startOffset <= Int.MAX_VALUE - newLength) { "DocumentTextPatch new range overflows Int" }
-      require(patch.moveOffset() >= 0) { "DocumentTextPatch moveOffset must be non-negative" }
-      require(patch.moveOffset() <= Int.MAX_VALUE - newLength) { "DocumentTextPatch move range overflows Int" }
+      require(startOffset <= Int.MAX_VALUE - newLength) { "DocumentTextPatch new range overflows Int: startOffset=$startOffset, newLength=$newLength" }
+      require(patch.moveOffset() >= 0) { "DocumentTextPatch moveOffset must be non-negative but got: $patch" }
+      require(patch.moveOffset() <= Int.MAX_VALUE - newLength) { "DocumentTextPatch move range overflows Int: $patch" }
     }
 
     private fun incrementPersistentMarkerCount(
