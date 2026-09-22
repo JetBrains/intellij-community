@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.python.pyproject.model.internal.workspaceBridge.isPythonEntity
 
 /**
@@ -16,15 +17,15 @@ import com.intellij.python.pyproject.model.internal.workspaceBridge.isPythonEnti
  * names. An event that leaves both sets equal cannot change the model, so it must not cost a build.
  */
 internal fun VersionedStorageChange.toRebuildRequest(): RebuildRequest? {
-  val added = LinkedHashMap<String, ExcludeUrlEntity>()
-  val removed = LinkedHashMap<String, ExcludeUrlEntity>()
+  val added = LinkedHashMap<VirtualFileUrl, ExcludeUrlEntity>()
+  val removed = LinkedHashMap<VirtualFileUrl, ExcludeUrlEntity>()
   for (change in getChanges(ExcludeUrlEntity::class.java)) {
     when (change) {
-      is EntityChange.Added -> added[change.newEntity.url.url] = change.newEntity
-      is EntityChange.Removed -> removed[change.oldEntity.url.url] = change.oldEntity
+      is EntityChange.Added -> added[change.newEntity.url] = change.newEntity
+      is EntityChange.Removed -> removed[change.oldEntity.url] = change.oldEntity
       is EntityChange.Replaced -> {
-        removed[change.oldEntity.url.url] = change.oldEntity
-        added[change.newEntity.url.url] = change.newEntity
+        removed[change.oldEntity.url] = change.oldEntity
+        added[change.newEntity.url] = change.newEntity
       }
     }
   }
@@ -57,5 +58,5 @@ internal fun VersionedStorageChange.toRebuildRequest(): RebuildRequest? {
   return null
 }
 
-private fun describe(what: String, urls: Set<String>): String =
-  "workspace model, ${urls.size} url $what, first '${urls.first()}'"
+private fun describe(what: String, urls: Set<VirtualFileUrl>): String =
+  "workspace model, ${urls.size} url $what, first '${urls.first().url}'"
