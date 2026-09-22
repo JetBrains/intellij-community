@@ -7,7 +7,6 @@ import com.intellij.ClassFinder
 import com.intellij.GroupBasedTestClassFilter
 import com.intellij.TestCaseLoader
 import com.intellij.execution.CommandLineWrapperUtil
-import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Pair
@@ -18,7 +17,6 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.bazel.runfiles.BazelRunfiles
 import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
-import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.trace.Span
 import jetbrains.buildServer.messages.serviceMessages.BlockClosed
@@ -51,7 +49,6 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.io.PrintStream
-import java.lang.reflect.Modifier
 import java.nio.charset.Charset
 import java.nio.file.AccessDeniedException
 import java.nio.file.FileSystems
@@ -905,20 +902,14 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       .flatMap { context.getModuleRuntimeClasspath(module = it, forTests = true) }
       .distinct()
     val classloader = UrlClassLoader.build().files(classpath).get()
-    @Suppress("UNCHECKED_CAST") val testAnnotation = classloader.loadClass(SkipInHeadlessEnvironment::class.java.name) as Class<out Annotation>
-    @Suppress("UNCHECKED_CAST") val ignoreAnnotation = classloader.loadClass(IJIgnore::class.java.name) as Class<out Annotation>
+    val finder = HeadlessSkippedTestFinder(classloader)
 
     return context.project.modules.mapConcurrent { module ->
       val outputRoots = context.outputProvider.getModuleOutputRoots(module, forTests = true)
       if (outputRoots.isEmpty()) return@mapConcurrent emptyList()
       val root = requireNotNull(outputRoots.singleOrNull()) { "More than one output root for module '${module.name}': ${outputRoots.joinToString()}" }
       ClassFinder(root, "", false).classes
-        .filter {
-          val testClass = classloader.loadClass(it)
-          !Modifier.isAbstract(testClass.modifiers) &&
-          !testClass.isAnnotationPresent(ignoreAnnotation) &&
-          testClass.isAnnotationPresent(testAnnotation)
-        }
+        .filter(finder::isSkippedInHeadlessEnvironment)
         .map { Pair(it, module.name) }
     }.flatten()
   }
