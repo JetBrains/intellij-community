@@ -13,6 +13,8 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle
 import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStatistics.recordHit
 import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStatistics.recordMiss
+import com.intellij.openapi.editor.impl.view.animation.EditorPainterCache.Companion.THRASH_COOLDOWN
+import com.intellij.openapi.editor.impl.view.animation.EditorPainterCache.Companion.THRASH_WINDOW
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.paint.use
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -36,6 +38,7 @@ internal class EditorPainterCache(
 ) : Disposable {
   private val coroutineScope: CoroutineScope = editor.coroutineScope
   private val lastCacheKey = AtomicReference<EditorAnimationCacheKey?>(null)
+  private val isCacheEnabled: Boolean = Registry.`is`("editor.animation.cache.enabled", true)
   private val debugWindow: EditorAnimationCacheDebugWindow?
 
   /**
@@ -54,12 +57,10 @@ internal class EditorPainterCache(
   private var cooldownUntil: AnimationTimeMark? = null
 
   init {
-    serveRequests()
-    debugWindow = if (Registry.`is`("editor.animation.cache.debug.enabled", false)) {
-      EditorAnimationCacheDebugWindow.createIfSupported(editor, entries)
-    } else {
-      null
+    if (isCacheEnabled) {
+      serveRequests()
     }
+    debugWindow = EditorAnimationCacheDebugWindow.createIfSupported(editor, entries)
   }
 
   /**
@@ -73,6 +74,9 @@ internal class EditorPainterCache(
    * uncached, and no single zone would contain the clip, so every multi-caret repaint would miss.
    */
   fun cacheCaretFrames(locations: List<CaretRectangle>) {
+    if (!isCacheEnabled) {
+      return
+    }
     val requestKey = EditorAnimationCacheKey.of(locations)
     val cachedKey = lastCacheKey.get()
     if (requestKey == cachedKey) {
@@ -97,7 +101,7 @@ internal class EditorPainterCache(
    */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun paintFromCache(graphics: Graphics2D, rect: Rectangle2D): Boolean {
-    if (editor.isDisposed || !ensureOpaqueContent()) {
+    if (!isCacheEnabled || editor.isDisposed || !ensureOpaqueContent()) {
       return false
     }
     val currentPixelGrid = EditorPixelGrid.forGraphics(graphics)
@@ -130,6 +134,9 @@ internal class EditorPainterCache(
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun invalidate(clip: Rectangle?) {
+    if (!isCacheEnabled) {
+      return
+    }
     if (clip == null) {
       clear()
       return
@@ -137,7 +144,7 @@ internal class EditorPainterCache(
     lastCacheKey.set(null)
     // Nothing was ever built, so there is no entry to drop and no thrashing to detect.
     val lastBuildAt = lastBuildAt ?: return
-    val now = AnimationClock.markAnimationNow()
+    val now = AnimationClock.now()
     val removedEntries = entries.removeIntersecting(clip)
     if (removedEntries) {
       debugWindow?.zonesChanged()
@@ -204,7 +211,7 @@ internal class EditorPainterCache(
 
   private fun isWithinCooldown(): Boolean {
     val cooldownUntil = cooldownUntil ?: return false
-    return AnimationClock.markAnimationNow() < cooldownUntil
+    return AnimationClock.now() < cooldownUntil
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
@@ -244,7 +251,7 @@ internal class EditorPainterCache(
     entries.add(CacheEntry(repaintedArea, image), budget)
     debugWindow?.zonesChanged()
     pixelGrid = grid
-    lastBuildAt = AnimationClock.markAnimationNow()
+    lastBuildAt = AnimationClock.now()
     return true
   }
 

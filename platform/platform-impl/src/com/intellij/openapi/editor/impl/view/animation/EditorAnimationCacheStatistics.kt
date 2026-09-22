@@ -9,7 +9,7 @@ internal val STATISTICS_BUCKET_DURATION: Duration = 500.milliseconds
 internal const val STATISTICS_BUCKET_COUNT = 10
 
 internal object EditorAnimationCacheStatistics {
-  private val startedAt = AnimationClock.markAnimationNow()
+  private val startedAt = AnimationClock.now()
   private val hits = IntArray(STATISTICS_BUCKET_COUNT)
   private val misses = IntArray(STATISTICS_BUCKET_COUNT)
   private val stamps = arrayOfNulls<AnimationTimeMark>(STATISTICS_BUCKET_COUNT)

@@ -6,5 +6,5 @@ import kotlin.time.TimeSource
 internal typealias AnimationTimeMark = TimeSource.Monotonic.ValueTimeMark
 
 internal object AnimationClock {
-  fun markAnimationNow(): AnimationTimeMark = TimeSource.Monotonic.markNow()
+  fun now(): AnimationTimeMark = TimeSource.Monotonic.markNow()
 }

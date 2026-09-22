@@ -187,7 +187,7 @@ internal class CaretAnimationState private constructor(
       blink = CaretBlinkMachine.DORMANT,
       repaintMetrics = CaretRepaintMetrics.EMPTY,
       caretCursor = CaretCursor.INITIAL,
-      lastFrameAt = AnimationClock.markAnimationNow(),
+      lastFrameAt = AnimationClock.now(),
       isRunning = false,
       version = 0L,
     )

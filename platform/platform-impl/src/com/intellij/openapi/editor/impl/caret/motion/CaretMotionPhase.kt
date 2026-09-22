@@ -175,7 +175,7 @@ internal sealed interface CaretMotionPhase {
   companion object {
     val DORMANT: CaretMotionPhase = Easing(
       trajectories = emptyMap(),
-      startTime = AnimationClock.markAnimationNow(),
+      startTime = AnimationClock.now(),
       settling = Settling.COMPLETE,
     )
   }

@@ -357,7 +357,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   boolean myCursorSetExternally;
 
   private boolean myIsCurrentlyBuildingCache = false;
-  private final @Nullable EditorPainterCache myContentAnimationCache;
+  private final @NotNull EditorPainterCache myContentAnimationCache;
   private final @NotNull EditorCaretMutator caretMutator;
 
   private static final Integer SCROLL_PANE_LAYER = 0;
@@ -695,12 +695,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorModel = new EditorModelImpl(this);
 
     myView = new EditorView(this, myEditorModel);
-    myContentAnimationCache = Registry.is("editor.animation.cache.enabled")
-                              ? new EditorPainterCache(this)
-                              : null;
-    if (myContentAnimationCache != null) {
-      Disposer.register(myDisposable, myContentAnimationCache);
-    }
+    myContentAnimationCache = new EditorPainterCache(this);
+    Disposer.register(myDisposable, myContentAnimationCache);
 
     myTextDrawingCallback = new EditorTextDrawingCallback(myView);
 
@@ -1555,9 +1551,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       isReleased = true;
       // Stop background frames before the editor models they read are disposed.
       Disposer.dispose(caretMutator);
-      if (myContentAnimationCache != null) {
-        Disposer.dispose(myContentAnimationCache);
-      }
+      Disposer.dispose(myContentAnimationCache);
       myDisposalTimestampNanos = System.nanoTime();
       mySizeAdjustmentStrategy.cancelAllRequests();
       cancelAutoResetForMouseSelectionState();
@@ -2499,9 +2493,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    */
   @ApiStatus.Internal
   public void invalidateAnimationCaches(@Nullable Rectangle clip) {
-    if (myContentAnimationCache != null) {
-      myContentAnimationCache.invalidate(clip);
-    }
+    myContentAnimationCache.invalidate(clip);
   }
 
   /**
@@ -2509,9 +2501,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    */
   @ApiStatus.Internal
   public void prefetchCaretFrames(@NotNull List<CaretRectangle> locations) {
-    if (myContentAnimationCache != null) {
-      myContentAnimationCache.cacheCaretFrames(locations);
-    }
+    myContentAnimationCache.cacheCaretFrames(locations);
   }
 
   @Override

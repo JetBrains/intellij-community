@@ -93,7 +93,7 @@ internal class EditorCaretMutator internal constructor(
       gainedFocus.set(true)
     }
     val previousState = state.getAndUpdate {
-      it.withShown(visible, AnimationClock.markAnimationNow())
+      it.withShown(visible, AnimationClock.now())
     }
     val previous = previousState.caretCursor()
     val visibilityChanged = previous.isShown() != visible
@@ -126,7 +126,7 @@ internal class EditorCaretMutator internal constructor(
     val newState = state.updateAndGet {
       if (it.caretCursor().isShown()) {
         // marks the caret as active now, which holds the blink off for one quiet period
-        it.withActivityAt(AnimationClock.markAnimationNow())
+        it.withActivityAt(AnimationClock.now())
       } else {
         // shows the caret at full opacity, without restarting the quiet period
         repaintNeeded = true
@@ -305,13 +305,13 @@ internal class EditorCaretMutator internal constructor(
    * The tick of a loop frame, whose duration is however long the previous frame actually took.
    */
   private fun CaretAnimationState.loopTick(): CaretTick {
-    val now = AnimationClock.markAnimationNow()
+    val now = AnimationClock.now()
     return tick(frameDurationAt(now), now)
   }
 
   private fun tick(
     frameDuration: Duration,
-    now: AnimationTimeMark = AnimationClock.markAnimationNow(),
+    now: AnimationTimeMark = AnimationClock.now(),
   ): CaretTick {
     return CaretTick(
       now = now,
