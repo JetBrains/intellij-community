@@ -380,7 +380,7 @@ public final class FileManagerImpl implements FileManagerEx {
                                                           boolean eventSystemEnabled) {
     FileType fileType = vFile.getFileType();
 
-    if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest() && !InternalPsiVersioning.isInsideVersioningButNotLocks()) {
       CodeInsightContextUtil.ensureContextRelevant(vFile, context, myManager.getProject());
     }
 
