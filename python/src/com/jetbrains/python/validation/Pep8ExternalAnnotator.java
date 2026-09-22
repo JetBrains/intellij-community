@@ -66,6 +66,7 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -81,12 +82,12 @@ import static com.jetbrains.python.validation.PyPep8HelperBridgeKt.execPep8Helpe
 
 
 public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotator.State, Pep8ExternalAnnotator.Results> {
-  @NotNull
-  private static final PyHelper PYCODESTYLE_2_8_0_PY = new PyHelper("pycodestyle-2.8.0.py", false);
-  @NotNull
-  private static final PyHelper PYCODESTYLE_2_10_0_PY = new PyHelper("pycodestyle-2.10.0.py", false);
-  @NotNull
-  private static final PyHelper PYCODESTYLE_PY = new PyHelper("pycodestyle.py", false);
+  @VisibleForTesting
+  static final @NotNull PyHelper PYCODESTYLE_2_8_0_PY = new PyHelper("pycodestyle-2.8.0.py", false);
+  @VisibleForTesting
+  static final @NotNull PyHelper PYCODESTYLE_2_10_0_PY = new PyHelper("pycodestyle-2.10.0.py", false);
+  @VisibleForTesting
+  static final @NotNull PyHelper PYCODESTYLE_PY = new PyHelper("pycodestyle.py", false);
 
   // Taken directly from the sources of pycodestyle.py
   private static final String DEFAULT_IGNORED_ERRORS = "E121,E123,E126,E226,E24,E704,W503,W504";
@@ -209,17 +210,7 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
     options.add("--max-line-length=" + collectedInfo.margin);
     options.add("-");
 
-    @NotNull
-    PyHelper pycodestyleScript;
-    if (collectedInfo.interpreterVersion.isOlderThan(LanguageLevel.PYTHON36)) {
-      pycodestyleScript = PYCODESTYLE_2_8_0_PY;
-    }
-    else if (collectedInfo.interpreterVersion.isOlderThan(LanguageLevel.PYTHON38)) {
-      pycodestyleScript = PYCODESTYLE_2_10_0_PY;
-    }
-    else {
-      pycodestyleScript = PYCODESTYLE_PY;
-    }
+    PyHelper pycodestyleScript = selectPycodestyleHelper(collectedInfo.interpreterVersion);
     var stdin = collectedInfo.fileText.getBytes(StandardCharsets.UTF_8);
     var output = execPep8Helper(pycodestyleScript, collectedInfo.interpreterPath, stdin, options);
 
@@ -233,6 +224,23 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
       ContainerUtil.addIfNotNull(results.problems, parseProblem(line));
     }
     return results;
+  }
+
+  /**
+   * Selects the bundled pycodestyle copy that {@code level} can run.
+   * <p>
+   * {@code pycodestyle.py} is 2.14.0. It calls {@code keyword.issoftkeyword}, which Python adds in 3.9.
+   * The two older copies guard that call with a version check, so they also run on an older interpreter.
+   */
+  @VisibleForTesting
+  static @NotNull PyHelper selectPycodestyleHelper(@NotNull LanguageLevel level) {
+    if (level.isOlderThan(LanguageLevel.PYTHON36)) {
+      return PYCODESTYLE_2_8_0_PY;
+    }
+    if (level.isOlderThan(LanguageLevel.PYTHON39)) {
+      return PYCODESTYLE_2_10_0_PY;
+    }
+    return PYCODESTYLE_PY;
   }
 
   private static void reportMissingInterpreter() {

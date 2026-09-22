@@ -37,4 +37,9 @@ internal fun execPep8Helper(helper: PyHelper, python: PythonBinary, stdin: ByteA
 }
 
 private val log = fileLogger()
-private val execOptions = ExecOptions(env = mapOf("PYTHONBUFFERED" to "1"))
+/**
+ * `PYTHONUTF8` keeps PY-37054 fixed. The helper reads stdin with `io.TextIOWrapper` and no explicit encoding, so it
+ * falls back to the locale encoding. That is the ANSI code page on Windows, and then `E501` counts UTF-8 bytes
+ * instead of characters. UTF-8 mode makes that fallback UTF-8, and it also makes the helper write the report in UTF-8.
+ */
+private val execOptions = ExecOptions(env = mapOf("PYTHONBUFFERED" to "1", "PYTHONUTF8" to "1"))
