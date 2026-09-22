@@ -10,7 +10,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.LineSeparator
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.inputStreamIfExists
 import com.intellij.util.io.move
 import com.intellij.util.io.outputStream
 import com.intellij.util.io.sanitizeFileName
@@ -19,6 +18,7 @@ import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
+import kotlin.io.path.inputStream
 
 private val LOG = logger<FileSystemExternalSystemStorage>()
 
@@ -84,7 +84,11 @@ internal abstract class FileSystemExternalSystemStorage(dirName: String, project
       return null
     }
 
-    return nameToPath(name).inputStreamIfExists()?.use {
+    val path = nameToPath(name)
+    if (!path.exists()) {
+      return null
+    }
+    return path.inputStream().use {
       JDOMUtil.load(it)
     }
   }

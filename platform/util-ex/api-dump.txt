@@ -113,7 +113,6 @@ f:com.intellij.util.io.PathKt
 - sf:generateRandomPath(java.nio.file.Path):java.nio.file.Path
 - sf:getSystemIndependentPath(java.nio.file.Path):java.lang.String
 - sf:inputStream(java.nio.file.Path):java.io.InputStream
-- sf:inputStreamIfExists(java.nio.file.Path):java.io.InputStream
 - sf:isAncestor(java.nio.file.Path,java.nio.file.Path):Z
 - sf:isDirectory(java.nio.file.Path):Z
 - sf:isFile(java.nio.file.Path):Z

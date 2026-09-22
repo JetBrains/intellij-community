@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.inputStreamIfExists
 import org.jetbrains.annotations.ApiStatus
 import org.snakeyaml.engine.v2.api.LoadSettings
 import org.snakeyaml.engine.v2.composer.Composer
@@ -24,7 +23,10 @@ import org.snakeyaml.engine.v2.parser.ParserImpl
 import org.snakeyaml.engine.v2.scanner.StreamReader
 import org.snakeyaml.engine.v2.schema.FailsafeSchema
 import java.io.Reader
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.inputStream
 
 // we cannot use the same approach as we generate JSON scheme because we should load option classes only in a lazy manner
 // that's why we don't use snakeyaml TypeDescription approach to load
@@ -148,8 +150,15 @@ private fun findConfigurationFile(projectIdeaDir: Path): Path? {
 fun readProjectConfigurationFile(projectIdeaDir: Path): MappingNode? {
   val file = findConfigurationFile(projectIdeaDir) ?: return null
   try {
-    val inputStream = file.inputStreamIfExists() ?: return null
-    return doRead(inputStream.bufferedReader())
+    if (!file.exists()) {
+      return null
+    }
+    return doRead(file.inputStream().bufferedReader())
+  }
+  catch (_: NoSuchFileException) {
+    // the file may be removed between the existence check above and the first read
+    // non-local file is opened lazily, so a missing file is reported only once reading starts
+    return null
   }
   catch (e: Throwable) {
     LOG.error("Cannot parse \"$file\"", e)

@@ -2,7 +2,6 @@
 package com.intellij.collaboration.api.graphql
 
 import com.intellij.util.io.createParentDirectories
-import com.intellij.util.io.inputStreamIfExists
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -10,6 +9,8 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
 import kotlin.io.path.createFile
+import kotlin.io.path.exists
+import kotlin.io.path.inputStream
 import kotlin.io.path.writeText
 
 class CachingGraphQLQueryLoaderTest {
@@ -25,7 +26,8 @@ class CachingGraphQLQueryLoaderTest {
   @Before
   fun setUp() {
     loader = CachingGraphQLQueryLoader(getFileStream = {
-      testDataRule.root.toPath().resolve(it).inputStreamIfExists()
+      val path = testDataRule.root.toPath().resolve(it)
+      if (path.exists()) path.inputStream() else null
     })
     testDataRule.newFolder("graphql", "query")
     fragmentFolder = testDataRule.newFolder("graphql", "fragment")

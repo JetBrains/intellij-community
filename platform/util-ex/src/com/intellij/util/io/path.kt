@@ -56,13 +56,6 @@ fun Path.outputStream(): OutputStream {
 
 fun Path.safeOutputStream(): OutputStream = SafeFileOutputStream(this.createParentDirectories())
 
-fun Path.inputStreamIfExists(): InputStream? = try {
-  inputStream()
-}
-catch (_: NoSuchFileException) {
-  null
-}
-
 @JvmOverloads
 fun Path.delete(recursively: Boolean = true) {
   when {

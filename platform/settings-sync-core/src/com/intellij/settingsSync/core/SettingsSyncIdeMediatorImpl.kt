@@ -16,12 +16,12 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.settingsSync.core.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.core.notification.NotificationService
 import com.intellij.settingsSync.core.plugins.SettingsSyncPluginManager
-import com.intellij.util.io.inputStreamIfExists
 import com.intellij.util.io.write
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.InputStream
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
@@ -183,7 +183,12 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     val adjustedSpec = getFileRelativeToRootConfig(fileSpec)
     return readUnderLock(adjustedSpec) {
       try {
-        consumer(path.inputStreamIfExists())
+        consumer(if (path.exists()) path.inputStream() else null)
+        true
+      }
+      catch (_: NoSuchFileException) {
+        // the file may be removed between the existence check above and the first read
+        // non-local file is opened lazily, so a missing file is reported only once reading starts
         true
       }
       catch (e: Throwable) {

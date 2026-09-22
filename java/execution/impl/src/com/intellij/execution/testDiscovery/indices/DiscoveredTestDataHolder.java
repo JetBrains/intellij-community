@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -146,11 +146,10 @@ public final class DiscoveredTestDataHolder {
   }
 
   private static int readVersion(@NotNull Path versionFile) throws IOException {
-    InputStream inputStream = PathKt.inputStreamIfExists(versionFile);
-    if (inputStream == null) {
+    if (!Files.exists(versionFile)) {
       return -1;
     }
-    try (DataInputStream versionInput = new DataInputStream(inputStream)) {
+    try (DataInputStream versionInput = new DataInputStream(Files.newInputStream(versionFile))) {
       return DataInputOutputUtil.readINT(versionInput);
     }
   }
