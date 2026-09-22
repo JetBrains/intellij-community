@@ -80,6 +80,13 @@ public class StdXMLReaderTest {
   }
 
   @Test
+  public void doctypeWithNonUrlSystemIdIsNotResolved() throws Exception {
+    // a system ID is arbitrary document content, and not always a URL
+    String withUrn = "<?xml version=\"1.0\"?><!DOCTYPE greeting SYSTEM \"urn:oasis:names:tc:greeting\">" + DOCUMENT;
+    assertEquals("greeting", parseRootTag(new StdXMLReader(new StringReader(withUrn))));
+  }
+
+  @Test
   public void doctypeWithoutExternalIdOrInternalSubset() throws Exception {
     // JAXP hit a NPE on exactly this shape when told to skip DTDs, see JDK-8329295
     assertEquals("greeting", parseRootTag(new StdXMLReader(new StringReader("<!DOCTYPE greeting>" + DOCUMENT))));
