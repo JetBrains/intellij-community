@@ -55,7 +55,7 @@ class UseOptimizedEelFunctionsTest {
     
           class Example {
             void example() throws IOException {
-              byte[] result = Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt"));
+              byte[] result = Files.<warning descr="'readAllBytes' requires multiple RPC round trips in IJent context">readAllBytes</warning>(Path.of("hello.txt"));
             }
           }
         """.trimIndent()
@@ -86,7 +86,7 @@ class UseOptimizedEelFunctionsTest {
           import java.nio.file.Path
     
           fun example() {
-            val result = Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt"))
+            val result = Files.<warning descr="'readAllBytes' requires multiple RPC round trips in IJent context">readAllBytes</warning>(Path.of("hello.txt"))
           }
         """.trimIndent()
 
@@ -171,7 +171,7 @@ class UseOptimizedEelFunctionsTest {
     
           class Example {
             void example() throws IOException {
-              ByteBuffer result = ByteBuffer.wrap(Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt")));
+              ByteBuffer result = ByteBuffer.wrap(Files.<warning descr="'readAllBytes' requires multiple RPC round trips in IJent context">readAllBytes</warning>(Path.of("hello.txt")));
             }
           }
         """.trimIndent()
@@ -204,7 +204,7 @@ class UseOptimizedEelFunctionsTest {
           import java.nio.file.Path
     
           fun example() {
-            val result = ByteBuffer.wrap(Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt")))
+            val result = ByteBuffer.wrap(Files.<warning descr="'readAllBytes' requires multiple RPC round trips in IJent context">readAllBytes</warning>(Path.of("hello.txt")))
           }
         """.trimIndent()
 
@@ -237,7 +237,7 @@ class UseOptimizedEelFunctionsTest {
     
           class Example {
             void example() throws IOException {
-              int hash = Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt")).hashCode();
+              int hash = Files.<warning descr="'readAllBytes' requires multiple RPC round trips in IJent context">readAllBytes</warning>(Path.of("hello.txt")).hashCode();
             }
           }
         """.trimIndent()
@@ -270,7 +270,7 @@ class UseOptimizedEelFunctionsTest {
           import java.nio.file.Path
     
           fun example() {
-            val hash = Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt")).hashCode()
+            val hash = Files.<warning descr="'readAllBytes' requires multiple RPC round trips in IJent context">readAllBytes</warning>(Path.of("hello.txt")).hashCode()
           }
         """.trimIndent()
 
@@ -301,7 +301,7 @@ class UseOptimizedEelFunctionsTest {
     
           class Example {
             void example() throws IOException {
-              byte[] result = Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt"));
+              byte[] result = Files.<warning descr="'readAllBytes' requires multiple RPC round trips in IJent context">readAllBytes</warning>(Path.of("hello.txt"));
             }
           }
         """.trimIndent()
@@ -330,7 +330,7 @@ class UseOptimizedEelFunctionsTest {
           import java.nio.file.*
     
           fun example() {
-            val result = Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt"))
+            val result = Files.<warning descr="'readAllBytes' requires multiple RPC round trips in IJent context">readAllBytes</warning>(Path.of("hello.txt"))
           }
         """.trimIndent()
 
@@ -358,7 +358,7 @@ class UseOptimizedEelFunctionsTest {
     
           class Example {
             void example() throws IOException {
-              var result = java.nio.file.Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(java.nio.file.Path.of("hello.txt"));
+              var result = java.nio.file.Files.<warning descr="'readAllBytes' requires multiple RPC round trips in IJent context">readAllBytes</warning>(java.nio.file.Path.of("hello.txt"));
             }
           }
         """.trimIndent()
@@ -388,7 +388,7 @@ class UseOptimizedEelFunctionsTest {
           import java.nio.file.Files
     
           fun example() {
-            val result = java.nio.file.Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(java.nio.file.Path.of("hello.txt"))
+            val result = java.nio.file.Files.<warning descr="'readAllBytes' requires multiple RPC round trips in IJent context">readAllBytes</warning>(java.nio.file.Path.of("hello.txt"))
           }
         """.trimIndent()
 
@@ -420,7 +420,7 @@ class UseOptimizedEelFunctionsTest {
     
           class Example {
             void example() throws IOException {
-              var result = <warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt"));
+              var result = <warning descr="'readAllBytes' requires multiple RPC round trips in IJent context">readAllBytes</warning>(Path.of("hello.txt"));
             }
           }
         """.trimIndent()
@@ -451,7 +451,7 @@ class UseOptimizedEelFunctionsTest {
           import java.nio.file.Path
     
           fun example() {
-            val result = <warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt"))
+            val result = <warning descr="'readAllBytes' requires multiple RPC round trips in IJent context">readAllBytes</warning>(Path.of("hello.txt"))
           }
         """.trimIndent()
 
@@ -478,7 +478,7 @@ class UseOptimizedEelFunctionsTest {
         import java.nio.file.Path
   
         fun example() {
-          val result = <warning descr="Can require multiple round trips for one file operation">foobar</warning>(Path.of("hello.txt"))
+          val result = <warning descr="'foobar' requires multiple RPC round trips in IJent context">foobar</warning>(Path.of("hello.txt"))
         }
       """.trimIndent()
 
@@ -509,7 +509,7 @@ class UseOptimizedEelFunctionsTest {
   
         class Example {
           void example() throws IOException {
-            byte[] result = Files.<warning descr="Can require multiple round trips for one file operation">readAllBytes</warning>(Path.of("hello.txt"));
+            byte[] result = Files.<warning descr="'readAllBytes' requires multiple RPC round trips in IJent context">readAllBytes</warning>(Path.of("hello.txt"));
           }
         }
       """.trimIndent()
@@ -543,8 +543,8 @@ class UseOptimizedEelFunctionsTest {
   
         class Example {
           void example() throws IOException {
-            String a = Files.<warning descr="Can require multiple round trips for one file operation">readString</warning>(Path.of("hello.txt"));
-            String b = Files.<warning descr="Can require multiple round trips for one file operation">readString</warning>(Path.of("hello.txt"), StandardCharsets.UTF_8);
+            String a = Files.<warning descr="'readString' requires multiple RPC round trips in IJent context">readString</warning>(Path.of("hello.txt"));
+            String b = Files.<warning descr="'readString' requires multiple RPC round trips in IJent context">readString</warning>(Path.of("hello.txt"), StandardCharsets.UTF_8);
           }
         }
       """.trimIndent()
@@ -580,8 +580,8 @@ class UseOptimizedEelFunctionsTest {
 
         class Example {
           void example(byte[] content) throws IOException {
-            Files.<warning descr="Can require multiple round trips for one file operation">write</warning>(Path.of("hello.txt"), content);
-            Files.<warning descr="Can require multiple round trips for one file operation">write</warning>(Path.of("hello.txt"), content, StandardOpenOption.APPEND);
+            Files.<warning descr="'write' requires multiple RPC round trips in IJent context">write</warning>(Path.of("hello.txt"), content);
+            Files.<warning descr="'write' requires multiple RPC round trips in IJent context">write</warning>(Path.of("hello.txt"), content, StandardOpenOption.APPEND);
           }
         }
       """.trimIndent()
@@ -615,7 +615,7 @@ class UseOptimizedEelFunctionsTest {
         import java.nio.file.StandardOpenOption
 
         fun example(content: ByteArray) {
-          Files.<warning descr="Can require multiple round trips for one file operation">write</warning>(Path.of("hello.txt"), content, StandardOpenOption.CREATE)
+          Files.<warning descr="'write' requires multiple RPC round trips in IJent context">write</warning>(Path.of("hello.txt"), content, StandardOpenOption.CREATE)
         }
       """.trimIndent()
 
@@ -667,8 +667,8 @@ class UseOptimizedEelFunctionsTest {
 
         class Example {
           void example() throws IOException {
-            Files.<warning descr="Can require multiple round trips for one file operation">writeString</warning>(Path.of("first.txt"), "first");
-            Files.<warning descr="Can require multiple round trips for one file operation">writeString</warning>(Path.of("second.txt"), "second", StandardCharsets.UTF_16LE, StandardOpenOption.CREATE);
+            Files.<warning descr="'writeString' requires multiple RPC round trips in IJent context">writeString</warning>(Path.of("first.txt"), "first");
+            Files.<warning descr="'writeString' requires multiple RPC round trips in IJent context">writeString</warning>(Path.of("second.txt"), "second", StandardCharsets.UTF_16LE, StandardOpenOption.CREATE);
           }
         }
       """.trimIndent()
@@ -704,7 +704,7 @@ class UseOptimizedEelFunctionsTest {
         import java.nio.file.StandardOpenOption
 
         fun example() {
-          Files.<warning descr="Can require multiple round trips for one file operation">writeString</warning>(Path.of("hello.txt"), "hello", StandardCharsets.UTF_16LE, StandardOpenOption.CREATE)
+          Files.<warning descr="'writeString' requires multiple RPC round trips in IJent context">writeString</warning>(Path.of("hello.txt"), "hello", StandardCharsets.UTF_16LE, StandardOpenOption.CREATE)
         }
       """.trimIndent()
 
@@ -734,7 +734,7 @@ class UseOptimizedEelFunctionsTest {
         import java.nio.file.Path
 
         fun example(content: ByteArray) {
-          Files.<info descr="Can require multiple round trips for one file operation">write</info>(Path.of("hello.txt"), content)
+          Files.<info descr="'write' requires multiple RPC round trips in IJent context">write</info>(Path.of("hello.txt"), content)
         }
       """.trimIndent()
 
@@ -763,10 +763,10 @@ class UseOptimizedEelFunctionsTest {
   
         class Example {
           void example() throws IOException {
-            NioFiles.<warning descr="Can require multiple round trips for one file operation">deleteRecursively</warning>(Path.of(""));
+            NioFiles.<warning descr="'deleteRecursively' requires multiple RPC round trips in IJent context">deleteRecursively</warning>(Path.of(""));
             NioFiles.deleteRecursively(Path.of(""), path -> {});  // This overload has no replacement in eel.
             
-            FileUtilRt.<warning descr="Can require multiple round trips for one file operation">deleteRecursively</warning>(Path.of(""));
+            FileUtilRt.<warning descr="'deleteRecursively' requires multiple RPC round trips in IJent context">deleteRecursively</warning>(Path.of(""));
           }
         }
       """.trimIndent()

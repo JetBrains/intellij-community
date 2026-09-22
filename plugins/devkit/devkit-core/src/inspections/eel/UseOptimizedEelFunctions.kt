@@ -81,43 +81,30 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
   }
 
   private fun handleMethod(holder: ProblemsHolder, node: UCallExpression, fqn: String, highlightType: ProblemHighlightType) {
-    val methodPsi = node.methodIdentifier?.sourcePsi ?: return
-    if (fqn == "java.nio.file.Files.readAllBytes") {
-      holder.registerProblem(
-        methodPsi, DevKitBundle.message("inspection.message.works.ineffectively.with.remote.eel"), highlightType,
-        ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "readAllBytes"),
-      )
-    }
-    if (fqn == "java.nio.file.Files.readString") {
-      holder.registerProblem(
-        methodPsi, DevKitBundle.message("inspection.message.works.ineffectively.with.remote.eel"), highlightType,
-        ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "readString"),
-      )
-    }
-    if (fqn == "java.nio.file.Files.write" && isByteArrayWrite(node)) {
-      holder.registerProblem(
-        methodPsi, DevKitBundle.message("inspection.message.works.ineffectively.with.remote.eel"), highlightType,
-        ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "write"),
-      )
-    }
-    if (fqn == "java.nio.file.Files.writeString") {
-      holder.registerProblem(
-        methodPsi, DevKitBundle.message("inspection.message.works.ineffectively.with.remote.eel"), highlightType,
-        ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "writeString"),
-      )
-    }
-    if (
+    val replacement = when {
+      fqn == "java.nio.file.Files.readAllBytes" ->
+        ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "readAllBytes")
+      fqn == "java.nio.file.Files.readString" ->
+        ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "readString")
+      fqn == "java.nio.file.Files.write" && isByteArrayWrite(node) ->
+        ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "write")
+      fqn == "java.nio.file.Files.writeString" ->
+        ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "writeString")
       (
         fqn == "com.intellij.openapi.util.io.NioFiles.deleteRecursively" ||
         fqn == "com.intellij.openapi.util.io.FileUtilRt.deleteRecursively"
       ) &&
-      node.valueArgumentCount == 1
-    ) {
-      holder.registerProblem(
-        methodPsi, DevKitBundle.message("inspection.message.works.ineffectively.with.remote.eel"), highlightType,
-        ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFileUtils", "deleteRecursively"),
-      )
+      node.valueArgumentCount == 1 ->
+        ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFileUtils", "deleteRecursively")
+      else -> return
     }
+    val methodPsi = node.methodIdentifier?.sourcePsi ?: return
+    holder.registerProblem(
+      methodPsi,
+      DevKitBundle.message("inspection.message.works.ineffectively.with.remote.eel", methodPsi.text),
+      highlightType,
+      replacement,
+    )
   }
 
   private fun isByteArrayWrite(node: UCallExpression): Boolean {
