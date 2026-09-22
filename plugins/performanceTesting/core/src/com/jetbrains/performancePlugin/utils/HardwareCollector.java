@@ -23,7 +23,6 @@
  */
 package com.jetbrains.performancePlugin.utils;
 
-import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.troubleshooting.TroubleInfoCollector;
@@ -70,10 +69,6 @@ public final class HardwareCollector implements TroubleInfoCollector {
   }
 
   public String collectHardwareInfo(Boolean skipNetworkReporting) {
-    if (!JnaLoader.isLoaded()) {
-      return "Failed to collect computer system info: JNA is not loaded)";
-    }
-
     try {
       SystemInfo si = new SystemInfo();
 
