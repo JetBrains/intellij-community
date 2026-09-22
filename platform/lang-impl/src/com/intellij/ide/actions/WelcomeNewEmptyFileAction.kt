@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
@@ -268,6 +269,8 @@ private fun doSaveFile(project: Project, file: VirtualFile, closeCurrentTab: Boo
               fileEditorManager.closeFile(file)
             }
             fileEditorManager.openFile(targetFile)
+
+            IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace()
 
             deleteFile(project, file)
           }, project.disposed)
