@@ -371,7 +371,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
   private int adjustOffsetToInlay(int offset) {
     CharSequence text = myEditor.getDocument().getImmutableCharSequence();
     int hostWhitespaceStart = CharArrayUtil.shiftBackward(text, offset, WHITESPACE) + 1;
-    int hostWhitespaceEnd = CharArrayUtil.shiftForward(text, offset, WHITESPACE);
+    int hostWhitespaceEnd = Math.max(hostWhitespaceStart, CharArrayUtil.shiftForward(text, offset, WHITESPACE));
     Editor hostEditor = myEditor;
     if (myEditor instanceof EditorWindow) {
       hostEditor = ((EditorWindow)myEditor).getDelegate();
