@@ -1,17 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 /**
- * Describes the source from where a plugin was downloaded.
- * This source is considered safe to install updates for the plugin from.
- * [PluginUpdateSourceId] with `isMarketplace == true` may have various hosts and are considered interchangeable in terms of safety.
- * The use case is the Marketplace proxy provided by IDE Services.
+ * Describes the source from where a plugin is allowed to have updates. In general, it's the repository plugin was installed from.
  */
 @Serializable
 @ApiStatus.Internal
@@ -23,15 +19,12 @@ sealed interface PluginUpdateSourceId {
    * This check is symmetrical, but not transitive.
    *
    * @return if a plugin with this update source may have updates from [other] update source
+   * which describes a single repository or a group of repositories
    */
   fun canInstallUpdatesFrom(other: PluginUpdateSourceId): Boolean
 }
 
 @ApiStatus.Internal
 fun PluginUpdateSourceId?.getPresentableName(): @Nls(capitalization = Nls.Capitalization.Sentence) String {
-  return when {
-    this == null -> IdeBundle.message("plugin.update.source.presentable.name.unknown")
-    this.isMarketplace -> IdeBundle.message("plugin.update.source.presentable.name.marketplace")
-    else -> this.host
-  }
+  return PluginUpdateSourceServiceImpl.getPresentableName(this)
 }

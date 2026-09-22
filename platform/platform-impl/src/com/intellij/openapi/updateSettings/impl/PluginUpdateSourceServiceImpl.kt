@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
@@ -32,6 +33,14 @@ internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
 
   companion object {
     fun getImplInstance(): PluginUpdateSourceServiceImpl = PluginUpdateSourceService.getInstance() as PluginUpdateSourceServiceImpl
+
+    fun getPresentableName(updateSourceId: PluginUpdateSourceId?): @NlsSafe String {
+      return when {
+        updateSourceId == null -> IdeBundle.message("plugin.update.source.presentable.name.unknown")
+        updateSourceId.isMarketplace -> IdeBundle.message("plugin.update.source.presentable.name.marketplace")
+        else -> updateSourceId.host
+      }
+    }
   }
 
   override fun getPluginUpdateSourceId(pluginId: PluginId): PluginUpdateSourceId? {
