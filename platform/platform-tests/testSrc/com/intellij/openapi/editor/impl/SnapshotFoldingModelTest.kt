@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
@@ -127,6 +128,35 @@ class SnapshotFoldingModelTest {
     assertThat(state.regionCount).isZero()
   }
 
+  @Test
+  fun `custom fold region invalidates after another region aligns to a new line break`(): Unit = timeoutRunBlocking {
+    val state = withEditor("") { editor ->
+      val document = editor.document as DocumentImpl
+      document.setAcceptSlashR(true)
+      document.insertString(0, "a\rb\nc")
+
+      lateinit var customRegion: CustomFoldRegion
+      lateinit var regularRegion: FoldRegion
+      editor.foldingModel.runBatchFoldingOperation {
+        customRegion = editor.foldingModel.addCustomLinesFolding(0, 0, customRenderer)!!
+        regularRegion = editor.foldingModel.addFoldRegion(3, 5, "...")!!
+        regularRegion.isExpanded = false
+      }
+
+      document.deleteString(2, 3)
+
+      ComplexLineBreakState(
+        customRegionIsValid = customRegion.isValid,
+        regularRegionRange = regularRegion.textRange,
+        regionCount = editor.foldingModel.allFoldRegions.size,
+      )
+    }
+
+    assertThat(state.customRegionIsValid).isFalse()
+    assertThat(state.regularRegionRange).isEqualTo(TextRange(1, 4))
+    assertThat(state.regionCount).isEqualTo(1)
+  }
+
   private suspend fun <T> withEditor(text: String, action: suspend (EditorImpl) -> T): T {
     return withContext(Dispatchers.EDT) {
       val editorFactory = EditorFactory.getInstance()
@@ -181,6 +211,12 @@ class SnapshotFoldingModelTest {
   private data class CustomRegionState(
     val isValid: Boolean,
     val disposalCount: Int,
+    val regionCount: Int,
+  )
+
+  private data class ComplexLineBreakState(
+    val customRegionIsValid: Boolean,
+    val regularRegionRange: TextRange,
     val regionCount: Int,
   )
 

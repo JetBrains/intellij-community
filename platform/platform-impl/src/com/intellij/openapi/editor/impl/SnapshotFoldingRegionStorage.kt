@@ -39,6 +39,9 @@ internal class SnapshotFoldingRegionStorage(
   val document: DocumentImpl,
 ) : FoldingRegionStorage {
   private val regionsById: ConcurrentLongObjectMap<SnapshotFoldRegion> = Java11Shim.createConcurrentLongObjectMap()
+  private val foldRegionMarkerPolicy: MarkerPolicy = FoldRegionMarkerPolicy {
+    model.setComplexDocumentChange(true)
+  }
   val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(
     document,
     onMarkersInvalidated = ::processInvalidatedRegions,
@@ -54,7 +57,7 @@ internal class SnapshotFoldingRegionStorage(
     neverExpands: Boolean,
   ): FoldRegionMarker {
     val markerId = SnapshotMarkerEngineImpl.nextMarkerId()
-    val spec = MarkerSpec(isGreedyToLeft = false, isGreedyToRight = false, policy = FoldRegionMarkerPolicy)
+    val spec = MarkerSpec(isGreedyToLeft = false, isGreedyToRight = false, policy = foldRegionMarkerPolicy)
     val region = SnapshotFoldRegion(
       storage = this,
       markerId = markerId,
@@ -465,7 +468,9 @@ internal class SnapshotCustomFoldRegion(
   override fun toString(): String = "${super.toString()}, renderer: $renderer, size: ${width}x$height"
 }
 
-private object FoldRegionMarkerPolicy : MarkerPolicy {
+private class FoldRegionMarkerPolicy(
+  private val onRangeAligned: () -> Unit,
+) : MarkerPolicy {
   override fun transform(
     entry: PMarkerRoot.MarkerEntry,
     patch: DocumentTextPatch,
@@ -477,12 +482,18 @@ private object FoldRegionMarkerPolicy : MarkerPolicy {
       transformed
     }
     else {
-      validateRange(alignToCharacterBoundaries(transformed.entry, afterText))
+      alignAndValidate(transformed.entry, afterText)
     }
   }
 
   override fun afterRetarget(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
-    return validateRange(alignToCharacterBoundaries(entry, text))
+    return alignAndValidate(entry, text)
+  }
+
+  private fun alignAndValidate(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
+    val alignedEntry = alignToCharacterBoundaries(entry, text)
+    if (alignedEntry != entry) onRangeAligned()
+    return validateRange(alignedEntry)
   }
 
   private fun validateRange(entry: PMarkerRoot.MarkerEntry): MarkerTransformResult {
