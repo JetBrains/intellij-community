@@ -15,6 +15,7 @@ import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsageInfo2UsageAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
@@ -101,6 +102,15 @@ public final class UsageInfoToUsageConverter {
   }
 
   public static @NotNull Usage convert(PsiElement @NotNull [] primaryElements, @NotNull UsageInfo usageInfo) {
+    Usage convertedUsage = convertByProvider(usageInfo);
+    if (convertedUsage != null) {
+      return convertedUsage;
+    }
+
+    return convertDefault(primaryElements, usageInfo);
+  }
+
+  private static @NotNull Usage convertDefault(PsiElement @NotNull [] primaryElements, @NotNull UsageInfo usageInfo) {
     PsiElement usageElement = usageInfo.getElement();
     if (usageElement != null && primaryElements.length != 0) {
       ReadWriteAccessDetector.Access rwAccess = ReadWriteUtil.getReadWriteAccess(primaryElements, usageElement);
@@ -113,8 +123,13 @@ public final class UsageInfoToUsageConverter {
 
 
   public static @NotNull Usage convertToSimilarUsage(PsiElement @NotNull [] primaryElements,
-                                                     @NotNull UsageInfo usageInfo,
-                                                     @NotNull ClusteringSearchSession session) {
+                                                      @NotNull UsageInfo usageInfo,
+                                                      @NotNull ClusteringSearchSession session) {
+    Usage convertedUsage = convertByProvider(usageInfo);
+    if (convertedUsage != null) {
+      return convertedUsage;
+    }
+
     PsiElement usageElement = usageInfo.getElement();
     if (usageElement != null && primaryElements.length != 0) {
       Bag features = new Bag();
@@ -132,7 +147,11 @@ public final class UsageInfoToUsageConverter {
         return session.clusterUsage(similarUsageAdapter);
       }
     }
-    return convert(primaryElements, usageInfo);
+    return convertDefault(primaryElements, usageInfo);
+  }
+
+  private static @Nullable Usage convertByProvider(@NotNull UsageInfo usageInfo) {
+    return UsageInfoToUsageConverterProvider.EP_NAME.computeSafeIfAny(provider -> provider.convert(usageInfo));
   }
 
   public static Usage @NotNull [] convert(@NotNull TargetElementsDescriptor descriptor, UsageInfo @NotNull [] usageInfos) {

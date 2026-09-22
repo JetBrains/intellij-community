@@ -24,6 +24,12 @@ import java.awt.Point;
 @ApiStatus.Internal
 public abstract class EditBreakpointActionHandler extends DebuggerActionHandler {
 
+  @ApiStatus.Experimental
+  protected void doShowPopup(Project project, JComponent component, Point whereToShow, XBreakpointProxy breakpoint,
+                             @NotNull PreferredFocusOwner preferredFocusOwner) {
+    doShowPopup(project, component, whereToShow, breakpoint);
+  }
+
   protected abstract void doShowPopup(Project project, JComponent component, Point whereToShow, XBreakpointProxy breakpoint);
 
   @Override
@@ -47,12 +53,21 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
                              @NotNull Editor editor,
                              @NotNull XBreakpointProxy breakpoint,
                              @Nullable GutterIconRenderer breakpointGutterRenderer) {
+    editBreakpoint(project, editor, breakpoint, breakpointGutterRenderer, PreferredFocusOwner.DEFAULT);
+  }
+
+  @ApiStatus.Experimental
+  public void editBreakpoint(@NotNull Project project,
+                             @NotNull Editor editor,
+                             @NotNull XBreakpointProxy breakpoint,
+                             @Nullable GutterIconRenderer breakpointGutterRenderer,
+                             @NotNull PreferredFocusOwner preferredFocusOwner) {
     if (BreakpointsDialogFactory.getInstance(project).popupRequested(breakpoint)) {
       return;
     }
     EditorGutterComponentEx gutterComponent = ((EditorEx)editor).getGutterComponentEx();
     Point point = getPopupPoint(editor, breakpointGutterRenderer);
-    doShowPopup(project, gutterComponent, point, breakpoint);
+    doShowPopup(project, gutterComponent, point, breakpoint, preferredFocusOwner);
   }
 
   public static @NotNull Point getPopupPoint(@NotNull Editor editor,
@@ -75,5 +90,12 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
                              @NotNull BreakpointItem breakpoint) {
     XBreakpointProxy breakpointProxy = breakpoint.getBreakpoint();
     doShowPopup(project, parent, whereToShow, breakpointProxy);
+  }
+
+  @ApiStatus.Experimental
+  public enum PreferredFocusOwner {
+    DEFAULT,
+    CONDITION_TEXT_FIELD,
+    EVALUATE_AND_LOG_TEXT_FIELD,
   }
 }

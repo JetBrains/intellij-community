@@ -24,6 +24,9 @@
     <extensionPoint qualifiedName="com.intellij.usageFilteringRuleCustomizer" interface="com.intellij.usages.rules.UsageFilteringRuleCustomizer" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.usageTargetProvider" interface="com.intellij.usages.UsageTargetProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.usageToPsiElementProvider" interface="com.intellij.usages.UsageToPsiElementProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.usageInfoToUsageConverterProvider"
+                    interface="com.intellij.usages.UsageInfoToUsageConverterProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.usageFeaturesProvider" interface="com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.usageFilteringRuleProvider" interface="com.intellij.usages.rules.UsageFilteringRuleProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.importFilteringRule" interface="com.intellij.usages.rules.ImportFilteringRule" dynamic="true"/>

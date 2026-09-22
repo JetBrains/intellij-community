@@ -455,7 +455,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   public boolean merge(@NotNull MergeableUsage other) {
     if (!(other instanceof UsageInfo2UsageAdapter u2)) return false;
     assert u2 != this;
-    if (myLineNumber != u2.myLineNumber || !Comparing.equal(getFile(), u2.getFile())) return false;
+    if (!canMerge(u2)) return false;
     UsageInfo[] merged = ArrayUtil.mergeArrays(getMergedInfos(), u2.getMergedInfos());
     myMergedUsageInfos = merged.length == 1 ? merged[0] : merged;
     Arrays.sort(getMergedInfos(), BY_NAVIGATION_OFFSET);
@@ -466,6 +466,11 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     myModificationStamp = Long.MIN_VALUE;
 
     return true;
+  }
+
+  @ApiStatus.Internal
+  protected boolean canMerge(@NotNull UsageInfo2UsageAdapter other) {
+    return myLineNumber == other.myLineNumber && Comparing.equal(getFile(), other.getFile());
   }
 
   private static @Nullable SmartPsiFileRange merge(
