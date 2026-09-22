@@ -42,6 +42,21 @@ interface WelcomeRightTabContentProvider {
   val isThemeChooserPopupEnabled: Boolean
     get() = false
 
+  /**
+   * Sample code shown beside the theme list, so the user can judge a theme on real code.
+   * Null leaves the chooser as a list alone.
+   */
+  fun getThemePreviewSample(): ThemePreviewSample? = null
+
+  /**
+   * Code the theme chooser renders beside its list. [fileName] only selects the syntax highlighting;
+   * no file is created and the name is never shown.
+   */
+  class ThemePreviewSample(
+    val fileName: String,
+    val text: @NlsSafe String,
+  )
+
   fun getFeatureButtonModels(project: Project): List<FeatureButtonModel>
 
   /**

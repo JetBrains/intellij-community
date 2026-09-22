@@ -409,7 +409,7 @@ internal class WelcomeScreenRightTabImpl(
     val actions = models.mapIndexed { index, model ->
       val addBorder = index < models.size - 1
       when (model) {
-        is ComboBoxInfoPanelModel -> ComboBoxInfoPanelAction(model, addBorder, contentProvider.isThemeChooserPopupEnabled)
+        is ComboBoxInfoPanelModel -> ComboBoxInfoPanelAction(model, addBorder, contentProvider)
 
         is ButtonInfoPanelModel -> ButtonInfoPanelAction(model, project, coroutineScope, addBorder)
       }
@@ -698,7 +698,7 @@ private class ButtonInfoPanelModel(private val model: WelcomeRightTabContentProv
 private class ComboBoxInfoPanelAction(
   private val comboModel: ComboBoxInfoPanelModel,
   private val addBorder: Boolean,
-  private val isThemeChooserPopupEnabled: Boolean,
+  private val contentProvider: WelcomeRightTabContentProvider,
 ) : ExpandableComboAction(), DumbAware {
 
   private val model = comboModel.model
@@ -729,8 +729,8 @@ private class ComboBoxInfoPanelAction(
   @Suppress("SplitModeApiUsage")
   override fun createPopup(event: AnActionEvent): JBPopup {
     val owner = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? JComponent
-    if (model is ThemeModel && isThemeChooserPopupEnabled && owner != null) {
-      return WelcomeScreenThemeChooserPopup(model).createPopup(owner, null)
+    if (model is ThemeModel && contentProvider.isThemeChooserPopupEnabled && owner != null) {
+      return WelcomeScreenThemeChooserPopup(model, contentProvider.getThemePreviewSample()).createPopup(owner, null)
     }
 
     val step = object : BaseListPopupStep<String>(null, model.itemNames()) {

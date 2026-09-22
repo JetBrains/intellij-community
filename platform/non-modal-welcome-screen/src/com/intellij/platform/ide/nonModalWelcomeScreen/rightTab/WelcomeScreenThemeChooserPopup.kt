@@ -3,11 +3,20 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafReference
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenComboBoxKind
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector
@@ -30,6 +39,9 @@ private const val PREVIEW_THROTTLING_MS = 500
 
 private const val VISIBLE_ROW_COUNT = 12
 
+private const val PREVIEW_WIDTH = 420
+private const val PREVIEW_HEIGHT = 260
+
 /**
  * Theme chooser for the welcome screen's Theme control: a list that previews the highlighted theme, with a
  * Light/Dark switch in its header.
@@ -41,7 +53,10 @@ private const val VISIBLE_ROW_COUNT = 12
  * - a `ListPopupImpl` has no slot for an interactive header — its caption is forced to zero height when the
  *   step has no title, and the header slot is taken by speed search.
  */
-internal class WelcomeScreenThemeChooserPopup(private val model: ThemeModel) {
+internal class WelcomeScreenThemeChooserPopup(
+  private val model: ThemeModel,
+  private val previewSample: WelcomeRightTabContentProvider.ThemePreviewSample?,
+) {
   /**
    * Builds the popup; the caller shows it. [onDispose] comes from the trigger button and releases its
    * pressed state, so it has to run on every close path.
@@ -83,11 +98,14 @@ internal class WelcomeScreenThemeChooserPopup(private val model: ThemeModel) {
     // PopupChooserBuilder rather than a hand-assembled component popup: it brings the platform's own
     // list-popup behaviour, including selection following the mouse and choosing on click or Enter, and it
     // is the only builder with a north slot for the brightness switch.
+    val popupDisposable = Disposer.newDisposable("WelcomeScreenThemeChooserPopup")
+
     val builder = PopupChooserBuilder(list)
     // The renderer the Appearance settings combobox uses, so rows match the platform's theme popup:
     // names, a Beta badge and restart hint where a theme needs one, and group separators.
     builder.setRenderer(LafManager.getInstance().getLookAndFeelCellRenderer(list))
     builder.setNorthComponent(createBrightnessSwitch(listModel, list))
+    previewSample?.let { builder.setEastComponent(createCodePreview(it, popupDisposable)) }
     builder.setAutoselectOnMouseMove(true)
     builder.setRequestFocus(true)
     builder.setCancelOnClickOutside(true)
@@ -104,6 +122,7 @@ internal class WelcomeScreenThemeChooserPopup(private val model: ThemeModel) {
     })
 
     val popup = builder.createPopup()
+    Disposer.register(popup, popupDisposable)
 
     popup.addListener(object : JBPopupListener {
       override fun onClosed(event: LightweightWindowEvent) {
@@ -116,6 +135,53 @@ internal class WelcomeScreenThemeChooserPopup(private val model: ThemeModel) {
     })
 
     return popup
+  }
+
+  /**
+   * Read-only editor beside the list. It needs no project and no backend: the highlighter comes from the
+   * file type alone, so it is lexer-based.
+   *
+   * The editor follows [EditorColorsManager.TOPIC] rather than being redrawn by the chooser, because a
+   * preview applies the theme for real and that is what changes the global scheme.
+   */
+  private fun createCodePreview(sample: WelcomeRightTabContentProvider.ThemePreviewSample, parent: Disposable): JComponent {
+    val editorFactory = EditorFactory.getInstance()
+    val document = editorFactory.createDocument(sample.text)
+    val editor = editorFactory.createViewer(document, null, EditorKind.PREVIEW) as EditorEx
+    Disposer.register(parent) { editorFactory.releaseEditor(editor) }
+
+    editor.setCaretEnabled(false)
+    // Soft wraps keep every line inside the narrow preview, so nothing is lost off the right edge. The
+    // vertical scrollbar then reaches the rest of the sample, which wrapping makes taller.
+    editor.setHorizontalScrollbarVisible(false)
+    editor.setVerticalScrollbarVisible(true)
+    editor.settings.apply {
+      isUseSoftWraps = true
+      isPaintSoftWraps = false
+      isLineNumbersShown = false
+      isLineMarkerAreaShown = false
+      isFoldingOutlineShown = false
+      isRightMarginShown = false
+      isCaretRowShown = false
+      isIndentGuidesShown = false
+      additionalLinesCount = 0
+      additionalColumnsCount = 0
+    }
+
+    fun applyGlobalScheme() {
+      val scheme = EditorColorsManager.getInstance().globalScheme
+      editor.colorsScheme = scheme
+      editor.highlighter = EditorHighlighterFactory.getInstance()
+        .createEditorHighlighter(scheme, sample.fileName, null)
+      editor.backgroundColor = scheme.defaultBackground
+    }
+
+    applyGlobalScheme()
+    ApplicationManager.getApplication().messageBus.connect(parent)
+      .subscribe(EditorColorsManager.TOPIC, EditorColorsListener { applyGlobalScheme() })
+
+    editor.component.preferredSize = Dimension(JBUI.scale(PREVIEW_WIDTH), JBUI.scale(PREVIEW_HEIGHT))
+    return editor.component
   }
 
   /**
