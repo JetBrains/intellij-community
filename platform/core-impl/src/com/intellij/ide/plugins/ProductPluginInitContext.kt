@@ -508,6 +508,7 @@ private val externalNonBundledPluginCompatibilityDependencies = listOf(
  * plugin alias for compatibility.
  */
 private val vcsApiContentModules = arrayOf(
+  "intellij.platform.vcs",
   "intellij.platform.vcs.impl",
   "intellij.platform.vcs.dvcs",
   "intellij.platform.vcs.dvcs.impl",
