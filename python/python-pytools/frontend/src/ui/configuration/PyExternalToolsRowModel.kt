@@ -102,6 +102,13 @@ internal class ToolRow(
   var minimumSupportedVersion: Version? = null,
   var descriptor: PyToolDescriptorDto = PyToolDescriptorDto(),
   var configuration: PyToolConfigurationDto? = null,
+  /**
+   * True once a backend answer has told this row which features the tool has selected, even an answer that
+   * carries no configuration. [configuration] alone cannot say: `null` means both "this tool has none" and
+   * "nobody has asked yet", and the latter must not paint the "select features" hint over a tool whose
+   * persisted features are perfectly fine.
+   */
+  var configurationLoaded: Boolean = false,
   var selectedAsTypeEngine: Boolean = false,
 ) {
   val detailConfigurableProvider: ExternalPyTool<*>? = tool as? ExternalPyTool<*>
@@ -273,15 +280,21 @@ internal fun ToolRow.applyBackendState(
   updateStagedPath: Boolean = false,
   updateStagedEnabled: Boolean = false,
 ) {
+  // A state takes seconds to arrive — it waits for the tool listing and the executable detection — so the
+  // user may have edited the row while it was in flight. Take the backend value into [staged] only while
+  // the field still holds the baseline this answer is about to replace; an edited field keeps the edit, and
+  // only its baseline moves, which is what makes the edit modified and carries it to Apply.
+  val enabledUntouched = staged.enabled == persistedEnabled
+  val pathUntouched = staged.customPath == persistedCustomPath
   persistedEnabled = state.enabled
-  if (updateStagedEnabled) staged = staged.copy(enabled = state.enabled)
+  if (updateStagedEnabled && enabledUntouched) staged = staged.copy(enabled = state.enabled)
   val path = state.path
   val customPath = when (path?.kind) {
     PyToolPathKind.CUSTOM -> path.value
     PyToolPathKind.DETECTED, null -> null
   }
   persistedCustomPath = customPath
-  if (updateStagedPath) staged = staged.copy(customPath = customPath)
+  if (updateStagedPath && pathUntouched) staged = staged.copy(customPath = customPath)
   pathFieldValue = when (path?.kind) {
     PyToolPathKind.CUSTOM -> PathFieldValue.Custom(path.value)
     PyToolPathKind.DETECTED -> PathFieldValue.AutoDetected(path.value)
@@ -309,6 +322,7 @@ internal fun ToolRow.applyBackendState(
   canInstall = state.canInstall
   latestVersion = state.latestVersion?.let(Version::parseVersion)
   configuration = state.configuration
+  configurationLoaded = true
   selectedAsTypeEngine = state.selectedAsTypeEngine
 }
 

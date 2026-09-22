@@ -210,7 +210,11 @@ internal class PyExternalToolRowPanel(
       checkBoxes.isNotEmpty() -> checkBoxes.filter { it.isSelected }.joinToString(", ") { it.text }.ifBlank { null }
       else -> row.detailConfigurableProvider?.summaryFor(project, row.configuration)?.takeIf { it.isNotBlank() }
     }
-    val noFeatures = row.staged.enabled && options == null
+    // Whether this row knows what its features are. An expanded row's live checkboxes answer for
+    // themselves; a collapsed one has to have been told. Without the guard, the hint claimed that a tool
+    // had no features selected while its configuration was still on its way from the backend.
+    val featuresKnown = checkBoxes.isNotEmpty() || row.configurationLoaded
+    val noFeatures = row.staged.enabled && options == null && featuresKnown
     summaryLabel.text = when {
       options != null -> options
       noFeatures -> PyToolsUiBundle.message("settings.external.tools.column.no.features")

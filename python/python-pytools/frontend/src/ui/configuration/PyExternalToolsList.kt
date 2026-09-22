@@ -74,11 +74,23 @@ internal class PyExternalToolsList(
 
   private val persistedPaths = mutableMapOf<PyToolId, String?>()
 
-  /** Source-of-truth row list, materialised once from the [PyTool] extension point. */
+  private val enabledStates = PyToolsFrontendState.getInstance(project)
+
+  /**
+   * Source-of-truth row list, materialised once from the [PyTool] extension point.
+   *
+   * The enable flag is seeded from [PyToolsFrontendState], a synchronous mirror of the backend state, so a
+   * row paints its real toggle on the first frame. A hardcoded `false` showed every enabled tool as off
+   * until the seconds-long [loadState] answered. The seed goes into the staged state *and* the persisted
+   * baseline, so a seeded row is not modified and Apply sends no `setEnabled` for it.
+   */
   private val rows: List<ToolRow> = PyTool.extensionList
     .filterIsInstance<ExternalPyTool<*>>()
     .sortedBy { it.presentableName.lowercase() }
-    .map { ToolRow(it, RowState(enabled = false, customPath = null)) }
+    .map { tool ->
+      val enabled = enabledStates.isEnabled(tool.toolId)
+      ToolRow(tool, RowState(enabled = enabled, customPath = null), persistedEnabled = enabled)
+    }
 
   private val rowPanels: Map<ToolRow, PyExternalToolRowPanel> =
     rows.associateWith { PyExternalToolRowPanel(it, this) }
@@ -213,6 +225,7 @@ internal class PyExternalToolsList(
     // needs the tool listing and, for a path the listing does not cover, a `--version` run.
     rows.forEach { row ->
       scope.launch { loadPath(row) }
+      scope.launch { loadConfiguration(row) }
       scope.launch { loadState(row) }
     }
     scope.launch { probeAllSdks() }
@@ -228,13 +241,35 @@ internal class PyExternalToolsList(
     refreshRow(row)
   }
 
+  /**
+   * Fill the row's feature configuration, which the header summary reads.
+   *
+   * Asked for on its own because it is cheap — a settings read on the backend — while a full state also
+   * needs the tool listing and the executable detection. Without it an enabled tool's features stayed
+   * unnamed, and the header claimed none were selected, for as long as the state took.
+   */
+  private suspend fun loadConfiguration(row: ToolRow) {
+    // A tool that reports no configuration leaves the row uninformed on purpose: the state settles it, and
+    // until then the header says nothing rather than claiming the tool has no features selected.
+    row.configuration = PyToolApi.getInstance().getConfiguration(
+      PyToolRequest(project.projectId(), row.tool.toolId),
+    ) ?: return
+    row.configurationLoaded = true
+    refreshRow(row)
+  }
+
   private suspend fun loadState(row: ToolRow) {
     val state = PyToolApi.getInstance().getStates(
       PyToolsRequest(project.projectId(), listOf(row.tool.toolId)),
     ).singleOrNull()
     if (state != null) {
+      // Read the baseline before applying the state, which moves it. Staging the type engine's tool on is a
+      // default, not a correction, so it may only speak for a toggle the user has left alone.
+      val enabledUntouched = row.staged.enabled == snapshotOf(row).enabled
       row.applyBackendState(state, updateStagedPath = true, updateStagedEnabled = true)
-      if (!row.staged.enabled && isEngineFor(row.tool)) row.staged = row.staged.copy(enabled = true)
+      if (enabledUntouched && !row.staged.enabled && isEngineFor(row.tool)) {
+        row.staged = row.staged.copy(enabled = true)
+      }
       persistedPaths[row.tool.toolId] = row.persistedCustomPath
     }
     refreshRow(row)
@@ -319,9 +354,7 @@ internal class PyExternalToolsList(
       )
     }
     row.applyBackendState(backendState)
-    PyToolsFrontendState.getInstance(project).apply(
-      PyToolEnabledStateDto(backendState.toolId, backendState.enabled),
-    )
+    enabledStates.apply(PyToolEnabledStateDto(backendState.toolId, backendState.enabled))
   }
 
   /** Revert all rows' staged state to the persisted snapshot and reset any open detail configurables. */
