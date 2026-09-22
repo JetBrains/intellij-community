@@ -105,7 +105,7 @@ object GrazieRemote {
     Files.walk(path).use { files ->
       files
         .filter { Files.isRegularFile(it) }
-        .sorted()
+        .sorted(compareBy { path.relativize(it).joinToString("/") })
         .forEach { file -> updateDigest(file, digest) }
     }
     return DigestUtil.digestToHash(digest)
