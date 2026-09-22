@@ -63,14 +63,16 @@ object JsonElementFactory {
     override fun createNode(text: CharSequence?): ASTNode = createNode(text)
 
     override fun isReparseable(currentNode: ASTNode, newText: CharSequence, fileLanguage: Language, project: Project): Boolean {
-      val lexer = findLexer(fileLanguage)
+      val lexer = findLexer(jsonDialectOf(currentNode.psi, fileLanguage))
       val cancellationProvider = CancellationProvider { ProgressManager.checkCanceled() }
       val tokenList = performLexing(newText, lexer, cancellationProvider, thisLogger().asSyntaxLogger())
       return isReparseable(tokenList, cancellationProvider)
     }
 
+    override fun getLanguageForParser(psi: PsiElement): Language = jsonDialectOf(psi, JsonLanguage.INSTANCE)
+
     override fun doParseContents(chameleon: ASTNode, psi: PsiElement): ASTNode? {
-      val language = psi.containingFile.language // json or json5
+      val language = getLanguageForParser(psi)
       val lexer = findLexer(language)
       val syntaxBuilder = PsiSyntaxBuilderFactory.getInstance().createBuilder(chameleon, lexer, language, chameleon.getChars())
       val builder = syntaxBuilder.getSyntaxTreeBuilder()
@@ -81,6 +83,19 @@ object JsonElementFactory {
       }
     }
   }
+
+  /**
+   * Returns the JSON dialect to lex and to parse with.
+   *
+   * A host language embeds a JSON fragment. The fragment then reports the language of the host file.
+   * That language is no JSON dialect, so use plain JSON for it.
+   *
+   * @param psi the element to take the dialect from, or null if the tree has no PSI yet
+   * @param fallback the language to use if [psi] is null
+   */
+  private fun jsonDialectOf(psi: PsiElement?, fallback: Language): Language =
+    if (psi != null) JsonDialectUtil.getLanguageOrDefaultJson(psi)
+    else fallback as? JsonLanguage ?: JsonLanguage.INSTANCE
 
   private fun findLexer(fileLanguage: Language): Lexer {
     val definition = LanguageSyntaxDefinitions.INSTANCE.forLanguage(fileLanguage) ?: run {

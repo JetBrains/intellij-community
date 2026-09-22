@@ -1,18 +1,27 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json
 
+import com.intellij.json.json5.Json5Language
 import com.intellij.json.psi.JsonArray
 import com.intellij.json.psi.JsonFile
 import com.intellij.json.psi.JsonObject
 import com.intellij.json.psi.JsonProperty
+import com.intellij.json.syntax.JsonLazyParsing
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileTypes.PlainTextLanguage
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.tree.IReparseableElementType
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -20,7 +29,12 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.junit5.fixture.virtualFileFixture
+import java.util.concurrent.CopyOnWriteArrayList
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -32,6 +46,7 @@ internal class JsonReparseTest {
   }
 
   val file by root.virtualFileFixture("foo.json", "")
+  val json5File by root.virtualFileFixture("foo.json5", "")
   val project get() = p.get()
 
   @Test
@@ -307,17 +322,83 @@ internal class JsonReparseTest {
     )
   }
 
-  private suspend fun checkReparse(text: String, insertion: String) {
+  // IJPL-256275: a host language can embed a JSON fragment. The fragment then reports the language
+  // of the host file, which is no JSON dialect.
+
+  @Test
+  fun testHostFileLanguageLogsNoError() = timeoutRunBlocking {
+    assumeTrue(JsonLazyParsing, "The test needs the lazy OBJECT element type")
+
+    edtWriteAction {
+      file.setBinaryContent("{\"a\": 1}".toByteArray())
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+    }
+
+    val objectNode = readAction {
+      val psiFile = PsiManager.getInstance(project).findFile(file)!! as JsonFile
+      (psiFile.topLevelValue as JsonObject).node
+    }
+    val elementType = objectNode.elementType as IReparseableElementType
+
+    val loggedErrors = CopyOnWriteArrayList<String>()
+    LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
+        // The processor is global. Keep only the error under test.
+        if (message.contains("No syntax definition found")) {
+          loggedErrors.add(message)
+        }
+        return Action.NONE
+      }
+    }) {
+      runReadActionBlocking {
+        assertTrue(elementType.isReparseable(objectNode, "{\"a\": 2}", PlainTextLanguage.INSTANCE, project))
+      }
+    }
+
+    assertEquals(emptyList<String>(), loggedErrors)
+  }
+
+  @Test
+  fun testReparseJson5() = timeoutRunBlocking {
+    assumeTrue(JsonLazyParsing, "The test needs the lazy OBJECT element type")
+
+    // A hexadecimal number is JSON5 only. A plain JSON lexer turns it into an error.
+    checkReparse("{a: 0xFF<caret>}", ", b: 0x10", json5File)
+    assertNoErrors(json5File)
+
+    // The plain JSON parser turns "0xFF" into an error, so the tree shows which dialect parsed it.
+    // The reparse check looks at the brace balance only, so it needs a different JSON5 construct.
+    // A line continuation in a string is JSON5 only. A plain JSON lexer ends the string at the line
+    // end. It then counts the "}" on the next line as a brace, and finds the block unbalanced.
+    val objectNode = readAction {
+      val psiFile = PsiManager.getInstance(project).findFile(json5File)!! as JsonFile
+      (psiFile.topLevelValue as JsonObject).node
+    }
+    val elementType = objectNode.elementType as IReparseableElementType
+    readAction {
+      assertTrue(elementType.isReparseable(objectNode, "{a: \"x\\\n}y\"}", Json5Language.INSTANCE, project))
+    }
+  }
+
+  private suspend fun assertNoErrors(target: VirtualFile) {
+    readAction {
+      val psiFile: PsiFile = PsiManager.getInstance(project).findFile(target)!!
+      val error = PsiTreeUtil.findChildOfType(psiFile, PsiErrorElement::class.java)
+      assertNull(error, "Unexpected parse error: ${error?.errorDescription}")
+    }
+  }
+
+  private suspend fun checkReparse(text: String, insertion: String, target: VirtualFile = file) {
     val textWithMarkup = text.trimIndent()
     val (cleanText, startOffset, endOffset) = extractMarkup(textWithMarkup)
 
     edtWriteAction {
-      file.setBinaryContent(cleanText.toByteArray())
+      target.setBinaryContent(cleanText.toByteArray())
       PsiDocumentManager.getInstance(project).commitAllDocuments()
     }
 
-    val document = readAction { FileDocumentManager.getInstance().getDocument(file)!! }
-    val psiFile = readAction { PsiManager.getInstance(project).findFile(file)!! }
+    val document = readAction { FileDocumentManager.getInstance().getDocument(target)!! }
+    val psiFile = readAction { PsiManager.getInstance(project).findFile(target)!! }
 
     readAction {
       PsiTestUtil.checkFileStructure(psiFile)
