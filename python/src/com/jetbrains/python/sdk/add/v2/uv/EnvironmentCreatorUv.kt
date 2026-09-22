@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.pyproject.PY_PROJECT_TOML
@@ -60,6 +61,15 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Path
 
 /**
+ * The `major.minor` head of a version as uv prints it. Taken as a prefix rather than parsed, because a pre-release
+ * (`3.15.0b4`) is not a dotted triple and the combo shows the language level anyway.
+ */
+private val LANGUAGE_LEVEL_PREFIX: Regex = Regex("""^\d+\.\d+""")
+
+/** The granularity uv's `--python` resolves at, and the granularity the version combo shows: `3.14`. */
+private fun Version.languageLevel(): @NlsSafe String = "$major.$minor"
+
+/**
  * Creates a UV environment creator for the given model.
  *
  * @param module The module context for environment creation. Can be null when creating an interpreter
@@ -94,6 +104,14 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
   private val venvAlreadyExistsError = propertyGraph.property<VenvAlreadyExistsError<P>?>(null)
   private val loading = AtomicBooleanProperty(false)
 
+  /**
+   * The language level uv reported it would pick, marked as the default in [versionComboBox] and pre-selected there, or
+   * null while that is unknown. Written from the flow in [onShown] before the items are added, and read by the cell
+   * renderer on the EDT, hence volatile.
+   */
+  @Volatile
+  private var defaultLanguageLevel: String? = null
+
   init {
     model.uvViewModel.uvExecutable.afterChange {
       executableFlow.value = it
@@ -119,8 +137,15 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
       row(message("sdk.create.python.version")) {
-        versionComboBox = comboBox(listOf<Version?>(null), textListCellRenderer {
-          it?.let { "${it.major}.${it.minor}" } ?: message("python.sdk.uv.default.version")
+        // One row per version, with uv's own pick marked rather than offered a second time as a separate "Default"
+        // item: the two read as different options while producing the same environment. The marker is dropped when uv
+        // could not say which version it would pick — an unmarked list is honest, a wrongly marked row is not.
+        versionComboBox = comboBox(emptyList<Version?>(), textListCellRenderer("") { version ->
+          val languageLevel = version.languageLevel()
+          when (languageLevel) {
+            defaultLanguageLevel -> message("python.sdk.uv.version.default.marker", languageLevel)
+            else -> languageLevel
+          }
         })
           .bindItem(pythonVersion)
           .enabledIf(loading.not())
@@ -176,8 +201,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
         model.uvViewModel.uvVenvValidator.autodetectFolder()
 
         versionComboBox.removeAllItems()
-        versionComboBox.addItem(null)
-        versionComboBox.selectedItem = null
+        defaultLanguageLevel = null
 
         if (executable?.validationResult?.successOrNull == null) {
           return@onEach
@@ -198,9 +222,23 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
               .getOr { return@withContext emptyList() }
           }
 
+          // Resolved before the items are added so the renderer already knows which row to mark on its first paint.
+          defaultLanguageLevel = executable.pathHolder?.let { uvExecutable ->
+            withContext(Dispatchers.IO) { resolveDefaultLanguageLevel(uvExecutable, projectPath) }
+          }
+
           pythonVersions.forEach {
             versionComboBox.addItem(it)
           }
+          // uv's own pick, so that leaving the combo alone builds the environment uv would have built anyway. It is
+          // routinely not the newest offered: a `.python-version` or a `requires-python` bound moves it, and even
+          // within a satisfied range uv follows its own preference order rather than taking the highest.
+          //
+          // Where uv could not answer at all, the newest supported version is a deliberate choice and not a guess at
+          // uv's — deterministic, visible in the combo, and the user's to change. Taken by comparison rather than as
+          // the head of the list, which would rest on uv listing newest first.
+          versionComboBox.selectedItem = pythonVersions.firstOrNull { it.languageLevel() == defaultLanguageLevel }
+                                         ?: pythonVersions.maxOrNull()
         }
         finally {
           loading.set(false)
@@ -208,6 +246,28 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
       }
       .launchIn(scope)
 
+  }
+
+  /**
+   * Asks uv which interpreter it would use for [projectPath], as the language level it reports, or null when it cannot
+   * say — no interpreter satisfies the project's `requires-python`, or uv failed outright.
+   *
+   * Run from [projectPath] itself, or from the deepest directory above it that exists: uv walks up for
+   * `.python-version` and for a `pyproject.toml` whose `requires-python` narrows the choice, so an ancestor of a
+   * project directory yet to be created answers as that directory will once it is created there.
+   *
+   * `system = true` is what makes this a prediction rather than a report. Without it uv answers with the interpreter of
+   * the `.venv` already in the directory, while the environment this dialog goes on to build is created by
+   * `uv venv --clear`, which ignores that venv and takes uv's default instead.
+   */
+  private suspend fun resolveDefaultLanguageLevel(uvExecutable: P, projectPath: Path): String? {
+    val workingDir = generateSequence(projectPath) { it.parent }.firstOrNull { candidate ->
+      model.fileSystem.parsePath(candidate.toString()).successOrNull?.let { model.fileSystem.fileExists(it) } == true
+    } ?: return null
+
+    val runtime = PyToolRuntime(model.fileSystem.getBinaryToExec(uvExecutable, workingDir), ExecOptions())
+    val reported = runtime.uvCli().python().find(showVersion = true, system = true).successOrNull ?: return null
+    return LANGUAGE_LEVEL_PREFIX.find(reported)?.value
   }
 
   override fun onVenvSelectExisting() {

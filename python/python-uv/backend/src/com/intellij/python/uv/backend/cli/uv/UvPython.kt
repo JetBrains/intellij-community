@@ -130,9 +130,27 @@ class UvPython(runtime: PyToolRuntime) : UvCommand("python", runtime) {
   suspend fun upgrade(): PyResult<Unit> = TODO()
 
   /**
-   * Search for a Python installation
+   * Search for a Python installation, reporting the interpreter uv would use — its path, or with [showVersion] the
+   * version instead.
+   *
+   * uv answers from the working directory: it walks up for `.python-version` and for a `pyproject.toml` whose
+   * `requires-python` narrows the choice, so the directory this runs in is part of the question.
+   *
+   * @param request uv's own version request (`3.12`, `>=3.10,<3.13`, `pypy@3.11`). uv reports whichever interpreter it
+   *   defaults to when none is named.
+   * @param showVersion report the version rather than the path to the binary.
+   * @param system ignore the virtual environment of the working directory and answer from the interpreters uv installs
+   *   from. Needed to predict a *new* environment: uv would otherwise report the Python of the `.venv` already there,
+   *   while `uv venv --clear` builds the replacement on uv's default.
    */
-  suspend fun find(): PyResult<String> = TODO()
+  suspend fun find(request: String? = null, showVersion: Boolean? = null, system: Boolean? = null): PyResult<String> {
+    val arguments = buildList {
+      add("find")
+      request?.let { add(it) }
+      addAll(listOf(showVersion to "--show-version", system to "--system").makeOptions())
+    }
+    return executeAndHandleErrors(*arguments.toTypedArray(), transformer = ZeroCodeStdoutTransformer)
+  }
 
   /**
    * Pin to a specific Python version
