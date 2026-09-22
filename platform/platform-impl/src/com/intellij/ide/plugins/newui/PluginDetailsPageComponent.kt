@@ -1026,13 +1026,14 @@ class PluginDetailsPageComponent private constructor(
       try {
         val loadedItems = withContext(Dispatchers.IO) {
           UiPluginManager.getInstance().getAllPluginUpdateSources()
-            .filter { it.isMarketplace || it.host.isNotBlank() }
+            .filter { it.getPresentableName().isNotBlank() }
             .sortedWith { first, second ->
-              when {
-                first.isMarketplace && second.isMarketplace -> 0
-                first.isMarketplace -> -1
-                second.isMarketplace -> 1
-                else -> first.host.compareTo(second.host)
+              val priorityDiff = first.semanticPriority.compareTo(second.semanticPriority)
+              if (priorityDiff != 0) {
+                -1 * priorityDiff
+              }
+              else {
+                first.getPresentableName().compareTo(second.getPresentableName())
               }
             }
         }

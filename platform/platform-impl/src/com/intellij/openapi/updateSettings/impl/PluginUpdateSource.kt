@@ -16,6 +16,14 @@ sealed interface PluginUpdateSource {
   val isMarketplace: Boolean
 
   /**
+   * When sorting from most useful sources, use this field
+   * The more it is, the more important this source is
+   *
+   * For example,`Marketplace` is more important than a custom repository
+   */
+  val semanticPriority: Int
+
+  /**
    * This check is symmetrical, but not transitive.
    *
    * @return if a plugin with this update source may have updates from [other] update source

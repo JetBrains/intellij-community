@@ -177,6 +177,14 @@ private data class Repository(
       else -> false
     }
   }
+
+  override val semanticPriority: Int
+    get() {
+      var priority = 0
+      if (isMarketplace) priority += 2
+      if (isNightlyRepository) priority += 1
+      return priority
+    }
 }
 
 @Tag("updateSource")
