@@ -10,13 +10,14 @@ import org.jetbrains.intellij.build.dependencies.archiveCacheKey
 import org.jetbrains.intellij.build.dependencies.extractToCacheLocation
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
+import org.jetbrains.intellij.build.impl.SupportedDistribution
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.resolveFileForReading
 import java.nio.file.Files
 import java.nio.file.Path
 
-internal const val PYREFLY_BUNDLE_ENABLED_PROPERTY: String = "pyrefly.bundle"
+const val PYREFLY_BUNDLE_ENABLED_PROPERTY: String = "pyrefly.bundle"
 
 private const val PYREFLY_VERSION_PROPERTY: String = "pyreflyBuild"
 
@@ -42,7 +43,15 @@ fun PluginLayout.PluginLayoutSpec.withBundledPyrefly() {
   }
 }
 
-internal fun isPyreflyBundlingEnabled(): Boolean = System.getProperty(PYREFLY_BUNDLE_ENABLED_PROPERTY).toBoolean()
+fun PluginLayout.PluginLayoutSpec.withPublishedPyrefly(dist: SupportedDistribution) {
+  val (os, arch, _) = dist
+  withGeneratedResources { targetDir, context ->
+    copyPyreflyLicenseReport(targetDir, context)
+    copyPyreflyBinary(targetDir, context, os, arch)
+  }
+}
+
+fun isPyreflyBundlingEnabled(): Boolean = System.getProperty(PYREFLY_BUNDLE_ENABLED_PROPERTY).toBoolean()
 
 private fun copyPyreflyLicenseReport(targetDir: Path, context: BuildContext) {
   val licenseDir = downloadPyrefly(context, PYREFLY_LICENSE_ARTIFACT_ID).resolve("license")
