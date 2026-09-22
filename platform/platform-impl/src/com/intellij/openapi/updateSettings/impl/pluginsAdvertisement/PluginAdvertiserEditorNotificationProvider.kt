@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.pluginRequiresUltimatePluginButItsDisabled
+import com.intellij.ide.trustedProjects.TrustedFiles
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -60,6 +61,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
 
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (!TrustedProjects.isProjectTrusted(project)) return null
+    if (!TrustedFiles.isTrusted(file, project)) return null
 
     if (application.isHeadlessEnvironment || tryUltimateIsDisabled()) {
       return null
