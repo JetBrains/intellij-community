@@ -5858,13 +5858,6 @@ c:com.intellij.ui.FontInfoRenderer
 - p:customizeCellRenderer(javax.swing.JList,java.lang.Object,I,Z,Z):V
 - getPreferredSize():java.awt.Dimension
 - p:isEditorFont():Z
-f:com.intellij.ui.GotItMessage
-- s:createMessage(java.lang.String,java.lang.String):com.intellij.ui.GotItMessage
-- setDisposable(com.intellij.openapi.Disposable):com.intellij.ui.GotItMessage
-- setHyperlinkListener(javax.swing.event.HyperlinkListener):com.intellij.ui.GotItMessage
-- setShowCallout(Z):com.intellij.ui.GotItMessage
-- show(com.intellij.ui.awt.RelativePoint,com.intellij.openapi.ui.popup.Balloon$Position):V
-- show(com.intellij.util.ui.PositionTracker,com.intellij.openapi.ui.popup.Balloon$Position):V
 f:com.intellij.ui.GotItTooltip
 - sf:BOTTOM_LEFT:kotlin.jvm.functions.Function2
 - sf:BOTTOM_MIDDLE:kotlin.jvm.functions.Function2

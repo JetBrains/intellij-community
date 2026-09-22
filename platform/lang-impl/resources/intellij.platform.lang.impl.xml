@@ -504,6 +504,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <statistics.gotItTooltipAllowlist prefix="rerun.tests"/>
     <directorySearchEngine implementation="com.intellij.find.impl.DefaultDirectorySearchEngine"/>
 
     <directorySearchEngine implementation="com.intellij.find.impl.EelDirectorySearchEngine"/>
