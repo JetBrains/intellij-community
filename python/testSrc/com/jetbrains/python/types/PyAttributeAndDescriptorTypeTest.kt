@@ -1953,6 +1953,64 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
       a.attr += "s" # WARNING Expected type 'int', got 'Literal["s"]' instead
       a.attr += C() # WARNING Expected type 'int' (from '__set__'), got 'str' instead
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-91904"])
+    fun `parameter shadows a module level submodule of the same name`() {
+      addPackageWithSubmoduleShadowedByParameter()
+      test("""
+        from pkg import Updates
+
+        def a(u: Updates):
+            expr = u.updates
+        #          ^^^^^^^^^ TYPE list[Update]
+            expr2 = u.updates[0]
+        #           ^^^^^^^^^^^^ TYPE Update
+        """.trimIndent())
+    }
+
+    @Test
+    @TestFor(issues = ["PY-91904"])
+    fun `module level submodule stays reachable through its package`() {
+      addPackageWithSubmoduleShadowedByParameter()
+      myFixture.addFileToProject("mod.py", """
+        from pkg import updates
+
+        class Updates2:
+            updates = updates
+      """.trimIndent())
+      test("""
+        from mod import Updates2
+
+        def f(x: Updates2):
+            expr = x.updates.State(1)
+        #          ^^^^^^^^^^^^^^^^^^ TYPE State
+        """.trimIndent())
+    }
+
+    /**
+     * Mirrors `telethon/tl/types/__init__.py`, which imports a submodule named `updates` and also declares
+     * `Updates.__init__(self, updates: List['TypeUpdate'])` assigning `self.updates = updates`.
+     */
+    private fun addPackageWithSubmoduleShadowedByParameter() {
+      myFixture.addFileToProject("pkg/updates.py", """
+        class State:
+            def __init__(self, pts: int):
+                self.pts = pts
+      """.trimIndent())
+      myFixture.addFileToProject("pkg/__init__.py", """
+        from typing import List
+        from . import updates
+
+        class Update:
+            def __init__(self, pts: int):
+                self.pts = pts
+
+        class Updates:
+            def __init__(self, updates: List['Update']):
+                self.updates = updates
+      """.trimIndent())
+    }
   }
 
   @Nested

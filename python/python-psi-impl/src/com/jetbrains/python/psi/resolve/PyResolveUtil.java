@@ -55,6 +55,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyGlobalStatement;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyNonlocalStatement;
+import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyPossibleClassMember;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
@@ -342,7 +343,11 @@ public final class PyResolveUtil {
     // class SQLAlchemy:
     //    Model: Model  # Model in the type hints resolves to its own target expression
     while (curScope != null) {
-      unqualifiedResults.addAll(resolveShortNameInSingleScope(curScope, firstName, resolveContext));
+      final List<? extends RatedResolveResult> scopeResults = resolveShortNameInSingleScope(curScope, firstName, resolveContext);
+      unqualifiedResults.addAll(scopeResults);
+      // A parameter binds its name for the whole body and can be neither `global` nor `nonlocal`, so unlike the
+      // flow-insensitive cases above it shadows every enclosing scope and a module-level namesake must not join in.
+      if (ContainerUtil.exists(scopeResults, it -> it.getElement() instanceof PyParameter)) break;
       curScope = ScopeUtil.getScopeOwner(curScope);
     }
 
