@@ -80,7 +80,8 @@ private fun WorkspaceFileIndexEx.isExcludedOrInvalid(file: VirtualFile): Boolean
   }
 }
 
-private enum class SubtreeProcessingMode(val shouldProcessRoot: Boolean, val shouldProcessChildren: Boolean) {
+@ApiStatus.Internal
+enum class SubtreeProcessingMode(val shouldProcessRoot: Boolean, val shouldProcessChildren: Boolean) {
   NONE(false, false),
   ROOT_ONLY(true, false),
   CHILDREN_ONLY(false, true),
@@ -138,19 +139,33 @@ private fun WorkspaceFileIndexEx.iterateNonIndexableFilesImpl(
 }
 
 /**
- * A file traversal that supports concurrent calls to [expand].
+ * A file traversal that supports concurrent item expansion.
  *
- * The caller owns the file queue. Add [roots] to the queue before the traversal starts.
+ * The caller owns the item queue. Add [roots] to the queue before the traversal starts.
  */
 @ApiStatus.Internal
 interface ConcurrentFileTraversal {
   /**
-   * Adds the child files to [consumer].
-   *
-   * @return `true` when the caller must process [file].
-  */
-  fun expand(file: VirtualFile, consumer: (List<VirtualFile>) -> Unit): Boolean
-  val roots: Collection<VirtualFile>
+   * Do not use the same item from multiple threads at the same time.
+   * Different items from one traversal support concurrent use.
+   */
+  interface TraversalItem {
+    val file: VirtualFile
+
+    /**
+     * Returns the processing mode for [file]. The method computes the mode once and returns the same value for each call.
+     */
+    fun getSubtreeProcessingMode(): SubtreeProcessingMode
+
+    /**
+     * Adds the child items to [consumer].
+     *
+     * @return `true` when the caller must process [file].
+     */
+    fun expand(consumer: (List<TraversalItem>) -> Unit): Boolean
+  }
+
+  val roots: Collection<TraversalItem>
 
   companion object {
 
@@ -209,19 +224,19 @@ interface FilesDeque {
 }
 
 private class FilesDequeImpl(
-  private val traversal: ConcurrentFileTraversal,
+  traversal: ConcurrentFileTraversal,
 ) : FilesDeque {
   private val bfsQueue = ArrayDeque(traversal.roots)
 
   override fun computeNext(): VirtualFile? {
     while (bfsQueue.isNotEmpty()) {
-      val file = bfsQueue.removeFirst()
+      val item = bfsQueue.removeFirst()
 
       ProgressManager.checkCanceled()
-      val shouldProcessRoot = traversal.expand(file, bfsQueue::addAll)
+      val shouldProcessRoot = item.expand(bfsQueue::addAll)
       if (!shouldProcessRoot) continue // skip only the current file, children can pass the filter
 
-      return file
+      return item.file
     }
     return null
   }
@@ -229,24 +244,34 @@ private class FilesDequeImpl(
 
 private class ConcurrentNonIndexableFileTraversal(
   private val project: Project,
-  override val roots: Set<VirtualFile>,
+  private val rootFiles: Set<VirtualFile>,
   private val filter: VirtualFileFilter?,
 ) : ConcurrentFileTraversal {
 
+  override val roots: Collection<ConcurrentFileTraversal.TraversalItem> = rootFiles.map(::TraversalItemImpl)
   private val visitedRoots: MutableSet<VirtualFile> = ConcurrentHashMap.newKeySet()
 
-  override fun expand(file: VirtualFile, consumer: (List<VirtualFile>) -> Unit): Boolean {
-    if (file in visitedRoots) return false
-    if (file in roots) {
-      if (!visitedRoots.add(file)) return false
+  private inner class TraversalItemImpl(override val file: VirtualFile) : ConcurrentFileTraversal.TraversalItem {
+    private var cachedSubtreeProcessingMode: SubtreeProcessingMode? = null
+
+    override fun getSubtreeProcessingMode(): SubtreeProcessingMode {
+      return cachedSubtreeProcessingMode ?: computeSubtreeProcessingMode().also { cachedSubtreeProcessingMode = it }
     }
 
-    val subtreeProcessingMode = getSubtreeProcessingModeAt(file, WorkspaceFileIndexEx.getInstance(project), filter)
-
-    if (subtreeProcessingMode.shouldProcessChildren) {
-      consumer(file.children.asList())
+    private fun computeSubtreeProcessingMode(): SubtreeProcessingMode {
+      if (file in visitedRoots) return SubtreeProcessingMode.NONE
+      if (file in rootFiles && !visitedRoots.add(file)) return SubtreeProcessingMode.NONE
+      return getSubtreeProcessingModeAt(file, WorkspaceFileIndexEx.getInstance(project), filter)
     }
 
-    return subtreeProcessingMode.shouldProcessRoot
+    override fun expand(consumer: (List<ConcurrentFileTraversal.TraversalItem>) -> Unit): Boolean {
+      val subtreeProcessingMode = getSubtreeProcessingMode()
+
+      if (subtreeProcessingMode.shouldProcessChildren) {
+        consumer(file.children.map(::TraversalItemImpl))
+      }
+
+      return subtreeProcessingMode.shouldProcessRoot
+    }
   }
 }

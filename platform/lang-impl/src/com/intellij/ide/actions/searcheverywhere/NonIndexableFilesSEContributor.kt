@@ -33,6 +33,7 @@ import com.intellij.util.Processor
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.indexing.ConcurrentFileTraversal
+import com.intellij.util.indexing.ConcurrentFileTraversal.TraversalItem
 import com.intellij.util.text.matching.MatchingMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -46,7 +47,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.ListCellRenderer
@@ -235,10 +235,11 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
           val toplevelProducerJob = launch(Dispatchers.IO.limitedParallelism(MAX_JOBS)) {
             ParallelQueueProcessor.createRunning(
               scope = this@launch, jobsNumber = MAX_JOBS, initialItems = state.roots, workerJobYieldTimeout = 50.milliseconds
-            ) processor@{ handle, file ->
-              val shouldProcessSelf = state.processItem(file, handle)
+            ) processor@{ handle, item ->
+              val shouldProcessSelf = state.processItem(item, handle)
               if (!shouldProcessSelf) return@processor
 
+              val file = item.file
               val filePath = file.path
               val rootOfFile = state.getPathRootOfPath(filePath)
               if (rootOfFile == null) {
@@ -360,24 +361,22 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
 }
 
 private class SearchJobsState {
-  val roots: Set<VirtualFile>
+  val roots: Collection<TraversalItem>
   private val rootsPaths: List<String>
-  private val traversal: ConcurrentFileTraversal
   private val resultsChannel: Channel<Pair<VirtualFile, Int>> = Channel(Channel.UNLIMITED)
 
   constructor(traversal: ConcurrentFileTraversal) {
-    this.traversal = traversal
-    this.roots = ConcurrentHashMap.newKeySet<VirtualFile>().apply { addAll(traversal.roots) }
-    this.rootsPaths = roots.map { it.path }
+    this.roots = traversal.roots
+    this.rootsPaths = roots.map { it.file.path }
   }
 
   fun getPathRootOfPath(filePath: String): String? {
     return rootsPaths.firstOrNull { filePath.startsWith(it) }
   }
 
-  fun processItem(file: VirtualFile, handle: ParallelQueueProcessor<VirtualFile>): Boolean {
-    return traversal.expand(file) { files ->
-      files.forEach(handle::queueSpawningWorkerJobIfNotAtLimit)
+  fun processItem(item: TraversalItem, handle: ParallelQueueProcessor<TraversalItem>): Boolean {
+    return item.expand { children ->
+      children.forEach(handle::queueSpawningWorkerJobIfNotAtLimit)
     }
   }
 
