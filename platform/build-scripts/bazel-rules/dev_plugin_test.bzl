@@ -4,6 +4,7 @@ load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts", "unittest")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "content_module_jar", "content_module_jar_target_name")
+load(":dev_dist_content.bzl", "DevDistContentInfo")
 load(":dev_dist_plugin.bzl", "dev_dist_plugin", "dev_dist_plugin_component_target_name")
 load(":dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor", "dev_dist_plugin_descriptor_target_name", "dev_dist_product_info")
 load(":dev_plugin.bzl", "dev_plugin")
@@ -198,6 +199,21 @@ def _dev_plugin_test_impl(ctx):
     asserts.true(env, spec["files"][1]["source"].endswith("/" + resources["first.txt"].short_path.removeprefix("../")), spec["files"][1]["source"])
     asserts.true(env, spec["files"][2]["source"].endswith("/" + resources["second.txt"].short_path.removeprefix("../")), spec["files"][2]["source"])
     asserts.equals(env, [], [action for action in actions if action.mnemonic not in ["PackDevPluginJar", "CollectDevPluginComponent", "FileWrite"]])
+
+    # The raw content: every merged module jar, the members of the reused content module jar, and every library the
+    # plugin names, the jar file token included. Neutral, like the packed inputs, so compared by short path.
+    raw_content = target[DevDistContentInfo]
+    asserts.equals(
+        env,
+        sorted([jar.short_path for jar in module_jars] + [jar.short_path for jar in content.member_jars]),
+        sorted([jar.short_path for jar in raw_content.module_jars.to_list()]),
+    )
+    raw_libraries = {entry.label: [jar.short_path for jar in entry.jars] for entry in raw_content.library_jars.to_list()}
+    asserts.equals(env, sorted([str(ctx.attr.library.label), str(ctx.attr.single_jar.label)]), sorted(raw_libraries.keys()))
+    asserts.equals(env, [jar.short_path for jar in library_jars], raw_libraries[str(ctx.attr.library.label)])
+    asserts.equals(env, [ctx.file.single_jar.short_path], raw_libraries[str(ctx.attr.single_jar.label)])
+    for file in raw_content.module_jars.to_list():
+        asserts.false(env, component_root == file.root.path, file.path)
     return analysistest.end(env)
 
 _DEV_PLUGIN_ATTRS = {
@@ -206,6 +222,7 @@ _DEV_PLUGIN_ATTRS = {
     "modules": attr.label_list(mandatory = True, providers = [_KtJvmInfo]),
     "helper": attr.label(mandatory = True, allow_single_file = True),
     "resources": attr.label(mandatory = True),
+    "single_jar": attr.label(mandatory = True, allow_single_file = [".jar"]),
     "spans": attr.bool(),
 }
 
@@ -405,6 +422,7 @@ def dev_plugin_test_suite(name):
             modules = [":" + owner, ":" + split],
             helper = ":" + helper + ".sh",
             resources = ":" + resource_files,
+            single_jar = ":foo-1.2.3.jar",
             spans = spans,
         )
 

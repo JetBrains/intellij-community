@@ -5,6 +5,7 @@ load("@rules_java//java:defs.bzl", "JavaInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load("//build:dev_launch_dependencies.bzl", "HOST_PLATFORMS", "platform_parts")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "library_entries", "module_output_jar")
+load(":dev_dist_content.bzl", "DevDistContentInfo")
 load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_neutral_product_transition", "dev_dist_product_info_transition")
 load(":dev_plugin.bzl", "dev_dist_plugin_directory")
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
@@ -504,10 +505,32 @@ def _dev_plugin_artifact_catalogue_impl(ctx):
             artifacts[identifier] = file
     libraries = {}
     members_by_path = {}
+    content_library_jars = []
     for target, identifier in compiled.libraries.items():
         identifier = _catalogue_id(identifier)
         libraries[identifier] = _library_members(ctx, identifier, target, artifacts, libraries, members_by_path)
+        content_library_jars.append(library_entries(ctx, [target], attr_name = "libraries")[0])
     catalogue = _write_catalogue(ctx, artifacts, libraries)
+
+    # The raw content: the compiled module jars and the library containers, in the neutral configuration, and the
+    # archives. A compiled input is a module target or the `<target>.jar` output file of one; both give the module's
+    # own jar, whose owner is the module rule. An archive is one jar of a library the plan names jar by jar, because the
+    # library shares another jar with a second library. It arrives as a resource input and is keyed by its own label,
+    # the way `dev_plugin.bzl` carries a jar file token. A descriptor or any other resource is no content, so a fragment
+    # that lays the plugin out without packing it declares neither.
+    content_module_jars = []
+    for target in compiled.inputs.keys():
+        if DevDistPluginDescriptorInfo in target:
+            continue
+        jar = _artifact_file(target)
+        if jar.extension == "jar" and not jar.is_directory:
+            content_module_jars.append(jar)
+    for target in ctx.attr.resource_inputs.keys():
+        if DevDistPluginDescriptorInfo in target or _KtJvmInfo in target:
+            continue
+        files = target[DefaultInfo].files.to_list()
+        if len(files) == 1 and files[0].extension == "jar" and not files[0].is_directory:
+            content_library_jars.append(struct(label = str(target.label), jars = (files[0],)))
     return [
         DefaultInfo(files = depset([catalogue])),
         DevPluginArtifactCatalogueInfo(
@@ -515,6 +538,7 @@ def _dev_plugin_artifact_catalogue_impl(ctx):
             artifacts = artifacts,
             libraries = libraries,
         ),
+        DevDistContentInfo(module_jars = depset(content_module_jars), library_jars = depset(content_library_jars)),
     ]
 
 _dev_plugin_artifact_catalogue = rule(
@@ -584,13 +608,14 @@ def _catalogue_binding(ctx, artifact_catalogue, reused_jars):
                 fail("catalogue artifact %s overlaps independent artifact %s" % (identifier, independent.path))
     return binding
 
-def _remainder_providers(ctx, graph, execution_version, directory, metadata, assets, classpath, independent_artifacts):
+def _remainder_providers(ctx, graph, execution_version, directory, metadata, assets, classpath, independent_artifacts, content):
     """The providers of a packed remainder. The component reads this one contract."""
     return [
         DefaultInfo(
             files = depset([directory]),
             runfiles = ctx.runfiles(files = [directory], transitive_files = independent_artifacts),
         ),
+        content,
         _new_remainder_info(
             graph = graph,
             execution_version = execution_version,
@@ -625,6 +650,20 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
     binding = _catalogue_binding(ctx, artifact_catalogue, reused_jars)
     classpath_descriptor = _descriptor_classpath_file(descriptor_target)
     independent_artifacts = depset(reused_jars.values())
+
+    # The raw content of the whole plugin: the catalogue's compiled modules and libraries, plus what each reused content
+    # module jar merged.
+    catalogue_content = artifact_catalogue[DevDistContentInfo]
+    reused_member_jars = []
+    reused_library_jars = []
+    for target in ctx.attr.independent_artifacts:
+        info = target[ContentModuleJarInfo]
+        reused_member_jars.extend(info.member_jars)
+        reused_library_jars.extend(info.library_jars)
+    content = DevDistContentInfo(
+        module_jars = depset(reused_member_jars, transitive = [catalogue_content.module_jars]),
+        library_jars = depset(reused_library_jars, transitive = [catalogue_content.library_jars]),
+    )
     inputs = depset([projection, binding.catalogue, classpath_descriptor], transitive = [depset(binding.artifacts.values())])
     for source in inputs.to_list():
         for artifact in independent_artifacts.to_list():
@@ -654,7 +693,7 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
         arguments = [arguments],
         progress_message = "Packing plugin remainder %{label} from its plan file",
     )
-    return _remainder_providers(ctx, ctx.attr.graph, execution_version, directory, metadata, assets, classpath, independent_artifacts)
+    return _remainder_providers(ctx, ctx.attr.graph, execution_version, directory, metadata, assets, classpath, independent_artifacts, content)
 
 dev_plugin_remainder_from_plan = rule(
     implementation = _dev_plugin_remainder_from_plan_impl,
@@ -778,6 +817,8 @@ def _dev_plugin_component_impl(ctx):
     payload = depset(payload)
     return [
         DefaultInfo(files = depset([manifest, classpath]), runfiles = ctx.runfiles(transitive_files = payload)),
+        # The raw content of the plugin, forwarded from the remainder: `dev_dist_plugin_content` unions it per product.
+        ctx.attr.remainder[DevDistContentInfo],
         IntellijDevFragmentInfo(
             name = ctx.attr.component_name,
             home = None,

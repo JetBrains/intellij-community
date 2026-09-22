@@ -4,6 +4,7 @@ load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "content_module_jar", "content_module_jar_target_name")
+load(":dev_dist_content.bzl", "DevDistContentInfo")
 load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_plugin_descriptor", "dev_dist_plugin_descriptor_target_name", "dev_dist_product_info", "dev_dist_product_info_transition")
 load(":dev_plugin_remainder.bzl", "DevPluginArtifactCatalogueInfo", "DevPluginGraphInfo", "DevPluginRemainderInfo", "dev_dist_complex_plugin", "dev_dist_complex_plugin_variant", "dev_plugin_artifact_catalogue", "dev_plugin_component", "dev_plugin_file_graph", "dev_plugin_remainder_from_plan", "plan_product_error", "platform_values_error", "product_name_error")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo")
@@ -259,11 +260,23 @@ def _library_catalogue_test_impl(ctx):
     for member, jar in zip(members, jars):
         asserts.equals(env, jar.short_path, catalogue.artifacts[member].short_path)
     asserts.equals(env, [catalogue.catalogue], target[DefaultInfo].files.to_list())
+
+    # The raw content names each container once, with its jars in container order. A resource is no content.
+    content = target[DevDistContentInfo]
+    asserts.equals(env, [], content.module_jars.to_list())
+    entries = {entry.label: entry for entry in content.library_jars.to_list()}
+    asserts.equals(env, sorted([str(container.label) for container in ctx.attr.containers]), sorted(entries.keys()))
+    for container in ctx.attr.containers:
+        expected = [jar.short_path for jar in container[JavaInfo].transitive_runtime_jars.to_list()]
+        asserts.equals(env, expected, [jar.short_path for jar in entries[str(container.label)].jars])
     return analysistest.end(env)
 
 _library_catalogue_test = analysistest.make(
     _library_catalogue_test_impl,
-    attrs = {"jars": attr.label_list(mandatory = True, allow_files = [".jar"], doc = "The member jars in container order.")},
+    attrs = {
+        "jars": attr.label_list(mandatory = True, allow_files = [".jar"], doc = "The member jars in container order."),
+        "containers": attr.label_list(mandatory = True, providers = [JavaInfo], doc = "The library containers the catalogue expands."),
+    },
 )
 
 def _expected_failure_test_impl(ctx):
@@ -298,6 +311,12 @@ def _component_test_impl(ctx):
     else:
         asserts.false(env, "--platform-neutral" in action.argv)
         asserts.equals(env, ["--os=linux", "--arch=x64"], platform_arguments)
+
+    # The component forwards the raw content of its remainder unchanged.
+    remainder_content = ctx.attr.remainder[DevDistContentInfo]
+    content = target[DevDistContentInfo]
+    asserts.equals(env, remainder_content.module_jars.to_list(), content.module_jars.to_list())
+    asserts.equals(env, remainder_content.library_jars.to_list(), content.library_jars.to_list())
     return analysistest.end(env)
 
 _component_test = analysistest.make(
@@ -419,6 +438,11 @@ def _remainder_from_plan_test_impl(ctx):
     asserts.equals(env, [remainder.metadata], groups.file_metadata.to_list())
     asserts.equals(env, [remainder.assets], groups.dev_dist_plugin_assets.to_list())
     asserts.equals(env, [remainder.classpath], groups.dev_dist_plugin_classpath.to_list())
+
+    # A catalogue of resources alone is empty content, and a remainder without a reused jar adds nothing to it.
+    content = target[DevDistContentInfo]
+    asserts.equals(env, [], content.module_jars.to_list())
+    asserts.equals(env, [], content.library_jars.to_list())
     return analysistest.end(env)
 
 _remainder_from_plan_test = analysistest.make(
@@ -581,6 +605,11 @@ def _reused_remainder_test_impl(ctx):
     asserts.equals(env, 1, len(actions))
     asserts.equals(env, ["--independent-module=" + content.module_name], [argument for argument in actions[0].argv if argument.startswith("--independent-module=")])
     asserts.false(env, content.jar.short_path in [file.short_path for file in actions[0].inputs.to_list()])
+
+    # The reused jar's members are raw content of the plugin, though the remainder action never reads them.
+    raw_content = target[DevDistContentInfo]
+    asserts.equals(env, [jar.short_path for jar in content.member_jars], [file.short_path for file in raw_content.module_jars.to_list()])
+    asserts.equals(env, list(content.library_jars), raw_content.library_jars.to_list())
     return analysistest.end(env)
 
 _reused_remainder_test = analysistest.make(
@@ -735,6 +764,7 @@ def dev_plugin_remainder_test_suite(name):
         name = library_catalogue_test,
         target_under_test = ":" + library_catalogue,
         jars = [":" + library_second, ":" + library_first],
+        containers = [":" + name + "_two_library", ":" + name + "_shared_library"],
     )
 
     # An optional source tree: the same target and ID shape as a required tree, present with files below the prefix

@@ -5,9 +5,9 @@ load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "DevDistPlatformJarInfo")
 load(":content_module_jar_test.bzl", "content_module_jar_test_suite")
-load(":dev_dist_content.bzl", "DevDistContentInfo", "DevDistPlatformPayloadInfo", "dev_dist_platform_payload")
+load(":dev_dist_content.bzl", "DevDistContentInfo", "DevDistPlatformPayloadInfo", "dev_dist_platform_payload", "dev_dist_plugin_content")
 load(":dev_dist_plugin.bzl", "dev_dist_plugin")
-load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorSetInfo", "dev_dist_plugin_descriptor_target_name")
+load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorSetInfo", "dev_dist_plugin_descriptor_target_name", "dev_dist_product_info")
 load(
     ":intellij_dev_dist.bzl",
     "IntellijDevBuildInputsInfo",
@@ -131,6 +131,58 @@ _fake_platform_jar = rule(
         "destination": attr.string(mandatory = True),
         "native_lib_dir": attr.string(),
         "_zipper": _ZIPPER,
+    },
+)
+
+# A plugin component as `dev_dist_plugin_content` sees it: the raw module jars of its members and one library container.
+def _fake_content_impl(ctx):
+    jars = []
+    for module in ctx.attr.modules:
+        jars.extend(module[_KtJvmInfo].all_output_jars)
+    libraries = []
+    if ctx.attr.library:
+        libraries.append(struct(
+            label = str(ctx.attr.library.label),
+            jars = tuple(ctx.attr.library[JavaInfo].transitive_runtime_jars.to_list()),
+        ))
+    return [
+        DefaultInfo(files = depset()),
+        DevDistContentInfo(module_jars = depset(jars), library_jars = depset(libraries)),
+    ]
+
+_fake_content = rule(
+    implementation = _fake_content_impl,
+    attrs = {
+        "modules": attr.label_list(providers = [_KtJvmInfo]),
+        "library": attr.label(providers = [JavaInfo]),
+    },
+)
+
+def _plugin_content_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    content = target[DevDistContentInfo]
+
+    # By short path, as sets: `plugins` are configured for the product and the test's own attributes are not, so one
+    # jar arrives as two `File` objects, and a jar two plugins share is one entry or two by configuration alone.
+    expected_jars = {}
+    expected_libraries = {}
+    for plugin in ctx.attr.plugins:
+        plugin_content = plugin[DevDistContentInfo]
+        for jar in plugin_content.module_jars.to_list():
+            expected_jars[jar.short_path] = True
+        for entry in plugin_content.library_jars.to_list():
+            expected_libraries[entry.label] = True
+    asserts.equals(env, sorted(expected_jars.keys()), sorted({jar.short_path: True for jar in content.module_jars.to_list()}.keys()))
+    asserts.equals(env, sorted(expected_libraries.keys()), sorted({entry.label: True for entry in content.library_jars.to_list()}.keys()))
+    asserts.equals(env, [], target[DefaultInfo].files.to_list())
+    asserts.equals(env, [], analysistest.target_actions(env))
+    return analysistest.end(env)
+
+_plugin_content_test = analysistest.make(
+    _plugin_content_test_impl,
+    attrs = {
+        "plugins": attr.label_list(mandatory = True, providers = [DevDistContentInfo], doc = "Every content target the union is expected to cover."),
     },
 )
 
@@ -532,6 +584,48 @@ def dev_dist_content_test_suite(name):
         name = tests[-1],
         target_under_test = ":" + duplicate_payload,
         expected_message = "lib/shared/ receives the native tree of both",
+    )
+
+    # The union of the bundled plugins' raw content. `plugins` go through the product transition, `deps` come as they
+    # are, and both land in one provider. A target without `DevDistContentInfo` is refused at the attribute.
+    product_info = name + "_product_info"
+    dev_dist_product_info(
+        name = product_info,
+        release_date = "20260101",
+        release_version = "2026300",
+        platform_prefix = "idea",
+    )
+    second_library = name + "_second_library"
+    _fake_library(name = second_library)
+    plugin_contents = [name + "_plugin_content_first", name + "_plugin_content_second", name + "_plugin_content_frontend"]
+    _fake_content(name = plugin_contents[0], modules = [":" + packed_owner], library = ":" + library)
+    _fake_content(name = plugin_contents[1], modules = [":" + packed_owner, ":" + raw_owner], library = ":" + second_library)
+    _fake_content(name = plugin_contents[2], modules = [":" + raw_owner])
+    plugin_content = name + "_plugin_content"
+    dev_dist_plugin_content(
+        name = plugin_content,
+        plugins = [":" + plugin_contents[0], ":" + plugin_contents[1]],
+        deps = [":" + plugin_contents[2]],
+        product_info = ":" + product_info,
+    )
+    tests.append(plugin_content + "_test")
+    _plugin_content_test(
+        name = tests[-1],
+        target_under_test = ":" + plugin_content,
+        plugins = [":" + content for content in plugin_contents],
+    )
+    refused_plugin_content = name + "_refused_plugin_content"
+    dev_dist_plugin_content(
+        name = refused_plugin_content,
+        plugins = [":" + raw_owner],
+        product_info = ":" + product_info,
+        tags = ["manual"],
+    )
+    tests.append(refused_plugin_content + "_test")
+    _expected_failure_test(
+        name = tests[-1],
+        target_under_test = ":" + refused_plugin_content,
+        expected_message = "does not have mandatory providers",
     )
 
     descriptors = name + "_descriptors"

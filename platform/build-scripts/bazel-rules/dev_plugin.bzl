@@ -20,6 +20,7 @@ load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "declare_spans", "library_entries", "merge_order_jars", "module_output_jar", "pack_jar")
+load(":dev_dist_content.bzl", "DevDistContentInfo")
 load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_neutral_product_transition")
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo")
@@ -31,6 +32,7 @@ DevPluginInputsInfo = provider(
         "libraries": "dict of library token to `struct(label, jars)`. The token is the label string the plugin's `BUILD.bazel` writes.",
         "content_jars": "dict of JPS module name to `struct(jar, metadata)`: the jar a `content_module_jar` target packed.",
         "files": "dict of label token to the tuple of regular `File`s the label produces. The token is the label string `files` names.",
+        "content": "`DevDistContentInfo`: every raw module jar and library the plugin merges, the members of a reused content module jar included.",
     },
 )
 
@@ -58,6 +60,10 @@ def _dev_plugin_inputs_impl(ctx):
             fail("%s is neither a library container nor one jar file" % target.label, attr = "libraries")
         libraries[token] = struct(label = str(target.label), jars = tuple(files))
 
+    # The raw content, for the fragment that lays the plugin out without packing it: the plugin's own module jars and
+    # libraries, plus what each reused content module jar merged. Its recipe travels with it, see `ContentModuleJarInfo`.
+    content_module_jars = list(module_jars.values())
+    content_library_jars = list(libraries.values())
     content_jars = {}
     for target in ctx.attr.content_module_jars:
         info = target[ContentModuleJarInfo]
@@ -68,6 +74,8 @@ def _dev_plugin_inputs_impl(ctx):
         if info.module_name in content_jars:
             fail("content module '%s' is packed twice" % info.module_name, attr = "content_module_jars")
         content_jars[info.module_name] = struct(jar = jar, metadata = metadata)
+        content_module_jars.extend(info.member_jars)
+        content_library_jars.extend(info.library_jars)
 
     files = {}
     for target, token in ctx.attr.file_targets.items():
@@ -81,7 +89,13 @@ def _dev_plugin_inputs_impl(ctx):
 
     return [
         DefaultInfo(files = depset()),
-        DevPluginInputsInfo(module_jars = module_jars, libraries = libraries, content_jars = content_jars, files = files),
+        DevPluginInputsInfo(
+            module_jars = module_jars,
+            libraries = libraries,
+            content_jars = content_jars,
+            files = files,
+            content = DevDistContentInfo(module_jars = depset(content_module_jars), library_jars = depset(content_library_jars)),
+        ),
     ]
 
 _dev_plugin_inputs = rule(
@@ -366,6 +380,9 @@ def _dev_plugin_impl(ctx):
     payload = depset([entry.jar for entry in packed] + copied_files)
     return [
         DefaultInfo(files = depset([manifest, classpath]), runfiles = ctx.runfiles(transitive_files = payload)),
+        # The raw content, published beside the packed component: `dev_dist_plugin_content` unions it per product for
+        # the fragment that lays the plugin out without packing it.
+        inputs.content,
         IntellijDevFragmentInfo(
             name = main_module,
             home = None,

@@ -128,11 +128,13 @@ dev_dist_neutral_product_transition = transition(
     outputs = [_PRODUCT_INFO_FLAG],
 )
 
-_PRODUCT_INFO_ATTR = {
+# The attribute a rule that collects per-product leaves declares, with the allowlist the transition needs. Public,
+# because `dev_dist_plugin_content` of `dev_dist_content.bzl` collects plugin components the same way.
+DEV_DIST_PRODUCT_INFO_ATTR = {
     "product_info": attr.label(
-        doc = """This product's `dev_dist_product_info`, which every descriptor below is configured with.
+        doc = """This product's `dev_dist_product_info`, which every leaf below is configured with.
 
-The transition on `descriptors` reads this label, so a leaf stamps the product that asked for it.""",
+The transition on the leaf attribute reads this label, so a leaf serves the product that asked for it.""",
         mandatory = True,
         providers = [DevDistProductInfo],
     ),
@@ -212,7 +214,7 @@ holds the variant that platform takes and nothing else. Selected while Bazel ana
 carries.""",
             mandatory = True,
         ),
-    } | _PRODUCT_INFO_ATTR,
+    } | DEV_DIST_PRODUCT_INFO_ATTR,
 )
 
 def _dev_dist_plugin_descriptor_group_impl(ctx):
@@ -244,7 +246,7 @@ dev_dist_plugin_descriptor_group = rule(
             cfg = dev_dist_product_info_transition,
             providers = [DevDistPluginDescriptorInfo],
         ),
-    } | _PRODUCT_INFO_ATTR,
+    } | DEV_DIST_PRODUCT_INFO_ATTR,
 )
 
 def _os_arch_stamps(ctx, product):
