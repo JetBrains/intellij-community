@@ -56,7 +56,6 @@
     ["node", "--test"],
     ["./.ownership/cli.cmd"],
     ["teamcity"],
-    ["bd"],
     ["npm", "view"],
     ["git", "status"],
     ["git", "diff"],
