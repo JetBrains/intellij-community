@@ -27,6 +27,30 @@ import javax.swing.JComponent
 @TestApplication
 internal class PluginActionDescriptorTest {
   @Test
+  fun `model builders use the same details loaded calculation`() {
+    fun buildModel(
+      factory: PluginUiModelBuilderFactory,
+      externalPluginId: String?,
+      externalUpdateId: String?,
+      description: String?,
+    ): PluginUiModel {
+      return factory.createBuilder(PluginId.getId("details.loaded.test"))
+        .setExternalPluginId(externalPluginId)
+        .setExternalUpdateId(externalUpdateId)
+        .setDescription(description)
+        .build()
+    }
+
+    for (factory in listOf(PluginNodeModelBuilderFactory, PluginDtoModelBuilderFactory)) {
+      val factoryName = factory.javaClass.simpleName
+      assertThat(buildModel(factory, "100", "200", null).detailsLoaded).describedAs(factoryName).isFalse()
+      assertThat(buildModel(factory, "100", "200", "Complete details").detailsLoaded).describedAs(factoryName).isTrue()
+      assertThat(buildModel(factory, null, "200", null).detailsLoaded).describedAs(factoryName).isTrue()
+      assertThat(buildModel(factory, "100", null, null).detailsLoaded).describedAs(factoryName).isTrue()
+    }
+  }
+
+  @Test
   @Timeout(30)
   fun `install loads incomplete Marketplace details before the operation`(
     @TestDisposable disposable: Disposable,

@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.marketplace.ModuleDependency;
 import com.intellij.ide.plugins.marketplace.PluginContentModule;
 import com.intellij.ide.plugins.marketplace.PluginModule;
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
+import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource;
 import com.intellij.openapi.util.NlsSafe;
@@ -587,7 +588,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   public void setIncomplete(boolean ignored) { }
 
   public boolean detailsLoaded() {
-    return externalPluginId == null || externalUpdateId == null || description != null;
+    return PluginUiModel.areDetailsLoaded(externalPluginId, externalUpdateId, description);
   }
 
   @ApiStatus.Internal

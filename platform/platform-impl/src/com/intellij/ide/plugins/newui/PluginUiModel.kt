@@ -162,6 +162,11 @@ interface PluginUiModel {
 
   companion object {
     @JvmStatic
+    fun areDetailsLoaded(externalPluginId: String?, externalUpdateId: String?, description: String?): Boolean {
+      return externalPluginId == null || externalUpdateId == null || description != null
+    }
+
+    @JvmStatic
     fun getDescriptorOrNull(model: PluginUiModel?): IdeaPluginDescriptor? = model?.getDescriptor()
   }
 }

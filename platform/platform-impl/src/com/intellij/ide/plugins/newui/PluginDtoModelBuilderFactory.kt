@@ -196,7 +196,14 @@ class PluginDtoModelBuilder(pluginId: PluginId) : PluginUiModelBuilder {
     return this
   }
 
-  override fun build(): PluginUiModel = resultDto
+  override fun build(): PluginUiModel {
+    resultDto.detailsLoaded = PluginUiModel.areDetailsLoaded(
+      resultDto.externalPluginId,
+      resultDto.externalUpdateId,
+      resultDto.description,
+    )
+    return resultDto
+  }
 }
 
 @ApiStatus.Internal
