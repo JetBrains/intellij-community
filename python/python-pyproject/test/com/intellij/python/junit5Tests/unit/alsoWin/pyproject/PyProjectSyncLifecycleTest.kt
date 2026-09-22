@@ -141,7 +141,7 @@ internal class PyProjectSyncLifecycleTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [false, true])
-  fun testRecoveryKeepsSubscriptionsAndReportsTheFailure(
+  fun testIoRecoveryKeepsSubscriptionsAndLogsAWarning(
     onStart: Boolean,
     @TestDisposable disposable: Disposable,
   ): Unit = timeoutRunBlocking {
@@ -164,13 +164,13 @@ internal class PyProjectSyncLifecycleTest {
     val reports = AtomicInteger()
     val reported = CompletableDeferred<Unit>()
     val processor = object : LoggedErrorProcessor() {
-      override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
+      override fun processWarn(category: String, message: String, t: Throwable?): Boolean {
         if (generateSequence(t) { it.cause }.any { it === failure }) {
           reports.incrementAndGet()
           reported.complete(Unit)
-          return Action.NONE
+          return false
         }
-        return super.processError(category, message, details, t)
+        return super.processWarn(category, message, t)
       }
     }
     val project = projectFixture.get()
@@ -238,12 +238,12 @@ internal class PyProjectSyncLifecycleTest {
     assertThat(findPyProjectTomlFilesInIndex(setOf(root), emptySet())).isEmpty()
     val reports = mutableListOf<Exception>()
     val processor = object : LoggedErrorProcessor() {
-      override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
+      override fun processWarn(category: String, message: String, t: Throwable?): Boolean {
         if (generateSequence(t) { it.cause }.any { it === failure }) {
           reports.add(failure)
-          return Action.NONE
+          return false
         }
-        return super.processError(category, message, details, t)
+        return super.processWarn(category, message, t)
       }
     }
     var found: List<Path> = emptyList()

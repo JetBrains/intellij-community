@@ -46,27 +46,27 @@ internal class RebuildWithRetryTest {
   private val third = MockVirtualFile.dir("third")
   private val retryDelays = listOf(5.milliseconds, 10.milliseconds)
   private val reported = CopyOnWriteArrayList<IOException>()
-  private var onLoggedError: () -> Unit = {}
-  private lateinit var errorProcessor: AccessToken
+  private var onLoggedWarning: () -> Unit = {}
+  private lateinit var logProcessor: AccessToken
 
   @BeforeEach
-  fun captureRebuildErrors() {
-    errorProcessor = LoggedErrorProcessor.executeWith(object : LoggedErrorProcessor() {
-      override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
+  fun captureRebuildWarnings() {
+    logProcessor = LoggedErrorProcessor.executeWith(object : LoggedErrorProcessor() {
+      override fun processWarn(category: String, message: String, t: Throwable?): Boolean {
         val failure = generateSequence(t) { it.cause }.filterIsInstance<IOException>().firstOrNull()
         if (category.endsWith(".RebuildWithRetryKt") && failure != null) {
           reported.add(failure)
-          onLoggedError()
-          return Action.NONE
+          onLoggedWarning()
+          return false
         }
-        return super.processError(category, message, details, t)
+        return super.processWarn(category, message, t)
       }
     })
   }
 
   @AfterEach
-  fun restoreErrorProcessor() {
-    errorProcessor.finish()
+  fun restoreLogProcessor() {
+    logProcessor.finish()
   }
 
   @Test
@@ -171,7 +171,7 @@ internal class RebuildWithRetryTest {
     val completed = Channel<PendingRebuild>(Channel.UNLIMITED)
     var attempts = 0
     requests.add(RebuildRequest(setOf(first), "first"))
-    onLoggedError = { requests.add(RebuildRequest(setOf(second), "during the retry")) }
+    onLoggedWarning = { requests.add(RebuildRequest(setOf(second), "during the retry")) }
     val collector = launch {
       requests.batches(Duration.ZERO).collectRebuilds(retryDelays) { batch ->
         if (++attempts == 1) throw IOException("Cannot rebuild")
@@ -204,6 +204,23 @@ internal class RebuildWithRetryTest {
 
     assertThat(attempts).isEqualTo(1)
     assertThat(reported).hasSize(if (duringBackoff) 1 else 0)
+  }
+
+  @Test
+  fun testRuntimeExceptionsAreNotRetried() {
+    val failure = IllegalStateException("Broken invariant")
+    var attempts = 0
+    val thrown = assertThrows<IllegalStateException> {
+      timeoutRunBlocking {
+        flowOf(batch(first)).collectRebuilds(retryDelays) {
+          attempts++
+          throw failure
+        }
+      }
+    }
+    assertThat(thrown).isSameAs(failure)
+    assertThat(attempts).isEqualTo(1)
+    assertThat(reported).isEmpty()
   }
 
   @Test
