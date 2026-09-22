@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileTypes.impl.associate.ui;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
@@ -258,7 +259,7 @@ public final class FileTypeAssociationForm {
 
     private @NlsSafe String getExtensionList() {
       List<ExtensionFileNameMatcher> matchers = OSAssociateFileTypesUtil.getExtensionMatchers(myFileType);
-      return String.join(", ", ContainerUtil.map(matchers, FileNameMatcher::getPresentableString));
+      return NlsMessages.formatNarrowAndList(ContainerUtil.map(matchers, FileNameMatcher::getPresentableString));
     }
 
     @Override

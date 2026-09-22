@@ -10,6 +10,7 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ProcessCloseConfirmation;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
@@ -141,7 +142,7 @@ public final class TerminateRemoteProcessDialog {
       return ExecutionBundle.message("terminate.process.confirmation.text", sessionNames.getFirst());
     }
     List<String> namesInQuotes = ContainerUtil.map(sessionNames, name -> "'%s'".formatted(name));
-    return ExecutionBundle.message("terminate.processes.confirmation.text", String.join(", ", namesInQuotes));
+    return ExecutionBundle.message("terminate.processes.confirmation.text", NlsMessages.formatNarrowAndList(namesInQuotes));
   }
 
   private static ProcessCloseConfirmationResult getConfirmationResult(int button, boolean withDisconnect) {
