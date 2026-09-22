@@ -3,6 +3,7 @@
 
 package com.intellij.platform.projectView.actions
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.isProjectViewSplit
@@ -23,6 +24,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsActions
 import com.intellij.platform.projectView.settings.ProjectViewOptionStateDTO
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
@@ -247,9 +249,14 @@ internal fun ProjectViewPaneOptionDTO.fromDTO(): ProjectViewPaneOption {
 private fun frontendOption(
   event: AnActionEvent,
   option: ProjectViewPaneOptionDTO,
-): Option = FrontendOption(event, option)
+): Option {
+  return when (option) {
+    ProjectViewPaneOptionDTO.HIDE_EMPTY_MIDDLE_PACKAGES -> FrontendHideEmptyMiddlePackagesOption(event, option)
+    else -> FrontendOption(event, option)
+  }
+}
 
-private class FrontendOption(private val event: AnActionEvent, private val option: ProjectViewPaneOptionDTO) : Option {
+private open class FrontendOption(private val event: AnActionEvent, private val option: ProjectViewPaneOptionDTO) : Option {
   override fun isSelected(): Boolean = getOptionState()?.isSelected == true
 
   override fun isEnabled(): Boolean = getOptionState()?.isEnabled == true
@@ -272,9 +279,29 @@ private class FrontendOption(private val event: AnActionEvent, private val optio
     }
   }
   
-  private fun service(): ProjectViewActionSupport? {
+  protected fun service(): ProjectViewActionSupport? {
     val project = event.project ?: return null
     return ProjectViewActionSupport.getInstance(project)
+  }
+}
+
+private class FrontendHideEmptyMiddlePackagesOption(event: AnActionEvent, option: ProjectViewPaneOptionDTO) : FrontendOption(event, option) {
+  override fun getName(): @NlsActions.ActionText String? {
+    return if (isFlattenPackagesSelected())
+      IdeBundle.message("action.hide.empty.middle.packages")
+    else
+      IdeBundle.message("action.compact.empty.middle.packages")
+  }
+
+  override fun getDescription(): @NlsActions.ActionDescription String? {
+    return if (isFlattenPackagesSelected())
+      IdeBundle.message("action.show.hide.empty.middle.packages")
+    else
+      IdeBundle.message("action.show.compact.empty.middle.packages")
+  }
+
+  private fun isFlattenPackagesSelected(): Boolean {
+    return service()?.getActionState()?.optionStates?.get(ProjectViewPaneOptionDTO.FLATTEN_PACKAGES)?.isSelected == true
   }
 }
 
