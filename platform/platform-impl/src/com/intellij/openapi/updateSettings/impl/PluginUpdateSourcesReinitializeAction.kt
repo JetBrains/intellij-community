@@ -23,14 +23,21 @@ internal class PluginUpdateSourcesReinitializeAction : DumbAwareAction() {
     PluginUpdateSourceServiceImpl.getImplInstance().resetPluginUpdateSources()
     val result = PluginUpdateSourceInitializer.enforceInitialization()
     val message: String
-    val notificationType : NotificationType
-    if (result) {
-        message = IdeBundle.message("notification.content.plugin.update.sources.are.reset.and.initialized")
+    val notificationType: NotificationType
+    when (result) {
+      is PluginUpdateSourceInitializer.Result.Success -> {
+        message = IdeBundle.message(
+          "notification.content.plugin.update.sources.are.reset.and.initialized",
+          result.loadedPluginsWithoutUpdateSource,
+        )
         notificationType = NotificationType.INFORMATION
-    }
-    else {
-        message = IdeBundle.message("notification.content.plugin.update.sources.are.reset.but.not.initialized")
+      }
+      is PluginUpdateSourceInitializer.Result.Failure -> {
+        message = result.errorMessage?.let { errorMessage ->
+          IdeBundle.message("notification.content.plugin.update.sources.are.reset.but.not.initialized.with.error", errorMessage)
+        } ?: IdeBundle.message("notification.content.plugin.update.sources.are.reset.but.not.initialized")
         notificationType = NotificationType.WARNING
+      }
     }
     NotificationGroupManager.getInstance()
       .getNotificationGroup("Plugin Update Sources Reset")

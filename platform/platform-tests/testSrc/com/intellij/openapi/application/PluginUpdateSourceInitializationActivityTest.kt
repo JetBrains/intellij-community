@@ -17,8 +17,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertNotNull
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 
 @TestApplication
 @RegistryKey(key = "platform.enable.plugin.update.source.feature", value = "true")
@@ -145,6 +146,29 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
         assertNoPluginUpdateSource(pluginId)
       }
     }
+  }
+
+  @Test
+  fun `enforced initialization returns success result`() {
+    setCustomRepositoryHosts(emptyList())
+    setInstalledPluginMocks(installedPlugin(UNKNOWN_PLUGIN))
+
+    val result = PluginUpdateSourceInitializer.enforceInitialization()
+
+    val success = assertIs<PluginUpdateSourceInitializer.Result.Success>(result)
+    assertTrue(success.loadedPluginsWithoutUpdateSource >= 1)
+  }
+
+  @Test
+  fun `enforced initialization returns repository URL in failure result`() {
+    val brokenServer = createTestServer()
+    brokenServer.httpServer.stop(0)
+    setCustomRepositoryHosts(listOf(brokenServer.url))
+
+    val result = PluginUpdateSourceInitializer.enforceInitialization()
+
+    val failure = assertIs<PluginUpdateSourceInitializer.Result.Failure>(result)
+    assertTrue(assertNotNull(failure.errorMessage).contains(brokenServer.url))
   }
 
   private fun setCustomRepositoryHosts(hosts: List<String>) {

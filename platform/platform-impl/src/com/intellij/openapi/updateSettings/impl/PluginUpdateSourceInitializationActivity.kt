@@ -100,6 +100,17 @@ object PluginsMissingUpdateSourceNotifier {
 object PluginUpdateSourceInitializer {
   private const val INITIALIZATION_HAPPENED_PROPERTY: String = "initialize.plugin.update.sources"
 
+  @ApiStatus.Internal
+  sealed interface Result {
+    data class Success(
+      val loadedPluginsWithoutUpdateSource: Int,
+    ) : Result
+
+    data class Failure(
+      val errorMessage: @NlsContexts.NotificationContent String? = null,
+    ) : Result
+  }
+
   fun hasInitializationHappened(): Boolean {
     return PropertiesComponent.getInstance().getBoolean(INITIALIZATION_HAPPENED_PROPERTY, false)
   }
@@ -115,18 +126,15 @@ object PluginUpdateSourceInitializer {
     enforceInitialization()
   }
 
-  fun enforceInitialization(): Boolean {
-    val success = doInitializePlugins()
-    if (!success) {
+  fun enforceInitialization(): Result {
+    val result = doInitializePlugins()
+    if (result is Result.Failure) {
       PropertiesComponent.getInstance().setValue(INITIALIZATION_HAPPENED_PROPERTY, false)
     }
-    return success
+    return result
   }
 
-  /**
-   * Returns if initialization was successful
-   */
-  private fun doInitializePlugins(): Boolean {
+  private fun doInitializePlugins(): Result {
     val dataMap = mutableMapOf<PluginId, MutableList<PluginUpdateSource>>()
 
     val updateSourceIds = mutableSetOf<PluginUpdateSource>()
@@ -137,8 +145,10 @@ object PluginUpdateSourceInitializer {
       if (host.isEmpty()) continue
       val pluginResult = runCatching { RepositoryHelper.loadPluginModels(host, null, null) }
       val pluginModels = pluginResult.getOrHandleException {
-        thisLogger().warn("Fail to get plugin list from repository $host; plugin update sources would be initialized next time", it)
-      } ?: return false
+        thisLogger().warn("Failed to get the plugin list from repository $host. Plugin update sources will be initialized next time.", it)
+      } ?: return Result.Failure(
+        IdeBundle.message("notification.content.plugin.update.sources.initialization.repository.error", host)
+      )
 
       for (model in pluginModels) {
         val pluginUpdateSourceIds = dataMap.getOrPut(model.pluginId) { mutableListOf() }
@@ -148,8 +158,8 @@ object PluginUpdateSourceInitializer {
 
     val safePluginList = getSafePluginIdList()
     if (safePluginList == null) {
-      thisLogger().warn("Fail to get list of trusted plugin ids; plugin update sources would be initialized next time")
-      return false
+      thisLogger().warn("Failed to get the list of trusted plugin IDs. Plugin update sources will be initialized next time.")
+      return Result.Failure()
     }
 
     val marketplaceUpdateSourceId = PluginUpdateSourceService.getInstance().createMarketplacePluginUpdateSourceId()
@@ -159,8 +169,9 @@ object PluginUpdateSourceInitializer {
     }
 
     thisLogger().info("Initialization of plugin update sources finished successfully")
-    logUpdateablePluginsWithoutUpdateSource()
-    return true
+    val pluginsWithoutUpdateSource = getUpdateablePluginsWithoutUpdateSource(PluginManagerCore.loadedPlugins)
+    logUpdateablePluginsWithoutUpdateSource(pluginsWithoutUpdateSource)
+    return Result.Success(pluginsWithoutUpdateSource.size)
   }
 
   private fun getSafePluginIdList(): List<String>? {
@@ -200,7 +211,8 @@ object PluginUpdateSourceInitializer {
     val singleCustomRepoUpdateSource = customPluginUpdateSources.singleCompatibleSourceOrNull()
     val newUpdateSourceId = when {
       singleCustomRepoUpdateSource != null -> {
-        PluginUpdateSourceServiceImpl.getImplInstance().allowUpdateFromMarketplaceWhenApplicable(singleCustomRepoUpdateSource, plugin, safePluginIdList)
+        PluginUpdateSourceServiceImpl.getImplInstance()
+          .allowUpdateFromMarketplaceWhenApplicable(singleCustomRepoUpdateSource, plugin, safePluginIdList)
       }
       customPluginUpdateSources.isNotEmpty() -> {
         thisLogger().info("Plugin $pluginId is found in multiple custom repositories: $customPluginUpdateSources")
@@ -220,15 +232,16 @@ object PluginUpdateSourceInitializer {
     }
   }
 
-  private fun logUpdateablePluginsWithoutUpdateSource() {
-    val plugins = getUpdateablePluginsWithoutUpdateSource(PluginManagerCore.loadedPlugins)
+  private fun logUpdateablePluginsWithoutUpdateSource(plugins: List<PluginDescriptor>) {
+    val message: String
     if (plugins.isEmpty()) {
-      thisLogger().info("No loaded updateable plugins without an update source after initialization")
-      return
+      message = "No loaded updateable plugins without an update source after initialization"
     }
-
-    val pluginNames = plugins.joinToString { "${it.pluginId.idString} (${it.name})" }
-    thisLogger().info("Loaded updateable plugins without update source after initialization: $pluginNames")
+    else {
+      val pluginNames = plugins.joinToString { "${it.pluginId.idString} (${it.name})" }
+      message = "Loaded updateable plugins without update source after initialization: $pluginNames"
+    }
+    thisLogger().info(message)
   }
 
   private fun List<PluginUpdateSource>.singleCompatibleSourceOrNull(): PluginUpdateSource? {
