@@ -20,12 +20,15 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Can be used to update groovy.sdk.xml md5 values and does some basic validation.
+ * Can be used to update md5 values in the <code>groovy.sdk.xml</code> file after changing version numbers.
+ * Also does some basic validation.
  * The same file should be published online so that it is available at
  * <a href="https://frameworks.jetbrains.com/groovy/index.xml">https://frameworks.jetbrains.com/groovy/index.xml</a>
- *
+ * <br>
  * The file to be published can be edited at
  * <a href="https://jetbrains.team/p/ld/repositories/frameworks-data/files/master/data/groovy/index.xml">https://jetbrains.team/p/ld/repositories/frameworks-data/files/master/data/groovy/index.xml</a>
+ * <br>
+ * Alternatively can be used to create a complete artifact tag section from a string of jar file names.
  *
  * @author Bas Leijdekkers
  */
@@ -118,8 +121,11 @@ final class GroovySdk {
           String expectedMD5 = reader.readAllAsString();
           String md5Value = md5.getNodeValue();
           if (!expectedMD5.equals(md5Value)) {
-            System.out.println("Incorrect md5: " + md5Value + " expected md5: " + expectedMD5);
+            System.out.println("Incorrect md5 for " + url);
             md5.setNodeValue(expectedMD5);
+          }
+          else {
+            System.out.print('.');
           }
         }
       }
