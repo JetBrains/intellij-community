@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.markup.ActiveGutterRenderer
+import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
@@ -328,7 +329,7 @@ object LocalTrackerDiffUtil {
     val offset = DiffGutterOperation.lineToOffset(editor, line)
     val icon = if (isExcludedFromCommit) AllIcons.Diff.GutterCheckBox else AllIcons.Diff.GutterCheckBoxSelected
     val checkboxHighlighter = editor.markupModel.addRangeHighlighter(null, offset, offset,
-                                                                     HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                                     HighlighterLayer.ADDITIONAL_SYNTAX + 1,
                                                                      HighlighterTargetArea.LINES_IN_RANGE)
     var message = DiffBundle.message("action.presentation.diff.include.into.commit.text")
     val shortcut = ActionManager.getInstance().getKeyboardShortcut("Vcs.Diff.IncludeWholeChangedLinesIntoCommit")
@@ -435,7 +436,7 @@ object LocalTrackerDiffUtil {
   private fun hasIconHighlighters(editor: EditorEx, line: Int, markupModelEx: MarkupModelEx): Boolean {
     val processor = object : FindProcessor<RangeHighlighter>() {
       override fun accept(it: RangeHighlighter): Boolean {
-        return it.getGutterIconRenderer() != null &&
+        return it.getGutterIconRenderer() is CheckboxDiffGutterRenderer &&
                it.editorFilter.avaliableIn(editor)
       }
     }
