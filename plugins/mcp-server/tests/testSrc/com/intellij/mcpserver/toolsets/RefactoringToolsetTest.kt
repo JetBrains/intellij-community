@@ -383,7 +383,6 @@ class RefactoringToolsetTest : GeneralMcpToolsetTestBase() {
     val applied: Boolean = false,
     val resolvedSymbol: SymbolInfo? = null,
     val affects: Affects? = null,
-    val changedFiles: List<String>? = null,
     val renamedFile: RenamedFile? = null,
     val candidates: List<Candidate>? = null,
     val conflicts: List<Conflict>? = null,

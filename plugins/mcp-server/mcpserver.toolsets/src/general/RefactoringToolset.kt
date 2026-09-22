@@ -169,7 +169,6 @@ class RefactoringToolset : McpToolset {
         applied = false,
         resolvedSymbol = resolvedSymbol,
         affects = RenameAffects(files = plan.affectedFiles.size, usages = plan.affectedUsages),
-        changedFiles = relativePaths(project, plan.affectedFiles),
         note = joinNotes(plan.notes),
       )
     }
@@ -181,7 +180,6 @@ class RefactoringToolset : McpToolset {
         applied = true,
         resolvedSymbol = resolvedSymbol,
         affects = RenameAffects(files = outcome.affectedFiles.size, usages = outcome.affectedUsages),
-        changedFiles = relativePaths(project, outcome.affectedFiles),
         renamedFile = renamedFile(project, virtualFile, pathBefore, relativePathBefore),
         note = joinNotes(outcome.notes + listOfNotNull(skippedFilesNote(outcome.skippedFiles))),
       )
@@ -359,11 +357,6 @@ class RefactoringToolset : McpToolset {
     return "The rename of these files was skipped, because the new name is already taken: ${skippedFiles.joinToString(", ")}."
   }
 
-  private fun relativePaths(project: Project, files: List<VirtualFile>): List<String> {
-    val projectDirectory = project.projectDirectory
-    return files.map { projectDirectory.relativizeIfPossible(it) }.sorted()
-  }
-
   @Suppress("SplitModeApiUsage")
   private fun relativePath(project: Project, absolutePath: String?): String? {
     if (absolutePath == null) return null
@@ -517,8 +510,13 @@ class RefactoringToolset : McpToolset {
     val resolvedSymbol: SymbolInfo? = null,
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val affects: RenameAffects? = null,
-    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
-    val changedFiles: List<String>? = null,
+    /**
+     * The file this rename moved, or null when it moved none.
+     *
+     * It holds one path and not the set of changed files, because the caller has to read this one:
+     * its own target moved, and the old path no longer resolves. The other files it never reads,
+     * so [affects] counts them instead of naming them.
+     */
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val renamedFile: RenamedFile? = null,
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
@@ -533,7 +531,12 @@ class RefactoringToolset : McpToolset {
     val partialResultReason: String? = null,
   )
 
-  /** The blast radius: the files that hold a usage or a declaration, and the number of usages. */
+  /**
+   * The blast radius: the files that hold a usage or a declaration, and the number of usages.
+   *
+   * It counts the files and does not name them, so the answer of the tool stays the same size for a
+   * rename of any width. The caller reads none of those files: the IDE already wrote them.
+   */
   @Serializable
   data class RenameAffects(val files: Int, val usages: Int)
 
