@@ -424,6 +424,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     invalidateFoldRegionLayouts();
     myCharWidthCache.clear();
     mySizeManager.reset();
+    mySelectionVisualModel.reset();
   }
 
   @RequiresEdt
@@ -450,6 +451,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     myLogicalPositionCache.reset(true, getTabSize());
     myTextLayoutCache.resetToDocumentSize(true);
     mySizeManager.reset();
+    mySelectionVisualModel.reset();
   }
 
   public void invalidateFoldRegionLayout(@NotNull FoldRegion region) {

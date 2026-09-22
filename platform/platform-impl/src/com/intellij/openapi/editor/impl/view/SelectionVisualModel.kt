@@ -159,6 +159,13 @@ internal class SelectionVisualModel(
   private val selectionBg get() = editor.selectionModel.textAttributes.backgroundColor
   private val lines = LineSet()
 
+  /*
+   * Drop the cached selection rectangles
+   * Called when the change might have caused cached rectangles outside
+   * the visible area to become invalid (for example, font size changes)
+   */
+  fun reset() = lines.items.clear()
+
   fun paintBlock(block: Rectangle2D) {
     val yStart = block.y - yShift
     val singleton = SelectionLine(AxisBounds(yStart, yStart + block.height))
