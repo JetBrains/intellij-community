@@ -33,6 +33,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.PopupShowOptions
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Disposer
@@ -58,6 +59,7 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.ui.popup.PopupState
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.JBInsets
@@ -703,6 +705,24 @@ private class ComboBoxInfoPanelAction(
 
   private val model = comboModel.model
 
+  private val popupState = PopupState.forPopup()
+
+  /**
+   * Opens the chooser above [owner] instead of underneath it, which is where the base class would open it.
+   *
+   * The footer sits at the bottom of the welcome screen, so a popup underneath does not fit on screen.
+   * The state guard stops a second click from stacking another popup. The extra popup would revert the
+   * preview when it closes.
+   */
+  private fun showThemeChooser(themeModel: ThemeModel, owner: JComponent) {
+    if (popupState.isShowing || popupState.isRecentlyHidden) {
+      return
+    }
+    val popup = WelcomeScreenThemeChooserPopup(themeModel, contentProvider.getThemePreviewSample()).createPopup(owner, null)
+    popupState.prepareToShow(popup)
+    popup.show(PopupShowOptions.aboveComponent(owner))
+  }
+
   init {
     templatePresentation.text = comboModel.itemPrefix
     templatePresentation.icon = comboModel.icon
@@ -727,10 +747,11 @@ private class ComboBoxInfoPanelAction(
   }
 
   @Suppress("SplitModeApiUsage")
-  override fun createPopup(event: AnActionEvent): JBPopup {
+  override fun createPopup(event: AnActionEvent): JBPopup? {
     val owner = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? JComponent
     if (model is ThemeModel && contentProvider.isThemeChooserPopupEnabled && owner != null) {
-      return WelcomeScreenThemeChooserPopup(model, contentProvider.getThemePreviewSample()).createPopup(owner, null)
+      showThemeChooser(model, owner)
+      return null
     }
 
     val step = object : BaseListPopupStep<String>(null, model.itemNames()) {

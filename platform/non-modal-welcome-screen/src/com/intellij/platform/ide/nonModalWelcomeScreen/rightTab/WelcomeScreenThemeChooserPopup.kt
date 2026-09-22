@@ -31,6 +31,7 @@ import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.ListSelectionModel
+import javax.swing.ScrollPaneConstants
 import javax.swing.Timer
 import javax.swing.UIManager
 
@@ -58,8 +59,10 @@ internal class WelcomeScreenThemeChooserPopup(
   private val previewSample: WelcomeRightTabContentProvider.ThemePreviewSample?,
 ) {
   /**
-   * Builds the popup; the caller shows it. [onDispose] comes from the trigger button and releases its
-   * pressed state, so it has to run on every close path.
+   * Builds the popup; the caller shows it, which is what decides where it appears.
+   *
+   * [onDispose] comes from the trigger button and has to run on every close path. The button passes null
+   * when it shows the popup itself, so there is nothing to release.
    */
   fun createPopup(owner: JComponent, onDispose: Runnable?): JBPopup {
     val previewer = model.previewer
@@ -77,8 +80,6 @@ internal class WelcomeScreenThemeChooserPopup(
     list.border = JBUI.Borders.empty(PopupUtil.getListInsets(false, false))
 
     list.setSelectedValue(model.currentItem, true)
-
-    var committed = false
 
     // Debounced apply-on-highlight, so holding an arrow key or sweeping the mouse does not thrash the LAF.
     val debounce = Timer(PREVIEW_THROTTLING_MS) {
@@ -113,10 +114,9 @@ internal class WelcomeScreenThemeChooserPopup(
     builder.setResizable(false)
     builder.setMovable(false)
     builder.setMinSize(Dimension(owner.width, 0))
+    // PopupChooserBuilder wires this as the popup's OK handler, so it runs after the popup has closed.
     builder.setItemChosenCallback(Runnable {
       val selected = list.selectedValue ?: return@Runnable
-      committed = true
-      debounce.stop()
       model.commit(selected)
       WelcomeScreenTabUsageCollector.logComboBoxValueChanged(WelcomeScreenComboBoxKind.THEME)
     })
@@ -124,10 +124,16 @@ internal class WelcomeScreenThemeChooserPopup(
     val popup = builder.createPopup()
     Disposer.register(popup, popupDisposable)
 
+    // The list column is sized by the popup, not by the longest theme name, so a horizontal scrollbar
+    // would only cut the rows. The builder creates its scroll pane inside createPopup, hence the order.
+    builder.scrollPane?.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+
     popup.addListener(object : JBPopupListener {
       override fun onClosed(event: LightweightWindowEvent) {
         debounce.stop()
-        if (!committed) {
+        // isOk means the user chose an item, and the choice is applied by the OK handler above, which
+        // runs after this. A flag of our own would still be unset here and would revert the choice.
+        if (!event.isOk) {
           previewer.restore(snapshot)
         }
         onDispose?.run()
