@@ -10,6 +10,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.LowMemoryWatcher
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
@@ -68,6 +69,16 @@ internal class IdeKotlinModulePackageNamesProvider(private val project: Project)
     private val binaryRootsCache = NullableConcurrentCache<VirtualFile, Set<String>?>()
 
     /**
+     * Whether the provider computes package sets for [KaLibraryModule]s.
+     *
+     * A library package set is an optimization. In an edge case, it can cost more than it saves. Then the user can disable it with the
+     * registry key as a workaround.
+     */
+    private val areLibraryPackageNamesEnabled: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        Registry.`is`("kotlin.analysis.modulePackageNamesProvider.enableLibraryPackageNames", defaultValue = true)
+    }
+
+    /**
      * The listener is currently limited to library modules, as we don't compute package names for source modules yet. Hence, we don't need
      * to react to out-of-block modification or source-only events at all.
      */
@@ -96,8 +107,12 @@ internal class IdeKotlinModulePackageNamesProvider(private val project: Project)
             is KaSourceModule -> computeSourceModulePackageSet(module)
 
             is KaLibraryModule ->
-                cache.getOrPut(module) { _ ->
-                    computeLibraryModulePackageSet(module)
+                if (areLibraryPackageNamesEnabled) {
+                    cache.getOrPut(module) { _ ->
+                        computeLibraryModulePackageSet(module)
+                    }
+                } else {
+                    null
                 }
 
             is KaLibrarySourceModule -> computePackageNames(module.binaryLibrary)

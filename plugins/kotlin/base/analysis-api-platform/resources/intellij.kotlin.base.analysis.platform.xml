@@ -36,6 +36,10 @@
                  description="Enables the local lookup optimizations"
                  key="kotlin.analysis.enableLocalLookupOptimization"
                  restartRequired="true"/>
+    <registryKey defaultValue="true"
+                 description="Enables package sets for library modules. A package set is an optimization for Kotlin symbol resolution, but it can be too expensive in edge cases. It can be disabled as a workaround."
+                 key="kotlin.analysis.modulePackageNamesProvider.enableLibraryPackageNames"
+                 restartRequired="true"/>
 
     <applicationService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinAnalysisPermissionOptions"
