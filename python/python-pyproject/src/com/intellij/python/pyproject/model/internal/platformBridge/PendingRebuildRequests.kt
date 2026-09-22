@@ -33,7 +33,7 @@ internal class PendingRebuildRequests(private val directoryLimit: Int = DIRECTOR
   private val state = MutableStateFlow(State())
 
   fun add(request: RebuildRequest) {
-    add(PendingRebuild(request.directoriesToLoad, request.reason, reloadProjectRoots = false))
+    add(PendingRebuild.Directories(request.directoriesToLoad, request.reason))
   }
 
   fun add(batch: PendingRebuild) {
@@ -83,30 +83,39 @@ internal fun Flow<PendingRebuild>.mergeRebuildRequests(
       producers.joinAll()
       requests.close()
     }
-    emit(PendingRebuild(emptySet(), "the start of the sync", reloadProjectRoots = true))
+    emit(PendingRebuild.FullScan("the start of the sync"))
     emitAll(requests.batches(quietPeriod))
   }
 }
 
 /** An immutable batch for one build. [reason] describes the latest request, or the overflow. */
-internal class PendingRebuild(
-  val directoriesToLoad: Set<VirtualFile>,
-  val reason: String,
-  val reloadProjectRoots: Boolean,
-)
+internal sealed class PendingRebuild(val reason: String) {
+  /** Loads all project roots before rebuilding the model. */
+  class FullScan(reason: String) : PendingRebuild(reason)
+
+  /** Loads the specified subtrees before rebuilding. An empty set rebuilds from the current index. */
+  class Directories(val directoriesToLoad: Set<VirtualFile>, reason: String) : PendingRebuild(reason)
+}
 
 /** Merges failed or pending work with [next], preserving full scans and the directory limit. */
 internal fun mergeRebuilds(previous: PendingRebuild?, next: PendingRebuild, directoryLimit: Int = DIRECTORY_LIMIT): PendingRebuild {
-  if (next.reloadProjectRoots) return next
-  if (previous?.reloadProjectRoots == true) return previous
-  val directories = LinkedHashSet(previous?.directoriesToLoad.orEmpty())
-  for (directory in next.directoriesToLoad) {
-    directories.add(directory)
-    if (directories.size > directoryLimit) {
-      return PendingRebuild(emptySet(), "the pending directory limit was exceeded", reloadProjectRoots = true)
+  when (next) {
+    is PendingRebuild.FullScan -> return next
+    is PendingRebuild.Directories -> {
+      val directories = when (previous) {
+        is PendingRebuild.FullScan -> return previous
+        is PendingRebuild.Directories -> LinkedHashSet(previous.directoriesToLoad)
+        null -> LinkedHashSet()
+      }
+      for (directory in next.directoriesToLoad) {
+        directories.add(directory)
+        if (directories.size > directoryLimit) {
+          return PendingRebuild.FullScan("the pending directory limit was exceeded")
+        }
+      }
+      return PendingRebuild.Directories(directories, next.reason)
     }
   }
-  return PendingRebuild(directories, next.reason, reloadProjectRoots = false)
 }
 
 private const val DIRECTORY_LIMIT = 100

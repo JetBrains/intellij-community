@@ -28,6 +28,7 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.assertThrows
@@ -51,15 +52,15 @@ internal class PendingRebuildRequestsTest {
 
   @Test
   fun testCompletedSourcesFlushTheirMergedBatch(): Unit = timeoutRunBlocking {
-    val batches = flowOf(PendingRebuild(setOf(first), "first", false))
-      .mergeRebuildRequests(flowOf(PendingRebuild(setOf(second), "second", false)), 1.days)
+    val batches = flowOf(PendingRebuild.Directories(setOf(first), "first"))
+      .mergeRebuildRequests(flowOf(PendingRebuild.Directories(setOf(second), "second")), 1.days)
 
     repeat(2) {
       val collected = batches.toList()
       assertThat(collected).hasSize(2)
-      assertThat(collected.first().reloadProjectRoots).isTrue()
-      assertThat(collected.last().directoriesToLoad).containsExactlyInAnyOrder(first, second)
-      assertThat(collected.last().reloadProjectRoots).isFalse()
+      assertInstanceOf(PendingRebuild.FullScan::class.java, collected.first())
+      val merged = assertInstanceOf(PendingRebuild.Directories::class.java, collected.last())
+      assertThat(merged.directoriesToLoad).containsExactlyInAnyOrder(first, second)
     }
   }
 
@@ -67,7 +68,7 @@ internal class PendingRebuildRequestsTest {
   fun testEmptySourcesCompleteAfterTheInitialScan(): Unit = timeoutRunBlocking {
     val collected = emptyFlow<PendingRebuild>().mergeRebuildRequests(emptyFlow(), Duration.ZERO).toList()
     assertThat(collected).hasSize(1)
-    assertThat(collected.single().reloadProjectRoots).isTrue()
+    assertInstanceOf(PendingRebuild.FullScan::class.java, collected.single())
   }
 
   @ParameterizedTest
@@ -84,7 +85,7 @@ internal class PendingRebuildRequestsTest {
         try {
           initialScanStarted.await()
           directories.filterIndexed { i, _ -> i % 2 == index }.forEach {
-            emit(PendingRebuild(setOf(it), it.name, false))
+            emit(PendingRebuild.Directories(setOf(it), it.name))
           }
           completed.complete(Unit)
           awaitCancellation()
@@ -99,7 +100,7 @@ internal class PendingRebuildRequestsTest {
         .onEach {
           if (!initialScanStarted.isCompleted) {
             assertThat(activeSources.get()).isEqualTo(2)
-            assertThat(it.reloadProjectRoots).isTrue()
+            assertInstanceOf(PendingRebuild.FullScan::class.java, it)
             initialScanStarted.complete(Unit)
             finishInitialScan.await()
           }
@@ -112,12 +113,12 @@ internal class PendingRebuildRequestsTest {
     val batches = collected.await()
     assertThat(batches).hasSize(2)
     val pending = batches.last()
-    assertThat(pending.reloadProjectRoots).isEqualTo(directoryCount > 100)
-    if (pending.reloadProjectRoots) {
-      assertThat(pending.directoriesToLoad).isEmpty()
+    if (directoryCount > 100) {
+      assertInstanceOf(PendingRebuild.FullScan::class.java, pending)
     }
     else {
-      assertThat(pending.directoriesToLoad).containsExactlyInAnyOrderElementsOf(directories)
+      val batch = assertInstanceOf(PendingRebuild.Directories::class.java, pending)
+      assertThat(batch.directoriesToLoad).containsExactlyInAnyOrderElementsOf(directories)
     }
     assertThat(activeSources.get()).isZero()
   }
@@ -156,8 +157,7 @@ internal class PendingRebuildRequestsTest {
     requests.add(RebuildRequest(setOf(first, second), "latest request"))
 
     val batch = requests.batches(Duration.ZERO).first()
-    assertThat(batch.directoriesToLoad).containsExactlyInAnyOrder(first, second)
-    assertThat(batch.reloadProjectRoots).isFalse()
+    assertThat(assertInstanceOf(PendingRebuild.Directories::class.java, batch).directoriesToLoad).containsExactlyInAnyOrder(first, second)
     assertThat(batch.reason).isEqualTo("latest request")
   }
 
@@ -175,13 +175,11 @@ internal class PendingRebuildRequestsTest {
     requests.add(RebuildRequest(setOf(first), "another change"))
 
     val batch = requests.batches(Duration.ZERO).first()
-    assertThat(batch.reloadProjectRoots).isTrue()
-    assertThat(batch.directoriesToLoad).isEmpty()
+    assertInstanceOf(PendingRebuild.FullScan::class.java, batch)
 
     requests.add(RebuildRequest(setOf(second), "a change during the full scan"))
     val next = requests.batches(Duration.ZERO).first()
-    assertThat(next.reloadProjectRoots).isFalse()
-    assertThat(next.directoriesToLoad).containsExactly(second)
+    assertThat(assertInstanceOf(PendingRebuild.Directories::class.java, next).directoriesToLoad).containsExactly(second)
   }
 
   @ParameterizedTest
@@ -209,14 +207,13 @@ internal class PendingRebuildRequestsTest {
     val batches = collected.await()
     assertThat(batches).hasSize(2)
     assertThat(batches.first()).isSameAs(processing)
-    assertThat(processing.directoriesToLoad).containsExactly(first)
+    assertThat(assertInstanceOf(PendingRebuild.Directories::class.java, processing).directoriesToLoad).containsExactly(first)
     val next = batches.last()
-    assertThat(next.reloadProjectRoots).isEqualTo(overflow)
     if (overflow) {
-      assertThat(next.directoriesToLoad).isEmpty()
+      assertInstanceOf(PendingRebuild.FullScan::class.java, next)
     }
     else {
-      assertThat(next.directoriesToLoad).containsExactlyInAnyOrder(first, second)
+      assertThat(assertInstanceOf(PendingRebuild.Directories::class.java, next).directoriesToLoad).containsExactlyInAnyOrder(first, second)
       assertThat(next.reason).isEqualTo("latest change during the build")
     }
   }
@@ -227,8 +224,7 @@ internal class PendingRebuildRequestsTest {
     repeat(2) {
       requests.add(RebuildRequest(emptySet(), "content changed"))
       val batch = requests.batches(Duration.ZERO).first()
-      assertThat(batch.directoriesToLoad).isEmpty()
-      assertThat(batch.reloadProjectRoots).isFalse()
+      assertThat(assertInstanceOf(PendingRebuild.Directories::class.java, batch).directoriesToLoad).isEmpty()
       assertThat(batch.reason).isEqualTo("content changed")
     }
   }
@@ -242,8 +238,7 @@ internal class PendingRebuildRequestsTest {
     val observed = mutableListOf<VirtualFile>()
     val collector = launch {
       requests.batches(Duration.ZERO).collect { batch ->
-        assertThat(batch.reloadProjectRoots).isFalse()
-        observed.addAll(batch.directoriesToLoad)
+        observed.addAll(assertInstanceOf(PendingRebuild.Directories::class.java, batch).directoriesToLoad)
         if (observed.size >= directories.size) received.complete(Unit)
       }
     }
@@ -275,7 +270,7 @@ internal class PendingRebuildRequestsTest {
     val batch = requests.batches(quietPeriod).first()
 
     assertThat(started.elapsedNow()).isGreaterThanOrEqualTo(quietPeriod)
-    assertThat(batch.directoriesToLoad).containsExactly(first)
+    assertThat(assertInstanceOf(PendingRebuild.Directories::class.java, batch).directoriesToLoad).containsExactly(first)
   }
 
   @Test
@@ -287,7 +282,7 @@ internal class PendingRebuildRequestsTest {
     }
     try {
       requests.add(RebuildRequest(setOf(first), "one change"))
-      assertThat(emitted.receive().directoriesToLoad).containsExactly(first)
+      assertThat(assertInstanceOf(PendingRebuild.Directories::class.java, emitted.receive()).directoriesToLoad).containsExactly(first)
       assertThat(withTimeoutOrNull(100.milliseconds) { emitted.receive() }).isNull()
     }
     finally {
@@ -308,7 +303,7 @@ internal class PendingRebuildRequestsTest {
       }
     }
     try {
-      assertThat(buildStarted.await().directoriesToLoad).containsExactly(first)
+      assertThat(assertInstanceOf(PendingRebuild.Directories::class.java, buildStarted.await()).directoriesToLoad).containsExactly(first)
       requests.add(RebuildRequest(setOf(second), "next build"))
     }
     finally {
@@ -316,7 +311,7 @@ internal class PendingRebuildRequestsTest {
     }
 
     val batch = requests.batches(Duration.ZERO).first()
-    assertThat(batch.directoriesToLoad).containsExactly(second)
+    assertThat(assertInstanceOf(PendingRebuild.Directories::class.java, batch).directoriesToLoad).containsExactly(second)
     assertThat(batch.reason).isEqualTo("next build")
   }
 }

@@ -102,15 +102,17 @@ internal class PyProjectModelSyncService(private val project: Project, private v
     knownRoots = setOf(project.stateStore.projectBasePath)
     project.workspaceModel.eventLog
       .mapNotNull { it.toRebuildRequest() }
-      .map { PendingRebuild(it.directoriesToLoad, it.reason, reloadProjectRoots = false) }
+      .map { PendingRebuild.Directories(it.directoriesToLoad, it.reason) }
       .mergeRebuildRequests(pyProjectTomlChanges { knownRoots }, DEBOUNCE)
       .collectRebuilds { batch ->
-        if (batch.reloadProjectRoots) {
-          loadProjectRootsIntoVfs()
-        }
-        else if (batch.directoriesToLoad.isNotEmpty()) {
-          val loaded = measureTime { loadSubtreesIntoVfs(batch.directoriesToLoad, collectExcludedPaths(project)) }
-          log.debug { "Loaded ${batch.directoriesToLoad.size} new directories into the VFS in $loaded" }
+        when (batch) {
+          is PendingRebuild.FullScan -> loadProjectRootsIntoVfs()
+          is PendingRebuild.Directories -> {
+            if (batch.directoriesToLoad.isNotEmpty()) {
+              val loaded = measureTime { loadSubtreesIntoVfs(batch.directoriesToLoad, collectExcludedPaths(project)) }
+              log.debug { "Loaded ${batch.directoriesToLoad.size} new directories into the VFS in $loaded" }
+            }
+          }
         }
         rebuildNow(batch.reason)
       }

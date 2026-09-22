@@ -51,6 +51,7 @@ import org.apache.tuweni.toml.TomlTable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.params.ParameterizedTest
@@ -248,10 +249,10 @@ internal class PyProjectSyncLifecycleTest {
     var found: List<Path> = emptyList()
     var attempts = 0
     LoggedErrorProcessor.executeWith(processor).use {
-      flowOf(PendingRebuild(setOf(directory), "new subtree", false))
+      flowOf(PendingRebuild.Directories(setOf(directory), "new subtree"))
         .collectRebuilds(listOf(10.milliseconds)) { batch ->
           attempts++
-          loadSubtreesIntoVfs(batch.directoriesToLoad)
+          loadSubtreesIntoVfs(assertInstanceOf(PendingRebuild.Directories::class.java, batch).directoriesToLoad)
           found = findPyProjectTomlFilesInIndex(setOf(root), emptySet())
         }
     }

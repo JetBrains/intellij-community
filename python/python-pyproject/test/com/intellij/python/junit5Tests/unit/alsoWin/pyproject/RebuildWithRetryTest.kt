@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -80,7 +81,8 @@ internal class RebuildWithRetryTest {
     }
 
     assertThat(reported.map { it.message }).containsExactly("first", "second")
-    assertThat(completed.map { it.directoriesToLoad }).containsExactly(setOf(first), setOf(second))
+    assertThat(completed.map { assertInstanceOf(PendingRebuild.Directories::class.java, it).directoriesToLoad })
+      .containsExactly(setOf(first), setOf(second))
     assertThat(attempts.map { it.first }).containsExactly("first", "first", "first", "second", "second", "second")
     for (offset in listOf(0, 3)) {
       assertThat(attempts[offset + 1].second - attempts[offset].second).isGreaterThanOrEqualTo(retryDelays[0])
@@ -103,16 +105,20 @@ internal class RebuildWithRetryTest {
     }
     try {
       requests.add(RebuildRequest(setOf(first), "first"))
-      repeat(3) { assertThat(attempted.receive().directoriesToLoad).containsExactly(first) }
+      repeat(3) {
+        val batch = assertInstanceOf(PendingRebuild.Directories::class.java, attempted.receive())
+        assertThat(batch.directoriesToLoad).containsExactly(first)
+      }
       assertThat(withTimeoutOrNull(100.milliseconds) { attempted.receive() }).isNull()
       assertThat(collector.isActive).isTrue()
       assertThat(reported).hasSize(1)
 
       fail = false
       requests.add(RebuildRequest(setOf(second), "second"))
-      assertThat(completed.receive().directoriesToLoad).containsExactlyInAnyOrder(first, second)
+      val merged = assertInstanceOf(PendingRebuild.Directories::class.java, completed.receive())
+      assertThat(merged.directoriesToLoad).containsExactlyInAnyOrder(first, second)
       requests.add(RebuildRequest(setOf(third), "third"))
-      assertThat(completed.receive().directoriesToLoad).containsExactly(third)
+      assertThat(assertInstanceOf(PendingRebuild.Directories::class.java, completed.receive()).directoriesToLoad).containsExactly(third)
     }
     finally {
       collector.cancelAndJoin()
@@ -124,8 +130,8 @@ internal class RebuildWithRetryTest {
   @ParameterizedTest
   @ValueSource(ints = [0, 1, 2])
   fun testMergingFailedWorkPreservesFullScans(scenario: Int): Unit = timeoutRunBlocking {
-    val fullScan = PendingRebuild(emptySet(), "full scan", reloadProjectRoots = true)
-    val hundredDirectories = PendingRebuild((1..100).map { MockVirtualFile.dir("dir$it") }.toSet(), "hundred", false)
+    val fullScan = PendingRebuild.FullScan("full scan")
+    val hundredDirectories = PendingRebuild.Directories((1..100).map { MockVirtualFile.dir("dir$it") }.toSet(), "hundred")
     val (failed, next) = when (scenario) {
       0 -> fullScan to batch(second)
       1 -> batch(first) to fullScan
@@ -141,8 +147,7 @@ internal class RebuildWithRetryTest {
 
     assertThat(attempts).isEqualTo(4)
     assertThat(reported).hasSize(1)
-    assertThat(checkNotNull(result).reloadProjectRoots).isTrue()
-    assertThat(checkNotNull(result).directoriesToLoad).isEmpty()
+    assertInstanceOf(PendingRebuild.FullScan::class.java, result)
   }
 
   @Test
@@ -155,7 +160,8 @@ internal class RebuildWithRetryTest {
       }
 
     assertThat(attempted).hasSize(9)
-    assertThat(attempted.last().directoriesToLoad).containsExactlyInAnyOrder(first, second, third)
+    val merged = assertInstanceOf(PendingRebuild.Directories::class.java, attempted.last())
+    assertThat(merged.directoriesToLoad).containsExactlyInAnyOrder(first, second, third)
     assertThat(reported).hasSize(1)
   }
 
@@ -173,8 +179,8 @@ internal class RebuildWithRetryTest {
       }
     }
     try {
-      assertThat(completed.receive().directoriesToLoad).containsExactly(first)
-      assertThat(completed.receive().directoriesToLoad).containsExactly(second)
+      assertThat(assertInstanceOf(PendingRebuild.Directories::class.java, completed.receive()).directoriesToLoad).containsExactly(first)
+      assertThat(assertInstanceOf(PendingRebuild.Directories::class.java, completed.receive()).directoriesToLoad).containsExactly(second)
       assertThat(attempts).isEqualTo(3)
     }
     finally {
@@ -232,5 +238,5 @@ internal class RebuildWithRetryTest {
     assertThat(reported).isEmpty()
   }
 
-  private fun batch(directory: MockVirtualFile): PendingRebuild = PendingRebuild(setOf(directory), directory.name, false)
+  private fun batch(directory: MockVirtualFile): PendingRebuild = PendingRebuild.Directories(setOf(directory), directory.name)
 }
