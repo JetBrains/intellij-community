@@ -17,6 +17,7 @@ import org.jetbrains.plugins.terminal.block.output.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.output.withOutput
 import org.jetbrains.plugins.terminal.hyperlinks.filter.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
+import kotlin.math.max
 
 internal class Gen1TerminalHyperlinkHighlighter(project: Project,
                                                 private val outputModel: TerminalOutputModel,
@@ -56,7 +57,7 @@ internal class Gen1TerminalHyperlinkHighlighter(project: Project,
     val expirableTokenProvider = ExpirableTokenProvider()
     lastUpdatedBlockInfo = block to expirableTokenProvider
 
-    hyperlinkSupport.clearHyperlinks(block.outputStartOffset, block.endOffset)
+    hyperlinkSupport.clearHyperlinks(block.outputStartOffset, max(block.outputStartOffset, block.endOffset))
 
     if (block.withOutput) {
       val startLine = document.getLineNumber(block.outputStartOffset)
