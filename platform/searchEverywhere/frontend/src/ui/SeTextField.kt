@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.ui
 
 import com.intellij.accessibility.TextFieldWithListAccessibleContext
@@ -16,11 +16,16 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import javax.accessibility.AccessibleContext
 import javax.swing.text.JTextComponent
 
+/**
+ * The search field of the Search Everywhere popup.
+ *
+ * @param resultListAccessibleContext supplies the accessible context of the result list, or null when the field has no result list
+ */
 @Internal
 open class SeTextField(
-  private val initialText: String?,
-  private val selectSearchText: Boolean = true,
-  private val resultListAccessibleContext: () -> AccessibleContext,
+  private var initialText: String?,
+  private var selectSearchText: Boolean = true,
+  private val resultListAccessibleContext: (() -> AccessibleContext)? = null,
 ) : ExtendableSearchTextField() {
   var isInitialSearchPattern: Boolean = true
     private set
@@ -53,6 +58,26 @@ open class SeTextField(
       }
       emptyAction.registerCustomShortcutSet(actionQuickImplementations.shortcutSet, this)
     }
+  }
+
+  /**
+   * Prepares the field for a new search session.
+   * The field then behaves as a field that was just created with [initialText] and [selectSearchText].
+   */
+  fun resetSession(initialText: String?, selectSearchText: Boolean) {
+    onTextChanged = {}
+    this.initialText = initialText
+    this.selectSearchText = selectSearchText
+    text = initialText ?: ""
+    isInitialSearchPattern = true
+  }
+
+  /** Called when [content] starts to use this field as its search field. */
+  open fun attachPopupContent(content: SePopupContentPane) {
+  }
+
+  /** Called when [content] stops using this field. */
+  open fun detachPopupContent(content: SePopupContentPane) {
   }
 
   fun configure(lastSearchText: String?, onTextChanged: (String) -> Unit) {
@@ -104,8 +129,9 @@ open class SeTextField(
   }
 
   override fun getAccessibleContext(): AccessibleContext? {
+    val listContext = resultListAccessibleContext ?: return super.getAccessibleContext()
     if (accessibleContext == null) {
-      accessibleContext = TextFieldWithListAccessibleContext(this, resultListAccessibleContext())
+      accessibleContext = TextFieldWithListAccessibleContext(this, listContext())
     }
     return accessibleContext
   }

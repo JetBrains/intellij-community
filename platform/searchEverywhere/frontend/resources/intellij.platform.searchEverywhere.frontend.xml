@@ -37,6 +37,10 @@
             class="com.intellij.platform.searchEverywhere.frontend.actions.SeNewSearchToggleAction"
             internal="true"
     />
+    <action id="SearchEverywhereComponent"
+            class="com.intellij.platform.searchEverywhere.frontend.toolbar.SearchEverywhereComponentAction"
+            icon="AllIcons.Actions.Search"
+    />
   </actions>
 
   <extensionPoints>

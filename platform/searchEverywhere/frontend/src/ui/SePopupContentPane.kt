@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -129,13 +130,17 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.awt.BorderLayout
+import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.InputEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.function.Supplier
+import javax.accessibility.AccessibleContext
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -144,6 +149,7 @@ import javax.swing.KeyStroke
 import javax.swing.ListCellRenderer
 import javax.swing.ListSelectionModel
 import javax.swing.ScrollPaneConstants
+import javax.swing.SwingUtilities
 import javax.swing.event.ListSelectionEvent
 import javax.swing.text.Document
 import kotlin.concurrent.atomics.AtomicBoolean
@@ -152,6 +158,12 @@ import kotlin.math.ceil
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * The content of the Search Everywhere popup.
+ *
+ * @param externalTextField a toolbar field that the popup uses as the search field. The popup then has no search field of its own,
+ * keeps the keyboard shortcuts on the toolbar field, and does not take the focus.
+ */
 @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
 @Internal
 class SePopupContentPane(
@@ -165,9 +177,13 @@ class SePopupContentPane(
   selectSearchText: Boolean,
   initPopupExtendedSize: Dimension?,
   initialSelectionState: SeSelectionState?,
+  externalTextField: SeTextField? = null,
 ) : JPanel(), Disposable, UiDataProvider, QuickSearchComponent {
   val preferableFocusedComponent: JComponent get() = textField
   val searchFieldDocument: Document get() = textField.document
+
+  /** The accessible context of the result list. An external search field exposes it to assistive technology. */
+  val resultListAccessibleContext: AccessibleContext get() = resultList.accessibleContext
   private val tabConfigurationState = MutableStateFlow(SePopupHeaderPane.Configuration.createInitial(initialTabs, selectedTabId))
   private val vmState = MutableStateFlow<SePopupVm?>(null)
   private val contentPane = this
@@ -186,7 +202,29 @@ class SePopupContentPane(
   private val resultListModel = SeResultListModel(searchStatePublisher) { resultList.selectionModel }
   private val resultList: SeResultJBList<SeResultListRow> = SeResultJBList(resultListModel)
   private var selectionListener = SeSelectionListener(initialSelectionState, resultList, resultListModel)
-  private val textField = SeTextField(initialSearchText, selectSearchText) { resultList.accessibleContext }
+  private val isExternalTextField = externalTextField != null
+  private val textField: SeTextField = externalTextField ?: SeTextField(initialSearchText, selectSearchText) { resultList.accessibleContext }
+
+  /** The component that holds the keyboard shortcuts of the popup. */
+  private val shortcutHost: JComponent = externalTextField ?: this
+
+  // The two listeners are declared before resultsScrollPane, whose initializer registers them on the text field.
+  private val textFieldFocusListener = object : FocusAdapter() {
+    override fun focusLost(e: FocusEvent) {
+      onFocusLost(e)
+    }
+  }
+
+  /** Shift+Up and Shift+Down in the text field extend the selection in the result list. */
+  private val expandSelectionRedirect = object : KeyAdapter() {
+    override fun keyPressed(e: KeyEvent) {
+      if (e.isShiftDown && (e.keyCode == KeyEvent.VK_UP || e.keyCode == KeyEvent.VK_DOWN)) {
+        resultList.dispatchEvent(e)
+        e.consume()
+      }
+    }
+  }
+
   private val hintHelper = HintHelper(textField)
   private val resultsScrollPane = createListPane(resultList)
   private val usagePreviewPanel = createUsagePreviewPanel()
@@ -246,9 +284,12 @@ class SePopupContentPane(
 
     resultList.setFocusable(false)
 
-    RowsGridBuilder(this)
+    val gridBuilder = RowsGridBuilder(this)
       .row().cell(headerPane, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
-      .row().cell(wrapSearchField(), horizontalAlign = HorizontalAlign.FILL, resizableColumn = true) //
+    if (!isExternalTextField) {
+      gridBuilder.row().cell(wrapSearchField(), horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
+    }
+    gridBuilder
       .row(resizable = true).cell(splitter, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL, resizableColumn = true)
       .row().cell(extendedInfoContainer, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
 
@@ -260,14 +301,25 @@ class SePopupContentPane(
     // hide resultsScrollPane and extendedInfoContainer if isCompactViewMode = true
     updateViewMode()
 
-    addHistoryExtensionToTextField()
-    WindowMoveListener(this).installTo(headerPane)
+    if (!isExternalTextField) {
+      addHistoryExtensionToTextField()
+      WindowMoveListener(this).installTo(headerPane)
+    }
+
+    textField.attachPopupContent(this)
 
     coroutineScope.launch {
       vmState.filterNotNull().collectLatest { vm ->
         connectTo(vm)
       }
     }
+  }
+
+  /** Registers the mnemonic of [action] as its shortcut on the component that holds the popup shortcuts. */
+  fun registerMnemonicShortcut(action: AnAction) {
+    val shortcut = ActionUtil.getMnemonicAsShortcut(action) ?: return
+    action.shortcutSet = shortcut
+    action.registerCustomShortcutSet(shortcut, shortcutHost, this)
   }
 
   private fun wrapSearchField(): JComponent {
@@ -289,9 +341,9 @@ class SePopupContentPane(
 
   private suspend fun connectTo(vm: SePopupVm) = coroutineScope {
     DumbAwareAction.create { vm.getHistoryItem(true).let { textField.setText(it, selectAll = true, reason = "history-prev") } }
-      .registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, contentPane)
+      .registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, shortcutHost, contentPane)
     DumbAwareAction.create { vm.getHistoryItem(false).let { textField.setText(it, selectAll = true, reason = "history-next") } }
-      .registerCustomShortcutSet(SearchTextField.ALT_SHOW_HISTORY_SHORTCUT, contentPane)
+      .registerCustomShortcutSet(SearchTextField.ALT_SHOW_HISTORY_SHORTCUT, shortcutHost, contentPane)
 
     launch {
       vm.tabsModelFlow.map {
@@ -487,6 +539,8 @@ class SePopupContentPane(
     }
 
     launch {
+      // A toolbar field is too narrow for a text hint.
+      if (isExternalTextField) return@launch
       combine(vm.searchFieldHint, semanticWarning) { searchFieldHint, semanticWarning ->
         searchFieldHint to semanticWarning
       }.collect { (searchFieldHint, semanticWarning) ->
@@ -628,7 +682,7 @@ class SePopupContentPane(
         coroutineScope.launch(Dispatchers.EDT) {
           elementsSelected(indices, modifiers)
         }
-      }.registerCustomShortcutSet(newShortcutSet, this, this)
+      }.registerCustomShortcutSet(newShortcutSet, shortcutHost, this)
     }
   }
 
@@ -708,13 +762,8 @@ class SePopupContentPane(
   }
 
   private fun installScrollingActions() {
-    val moveUpAction = MoveUpAction()
-    moveUpAction.registerCustomShortcutSet(
-      CommonShortcuts.getMoveUp(),
-      textField
-    )
-
-    ScrollingUtil.installMoveDownAction(resultList, textField)
+    MoveUpAction().registerCustomShortcutSet(CommonShortcuts.getMoveUp(), textField, this)
+    MoveDownAction().registerCustomShortcutSet(CommonShortcuts.getMoveDown(), textField, this)
 
     resultList.selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
 
@@ -772,7 +821,7 @@ class SePopupContentPane(
     resultList.addMouseMotionListener(listMouseListener)
     resultList.addMouseListener(listMouseListener)
 
-    ScrollingUtil.redirectExpandSelection(resultList, textField)
+    textField.addKeyListener(expandSelectionRedirect)
 
     val nextTabAction: (AnActionEvent) -> Unit = { e ->
       vmState.value?.let { vm ->
@@ -810,13 +859,9 @@ class SePopupContentPane(
     DumbAwareAction.create {
       ThreadingAssertions.assertEventDispatchThread()
       issueClosePopup()
-    }.registerCustomShortcutSet(escape?.shortcutSet ?: CommonShortcuts.ESCAPE, this)
+    }.registerCustomShortcutSet(escape?.shortcutSet ?: CommonShortcuts.ESCAPE, shortcutHost, this)
 
-    textField.addFocusListener(object : FocusAdapter() {
-      override fun focusLost(e: FocusEvent) {
-        onFocusLost(e)
-      }
-    })
+    textField.addFocusListener(textFieldFocusListener)
   }
 
   /**
@@ -870,7 +915,7 @@ class SePopupContentPane(
   private fun registerAction(actionID: String, actionSupplier: Supplier<out AnAction>) {
     val anAction = ActionManager.getInstance().getAction(actionID) ?: return
     val shortcuts = anAction.shortcutSet
-    actionSupplier.get().registerCustomShortcutSet(shortcuts, this, this)
+    actionSupplier.get().registerCustomShortcutSet(shortcuts, shortcutHost, this)
   }
 
   private fun registerAction(actionID: String, action: (AnActionEvent) -> Unit) {
@@ -891,9 +936,21 @@ class SePopupContentPane(
     }
 
     val oppositeComponent = e.oppositeComponent
-    if (!UIUtil.haveCommonOwner(this, oppositeComponent)) {
+    if (oppositeComponent == null || !isPopupComponent(oppositeComponent)) {
       issueClosePopup()
     }
+  }
+
+  /**
+   * True when [component] belongs to the popup: the content, a window that the content owns, or the registered hint popup.
+   * A hint that a toolbar field opens has the IDE frame as its owner, so the owner check alone does not cover it.
+   */
+  fun isPopupComponent(component: Component): Boolean {
+    if (SwingUtilities.isDescendingFrom(component, this) || UIUtil.haveCommonOwner(this, component)) {
+      return true
+    }
+    val hint = quickDocPopup?.takeIf { !it.isDisposed } ?: return false
+    return SwingUtilities.isDescendingFrom(component, hint.content) || UIUtil.haveCommonOwner(hint.content, component)
   }
 
   private fun addHistoryExtensionToTextField() {
@@ -1055,8 +1112,8 @@ class SePopupContentPane(
 
   private fun calcPreferredSize(compact: Boolean, avoidWidthDecreasing: Boolean = false): Dimension {
     val preferredHeight = if (compact) {
-      val extraHeight = if (Registry.`is`("search.everywhere.round.text.field", false)) JBUI.scale(15) else 0
-      headerPane.preferredSize.height + textField.preferredSize.height + extraHeight
+      val extraHeight = if (!isExternalTextField && Registry.`is`("search.everywhere.round.text.field", false)) JBUI.scale(15) else 0
+      headerPane.preferredSize.height + searchFieldHeightInPopup + extraHeight
     }
     else {
       getPopupExtendedHeight()
@@ -1071,6 +1128,10 @@ class SePopupContentPane(
   private fun getPopupExtendedHeight(): Int {
     return popupExtendedSize?.height ?: JBUI.CurrentTheme.BigPopup.maxListHeight()
   }
+
+  /** The height of the search field inside the popup. It is zero when a toolbar field is the search field. */
+  private val searchFieldHeightInPopup: Int
+    get() = if (isExternalTextField) 0 else textField.preferredSize.height
 
   private fun logTabSwitchedEvent(e: AnActionEvent) {
     val vm = vmState.value ?: return
@@ -1122,6 +1183,12 @@ class SePopupContentPane(
     }
   }
 
+  private inner class MoveDownAction : DumbAwareAction() {
+    override fun actionPerformed(e: AnActionEvent) {
+      ScrollingUtil.moveDown(resultList, 0)
+    }
+  }
+
   private fun createUsagePreviewPanel(): UsagePreviewPanel? {
     if (project == null) return null
 
@@ -1168,7 +1235,8 @@ class SePopupContentPane(
    */
   private fun getMaxVisibleRowCount(): Int {
     val cellHeight = resultList.getCellBounds(0, 0)?.height ?: -1
-    val scrollPaneHeight = getPopupExtendedHeight() - headerPane.height - textField.height - (extendedInfoComponent?.component?.height ?: 0)
+    val searchFieldHeight = if (isExternalTextField) 0 else textField.height
+    val scrollPaneHeight = getPopupExtendedHeight() - headerPane.height - searchFieldHeight - (extendedInfoComponent?.component?.height ?: 0)
     return ceil(scrollPaneHeight.toDouble() / cellHeight).toInt()
   }
 
@@ -1220,6 +1288,13 @@ class SePopupContentPane(
   }
 
   override fun dispose() {
+    textField.detachPopupContent(this)
+    textField.removeKeyListener(expandSelectionRedirect)
+    textField.removeFocusListener(textFieldFocusListener)
+    if (isExternalTextField) {
+      hintHelper.setSearchInProgress(false)
+      hintHelper.removeRightExtensions()
+    }
     usagePreviewPanel?.let { Disposer.dispose(it) }
   }
 

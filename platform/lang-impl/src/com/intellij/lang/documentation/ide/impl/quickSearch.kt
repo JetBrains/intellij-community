@@ -11,6 +11,7 @@ import com.intellij.lang.documentation.psi.psiDocumentationTargets
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
@@ -37,7 +38,17 @@ internal fun quickSearchPopupContext(project: Project): PopupContext? {
 private fun quickSearchPopupContext(project: Project, focusedComponent: Component): PopupContext? {
   val quickSearchComponent = ComponentUtil.getParentOfType(QuickSearchComponent::class.java, focusedComponent)
                              ?: return null
-  return QuickSearchPopupContext(project, quickSearchComponent)
+  return QuickSearchPopupContext(project, quickSearchComponent, hintAnchor(focusedComponent, quickSearchComponent))
+}
+
+/**
+ * The component next to which the documentation popup is placed: the content of the popup that contains the focused
+ * component, or the quick search component itself. A quick search component that sits outside its results popup,
+ * such as a toolbar field, carries the popup as [com.intellij.openapi.ui.popup.JBPopup.KEY].
+ */
+private fun hintAnchor(focusedComponent: Component, quickSearchComponent: QuickSearchComponent): Component {
+  val resultsPopup = PopupUtil.getPopupContainerFor(focusedComponent)?.takeIf { it.isVisible && !it.isDisposed }
+  return resultsPopup?.content ?: quickSearchComponent as Component
 }
 
 private fun hintUpdateSupplyPopupContext(project: Project, focusedComponent: Component): PopupContext? {
@@ -67,6 +78,7 @@ private abstract class UpdatingPopupContext(
 private class QuickSearchPopupContext(
   project: Project,
   private val searchComponent: QuickSearchComponent,
+  private val anchor: Component,
 ) : UpdatingPopupContext(project) {
 
   // otherwise, selecting SE items by mouse would close the popup
@@ -81,7 +93,7 @@ private class QuickSearchPopupContext(
   }
 
   override fun baseBoundsHandler(): PopupBoundsHandler {
-    return AdjusterPopupBoundsHandler(searchComponent as Component)
+    return AdjusterPopupBoundsHandler(anchor)
   }
 }
 

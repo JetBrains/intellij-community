@@ -1,12 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend
 
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.SearchEverywhereManagerFactory
 import com.intellij.ide.actions.searcheverywhere.PreviewExperiment.isExperimentEnabled
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFeature
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywherePopupInstance
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereToolbarField
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.SearchHistoryList
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
@@ -37,6 +39,7 @@ import com.intellij.platform.searchEverywhere.frontend.tabs.classes.SeClassesTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeFilesTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.symbols.SeSymbolsTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextTab
+import com.intellij.platform.searchEverywhere.frontend.toolbar.SeToolbarSearchField
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupContentPane
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupHeaderPane
 import com.intellij.platform.searchEverywhere.frontend.vm.SeDummyTabVm
@@ -73,9 +76,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
+import java.awt.AWTEvent
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
 import java.awt.Point
+import java.awt.event.MouseEvent
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -120,6 +125,10 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     @Suppress("DEPRECATION")
     val selectSearchText = initEvent.getData(SearchEverywhereManagerImpl.IS_SELECT_SEARCH_TEXT) != false
 
+    // A toolbar field in the data context becomes the search field. The popup then opens under the field.
+    val toolbarField = (initEvent.getData(SearchEverywhereToolbarField.DATA_KEY) as? SeToolbarSearchField)?.takeIf { it.isAvailable }
+    val initialSearchText = toolbarField?.prepareSession(searchText, selectSearchText) ?: searchText
+
     val tabFactories = SeTabFactory.EP_NAME.extensionList
     val tabCustomizer = SeTabsCustomizer.getInstance()
     val initialTabs = visibleTabsState?.map { tab ->
@@ -136,8 +145,10 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     val exportVm = AtomicReference<SePopupVm?>()
     val searchStatePublisher = SeSearchStatePublisher()
     val popupScope = coroutineScope.childScope("SearchEverywhereFrontendService popup scope")
-    val (popup, popupContentPane) = createAndShowIdlePopup(popupScope, initialTabs, tabId, searchText, selectSearchText, searchStatePublisher) {
+    val (popup, popupContentPane) = createAndShowIdlePopup(popupScope, initialTabs, tabId, initialSearchText, selectSearchText,
+                                                           searchStatePublisher, toolbarField) {
       popupInstance?.saveSearchText()
+      toolbarField?.endSession()
       visibleTabsState = it.visibleTabsInfo
       popupClosedCompletable.complete(Unit)
     }
@@ -177,7 +188,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
                                         tabFactories,
                                         initialTabs,
                                         tabId,
-                                        searchText,
+                                        initialSearchText,
                                         initEvent,
                                         popupScope,
                                         session,
@@ -387,6 +398,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     searchText: String?,
     selectSearchText: Boolean,
     searchStatePublisher: SeSearchStatePublisher,
+    toolbarField: SeToolbarSearchField?,
     onCancel: (SePopupContentPane) -> Unit
   ): Pair<JBPopup, SePopupContentPane> {
     var popup: JBPopup? = null
@@ -405,36 +417,65 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
                                          searchText,
                                          selectSearchText,
                                          getStateService().getSize(POPUP_LOCATION_SETTINGS_KEY),
-                                         selectionState)
+                                         selectionState,
+                                         externalTextField = toolbarField)
 
-    popup = createPopup(contentPane, project) {
+    popup = createPopup(contentPane, project, toolbarField) {
       onCancel(contentPane)
       selectionState = contentPane.getSelectionState()
     }
-    calcPopupPositionAndShow(popup, contentPane)
+    if (toolbarField == null) {
+      calcPopupPositionAndShow(popup, contentPane)
+    }
+    else {
+      showPopupUnder(popup, toolbarField)
+    }
 
     return popup to contentPane
   }
 
-  private fun createPopup(panel: SePopupContentPane, project: Project?, onCancel: () -> Unit): JBPopup {
-    val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, panel.preferableFocusedComponent)
+  /**
+   * Creates the popup for [panel].
+   * When [toolbarField] is not null, the popup does not take the focus and stays where [showPopupUnder] puts it.
+   * The focus listener of the field then closes the popup. The window check of the popup is off, because a hint window
+   * that the field opens has the IDE frame as its owner, and the check would cancel the popup together with the hint.
+   */
+  private fun createPopup(panel: SePopupContentPane, project: Project?, toolbarField: SeToolbarSearchField?, onCancel: () -> Unit): JBPopup {
+    val focusedComponent = if (toolbarField == null) panel.preferableFocusedComponent else null
+    val builder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, focusedComponent)
       .setProject(project)
       .setModalContext(false)
       .setNormalWindowLevel(StartupUiUtil.isWaylandToolkit())
-      .setCancelOnWindowDeactivation(!StartupUiUtil.isWaylandToolkit())
-      .setCancelOnClickOutside(true)
-      .setRequestFocus(true)
+      .setCancelOnWindowDeactivation(toolbarField == null && !StartupUiUtil.isWaylandToolkit())
       .setCancelKeyEnabled(false)
       .setResizable(true)
-      .setMovable(true)
-      .setDimensionServiceKey(project, POPUP_LOCATION_SETTINGS_KEY, true)
-      .setLocateWithinScreenBounds(false)
       .setCancelCallback {
         onCancel()
         SearchEverywhereUsageTriggerCollector.DIALOG_CLOSED.log(project, true)
         true
       }
-      .createPopup()
+    if (toolbarField == null) {
+      builder
+        .setCancelOnClickOutside(true)
+        .setRequestFocus(true)
+        .setMovable(true)
+        .setDimensionServiceKey(project, POPUP_LOCATION_SETTINGS_KEY, true)
+        .setLocateWithinScreenBounds(false)
+    }
+    else {
+      builder
+        .setCancelOnClickOutside(false)
+        .setRequestFocus(false)
+        .setFocusable(false)
+        .setMovable(false)
+        .setLocateWithinScreenBounds(true)
+    }
+    val popup = builder.createPopup()
+
+    if (toolbarField != null) {
+      toolbarField.attachPopup(popup)
+      cancelPopupOnMousePressOutside(popup, panel, toolbarField)
+    }
 
     popup.size = panel.preferredSize
     popup.setMinimumSize(panel.getMinimumSize(true))
@@ -502,6 +543,30 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     else {
       popup.showInFocusCenter()
     }
+  }
+
+  /** Shows [popup] under [field]. The popup is centered under the field and stays within the screen. */
+  private fun showPopupUnder(popup: JBPopup, field: SeToolbarSearchField) {
+    val x = (field.width - popup.size.width) / 2
+    popup.show(RelativePoint(field, Point(x, field.height)))
+  }
+
+  /** Cancels [popup] on a mouse press outside the popup, outside its hint popup, and outside [field]. */
+  private fun cancelPopupOnMousePressOutside(popup: JBPopup, panel: SePopupContentPane, field: SeToolbarSearchField) {
+    IdeEventQueue.getInstance().addDispatcher(object : IdeEventQueue.NonLockedEventDispatcher {
+      override fun dispatch(e: AWTEvent): Boolean {
+        if (e is MouseEvent && e.id == MouseEvent.MOUSE_PRESSED && !popup.isDisposed) {
+          val component = e.component
+          val inside = component == null ||
+                       SwingUtilities.isDescendingFrom(component, field) ||
+                       panel.isPopupComponent(component)
+          if (!inside) {
+            popup.cancel()
+          }
+        }
+        return false
+      }
+    }, popup)
   }
 
   private fun getStateService(): WindowStateService {

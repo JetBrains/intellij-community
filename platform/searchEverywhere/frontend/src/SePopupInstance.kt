@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywherePopupInstance
@@ -7,7 +7,6 @@ import com.intellij.ide.actions.searcheverywhere.SearchListener
 import com.intellij.ide.actions.searcheverywhere.SplitSearchListener
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupContentPane
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
@@ -22,13 +21,7 @@ import javax.swing.text.Document
 class SePopupInstance(private val popupVm: SePopupVm,
                       private val popupContentPane: SePopupContentPane,
                       private val combinedListener: SeSearchStatePublisher): SearchEverywherePopupInstance {
-  val registerShortcut: (AnAction) -> Unit = { action ->
-    val shortcut = ActionUtil.getMnemonicAsShortcut(action)
-    if (shortcut != null) {
-      action.shortcutSet = shortcut
-      action.registerCustomShortcutSet(shortcut, popupContentPane)
-    }
-  }
+  val registerShortcut: (AnAction) -> Unit = { action -> popupContentPane.registerMnemonicShortcut(action) }
 
   override fun getSearchText(): String = popupVm.searchPattern.value
 

@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereToolbarFields;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.ui.UISettings;
@@ -104,6 +105,8 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
       }
     }
 
-    ReadAction.runBlocking(() -> showInSearchEverywherePopup(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, newEvent, true, true));
+    AnActionEvent eventWithToolbarField = SearchEverywhereToolbarFields.withToolbarField(newEvent);
+    ReadAction.runBlocking(
+      () -> showInSearchEverywherePopup(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, eventWithToolbarField, true, true));
   }
 }
