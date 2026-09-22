@@ -2277,6 +2277,8 @@
       <module fileurl="file://$PROJECT_DIR$/tools/reproducibleBuilds.diff/intellij.tools.reproducibleBuilds.diff.iml" filepath="$PROJECT_DIR$/tools/reproducibleBuilds.diff/intellij.tools.reproducibleBuilds.diff.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/bootstrap/intellij.tools.testsBootstrap.iml" filepath="$PROJECT_DIR$/platform/testFramework/bootstrap/intellij.tools.testsBootstrap.iml" />
       <module fileurl="file://$PROJECT_DIR$/updater/intellij.tools.updater.iml" filepath="$PROJECT_DIR$/updater/intellij.tools.updater.iml" />
+      <module fileurl="file://$PROJECT_DIR$/updater/intellij.tools.updater.ffm.iml" filepath="$PROJECT_DIR$/updater/intellij.tools.updater.ffm.iml" />
+      <module fileurl="file://$PROJECT_DIR$/updater/intellij.tools.updater.ffm.tests.iml" filepath="$PROJECT_DIR$/updater/intellij.tools.updater.ffm.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/updater/intellij.tools.updater.tests.iml" filepath="$PROJECT_DIR$/updater/intellij.tools.updater.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/turboComplete/intellij.turboComplete.iml" filepath="$PROJECT_DIR$/plugins/turboComplete/intellij.turboComplete.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/turboComplete/intellij.turboComplete.tests.iml" filepath="$PROJECT_DIR$/plugins/turboComplete/intellij.turboComplete.tests.iml" />
