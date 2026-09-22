@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="mvstore" type="repository">
-        <properties maven-id="com.h2database:h2-mvstore:2.4.240">
+        <properties maven-id="com.h2database:h2-mvstore:2.5.250">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.4.240/h2-mvstore-2.4.240.jar">
-              <sha256sum>28d9ead5bc525a66b0da0e35bc56d64c5ecaba5e9be864f917d503180f12d47c</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.5.250/h2-mvstore-2.5.250.jar">
+              <sha256sum>6008cc858cf37c1d006795c415b62d7db4cf7d19fd6610e6ec40f57cc3235f8f</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.4.240/h2-mvstore-2.4.240.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.5.250/h2-mvstore-2.5.250.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.4.240/h2-mvstore-2.4.240-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.5.250/h2-mvstore-2.5.250-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

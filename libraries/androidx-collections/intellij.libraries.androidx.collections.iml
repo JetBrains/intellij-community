@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="androidx-collection" type="repository">
-        <properties maven-id="androidx.collection:collection:1.6.0-beta01">
+        <properties maven-id="androidx.collection:collection:1.6.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/androidx/collection/collection/1.6.0-beta01/collection-1.6.0-beta01.jar">
-              <sha256sum>9a273f0f95e9bec012a4bbe5090c08f80b67c28ff40d6a212b401eff99316a09</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/collection/collection/1.6.0/collection-1.6.0.jar">
+              <sha256sum>dd5b284394b51e94fe6f6e99b168a7891d2f0e78d594b725b36c45bd1b969df5</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/androidx/annotation/annotation/1.9.1/annotation-1.9.1.jar">
               <sha256sum>38322afa7345c37e29c65ec8852178ae1c26e23096a0634d07a4a3893931f58c</sha256sum>
@@ -20,8 +20,8 @@
             <artifact url="file://$MAVEN_REPOSITORY$/androidx/annotation/annotation-jvm/1.9.1/annotation-jvm-1.9.1.jar">
               <sha256sum>1e343917ebf27ba96fe4dc52b1cad7fd32b738fbc6355bb6cd5b3b305d7212d0</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/androidx/collection/collection-jvm/1.6.0-beta01/collection-jvm-1.6.0-beta01.jar">
-              <sha256sum>74e128077ba26f4f0ca6c5490ef86f8e931f811cd7aadf182830753a108aace9</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/collection/collection-jvm/1.6.0/collection-jvm-1.6.0.jar">
+              <sha256sum>839fcec147704611a222159fa84e3e062f68eee80caa549ddd1222d5210a13df</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -30,17 +30,17 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/collection/collection/1.6.0-beta01/collection-1.6.0-beta01.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/collection/collection/1.6.0/collection-1.6.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/annotation/annotation/1.9.1/annotation-1.9.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/annotation/annotation-jvm/1.9.1/annotation-jvm-1.9.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/collection/collection-jvm/1.6.0-beta01/collection-jvm-1.6.0-beta01.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/collection/collection-jvm/1.6.0/collection-jvm-1.6.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/collection/collection/1.6.0-beta01/collection-1.6.0-beta01-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/collection/collection/1.6.0/collection-1.6.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/annotation/annotation/1.9.1/annotation-1.9.1-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/annotation/annotation-jvm/1.9.1/annotation-jvm-1.9.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/collection/collection-jvm/1.6.0-beta01/collection-jvm-1.6.0-beta01-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/collection/collection-jvm/1.6.0/collection-jvm-1.6.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
