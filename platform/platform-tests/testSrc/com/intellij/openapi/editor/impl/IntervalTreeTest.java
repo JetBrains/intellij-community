@@ -3,18 +3,30 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.runner.RunWith;
 
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.junit.Assume.assumeFalse;
+
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class IntervalTreeTest extends LightPlatformTestCase {
   private final DocumentImpl document = new DocumentImpl(" ".repeat(1000));
   private final RangeMarkerTreeForTests tree = new RangeMarkerTreeForTests();
+
+  @Override
+  protected void setUp() throws Exception {
+    assumeFalse("See SnapshotMarkerEngineImplTest instead. This test covers the legacy interval tree but the snapshot marker engine is on. Turn off RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION temporarily if you really need to run this test", RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION);
+    super.setUp();
+  }
 
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
