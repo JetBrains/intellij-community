@@ -63,7 +63,7 @@ public fun Popup(
     Popup(
         popupPositionProvider,
         ZeroCornerSize,
-        onDismissRequest,
+        onDismissRequest?.ignoringInputMode(),
         properties,
         onPreviewKeyEvent,
         onKeyEvent,
@@ -83,7 +83,10 @@ public fun Popup(
  * but you need to display a popup that is bigger than the component size.
  *
  * @param popupPositionProvider Determines the position of the popup on the screen.
- * @param onDismissRequest Callback invoked when a dismiss event is requested, typically when the popup is dismissed.
+ * @param onDismissRequest Callback invoked when a dismiss event is requested. It receives the [InputMode] that caused
+ *   the dismissal: [InputMode.Keyboard] when a key did, [InputMode.Touch] when a pointer or a lost window focus did. A
+ *   menu needs this to tell the two apart, because it refuses a pointer dismissal while the pointer hovers the item
+ *   that opened it.
  * @param properties Configuration parameters for the popup, such as whether it should consume touch events or focusable
  *   behavior.
  * @param onPreviewKeyEvent Callback invoked for key events before they are dispatched to children. Return `true` to
@@ -101,7 +104,7 @@ public fun Popup(
 @Composable
 public fun Popup(
     popupPositionProvider: PopupPositionProvider,
-    onDismissRequest: (() -> Unit)? = null,
+    onDismissRequest: ((inputMode: InputMode) -> Unit)? = null,
     properties: PopupProperties = PopupProperties(),
     onPreviewKeyEvent: ((KeyEvent) -> Boolean)? = null,
     onKeyEvent: ((KeyEvent) -> Boolean)? = null,
@@ -156,7 +159,7 @@ public fun Popup(
     Popup(
         popupPositionProvider,
         cornerSize,
-        onDismissRequest,
+        onDismissRequest?.ignoringInputMode(),
         properties,
         onPreviewKeyEvent,
         onKeyEvent,
@@ -178,7 +181,10 @@ public fun Popup(
  * @param popupPositionProvider Determines the position of the popup on the screen.
  * @param cornerSize The size of the popup's rounded corners. This value gets ignored if the popup's implementation used
  *   is the default Compose popup.
- * @param onDismissRequest Callback invoked when a dismiss event is requested, typically when the popup is dismissed.
+ * @param onDismissRequest Callback invoked when a dismiss event is requested. It receives the [InputMode] that caused
+ *   the dismissal: [InputMode.Keyboard] when a key did, [InputMode.Touch] when a pointer or a lost window focus did. A
+ *   menu needs this to tell the two apart, because it refuses a pointer dismissal while the pointer hovers the item
+ *   that opened it.
  * @param properties Configuration parameters for the popup, such as whether it should consume touch events or focusable
  *   behavior.
  * @param onPreviewKeyEvent Callback invoked for key events before they are dispatched to children. Return `true` to
@@ -197,7 +203,7 @@ public fun Popup(
 public fun Popup(
     popupPositionProvider: PopupPositionProvider,
     cornerSize: CornerSize,
-    onDismissRequest: (() -> Unit)? = null,
+    onDismissRequest: ((inputMode: InputMode) -> Unit)? = null,
     properties: PopupProperties = PopupProperties(),
     onPreviewKeyEvent: ((KeyEvent) -> Boolean)? = null,
     onKeyEvent: ((KeyEvent) -> Boolean)? = null,
@@ -219,7 +225,7 @@ public fun Popup(
         } else {
             ComposePopup(
                 popupPositionProvider = popupPositionProvider,
-                onDismissRequest = onDismissRequest,
+                onDismissRequest = onDismissRequest?.let { dismiss -> { dismiss(InputMode.Touch) } },
                 properties = properties,
                 onPreviewKeyEvent = onPreviewKeyEvent,
                 onKeyEvent = onKeyEvent,
@@ -227,6 +233,52 @@ public fun Popup(
             )
         }
     }
+}
+
+@Deprecated(message = "Use the overload that reports the dismissal InputMode.", level = DeprecationLevel.HIDDEN)
+@Composable
+public fun Popup(
+    popupPositionProvider: PopupPositionProvider,
+    onDismissRequest: (() -> Unit)? = null,
+    properties: PopupProperties = PopupProperties(),
+    onPreviewKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    onKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    windowShape: ((IntSize) -> Shape)? = null,
+    content: @Composable () -> Unit,
+) {
+    Popup(
+        popupPositionProvider = popupPositionProvider,
+        onDismissRequest = onDismissRequest?.ignoringInputMode(),
+        properties = properties,
+        onPreviewKeyEvent = onPreviewKeyEvent,
+        onKeyEvent = onKeyEvent,
+        windowShape = windowShape,
+        content = content,
+    )
+}
+
+@Deprecated(message = "Use the overload that reports the dismissal InputMode.", level = DeprecationLevel.HIDDEN)
+@Composable
+public fun Popup(
+    popupPositionProvider: PopupPositionProvider,
+    cornerSize: CornerSize,
+    onDismissRequest: (() -> Unit)? = null,
+    properties: PopupProperties = PopupProperties(),
+    onPreviewKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    onKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    windowShape: ((IntSize) -> Shape)? = null,
+    content: @Composable () -> Unit,
+) {
+    Popup(
+        popupPositionProvider = popupPositionProvider,
+        cornerSize = cornerSize,
+        onDismissRequest = onDismissRequest?.ignoringInputMode(),
+        properties = properties,
+        onPreviewKeyEvent = onPreviewKeyEvent,
+        onKeyEvent = onKeyEvent,
+        windowShape = windowShape,
+        content = content,
+    )
 }
 
 /**
@@ -237,6 +289,62 @@ public fun Popup(
  * [JewelFlags.useCustomPopupRenderer] flag to use it.
  */
 public interface PopupRenderer {
+    @Deprecated(
+        message = "Implement the overload whose onDismissRequest reports the dismissal InputMode.",
+        replaceWith =
+            ReplaceWith(
+                "Popup(popupPositionProvider, properties, " +
+                    "onDismissRequest?.let { dismiss -> { _: InputMode -> dismiss() } }, " +
+                    "onPreviewKeyEvent, onKeyEvent, cornerSize, windowShape = null, content)",
+                "androidx.compose.ui.input.InputMode",
+            ),
+    )
+    @Composable
+    public fun Popup(
+        popupPositionProvider: PopupPositionProvider,
+        properties: PopupProperties,
+        onDismissRequest: (() -> Unit)?,
+        onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
+        onKeyEvent: ((KeyEvent) -> Boolean)?,
+        cornerSize: CornerSize,
+        content: @Composable () -> Unit,
+    ) {
+        error("A PopupRenderer must override one of the Popup overloads.")
+    }
+
+    @Deprecated(
+        message = "Implement the overload whose onDismissRequest reports the dismissal InputMode.",
+        replaceWith =
+            ReplaceWith(
+                "Popup(popupPositionProvider, properties, " +
+                    "onDismissRequest?.let { dismiss -> { _: InputMode -> dismiss() } }, " +
+                    "onPreviewKeyEvent, onKeyEvent, cornerSize, windowShape, content)",
+                "androidx.compose.ui.input.InputMode",
+            ),
+    )
+    @Composable
+    public fun Popup(
+        popupPositionProvider: PopupPositionProvider,
+        properties: PopupProperties,
+        onDismissRequest: (() -> Unit)?,
+        onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
+        onKeyEvent: ((KeyEvent) -> Boolean)?,
+        cornerSize: CornerSize,
+        windowShape: ((IntSize) -> Shape)?,
+        content: @Composable () -> Unit,
+    ) {
+        @Suppress("DEPRECATION")
+        Popup(
+            popupPositionProvider = popupPositionProvider,
+            properties = properties,
+            onDismissRequest = onDismissRequest,
+            onPreviewKeyEvent = onPreviewKeyEvent,
+            onKeyEvent = onKeyEvent,
+            cornerSize = cornerSize,
+            content = content,
+        )
+    }
+
     /**
      * Compatibility overload without native window-shape support. Implement the shaped overload instead.
      *
@@ -247,12 +355,25 @@ public interface PopupRenderer {
     public fun Popup(
         popupPositionProvider: PopupPositionProvider,
         properties: PopupProperties,
-        onDismissRequest: (() -> Unit)?,
+        onDismissRequest: ((inputMode: InputMode) -> Unit)?,
         onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
         onKeyEvent: ((KeyEvent) -> Boolean)?,
         cornerSize: CornerSize,
         content: @Composable () -> Unit,
-    )
+    ) {
+        // Reaches a renderer that implements only the overloads without an input mode. It cannot tell a key from
+        // a pointer, so it reports the pointer mode that every caller assumed before the input mode existed.
+        @Suppress("DEPRECATION")
+        Popup(
+            popupPositionProvider = popupPositionProvider,
+            properties = properties,
+            onDismissRequest = onDismissRequest?.reportingTouch(),
+            onPreviewKeyEvent = onPreviewKeyEvent,
+            onKeyEvent = onKeyEvent,
+            cornerSize = cornerSize,
+            content = content,
+        )
+    }
 
     /**
      * Renders a popup, optionally clipping its native window to [windowShape]. Only native-window renderers apply the
@@ -260,7 +381,10 @@ public interface PopupRenderer {
      *
      * @param popupPositionProvider Determines the popup position.
      * @param properties Popup focus and dismissal behavior.
-     * @param onDismissRequest Callback invoked when dismissal is requested.
+     * @param onDismissRequest Callback invoked when dismissal is requested. It receives the [InputMode] that caused the
+     *   dismissal: [InputMode.Keyboard] when a key did, [InputMode.Touch] when a pointer or a lost window focus did. A
+     *   menu needs this to tell the two apart, because it refuses a pointer dismissal while the pointer hovers the item
+     *   that opened it.
      * @param onPreviewKeyEvent Preview key handler; return `true` to consume an event.
      * @param onKeyEvent Key handler; return `true` to consume an event.
      * @param cornerSize Popup corner size.
@@ -271,7 +395,7 @@ public interface PopupRenderer {
     public fun Popup(
         popupPositionProvider: PopupPositionProvider,
         properties: PopupProperties,
-        onDismissRequest: (() -> Unit)?,
+        onDismissRequest: ((inputMode: InputMode) -> Unit)?,
         onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
         onKeyEvent: ((KeyEvent) -> Boolean)?,
         cornerSize: CornerSize,
@@ -293,6 +417,10 @@ public interface PopupRenderer {
     /** Companion object for [PopupRenderer]. Currently empty; kept as an extension point for extension functions. */
     public companion object
 }
+
+private fun (() -> Unit).ignoringInputMode(): (InputMode) -> Unit = { this() }
+
+private fun ((InputMode) -> Unit).reportingTouch(): () -> Unit = { this(InputMode.Touch) }
 
 /**
  * Provides a custom [PopupRenderer] implementation for rendering popups in the Jewel UI library.
@@ -316,7 +444,7 @@ private object DefaultPopupRenderer : PopupRenderer {
     override fun Popup(
         popupPositionProvider: PopupPositionProvider,
         properties: PopupProperties,
-        onDismissRequest: (() -> Unit)?,
+        onDismissRequest: ((inputMode: InputMode) -> Unit)?,
         onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
         onKeyEvent: ((KeyEvent) -> Boolean)?,
         cornerSize: CornerSize,
@@ -338,7 +466,7 @@ private object DefaultPopupRenderer : PopupRenderer {
     override fun Popup(
         popupPositionProvider: PopupPositionProvider,
         properties: PopupProperties,
-        onDismissRequest: (() -> Unit)?,
+        onDismissRequest: ((inputMode: InputMode) -> Unit)?,
         onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
         onKeyEvent: ((KeyEvent) -> Boolean)?,
         cornerSize: CornerSize,
@@ -349,7 +477,7 @@ private object DefaultPopupRenderer : PopupRenderer {
         // windowShape is ignored.
         ComposePopup(
             popupPositionProvider = popupPositionProvider,
-            onDismissRequest = onDismissRequest,
+            onDismissRequest = onDismissRequest?.let { dismiss -> { dismiss(InputMode.Touch) } },
             properties = properties,
             onPreviewKeyEvent = onPreviewKeyEvent,
             onKeyEvent = onKeyEvent,

@@ -18,6 +18,7 @@ import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposePanel
 import androidx.compose.ui.awt.RenderSettings
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -99,7 +100,7 @@ internal object JDialogRenderer : PopupRenderer {
     override fun Popup(
         popupPositionProvider: PopupPositionProvider,
         properties: PopupProperties,
-        onDismissRequest: (() -> Unit)?,
+        onDismissRequest: ((inputMode: InputMode) -> Unit)?,
         onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
         onKeyEvent: ((KeyEvent) -> Boolean)?,
         cornerSize: CornerSize,
@@ -121,7 +122,7 @@ internal object JDialogRenderer : PopupRenderer {
     override fun Popup(
         popupPositionProvider: PopupPositionProvider,
         properties: PopupProperties,
-        onDismissRequest: (() -> Unit)?,
+        onDismissRequest: ((inputMode: InputMode) -> Unit)?,
         onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
         onKeyEvent: ((KeyEvent) -> Boolean)?,
         cornerSize: CornerSize,
@@ -157,7 +158,7 @@ internal object JDialogRenderer : PopupRenderer {
             ComposePopup(
                 popupPositionProvider = popupPositionProvider,
                 properties = properties,
-                onDismissRequest = onDismissRequest,
+                onDismissRequest = onDismissRequest?.let { dismiss -> { dismiss(InputMode.Touch) } },
                 onPreviewKeyEvent = onPreviewKeyEvent,
                 onKeyEvent = onKeyEvent,
                 content = content,
@@ -183,7 +184,7 @@ internal object JDialogRenderer : PopupRenderer {
 private fun JPopupImpl(
     window: Window,
     popupPositionProvider: PopupPositionProvider,
-    onDismissRequest: (() -> Unit)?,
+    onDismissRequest: ((inputMode: InputMode) -> Unit)?,
     properties: PopupProperties,
     onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
     onKeyEvent: ((KeyEvent) -> Boolean)?,
@@ -402,19 +403,19 @@ private fun JPopupImpl(
             when (event) {
                 is MouseEvent -> {
                     if (shouldDismissPopup(event, dialog, currentProperties)) {
-                        currentOnDismissRequest?.invoke()
+                        currentOnDismissRequest?.invoke(InputMode.Touch)
                     }
                     // For focusable popups, WINDOW_LOST_FOCUS is skipped when the user clicks in the parent window
                     // (see shouldDismissPopup(WindowEvent) above). We handle dismissal on MOUSE_RELEASED instead.
                     // invokeLater queues after the current event finishes dispatching, so Compose has already
                     // processed the click (e.g., a toggle button's onClick) by the time the dismiss runs.
                     if (shouldDeferDismissOnMouseReleased(event, dialog, currentProperties)) {
-                        SwingUtilities.invokeLater { currentOnDismissRequest?.invoke() }
+                        SwingUtilities.invokeLater { currentOnDismissRequest?.invoke(InputMode.Touch) }
                     }
                 }
                 is WindowEvent -> {
                     if (shouldDismissPopup(event, dialog, currentProperties)) {
-                        currentOnDismissRequest?.invoke()
+                        currentOnDismissRequest?.invoke(InputMode.Touch)
                     }
                 }
                 is AWTKeyEvent -> {
@@ -439,7 +440,7 @@ private fun JPopupImpl(
                             dismissRequest != null
 
                     if (dismissed) {
-                        dismissRequest.invoke()
+                        dismissRequest.invoke(InputMode.Keyboard)
                     }
                     // A focusable popup swallows Escape whether or not it dismissed, matching Compose. A
                     // non-focusable one must let a key it did not act on reach whatever owns it.

@@ -3,6 +3,7 @@ package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.window.PopupPositionProvider
@@ -21,7 +22,7 @@ import androidx.compose.ui.window.PopupProperties
  * test depends on.
  */
 internal class RecordingPopupRenderer : PopupRenderer {
-    val dismissRequests: MutableList<(() -> Unit)?> = mutableListOf()
+    val dismissRequests: MutableList<((inputMode: InputMode) -> Unit)?> = mutableListOf()
     val properties: MutableList<PopupProperties> = mutableListOf()
 
     @Suppress("OVERRIDE_DEPRECATION")
@@ -29,7 +30,7 @@ internal class RecordingPopupRenderer : PopupRenderer {
     override fun Popup(
         popupPositionProvider: PopupPositionProvider,
         properties: PopupProperties,
-        onDismissRequest: (() -> Unit)?,
+        onDismissRequest: ((inputMode: InputMode) -> Unit)?,
         onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
         onKeyEvent: ((KeyEvent) -> Boolean)?,
         cornerSize: CornerSize,
@@ -51,7 +52,7 @@ internal class RecordingPopupRenderer : PopupRenderer {
     override fun Popup(
         popupPositionProvider: PopupPositionProvider,
         properties: PopupProperties,
-        onDismissRequest: (() -> Unit)?,
+        onDismissRequest: ((inputMode: InputMode) -> Unit)?,
         onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
         onKeyEvent: ((KeyEvent) -> Boolean)?,
         cornerSize: CornerSize,
