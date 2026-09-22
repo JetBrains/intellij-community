@@ -735,10 +735,26 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
 
   @Override
   public void showUnderneathOf(@NotNull Component aComponent, boolean useAlignment) {
-    boolean isAlignmentUsed = ExperimentalUI.isNewUI() && Registry.is("ide.popup.align.by.content") && useAlignment
-                              && isComponentSupportsAlignment(aComponent);
-    var point = isAlignmentUsed ? pointUnderneathOfAlignedHorizontally(aComponent) : defaultPointUnderneathOf(aComponent);
+    var point = pointUnderneathOf(aComponent, useAlignment);
     show(point);
+  }
+
+  /** Repositions a shown popup as if it opened underneath {@code component}. */
+  @ApiStatus.Internal
+  public void repositionUnderneathOf(@NotNull Component component) {
+    reposition(pointUnderneathOf(component, true));
+  }
+
+  /** Repositions a shown popup with the anchor and screen-fit rules from {@link #show(PopupShowOptions)}. */
+  @ApiStatus.Internal
+  public void reposition(@NotNull PopupShowOptions showOptions) {
+    reposition(((PopupShowOptionsBuilder)showOptions).build());
+  }
+
+  private static @NotNull RelativePoint pointUnderneathOf(@NotNull Component component, boolean useAlignment) {
+    boolean isAlignmentUsed = ExperimentalUI.isNewUI() && Registry.is("ide.popup.align.by.content") && useAlignment
+                              && isComponentSupportsAlignment(component);
+    return isAlignmentUsed ? pointUnderneathOfAlignedHorizontally(component) : defaultPointUnderneathOf(component);
   }
 
   private static boolean isComponentSupportsAlignment(Component c) {
@@ -808,6 +824,42 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
     stretchContentToOwnerIfNecessary(aPoint.getOriginalComponent());
 
     show(aPoint.getComponent(), screenPoint.x, screenPoint.y, false);
+  }
+
+  private void reposition(@NotNull RelativePoint point) {
+    var screenPoint = point.getScreenPoint();
+    fitXToComponentScreen(screenPoint, point.getComponent());
+    reposition(((PopupShowOptionsBuilder)PopupShowOptions.atScreenLocation(
+      point.getComponent(), screenPoint.x, screenPoint.y, false
+    )).build());
+  }
+
+  private void reposition(@NotNull PopupShowOptionsImpl options) {
+    if (!isVisible() || isBusy()) return;
+    ThreadingAssertions.assertEventDispatchThread();
+    var window = getContentWindow(myContent);
+    if (window == null) return;
+
+    var xy = new Point(options.getScreenX(), options.getScreenY());
+    var insets = myContent.getInsets();
+    if (insets != null) {
+      xy.x -= insets.left;
+      xy.y -= insets.top;
+    }
+    fixLocateByContent(xy, false);
+
+    var targetBounds = new Rectangle(xy, window.getSize());
+    var screen = ScreenUtil.getScreenRectangle(options.getScreenX(), options.getScreenY());
+    adjustAndFitToScreen(targetBounds, options, screen, false);
+    if (ClientSystemInfo.isWaylandToolkit()) {
+      var popupOwner = SwingUtilities.getRoot(myOwner);
+      if (popupOwner instanceof Window ownerWindow) {
+        targetBounds.setLocation(fitIntoParentBounds(targetBounds, ownerWindow));
+      }
+    }
+    window.setBounds(targetBounds);
+    window.validate();
+    updateMaskAndAlpha(window);
   }
 
   @Override
@@ -1367,44 +1419,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
     if (LOG.isDebugEnabled()) {
       LOG.debug("Target bounds " + targetBounds);
     }
-    @Nullable AppliedAdjustments adjustments = null;
-    if (options.getPopupAnchor() != AnchoredPoint.Anchor.TOP_LEFT) {
-      adjustments = adjustForAnchor(targetBounds, options, screen);
-    }
-    if (targetBounds.width > screen.width || targetBounds.height > screen.height) {
-      StringBuilder sb = new StringBuilder("popup preferred size is bigger than screen: ");
-      sb.append(targetBounds.width).append("x").append(targetBounds.height);
-      IJSwingUtilities.appendComponentClassNames(sb, myContent);
-      LOG.warn(sb.toString());
-    }
-    Rectangle original = new Rectangle(targetBounds);
-    if (ClientSystemInfo.isWaylandToolkit()) {
-      var hadToFit = fitSizeToScreen(targetBounds, screen);
-      if (hadToFit && LOG.isDebugEnabled()) {
-        LOG.debug("Target bounds after resizing to fit the screen: " + targetBounds);
-      }
-    }
-    else if (myLocateWithinScreen) {
-      ScreenUtil.moveToFit(targetBounds, screen, null);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Target bounds after moving to fit the screen: " + targetBounds);
-      }
-    }
-    else {
-      //even when LocateWithinScreen option is disabled, popup should not be shown in invisible area
-      fitToVisibleArea(targetBounds);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Target bounds after moving to fit the visible area: " + targetBounds);
-      }
-    }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("END calculating popup bounds, the result is " + targetBounds);
-    }
-
-
-    if (myMouseOutCanceller != null) {
-      myMouseOutCanceller.myEverEntered = targetBounds.equals(original);
-    }
+    var adjustments = adjustAndFitToScreen(targetBounds, options, screen, true);
 
     // prevent hiding of a floating toolbar
     Point pointOnOwner = new Point(aScreenX, aScreenY);
@@ -1705,6 +1720,50 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
   private record AppliedAdjustments(
     boolean adjustedHeight
   ) { }
+
+  private @Nullable AppliedAdjustments adjustAndFitToScreen(
+    @NotNull Rectangle targetBounds,
+    @NotNull PopupShowOptionsImpl options,
+    @NotNull Rectangle screen,
+    boolean recordMouseFit
+  ) {
+    var adjustments = options.getPopupAnchor() == AnchoredPoint.Anchor.TOP_LEFT
+                      ? null
+                      : adjustForAnchor(targetBounds, options, screen);
+    if (targetBounds.width > screen.width || targetBounds.height > screen.height) {
+      var message = new StringBuilder("popup preferred size is bigger than screen: ");
+      message.append(targetBounds.width).append("x").append(targetBounds.height);
+      IJSwingUtilities.appendComponentClassNames(message, myContent);
+      LOG.warn(message.toString());
+    }
+    var original = new Rectangle(targetBounds);
+    if (ClientSystemInfo.isWaylandToolkit()) {
+      var hadToFit = fitSizeToScreen(targetBounds, screen);
+      if (hadToFit && LOG.isDebugEnabled()) {
+        LOG.debug("Target bounds after resizing to fit the screen: " + targetBounds);
+      }
+    }
+    else if (myLocateWithinScreen) {
+      ScreenUtil.moveToFit(targetBounds, screen, null);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Target bounds after moving to fit the screen: " + targetBounds);
+      }
+    }
+    else {
+      // Even when LocateWithinScreen is disabled, the popup must stay in a visible area.
+      fitToVisibleArea(targetBounds);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Target bounds after moving to fit the visible area: " + targetBounds);
+      }
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("END calculating popup bounds, the result is " + targetBounds);
+    }
+    if (recordMouseFit && myMouseOutCanceller != null) {
+      myMouseOutCanceller.myEverEntered = targetBounds.equals(original);
+    }
+    return adjustments;
+  }
 
   private AppliedAdjustments adjustForAnchor(
     @NotNull Rectangle bounds,
