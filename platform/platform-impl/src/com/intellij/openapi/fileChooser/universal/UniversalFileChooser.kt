@@ -86,6 +86,8 @@ import java.awt.Component
 import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.Toolkit
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
@@ -943,6 +945,16 @@ object UniversalFileChooser {
             }
           }
         })
+        pathTextField.addFocusListener(object : FocusAdapter() {
+          override fun focusLost(e: FocusEvent) {
+            if (e.isTemporary) return
+            if (pathTextField.isCompletionPopupVisible) return
+            // Only a move to the tree reverts the edited text. A move to a button, such as OK,
+            // must keep the text, because the button acts on it.
+            if (e.oppositeComponent !== fileTree.getTree()) return
+            syncPathFieldWithTreeSelection()
+          }
+        })
 
         tree.addTreeSelectionListener {
           topToolbar.updateActionsAsync()
@@ -1356,6 +1368,21 @@ object UniversalFileChooser {
           current = current.parent
         }
         return false
+      }
+
+      /**
+       * Restores the path field text from the tree selection when the user leaves the field without
+       * applying the edited text. A click on the node that is already selected fires no selection
+       * change, so the field keeps the stale text (see IJPL-248859).
+       */
+      private fun syncPathFieldWithTreeSelection() {
+        if (updatingPathFieldFromTree) return
+        if (pathNavigationJob?.isActive == true) return
+        val selection = fileTree.getSelectedFiles()
+        val selected = selection.firstOrNull() ?: return
+        if (getPathFieldText() == contributor.getPresentablePath(selected)) return
+        setPathTextFieldError(false)
+        updatePathField(selection)
       }
 
       private fun updatePathField(selection: List<Path?>) {

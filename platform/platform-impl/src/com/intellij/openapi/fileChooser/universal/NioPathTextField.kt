@@ -35,6 +35,10 @@ internal class NioPathTextField(
 
   private var completionPopup: JBPopup? = null
 
+  /** True while the completion popup holds the focus, so the field focus loss is not a real one. */
+  val isCompletionPopupVisible: Boolean
+    get() = completionPopup?.isVisible == true
+
   init {
     document.addDocumentListener(object : DocumentListener {
       override fun insertUpdate(e: DocumentEvent) {
