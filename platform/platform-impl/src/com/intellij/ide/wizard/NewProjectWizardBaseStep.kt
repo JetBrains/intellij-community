@@ -23,6 +23,7 @@ import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.observable.util.widthProperty
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
@@ -167,7 +168,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
           .withPathToTextConvertor(::getPresentablePath)
           .withTextToPathConvertor(::getCanonicalPath)
           .withEnvironmentRestricted(true)
-        textFieldWithBrowseButton(fileChooserDescriptor, context.project)
+        textFieldWithBrowseButton(fileChooserDescriptor, context.project ?: ProjectManager.getInstance().defaultProject)
           .bindText(pathProperty.toUiPathProperty())
           .align(AlignX.FILL)
           .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
