@@ -187,7 +187,6 @@ internal fun normalizeContentReport(fileEntries: List<FileEntry>, short: Boolean
           dependentModules = projectLib.dependentModules.takeIf { !short } ?: emptyMap(),
         )
       },
-      files = originalItem.files.map { it.copy(name = removeVersionFromName(it.name), size = 0) },
     )
     item
   }

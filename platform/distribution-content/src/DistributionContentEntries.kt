@@ -12,10 +12,6 @@ data class FileEntry(
    */
   @JvmField val name: String,
 
-  @JvmField val os: String? = null,
-  @JvmField val arch: String? = null,
-  @JvmField val libc: String? = null,
-
   /**
    * The list of included in the file project libraries.
    */
@@ -33,11 +29,6 @@ data class FileEntry(
 
   @JvmField val library: String? = null,
   @JvmField val module: String? = null,
-  @JvmField val files: List<ModuleLibraryFile> = emptyList(),
-  @JvmField val reason: String? = null,
-
-  @JvmField val bundled: List<PluginContentReport> = emptyList(),
-  @JvmField val nonBundled: List<PluginContentReport> = emptyList(),
 
   /**
    * How the build produced [name].

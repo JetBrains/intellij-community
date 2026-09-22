@@ -78,7 +78,6 @@ internal fun projectContentReport(contentReport: ContentReport, context: BuildCo
   val rootModuleSets = buildRootModuleSets(productModules)
   return ProjectedContentReport(
     platform = projectPlatform(
-      contentReport = contentReport,
       buildPaths = buildPaths,
       distFiles = context.getDistFiles(os = null, arch = null, libcImpl = null),
       fileToEntry = fileToEntry,
@@ -183,7 +182,6 @@ private fun projectProductModules(productModuleMap: ProductModuleEntries, buildP
 }
 
 private fun projectPlatform(
-  contentReport: ContentReport,
   buildPaths: BuildPaths,
   distFiles: Collection<DistFile>,
   fileToEntry: Map<String, List<DistributionFileEntry>>,
@@ -202,9 +200,6 @@ private fun projectPlatform(
   for (item in distFiles) {
     result.add(FileEntry(
       name = item.relativePath,
-      os = item.os?.osId,
-      arch = item.arch?.dirName,
-      libc = item.libcImpl?.toString(),
     ))
   }
 
@@ -212,8 +207,6 @@ private fun projectPlatform(
     name = "plugins",
     productModules = collectProductModules(productModules = productModules, moduleSets = moduleSets, kind = ModuleIncludeReasons.PRODUCT_MODULES),
     productEmbeddedModules = collectProductModules(productModules = productModules, moduleSets = moduleSets, kind = ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES),
-    bundled = projectPluginIndex(contentReport.bundledPlugins),
-    nonBundled = projectPluginIndex(contentReport.nonBundledPlugins),
   ))
   return result
 }
@@ -340,7 +333,6 @@ private fun projectSeparatePackedModuleLibrary(name: String, fileEntries: List<D
     name = name,
     library = libName,
     module = entries.first().moduleName,
-    files = entries.map { ModuleLibraryFile(name = libraryFileName(it, buildPaths), size = it.size) },
   )
 }
 
@@ -424,8 +416,6 @@ private inline fun projectContentEntries(
         modules = modules.modules,
         contentModules = modules.contentModules,
         library = libraryData.libraryName,
-        files = entries.map { ModuleLibraryFile(name = libraryFileName(it, buildPaths), size = it.size) },
-        reason = libraryData.reason,
       ))
     }
     else {
