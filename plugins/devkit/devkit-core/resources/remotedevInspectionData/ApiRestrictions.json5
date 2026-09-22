@@ -212,6 +212,7 @@
   {"apiName": "com.intellij.execution.target.TargetEnvironmentType", "extensionPointNames": ["com.intellij.executionTargetType"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.execution.target.LanguageRuntimeType", "extensionPointNames": ["com.intellij.executionTargetLanguageRuntimeType"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.execution.filters.ConsoleFilterProvider", "extensionPointNames": ["com.intellij.consoleFilterProvider"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
+  {"apiName": "com.intellij.execution.filters.InvisibleHyperlinkFilterProvider", "extensionPointNames": ["com.intellij.invisibleHyperlinkFilterProvider"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.execution.filters.ConsoleInputFilterProvider", "extensionPointNames": ["com.intellij.consoleInputFilterProvider"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.execution.actions.ConsoleActionsPostProcessor", "extensionPointNames": ["com.intellij.consoleActionsPostProcessor"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.execution.junit.RuntimeConfigurationProducer", "extensionPointNames": ["com.intellij.configurationProducer"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
