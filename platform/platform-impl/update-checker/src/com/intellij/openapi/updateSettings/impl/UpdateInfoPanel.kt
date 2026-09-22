@@ -297,6 +297,7 @@ private fun Panel.banner(messageText: @Nls String, status: EditorNotificationPan
   lateinit var result: Cell<InlineBanner>
   row {
     result = cell(InlineBanner(messageText, status))
+      .align(AlignX.FILL)
       .applyToComponent {
         showCloseButton(false)
         putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(left = 8, right = 8))
