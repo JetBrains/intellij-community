@@ -8,7 +8,6 @@ import com.intellij.codeInsight.inline.completion.TypingEvent.OneSymbol
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.UI
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
@@ -68,7 +67,7 @@ class TerminalInlineCompletionController(
           invokeNewCommandCompletion()
         }
     }
-    coroutineScope.awaitCancellationAndInvoke(Dispatchers.UI) {
+    coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
       InlineCompletion.remove(editor)
     }
   }
