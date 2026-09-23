@@ -9,9 +9,9 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Version
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiFile
-import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.psi.KtFile
 
 internal class OutdatedIntelliJPlatformGradlePluginVersionInspection : LocalInspectionTool() {
@@ -23,21 +23,21 @@ internal class OutdatedIntelliJPlatformGradlePluginVersionInspection : LocalInsp
 
   override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val model = IntelliJPlatformGradleModelProvider.getInstance(file.project).getModel(file) ?: return null
-    val currentVersion = GradleVersion.version(model.currentPluginVersion)
-    val latestVersion = GradleVersion.version(model.latestPluginVersion)
+    val currentVersion = Version.parseVersion(model.currentPluginVersion) ?: return null
+    val latestVersion = Version.parseVersion(model.latestPluginVersion) ?: return null
     if (currentVersion >= latestVersion) return null
 
     val message = DevKitGradleBundle.message(
       "inspection.intellij.platform.gradle.plugin.outdated.version.problem",
-      currentVersion.version,
-      latestVersion.version,
+      currentVersion.toString(),
+      latestVersion.toString(),
     )
-    return findIntelliJPlatformGradlePluginVersionReplacements(file, currentVersion.version, latestVersion.version)
+    return findIntelliJPlatformGradlePluginVersionReplacements(file, currentVersion.toString(), latestVersion.toString())
       .map { (element, newContent) ->
         manager.createProblemDescriptor(
           element,
           message,
-          UpdatePluginVersionQuickFix(latestVersion.version, newContent),
+          UpdatePluginVersionQuickFix(latestVersion.toString(), newContent),
           ProblemHighlightType.WARNING,
           isOnTheFly,
         )

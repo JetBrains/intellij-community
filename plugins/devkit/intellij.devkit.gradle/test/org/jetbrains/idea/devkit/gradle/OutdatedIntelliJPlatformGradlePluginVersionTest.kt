@@ -2,15 +2,15 @@
 package org.jetbrains.idea.devkit.gradle
 
 import com.intellij.devkit.gradle.tooling.IntelliJPlatformGradleModel
+import com.intellij.openapi.util.Version
 import junit.framework.TestCase
-import org.gradle.util.GradleVersion
 
 internal class OutdatedIntelliJPlatformGradlePluginVersionTest : TestCase() {
 
   fun testReportsFirstOutdatedModel() {
     val outdated = findOutdatedIntelliJPlatformGradlePluginVersion(listOf(model("2.2.1", "2.2.1"), model("2.1.0", "2.2.1")))
 
-    assertEquals(GradleVersion.version("2.1.0") to GradleVersion.version("2.2.1"), outdated)
+    assertEquals(Version(2, 1, 0) to Version(2, 2, 1), outdated)
   }
 
   fun testIgnoresUpToDateModels() {
