@@ -46,6 +46,8 @@ jvm_library(
         "//plugins/kotlin/ml-completion:completion-ml",
         "//plugins/kotlin/ml-completion:completion-ml_test_lib",
         "//platform/platform-impl/internal",
+        "//platform/scratch/plugin",
+        "//platform/scratch/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.completion.ml.tests` end

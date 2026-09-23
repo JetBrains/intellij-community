@@ -86,6 +86,8 @@ jvm_library(
         "//plugins/groovy:groovy_test_lib",
         "//plugins/gradle/java/groovy",
         "//plugins/gradle/java/groovy:groovy_test_lib",
+        "//platform/scratch/plugin",
+        "//platform/scratch/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.java.tests.benchmark` end

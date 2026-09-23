@@ -90,6 +90,8 @@ jvm_library(
         "//plugins/kotlin/fir/tests:tests_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+        "//platform/scratch/plugin",
+        "//platform/scratch/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.compilerReferenceIndex.tests` end

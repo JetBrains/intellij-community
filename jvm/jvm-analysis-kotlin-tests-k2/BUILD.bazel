@@ -53,6 +53,8 @@ jvm_library(
         "//java/java-syntax:syntax_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//platform/scratch/plugin",
+        "//platform/scratch/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.jvm.analysis.kotlin.tests.k2` end

@@ -154,6 +154,8 @@ jvm_library(
         "//plugins/kotlin/base/scripting/scripting:kotlin-base-scripting-tests_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//platform/scratch/plugin",
+        "//platform/scratch/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.util.test-generator-fir` end

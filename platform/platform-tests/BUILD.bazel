@@ -480,6 +480,8 @@ jvm_library(
         "//platform/eel:eel-tests_test_lib",
         "//platform/platform-tests/concurrency:util-concurrency-tests",
         "//platform/platform-tests/concurrency:util-concurrency-tests_test_lib",
+        "//platform/scratch/plugin",
+        "//platform/scratch/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.tests` end

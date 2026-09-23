@@ -89,6 +89,8 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/lang-core",
         "//platform/lang-core:lang-core_test_lib",
+        "//platform/scratch/plugin",
+        "//platform/scratch/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.i18n.tests` end

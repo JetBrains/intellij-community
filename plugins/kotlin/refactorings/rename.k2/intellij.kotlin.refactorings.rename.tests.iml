@@ -57,6 +57,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.refactorings.rename" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.scratch.plugin" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.refactorings.rename" />
 </module>

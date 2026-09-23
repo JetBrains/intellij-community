@@ -226,6 +226,8 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//platform/scratch/plugin",
+        "//platform/scratch/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.liveTemplates.tests` end

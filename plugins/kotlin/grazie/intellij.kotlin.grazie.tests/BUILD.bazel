@@ -55,6 +55,8 @@ jvm_library(
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//platform/scratch/plugin",
+        "//platform/scratch/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.grazie.tests` end

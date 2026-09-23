@@ -106,6 +106,8 @@ jvm_library(
         "//libraries/junit4:junit4_test_lib",
         "//plugins/groovy-scripting",
         "//plugins/groovy-scripting:groovy-scripting_test_lib",
+        "//platform/scratch/plugin",
+        "//platform/scratch/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test.compose` end

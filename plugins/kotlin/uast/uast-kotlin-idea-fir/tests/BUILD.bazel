@@ -81,6 +81,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//plugins/kotlin/uast/uast-kotlin-fir/tests",
         "//plugins/kotlin/uast/uast-kotlin-fir/tests:tests_test_lib",
+        "//platform/scratch/plugin",
+        "//platform/scratch/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.uast.idea.tests` end

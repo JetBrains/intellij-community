@@ -244,6 +244,8 @@ jvm_library(
         "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/scratch/plugin",
+        "//platform/scratch/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.postfixTemplates.tests` end

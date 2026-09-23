@@ -89,6 +89,8 @@ jvm_library(
         "//plugins/coverage:coverage_test_lib",
         "//plugins/coverage:java-coverage-tests",
         "//plugins/coverage:java-coverage-tests_test_lib",
+        "//platform/scratch/plugin",
+        "//platform/scratch/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.coverage.tests` end
