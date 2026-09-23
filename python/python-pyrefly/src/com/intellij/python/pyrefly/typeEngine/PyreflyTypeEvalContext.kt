@@ -424,7 +424,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
 
   /** True for a class object. A server that sends no `flags` reports an instance. */
   private fun PyreflyLsp4jServer.TspType.isInstantiable(): Boolean =
-    flags?.and(PyreflyLsp4jServer.INSTANTIABLE_FLAG) != 0
+    flags != null && flags.and(PyreflyLsp4jServer.INSTANTIABLE_FLAG) != 0
 
   private fun PyreflyLsp4jServer.TspType.isCallable(): Boolean =
     flags?.let { it and PyreflyLsp4jServer.CALLABLE_FLAG != 0 } == true
