@@ -102,6 +102,18 @@ This specification covers the page structure, section model, search, source load
     `compatible multi selection renders every row and details occurrence`
   )
 
+- The default split must assign equal widths when the available width is at most 700 scaled pixels.
+- Above 700 scaled pixels, the list must receive one eleventh of each extra pixel.
+- Pane minimum widths must take priority when the page is too narrow for the default split.
+- The default split must follow page resizing until the user moves the divider.
+- The page must save the user's split proportion and restore it when the page reopens.
+- The details pane must have a minimum width of 220 scaled pixels.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt (
+    `default split gives the list half of narrow widths and one eleventh of extra width`;
+    `nested layout does not save the default split`;
+    `user split proportion persists across views and resizes`
+  )
+
 - Visible sections must use this order: Installing, Installed, Bundled, Suggested or Marketplace, Internal, then custom repositories.
 - A ready section with no items must not leave a placeholder.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (

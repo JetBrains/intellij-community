@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.setToolTipText
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splitter
@@ -171,18 +172,53 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     }
 
     val detailsComponent = detailsPresenter?.component ?: createStaticDetailsComponent()
+    val detailsMinimumSize = detailsComponent.minimumSize
+    if (detailsMinimumSize.width < JBUI.scale(DETAILS_MIN_WIDTH)) {
+      detailsComponent.minimumSize = Dimension(JBUI.scale(DETAILS_MIN_WIDTH), detailsMinimumSize.height)
+    }
 
-    component = object : OnePixelSplitter(false, DEFAULT_SPLIT_PROPORTION) {
+    component = object : OnePixelSplitter(false, SPLIT_STORAGE_DEFAULT_PROPORTION) {
+      // JBSplitter saves each proportion change. Preserve this flag through nested layouts so only user changes reach storage.
+      private var updatingDefaultProportion = false
+
       override fun createDivider(): Divider {
         return super.createDivider().apply {
           background = PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR
         }
+      }
+
+      override fun loadProportion() {
+        if (PropertiesComponent.getInstance().isValueSet(SPLIT_PROPORTION_KEY)) {
+          super.loadProportion()
+        }
+      }
+
+      override fun saveProportion() {
+        if (!updatingDefaultProportion) {
+          super.saveProportion()
+        }
+      }
+
+      override fun doLayout() {
+        val availableWidth = width - insets.left - insets.right - dividerWidth
+        if (availableWidth > 0 && !PropertiesComponent.getInstance().isValueSet(SPLIT_PROPORTION_KEY)) {
+          val wasUpdatingDefaultProportion = updatingDefaultProportion
+          updatingDefaultProportion = true
+          try {
+            proportion = defaultListProportion(availableWidth)
+          }
+          finally {
+            updatingDefaultProportion = wasUpdatingDefaultProportion
+          }
+        }
+        super.doLayout()
       }
     }.apply {
       accessibleContext.accessibleName = IdeBundle.message("title.plugins")
       lackOfSpaceStrategy = Splitter.LackOfSpaceStrategy.HONOR_THE_FIRST_MIN_SIZE
       firstComponent = listPanel
       secondComponent = detailsComponent
+      setAndLoadSplitterProportionKey(SPLIT_PROPORTION_KEY)
     }
     resultsAnnouncementTimer = Timer(RESULTS_ANNOUNCEMENT_DELAY_MS) { announceRenderedResults() }.apply {
       isRepeats = false
@@ -1340,11 +1376,15 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
   }
 
   private companion object {
-    const val DEFAULT_SPLIT_PROPORTION: Float = 0.45f
+    const val DETAILS_MIN_WIDTH: Int = 220
     const val ERROR_INSET: Int = 10
     const val ERROR_LEFT_INSET: Int = 16
     const val ERROR_RETRY_GAP: Int = 8
     const val PLUGIN_LIST_MIN_WIDTH: Int = 280
+    const val SPLIT_EQUAL_WIDTH: Int = 700
+    const val SPLIT_EXTRA_WIDTH_PARTS: Int = 11
+    const val SPLIT_PROPORTION_KEY: String = "UnifiedPluginsPage.SplitProportion"
+    const val SPLIT_STORAGE_DEFAULT_PROPORTION: Float = 0f
     const val REALIZATION_CHUNK_SIZE: Int = 100
     const val RESULTS_ANNOUNCEMENT_DELAY_MS: Int = 250
     const val REAL_ROW_ESTIMATED_HEIGHT: Int = 80
@@ -1366,6 +1406,13 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     const val STICKY_HEADER_GRADIENT_HEIGHT: Int = 8
     const val TITLE_STATUS_GAP: Int = 6
 
+  }
+
+  private fun defaultListProportion(availableWidth: Int): Float {
+    val equalWidth = JBUI.scale(SPLIT_EQUAL_WIDTH)
+    val listWidth = minOf(availableWidth, equalWidth) / 2f +
+                    (availableWidth - equalWidth).coerceAtLeast(0) / SPLIT_EXTRA_WIDTH_PARTS.toFloat()
+    return listWidth / availableWidth
   }
 
   private fun SectionView?.orEmptyRealizedItems(): List<PluginItemState> = this?.realizedItems().orEmpty()

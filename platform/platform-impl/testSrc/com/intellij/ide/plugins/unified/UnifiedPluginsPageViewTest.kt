@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.Divider
+import com.intellij.openapi.ui.Splitter
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.AnimatedIcon
@@ -64,12 +65,90 @@ internal class UnifiedPluginsPageViewTest {
   companion object {
     private const val EXPECTED_ANCHOR_OFFSET: Int = -7
     private const val SEARCH_HISTORY_PROPERTY: String = "UnifiedPluginsSearchHistory"
+    private const val SPLIT_PROPORTION_PROPERTY: String = "UnifiedPluginsPage.SplitProportion"
     private const val SECTION_EXPANSION_GAP: Int = 2
 
     @JvmStatic
     @BeforeAll
     fun beforeAll() {
       LafManager.getInstance()
+    }
+  }
+
+  @Test
+  fun `default split gives the list half of narrow widths and one eleventh of extra width`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val properties = PropertiesComponent.getInstance()
+    val previousProportion = properties.getValue(SPLIT_PROPORTION_PROPERTY)
+    try {
+      properties.unsetValue(SPLIT_PROPORTION_PROPERTY)
+      val splitter = createView().component as OnePixelSplitter
+
+      for ((width, expectedListWidth) in listOf(600 to 300, 700 to 350, 1800 to 450)) {
+        splitter.setSize(JBUI.scale(width), JBUI.scale(320))
+        splitter.doLayout()
+        assertThat(splitter.firstComponent.width)
+          .isBetween(JBUI.scale(expectedListWidth) - 2, JBUI.scale(expectedListWidth) + 2)
+      }
+
+      assertThat(splitter.secondComponent.minimumSize.width).isGreaterThanOrEqualTo(JBUI.scale(220))
+      assertThat(properties.isValueSet(SPLIT_PROPORTION_PROPERTY)).isFalse()
+    }
+    finally {
+      restoreProperty(properties, SPLIT_PROPORTION_PROPERTY, previousProportion)
+    }
+  }
+
+  @Test
+  fun `nested layout does not save the default split`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val properties = PropertiesComponent.getInstance()
+    val previousProportion = properties.getValue(SPLIT_PROPORTION_PROPERTY)
+    try {
+      properties.unsetValue(SPLIT_PROPORTION_PROPERTY)
+      val splitter = createView().component as OnePixelSplitter
+      var nestedLayoutCalled = false
+      splitter.addPropertyChangeListener(Splitter.PROP_PROPORTION) {
+        if (!nestedLayoutCalled) {
+          nestedLayoutCalled = true
+          splitter.doLayout()
+        }
+      }
+
+      splitter.setSize(JBUI.scale(600), JBUI.scale(320))
+      splitter.doLayout()
+
+      assertThat(nestedLayoutCalled).isTrue()
+      assertThat(properties.isValueSet(SPLIT_PROPORTION_PROPERTY)).isFalse()
+    }
+    finally {
+      restoreProperty(properties, SPLIT_PROPORTION_PROPERTY, previousProportion)
+    }
+  }
+
+  @Test
+  fun `user split proportion persists across views and resizes`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val properties = PropertiesComponent.getInstance()
+    val previousProportion = properties.getValue(SPLIT_PROPORTION_PROPERTY)
+    try {
+      properties.unsetValue(SPLIT_PROPORTION_PROPERTY)
+      val splitter = createView().component as OnePixelSplitter
+      splitter.setSize(JBUI.scale(1100), JBUI.scale(320))
+      splitter.doLayout()
+      splitter.proportion = 0.5f
+
+      assertThat(properties.getFloat(SPLIT_PROPORTION_PROPERTY, -1f)).isEqualTo(0.5f)
+
+      val reopenedSplitter = createView().component as OnePixelSplitter
+      assertThat(reopenedSplitter.proportion).isEqualTo(0.5f)
+      for (width in listOf(1100, 1400)) {
+        reopenedSplitter.setSize(JBUI.scale(width), JBUI.scale(320))
+        reopenedSplitter.doLayout()
+        assertThat(reopenedSplitter.proportion).isEqualTo(0.5f)
+        assertThat(reopenedSplitter.firstComponent.width)
+          .isBetween(JBUI.scale(width) / 2 - 2, JBUI.scale(width) / 2 + 2)
+      }
+    }
+    finally {
+      restoreProperty(properties, SPLIT_PROPORTION_PROPERTY, previousProportion)
     }
   }
 
@@ -385,7 +464,7 @@ internal class UnifiedPluginsPageViewTest {
     val actionRight = SwingUtilities.convertPoint(expansionControl, Point(expansionControl.width, 0), scrollPane.viewport).x
     assertThat(actionRight).isLessThanOrEqualTo(scrollPane.viewport.width)
 
-    view.component.setSize(fullTitleWidth * 4, 320)
+    view.component.setSize(fullTitleWidth * 11, 320)
     layoutRecursively(view.component)
     view.render(controller.state.value)
 
@@ -730,9 +809,16 @@ internal class UnifiedPluginsPageViewTest {
     assertThat(listPanel.minimumSize.width).isEqualTo(JBUI.scale(280))
 
     val splitter = view.component as OnePixelSplitter
-    splitter.setProportion(0.1f)
-    layoutRecursively(splitter)
-    assertThat(listPanel.width).isEqualTo(JBUI.scale(280))
+    val properties = PropertiesComponent.getInstance()
+    val previousProportion = properties.getValue(SPLIT_PROPORTION_PROPERTY)
+    try {
+      splitter.setProportion(0.1f)
+      layoutRecursively(splitter)
+      assertThat(listPanel.width).isEqualTo(JBUI.scale(280))
+    }
+    finally {
+      restoreProperty(properties, SPLIT_PROPORTION_PROPERTY, previousProportion)
+    }
 
     val image = BufferedImage(2, JBUI.scale(1) + 1, BufferedImage.TYPE_INT_ARGB)
     val graphics = image.createGraphics()
@@ -1108,12 +1194,11 @@ internal class UnifiedPluginsPageViewTest {
   }
 
   private fun restoreSearchHistory(properties: PropertiesComponent, value: String?) {
-    if (value == null) {
-      properties.unsetValue(SEARCH_HISTORY_PROPERTY)
-    }
-    else {
-      properties.setValue(SEARCH_HISTORY_PROPERTY, value)
-    }
+    restoreProperty(properties, SEARCH_HISTORY_PROPERTY, value)
+  }
+
+  private fun restoreProperty(properties: PropertiesComponent, key: String, value: String?) {
+    if (value == null) properties.unsetValue(key) else properties.setValue(key, value)
   }
 
   private fun section(
