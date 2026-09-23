@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.WeighedItem;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +18,7 @@ import java.util.function.Supplier;
 /**
  * @author konstantin.aleev
  */
+@ApiStatus.Internal
 public class RunDashboardRunConfigurationStatus implements WeighedItem {
   public static final RunDashboardRunConfigurationStatus STARTED = new RunDashboardRunConfigurationStatus(
     "STARTED", ExecutionBundle.messagePointer("run.dashboard.started.group.name"), AllIcons.Actions.Execute, 10);

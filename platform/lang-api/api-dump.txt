@@ -699,24 +699,6 @@ com.intellij.codeInspection.ui.StringValidatorWithSwingSelector
 - a:select(com.intellij.openapi.project.Project):java.lang.String
 a:com.intellij.execution.ExecutionTargetProvider
 - <init>():V
-com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
-- a:addLink(java.lang.String,java.lang.Runnable):com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
-- a:addText(java.lang.String,com.intellij.ui.SimpleTextAttributes):com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
-- a:setClearText():com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
-- a:setIcon(javax.swing.Icon):com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
-a:com.intellij.execution.dashboard.RunDashboardCustomizer
-- sf:CUSTOMIZER_EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- <init>():V
-- getPsiElement(com.intellij.execution.configurations.RunConfiguration):com.intellij.psi.PsiElement
-- updatePresentation(com.intellij.execution.dashboard.RunDashboardCustomizationBuilder,com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.ui.RunContentDescriptor):Z
-com.intellij.execution.dashboard.RunDashboardDefaultTypesProvider
-- a:getDefaultTypeIds(com.intellij.openapi.project.Project):java.util.Collection
-com.intellij.execution.dashboard.RunDashboardRunConfigurationNode
-- a:getConfigurationSettings():com.intellij.execution.RunnerAndConfigurationSettings
-- a:getContent():com.intellij.ui.content.Content
-- a:getDescriptor():com.intellij.execution.ui.RunContentDescriptor
-c:com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
-- s:getStatus(com.intellij.execution.ui.RunContentDescriptor):com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
 c:com.intellij.execution.filters.CompositeFilter
 - com.intellij.execution.filters.Filter
 - com.intellij.execution.filters.FilterMixin

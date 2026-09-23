@@ -4,11 +4,13 @@ package com.intellij.execution.dashboard;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author konstantin.aleev
  */
+@ApiStatus.Internal
 public interface RunDashboardNode {
   default @Nullable RunContentDescriptor getDescriptor() {
     return null;
