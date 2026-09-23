@@ -893,8 +893,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     Map<SearchRequestCollector, Processor<? super PsiReference>> collectors = new HashMap<>();
     collectors.put(collector, processor);
 
-    return ConcurrencyUtils.runWithIndicatorOrContextCancellation((_) -> {
-      ProgressIndicator progress = getOrCreateIndicator();
+    return ConcurrencyUtils.runWithIndicatorOrContextCancellation(progress -> {
       if (appendCollectorsFromQueryRequests(progress, collectors) == QueryRequestsRunResult.STOPPED) {
         return false;
       }

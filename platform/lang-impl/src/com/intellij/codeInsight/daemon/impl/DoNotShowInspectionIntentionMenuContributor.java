@@ -139,7 +139,7 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
       ContainerUtil.map2Map(intentionTools, wrapper -> Pair.create(wrapper.getShortName(), wrapper.getDisplayName()));
 
     // indicator can be null when run from EDT
-    ConcurrencyUtils.runWithIndicatorOrContextCancellation(DaemonProgressIndicator::new, (_) -> {
+    ConcurrencyUtils.runWithIndicatorOrContextCancellation((_) -> {
       collectIntentionsFromDoNotShowLeveledInspectionsWithIndicator(intentionTools, hostFile, toInspect, offset, displayNames, outIntentions);
       return null;
     });
