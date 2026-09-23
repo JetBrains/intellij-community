@@ -28,6 +28,7 @@ Then BUILD files can use labels like @my_repo_name//:foo.zip or the convenience 
 # because the desired workflow is to declare files in per-module .bzl files, not
 # inside MODULE.bazel. The use_repo_rule pattern fits that requirement.
 
+load("@bazel_tools//tools/build_defs/repo:cache.bzl", "DEFAULT_CANONICAL_ID_ENV", "get_default_canonical_id")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
 
 _PRELOADED_DOWNLOADS_MANIFEST = "preloaded-downloads-v1.tsv"
@@ -51,11 +52,15 @@ def write_downloads_repo(repository_ctx, files):
 
     downloads = []
     for f in files:
+        # Without a canonical id, any cache entry whose checksum matches satisfies the request, whatever
+        # URL put it there. Bazel recommends one wherever a checksum is given, and an unpinned entry gets
+        # the same treatment so that its cache hit is still tied to the URL it came from.
         downloads.append(repository_ctx.download(
             url = f.url,
             output = f.name,
             sha256 = f.sha256,
             block = False,
+            canonical_id = get_default_canonical_id(repository_ctx, [f.url]),
             auth = get_auth(repository_ctx, [f.url]),
         ))
 
@@ -67,10 +72,7 @@ def write_downloads_repo(repository_ctx, files):
             pinned = False
         rows.append("%s\t%s\t%s" % (f.name, download.wait().sha256, f.url))
 
-    repository_ctx.file(
-        _PRELOADED_DOWNLOADS_MANIFEST,
-        _PRELOADED_DOWNLOADS_MANIFEST_HEADER + "\n" + "\n".join(rows) + "\n",
-    )
+    repository_ctx.file(_PRELOADED_DOWNLOADS_MANIFEST, manifest_content(rows))
     names = [f.name for f in files]
     repository_ctx.file(
         "BUILD",
@@ -91,6 +93,14 @@ filegroup(
         ),
     )
     return pinned
+
+def manifest_content(rows):
+    """The preloaded-downloads manifest holding [rows], each already `name<tab>sha256<tab>url`.
+
+    Joined with the header rather than concatenated after it, because a repository that declares no file
+    has no rows, and concatenation would leave a blank line that `PreloadedDownloads.parse` rejects.
+    """
+    return "\n".join([_PRELOADED_DOWNLOADS_MANIFEST_HEADER] + rows) + "\n"
 
 def find_download_conflict(files):
     """Returns an error for duplicate output names or URLs, or `None` when [files] are safe to fetch."""
@@ -137,12 +147,14 @@ def test_deps_repository(repository_name):
         files.append(struct(name = name, url = url, sha256 = sha256))
 
     def _impl(repository_ctx):
-        write_downloads_repo(repository_ctx, files)
-        return repository_ctx.repo_metadata(reproducible = True)
+        # Taken from the fetch rather than asserted: `download_file` requires a checksum, so this is true
+        # today, and it stays true by construction if that ever relaxes
+        return repository_ctx.repo_metadata(reproducible = write_downloads_repo(repository_ctx, files))
 
     def make_repository_rule():
         return repository_rule(
             implementation = _impl,
+            environ = [DEFAULT_CANONICAL_ID_ENV],
         )
 
     def all_targets():

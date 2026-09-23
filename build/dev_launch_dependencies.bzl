@@ -22,6 +22,7 @@ This file owns the community half - the machinery, and the groups whose version 
 [merge_repo_sets].
 """
 
+load("@bazel_tools//tools/build_defs/repo:cache.bzl", "DEFAULT_CANONICAL_ID_ENV", "get_default_canonical_id")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
 load(":test_deps_extension.bzl", "all_downloads_pinned", "write_downloads_repo")
 
@@ -158,6 +159,7 @@ def _repo_impl(repository_ctx):
 
 dev_launch_deps_repo = repository_rule(
     implementation = _repo_impl,
+    environ = [DEFAULT_CANONICAL_ID_ENV],
     attrs = {
         # optional, and only where the checkout already owns a trustworthy hash - see write_downloads_repo
         "sha256s": attr.string_list(),
@@ -166,17 +168,19 @@ dev_launch_deps_repo = repository_rule(
 )
 
 def _extracted_repo_impl(repository_ctx):
+    urls = [repository_ctx.attr.url]
     result = repository_ctx.download_and_extract(
-        url = repository_ctx.attr.url,
+        url = urls,
         sha256 = repository_ctx.attr.sha256,
-        stripPrefix = repository_ctx.attr.strip_prefix,
-        auth = get_auth(repository_ctx, [repository_ctx.attr.url]),
+        strip_prefix = repository_ctx.attr.strip_prefix,
+        canonical_id = get_default_canonical_id(repository_ctx, urls),
+        auth = get_auth(repository_ctx, urls),
     )
     repository_ctx.file(
         "BUILD",
         """
 package(default_visibility = ["//visibility:public"])
-files = glob(["**"], exclude = ["BUILD"], allow_empty = False)
+files = glob(["**"], exclude = ["BUILD", "BUILD.bazel"], allow_empty = False)
 exports_files(files)
 filegroup(
     name = "files",
@@ -196,6 +200,7 @@ dev_launch_extracted_repo = repository_rule(
     and the consumer is handed files rather than a directory it has to populate.
     """,
     implementation = _extracted_repo_impl,
+    environ = [DEFAULT_CANONICAL_ID_ENV],
     attrs = {
         # optional, exactly as in dev_launch_deps_repo: these URLs carry their version, so the same URL is the same
         # artifact and an unpinned fetch costs a re-download only when the version moves
