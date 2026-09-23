@@ -38,7 +38,8 @@ public abstract class DomManager extends CompositeModificationTracker implements
    * @param file XML file
    * @param domClass desired DOM element class
    * @return New or cached DOM file element for the given file. All registered {@link DomFileDescription}s are
-   * asked if they are responsible for the file {@link DomFileDescription#isMyFile(XmlFile, Module)}.
+   * asked if they are responsible for the file ({@link DomFileDescription#isMyFile(XmlFile)}, or
+   * the deprecated {@link DomFileDescription#isMyFile(XmlFile, Module)} for descriptions that still override it).
    * If there is a {@link DomFileDescription} that is responsible for the file, but its {@link DomFileDescription#getRootElementClass()}
    * result is incompatible with domClass parameter, null is returned
    */

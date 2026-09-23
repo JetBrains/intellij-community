@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.serialization.ClassUtil;
@@ -131,12 +132,41 @@ public final class DomApplicationComponent {
     return ContainerUtil.map2Set(myAcceptingOtherRootTagNamesDescriptions, DomFileMetaData::getDescription);
   }
 
+  @SuppressWarnings("deprecation")
   public @Nullable DomFileDescription<?> findDescription(XmlFile file) {
-    Module module = ModuleUtilCore.findModuleForFile(file);
-    Condition<DomFileDescription<?>> condition = d -> d.isMyFile(file, module);
     String rootTagLocalName = DomService.getInstance().getXmlFileHeader(file).getRootTagLocalName();
-    DomFileDescription<?> description = ContainerUtil.find(getFileDescriptions(rootTagLocalName), condition);
-    return description != null ? description : ContainerUtil.find(getAcceptingOtherRootTagNameDescriptions(), condition);
+    Set<DomFileDescription<?>> byRootTag = getFileDescriptions(rootTagLocalName);
+    Set<DomFileDescription<?>> acceptingOtherRootTags = getAcceptingOtherRootTagNameDescriptions();
+    if (byRootTag.isEmpty() && acceptingOtherRootTags.isEmpty()) {
+      return null;
+    }
+    // The module lookup is costly and may be unavailable (e.g. while indexing), so resolve it lazily
+    // and only for descriptions that override the module-aware isMyFile.
+    NullableLazyValue<Module> module = NullableLazyValue.lazyNullable(() -> ModuleUtilCore.findModuleForFile(file));
+    Condition<DomFileDescription<?>> condition = d -> isModuleAware(d) ? d.isMyFile(file, module.getValue()) : d.isMyFile(file);
+    DomFileDescription<?> description = ContainerUtil.find(byRootTag, condition);
+    return description != null ? description : ContainerUtil.find(acceptingOtherRootTags, condition);
+  }
+
+  /**
+   * Whether the description overrides the deprecated {@link DomFileDescription#isMyFile(XmlFile, Module)} and thus needs the file's module.
+   * Resolved by reflection once per description class.
+   */
+  private static final ClassValue<Boolean> MODULE_AWARE = new ClassValue<>() {
+    @Override
+    protected Boolean computeValue(Class<?> type) {
+      try {
+        return type.getMethod("isMyFile", XmlFile.class, Module.class).getDeclaringClass() != DomFileDescription.class;
+      }
+      catch (NoSuchMethodException e) {
+        // unreachable: the method is public and inherited; stay on the safe side and pass the module
+        return true;
+      }
+    }
+  };
+
+  static boolean isModuleAware(@NotNull DomFileDescription<?> description) {
+    return MODULE_AWARE.get(description.getClass());
   }
 
   synchronized void registerFileDescription(DomFileDescription<?> description) {

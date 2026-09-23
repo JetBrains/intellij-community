@@ -191,7 +191,15 @@ public class DomFileDescription<T> {
     return myRootTagName;
   }
 
-  public boolean isMyFile(@NotNull XmlFile file, final @Nullable Module module) {
+  /**
+   * Tells whether this description is responsible for the given file.
+   * This is the preferred method to override.
+   * The DOM calls it without resolving the file's module, so it also works while indexing, where no module information exists.
+   * The default implementation checks the root element {@link Namespace} against the file header.
+   *
+   * @see #isMyFile(XmlFile, Module)
+   */
+  public boolean isMyFile(@NotNull XmlFile file) {
     final Namespace namespace = DomReflectionUtil.findAnnotationDFS(myRootElementClass, Namespace.class);
     if (namespace != null) {
       final String key = namespace.value();
@@ -207,13 +215,26 @@ public class DomFileDescription<T> {
     return true;
   }
 
+  /**
+   * The default implementation delegates to {@link #isMyFile(XmlFile)}.
+   * The DOM resolves the module lazily, and only for descriptions that still override this method.
+   *
+   * @param module the module the file belongs to, or null when the file is not in any module
+   * @deprecated override {@link #isMyFile(XmlFile)} instead. When the decision really depends on the module,
+   * resolve it there with {@link com.intellij.openapi.module.ModuleUtilCore#findModuleForFile(com.intellij.psi.PsiFile)}.
+   */
+  @Deprecated
+  public boolean isMyFile(@NotNull XmlFile file, final @Nullable Module module) {
+    return isMyFile(file);
+  }
+
   public boolean acceptsOtherRootTagNames() {
     return false;
   }
 
   /**
    * Get dependency items (the same, as in {@link com.intellij.psi.util.CachedValue}) for file. On any dependency item change, the
-   * {@link #isMyFile(XmlFile, Module)} method will be invoked once more to ensure that the file description still
+   * {@link #isMyFile(XmlFile)} (or {@link #isMyFile(XmlFile, Module)}) method will be invoked once more to ensure that the file description still
    * accepts this file.
    *
    * @param file XML file to get dependencies of
