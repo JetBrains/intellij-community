@@ -66,7 +66,7 @@ targets:
 # Unified Plugin Manager UI
 
 Status: Active
-Date: 2026-09-22
+Date: 2026-09-23
 
 ## Purpose
 
@@ -460,6 +460,11 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
     `remote completion does not steal local selection`;
     `remote completion does not replace explicitly cleared selection`;
     `installing publication preserves empty selection across later source updates`
+  )
+
+- The details panel closes without an error while a request runs.
+  [@test] ../../testSrc/com/intellij/ide/plugins/newui/PluginDetailsPageComponentTest.kt (
+    `the detached details panel ignores an update source result`
   )
 
 - When a new search query sets a default selection, the selected row must be visible below the sticky header.
