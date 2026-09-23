@@ -15,12 +15,10 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
@@ -33,8 +31,8 @@ public final class AntlibDomFileDescription extends AntFileDescription<AntDomAnt
   }
 
   @Override
-  public boolean isMyFile(@NotNull XmlFile file, @Nullable Module module) {
-    return super.isMyFile(file, module) && isAntLibFile(file);
+  public boolean isMyFile(@NotNull XmlFile file) {
+    return super.isMyFile(file) && isAntLibFile(file);
   }
 
   public static boolean isAntLibFile(final XmlFile xmlFile) {

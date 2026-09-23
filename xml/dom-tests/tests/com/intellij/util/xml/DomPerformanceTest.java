@@ -17,7 +17,6 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -72,17 +71,17 @@ public class DomPerformanceTest extends DomHardCoreTestCase {
       getDomManager().registerFileDescription(new DomFileDescription<>(MyChildElement.class, "foo") {
 
         @Override
-        public boolean isMyFile(@NotNull final XmlFile file, final Module module) {
+        public boolean isMyFile(@NotNull final XmlFile file) {
           fail();
-          return super.isMyFile(file, module);
+          return super.isMyFile(file);
         }
       }, getTestRootDisposable());
       getDomManager().registerFileDescription(new DomFileDescription<>(MyChildElement.class, "bar") {
 
         @Override
-        public boolean isMyFile(@NotNull final XmlFile file, final Module module) {
+        public boolean isMyFile(@NotNull final XmlFile file) {
           fail();
-          return super.isMyFile(file, module);
+          return super.isMyFile(file);
         }
       }, getTestRootDisposable());
     }

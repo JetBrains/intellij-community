@@ -2,7 +2,6 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.ForcedAntFileAttribute;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlDocument;
@@ -25,8 +24,8 @@ public final class AntDomFileDescription extends AntFileDescription<AntDomProjec
   }
 
   @Override
-  public boolean isMyFile(@NotNull XmlFile file, @Nullable Module module) {
-    return super.isMyFile(file, module) && isAntFile(file);
+  public boolean isMyFile(@NotNull XmlFile file) {
+    return super.isMyFile(file) && isAntFile(file);
   }
 
   @Override

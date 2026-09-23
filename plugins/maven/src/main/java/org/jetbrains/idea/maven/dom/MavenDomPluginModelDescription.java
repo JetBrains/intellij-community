@@ -15,12 +15,10 @@
  */
 package org.jetbrains.idea.maven.dom;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomFileDescription;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 
 public final class MavenDomPluginModelDescription extends DomFileDescription<MavenDomPluginModel> {
@@ -29,7 +27,7 @@ public final class MavenDomPluginModelDescription extends DomFileDescription<Mav
   }
 
   @Override
-  public boolean isMyFile(@NotNull XmlFile file, @Nullable Module module) {
+  public boolean isMyFile(@NotNull XmlFile file) {
     XmlTag rootTag = file.getRootTag();
     assert rootTag != null; // rootTag.getName() == "plugin"
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomFileDescription;
@@ -17,7 +16,7 @@ public class MockDomFileDescription<T> extends DomFileDescription<T> {
   }
 
   @Override
-  public boolean isMyFile(final @NotNull XmlFile xmlFile, final Module module) {
+  public boolean isMyFile(final @NotNull XmlFile xmlFile) {
     return xmlFile.getViewProvider().getVirtualFile().equals(myFile);
   }
 

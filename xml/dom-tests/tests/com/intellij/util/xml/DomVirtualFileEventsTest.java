@@ -16,7 +16,6 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlFile;
@@ -34,8 +33,8 @@ public class DomVirtualFileEventsTest extends DomHardCoreTestCase{
     getDomManager().registerFileDescription(new DomFileDescription(MyElement.class, "a") {
 
       @Override
-      public boolean isMyFile(@NotNull final XmlFile file, final Module module) {
-        return super.isMyFile(file, module) && file.getName().contains("a");
+      public boolean isMyFile(@NotNull final XmlFile file) {
+        return super.isMyFile(file) && file.getName().contains("a");
       }
     }, getTestRootDisposable());
   }

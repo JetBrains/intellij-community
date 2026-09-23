@@ -5,7 +5,6 @@ package org.jetbrains.idea.devkit.dom.keymap
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.presentation.Presentation
-import com.intellij.openapi.module.Module
 import com.intellij.psi.xml.XmlFile
 import com.intellij.util.xml.Attribute
 import com.intellij.util.xml.Convert
@@ -24,7 +23,7 @@ import javax.swing.Icon
 
 internal class KeymapDomFileDescription : DomFileDescription<KeymapXmlRootElement>(KeymapXmlRootElement::class.java, "keymap") {
   override fun getFileIcon(file: XmlFile, flags: Int): Icon = AllIcons.General.Keyboard
-  override fun isMyFile(file: XmlFile, module: Module?): Boolean {
+  override fun isMyFile(file: XmlFile): Boolean {
     return PsiUtil.isPluginProject(file.project)
   }
 }
