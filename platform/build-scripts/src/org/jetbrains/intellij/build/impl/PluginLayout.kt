@@ -18,7 +18,6 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CustomAssetDescriptor
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LazySource
-import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.CompatibleBuildRange
@@ -445,26 +444,22 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      * [run] states whether classic dev mode also runs [generator]. See [platformResourceGenerators].
      */
     fun withGeneratedPlatformResources(
-      os: OsFamily,
-      arch: JvmArchitecture,
-      libc: LibcImpl,
+      platform: SupportedDistribution,
       layoutAssetSpec: DevPluginLayoutAssetSpec,
       run: DeclaredResourceGeneratorRun = DeclaredResourceGeneratorRun.BUNDLED_AND_DEV,
       generator: ResourceGenerator,
     ) {
-      val key = SupportedDistribution(os, arch, libc)
       val declared = DeclaredPluginLayoutResourceGenerator(layoutAssetSpec, generator, run)
-      layout.platformResourceGenerators += key to (layout.platformResourceGenerators.get(key) ?: persistentListOf()) + declared
+      layout.platformResourceGenerators += platform to (layout.platformResourceGenerators.get(platform) ?: persistentListOf()) + declared
     }
 
     /**
      * Add platform-specific executable file pattern.
      * Pattern is relative to plugin root directory.
      */
-    fun withPlatformExecutable(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, pattern: String) {
-      val key = SupportedDistribution(os, arch, libc)
-      val existing = layout.executablePatterns.get(key) ?: persistentListOf()
-      layout.executablePatterns = layout.executablePatterns.putting(key, existing.adding(pattern))
+    fun withPlatformExecutable(platform: SupportedDistribution, pattern: String) {
+      val existing = layout.executablePatterns.get(platform) ?: persistentListOf()
+      layout.executablePatterns = layout.executablePatterns.putting(platform, existing.adding(pattern))
     }
 
     /**

@@ -54,9 +54,7 @@ class PlatformResourceGeneratorRunTest {
   fun `a bundled-only declared generator makes the layout platform-specific`() {
     val layout = PluginLayout.pluginAuto(listOf("test.plugin")) { spec ->
       spec.withGeneratedPlatformResources(
-        os = distribution.os,
-        arch = distribution.arch,
-        libc = distribution.libcImpl,
+        platform = distribution,
         layoutAssetSpec = DevPluginLayoutAssetSpec.OMITTED,
         run = DeclaredResourceGeneratorRun.BUNDLED_ONLY,
       ) { _, _ -> }
@@ -70,9 +68,7 @@ class PlatformResourceGeneratorRunTest {
   fun `a declared generator runs in bundled and dev mode by default`() {
     val layout = PluginLayout.pluginAuto(listOf("test.plugin")) { spec ->
       spec.withGeneratedPlatformResources(
-        os = distribution.os,
-        arch = distribution.arch,
-        libc = distribution.libcImpl,
+        platform = distribution,
         layoutAssetSpec = DevPluginLayoutAssetSpec.OMITTED,
       ) { _, _ -> }
     }
@@ -83,15 +79,11 @@ class PlatformResourceGeneratorRunTest {
   private fun createLayout(invocations: MutableList<String>): PluginLayout {
     return PluginLayout.pluginAuto(listOf("test.plugin")) { spec ->
       spec.withGeneratedPlatformResources(
-        os = distribution.os,
-        arch = distribution.arch,
-        libc = distribution.libcImpl,
+        platform = distribution,
         layoutAssetSpec = DevPluginLayoutAssetSpec.OMITTED,
       ) { _, _ -> invocations.add("bundled-and-dev") }
       spec.withGeneratedPlatformResources(
-        os = distribution.os,
-        arch = distribution.arch,
-        libc = distribution.libcImpl,
+        platform = distribution,
         layoutAssetSpec = DevPluginLayoutAssetSpec.OMITTED,
         run = DeclaredResourceGeneratorRun.BUNDLED_ONLY,
       ) { _, _ -> invocations.add("bundled-only") }

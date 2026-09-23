@@ -42,13 +42,14 @@ private val PYREFLY_DEV_SPEC: DevPluginLayoutAssetSpec = DevPluginLayoutAssetSpe
 fun PluginLayout.PluginLayoutSpec.withBundledPyrefly() {
   withGeneratedResources(PYREFLY_DEV_SPEC) { targetDir, context -> copyPyreflyLicenseReport(targetDir, context) }
 
-  for ((os, arch, libc) in SUPPORTED_DISTRIBUTIONS) {
-    withGeneratedPlatformResources(os, arch, libc, layoutAssetSpec = PYREFLY_DEV_SPEC, run = DeclaredResourceGeneratorRun.BUNDLED_ONLY) { targetDir, context ->
+  for (platform in SUPPORTED_DISTRIBUTIONS) {
+    val (os, arch) = platform
+    withGeneratedPlatformResources(platform, layoutAssetSpec = PYREFLY_DEV_SPEC, run = DeclaredResourceGeneratorRun.BUNDLED_ONLY) { targetDir, context ->
       copyPyreflyBinary(targetDir, context, os, arch)
     }
 
     if (os != OsFamily.WINDOWS) {
-      withPlatformExecutable(os, arch, libc, "$PYREFLY_DIR_NAME/${pyreflyPlatformDirName(os, arch)}/${os.binaryName(PYREFLY_BINARY_NAME)}")
+      withPlatformExecutable(platform, "$PYREFLY_DIR_NAME/${pyreflyPlatformDirName(os, arch)}/${os.binaryName(PYREFLY_BINARY_NAME)}")
     }
   }
 }

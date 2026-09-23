@@ -62,8 +62,9 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.MACOS)
     },
     plugin("intellij.webp") { spec ->
-      for ((os, arch, libc) in SUPPORTED_DISTRIBUTIONS) {
-        spec.withGeneratedPlatformResources(os, arch, libc, webpLayoutAssetSpec(os, arch)) { targetDir, context ->
+      for (platform in SUPPORTED_DISTRIBUTIONS) {
+        val (os, arch) = platform
+        spec.withGeneratedPlatformResources(platform, webpLayoutAssetSpec(os, arch)) { targetDir, context ->
           copyFileToDir(NativeBinaryDownloader.getLibWebp(context, os, arch), targetDir.resolve("lib/libwebp/${os.dirName}/${arch.dirName}"))
         }
       }
@@ -236,10 +237,11 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.withModule("intellij.terminal.completion")
       spec.withResource("resources/shell-integrations", "shell-integrations")
       // bundle the libghostty-vt native library
-      for ((os, arch, libc) in SUPPORTED_DISTRIBUTIONS) {
+      for (platform in SUPPORTED_DISTRIBUTIONS) {
+        val (os, arch) = platform
         val dirName = os.osName.lowercase() + "-" + arch.archName.lowercase()
         // a declared generator also runs from a dev build, which loads libghostty-vt there
-        spec.withGeneratedPlatformResources(os, arch, libc, terminalLayoutAssetSpec(os, arch)) { targetDir, context ->
+        spec.withGeneratedPlatformResources(platform, terminalLayoutAssetSpec(os, arch)) { targetDir, context ->
           copyFileToDir(NativeBinaryDownloader.getLibGhosttyVt(context, os, arch), targetDir.resolve("libghostty-vt/$dirName"))
         }
       }
