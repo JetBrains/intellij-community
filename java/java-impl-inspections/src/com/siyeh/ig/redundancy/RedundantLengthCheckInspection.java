@@ -68,7 +68,8 @@ public final class RedundantLengthCheckInspection extends AbstractBaseJavaLocalI
         if (ifStatement.getElseBranch() != null) return;
         if (!(ControlFlowUtils.stripBraces(ifStatement.getThenBranch()) instanceof PsiForeachStatement forEach)) return;
         if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(forEach.getIteratedValue(), arrayExpression)) {
-          holder.problem(condition, InspectionGadgetsBundle.message("inspection.redundant.length.check.display.name")).fix(new SimplifyBooleanExpressionFix(condition, true)).register();
+          holder.problem(condition, InspectionGadgetsBundle.message("inspection.redundant.length.check.display.name"))
+            .fix(new SimplifyBooleanExpressionFix(condition, true)).register();
         }
       }
 
@@ -116,7 +117,8 @@ public final class RedundantLengthCheckInspection extends AbstractBaseJavaLocalI
           forEach = ObjectUtils.tryCast(nextStatement, PsiForeachStatement.class);
         }
         if (forEach != null && equivalence.expressionsAreEquivalent(forEach.getIteratedValue(), arrayExpression)) {
-          holder.problem(condition, InspectionGadgetsBundle.message("inspection.redundant.length.check.display.name")).fix(new SimplifyBooleanExpressionFix(condition, false)).register();
+          holder.problem(condition, InspectionGadgetsBundle.message("inspection.redundant.length.check.display.name"))
+            .fix(new SimplifyBooleanExpressionFix(condition, false)).register();
         }
       }
     };

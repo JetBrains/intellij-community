@@ -100,7 +100,10 @@ public final class RedundantOperationOnEmptyContainerInspection extends Abstract
         if (value == null) return;
         String msg = getProblemMessage(value);
         if (msg == null) return;
-        holder.problem(value, msg).fix(new DeleteElementFix(statement, InspectionGadgetsBundle.message("remove.loop.fix.family.name"))).fix(getFindCauseFix(value)).register();
+        holder.problem(value, msg)
+          .fix(new DeleteElementFix(statement, InspectionGadgetsBundle.message("remove.loop.fix.family.name")))
+          .fix(getFindCauseFix(value))
+          .register();
       }
 
       private static @NotNull LocalQuickFix getFindCauseFix(@NotNull PsiExpression value) {

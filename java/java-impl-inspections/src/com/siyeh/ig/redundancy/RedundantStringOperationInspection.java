@@ -110,8 +110,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
 
   public static final String CONTENT_EQUALS = "contentEquals";
 
-  private static final CallMatcher BYTE_ARRAY_OUTPUT_STREAM_INTO_BYTE_ARRAY =
-    exactInstanceCall(JAVA_IO_BYTE_ARRAY_OUTPUT_STREAM, "toByteArray").parameterCount(0);
+  private static final CallMatcher BYTE_ARRAY_OUTPUT_STREAM_INTO_BYTE_ARRAY = exactInstanceCall(JAVA_IO_BYTE_ARRAY_OUTPUT_STREAM, "toByteArray").parameterCount(0);
   private static final CallMatcher STRING_TO_STRING = exactInstanceCall(JAVA_LANG_STRING, TO_STRING).parameterCount(0);
   private static final CallMatcher STRING_INTERN = exactInstanceCall(JAVA_LANG_STRING, "intern").parameterCount(0);
   private static final CallMatcher STRING_LENGTH = exactInstanceCall(JAVA_LANG_STRING, HardcodedMethodConstants.LENGTH).parameterCount(0);
@@ -126,21 +125,17 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
   private static final CallMatcher WRITER_APPEND = instanceCall(JAVA_IO_WRITER, "append").parameterTypes(JAVA_LANG_CHAR_SEQUENCE);
   private static final CallMatcher WRITER_WRITE = instanceCall(JAVA_IO_WRITER, "write").parameterTypes(JAVA_LANG_STRING);
   private static final CallMatcher STRING_BUILDER_TO_STRING = instanceCall(JAVA_LANG_ABSTRACT_STRING_BUILDER, TO_STRING).parameterCount(0);
-  private static final CallMatcher PRINTSTREAM_PRINTLN = instanceCall("java.io.PrintStream", "println")
-    .parameterTypes(JAVA_LANG_STRING);
-  private static final CallMatcher METHOD_WITH_REDUNDANT_ZERO_AS_SECOND_PARAMETER =
-    exactInstanceCall(JAVA_LANG_STRING, "indexOf", "startsWith").parameterCount(2);
+  private static final CallMatcher PRINTSTREAM_PRINTLN = instanceCall(JAVA_IO_PRINT_STREAM, "println").parameterTypes(JAVA_LANG_STRING);
+  private static final CallMatcher METHOD_WITH_REDUNDANT_ZERO_AS_SECOND_PARAMETER = exactInstanceCall(JAVA_LANG_STRING, "indexOf", "startsWith").parameterCount(2);
   private static final CallMatcher STRING_LAST_INDEX_OF = exactInstanceCall(JAVA_LANG_STRING, "lastIndexOf").parameterCount(2);
   private static final CallMatcher STRING_IS_EMPTY = exactInstanceCall(JAVA_LANG_STRING, "isEmpty").parameterCount(0);
   private static final CallMatcher CASE_CHANGE = exactInstanceCall(JAVA_LANG_STRING, "toUpperCase", "toLowerCase");
   private static final CallMatcher STRING_EQUALS = exactInstanceCall(JAVA_LANG_STRING, HardcodedMethodConstants.EQUALS).parameterTypes(JAVA_LANG_OBJECT);
-  private static final CallMatcher STRING_EQUALS_IGNORE_CASE =
-    exactInstanceCall(JAVA_LANG_STRING, "equalsIgnoreCase").parameterTypes(JAVA_LANG_STRING);
+  private static final CallMatcher STRING_EQUALS_IGNORE_CASE = exactInstanceCall(JAVA_LANG_STRING, "equalsIgnoreCase").parameterTypes(JAVA_LANG_STRING);
   private static final CallMatcher CHANGE_CASE = anyOf(exactInstanceCall(JAVA_LANG_STRING, "toLowerCase").parameterCount(0),
                                                        exactInstanceCall(JAVA_LANG_STRING, "toUpperCase").parameterCount(0));
   private static final CallMatcher STRING_VALUE_OF = staticCall(JAVA_LANG_STRING, "valueOf").parameterTypes("char[]");
-  private static final CallMatcher STRING_STRIP =
-    exactInstanceCall(JAVA_LANG_STRING, "strip", "stripLeading", "stripTrailing").parameterCount(0);
+  private static final CallMatcher STRING_STRIP = exactInstanceCall(JAVA_LANG_STRING, "strip", "stripLeading", "stripTrailing").parameterCount(0);
   private static final CallMatcher STRING_TO_CHAR_ARRAY = exactInstanceCall(JAVA_LANG_STRING, "toCharArray").parameterCount(0);
 
   public boolean ignoreStringConstructor = false;
@@ -497,13 +492,13 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly);
     }
 
-    private static boolean isNegated(final @NotNull PsiExpression start, boolean negated) {
+    private static boolean isNegated(@NotNull PsiExpression start, boolean negated) {
       final PsiExpression negation = BoolUtils.findNegation(start);
       if (negation == null) return negated;
       else return isNegated(negation, !negated);
     }
 
-    private static PsiExpression getOutermostEquals(final @NotNull PsiExpression start) {
+    private static PsiExpression getOutermostEquals(@NotNull PsiExpression start) {
       final PsiExpression negation = BoolUtils.findNegation(start);
       if (negation == null) return start;
       else return getOutermostEquals(negation);
@@ -547,13 +542,13 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
       return getSingleEmptyStringArgument(call) != null ? getProblem(call, "inspection.redundant.string.call.message") : null;
     }
 
-    private @Nullable ProblemDescriptor getStringBuilderToStringProblem(final @NotNull PsiMethodCallExpression call) {
+    private @Nullable ProblemDescriptor getStringBuilderToStringProblem(@NotNull PsiMethodCallExpression call) {
       final ProblemDescriptor descriptor = getRedundantStringBuilderToStringProblem(call);
       if (descriptor != null) return descriptor;
       return getUseContentEqualsProblem(call);
     }
 
-    private @Nullable ProblemDescriptor getRedundantStringBuilderToStringProblem(final @NotNull PsiMethodCallExpression call) {
+    private @Nullable ProblemDescriptor getRedundantStringBuilderToStringProblem(@NotNull PsiMethodCallExpression call) {
       final PsiMethodCallExpression substringCall = PsiTreeUtil.getParentOfType(call, PsiMethodCallExpression.class);
       if (substringCall == null) return null;
 
@@ -563,7 +558,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
       return getProblem(call, "inspection.redundant.string.call.message");
     }
 
-    private @Nullable ProblemDescriptor getUseContentEqualsProblem(final @NotNull PsiMethodCallExpression call) {
+    private @Nullable ProblemDescriptor getUseContentEqualsProblem(@NotNull PsiMethodCallExpression call) {
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
       if (parent instanceof PsiExpressionList list &&
           list.getExpressionCount() == 1 &&
@@ -714,7 +709,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
      * @param call an expression to examine
      * @return true if the expression is a good candidate to be converted with {@link String#charAt(int)}, otherwise - false
      */
-    private static boolean isBetterWithCharAt(final @NotNull PsiMethodCallExpression call) {
+    private static boolean isBetterWithCharAt(@NotNull PsiMethodCallExpression call) {
       final PsiExpression[] args = call.getArgumentList().getExpressions();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(call.getProject());
 
@@ -761,7 +756,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
       private final @NotNull String myConverted;
       private final boolean myEquality;
 
-      SubstringToCharAtQuickFix(final @NotNull String text, final @NotNull String converted, boolean equality) {
+      SubstringToCharAtQuickFix(@NotNull String text, @NotNull String converted, boolean equality) {
         myText = text;
         myConverted = converted;
         myEquality = equality;
@@ -803,7 +798,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
         ct.replaceAndRestoreComments(getOutermostEquals(call), convertTo);
       }
 
-      private static @NonNls @Nullable String getTargetString(final @NotNull PsiMethodCallExpression call,
+      private static @NonNls @Nullable String getTargetString(@NotNull PsiMethodCallExpression call,
                                                               @NotNull Function<@NotNull PsiElement, @NotNull String> textExtractor) {
         final PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
         if (qualifierCall == null) return null;
@@ -1257,15 +1252,14 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiReferenceExpression ref)) {
+      if (!(element.getParent() instanceof PsiReferenceExpression ref)) {
         return;
       }
       PsiExpression qualifier = ref.getQualifierExpression();
       if (qualifier == null) {
         return;
       }
-      PsiElement grandParent = parent.getParent();
+      PsiElement grandParent = ref.getParent();
       if (!(grandParent instanceof PsiMethodCallExpression) || !(grandParent.getParent() instanceof PsiReferenceExpression toArrayCall)) {
         return;
       }
