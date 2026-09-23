@@ -67,7 +67,7 @@ internal class BuildConsoleViewImpl(
   private fun onFileMessageEvent(event: FileMessageEvent) {
     val description = event.description
     val contentType = event.result.kind.contentType
-    if (!description.isNullOrEmpty()) {
+    if (description != null) {
       delegate.print(description, contentType)
     }
     else {
