@@ -950,7 +950,7 @@ public final class ConfigImportHelper {
     updateVMOptions(newConfigDir, oldConfigDir, log);
   }
 
-  @SuppressWarnings({"KotlinInternalInJava", "UnnecessaryFullyQualifiedName"})
+  @SuppressWarnings("UnnecessaryFullyQualifiedName")
   public static void migrateLocalization(@NotNull Path oldConfigDir, @NotNull Path oldPluginsDir) {
     com.intellij.openapi.application.migrations.Localization242.INSTANCE.enableL10nIfPluginInstalled(parseVersionFromConfig(oldConfigDir), oldPluginsDir);
   }
@@ -1125,8 +1125,8 @@ public final class ConfigImportHelper {
     return true;
   }
 
-  @SuppressWarnings({"KotlinInternalInJava", "UnnecessaryFullyQualifiedName"})
-  private static void performMigrations(com.intellij.openapi.application.PluginMigrationOptions options) {
+  @SuppressWarnings("UnnecessaryFullyQualifiedName")
+  private static void performMigrations(PluginMigrationOptions options) {
     // WRITE IN MIGRATIONS HERE
     // Note that migrations are not taken into account for IDE updates through Toolbox
     new com.intellij.openapi.application.migrations.NotebooksMigration242().migratePlugins(options);
@@ -1137,7 +1137,6 @@ public final class ConfigImportHelper {
     new com.intellij.openapi.application.migrations.RustMigration262().migratePlugins(options);
   }
 
-  @SuppressWarnings({"KotlinInternalInJava", "UnnecessaryFullyQualifiedName"})
   private static void migrateGlobalPlugins(
     Path newConfigDir, Path oldConfigDir,
     List<IdeaPluginDescriptor> toMigrate, List<IdeaPluginDescriptor> toDownload,
@@ -1145,7 +1144,7 @@ public final class ConfigImportHelper {
   ) {
     var currentProductVersion = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
     var previousVersion = parseVersionFromConfig(oldConfigDir);
-    var options = new com.intellij.openapi.application.PluginMigrationOptions(
+    var options = new PluginMigrationOptions(
       previousVersion, currentProductVersion, newConfigDir, oldConfigDir, toMigrate, toDownload, log
     );
     performMigrations(options);
