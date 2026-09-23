@@ -54,7 +54,7 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.mainJarName = "antIntegration.jar"
       spec.withModule("intellij.ant.jps", "ant-jps.jar")
 
-      spec.withGeneratedResources { dir, buildContext ->
+      spec.withGeneratedResources(ANT_DISTRIBUTION_DEV_SPEC) { dir, buildContext ->
         copyAnt(mainModule = spec.mainModule, pluginDir = dir, context = buildContext)
       }
     },
@@ -970,6 +970,12 @@ private fun copyMavenLibraries(libraries: List<BundledMavenDownloader.MavenLibra
     copyFile(file = source, target = targetDir.resolve(fileName), overwrite = true)
   }
 }
+
+/**
+ * The dev distribution omits the Ant distribution of the Ant plugin. The plugin is a marketplace plugin that no
+ * dev-distribution product includes, and it finds `community/lib/ant` itself when it runs from sources.
+ */
+private val ANT_DISTRIBUTION_DEV_SPEC: DevPluginLayoutAssetSpec = DevPluginLayoutAssetSpec.OMITTED
 
 private fun copyAnt(mainModule: String, pluginDir: Path, context: BuildContext): List<DistributionFileEntry> {
   val antDir = pluginDir.resolve("dist")

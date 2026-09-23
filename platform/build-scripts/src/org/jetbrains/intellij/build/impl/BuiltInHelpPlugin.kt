@@ -5,6 +5,7 @@ import com.intellij.platform.buildScripts.concurrency.withLockInterruptibly
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
 import org.jetbrains.intellij.build.io.ZipArchiver
 import org.jetbrains.intellij.build.io.archiveDir
 import org.jetbrains.intellij.build.io.writeNewZipWithoutIndex
@@ -17,6 +18,12 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.io.path.exists
 
 internal const val BUILT_IN_HELP_MODULE_NAME = "intellij.builtInHelp"
+
+/**
+ * The dev distribution omits the help assets jar. A `HelpIndexer` run builds it from `help/plugin-resources`, which only
+ * a help build fills, and only the non-bundled plugin step builds this plugin.
+ */
+private val HELP_ASSETS_DEV_SPEC: DevPluginLayoutAssetSpec = DevPluginLayoutAssetSpec.OMITTED
 
 internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Pair<PluginLayout, String>? {
   val productName = context.applicationInfo.fullProductName
@@ -40,7 +47,7 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Pair
         overwrite = PatchOverwriteMode.TRUE
       )
     }
-    spec.withGeneratedResources { targetDir, buildContext ->
+    spec.withGeneratedResources(HELP_ASSETS_DEV_SPEC) { targetDir, buildContext ->
       val assetJar = targetDir.resolve("lib/help-$productLowerCase-assets.jar")
       buildResourcesForHelpPlugin(
         resourceRoot = resourceRoot,

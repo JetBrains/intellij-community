@@ -21,6 +21,7 @@ import org.jetbrains.intellij.build.LazySource
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.CompatibleBuildRange
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetOwner
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
 import org.jetbrains.intellij.build.impl.BuildUtils.checkedReplace
 import java.nio.file.Files
@@ -384,8 +385,12 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       layout.withResourceFromModule(moduleName = layout.mainModule, resourcePath = resourcePath, relativeOutputPath = relativeOutputPath)
     }
 
-    fun withGeneratedResources(generator: ResourceGenerator) {
-      layout.resourceGenerators += generator
+    /**
+     * A resource generator that states its own development layout, such as `CidrDependencyResource`.
+     * A generator that is code only takes the overload with a [DevPluginLayoutAssetSpec].
+     */
+    fun <T> withGeneratedResources(resource: T) where T : ResourceGenerator, T : DevPluginLayoutAssetOwner {
+      layout.resourceGenerators += resource
     }
 
     /**
@@ -418,10 +423,6 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      */
     fun withLibraryResources(libraryName: String, relativeOutputPath: String) {
       layout.resourceGenerators += LibraryResourceGenerator(libraryName = libraryName, targetPath = relativeOutputPath)
-    }
-
-    fun withCustomAsset(platform: SupportedDistribution, lazySourceSupplier: (context: BuildContext) -> LazySource?) {
-      layout.customAssets += customAsset(platform, lazySourceSupplier)
     }
 
     fun withCustomAsset(layoutAssetSpec: DevPluginLayoutAssetSpec, lazySourceSupplier: (context: BuildContext) -> LazySource?) {
@@ -545,17 +546,6 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       set(value) {
         layout.mainJarName = value
       }
-
-    /**
-     * @param binPathRelativeToCommunity path to a resource file or directory relative to the intellij-community repo root
-     * @param outputPath target path relative to the plugin root directory
-     *
-     * The dev-distribution generator cannot plan this declaration, so a plugin that keeps it is unplannable. Declare a
-     * checkout directory with [withResourceFromModule] against the module whose Bazel package holds it.
-     */
-    fun withBin(binPathRelativeToCommunity: String, outputPath: String) {
-      withGeneratedResources(BinaryResourceGenerator(binPathRelativeToCommunity, outputPath))
-    }
 
     /**
      * @param resourcePath path to a resource file or directory relative to `moduleName` module content root

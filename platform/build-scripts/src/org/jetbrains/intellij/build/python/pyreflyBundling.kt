@@ -58,7 +58,7 @@ fun PluginLayout.PluginLayoutSpec.withBundledPyrefly() {
 
 fun PluginLayout.PluginLayoutSpec.withPublishedPyrefly(dist: SupportedDistribution) {
   val (os, arch, _) = dist
-  withGeneratedResources { targetDir, context ->
+  withGeneratedResources(PYREFLY_DEV_SPEC) { targetDir, context ->
     copyPyreflyLicenseReport(targetDir, context)
     copyPyreflyBinary(targetDir, context, os, arch)
   }
