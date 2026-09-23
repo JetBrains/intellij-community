@@ -21,7 +21,6 @@ import java.nio.file.Path;
 import static com.intellij.platform.backend.documentation.impl.ImplKt.computeHtmlDocBlocking;
 import static org.junit.Assert.assertNotNull;
 
-@SuppressWarnings({"removal", "UnnecessaryFullyQualifiedName"})
 public final class JavaDocumentationTestUtil {
   private JavaDocumentationTestUtil() {
   }
@@ -64,6 +63,7 @@ public final class JavaDocumentationTestUtil {
     return getDocumentationText(editor, psiFile);
   }
 
+  @SuppressWarnings({"removal", "UnnecessaryFullyQualifiedName"})
   private static @NotNull String getDocumentationText(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     String html = computeHtmlDocBlocking(editor, psiFile);
     if (html == null) html = "";
