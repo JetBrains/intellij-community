@@ -5,17 +5,18 @@
     <plugin id="org.jetbrains.plugins.terminal"/>
     <module name="intellij.libraries.jediterm.core"/>
     <module name="intellij.libraries.jediterm.ui"/>
-    <module name="intellij.platform.backend"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc.topics"/>
     <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.sh.run.ShRunner" open="true"
+    <applicationService serviceInterface="com.intellij.sh.run.ShRunner"
                         serviceImplementation="com.intellij.sh.run.terminal.ShTerminalRunner"/>
 
     <projectService serviceInterface="com.intellij.sh.run.ShDefaultShellPathProvider"

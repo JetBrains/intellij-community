@@ -14,6 +14,7 @@
     <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.lang"/>
@@ -30,6 +31,9 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.shellOccurrencesHighlightingSuppressor"
                     interface="com.intellij.sh.highlighting.ShOccurrencesHighlightingSuppressor"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.runMarkerContributionAdditionalCondition"
+                    interface="com.intellij.sh.run.ShRunnerAdditionalCondition"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -57,9 +61,15 @@
     <highlightErrorFilter implementation="com.intellij.sh.ShErrorFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.sh.ShErrorFilter"/>
 
+    <runLineMarkerContributor language="" implementationClass="com.intellij.sh.run.ShRunLineMarkerContributor"/>
+
     <statistics.counterUsagesCollector implementationClass="com.intellij.sh.statistics.ShCounterUsagesCollector"/>
 
     <notificationGroup id="Shell Script" displayType="BALLOON" bundle="messages.ShBundle" key="notification.group.shell.script"/>
     <statistics.notificationIdsHolder implementation="com.intellij.sh.ShNotificationDisplayIds"/>
   </extensions>
+
+  <actions>
+    <action id="runShellFileAction" class="com.intellij.sh.run.ShRunFileAction" use-shortcut-of="RunClass"/>
+  </actions>
 </idea-plugin>

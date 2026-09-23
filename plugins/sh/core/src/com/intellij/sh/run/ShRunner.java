@@ -12,6 +12,14 @@ public interface ShRunner {
    * The implementation can make it asynchronously,
    * there is no guarantee that the result will be immediately visible after completion of this method.
    * So, it can be called on any thread.
+   * <p>
+   * The terminal tab is created by the frontend of the current session, so in remote development the request travels to the
+   * client that owns the current {@link com.intellij.codeWithMe.ClientId}.
+   *
+   * @param command          the shell line to execute, already quoted for the target shell
+   * @param workingDirectory the directory to start the shell in: spelled as the project's environment sees it (an {@code EelPath}
+   *                         string) when it belongs to that environment, otherwise a nio path of the sending machine that the
+   *                         terminal can route on its own (a WSL directory open in a local project)
    */
   void run(@NotNull Project project,
            @NotNull String command,

@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.sh.ShTypes;
@@ -35,6 +36,21 @@ public final class ShShebangParserUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * Splits a shebang (without the {@code #!} prefix) into the interpreter and its options: a trailing token that carries no path
+   * separator is an option, so {@code /usr/bin/env bash} gives {@code /usr/bin/env} and {@code bash}.
+   */
+  public static @NotNull Pair<String, String> parseInterpreterAndOptions(@NotNull String shebang) {
+    String[] splitShebang = shebang.split(" ");
+    if (splitShebang.length > 1) {
+      String shebangParam = splitShebang[splitShebang.length - 1];
+      if (!shebangParam.contains("/") && !shebangParam.contains("\\")) {
+        return Pair.create(shebang.substring(0, shebang.length() - shebangParam.length() - 1), shebangParam);
+      }
+    }
+    return Pair.create(shebang, "");
   }
 
   public static @NotNull @NlsSafe String getInterpreter(@NotNull ShFile file,

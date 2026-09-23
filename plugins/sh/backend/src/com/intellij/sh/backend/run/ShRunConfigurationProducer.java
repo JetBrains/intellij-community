@@ -18,7 +18,7 @@ import com.intellij.sh.run.ShRunConfiguration;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.sh.backend.run.ShRunFileAction.parseInterpreterAndOptions;
+import static com.intellij.sh.parser.ShShebangParserUtil.parseInterpreterAndOptions;
 
 final class ShRunConfigurationProducer extends LazyRunConfigurationProducer<ShRunConfiguration> {
   @Override

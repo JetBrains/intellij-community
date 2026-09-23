@@ -5,7 +5,6 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.Platform;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -23,20 +22,17 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.EelOsFamily;
 import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.sh.ShBundle;
-import com.intellij.sh.ShStringUtil;
 import com.intellij.terminal.TerminalExecutionConsole;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
@@ -57,7 +53,7 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     if (myRunConfiguration.isExecuteInTerminal() && !isRunBeforeConfig()) {
       ShRunner shRunner = ApplicationManager.getApplication().getService(ShRunner.class);
       if (shRunner != null && shRunner.isAvailable(myProject)) {
-        shRunner.run(myProject, buildCommand(eelDescriptor), myRunConfiguration.getScriptWorkingDirectory(), myRunConfiguration.getName(),
+        shRunner.run(myProject, buildCommand(eelDescriptor), terminalWorkingDirectory(eelDescriptor), myRunConfiguration.getName(),
                      isActivateToolWindow());
         return null;
       }
@@ -139,22 +135,27 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     return isRunBeforeConfig;
   }
 
+  /**
+   * A directory inside the project's environment travels in that environment's spelling; a directory elsewhere (a WSL script
+   * in a local project) keeps the nio spelling the terminal can route directly. See {@link ShRunner#run}.
+   */
+  private @NotNull String terminalWorkingDirectory(@NotNull EelDescriptor eelDescriptor) {
+    String workingDirectory = myRunConfiguration.getScriptWorkingDirectory();
+    return eelDescriptor.equals(getEelDescriptor(myProject)) ? convertPathUsingEel(workingDirectory, eelDescriptor) : workingDirectory;
+  }
+
+  /** The shell line for the terminal; every path is passed in the spelling of the environment the shell runs in. */
   private @NotNull String buildCommand(@NotNull EelDescriptor eelDescriptor) {
+    Map<String, String> envs = myRunConfiguration.getEnvData().getEnvs();
+    EelOsFamily osFamily = eelDescriptor.getOsFamily();
     if (myRunConfiguration.isExecuteScriptFile()) {
-      final List<String> commandLine = new ArrayList<>();
-      addIfPresent(commandLine, myRunConfiguration.getEnvData().getEnvs());
-      addIfPresent(commandLine, adaptPathForExecution(myRunConfiguration.getInterpreterPath(), eelDescriptor));
-      addIfPresent(commandLine, myRunConfiguration.getInterpreterOptions());
-      commandLine.add(adaptPathForExecution(myRunConfiguration.getScriptPath(), eelDescriptor));
-      addIfPresent(commandLine, myRunConfiguration.getScriptOptions());
-      return String.join(" ", commandLine);
+      return ShTerminalCommandBuilder.scriptFileCommand(convertPathUsingEel(myRunConfiguration.getInterpreterPath(), eelDescriptor),
+                                                        myRunConfiguration.getInterpreterOptions(),
+                                                        convertPathUsingEel(myRunConfiguration.getScriptPath(), eelDescriptor),
+                                                        myRunConfiguration.getScriptOptions(),
+                                                        envs, osFamily);
     }
-    else {
-      List<String> commandLine = new ArrayList<>();
-      addIfPresent(commandLine, myRunConfiguration.getEnvData().getEnvs(), true);
-      addIfPresent(commandLine, myRunConfiguration.getScriptText());
-      return String.join(" ", commandLine);
-    }
+    return ShTerminalCommandBuilder.scriptTextCommand(myRunConfiguration.getScriptText(), envs, osFamily);
   }
 
   private EelDescriptor computeEelDescriptor() {
@@ -183,53 +184,6 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     else {
       return eelDescriptor;
     }
-  }
-
-  private static void addIfPresent(@NotNull List<String> commandLine, @Nullable String options) {
-    ContainerUtil.addIfNotNull(commandLine, StringUtil.nullize(options));
-  }
-
-  private static void addIfPresent(@NotNull List<String> commandLine, @NotNull Map<String, String> envs) {
-    addIfPresent(commandLine, envs, false);
-  }
-
-  private static void addIfPresent(@NotNull List<String> commandLine, @NotNull Map<String, String> envs, boolean endWithSemicolon) {
-    int index = 0;
-    for (Map.Entry<String, String> entry : envs.entrySet()) {
-      String key = entry.getKey();
-      String value = entry.getValue();
-      String quotedString;
-      if (Platform.current() != Platform.WINDOWS) {
-        quotedString = ShStringUtil.quote(value);
-      }
-      else {
-        String escapedValue = StringUtil.escapeQuotes(value);
-        quotedString = StringUtil.containsWhitespaces(value) ? StringUtil.QUOTER.apply(escapedValue) : escapedValue;
-      }
-      if (endWithSemicolon) {
-        String semicolon = "";
-        if (index == envs.size() - 1) semicolon = ";";
-        commandLine.add("export " + key + "=" + quotedString + semicolon);
-      }
-      else {
-        commandLine.add(key + "=" + quotedString);
-      }
-      index++;
-    }
-  }
-
-  private static String adaptPathForExecution(@NotNull String systemDependentPath,
-                                              @NotNull EelDescriptor eelDescriptor) {
-    systemDependentPath = convertPathUsingEel(systemDependentPath, eelDescriptor);
-
-    return switch (eelDescriptor.getOsFamily()) {
-      case Windows ->
-        ShStringUtil.quote(systemDependentPath);
-      case Posix -> {
-        String escapedPath = StringUtil.escapeQuotes(systemDependentPath);
-        yield StringUtil.containsWhitespaces(systemDependentPath) ? StringUtil.QUOTER.apply(escapedPath) : escapedPath;
-      }
-    };
   }
 
   private static String convertPathUsingEel(@NotNull String path, @NotNull EelDescriptor eelDescriptor) {
