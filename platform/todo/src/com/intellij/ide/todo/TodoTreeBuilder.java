@@ -192,7 +192,9 @@ public abstract class TodoTreeBuilder implements Disposable {
     catch (IndexNotReadyException ignore) {
     }
 
-    FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener, this);
+    if (!shouldUseSplitTodo()) {
+      FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener, this);
+    }
   }
 
   public boolean isDisposed() {

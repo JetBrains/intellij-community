@@ -4,6 +4,7 @@ package com.intellij.ide.todo.nodes
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.todo.TodoTreeBuilder
+import com.intellij.ide.ui.colors.color
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
@@ -75,6 +76,7 @@ class TodoRemoteFileNode(
     }
 
     presentation.presentableText = presentableText
+    presentation.forcedTextForeground = fileResult?.fileStatusColor?.color()
     presentation.setIcon(file.fileType.icon)
 
     val todoItemCount = fileResult?.todos?.size ?: builder.getCachedRemoteTodos(file).size

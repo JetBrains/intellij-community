@@ -5,11 +5,13 @@ import com.intellij.ide.todo.TodoFilter
 import com.intellij.ide.todo.rpc.TodoFileResult
 import com.intellij.ide.todo.rpc.TodoResult
 import com.intellij.ide.ui.SerializableTextChunk
+import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -47,6 +49,7 @@ object TodoFileResultBuilder {
       moduleName = getModuleName(project, virtualFile),
       packageName = getPackageName(project, virtualFile),
       todos = todos,
+      fileStatusColor = FileStatusManager.getInstance(project).getStatus(virtualFile).color?.rpcId(),
     )
   }
 

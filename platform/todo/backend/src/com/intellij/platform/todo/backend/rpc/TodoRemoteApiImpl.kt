@@ -20,6 +20,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.FileStatusListener
+import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
@@ -76,6 +78,11 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
         }
       }
     }
+
+    FileStatusManager.getInstance(project).addFileStatusListener(object : FileStatusListener {
+      override fun fileStatusesChanged() = scheduleInitialScan()
+      override fun fileStatusChanged(virtualFile: VirtualFile) { fileChangesQueue.trySend(virtualFile) }
+    }, flowDisposable)
 
     launch {
       for (file in fileChangesQueue) {
