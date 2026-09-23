@@ -266,7 +266,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                          @NotNull SearchSession session,
                                          @NotNull TextOccurenceProcessor processor) {
     return bulkProcessElementsWithWord(searchScope, text, searchContext, options, containerName, session, (scope, offsetsInScope, searcher) ->
-      LowLevelSearchUtil.processElementsAtOffsets(scope, searcher, options.contains(Options.PROCESS_INJECTED_PSI), getOrCreateIndicator(),
+      LowLevelSearchUtil.processElementsAtOffsets(scope, searcher, options.contains(Options.PROCESS_INJECTED_PSI),
+                                                  Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator()), // bulkProcessElementsWithWord makes sure it's run under progress
                                                   offsetsInScope, processor));
   }
 
@@ -284,8 +285,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
     if (searchScope instanceof GlobalSearchScope) {
-      return ConcurrencyUtils.runWithIndicatorOrContextCancellation((_) -> {
-        ProgressIndicator progress = getOrCreateIndicator();
+      return ConcurrencyUtils.runWithIndicatorOrContextCancellation(progress -> {
         StringSearcher searcher = new StringSearcher(text, options.contains(Options.CASE_SENSITIVE_SEARCH), true,
                                                      searchContext == UsageSearchContext.IN_STRINGS,
                                                      options.contains(Options.PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE));
@@ -930,13 +930,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     });
   }
 
-  private static @NotNull ProgressIndicator getOrCreateIndicator() {
-    ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    if (progress == null) progress = new EmptyProgressIndicator();
-    progress.setIndeterminate(false);
-    return progress;
-  }
-
   private enum QueryRequestsRunResult {
     STOPPED,
     UNCHANGED,
@@ -1228,9 +1221,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       @Override
       public boolean execute(@NotNull PsiElement scope, int @NotNull [] offsetsInScope, @NotNull StringSearcher searcher) {
         ProgressManager.checkCanceled();
-
         return LowLevelSearchUtil.processElementsAtOffsets(scope, searcher, !ignoreInjectedPsi,
-                                                           getOrCreateIndicator(), offsetsInScope,
+                                                           Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator()), // runs under progress always
+                                                           offsetsInScope,
                                                            (element, offsetInElement) -> {
             if (ignoreInjectedPsi && element instanceof PsiLanguageInjectionHost) return true;
             return wrapped.processTextOccurrence(element, offsetInElement, consumer);
@@ -1244,9 +1237,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     };
   }
 
-  private static @NotNull Condition<Integer> matchContextCondition(
-    @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext
-  ) {
+  private static @NotNull Condition<Integer> matchContextCondition(@MagicConstant(flagsFromClass = UsageSearchContext.class)
+                                                                   short searchContext) {
     return context -> (context & searchContext) != 0;
   }
 
