@@ -164,8 +164,7 @@ def intellij_dev_prebuilt_binary(
         local_home_tool = None,
         data = [],
         before_run_main_class = "",
-        before_run_runtime_deps = [],
-        ide_config = None):
+        before_run_runtime_deps = []):
     """Launches a built distribution or a linked local home without packaging it.
 
     The distribution declares its product and additional modules.
@@ -173,21 +172,16 @@ def intellij_dev_prebuilt_binary(
     `data` is the launcher's extra runfiles, on top of the distribution and its config.
     With `before_run_main_class`, `BeforeRunDevMain` runs that class over `before_run_runtime_deps` first, then
     `PreBuiltDevMain`, as `intellij_dev_binary` does before `DevMainKt`.
-    `ide_config` is the `intellij_dev_dist_config` of `dist` when several launchers share one distribution; `dist` then
-    names a single target, and the macro declares no alias and no config of its own.
     """
 
     # Manual, like the distribution in `data`: a wildcard build must not compose it. `bazel run` names the launcher and
     # is not affected.
     tags = ["manual"]
 
-    if ide_config:
-        dist_target = dist
-    else:
-        ide_config = name + "_ide_config"
-        dist_target = name + "_distribution"
-        native.alias(name = dist_target, actual = dist, tags = tags, visibility = ["//visibility:private"])
-        intellij_dev_dist_config(name = ide_config, dist = dist_target, tags = tags, visibility = ["//visibility:private"])
+    ide_config = name + "_ide_config"
+    dist_target = name + "_distribution"
+    native.alias(name = dist_target, actual = dist, tags = tags, visibility = ["//visibility:private"])
+    intellij_dev_dist_config(name = ide_config, dist = dist_target, tags = tags, visibility = ["//visibility:private"])
 
     local_home_data = [local_home_tool] if local_home_tool else []
     local_home_flags = ["-Didea.dev.local.home.tool=$(rlocationpath %s)" % local_home_tool] if local_home_tool else []
@@ -209,4 +203,120 @@ def intellij_dev_prebuilt_binary(
         env = env,
         add_opens = INTELLIJ_ADD_OPENS,
         args = program_args,
+    )
+
+def _launcher_runfile_path(ctx, file):
+    path = file.short_path
+    return path[3:] if path.startswith("../") else ctx.workspace_name + "/" + path
+
+def _java_runfile_path(ctx, java_runtime):
+    path = java_runtime.java_executable_runfiles_path
+    if path.startswith("/"):
+        return path
+    return path[3:] if path.startswith("../") else ctx.workspace_name + "/" + path
+
+def _intellij_dev_launcher_impl(ctx):
+    java_runtime = ctx.toolchains["@bazel_tools//tools/jdk:runtime_toolchain_type"].java_runtime
+    windows = ctx.target_platform_has_constraint(ctx.attr._windows[platform_common.ConstraintValueInfo])
+    executable = ctx.actions.declare_file(ctx.label.name + (".exe" if windows else ""))
+    ctx.actions.symlink(output = executable, target_file = ctx.executable._launcher, is_executable = True)
+
+    # `$$` is a literal `$`, and the launcher expands `${NAME}` at launch, as the java stub's shell did.
+    targets = ctx.attr.data + [ctx.attr.dist, ctx.attr.ide_config]
+    jvm_flags = ctx.fragments.java.default_jvm_opts + [
+        ctx.expand_make_variables("jvm_flags", ctx.expand_location(flag, targets), {})
+        for flag in ctx.attr.jvm_flags
+    ] + ["--add-opens=%s=ALL-UNNAMED" % package for package in ctx.attr.add_opens]
+    manifest = ctx.actions.declare_file(ctx.label.name + ".launch.json")
+    ctx.actions.write(manifest, json.encode({
+        "version": 1,
+        "java": _java_runfile_path(ctx, java_runtime),
+        "ideConfig": _launcher_runfile_path(ctx, ctx.file.ide_config),
+        "localHomeTool": _launcher_runfile_path(ctx, ctx.executable.local_home_tool),
+        "beforeRun": _launcher_runfile_path(ctx, ctx.executable.before_run) if ctx.attr.before_run else "",
+        "jvmFlags": jvm_flags,
+        "home": ctx.attr.home,
+    }))
+
+    runfiles = ctx.runfiles(files = [executable, manifest, ctx.file.ide_config], transitive_files = java_runtime.files)
+    for target in [ctx.attr.dist, ctx.attr.local_home_tool, ctx.attr._launcher] + ([ctx.attr.before_run] if ctx.attr.before_run else []) + ctx.attr.data:
+        runfiles = runfiles.merge(ctx.runfiles(transitive_files = target[DefaultInfo].files)).merge(target[DefaultInfo].default_runfiles)
+    return [
+        DefaultInfo(executable = executable, files = depset([executable, manifest]), runfiles = runfiles),
+        RunEnvironmentInfo(environment = ctx.attr.env),
+    ]
+
+intellij_dev_launcher = rule(
+    doc = """Starts a composed dev distribution through the Go launcher, `bazel run //<package>:<name>`.
+
+The launcher reads `<name>.launch.json`, which this rule writes, links the distribution's local home under
+`$BUILD_WORKSPACE_DIRECTORY/<home>`, and replaces itself with the IDE's JVM in the workspace. It takes the java stub's
+wrapper options, so the IDE's Bazel plugin can debug it. See `community/build/content-module-packer/dev-launcher`.""",
+    implementation = _intellij_dev_launcher_impl,
+    executable = True,
+    fragments = ["java"],
+    toolchains = ["@bazel_tools//tools/jdk:runtime_toolchain_type"],
+    attrs = {
+        "dist": attr.label(mandatory = True, doc = "The composed distribution, whose runfiles hold its home or its components."),
+        "ide_config": attr.label(mandatory = True, allow_single_file = True, doc = "The `intellij_dev_dist_config` of `dist`."),
+        "jvm_flags": attr.string_list(doc = "JVM flags; `$(location)` and make variables expand, and `${NAME}` expands at launch."),
+        "add_opens": attr.string_list(doc = "Packages opened to the unnamed module, as `java_binary.add_opens`."),
+        "env": attr.string_dict(doc = "Environment variables `bazel run` sets for the launcher."),
+        "data": attr.label_list(allow_files = True, doc = "Extra runfiles of the launcher."),
+        "local_home_tool": attr.label(mandatory = True, executable = True, cfg = "target", doc = "The collector whose `local-home` links a local home."),
+        "before_run": attr.label(executable = True, cfg = "target", doc = "An executable the launcher runs in the workspace before the IDE, and fails with."),
+        "home": attr.string(mandatory = True, doc = "The workspace-relative directory under which each launch links its home."),
+        "_launcher": attr.label(default = Label("//build/content-module-packer/dev-launcher"), executable = True, cfg = "target"),
+        "_windows": attr.label(default = Label("@platforms//os:windows")),
+    },
+)
+
+def intellij_dev_launcher_binary(
+        name,
+        dist,
+        ide_config,
+        local_home_tool,
+        jvm_flags = [],
+        env = {},
+        program_args = [],
+        data = [],
+        before_run_main_class = "",
+        before_run_runtime_deps = [],
+        visibility = None):
+    """The Go launcher of a composed dev distribution, with the flags `intellij_dev_prebuilt_binary` gives its java stub.
+
+    `dist` and `ide_config` are the distribution and its `intellij_dev_dist_config`. The home is linked under
+    `out/dev-data/<name>/homes`, one directory per launch, beside the launcher's config and system directories. With
+    `before_run_main_class`, a `java_binary` `<name>_before_run` runs that class over `before_run_runtime_deps` first.
+    """
+    tags = ["manual"]
+    before_run = None
+    if before_run_main_class:
+        before_run = name + "_before_run"
+        java_binary(
+            name = before_run,
+            main_class = before_run_main_class,
+            runtime_deps = before_run_runtime_deps,
+            tags = tags,
+            visibility = ["//visibility:private"],
+        )
+    intellij_dev_launcher(
+        name = name,
+        visibility = visibility,
+        tags = tags,
+        dist = dist,
+        ide_config = ide_config,
+        local_home_tool = local_home_tool,
+        before_run = before_run,
+        # The IDE starts in the workspace, so a relative path in a flag resolves as it does for the run configuration.
+        jvm_flags = _runtime_jvm_flags(name, jvm_flags, platform_prefix = None, config_path = None, system_path = None) + [
+            # Not a build-time input: `AppMode.getDevIdeaProjectDir` and the webview native bridge read it at runtime,
+            # and a dev launch has it only because `DevMainImpl` sets it from the project root it just built against.
+            "-Didea.dev.project.root=$${BUILD_WORKSPACE_DIRECTORY}",
+        ],
+        add_opens = INTELLIJ_ADD_OPENS,
+        env = env,
+        args = program_args,
+        data = data,
+        home = "out/dev-data/%s/homes" % name,
     )
