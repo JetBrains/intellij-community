@@ -7,10 +7,12 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.python.terminal.shared"/>
     <module name="intellij.terminal.frontend"/>
+    <plugin id="org.jetbrains.plugins.terminal"/>
   </dependencies>
   <!-- endregion -->
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <terminalSettingsProvider implementation="com.intellij.python.terminal.frontend.PyVirtualEnvTerminalSettingsProvider"/>
+    <workingDirectoryCustomizer implementation="com.intellij.python.terminal.frontend.PyTerminalWorkingDirectoryCustomizer"/>
   </extensions>
 </idea-plugin>
