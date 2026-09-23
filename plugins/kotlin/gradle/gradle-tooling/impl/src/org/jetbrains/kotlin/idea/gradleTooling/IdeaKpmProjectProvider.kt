@@ -2,13 +2,14 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelController
-import com.intellij.gradle.toolingExtension.modelAction.GradleModelController.GradleModelFetchRequest.GradleExecutionMode
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmProjectContainer
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer
 
-object IdeaKpmProjectProvider : ProjectImportModelProvider {
+class IdeaKpmProjectProvider(
+    private val executionMode: GradleModelController.GradleModelFetchRequest.GradleExecutionMode,
+) : ProjectImportModelProvider {
 
     override fun populateModels(
         modelController: GradleModelController,
@@ -17,7 +18,7 @@ object IdeaKpmProjectProvider : ProjectImportModelProvider {
     ) {
         modelController.fetchRequest(buildModels, IdeaKpmProjectContainer::class.java)
             .optionalModel()
-            .executionMode(GradleExecutionMode.SEQUENTIAL)
+            .executionMode(executionMode)
             .execute(modelConsumer)
     }
 }

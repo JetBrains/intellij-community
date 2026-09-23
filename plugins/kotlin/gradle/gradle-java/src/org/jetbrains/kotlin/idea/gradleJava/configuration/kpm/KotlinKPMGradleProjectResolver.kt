@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.gradle.configuration.buildClasspathData
 import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById
 import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ContentRootsCreator
 import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ModuleDataInitializer
+import org.jetbrains.kotlin.idea.gradle.utils.KotlinGradleModelFetchProperties
 import org.jetbrains.kotlin.idea.gradleTooling.IdeaKpmProjectProvider
 import org.jetbrains.kotlin.tooling.core.Extras
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
@@ -43,7 +44,9 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
     override fun getExtraProjectModelClasses(): Set<Class<out Any>> =
         throw UnsupportedOperationException("Use getModelProvider() instead!")
 
-    override fun getModelProvider(): ProjectImportModelProvider? = IdeaKpmProjectProvider
+    override fun getModelProvider(): ProjectImportModelProvider? = IdeaKpmProjectProvider(
+        KotlinGradleModelFetchProperties.getExecutionMode(),
+    )
 
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> = setOf(
         IdeaKpmProject::class.java,  // representative of kotlin-gradle-plugin-idea
