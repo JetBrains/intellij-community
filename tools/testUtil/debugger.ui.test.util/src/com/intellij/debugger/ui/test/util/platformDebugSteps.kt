@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.test.util
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.UiText.Companion.asString
+import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.UiComponent.Companion.waitFound
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
@@ -35,6 +36,7 @@ class PlatformDebugSteps(private val ideFrame: IdeaFrameUI) {
   fun startDebugFromMainToolbar(waitForIndicators: Boolean = true): PlatformDebugSteps {
     ideFrame.run {
       step("Start debug process from main toolbar") {
+        waitForRunConfigurationWidget()
         mainToolbar.debugButton.waitFound()
         shouldBe("Debug button is not enabled") { mainToolbar.debugButton.isEnabled() }
         mainToolbar.debugButton.click()
@@ -44,6 +46,19 @@ class PlatformDebugSteps(private val ideFrame: IdeaFrameUI) {
       }
     }
     return this
+  }
+
+  /**
+   * The main toolbar publishes the run and debug buttons only after the run-configuration widget resolves.
+   * A read before that finds no button at all. Best effort: a toolbar without the widget falls through to
+   * the debug button lookup unchanged.
+   */
+  private fun waitForRunConfigurationWidget(timeout: Duration = 30.seconds) {
+    runCatching {
+      waitFor(message = "Run configuration widget holds a configuration", timeout = timeout) {
+        runCatching { ideFrame.mainToolbar.runWidget.text.isNotBlank() }.getOrDefault(false)
+      }
+    }
   }
 
   fun stopDebugFromMainToolbar() {
@@ -92,7 +107,18 @@ class PlatformDebugSteps(private val ideFrame: IdeaFrameUI) {
           // Re-query the button on every poll: the debug toolbar recreates its ActionButtons when the
           // session state changes, so a reference captured once may stay disabled while the live button
           // is already enabled.
-          val button = waitNotNull(message = "$kindOfStep button did not become enabled", timeout = timeout) {
+          val button = waitNotNull<UiComponent>(
+            message = "$kindOfStep button did not become enabled",
+            timeout = timeout,
+            // Separate "the toolbar never published the button" from "the button is there and disabled".
+            errorMessage = { _ ->
+              if (xx { byAccessibleName(kindOfStep) }.list().isEmpty()) {
+                "No '$kindOfStep' button in the debug toolbar after $timeout. The session never reached a suspended state."
+              }
+              else {
+                "The '$kindOfStep' button stayed disabled for $timeout. The session is not suspended."
+              }
+            }) {
             xx { byAccessibleName(kindOfStep) }.list().lastOrNull { it.isEnabled() }
           }
           button.click()
