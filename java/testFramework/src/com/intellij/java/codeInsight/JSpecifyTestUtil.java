@@ -9,6 +9,10 @@ public final class JSpecifyTestUtil {
   private JSpecifyTestUtil() {
   }
 
+  /**
+   * Adds {@code @org.jspecify.annotations.NullMarked} and {@code @org.jspecify.annotations.NullUnmarked} annotations to the test environment.
+   * @param fixture test fixture
+   */
   public static void addJSpecifyNullMarked(@NotNull JavaCodeInsightTestFixture fixture) {
     @Language("JAVA") String nullMarked =
       """
@@ -26,6 +30,11 @@ public final class JSpecifyTestUtil {
     fixture.addClass(nullUnmarked);
   }
 
+
+  /**
+   * Adds {@code @org.jspecify.annotations.NonNull} annotation to the test environment.
+   * @param fixture test fixture
+   */
   public static void addJSpecifyNonNull(@NotNull JavaCodeInsightTestFixture fixture) {
     @Language("JAVA") String nonNull =
       """

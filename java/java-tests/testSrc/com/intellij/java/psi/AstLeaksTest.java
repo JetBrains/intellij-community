@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.java.codeInsight.JSpecifyTestUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiClass;
@@ -105,13 +106,7 @@ public class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testNullabilityCorrectLoad() {
-    @Language("JAVA") String nullMarked =
-      """
-        package org.jspecify.annotations;
-        import java.lang.annotation.*;
-        @Target({ElementType.TYPE, ElementType.METHOD, ElementType.MODULE})
-        public @interface NullMarked {}""";
-    myFixture.addClass(nullMarked);
+    JSpecifyTestUtil.addJSpecifyNonNull(myFixture);
     final PsiClass cls = myFixture.addClass(
       """
         @org.jspecify.annotations.NullMarked
@@ -139,13 +134,7 @@ public class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testNullabilityCorrectLoadGetBeforeAsymPath() {
-    @Language("JAVA") String nullMarked =
-      """
-        package org.jspecify.annotations;
-        import java.lang.annotation.*;
-        @Target({ElementType.TYPE, ElementType.METHOD, ElementType.MODULE})
-        public @interface NullMarked {}""";
-    myFixture.addClass(nullMarked);
+    JSpecifyTestUtil.addJSpecifyNonNull(myFixture);
     final PsiClass cls = myFixture.addClass(
       """
         @org.jspecify.annotations.NullMarked
@@ -171,13 +160,7 @@ public class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testNullabilityCorrectLoadGetBefore() {
-    @Language("JAVA") String nullMarked =
-      """
-        package org.jspecify.annotations;
-        import java.lang.annotation.*;
-        @Target({ElementType.TYPE, ElementType.METHOD, ElementType.MODULE})
-        public @interface NullMarked {}""";
-    myFixture.addClass(nullMarked);
+    JSpecifyTestUtil.addJSpecifyNonNull(myFixture);
     final PsiClass cls = myFixture.addClass(
       """
         @org.jspecify.annotations.NullMarked

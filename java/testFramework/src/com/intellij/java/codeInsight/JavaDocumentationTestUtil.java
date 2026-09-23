@@ -14,6 +14,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.EditorTestUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -25,6 +26,7 @@ public final class JavaDocumentationTestUtil {
   private JavaDocumentationTestUtil() {
   }
 
+  @ApiStatus.Internal
   public static @NotNull VirtualFile getJarFile(@NotNull String name) {
     Path dataFile = Path.of(JavaTestUtil.getJavaTestDataPath(), "codeInsight", "documentation", name);
     VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(dataFile.toAbsolutePath().toString());
@@ -34,6 +36,9 @@ public final class JavaDocumentationTestUtil {
     return jarFile;
   }
 
+  /**
+   * @see JavaDocumentationTestUtil#getDocumentationText(Editor, PsiFile)
+   */
   public static @NotNull String getDocumentationText(@NotNull Project project, @NotNull String sourceEditorText) {
     int caretPosition = sourceEditorText.indexOf(EditorTestUtil.CARET_TAG);
     if (caretPosition >= 0) {
@@ -55,6 +60,9 @@ public final class JavaDocumentationTestUtil {
     }
   }
 
+  /**
+   * @see JavaDocumentationTestUtil#getDocumentationText(Editor, PsiFile)
+   */
   public static @NotNull String getDocumentationText(@NotNull Editor editor) {
     Project project = editor.getProject();
     assertNotNull(project);
@@ -63,6 +71,9 @@ public final class JavaDocumentationTestUtil {
     return getDocumentationText(editor, psiFile);
   }
 
+  /**
+   * @return documentation text in the given offset. Offest is the caret position stored in the {@link Editor}.
+   */
   @SuppressWarnings({"removal", "UnnecessaryFullyQualifiedName"})
   private static @NotNull String getDocumentationText(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     String html = computeHtmlDocBlocking(editor, psiFile);

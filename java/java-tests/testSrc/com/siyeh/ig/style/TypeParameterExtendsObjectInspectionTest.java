@@ -1,12 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE.txt file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.java.codeInsight.JSpecifyTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,21 +29,7 @@ public class TypeParameterExtendsObjectInspectionTest extends LightJavaInspectio
   public void testTypeParameterExtendsObjectWithContainerAnnotation() {
     final TypeParameterExtendsObjectInspection inspection = getTypeParameterExtendsObjectInspection(true);
     myFixture.enableInspections(inspection);
-    @Language("JAVA") String nullMarked =
-      """
-        package org.jspecify.annotations;
-        import java.lang.annotation.*;
-        @Target({ElementType.TYPE, ElementType.METHOD, ElementType.MODULE})
-        public @interface NullMarked {}""";
-    myFixture.addClass(nullMarked);
-
-    @Language("JAVA") String nullUnmarked =
-      """
-        package org.jspecify.annotations;
-        import java.lang.annotation.*;
-        @Target({ElementType.TYPE, ElementType.METHOD})
-        public @interface NullUnmarked {}""";
-    myFixture.addClass(nullUnmarked);
+    JSpecifyTestUtil.addJSpecifyNullMarked(myFixture);
 
     doTest();
   }

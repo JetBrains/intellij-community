@@ -1,9 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight
 
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 
 object JvmLoggerTestSetupUtil {
+  /**
+   * Adds Slf4j logger interface and factory to the test environment.
+   */
   fun setupSlf4j(fixture: JavaCodeInsightTestFixture) {
     fixture.addClass("""
       package org.slf4j;
@@ -19,6 +22,9 @@ object JvmLoggerTestSetupUtil {
     """.trimIndent())
   }
 
+  /**
+   * Adds Log4j2 logger interface and factory to the test environment.
+   */
   fun setupLog4j2(fixture: JavaCodeInsightTestFixture) {
     fixture.addClass("""
       package org.apache.logging.log4j;
@@ -34,6 +40,9 @@ object JvmLoggerTestSetupUtil {
     """.trimIndent())
   }
 
+  /**
+   * Adds Log4j logger interface to the test environment.
+   */
   fun setupLog4j(fixture: JavaCodeInsightTestFixture) {
     fixture.addClass("""
       package org.apache.log4j;
@@ -44,6 +53,9 @@ object JvmLoggerTestSetupUtil {
     """.trimIndent())
   }
 
+  /**
+   * Adds Apache Commons logger interface and factory to the test environment.
+   */
   fun setupApacheCommons(fixture: JavaCodeInsightTestFixture) {
     fixture.addClass("""
     package org.apache.commons.logging;
