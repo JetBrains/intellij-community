@@ -30,7 +30,7 @@ internal enum class CaretEasing {
   /**
    * Time constant of the exponential approach that reaches [MATCHED_PROGRESS] at the same moment this curve does.
    */
-  internal fun timeConstant(duration: Duration): Duration {
+  fun timeConstant(duration: Duration): Duration {
     val matchedAt = progressWhereMatched(duration)
     val matchedDuration = duration * matchedAt
     val timeConstant = matchedDuration / TIME_CONSTANTS_TO_MATCH

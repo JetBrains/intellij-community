@@ -7,18 +7,27 @@ import kotlin.math.pow
 import kotlin.time.Duration
 
 internal data class CaretTick(
-  val now: AnimationTimeMark,
+  private val now: AnimationTimeMark,
   private val frameDuration: Duration,
-  val settings: CaretAnimationSettings,
+  private val settings: CaretSettings,
   private val elapsedQuietTime: Duration,
 ) {
-  val isWithinQuietPeriod: Boolean get() = elapsedQuietTime < settings.quietPeriod
+  fun isWithinQuietPeriod(): Boolean {
+    return elapsedQuietTime < settings.quietPeriod()
+  }
 
-  val remainingQuietTime: Duration
-    get() {
-      val remaining = settings.quietPeriod - elapsedQuietTime
-      return remaining.coerceAtLeast(CaretFrameInterval.MOVEMENT)
-    }
+  fun now(): AnimationTimeMark {
+    return now
+  }
+
+  fun settings(): CaretSettings {
+    return settings
+  }
+
+  fun remainingQuietTime(): Duration {
+    val remaining = settings.quietPeriod() - elapsedQuietTime
+    return remaining.coerceAtLeast(CaretFrameInterval.MOVEMENT)
+  }
 
   fun elapsedSince(startTime: AnimationTimeMark): Duration {
     val elapsed = now - startTime
@@ -38,6 +47,15 @@ internal data class CaretTick(
   fun velocityDamping(): Double {
     val elapsedFrames = frameDuration / CaretFrameInterval.MOVEMENT
     return VELOCITY_DAMPING_PER_FRAME.pow(elapsedFrames)
+  }
+
+  /**
+   * Whether a smooth blink in progress must give way to a fully opaque caret.
+   */
+  fun isInterrupted(): Boolean {
+    val blinkingDisabled = !settings().isBlinking()
+    val smoothBlinkingDisabled = !settings().blinksSmoothly()
+    return isWithinQuietPeriod() || blinkingDisabled || smoothBlinkingDisabled
   }
 
   companion object {

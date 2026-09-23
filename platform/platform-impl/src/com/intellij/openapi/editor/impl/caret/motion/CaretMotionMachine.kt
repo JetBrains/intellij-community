@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl.caret.motion
 
 import com.intellij.openapi.editor.Caret
-import com.intellij.openapi.editor.impl.caret.model.CaretAnimationSettings
 import com.intellij.openapi.editor.impl.caret.model.CaretFrameInterval
 import com.intellij.openapi.editor.impl.caret.model.CaretPlacement
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle
@@ -22,14 +21,16 @@ internal class CaretMotionMachine private constructor(
   private val retargeted: Boolean,
   private val framesToPrefetch: List<CaretRectangle>?,
 ) {
-  val isSettled: Boolean get() = phase.isSettled
+  fun isSettled(): Boolean {
+    return phase.isSettled()
+  }
 
-  val locations: List<CaretRectangle> get() = phase.locations
-
-  /// MARK: motion transitions
+  fun locations(): List<CaretRectangle> {
+    return phase.locations()
+  }
 
   fun retarget(placements: List<CaretPlacement>, tick: CaretTick, isCaretShown: Boolean): CaretMotionMachine {
-    val isAtRest = phase.isSettled
+    val isAtRest = phase.isSettled()
     val snapping = isAtRest && (holdsSamePlaces(placements) || !isCaretShown)
     val nextUrgency = urgencyAfterRetarget(placements, snapping)
     return withUrgency(nextUrgency).aimAt(placements, tick, snapping)
@@ -44,19 +45,17 @@ internal class CaretMotionMachine private constructor(
    */
   fun settle(tick: CaretTick): CaretMotionMachine {
     return CaretMotionMachine(
-      phase = restingPhase(phase.targets, tick),
+      phase = restingPhase(phase.targets(), tick),
       urgency = FULL_URGENCY,
       retargeted = true,
       framesToPrefetch = null,
     )
   }
 
-  /// MARK: frame updates
-
   fun advance(tick: CaretTick, prefetching: Boolean): Pair<CaretMotionMachine, CaretMotionStep> {
-    val wasMoving = !phase.isSettled
+    val wasMoving = !phase.isSettled()
     val advancedPhase = if (wasMoving) phase.advance(tick, timeConstantFor(tick)) else phase
-    val moving = !advancedPhase.isSettled
+    val moving = !advancedPhase.isSettled()
     val step = CaretMotionStep(
       moved = retargeted || wasMoving,
       prefetch = framesToPrefetch.takeIf { prefetching },
@@ -72,7 +71,7 @@ internal class CaretMotionMachine private constructor(
   }
 
   private fun timeConstantFor(tick: CaretTick): Duration {
-    val scaledTimeConstant = tick.settings.moveTimeConstant * urgency
+    val scaledTimeConstant = tick.settings().moveTimeConstant() * urgency
     return scaledTimeConstant.coerceAtLeast(CaretFrameInterval.MOVEMENT)
   }
 
@@ -88,8 +87,6 @@ internal class CaretMotionMachine private constructor(
     }
   }
 
-  /// MARK: trajectory updates
-
   private fun withUrgency(urgency: Double): CaretMotionMachine {
     return CaretMotionMachine(phase, urgency, retargeted, framesToPrefetch)
   }
@@ -100,13 +97,13 @@ internal class CaretMotionMachine private constructor(
       phase = nextPhase,
       urgency = urgency,
       retargeted = true,
-      framesToPrefetch = nextPhase.framesWorthPrefetching(tick.settings),
+      framesToPrefetch = nextPhase.framesWorthPrefetching(tick.settings()),
     )
   }
 
   private fun phaseAimedAt(placements: List<CaretPlacement>, tick: CaretTick, snapping: Boolean): CaretMotionPhase {
-    val previous = phase.trajectories
-    val isAtRest = phase.isSettled
+    val previous = phase.trajectories()
+    val isAtRest = phase.isSettled()
     return when {
       // The carets are already painted where they belong, so only the targets need rebasing.
       holdsSameSpots(placements) -> {
@@ -120,14 +117,14 @@ internal class CaretMotionMachine private constructor(
         // A move that starts from rest follows one shared easing curve from here.
         CaretMotionPhase.Easing(
           trajectories = trajectoriesFrom(previous, placements, CaretTrajectory::restartedAt),
-          startTime = tick.now,
+          startTime = tick.now(),
         )
       }
       else -> {
         // A move interrupted mid-flight keeps its velocity and bends towards the new targets.
         CaretMotionPhase.Pursuit(
           trajectories = trajectoriesFrom(previous, placements, CaretTrajectory::aimedAt),
-          settling = phase.settling,
+          settling = phase.settling(),
         )
       }
     }
@@ -159,13 +156,11 @@ internal class CaretMotionMachine private constructor(
     val trajectories = placements.associate { placement ->
       placement.caret() to CaretTrajectory.restingAt(placement)
     }
-    return CaretMotionPhase.Easing(trajectories, startTime = tick.now, settling = Settling.COMPLETE)
+    return CaretMotionPhase.Easing(trajectories, startTime = tick.now(), settling = Settling.COMPLETE)
   }
 
-  /// MARK: target comparisons
-
   private fun targetFor(placement: CaretPlacement): CaretPlacement? {
-    return phase.trajectories[placement.caret()]?.target
+    return phase.trajectories()[placement.caret()]?.target
   }
 
   /**
@@ -185,7 +180,7 @@ internal class CaretMotionMachine private constructor(
    * Whether every placement denotes the document position it already targeted, whatever pixel that is now.
    */
   private fun holdsSamePlaces(placements: List<CaretPlacement>): Boolean {
-    if (phase.trajectories.isEmpty()) {
+    if (phase.trajectories().isEmpty()) {
       return false
     }
     return placements.all { placement ->
@@ -198,24 +193,12 @@ internal class CaretMotionMachine private constructor(
    * Whether no caret was added, removed or retargeted, so the move in progress needs no adjustment at all.
    */
   private fun holdsSameTargets(placements: List<CaretPlacement>): Boolean {
-    if (phase.trajectories.size != placements.size) {
+    if (phase.trajectories().size != placements.size) {
       return false
     }
     return placements.all { placement ->
       val target = targetFor(placement)
       target != null && target.matches(placement)
-    }
-  }
-
-  /**
-   * Every frame this easing move will paint, or `null` when there is nothing worth prefetching into the cache.
-   */
-  private fun CaretMotionPhase.framesWorthPrefetching(settings: CaretAnimationSettings): List<CaretRectangle>? {
-    val hasEasingInProgress = trajectories.isNotEmpty() && isEasing && !isSettled
-    return if (hasEasingInProgress) {
-      plannedFrames(settings)
-    } else {
-      null
     }
   }
 

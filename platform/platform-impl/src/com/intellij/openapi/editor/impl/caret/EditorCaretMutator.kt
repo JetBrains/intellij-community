@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.impl.caret.model.CaretAnimationSettings
+import com.intellij.openapi.editor.impl.caret.model.CaretSettings
 import com.intellij.openapi.editor.impl.caret.model.CaretCursor
 import com.intellij.openapi.editor.impl.caret.model.CaretEasing
 import com.intellij.openapi.editor.impl.caret.model.CaretFrameInterval
@@ -169,7 +169,7 @@ internal class EditorCaretMutator(
 
   private fun caretMovedAnimated(placements: List<CaretPlacement>, repaintMetrics: CaretRepaintMetrics) {
     val caretCursor = caretCursor()
-    val isCaretShown = caretCursor.wantsToBeShown() && editor.isCaretShown()
+    val isCaretShown = caretCursor.wantsToBeShown() && editor.isCaretShown
     val tick = tick(CaretFrameInterval.MOVEMENT)
     val next = state.updateAndGet {
       it.retarget(placements, tick, isCaretShown, repaintMetrics)
@@ -263,7 +263,7 @@ internal class EditorCaretMutator(
       val tick = current.computeTick()
       val isFrozen = disposed.get() || editor.document.isInBulkUpdate
       val (advanced: CaretAnimationState, step: CaretStep) = if (isFrozen) {
-        current.freeze(tick.now)
+        current.freeze(tick.now())
       } else {
         current.advance(tick, prefetching)
       }
@@ -336,13 +336,13 @@ internal class EditorCaretMutator(
            shouldDisableAnimations()
   }
 
-  private fun EditorImpl.caretAnimationSettings(): CaretAnimationSettings {
+  private fun EditorImpl.caretAnimationSettings(): CaretSettings {
     val configuredBlinkPeriod = settings.caretBlinkPeriod.milliseconds
     val blinkPeriod = configuredBlinkPeriod.coerceAtLeast(MIN_BLINK_PERIOD)
     val blinksSmoothly = !shouldDisableAnimations() && settings.isSmoothCaretBlinking
     val configuredMoveDuration = Registry.intValue("editor.smooth.caret.duration", 120)
     val moveDurationMs = configuredMoveDuration.coerceAtLeast(1)
-    return CaretAnimationSettings(
+    return CaretSettings(
       blinkPeriod = blinkPeriod,
       isBlinking = settings.isBlinkCaret,
       blinksSmoothly = blinksSmoothly,

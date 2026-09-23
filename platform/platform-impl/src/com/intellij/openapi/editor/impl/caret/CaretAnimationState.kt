@@ -29,7 +29,7 @@ internal class CaretAnimationState private constructor(
   private val version: Long,
 ) {
   fun isMotionSettled(): Boolean {
-    return motion.isSettled
+    return motion.isSettled()
   }
 
   fun caretCursor(): CaretCursor {
@@ -126,13 +126,13 @@ internal class CaretAnimationState private constructor(
   fun advance(tick: CaretTick, prefetching: Boolean): Pair<CaretAnimationState, CaretStep> {
     val (nextMotion, motionStep) = motion.advance(tick, prefetching)
     val (nextBlink, blinkStep) = blink.advance(tick, prefetching)
-    val movedLocations = if (motionStep.moved) nextMotion.locations else null
-    val nextCaretCursor = caretCursor.withStep(movedLocations, blinkStep.opacity, tick.now, repaintMetrics)
+    val movedLocations = if (motionStep.moved) nextMotion.locations() else null
+    val nextCaretCursor = caretCursor.withStep(movedLocations, blinkStep.opacity, tick.now(), repaintMetrics)
     val nextState = next(
       motion = nextMotion,
       blink = nextBlink,
       caretCursor = nextCaretCursor,
-      lastFrameAt = tick.now,
+      lastFrameAt = tick.now(),
     )
     val step = stepFor(motionStep, blinkStep, nextCaretCursor, nextState.version)
     return nextState to step

@@ -8,40 +8,34 @@ import kotlin.time.Duration
 
 internal sealed interface CaretBlinkPhase {
   fun advance(tick: CaretTick): CaretBlinkPhase
-
   fun step(tick: CaretTick, prefetching: Boolean): CaretBlinkStep
 
   override fun toString(): String
 
-  /// MARK: dormant and awake phases
-
   data object Dormant : CaretBlinkPhase {
     override fun advance(tick: CaretTick): CaretBlinkPhase = this
-
     override fun step(tick: CaretTick, prefetching: Boolean): CaretBlinkStep = CaretBlinkStep.DORMANT
   }
 
   data object Awake : CaretBlinkPhase {
     override fun advance(tick: CaretTick): CaretBlinkPhase {
-      val staysAwake = !tick.settings.isBlinking || tick.isWithinQuietPeriod
+      val staysAwake = !tick.settings().isBlinking() || tick.isWithinQuietPeriod()
       return when {
         staysAwake -> this
-        tick.settings.blinksSmoothly -> Fading(fromOpacity = 1.0, toOpacity = 0.0, startedAt = tick.now)
-        else -> Toggling(visible = false, since = tick.now)
+        tick.settings().blinksSmoothly() -> Fading(fromOpacity = 1.0, toOpacity = 0.0, startedAt = tick.now())
+        else -> Toggling(visible = false, since = tick.now())
       }
     }
 
     override fun step(tick: CaretTick, prefetching: Boolean): CaretBlinkStep {
-      val nextDelay = if (tick.settings.isBlinking) {
-        tick.remainingQuietTime
+      val nextDelay = if (tick.settings().isBlinking()) {
+        tick.remainingQuietTime()
       } else {
         Duration.INFINITE
       }
       return CaretBlinkStep(opacity = 1.0f, wantsPrefetch = false, nextDelay = nextDelay)
     }
   }
-
-  /// MARK: smooth blinking
 
   /**
    * Interpolates the opacity from [fromOpacity] to [toOpacity] over one fade duration.
@@ -52,11 +46,11 @@ internal sealed interface CaretBlinkPhase {
     private val startedAt: AnimationTimeMark,
   ) : CaretBlinkPhase {
     override fun advance(tick: CaretTick): CaretBlinkPhase {
-      val isFading = tick.elapsedSince(startedAt) < tick.settings.fadeDuration
+      val isFading = tick.elapsedSince(startedAt) < tick.settings().fadeDuration()
       return when {
         tick.isInterrupted() -> Awake
         isFading -> this
-        else -> Holding(opacity = toOpacity, startedAt = tick.now)
+        else -> Holding(opacity = toOpacity, startedAt = tick.now())
       }
     }
 
@@ -71,7 +65,7 @@ internal sealed interface CaretBlinkPhase {
 
     private fun opacityAt(tick: CaretTick): Double {
       val elapsed = tick.elapsedSince(startedAt)
-      val fadeProgress = (elapsed / tick.settings.fadeDuration).coerceIn(0.0, 1.0)
+      val fadeProgress = (elapsed / tick.settings().fadeDuration()).coerceIn(0.0, 1.0)
       val isFadingOut = toOpacity < fromOpacity
       val easedProgress = if (isFadingOut) easeInOutCubic(fadeProgress) else easeOutQuint(fadeProgress)
       return fromOpacity + (toOpacity - fromOpacity) * easedProgress
@@ -83,11 +77,11 @@ internal sealed interface CaretBlinkPhase {
    */
   data class Holding(private val opacity: Double, private val startedAt: AnimationTimeMark) : CaretBlinkPhase {
     override fun advance(tick: CaretTick): CaretBlinkPhase {
-      val isHolding = tick.elapsedSince(startedAt) < tick.settings.holdDuration
+      val isHolding = tick.elapsedSince(startedAt) < tick.settings().holdDuration()
       return when {
         tick.isInterrupted() -> Awake
         isHolding -> this
-        else -> Fading(fromOpacity = opacity, toOpacity = 1.0 - opacity, startedAt = tick.now)
+        else -> Fading(fromOpacity = opacity, toOpacity = 1.0 - opacity, startedAt = tick.now())
       }
     }
 
@@ -100,24 +94,22 @@ internal sealed interface CaretBlinkPhase {
     }
 
     private fun remainingHoldDuration(tick: CaretTick): Duration {
-      val remaining = tick.settings.holdDuration - tick.elapsedSince(startedAt)
+      val remaining = tick.settings().holdDuration() - tick.elapsedSince(startedAt)
       return remaining.coerceAtLeast(CaretFrameInterval.BLINK)
     }
   }
-
-  /// MARK: toggled blinking
 
   /**
    * Flips the caret between fully opaque and fully transparent once per half blink period.
    */
   data class Toggling(private val visible: Boolean, private val since: AnimationTimeMark) : CaretBlinkPhase {
     override fun advance(tick: CaretTick): CaretBlinkPhase {
-      val wakesUp = tick.isWithinQuietPeriod || !tick.settings.isBlinking || tick.settings.blinksSmoothly
-      val keepsCurrentHalf = tick.elapsedSince(since) < tick.settings.blinkPeriod
+      val wakesUp = tick.isWithinQuietPeriod() || !tick.settings().isBlinking() || tick.settings().blinksSmoothly()
+      val keepsCurrentHalf = tick.elapsedSince(since) < tick.settings().blinkPeriod()
       return when {
         wakesUp -> Awake
         keepsCurrentHalf -> this
-        else -> Toggling(visible = !visible, since = tick.now)
+        else -> Toggling(visible = !visible, since = tick.now())
       }
     }
 
@@ -127,21 +119,10 @@ internal sealed interface CaretBlinkPhase {
     }
 
     private fun remainingHalfPeriod(tick: CaretTick): Duration {
-      val remaining = tick.settings.blinkPeriod - tick.elapsedSince(since)
+      val remaining = tick.settings().blinkPeriod() - tick.elapsedSince(since)
       return remaining.coerceAtLeast(CaretFrameInterval.BLINK)
     }
   }
-}
-
-/// MARK: blink helpers
-
-/**
- * Whether a smooth blink in progress must give way to a fully opaque caret.
- */
-private fun CaretTick.isInterrupted(): Boolean {
-  val blinkingDisabled = !settings.isBlinking
-  val smoothBlinkingDisabled = !settings.blinksSmoothly
-  return isWithinQuietPeriod || blinkingDisabled || smoothBlinkingDisabled
 }
 
 private fun easeOutQuint(progress: Double): Double {
