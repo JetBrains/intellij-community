@@ -25,85 +25,85 @@ http_file(
 # IDE or a published artifact.
 http_file(
     name = "jewel_deps_spectre_core",
-    downloaded_file_path = "spectre-core-0.6.0.jar",
-    sha256 = "2bbc9b5f91ef4df21854f1a9950d3eb4dfec08a8786c6859469ce50fc8ac142f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-core/0.6.0/spectre-core-0.6.0.jar",
+    downloaded_file_path = "spectre-core-0.7.1.jar",
+    sha256 = "768c157299a540145321329e25d26c29a53233308fabc33c33de9c90e67b6d93",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-core/0.7.1/spectre-core-0.7.1.jar",
 )
 
 http_file(
     name = "jewel_deps_spectre_core_sources",
-    downloaded_file_path = "spectre-core-0.6.0-sources.jar",
-    sha256 = "0b7687599dff467ad309bc0d3ecc6cf2694a4b41e02c6da61a9ea7411a2d3bdc",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-core/0.6.0/spectre-core-0.6.0-sources.jar",
+    downloaded_file_path = "spectre-core-0.7.1-sources.jar",
+    sha256 = "7e947f8763838a914602f157a4b976d2a58b8977e6b4e0e48e163def75f302f3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-core/0.7.1/spectre-core-0.7.1-sources.jar",
 )
 
 http_file(
     name = "jewel_deps_spectre_testing",
-    downloaded_file_path = "spectre-testing-0.6.0.jar",
-    sha256 = "bd30b7089dc3b2c3d5af0f5799853a083c5b4db2c3e660229ab467c82a45930d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-testing/0.6.0/spectre-testing-0.6.0.jar",
+    downloaded_file_path = "spectre-testing-0.7.1.jar",
+    sha256 = "0e606bab19b78dfdee59e7fbd253b719b13e6588cc04d8ae9850638629edf543",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-testing/0.7.1/spectre-testing-0.7.1.jar",
 )
 
 http_file(
     name = "jewel_deps_spectre_testing_sources",
-    downloaded_file_path = "spectre-testing-0.6.0-sources.jar",
-    sha256 = "2647b912450c6ba7004c94125f6402e91a2d7a95d309ca8b0ead51971dbd1648",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-testing/0.6.0/spectre-testing-0.6.0-sources.jar",
+    downloaded_file_path = "spectre-testing-0.7.1-sources.jar",
+    sha256 = "551be8befdb096fda3fc1918c454774d53ba48e27669159f0e61e112a5272edd",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-testing/0.7.1/spectre-testing-0.7.1-sources.jar",
 )
 
 # Compile dependency of spectre-testing; unused by the in-process lane, but must resolve.
 http_file(
     name = "jewel_deps_spectre_agent",
-    downloaded_file_path = "spectre-agent-0.6.0.jar",
-    sha256 = "f1e42560776f5f24866410f2cdc59170783a7fbf56f2687780fd59909e3f0556",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-agent/0.6.0/spectre-agent-0.6.0.jar",
+    downloaded_file_path = "spectre-agent-0.7.1.jar",
+    sha256 = "7d7dcea1d9e03b1ed02f16f38fdc3945c8608c24101d8edac193f4a028cbbee4",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-agent/0.7.1/spectre-agent-0.7.1.jar",
 )
 
 # The loadable Java agent, supplied by the attaching test JVM and injected into the IDE under test.
 # Keeping it here rather than in `lib/` is what stops Spectre reaching the IDE or a published artifact.
 http_file(
     name = "jewel_deps_spectre_agent_runtime",
-    downloaded_file_path = "spectre-agent-runtime-0.6.0.jar",
-    sha256 = "af40de579e1b112e3fb44d1cee2ea1fcf43c104ff65fde216338a3baaac561d6",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-agent-runtime/0.6.0/spectre-agent-runtime-0.6.0.jar",
+    downloaded_file_path = "spectre-agent-runtime-0.7.1.jar",
+    sha256 = "5adab3d5512f9c6ba9532fc838b112ab465c130d643ae2dc43d5ac5a51913682",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-agent-runtime/0.7.1/spectre-agent-runtime-0.7.1.jar",
 )
 
 http_file(
     name = "jewel_deps_spectre_agent_sources",
-    downloaded_file_path = "spectre-agent-0.6.0-sources.jar",
-    sha256 = "ee04f1ecdae443229350239ae6d99b6031c04b31e136dc97088edd2e9a81a020",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-agent/0.6.0/spectre-agent-0.6.0-sources.jar",
+    downloaded_file_path = "spectre-agent-0.7.1-sources.jar",
+    sha256 = "2762cb5a19cb5683d9c536ebe40d14585c3fdc470d2dd143628a2d0848a53e11",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-agent/0.7.1/spectre-agent-0.7.1-sources.jar",
 )
 
 # Runtime dependency of spectre-testing.
 http_file(
     name = "jewel_deps_spectre_recording",
-    downloaded_file_path = "spectre-recording-0.6.0.jar",
-    sha256 = "ab44895f231546d0209924caa4f429f9a2fd700f499f9d1b34dcb92a39431f80",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-recording/0.6.0/spectre-recording-0.6.0.jar",
+    downloaded_file_path = "spectre-recording-0.7.1.jar",
+    sha256 = "b70cacad3e85f65b1d6dedc151864a80149507ccd50c43ac8599c4ea1ed38d60",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-recording/0.7.1/spectre-recording-0.7.1.jar",
 )
 
 http_file(
     name = "jewel_deps_spectre_recording_sources",
-    downloaded_file_path = "spectre-recording-0.6.0-sources.jar",
-    sha256 = "7c84c5c3e9bd2774d06183d802fbad5a8fe4bb3bd2bb2ea271b7e5d5b1bb61b8",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-recording/0.6.0/spectre-recording-0.6.0-sources.jar",
+    downloaded_file_path = "spectre-recording-0.7.1-sources.jar",
+    sha256 = "904c37a2acfd6933c348394406e1850c5d694802377741fad84dcbe80eaea8bc",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-recording/0.7.1/spectre-recording-0.7.1-sources.jar",
 )
 
 # Dependency of spectre-core: the desktop input coordination that `RobotDriver` loads at construction.
 http_file(
     name = "jewel_deps_spectre_input_coordinator",
-    downloaded_file_path = "spectre-input-coordinator-0.6.0.jar",
-    sha256 = "8d78016b066f8fcfdfb6b83af76af6d2ead5bf407ac94649c81803e05dd30d22",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-input-coordinator/0.6.0/spectre-input-coordinator-0.6.0.jar",
+    downloaded_file_path = "spectre-input-coordinator-0.7.1.jar",
+    sha256 = "3ea621855f025c16ac4d5c957278b51e30ddec74599c6649e862411f08a80184",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-input-coordinator/0.7.1/spectre-input-coordinator-0.7.1.jar",
 )
 
 # Runtime dependency of spectre-testing and spectre-agent.
 http_file(
     name = "jewel_deps_spectre_input_coordinator_server",
-    downloaded_file_path = "spectre-input-coordinator-server-0.6.0.jar",
-    sha256 = "e25ddc00d5d57fe0308ceca0787b140c1e2113010a8ff17bd7e82822cd097360",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-input-coordinator-server/0.6.0/spectre-input-coordinator-server-0.6.0.jar",
+    downloaded_file_path = "spectre-input-coordinator-server-0.7.1.jar",
+    sha256 = "561bd0ffe752e6948ada3c81c2b54a6e17629213ef332625b7da61d992470c6e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-input-coordinator-server/0.7.1/spectre-input-coordinator-server-0.7.1.jar",
 )
 
 # Runtime dependency of spectre-core, not otherwise in the monorepo.

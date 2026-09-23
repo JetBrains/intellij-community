@@ -29,9 +29,8 @@ import kotlin.concurrent.thread
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.JewelFlags
 import org.jetbrains.jewel.intui.standalone.awaitWindow
@@ -70,7 +69,7 @@ class CustomPopupRendererSpectreTest {
             // The pointer remains inside the ComboBox after click, reproducing the hover path that
             // previously let the popup's JDialogRenderer consume Escape as a no-op dismissal.
             automator.pressKey(KeyEvent.VK_ESCAPE)
-            automator.waitUntilGone("The ComboBox popup") { findByTestTag(COMBO_BOX_POPUP_TAG) }
+            automator.waitUntilGone(tag = COMBO_BOX_POPUP_TAG, timeout = 10.seconds)
         } finally {
             app.stop()
         }
@@ -127,7 +126,7 @@ class CustomPopupRendererSpectreTest {
                 automator.waitForIdle()
 
                 automator.pressKey(KeyEvent.VK_ESCAPE)
-                automator.waitUntilGone("The menu popup") { findByTestTag(MENU_POPUP_TAG) }
+                automator.waitUntilGone(tag = MENU_POPUP_TAG, timeout = 10.seconds)
             } finally {
                 app.stop()
             }
@@ -150,7 +149,7 @@ class CustomPopupRendererSpectreTest {
 
                 // The first Escape belongs to speed search, and must not reach the popup behind it.
                 automator.pressKey(KeyEvent.VK_ESCAPE)
-                automator.waitUntilGone("The speed search field") { findByTestTag(SPEED_SEARCH_INPUT_TAG) }
+                automator.waitUntilGone(tag = SPEED_SEARCH_INPUT_TAG, timeout = 10.seconds)
                 assertTrue(
                     automator.isPresent { findByTestTag(COMBO_BOX_POPUP_TAG) },
                     "The first Escape dismissed speed search, so the popup behind it must still be open",
@@ -158,7 +157,7 @@ class CustomPopupRendererSpectreTest {
 
                 // Only once speed search is gone does Escape reach the popup.
                 automator.pressKey(KeyEvent.VK_ESCAPE)
-                automator.waitUntilGone("The speed searchable ComboBox popup") { findByTestTag(COMBO_BOX_POPUP_TAG) }
+                automator.waitUntilGone(tag = COMBO_BOX_POPUP_TAG, timeout = 10.seconds)
             } finally {
                 app.stop()
             }
@@ -182,7 +181,7 @@ class CustomPopupRendererSpectreTest {
                 val bounds = comboBox.boundsOnScreen
                 driver.click(bounds.x + bounds.width - CHEVRON_INSET, bounds.y + bounds.height / 2)
 
-                automator.waitUntilGone("The ComboBox popup") { findByTestTag(COMBO_BOX_POPUP_TAG) }
+                automator.waitUntilGone(tag = COMBO_BOX_POPUP_TAG, timeout = 10.seconds)
                 automator.waitForIdle()
                 assertFalse(
                     automator.isPresent { findByTestTag(COMBO_BOX_POPUP_TAG) },
@@ -210,28 +209,11 @@ class CustomPopupRendererSpectreTest {
             // The pointer is left on the chevron, which is the hover path that previously had the renderer
             // consume Escape as a no-op dismissal.
             automator.pressKey(KeyEvent.VK_ESCAPE)
-            automator.waitUntilGone("The EditableComboBox popup") { findByTestTag(COMBO_BOX_POPUP_TAG) }
+            automator.waitUntilGone(tag = COMBO_BOX_POPUP_TAG, timeout = 10.seconds)
         } finally {
             app.stop()
         }
     }
-}
-
-/**
- * Waits until [find] matches nothing, across every window Spectre tracks.
- *
- * Spectre only ships a wait-for-presence helper, but a popup lives in its own native window, and these tests need to
- * watch that window go away.
- */
-private suspend fun ComposeAutomator.waitUntilGone(
-    description: String,
-    find: ComposeAutomator.() -> List<AutomatorNode>,
-) {
-    repeat(POLL_ATTEMPTS) {
-        if (!isPresent(find)) return
-        delay(POLL_INTERVAL_MS.milliseconds)
-    }
-    error("$description was still on screen after ${POLL_ATTEMPTS * POLL_INTERVAL_MS} ms")
 }
 
 private fun ComposeAutomator.isPresent(find: ComposeAutomator.() -> List<AutomatorNode>): Boolean {
@@ -330,6 +312,3 @@ private const val SPEED_SEARCH_COMBO_TAG = "spectre.speedSearchCombo"
 
 /** Distance from the ComboBox's trailing edge that reliably lands on the chevron rather than the label. */
 private const val CHEVRON_INSET = 8
-
-private const val POLL_ATTEMPTS = 100
-private const val POLL_INTERVAL_MS = 100L
