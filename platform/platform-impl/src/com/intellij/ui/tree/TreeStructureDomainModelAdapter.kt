@@ -138,7 +138,10 @@ fun buildTreeNodeDescriptorPresentation(
   return builder.run {
     setIcon(presentation.getIcon(false))
     val mainText = presentation.presentableText ?: ""
-    setMainText(mainText)
+    val mainTextFallback = if (mainText.isEmpty()) StringBuilder() else null
+    if (mainText.isNotEmpty()) {
+      setMainText(mainText)
+    }
     val locationAttributes: SimpleTextAttributes
     // all this mess has been ported from NodeRenderer
     val forcedColor = presentation.forcedTextForeground
@@ -150,6 +153,7 @@ fun buildTreeNodeDescriptorPresentation(
     }
     else {
       var first = true
+      var isMain = true
       for (fragment in presentation.coloredText) {
         var attributes = fragment.attributes ?: SimpleTextAttributes.REGULAR_ATTRIBUTES
         if (attributes.fgColor == null && forcedColor != null) {
@@ -166,6 +170,12 @@ fun buildTreeNodeDescriptorPresentation(
           first = false
         }
         appendTextFragment(fragment.text, attributes)
+        if (attributes.fgColor == SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor) {
+          isMain = false
+        }
+        if (isMain) {
+          mainTextFallback?.append(fragment.text)
+        }
       }
       locationAttributes = SimpleTextAttributes.GRAYED_ATTRIBUTES
     }
@@ -178,6 +188,10 @@ fun buildTreeNodeDescriptorPresentation(
     setBackground(presentation.background)
     setToolTipText(presentation.tooltip)
     setTextAttributesKey(presentation.textAttributesKey)
+    if (mainText.isEmpty() && mainTextFallback?.isNotEmpty() == true) {
+      // fall back to the colored text heuristics
+      setMainText(mainTextFallback.toString())
+    }
     build()
   }
 }
