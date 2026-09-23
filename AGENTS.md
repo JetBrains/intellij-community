@@ -38,7 +38,7 @@ Read the referenced rules before you edit or review a file under these roots. Th
   - Tests: run `bun run build` and `bun test`.
   - Bazel: do not run a Bazel build or test here.
 - **Eel / IJent** (`platform/eel*/`, `platform/ijent/`): read `platform/eel/AGENTS.md` first.
-- **PyCharm** (`./python`): use `./python/.ai/index.md`.
+- **PyCharm** (`./python`): start a PY-NNNNN issue at `./python/.ai/index.md`.
 
 ## Mandatory Rules
 

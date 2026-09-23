@@ -22,7 +22,7 @@
     "dotnet": ["dotnet"],
     "jewel": ["jewel-markdown", "jewel-release"],
     "kotlin-mpp": ["kmt-tc-duty"],
-    "python": ["compare-python-typecheckers", "py-junit5-tests"],
+    "python": ["compare-python-typecheckers", "py-junit5-tests", "pycharm-dev-workflow"],
     "remote-dev": [
       "daemon-libraries",
       "investigate-split-completion",
