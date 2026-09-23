@@ -1160,13 +1160,6 @@ f:com.intellij.ide.browsers.BrowserSettings
 - getDependencies():java.util.Collection
 - getId():java.lang.String
 - f:selectBrowser(com.intellij.ide.browsers.WebBrowser):V
-c:com.intellij.ide.browsers.BrowserStarter
-- <init>(com.intellij.execution.configurations.RunConfiguration,com.intellij.ide.browsers.StartBrowserSettings,com.intellij.execution.process.ProcessHandler):V
-- <init>(com.intellij.execution.configurations.RunConfiguration,com.intellij.ide.browsers.StartBrowserSettings,java.util.function.BooleanSupplier):V
-- p:isOutdated():Z
-- p:openPageNow():V
-- setMaximumAttempts(I):com.intellij.ide.browsers.BrowserStarter
-- setOpenOnMaximumAttempt(Z):com.intellij.ide.browsers.BrowserStarter
 e:com.intellij.ide.browsers.DefaultBrowserPolicy
 - sf:ALTERNATIVE:com.intellij.ide.browsers.DefaultBrowserPolicy
 - sf:FIRST:com.intellij.ide.browsers.DefaultBrowserPolicy

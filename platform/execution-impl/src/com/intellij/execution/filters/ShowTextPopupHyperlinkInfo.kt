@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters
 
 import com.intellij.openapi.application.ApplicationManager
@@ -19,7 +19,7 @@ import javax.swing.ScrollPaneConstants
  * A console hyperlink, which shows a popup with the given text on a click.
  * Useful for filters - to create links for viewing contents of argument files.
  *
- * @see ArgumentFileFilter
+ * @see com.intellij.execution.filters.ArgumentFileFilter
  */
 @ApiStatus.Internal
 class ShowTextPopupHyperlinkInfo(@NlsContexts.PopupTitle private val title: String, private val text: String) : HyperlinkInfo {

@@ -181,6 +181,19 @@ f:com.intellij.execution.RunManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.execution.RunManager
 - f:getInstanceAsync(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - f:getInstanceIfCreated(com.intellij.openapi.project.Project):com.intellij.execution.RunManager
+com.intellij.execution.RunManagerListener
+- java.util.EventListener
+- sf:TOPIC:com.intellij.util.messages.Topic
+- beforeRunTasksChanged():V
+- beginUpdate():V
+- endUpdate():V
+- runConfigurationAdded(com.intellij.execution.RunnerAndConfigurationSettings):V
+- runConfigurationChanged(com.intellij.execution.RunnerAndConfigurationSettings):V
+- runConfigurationChanged(com.intellij.execution.RunnerAndConfigurationSettings,java.lang.String):V
+- runConfigurationRemoved(com.intellij.execution.RunnerAndConfigurationSettings):V
+- runConfigurationSelected():V
+- runConfigurationSelected(com.intellij.execution.RunnerAndConfigurationSettings):V
+- stateLoaded(com.intellij.execution.RunManager,Z):V
 com.intellij.execution.RunnerAndConfigurationSettings
 - checkSettings():V
 - a:checkSettings(com.intellij.execution.Executor):V

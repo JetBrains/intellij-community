@@ -362,19 +362,6 @@ f:com.intellij.diagnostic.logs.LogLevelConfigurationManager
 - f:setCategories(java.util.List):V
 f:com.intellij.diagnostic.logs.LogLevelConfigurationManager$Companion
 - f:getInstance():com.intellij.diagnostic.logs.LogLevelConfigurationManager
-com.intellij.execution.RunManagerListener
-- java.util.EventListener
-- sf:TOPIC:com.intellij.util.messages.Topic
-- beforeRunTasksChanged():V
-- beginUpdate():V
-- endUpdate():V
-- runConfigurationAdded(com.intellij.execution.RunnerAndConfigurationSettings):V
-- runConfigurationChanged(com.intellij.execution.RunnerAndConfigurationSettings):V
-- runConfigurationChanged(com.intellij.execution.RunnerAndConfigurationSettings,java.lang.String):V
-- runConfigurationRemoved(com.intellij.execution.RunnerAndConfigurationSettings):V
-- runConfigurationSelected():V
-- runConfigurationSelected(com.intellij.execution.RunnerAndConfigurationSettings):V
-- stateLoaded(com.intellij.execution.RunManager,Z):V
 f:com.intellij.execution.impl.ConsoleViewUtil
 - s:enableReplaceActionForConsoleViewEditor(com.intellij.openapi.editor.Editor):V
 - s:isConsoleViewEditor(com.intellij.openapi.editor.Editor):Z
@@ -961,8 +948,6 @@ f:com.intellij.ide.browsers.BrowserSettings
 - com.intellij.openapi.options.Configurable$WithEpDependencies
 - com.intellij.openapi.options.SearchableConfigurable
 - <init>():V
-c:com.intellij.ide.browsers.BrowserStarter
-- start():V
 e:com.intellij.ide.browsers.DefaultBrowserPolicy
 - java.lang.Enum
 c:com.intellij.ide.browsers.StartBrowserSettings

@@ -287,7 +287,6 @@
                     beanClass="com.intellij.ide.browsers.BrowserSettingsConfigurableEP" dynamic="true">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="org.jetbrains.javaScriptDebuggerStarter" interface="com.intellij.ide.browsers.JavaScriptDebuggerStarter" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.tipAndTrick" beanClass="com.intellij.ide.util.TipAndTrickBean" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.remote.customDataContextSerializer"
                     interface="com.intellij.ide.CustomDataContextSerializer"
@@ -1305,7 +1304,6 @@
     <applicationConfigurable groupId="tools" instance="com.intellij.ide.browsers.BrowserSettings"
                              id="reference.settings.ide.settings.web.browsers"
                              key="browsers.settings" bundle="messages.IdeBundle"/>
-    <stepsBeforeRunProvider implementation="com.intellij.ide.browsers.LaunchBrowserBeforeRunTaskProvider"/>
     <selectInTarget implementation="com.intellij.ide.browsers.actions.SelectInDefaultBrowserTarget"/>
     <applicationService serviceInterface="com.intellij.ide.browsers.WebBrowserService"
                         serviceImplementation="com.intellij.ide.browsers.impl.WebBrowserServiceImpl"/>
