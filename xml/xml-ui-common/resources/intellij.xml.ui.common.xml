@@ -27,6 +27,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.ide.browsers.WebBrowserXmlService"
+                        serviceImplementation="com.intellij.xml.impl.WebBrowserXmlServiceImpl"
+                        overrides="true"/>
+
     <lang.rearranger language="XML" implementationClass="com.intellij.xml.arrangement.XmlRearranger"/>
     <lang.rearranger language="HTML" implementationClass="com.intellij.xml.arrangement.HtmlRearranger"/>
 

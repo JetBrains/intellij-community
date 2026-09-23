@@ -258,9 +258,6 @@
 
     <gotoRelatedProvider implementation="com.intellij.navigation.HtmlGotoRelatedProvider"/>
     <xml.relatedToHtmlFilesContributor implementation="com.intellij.navigation.LinkedToHtmlFilesContributor"/>
-    <applicationService serviceInterface="com.intellij.ide.browsers.WebBrowserXmlService"
-                        serviceImplementation="com.intellij.ide.browsers.WebBrowserXmlServiceImpl"
-                        overrides="true"/>
 
     <intentionAction>
       <language>XML</language>

@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.browsers
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.xml.impl
 
+import com.intellij.ide.browsers.WebBrowserXmlService
 import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.lang.Language
 import com.intellij.lang.html.HTMLLanguage
