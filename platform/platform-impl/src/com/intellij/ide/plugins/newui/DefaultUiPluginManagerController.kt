@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.ContentModuleDescriptor
 import com.intellij.ide.plugins.CustomPluginRepositoryService
@@ -71,6 +72,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
+import com.intellij.util.io.HttpRequests
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -84,7 +86,6 @@ import java.util.EnumMap
 import java.util.LinkedHashMap
 import java.util.LinkedHashSet
 import java.util.UUID
-import java.util.concurrent.CancellationException
 import javax.swing.JComponent
 import kotlin.coroutines.CoroutineContext
 
@@ -168,11 +169,13 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return try {
       CustomPluginRepositoryLoadResult(RepositoryHelper.loadPluginModels(repository.id, null, null).withSource())
     }
-    catch (c: CancellationException) {
-      throw c
-    }
     catch (t: Throwable) {
-      CustomPluginRepositoryLoadResult(emptyList(), t.message ?: t.javaClass.simpleName)
+      rethrowControlFlowException(t)
+      CustomPluginRepositoryLoadResult(
+        emptyList(),
+        t.message ?: t.javaClass.simpleName,
+        (t as? HttpRequests.HttpStatusException)?.statusCode,
+      )
     }
   }
 

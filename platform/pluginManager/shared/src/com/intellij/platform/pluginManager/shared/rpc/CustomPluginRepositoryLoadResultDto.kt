@@ -10,4 +10,5 @@ import org.jetbrains.annotations.ApiStatus
 data class CustomPluginRepositoryLoadResultDto(
   val plugins: List<PluginDto>,
   val error: String? = null,
+  val httpStatusCode: Int? = null,
 )

@@ -18,4 +18,5 @@ data class CustomPluginRepository(
 data class CustomPluginRepositoryLoadResult(
   val plugins: List<PluginUiModel>,
   val error: String? = null,
+  val httpStatusCode: Int? = null,
 )

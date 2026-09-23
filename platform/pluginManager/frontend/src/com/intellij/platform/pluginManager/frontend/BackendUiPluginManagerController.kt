@@ -268,7 +268,7 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
 
   override suspend fun loadCustomPluginRepository(repository: CustomPluginRepository): CustomPluginRepositoryLoadResult {
     val result = PluginManagerApi.getInstance().loadCustomPluginRepository(repository.id)
-    return CustomPluginRepositoryLoadResult(result.plugins.withSource(), result.error)
+    return CustomPluginRepositoryLoadResult(result.plugins.withSource(), result.error, result.httpStatusCode)
   }
 
   override fun hasPluginRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): Boolean {

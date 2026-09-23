@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.unified
 
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.newui.CustomPluginRepository
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginUiModel
@@ -258,7 +260,7 @@ internal class UnifiedPluginRepositorySourceCoordinator(
       try {
         val result = repositoryCache.loadRepository(repository, refresh)
         if (result.error != null && result.plugins.isEmpty()) {
-          commands.trySend(Command.RepositoryFailed(requestCatalogToken, repositoryId, token, result.error, null))
+          commands.trySend(Command.RepositoryFailed(requestCatalogToken, repositoryId, token, result.error, result.httpStatusCode, null))
           return@launch
         }
         val models = latestCustomRepositoryPlugins(result.plugins)
@@ -270,17 +272,16 @@ internal class UnifiedPluginRepositorySourceCoordinator(
             token,
             models,
             result.error,
+            result.httpStatusCode,
             snapshot,
             updatesAtRequest,
             sharedFactsAtRequest,
           )
         )
       }
-      catch (c: CancellationException) {
-        throw c
-      }
       catch (t: Throwable) {
-        commands.trySend(Command.RepositoryFailed(requestCatalogToken, repositoryId, token, t.message, t))
+        rethrowControlFlowException(t)
+        commands.trySend(Command.RepositoryFailed(requestCatalogToken, repositoryId, token, t.message, null, t))
       }
     }
   }
@@ -296,6 +297,7 @@ internal class UnifiedPluginRepositorySourceCoordinator(
     val updates = latestUpdates
     val revision = ++contentRevision
     val fetchError = entry.fetchError
+    val fetchHttpStatusCode = entry.fetchHttpStatusCode
     entry.requestToken = token
     entry.requestKind = RequestKind.Enrichment
     entry.status = PluginSectionStatus.Loading(showingStaleContent = entry.snapshot != null)
@@ -310,17 +312,16 @@ internal class UnifiedPluginRepositorySourceCoordinator(
             token,
             models,
             fetchError,
+            fetchHttpStatusCode,
             snapshot,
             updatesAtRequest,
             sharedFactsAtRequest,
           )
         )
       }
-      catch (c: CancellationException) {
-        throw c
-      }
       catch (t: Throwable) {
-        commands.trySend(Command.RepositoryFailed(requestCatalogToken, repositoryId, token, t.message, t))
+        rethrowControlFlowException(t)
+        commands.trySend(Command.RepositoryFailed(requestCatalogToken, repositoryId, token, t.message, null, t))
       }
     }
   }
@@ -331,6 +332,7 @@ internal class UnifiedPluginRepositorySourceCoordinator(
     entry.requestKind = null
     entry.fetchedModels = command.models
     entry.fetchError = command.error
+    entry.fetchHttpStatusCode = command.httpStatusCode
     entry.snapshot = command.snapshot
     markRepositoryContentChanged()
     if (command.updateRevision != updateRevision || command.sharedFactsRevision != sharedFactsRevision) {
@@ -338,7 +340,7 @@ internal class UnifiedPluginRepositorySourceCoordinator(
       return
     }
     entry.status = command.error?.let {
-      PluginSectionStatus.Degraded(PluginSectionError(loadErrorMessage, retryable = true))
+      PluginSectionStatus.Degraded(repositoryLoadError(command.httpStatusCode))
     } ?: PluginSectionStatus.Ready
     markRepositorySettled(command.repositoryId)
     publish()
@@ -349,13 +351,14 @@ internal class UnifiedPluginRepositorySourceCoordinator(
     requestJobs.remove(command.repositoryId)
     entry.requestKind = null
     entry.fetchError = command.message
+    entry.fetchHttpStatusCode = command.httpStatusCode
     if (command.cause != null) {
       LOG.warn("Failed to load custom plugin repository ${command.repositoryId} for the unified Plugins page", command.cause)
     }
     else {
       LOG.warn("Failed to load custom plugin repository ${command.repositoryId} for the unified Plugins page: ${command.message}")
     }
-    val error = PluginSectionError(loadErrorMessage, retryable = true)
+    val error = repositoryLoadError(command.httpStatusCode)
     entry.status = if (entry.snapshot == null) PluginSectionStatus.Failed(error) else PluginSectionStatus.Degraded(error)
     markRepositorySettled(command.repositoryId)
     publish()
@@ -364,6 +367,12 @@ internal class UnifiedPluginRepositorySourceCoordinator(
   private fun currentEntry(catalogToken: Long, repositoryId: String, requestToken: Long): RepositoryEntry? {
     if (catalogToken != this.catalogToken) return null
     return entries[repositoryId]?.takeIf { it.requestToken == requestToken }
+  }
+
+  private fun repositoryLoadError(httpStatusCode: Int?): PluginSectionError {
+    val message = if (httpStatusCode == null) loadErrorMessage
+                  else IdeBundle.message("plugins.configurable.repository.plugins.not.loaded.http.status", httpStatusCode)
+    return PluginSectionError(message, retryable = true)
   }
 
   private fun registerSuggestionRefresh(repositoryIds: Collection<String>) {
@@ -482,6 +491,7 @@ internal class UnifiedPluginRepositorySourceCoordinator(
     var repository: CustomPluginRepository,
     var fetchedModels: List<PluginUiModel>? = null,
     var fetchError: String? = null,
+    var fetchHttpStatusCode: Int? = null,
     var snapshot: UnifiedPluginMarketplaceSnapshot? = null,
     var status: PluginSectionStatus = PluginSectionStatus.Loading(showingStaleContent = false),
     var requestToken: Long = 0,
@@ -517,6 +527,7 @@ internal class UnifiedPluginRepositorySourceCoordinator(
       val requestToken: Long,
       val models: List<PluginUiModel>,
       val error: String?,
+      val httpStatusCode: Int?,
       val snapshot: UnifiedPluginMarketplaceSnapshot,
       val updateRevision: Long,
       val sharedFactsRevision: Long,
@@ -527,6 +538,7 @@ internal class UnifiedPluginRepositorySourceCoordinator(
       val repositoryId: String,
       val requestToken: Long,
       val message: String?,
+      val httpStatusCode: Int?,
       val cause: Throwable?,
     ) : Command
   }

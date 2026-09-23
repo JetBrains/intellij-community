@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.unified
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.CustomPluginRepository
 import com.intellij.ide.plugins.newui.CustomPluginRepositoryLoadResult
@@ -8,6 +9,7 @@ import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUpdatesEvent
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.util.io.HttpRequests
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
@@ -142,8 +144,48 @@ internal class UnifiedPluginRepositorySourceCoordinatorTest {
     assertThat(sections.map { it.count }).containsExactly(0, 0, 1)
     assertThat(sections[0].status).isEqualTo(PluginSectionStatus.Ready)
     assertThat(sections[1].status).isInstanceOf(PluginSectionStatus.Failed::class.java)
+    assertThat((sections[1].status as PluginSectionStatus.Failed).error.message).isEqualTo("Unable to load repository plugins")
     assertThat(sections[2].status).isInstanceOf(PluginSectionStatus.Degraded::class.java)
     assertThat(repositoryPluginIds(coordinator)).containsExactly("partial.plugin")
+    coordinator.close()
+  }
+
+  @Test
+  fun `HTTP status appears for a failed repository request`() = runTest {
+    val repository = repository("failed")
+    val provider = FakeRepositoryDataProvider(
+      catalogLoader = { catalog(repository) },
+      repositoryLoader = { _, _ -> throw HttpRequests.HttpStatusException("Request failed", 401, "https://example.test/plugins.xml") },
+    )
+    val coordinator = coordinator(provider)
+
+    coordinator.start()
+    runCurrent()
+
+    val status = coordinator.state.value.sections.single().status as PluginSectionStatus.Failed
+    assertThat(status.error.message).isEqualTo(IdeBundle.message("plugins.configurable.repository.plugins.not.loaded.http.status", 401))
+    coordinator.close()
+  }
+
+  @Test
+  fun `partial repository retains HTTP status after enrichment`() = runTest {
+    val repository = repository("partial")
+    val provider = FakeRepositoryDataProvider(
+      catalogLoader = { catalog(repository) },
+      repositoryLoader = { _, _ -> CustomPluginRepositoryLoadResult(listOf(plugin("partial.plugin")), "Request failed", 503) },
+    )
+    val coordinator = coordinator(provider)
+
+    coordinator.start()
+    runCurrent()
+
+    val expectedMessage = IdeBundle.message("plugins.configurable.repository.plugins.not.loaded.http.status", 503)
+    assertThat((coordinator.state.value.sections.single().status as PluginSectionStatus.Degraded).error.message).isEqualTo(expectedMessage)
+
+    coordinator.refreshEnrichment()
+    runCurrent()
+
+    assertThat((coordinator.state.value.sections.single().status as PluginSectionStatus.Degraded).error.message).isEqualTo(expectedMessage)
     coordinator.close()
   }
 

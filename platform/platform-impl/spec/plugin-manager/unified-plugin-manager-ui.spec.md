@@ -689,6 +689,14 @@ Untested: No focused test verifies that Internal ignores the legacy Show All que
     `failed refresh does not evict the last page-cached success`
   )
 
+- A custom repository failure with an HTTP response must show its status code.
+- A failure without an HTTP response must show the general repository error.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginRepositorySourceCoordinatorTest.kt (
+    `HTTP status appears for a failed repository request`;
+    `partial repository retains HTTP status after enrichment`;
+    `empty failed and partial repositories remain distinct visible sections`
+  )
+
 - Popular tag loading and failure must not delay or fail Marketplace content.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginMarketplaceSourceCoordinatorTest.kt (
     `popular tags load independently from Marketplace content`;

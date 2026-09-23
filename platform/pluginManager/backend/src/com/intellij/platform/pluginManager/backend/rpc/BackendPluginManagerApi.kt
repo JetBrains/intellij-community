@@ -156,6 +156,7 @@ class BackendPluginManagerApi : PluginManagerApi {
     return CustomPluginRepositoryLoadResultDto(
       plugins = result.plugins.map { PluginDto.fromModel(it) },
       error = result.error,
+      httpStatusCode = result.httpStatusCode,
     )
   }
 

@@ -1,10 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.unified
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.plugins.newui.CustomPluginRepository
 import com.intellij.ide.plugins.newui.CustomPluginRepositoryLoadResult
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.UiPluginManager
+import com.intellij.util.io.HttpRequests
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
@@ -142,11 +144,13 @@ internal class UnifiedPluginRepositoryCache(
     return try {
       dataProvider.loadRepository(repository)
     }
-    catch (c: CancellationException) {
-      throw c
-    }
     catch (t: Throwable) {
-      CustomPluginRepositoryLoadResult(emptyList(), t.message ?: t.javaClass.simpleName)
+      rethrowControlFlowException(t)
+      CustomPluginRepositoryLoadResult(
+        emptyList(),
+        t.message ?: t.javaClass.simpleName,
+        (t as? HttpRequests.HttpStatusException)?.statusCode,
+      )
     }
   }
 
