@@ -29,15 +29,15 @@ internal class OutdatedIntelliJPlatformGradlePluginVersionInspection : LocalInsp
 
     val message = DevKitGradleBundle.message(
       "inspection.intellij.platform.gradle.plugin.outdated.version.problem",
-      currentVersion.toString(),
-      latestVersion.toString(),
+      model.currentPluginVersion,
+      model.latestPluginVersion,
     )
-    return findIntelliJPlatformGradlePluginVersionReplacements(file, currentVersion.toString(), latestVersion.toString())
+    return findIntelliJPlatformGradlePluginVersionReplacements(file, model.currentPluginVersion, model.latestPluginVersion)
       .map { (element, newContent) ->
         manager.createProblemDescriptor(
           element,
           message,
-          UpdatePluginVersionQuickFix(latestVersion.toString(), newContent),
+          UpdatePluginVersionQuickFix(model.latestPluginVersion, newContent),
           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
           isOnTheFly,
         )
