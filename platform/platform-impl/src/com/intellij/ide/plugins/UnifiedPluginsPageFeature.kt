@@ -5,9 +5,12 @@ import com.intellij.openapi.util.registry.RegistryManager
 
 internal object UnifiedPluginsPageFeature {
   const val REGISTRY_KEY: String = "plugin.manager.unified.page"
+  const val STANDALONE_DIALOG_REGISTRY_KEY: String = "plugin.manager.unified.page.standalone.dialog"
   const val DENSITY_REGISTRY_KEY: String = "plugin.manager.unified.page.density.options"
 
   fun isEnabled(): Boolean = RegistryManager.getInstance().`is`(REGISTRY_KEY)
+
+  fun isStandaloneDialogEnabled(): Boolean = isEnabled() && RegistryManager.getInstance().`is`(STANDALONE_DIALOG_REGISTRY_KEY)
 
   fun densityVariant(): UnifiedPluginsPageDensityVariant {
     val value = RegistryManager.getInstance().get(DENSITY_REGISTRY_KEY)

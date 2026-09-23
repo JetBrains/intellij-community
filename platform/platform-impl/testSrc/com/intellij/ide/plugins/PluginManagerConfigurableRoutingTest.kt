@@ -2,16 +2,21 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSourceEnum
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.newEditor.SettingsFilter
 import com.intellij.openapi.options.newEditor.SpotlightPainter
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
@@ -33,6 +38,8 @@ import java.awt.Container
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.Point
+import java.util.function.Consumer
+import java.util.function.Predicate
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
@@ -69,6 +76,66 @@ internal class PluginManagerConfigurableRoutingTest {
       Disposer.dispose(session)
     }
   }
+
+  @Test
+  @RegistryKey(key = UnifiedPluginsPageFeature.REGISTRY_KEY, value = "true")
+  fun `standalone entry point prefers a wider unified page`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val embedded = PluginManagerConfigurable()
+    val standalone = PluginManagerConfigurable.createForStandaloneEntryPoint(PluginManagerOpenSourceEnum.TOOLBAR)
+    try {
+      val embeddedSize = embedded.createComponent().preferredSize
+      val standaloneSize = standalone.createComponent().preferredSize
+
+      assertThat(embeddedSize.width).isEqualTo(JBUI.scale(800))
+      assertThat(standaloneSize.width).isEqualTo(JBUI.scale(900))
+      assertThat(standaloneSize.height).isEqualTo(embeddedSize.height)
+    }
+    finally {
+      embedded.disposeUIResources()
+      standalone.disposeUIResources()
+    }
+  }
+
+  @Test
+  @RegistryKey(key = UnifiedPluginsPageFeature.REGISTRY_KEY, value = "false")
+  fun `standalone entry point does not widen the legacy page`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val configurable = PluginManagerConfigurable.createForStandaloneEntryPoint(PluginManagerOpenSourceEnum.TOOLBAR)
+    try {
+      assertThat(configurable.createComponent().preferredSize.width).isEqualTo(JBUI.scale(800))
+    }
+    finally {
+      configurable.disposeUIResources()
+    }
+  }
+
+  @Test
+  @RegistryKey(key = UnifiedPluginsPageFeature.REGISTRY_KEY, value = "true")
+  @RegistryKey(key = UnifiedPluginsPageFeature.STANDALONE_DIALOG_REGISTRY_KEY, value = "true")
+  fun `entry point opens a standalone dialog with its own size key`(@TestDisposable disposable: Disposable): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val settings = RecordingShowSettingsUtil()
+      ApplicationManager.getApplication().replaceService(ShowSettingsUtil::class.java, settings, disposable)
+
+      PluginManagerConfigurable.showFromEntryPoint(null, PluginManagerOpenSourceEnum.TOOLBAR)
+
+      assertThat(settings.editedConfigurable).isInstanceOf(PluginManagerConfigurable::class.java)
+      assertThat(settings.editedDimensionKey).isEqualTo("UnifiedPluginsPage.StandaloneDialog")
+      assertThat(settings.settingsOpened).isFalse()
+    }
+
+  @Test
+  @RegistryKey(key = UnifiedPluginsPageFeature.REGISTRY_KEY, value = "true")
+  @RegistryKey(key = UnifiedPluginsPageFeature.STANDALONE_DIALOG_REGISTRY_KEY, value = "false")
+  fun `welcome entry point keeps the Settings route when the switch is off`(@TestDisposable disposable: Disposable): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val settings = RecordingShowSettingsUtil()
+      ApplicationManager.getApplication().replaceService(ShowSettingsUtil::class.java, settings, disposable)
+
+      PluginManagerConfigurable.showSettingsDialogFromWelcomeScreen(null)
+
+      assertThat(settings.settingsOpened).isTrue()
+      assertThat(settings.editedConfigurable).isNull()
+    }
 
   @Test
   @RegistryKey(key = UnifiedPluginsPageFeature.REGISTRY_KEY, value = "true")
@@ -334,6 +401,26 @@ internal class PluginManagerConfigurableRoutingTest {
     fun update(query: String) {
       filter.setFilterText(query)
       painter.update(filter, configurable, component)
+    }
+  }
+
+  private class RecordingShowSettingsUtil : ShowSettingsUtilImpl() {
+    var editedConfigurable: Configurable? = null
+    var editedDimensionKey: String? = null
+    var settingsOpened: Boolean = false
+
+    override fun editConfigurable(project: Project?, dimensionServiceKey: String, configurable: Configurable): Boolean {
+      editedConfigurable = configurable
+      editedDimensionKey = dimensionServiceKey
+      return true
+    }
+
+    override fun showSettingsDialog(
+      project: Project?,
+      predicate: Predicate<in Configurable>,
+      additionalConfiguration: Consumer<in Configurable>?,
+    ) {
+      settingsOpened = true
     }
   }
 

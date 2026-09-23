@@ -7,13 +7,11 @@ import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.UIComponentFileEditor;
 import com.intellij.ide.plugins.UIComponentVirtualFile;
 import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSourceEnum;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -33,11 +31,7 @@ final class ShowPluginManagerAction extends AnAction implements DumbAware, Actio
       showPluginsInEditor(project, openSource);
       return;
     }
-    ShowSettingsUtil.getInstance().showSettingsDialog(
-      ProjectUtil.currentOrDefaultProject(project),
-      PluginManagerConfigurable.class,
-      c -> c.setOpenSource(openSource)
-    );
+    PluginManagerConfigurable.showFromEntryPoint(ProjectUtil.currentOrDefaultProject(project), openSource);
   }
 
   @Override

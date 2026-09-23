@@ -6,6 +6,7 @@ package com.intellij.ide.plugins
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSourceEnum
 import com.intellij.ide.plugins.newui.getPluginsViewCustomizer
+import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -25,11 +26,13 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.JBColor
 import com.intellij.ui.RelativeFont
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Component
+import java.awt.Dimension
 import java.text.SimpleDateFormat
 import java.util.function.Consumer
 import java.util.function.Function
@@ -40,6 +43,7 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
   private var myPanel: PluginsPageSession? = null
   private var openSource: PluginManagerOpenSourceEnum? = null
   private var isStandaloneConfigurable = false
+  private var useWideStandaloneDefault = false
 
   /**
    * @deprecated Use {@link PluginManagerConfigurable#PluginManagerConfigurable()}
@@ -79,7 +83,12 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
       LOG.error("Error while processing configurable", e)
     }
 
-    return panel.getComponent()
+    val component = panel.getComponent()
+    if (useWideStandaloneDefault && panel is UnifiedPluginsPageSession) {
+      val preferredSize = component.preferredSize
+      component.preferredSize = Dimension(JBUI.scale(900), preferredSize.height)
+    }
+    return component
   }
 
   override fun getPreferredFocusedComponent(): JComponent? = myPanel?.getPreferredFocusedComponent()
@@ -230,6 +239,7 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
   companion object {
     const val ID: String = "preferences.pluginManager"
     const val SELECTION_TAB_KEY: String = "PluginConfigurable.selectionTab"
+    private const val STANDALONE_DIALOG_DIMENSION_KEY: String = "UnifiedPluginsPage.StandaloneDialog"
 
     @JvmField
     val PLUGIN_INSTALL_CALLBACK_DATA_KEY: DataKey<Consumer<PluginInstallCallbackData>> =
@@ -364,6 +374,30 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
       return PluginManagerConfigurable().apply { setOpenSource(openSource) }
     }
 
+    internal fun createForStandaloneEntryPoint(openSource: PluginManagerOpenSourceEnum): PluginManagerConfigurable {
+      return createWithOpenSource(openSource).apply {
+        isStandaloneConfigurable = true
+        useWideStandaloneDefault = true
+      }
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun showFromEntryPoint(project: Project?, source: PluginManagerOpenSourceEnum) {
+      if (AppMode.isRemoteDevHost() || !UnifiedPluginsPageFeature.isStandaloneDialogEnabled()) {
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginManagerConfigurable::class.java) {
+          it.setOpenSource(source)
+        }
+        return
+      }
+
+      ShowSettingsUtil.getInstance().editConfigurable(
+        project,
+        STANDALONE_DIALOG_DIMENSION_KEY,
+        createForStandaloneEntryPoint(source),
+      )
+    }
+
     @ApiStatus.Internal
     @JvmStatic
     fun createForWelcomeScreen(): PluginManagerConfigurable {
@@ -403,9 +437,7 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
     @ApiStatus.Internal
     @JvmStatic
     fun showSettingsDialogFromWelcomeScreen(project: Project?) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginManagerConfigurable::class.java) {
-        it.setOpenSource(PluginManagerOpenSourceEnum.WELCOME_SCREEN)
-      }
+      showFromEntryPoint(project, PluginManagerOpenSourceEnum.WELCOME_SCREEN)
     }
 
     @ApiStatus.Internal

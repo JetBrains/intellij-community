@@ -114,6 +114,23 @@ This specification covers the page structure, section model, search, source load
     `user split proportion persists across views and resizes`
   )
 
+- With the standalone dialog switch enabled, the toolbar, File menu, action search, and local welcome buttons must open the unified Plugins page without the Settings tree.
+- The Settings tree must keep Plugins. The legacy page must keep its current entry-point route.
+- The standalone entry-point dialog must prefer a content width of 900 scaled pixels and use its own saved window size.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageFeatureTest.kt (
+    `standalone dialog is available when both switches are enabled`;
+    `standalone dialog switch restores the Settings route`;
+    `legacy page does not use the standalone entry point`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerConfigurableRoutingTest.kt (
+    `standalone entry point prefers a wider unified page`;
+    `standalone entry point does not widen the legacy page`;
+    `entry point opens a standalone dialog with its own size key`;
+    `welcome entry point keeps the Settings route when the switch is off`
+  )
+
+Untested: Product welcome buttons on a remote backend keep the Settings route because the standalone dialog does not forward to the frontend.
+
 - Visible sections must use this order: Installing, Installed, Bundled, Suggested or Marketplace, Internal, then custom repositories.
 - A ready section with no items must not leave a placeholder.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (

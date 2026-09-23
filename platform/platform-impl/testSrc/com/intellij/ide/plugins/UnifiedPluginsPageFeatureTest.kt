@@ -15,6 +15,27 @@ internal class UnifiedPluginsPageFeatureTest {
   }
 
   @Test
+  @RegistryKey(key = UnifiedPluginsPageFeature.REGISTRY_KEY, value = "true")
+  @RegistryKey(key = UnifiedPluginsPageFeature.STANDALONE_DIALOG_REGISTRY_KEY, value = "true")
+  fun `standalone dialog is available when both switches are enabled`() {
+    assertThat(UnifiedPluginsPageFeature.isStandaloneDialogEnabled()).isTrue()
+  }
+
+  @Test
+  @RegistryKey(key = UnifiedPluginsPageFeature.REGISTRY_KEY, value = "true")
+  @RegistryKey(key = UnifiedPluginsPageFeature.STANDALONE_DIALOG_REGISTRY_KEY, value = "false")
+  fun `standalone dialog switch restores the Settings route`() {
+    assertThat(UnifiedPluginsPageFeature.isStandaloneDialogEnabled()).isFalse()
+  }
+
+  @Test
+  @RegistryKey(key = UnifiedPluginsPageFeature.REGISTRY_KEY, value = "false")
+  @RegistryKey(key = UnifiedPluginsPageFeature.STANDALONE_DIALOG_REGISTRY_KEY, value = "true")
+  fun `legacy page does not use the standalone entry point`() {
+    assertThat(UnifiedPluginsPageFeature.isStandaloneDialogEnabled()).isFalse()
+  }
+
+  @Test
   fun `density variant uses 32 pixel icons by default`() {
     assertThat(UnifiedPluginsPageFeature.densityVariant()).isEqualTo(UnifiedPluginsPageDensityVariant.Icons32)
   }
