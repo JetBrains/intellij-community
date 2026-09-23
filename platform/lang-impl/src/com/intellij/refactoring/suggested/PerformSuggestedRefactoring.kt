@@ -22,6 +22,8 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -29,6 +31,7 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
@@ -388,8 +391,8 @@ private fun performRename(refactoringSupport: SuggestedRefactoringSupport, data:
 
   val refactoring = RefactoringFactory.getInstance(project).createRename(data.declaration, newName, true, textOccurrencesEnabled)
   refactoring.respectAllAutomaticRenames()
-
-  if (refactoring.hasNonCodeUsages() && !ApplicationManager.getApplication().isHeadlessEnvironment) {
+  val hasNonCodeUsages = ProgressManager.getInstance().runProcess(Computable { refactoring.hasNonCodeUsages() }, EmptyProgressIndicator())
+  if (hasNonCodeUsages && !ApplicationManager.getApplication().isHeadlessEnvironment) {
     val question = RefactoringBundle.message("suggested.refactoring.rename.text.occurrences", data.oldName, newName)
     val result = Messages.showOkCancelDialog(
       project,

@@ -55,6 +55,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -250,7 +251,7 @@ public abstract class InplaceRefactoring {
     myEditor.putUserData(INPLACE_RENAMER, this);
 
     List<Pair<PsiElement, TextRange>> stringUsages = new NotNullList<>();
-    collectAdditionalElementsToRename(stringUsages);
+    ProgressManager.getInstance().runProcess(()-> collectAdditionalElementsToRename(stringUsages), new EmptyProgressIndicator());
     try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) { // IJPL-162116
       return buildTemplateAndStart(references, stringUsages, scope, containingFile);
     }
