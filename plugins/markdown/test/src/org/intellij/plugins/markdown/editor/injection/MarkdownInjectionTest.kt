@@ -117,6 +117,29 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
     assertEquals(2, injectedDocument.hostRanges.size)
   }
 
+  fun `test blank line with an extra indent keeps the extra spaces in the injected code`() {
+    val text = "    ```python\n    a\n        \n    b\n    ```"
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)
+    assertNotNull(codeFence)
+    val injectedFiles = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(codeFence!!)
+    assertNotNull(injectedFiles)
+    val injectedFile = injectedFiles!!.first().first.containingFile
+    // The four spaces of the fence stay out. The four spaces above them belong to the code.
+    assertEquals("a\n    \nb", injectedFile.text)
+
+    val injectedDocument = PsiDocumentManager.getInstance(project).getDocument(injectedFile) as DocumentWindow
+    val document = editor.document
+    for (range in injectedDocument.hostRanges) {
+      val lineStart = document.getLineStartOffset(document.getLineNumber(range.startOffset))
+      assertTrue(
+        "A range must not hold the indent of the fence",
+        range.startOffset - lineStart >= 4,
+      )
+    }
+  }
+
   fun `test tab-indented fence with lang`() {
     val text = listOf("\t```java", "\tclass C {}", "\t```").joinToString("\n")
     configureFromFileText("test.md", text)

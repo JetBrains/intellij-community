@@ -39,6 +39,7 @@
     <extensions defaultExtensionNs="com.intellij">
       <applicationService serviceImplementation="com.intellij.markdown.backend.services.MarkdownFrontendRunnerRequestService" client="all"/>
       <highlightingPassFactory implementation="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewPassFactory"/>
+      <highlightingPassFactory implementation="com.intellij.markdown.backend.editor.fence.CodeFenceBackgroundHighlightingPassFactory"/>
       <externalAnnotator language="Markdown"
                          implementationClass="com.intellij.markdown.backend.inspections.MarkdownNonExistentInternetResourcesAnnotator"/>
       <platform.rpc.backend.remoteApiProvider

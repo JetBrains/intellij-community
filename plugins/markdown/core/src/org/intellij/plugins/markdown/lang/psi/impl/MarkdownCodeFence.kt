@@ -11,6 +11,7 @@ import com.intellij.psi.LiteralTextEscaper
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.impl.source.tree.injected.InjectionBackgroundSuppressor
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
@@ -23,8 +24,17 @@ import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
 import org.intellij.plugins.markdown.structureView.MarkdownBasePresentation
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * The PSI element of a Markdown code fence.
+ *
+ * A fence holds a block of code, and it hosts the injection of the language of that code.
+ *
+ * A fence also suppresses the background of its injection. That background follows the injected ranges,
+ * which leave out the indent, so it does not make a rectangle.
+ * `CodeFenceBackgroundHighlightingPassFactory` paints the background of a fence instead.
+ */
 @Suppress("DEPRECATION")
-class MarkdownCodeFence(elementType: IElementType): MarkdownCodeFenceImpl(elementType) {
+class MarkdownCodeFence(elementType: IElementType): MarkdownCodeFenceImpl(elementType), InjectionBackgroundSuppressor {
   override fun accept(visitor: PsiElementVisitor) {
     when (visitor) {
       is MarkdownElementVisitor -> visitor.visitCodeFence(this)
