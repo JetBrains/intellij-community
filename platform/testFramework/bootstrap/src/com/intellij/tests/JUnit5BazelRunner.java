@@ -233,6 +233,9 @@ public final class JUnit5BazelRunner {
         Files.createDirectories(userHome);
         System.setProperty("user.home", userHome.toString());
       }
+      else if (System.getProperty("idea.home.path") != null) {  // TODO: https://youtrack.jetbrains.com/issue/MRI-5478
+        ideaHome = Path.of(System.getProperty("idea.home.path"));
+      }
       else {
         // Traditional arts: idea.home is set to monorepo checkout root
         ideaHome = guessBazelWorkspaceDir();
