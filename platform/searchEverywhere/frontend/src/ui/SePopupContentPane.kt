@@ -452,7 +452,7 @@ class SePopupContentPane(
               var hasResultsUpdates = false
               resultList.withProgrammaticSelectionChange {
                 for (event in events) {
-                  resultListModel.addFromThrottledEvent(searchContext, event)
+                  resultListModel.addFromThrottledEvent(searchContext, event, resultsScrollPane.verticalScrollBar.model.value == 0)
                   if (event.hasResultsUpdates()) hasResultsUpdates = true
                 }
               }

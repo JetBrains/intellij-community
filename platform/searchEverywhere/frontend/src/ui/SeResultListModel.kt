@@ -56,7 +56,7 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
     }
   }
 
-  fun addFromThrottledEvent(searchContext: SeSearchContext, throttledEvent: ThrottledItems<SeResultEvent>) {
+  fun addFromThrottledEvent(searchContext: SeSearchContext, throttledEvent: ThrottledItems<SeResultEvent>, isZeroOffset: Boolean) {
     var shouldFreezeImmediately = false
 
     if (!isValid) {
@@ -78,7 +78,7 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
       is ThrottledAccumulatedItems<SeResultEvent> -> {
         val accumulatedList = SeResultListCollection(pendingReplacementElementUuids)
         throttledEvent.items.forEach {
-          accumulatedList.handleEvent(searchContext, it)
+          accumulatedList.handleEvent(searchContext, it, isZeroOffset)
         }
 
         // Remove SeResultListMoreRow from the accumulatedList if we already have one in the real listModel
@@ -102,7 +102,7 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
         }
       }
       is ThrottledOneItem<SeResultEvent> -> {
-        resultListAdapter.handleEvent(searchContext, throttledEvent.item, onAdd = {
+        resultListAdapter.handleEvent(searchContext, throttledEvent.item, isZeroOffset, onAdd = {
           searchStatePublisher.elementsAdded(searchContext.searchId, mapOf(it.uuid to it))
         }, onRemove = {
           searchStatePublisher.elementsRemoved(searchContext.searchId, 1)
