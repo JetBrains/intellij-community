@@ -12,7 +12,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.ide.scratch.ScratchFileActions.doCreateNewScratch;
+import static com.intellij.ide.scratch.ScratchFileCreator.doCreateNewScratch;
 
 @ApiStatus.Internal
 public final class ScratchFromSelectionIntention implements IntentionAction {

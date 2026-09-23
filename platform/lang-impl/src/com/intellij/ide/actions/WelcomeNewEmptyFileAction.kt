@@ -3,9 +3,9 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.scratch.RootType
-import com.intellij.ide.scratch.ScratchFileActions
 import com.intellij.ide.scratch.ScratchFileActions.ChangeLanguageAction
 import com.intellij.ide.scratch.ScratchFileCreationHelper
+import com.intellij.ide.scratch.ScratchFileCreator
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.ide.ui.WindowFocusFrontendService
@@ -77,7 +77,7 @@ internal class WelcomeNewEmptyFileAction : DumbAwareAction(), FusAwareAction {
     else {
       context.prepareText = false
     }
-    if (ScratchFileActions.doCreateNewScratch(project, context, e.dataContext) != null) {
+    if (ScratchFileCreator.doCreateNewScratch(project, context, e.dataContext) != null) {
       rememberWelcomeNewFile(e, context.language)
     }
   }

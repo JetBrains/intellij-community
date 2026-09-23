@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.ide.scratch.ScratchRootType;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -37,7 +37,7 @@ final class AssociateFileTypeAction extends DumbAwareAction {
       // the action should also be available for files which have been auto-detected as text or as a particular language (IDEA-79574)
       haveSmthToDo = FileTypeManager.getInstance().getFileTypeByFileName(file.getNameSequence()) == FileTypes.UNKNOWN &&
                      !(file.getFileSystem() instanceof NonPhysicalFileSystem) &&
-                     !ScratchRootType.getInstance().containsFile(file);
+                     !ScratchUtil.isScratch(file);
       haveSmthToDo |= ActionPlaces.isMainMenuOrActionSearch(e.getPlace());
     }
     presentation.setVisible(haveSmthToDo || ActionPlaces.isMainMenuOrActionSearch(e.getPlace()));

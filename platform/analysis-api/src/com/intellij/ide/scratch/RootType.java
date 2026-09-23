@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -105,6 +106,17 @@ public abstract class RootType {
 
   public VirtualFile findFile(@Nullable Project project, @NotNull String pathName, ScratchFileService.Option option) throws IOException {
     return ScratchFileService.getInstance().findFile(this, pathName, option);
+  }
+
+  /**
+   * Lets a root type reuse an existing file when one is requested with {@link ScratchFileService.Option#create_if_missing},
+   * e.g. a scratch buffer that was saved under another extension. Called under write action before {@code fileName} is created in {@code dir}.
+   *
+   * @return the file to use instead of creating {@code fileName}, or null to create it
+   */
+  @ApiStatus.Internal
+  public @Nullable VirtualFile findFileToReuse(@NotNull VirtualFile dir, @NotNull String fileName) throws IOException {
+    return null;
   }
 
   public void fileOpened(@NotNull VirtualFile file, @NotNull FileEditorManager source) {

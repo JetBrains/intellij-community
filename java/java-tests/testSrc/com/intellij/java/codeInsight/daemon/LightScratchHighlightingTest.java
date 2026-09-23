@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
-import com.intellij.ide.scratch.ScratchFileActions;
 import com.intellij.ide.scratch.ScratchFileCreationHelper;
+import com.intellij.ide.scratch.ScratchFileCreator;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -34,7 +34,7 @@ public final class LightScratchHighlightingTest extends LightJavaCodeInsightFixt
       public void run() {
         ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();
         context.language = JavaLanguage.INSTANCE;
-        myFile = ScratchFileActions.doCreateNewScratch(LightScratchHighlightingTest.this.getProject(), context);
+        myFile = ScratchFileCreator.doCreateNewScratch(LightScratchHighlightingTest.this.getProject(), context);
         Document document = myFile.getFileDocument();
         document.insertString(0, text);
         PsiDocumentManager.getInstance(LightScratchHighlightingTest.this.getProject()).commitDocument(document);

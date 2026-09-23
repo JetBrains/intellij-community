@@ -20,7 +20,7 @@ public class ScratchFileTest extends LightPlatformCodeInsightTestCase {
   private PsiFile createXmlScratch() {
     ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();
     context.language = XMLLanguage.INSTANCE;
-    return ScratchFileActions.doCreateNewScratch(getProject(), context);
+    return ScratchFileCreator.doCreateNewScratch(getProject(), context);
   }
 
   public void testXmlCompletion() {

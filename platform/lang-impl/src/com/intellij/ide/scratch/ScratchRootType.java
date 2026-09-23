@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
+import java.io.IOException;
 
 /**
  * Root for files placed under the "Scratches" folder in the
@@ -20,7 +21,7 @@ public final class ScratchRootType extends RootType {
   }
 
   ScratchRootType() {
-    super("scratches", LangBundle.message("root.type.scratches"));
+    super(ScratchFileCreator.SCRATCHES_ROOT_TYPE_ID, LangBundle.message("root.type.scratches"));
   }
 
   @Override
@@ -32,6 +33,17 @@ public final class ScratchRootType extends RootType {
   public @NotNull Icon patchIcon(@NotNull Icon baseIcon, @NotNull VirtualFile file, int flags, @Nullable Project project) {
       if (file.isDirectory()) return baseIcon;
       return new ScratchFileTypeIcon(baseIcon);
+  }
+
+  @Override
+  public @Nullable VirtualFile findFileToReuse(@NotNull VirtualFile dir, @NotNull String fileName) throws IOException {
+    // a buffer keeps its number but may have been saved under another extension
+    if (!fileName.startsWith("buffer")) return null;
+    VirtualFile file = ScratchImplUtil.findFileIgnoreExtension(dir, fileName);
+    if (file != null && !file.getName().equals(fileName)) {
+      file.rename(this, fileName);
+    }
+    return file;
   }
 
   public @Nullable VirtualFile createScratchFile(@Nullable Project project,
@@ -46,6 +58,6 @@ public final class ScratchRootType extends RootType {
                                                  @Nullable Language language,
                                                  @NotNull String text,
                                                  @NotNull ScratchFileService.Option option) {
-    return ScratchFileActions.createScratchFile(project, fileName, language, text, option, this);
+    return ScratchFileCreator.createScratchFile(project, fileName, language, text, option, this);
   }
 }

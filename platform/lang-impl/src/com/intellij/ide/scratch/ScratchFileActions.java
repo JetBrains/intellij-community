@@ -8,7 +8,6 @@ import com.intellij.ide.actions.NewFileActionWithCategory;
 import com.intellij.ide.actions.RecentLocationsAction;
 import com.intellij.ide.scratch.ScratchImplUtil.LanguageItem;
 import com.intellij.ide.util.DeleteHandler;
-import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
@@ -25,8 +24,6 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.editor.Caret;
@@ -46,35 +43,26 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService;
 import com.intellij.openapi.wm.ex.ProjectFrameCapability;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SyntaxTraverser;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.UIBundle;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -85,7 +73,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Component;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -275,10 +262,10 @@ public final class ScratchFileActions {
     return createContext(project, file, editor, e.getDataContext());
   }
 
-  static @NotNull ScratchFileCreationHelper.Context createContext(@NotNull Project project,
-                                                                  @Nullable PsiFile file,
-                                                                  @Nullable Editor editor,
-                                                                  @NotNull DataContext dataContext) {
+  public static @NotNull ScratchFileCreationHelper.Context createContext(@NotNull Project project,
+                                                                         @Nullable PsiFile file,
+                                                                         @Nullable Editor editor,
+                                                                         @NotNull DataContext dataContext) {
     ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();
     context.text = StringUtil.notNullize(getSelectionText(editor));
     context.sourceFile = file;
@@ -289,88 +276,20 @@ public final class ScratchFileActions {
     return context;
   }
 
+  /** @deprecated use {@link ScratchFileCreator#doCreateNewScratch(Project, ScratchFileCreationHelper.Context)} */
+  @Deprecated
   @ApiStatus.Internal
   public static @Nullable PsiFile doCreateNewScratch(@NotNull Project project, @NotNull ScratchFileCreationHelper.Context context) {
-    return doCreateNewScratch(project, context, DataContext.EMPTY_CONTEXT);
+    return ScratchFileCreator.doCreateNewScratch(project, context);
   }
 
+  /** @deprecated use {@link ScratchFileCreator#doCreateNewScratch(Project, ScratchFileCreationHelper.Context, DataContext)} */
+  @Deprecated
   @ApiStatus.Internal
-  public static @Nullable PsiFile doCreateNewScratch(
-    @NotNull Project project,
-    @NotNull ScratchFileCreationHelper.Context context,
-    @NotNull DataContext dataContext
-  ) {
-    if (context.fileExtension == null && context.language != null) {
-      LanguageFileType fileType = context.language.getAssociatedFileType();
-      if (fileType != null) {
-        context.fileExtension = ScratchImplUtil.getFileTypeExtensions(fileType, true, FileTypeManager.getInstance()).first();
-      }
-    }
-    if (context.language != null && context.prepareText) {
-      ScratchFileCreationHelper helper = ScratchFileCreationHelper.EXTENSION.forLanguage(context.language);
-      if (StringUtil.isEmpty(context.text)) {
-        helper.prepareText(project, context, dataContext);
-      }
-      helper.beforeCreate(project, context);
-    }
-
-    VirtualFile dir = context.ideView != null ? PsiUtilCore.getVirtualFile(ArrayUtil.getFirstElement(context.ideView.getDirectories())) : null;
-    RootType rootType = dir == null ? null : ScratchFileService.findRootType(dir);
-    String relativePath = rootType != context.defaultRootType ? "" :
-                          FileUtil.getRelativePath(ScratchFileService.getInstance().getRootPath(rootType), dir.getPath(), '/');
-
-    String fileName = (StringUtil.isEmpty(relativePath) ? "" : relativePath + "/") +
-                      PathUtil.makeFileName(ObjectUtils.notNull(context.filePrefix, "scratch") +
-                                            (context.fileCounter != null ? context.fileCounter.create() : ""),
-                                            context.fileExtension);
-    VirtualFile file = createScratchFile(
-      project, fileName, context.language, context.text, context.createOption, context.defaultRootType
-    );
-    if (file == null) return null;
-
-    Navigatable navigatable = PsiNavigationSupport.getInstance().createNavigatable(project, file, context.caretOffset);
-    navigatable.navigate(!LaterInvocator.isInModalContextForProject(project));
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-
-    if (context.language != null) {
-      ScratchFileCreationHelper.EXTENSION.forLanguage(context.language)
-        .afterCreate(project, context, psiFile);
-    }
-
-    if (context.ideView != null && psiFile != null) {
-      context.ideView.selectElement(psiFile);
-    }
-    return psiFile;
-  }
-
-  static @Nullable VirtualFile createScratchFile(@Nullable Project project,
-                                                 @NotNull String fileName,
-                                                 @Nullable Language language,
-                                                 @NotNull String text,
-                                                 @NotNull ScratchFileService.Option option,
-                                                 @NotNull RootType rootType) {
-    try {
-      return
-        WriteCommandAction.writeCommandAction(project).withName(UIBundle.message("file.chooser.create.new.scratch.file.command.name"))
-          .withGlobalUndo().shouldRecordActionForActiveDocument(false)
-          .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION).compute(() -> {
-            ScratchFileService fileService = ScratchFileService.getInstance();
-            VirtualFile file = fileService.findFile(rootType, fileName, option);
-            // save text should go before any other manipulations that load document,
-            // otherwise undo will be broken
-            VfsUtil.saveText(file, text);
-            if (language != null) {
-              Language fileLanguage = LanguageUtil.getFileLanguage(file);
-              fileService.getScratchesMapping().setMapping(file, fileLanguage == null || language == fileLanguage ? null : language);
-            }
-            return file;
-          });
-    }
-    catch (IOException e) {
-      Messages.showMessageDialog(UIBundle.message("create.new.file.could.not.create.file.error.message", fileName),
-                                 UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
-      return null;
-    }
+  public static @Nullable PsiFile doCreateNewScratch(@NotNull Project project,
+                                                     @NotNull ScratchFileCreationHelper.Context context,
+                                                     @NotNull DataContext dataContext) {
+    return ScratchFileCreator.doCreateNewScratch(project, context, dataContext);
   }
 
   private static void checkLanguageAndTryToFixText(@NotNull Project project,
@@ -406,10 +325,10 @@ public final class ScratchFileActions {
     PsiElement element = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, offset);
     PsiFile file = element != null ? element.getContainingFile() : psiFile;
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    FileType fileType = ScratchImplUtil.getFileTypeFromName(file.getName(), fileTypeManager);
+    FileType fileType = ScratchFileCreator.getFileTypeFromName(file.getName(), fileTypeManager);
     context.language = fileType instanceof LanguageFileType ? file.getLanguage() : null;
     if (fileType != null) {
-      context.fileExtension = ScratchImplUtil.getFileTypeExtensions(fileType, true, fileTypeManager).first();
+      context.fileExtension = ScratchFileCreator.getFileTypeExtensions(fileType, true, fileTypeManager).first();
     }
     if (context.language == PlainTextLanguage.INSTANCE && file.getFileType() instanceof InternalFileType) {
       context.language = StdLanguages.XML;

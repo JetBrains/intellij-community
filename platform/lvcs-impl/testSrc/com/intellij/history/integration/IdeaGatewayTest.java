@@ -3,8 +3,8 @@ package com.intellij.history.integration;
 
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
-import com.intellij.ide.scratch.ScratchFileActions;
 import com.intellij.ide.scratch.ScratchFileCreationHelper;
+import com.intellij.ide.scratch.ScratchFileCreator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -212,7 +212,7 @@ public class IdeaGatewayTest extends IntegrationTestCase {
 
     // AND scratch file
     ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();
-    VirtualFile scratchFile = ScratchFileActions.doCreateNewScratch(getProject(), context).getVirtualFile();
+    VirtualFile scratchFile = ScratchFileCreator.doCreateNewScratch(getProject(), context).getVirtualFile();
 
     // WHEN - THEN
     assertTrue(myGateway.isVersioned(scratchFile));

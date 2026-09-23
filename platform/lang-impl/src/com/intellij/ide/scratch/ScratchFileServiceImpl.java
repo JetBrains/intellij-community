@@ -445,18 +445,10 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
     return WriteAction.compute(() -> {
       VirtualFile dir = VfsUtil.createDirectories(PathUtil.getParentPath(fullPath));
       if (option == Option.create_new_always) {
-        return dir.createChildData(fileSystem, ScratchImplUtil.getNextAvailableName(dir, fileName));
+        return dir.createChildData(fileSystem, ScratchFileCreator.getNextAvailableName(dir, fileName));
       }
-      else if (option == Option.create_if_missing && rootType instanceof ScratchRootType && fileName.startsWith("buffer")) {
-        VirtualFile file = ScratchImplUtil.findFileIgnoreExtension(dir, fileName);
-        if (file != null && !file.getName().equals(fileName)) {
-          file.rename(this, fileName);
-        }
-        return file != null ? file : dir.findOrCreateChildData(fileSystem, fileName);
-      }
-      else {
-        return dir.findOrCreateChildData(fileSystem, fileName);
-      }
+      VirtualFile file = option == Option.create_if_missing ? rootType.findFileToReuse(dir, fileName) : null;
+      return file != null ? file : dir.findOrCreateChildData(fileSystem, fileName);
     });
   }
 

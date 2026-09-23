@@ -10,19 +10,14 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
-import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.UnknownFileType;
-import com.intellij.openapi.fileTypes.WildcardFileNameMatcher;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,8 +30,6 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,12 +73,12 @@ final class ScratchImplUtil {
 
     if (file == null) return;
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    FileType prevType = getFileTypeFromName(file.getName(), fileTypeManager);
+    FileType prevType = ScratchFileCreator.getFileTypeFromName(file.getName(), fileTypeManager);
     Language currLanguage = LanguageUtil.getLanguageForPsi(project, file, item.fileType);
     FileType currType = currLanguage == null ? item.fileType : ObjectUtils.notNull(currLanguage.getAssociatedFileType(), item.fileType);
     if (prevType == currType) return;
 
-    String nameWithoutExtension = getNameWithoutExtension(file, fileTypeManager);
+    String nameWithoutExtension = ScratchFileCreator.getNameWithoutExtension(file, fileTypeManager);
 
     VirtualFile parent = file.getParent();
     String newName = parent != null ? VfsUtil.getNextAvailableName(parent, nameWithoutExtension, item.fileExtension) :
@@ -93,113 +86,31 @@ final class ScratchImplUtil {
     file.rename(ScratchImplUtil.class, newName);
   }
 
-  private static @NotNull String getNameWithoutExtension(@NotNull VirtualFile file,
-                                                         @NotNull FileTypeManager fileTypeManager) {
-    return getNameWithoutExtension(file.getName(), file.isCaseSensitive(), fileTypeManager);
-  }
-
-  private static @NotNull String getNameWithoutExtension(@NotNull String fileName,
-                                                         boolean caseSensitive,
-                                                         @NotNull FileTypeManager fileTypeManager) {
-    // support multipart extensions like *.blade.php
-    String extension = StringUtil.notNullize(PathUtilRt.getFileExtension(fileName));
-    if (extension.isEmpty()) return fileName;
-    FileType fileType = fileTypeManager.getFileTypeByFileName(fileName);
-    if (fileType != FileTypes.UNKNOWN) {
-      extension = getFileTypeExtensions(fileType, false, fileTypeManager)
-        .reduce(extension, (val, o) -> val.length() < o.length() && hasExtension(fileName, o, caseSensitive) ? o : val);
-    }
-    return fileName.substring(0, fileName.length() - extension.length() - 1);
-  }
-
   public static boolean hasMatchingExtension(@NotNull Project project, @NotNull VirtualFile file) {
     String fileName = file.getName();
     if (PathUtilRt.getFileExtension(fileName) == null) return false;
     boolean caseSensitive = file.isCaseSensitive();
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    FileType expected = getFileTypeFromName(fileName, fileTypeManager);
+    FileType expected = ScratchFileCreator.getFileTypeFromName(fileName, fileTypeManager);
     Language language = LanguageUtil.getLanguageForPsi(project, file);
     FileType actual = language == null ? null : language.getAssociatedFileType();
     if (actual == null) return expected != null;
     if (expected == actual) return true;
-    return getFileTypeExtensions(actual, false, fileTypeManager)
-      .filter(o -> hasExtension(fileName, o, caseSensitive))
+    return ScratchFileCreator.getFileTypeExtensions(actual, false, fileTypeManager)
+      .filter(o -> ScratchFileCreator.hasExtension(fileName, o, caseSensitive))
       .isNotEmpty();
-  }
-
-  private static boolean hasExtension(@NotNull String fileName, @NotNull String extension, boolean caseSensitive) {
-    if (fileName.length() < extension.length() + 1) return false;
-    if (fileName.charAt(fileName.length() - extension.length() - 1) != '.') return false;
-    return StringUtilRt.equal(fileName.subSequence(fileName.length() - extension.length(), fileName.length()), extension, caseSensitive);
-  }
-
-  static @Nullable FileType getFileTypeFromName(@NotNull String fileName, @NotNull FileTypeManager fileTypeManager) {
-    if (PathUtilRt.getFileExtension(fileName) == null) return null;
-    FileType result = fileTypeManager.getFileTypeByFileName(fileName);
-    if (result == UnknownFileType.INSTANCE || getFileTypeExtensions(result, false, fileTypeManager).isEmpty()) {
-      return null;
-    }
-    return result;
-  }
-
-  static @NotNull JBIterable<String> getFileTypeExtensions(@NotNull FileType fileType,
-                                                           boolean sort,
-                                                           @NotNull FileTypeManager fileTypeManager) {
-    JBIterable<String> result = JBIterable.from(fileTypeManager.getAssociations(fileType))
-      .filterMap(o -> {
-        if (o instanceof ExtensionFileNameMatcher) {
-          return StringUtil.nullize(((ExtensionFileNameMatcher)o).getExtension());
-        }
-        else if (o instanceof WildcardFileNameMatcher) {
-          String pattern = ((WildcardFileNameMatcher)o).getPattern();
-          if (pattern.startsWith("*.") && pattern.indexOf('*', 1) < 0 && pattern.indexOf('?', 1) < 0) {
-            return StringUtil.nullize(pattern.substring(2));
-          }
-        }
-        return null;
-      });
-    if (sort) {
-      String def = fileType.getDefaultExtension();
-      return result.sort((o1, o2) -> o1.equals(o2) ? 0 : o1.equals(def) ? -1 : o2.equals(def) ? 1 : Integer.compare(o1.length(), o2.length()));
-    }
-    return result;
   }
 
   static @Nullable VirtualFile findFileIgnoreExtension(@NotNull VirtualFile dir, @NotNull String fileNameAndExt) {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    String fileName = getNameWithoutExtension(fileNameAndExt, dir.isCaseSensitive(), fileTypeManager);
+    String fileName = ScratchFileCreator.getNameWithoutExtension(fileNameAndExt, dir.isCaseSensitive(), fileTypeManager);
     for (VirtualFile child : dir.getChildren()) {
       if (child.isDirectory()) continue;
-      String childName = getNameWithoutExtension(child, fileTypeManager);
+      String childName = ScratchFileCreator.getNameWithoutExtension(child, fileTypeManager);
       if (!StringUtil.equalsIgnoreCase(childName, fileName)) continue;
       return child;
     }
     return null;
-  }
-
-  static @NotNull String getNextAvailableName(@NotNull VirtualFile dir, @NotNull String fileNameAndExt) {
-    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    IntSet existing = new IntOpenHashSet();
-    String fileName = getNameWithoutExtension(fileNameAndExt, dir.isCaseSensitive(), fileTypeManager);
-    int fileNameLen = fileName.length();
-    String fileExt = fileNameAndExt.length() > fileNameLen + 1 ? fileNameAndExt.substring(fileNameLen + 1) : "";
-    for (VirtualFile child : dir.getChildren()) {
-      if (child.isDirectory()) continue;
-      String childName = getNameWithoutExtension(child, fileTypeManager);
-      if (!StringUtil.startsWithIgnoreCase(childName, fileName)) continue;
-      if (childName.length() == fileNameLen) {
-        existing.add(0);
-      }
-      else if (childName.length() > fileNameLen + 1 &&
-               childName.charAt(fileNameLen) == '_') {
-        int val = StringUtil.parseInt(childName.substring(fileNameLen + 1), -1);
-        if (val > -1) existing.add(val);
-      }
-    }
-    int num = 0;
-    while (existing.contains(num)) num++;
-
-    return PathUtil.makeFileName(num == 0 ? fileName : fileName + "_" + num, fileExt);
   }
 
   static void changeLanguageWithUndo(@NotNull Project project,
@@ -261,7 +172,7 @@ final class ScratchImplUtil {
       .map(LanguageItem::fromLanguage)
       .append(JBIterable.of(fileTypeManager.getRegisteredFileTypes())
                 .filter(AbstractFileType.class)
-                .map(o -> LanguageItem.fromAbstractFileType(o, getFileTypeExtensions(o, true, fileTypeManager).first())))
+                .map(o -> LanguageItem.fromAbstractFileType(o, ScratchFileCreator.getFileTypeExtensions(o, true, fileTypeManager).first())))
       .filter(item -> item != null && ScratchFileTypeFilter.isEnabled(item.fileType()))
       .toList();
 

@@ -63,7 +63,8 @@ public abstract class ScratchFileCreationHelper {
     public String filePrefix;
     public Factory<Integer> fileCounter;
     public String fileExtension;
-    public @NotNull RootType defaultRootType = ScratchRootType.getInstance();
+    /** The root type to create the file under; {@code null} means the "Scratches" root. */
+    public @Nullable RootType defaultRootType;
     
     public ScratchFileService.Option createOption = ScratchFileService.Option.create_new_always;
     public IdeView ideView;
