@@ -18,6 +18,10 @@ public interface IntelliJPlatformGradleModel extends Model, Serializable {
 
   @Nullable String getProductReleasesFile();
 
+  @Nullable String getBundledPluginsFile();
+
+  @Nullable String getBundledModulesFile();
+
   @NotNull String getCurrentPluginVersion();
 
   @NotNull String getLatestPluginVersion();
@@ -28,17 +32,23 @@ final class IntelliJPlatformGradleModelImpl implements IntelliJPlatformGradleMod
 
   private final @NotNull Map<String, String> dependencyHelperProductCodes;
   private final @Nullable String productReleasesFile;
+  private final @Nullable String bundledPluginsFile;
+  private final @Nullable String bundledModulesFile;
   private final @NotNull String currentPluginVersion;
   private final @NotNull String latestPluginVersion;
 
   IntelliJPlatformGradleModelImpl(
     @NotNull Map<String, String> dependencyHelperProductCodes,
     @Nullable String productReleasesFile,
+    @Nullable String bundledPluginsFile,
+    @Nullable String bundledModulesFile,
     @NotNull String currentPluginVersion,
     @NotNull String latestPluginVersion
   ) {
     this.dependencyHelperProductCodes = dependencyHelperProductCodes;
     this.productReleasesFile = productReleasesFile;
+    this.bundledPluginsFile = bundledPluginsFile;
+    this.bundledModulesFile = bundledModulesFile;
     this.currentPluginVersion = currentPluginVersion;
     this.latestPluginVersion = latestPluginVersion;
   }
@@ -51,6 +61,16 @@ final class IntelliJPlatformGradleModelImpl implements IntelliJPlatformGradleMod
   @Override
   public @Nullable String getProductReleasesFile() {
     return productReleasesFile;
+  }
+
+  @Override
+  public @Nullable String getBundledPluginsFile() {
+    return bundledPluginsFile;
+  }
+
+  @Override
+  public @Nullable String getBundledModulesFile() {
+    return bundledModulesFile;
   }
 
   @Override
