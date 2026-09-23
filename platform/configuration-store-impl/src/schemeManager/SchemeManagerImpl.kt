@@ -382,7 +382,9 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
   internal suspend fun saveImpl(events: MutableList<VFileEvent>) {
     if (isLoadingSchemes.get()) {
+      // a scheme added during the load has no file info yet, so saving it now writes it as a new file
       LOG.warn("Skip save - schemes are loading")
+      return
     }
 
     var hasSchemes = false

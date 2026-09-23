@@ -44,6 +44,7 @@ import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.inputStream
+import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readText
 import kotlin.io.path.writeBytes
 import kotlin.io.path.writeText
@@ -274,6 +275,34 @@ class SchemeManagerTest {
     val schemeManager = createSchemeManager(dir)
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).isEmpty()
+  }
+
+  @Test
+  fun `save during load does not rewrite a loaded scheme`() {
+    val dir = fsRule.fs.getPath("/test").createDirectories()
+    // the trailing newline is a formatting difference that a save removes
+    val content = "<scheme name=\"s1\" data=\"data\" />\n"
+    dir.resolve("s1.xml").writeText(content)
+
+    lateinit var schemeManager: SchemeManagerImpl<TestScheme, TestScheme>
+
+    // RunManagerImpl adds each run configuration to the scheme manager while the loader creates it, and a project save can run then
+    class SaveDuringLoadProcessor : TestSchemeProcessor() {
+      override fun createScheme(dataHolder: SchemeDataHolder<TestScheme>, name: String, attributeProvider: (String) -> String?, isBundled: Boolean): TestScheme {
+        val scheme = super.createScheme(dataHolder, name, attributeProvider, isBundled)
+        schemeManager.addScheme(scheme)
+        schemeManager.save()
+        return scheme
+      }
+    }
+
+    schemeManager = SchemeManagerImpl(projectRule.project, FILE_SPEC, SaveDuringLoadProcessor(), provider = null, dir)
+    schemeManager.loadSchemes()
+    assertThat(schemeManager.allSchemes).containsExactly(TestScheme("s1", "data"))
+
+    schemeManager.save()
+    assertThat(dir.resolve("s1.xml").readText()).isEqualTo(content)
+    assertThat(dir.listDirectoryEntries()).containsExactly(dir.resolve("s1.xml"))
   }
 
   @Test
