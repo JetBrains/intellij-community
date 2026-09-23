@@ -10,7 +10,8 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiClass
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.checkVisibilityInAbstractedMembers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperConflictSearcher
@@ -58,11 +59,11 @@ internal class K2ExtractSuperConflictSearcher : KotlinExtractSuperConflictSearch
                 // See: org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractionTestGenerated.ExtractSuperclass.testPrivateClass
                 // This case should report conflicts but currently passes without showing any.
 
-                if (targetParent is PsiDirectory) {
-                    ExtractSuperClassUtil.checkSuperAccessible(targetParent, conflicts, originalClass.toLightClass())
-                }
-
                 analyze(originalClass) {
+                    if (targetParent is PsiDirectory) {
+                        ExtractSuperClassUtil.checkSuperAccessible(targetParent, conflicts, originalClass.classSymbol?.asPsiClass())
+                    }
+
                     checkVisibilityInAbstractedMembers(memberInfos, conflicts)
                 }
             }

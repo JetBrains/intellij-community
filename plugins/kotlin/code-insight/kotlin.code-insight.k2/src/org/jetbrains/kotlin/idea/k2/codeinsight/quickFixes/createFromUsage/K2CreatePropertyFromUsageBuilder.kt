@@ -34,6 +34,7 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.findParentOfType
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiClass
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.javaInterop.asKaType
@@ -47,7 +48,9 @@ import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.findClass
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
@@ -162,7 +165,7 @@ object K2CreatePropertyFromUsageBuilder {
         val receiverType = receiverExpression?.expressionType
         if (receiverType is KaErrorType) return emptyList()
 
-        val lightClass = (defaultContainerPsi as? KtClassOrObject)?.toLightClass() ?: defaultContainerPsi as? PsiClass
+        val lightClass = (defaultContainerPsi as? KtClassOrObject)?.classSymbol?.asPsiClass() ?: defaultContainerPsi as? PsiClass
         val isAbstract = lightClass?.hasModifier(JvmModifier.ABSTRACT)
         val containingKtFile = ref.containingKtFile
         val wrapperForKtFile = JvmClassWrapperForKtClass(containingKtFile)

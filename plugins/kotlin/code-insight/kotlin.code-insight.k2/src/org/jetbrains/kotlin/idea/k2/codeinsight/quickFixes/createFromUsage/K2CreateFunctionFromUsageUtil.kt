@@ -17,6 +17,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.javaInterop.asFacadePsiClass
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiClass
 import org.jetbrains.kotlin.analysis.api.components.asPsiType
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
@@ -36,6 +38,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
@@ -64,8 +67,6 @@ import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
-import org.jetbrains.kotlin.asJava.findFacadeClass
-import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObjectToSupertypeOrSelf
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
@@ -371,7 +372,7 @@ object K2CreateFunctionFromUsageUtil {
         return when(containerPsi) {
             is PsiClass -> containerPsi
             is KtClass -> containerPsi.getContainerClass()
-            is KtClassOrObject -> containerPsi.toLightClass()
+            is KtClassOrObject -> containerPsi.classSymbol?.asPsiClass()
             else -> getContainerClass()
         }
     }
@@ -384,6 +385,7 @@ object K2CreateFunctionFromUsageUtil {
             else -> null
         }
 
+    context(_: KaSession)
     private fun KtElement.getContainerClass(): JvmClass? {
         val containingClass = PsiTreeUtil.getParentOfType(
             /* element = */ this,
@@ -391,11 +393,12 @@ object K2CreateFunctionFromUsageUtil {
             /* strict = */ false,
             /* ...stopAt = */ KtSuperTypeList::class.java, KtPrimaryConstructor::class.java, KtConstructorDelegationCall::class.java
         )
-        return containingClass?.toLightClass() ?: getContainingFileAsJvmClass()
+        return containingClass?.classSymbol?.asPsiClass() ?: getContainingFileAsJvmClass()
     }
 
+    context(_: KaSession)
     private fun KtElement.getContainingFileAsJvmClass(): JvmClass? =
-        containingKtFile.findFacadeClass() ?: JvmClassWrapperForKtClass(containingKtFile).takeUnless { containingKtFile.isCompiled }
+        containingKtFile.symbol.asFacadePsiClass() ?: JvmClassWrapperForKtClass(containingKtFile).takeUnless { containingKtFile.isCompiled }
 
     private val NAME_SUGGESTER = KotlinNameSuggester()
 

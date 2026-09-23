@@ -13,7 +13,6 @@ import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.util.Processor
 import com.intellij.util.QueryExecutor
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
@@ -33,6 +32,7 @@ import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
+import org.jetbrains.kotlin.util.asFakePsiClass
 
 class KotlinFirDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScopedSearch.SearchParameters> {
     override fun execute(queryParameters: DefinitionsScopedSearch.SearchParameters, consumer: Processor<in PsiElement>): Boolean {
@@ -133,7 +133,7 @@ private fun processClassImplementations(klass: KtClassOrObject, searchScope: Sea
         return false
     }
 
-    val lightClass = runReadAction { (klass.toLightClass() ?: klass.toFakeLightClass()).takeIf { LambdaUtil.isFunctionalClass(it) }}
+    val lightClass = runReadAction { (klass.toLightClass() ?: klass.asFakePsiClass()).takeIf { LambdaUtil.isFunctionalClass(it) }}
     if (lightClass != null) {
         return FunctionalExpressionSearch.search(lightClass).asIterable().all { consumer.process(it) }
     }

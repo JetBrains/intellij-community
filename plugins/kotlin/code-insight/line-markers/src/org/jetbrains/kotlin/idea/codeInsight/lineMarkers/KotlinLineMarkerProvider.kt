@@ -25,14 +25,15 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Function
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiClass
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.directlyOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.getExpectsForActual
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.dsl.collectHighlightingDslMarkers
@@ -230,8 +231,10 @@ class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
         result.add(lineMarkerInfo)
     }
 
-    private fun isUsedSamInterface(element: KtClass): Boolean = element.toLightClass()
-        ?.let { aClass -> LambdaUtil.isFunctionalClass(aClass) && ReferencesSearch.search(aClass).findFirst() != null } == true
+    private fun isUsedSamInterface(element: KtClass): Boolean = analyze(element) {
+        element.classSymbol?.asPsiClass()
+            ?.let { aClass -> LambdaUtil.isFunctionalClass(aClass) && ReferencesSearch.search(aClass).findFirst() != null } == true
+    }
 
 }
 
@@ -279,7 +282,9 @@ object ClassInheritorsTooltip : Function<PsiElement, String> {
 }
 
 private fun findFunctionalExpressions(ktClass: KtClass): List<PsiElement> {
-    val lightClass = ktClass.toLightClass()
+    val lightClass = analyze(ktClass) {
+        ktClass.classSymbol?.asPsiClass()
+    }
     if (lightClass != null && LambdaUtil.isFunctionalClass(lightClass)) {
         return FunctionalExpressionSearch.search(lightClass, ktClass.useScope).asIterable().asSequence().take(TOOLTIPS_LIMIT).toList()
     }

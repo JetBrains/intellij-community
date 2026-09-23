@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclarationBase
+import org.jetbrains.kotlin.asJava.KtClsJavaBasedLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -359,7 +359,7 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
                 }
             }
 
-            is PsiClass -> (this is KtLightClassForDecompiledDeclarationBase).ifTrue {
+            is PsiClass -> (this is KtClsJavaBasedLightClass).ifTrue {
                 val origin = (this as? KtLightClass)?.kotlinOrigin
                 //TODO (light classes for decompiled files): correct presentation
                 if (origin != null) origin.getBaseIcon() else KotlinIcons.CLASS

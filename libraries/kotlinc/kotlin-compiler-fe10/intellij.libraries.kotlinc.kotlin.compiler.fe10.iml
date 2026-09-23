@@ -8,20 +8,13 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
-      <library name="kotlinc.kotlin-compiler-fe10" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-fe10-for-ide:2.5.0-dev-7866">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.5.0-dev-7866/kotlin-compiler-fe10-for-ide-2.5.0-dev-7866.jar">
-              <sha256sum>68a5c0269b7bce58e75b380b9ccc34baf6267a50d47b3b699c776da9639dcb84</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
+      <library name="kotlinc.kotlin-compiler-fe10">
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.5.0-dev-7866/kotlin-compiler-fe10-for-ide-2.5.0-dev-7866.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.5.255-dev-255/kotlin-compiler-fe10-for-ide-2.5.255-dev-255.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.5.0-dev-7866/kotlin-compiler-fe10-for-ide-2.5.0-dev-7866-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.5.255-dev-255/kotlin-compiler-fe10-for-ide-2.5.255-dev-255-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -14,16 +14,16 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
-import org.jetbrains.kotlin.asJava.toFakeLightClass
-import org.jetbrains.kotlin.asJava.toLightClassWithBuiltinMapping
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.util.fileScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinSuperClassIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex
+import org.jetbrains.kotlin.util.toLightClassWithBuiltinMapping
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDelegatedSuperTypeEntry
+import org.jetbrains.kotlin.util.asFakePsiClass
 
 class JavaOverridingMethodsSearcherFromKotlinParameters(method: PsiMethod, scope: SearchScope, checkDeep: Boolean) 
     : OverridingMethodsSearch.SearchParameters(method, scope, checkDeep)
@@ -66,7 +66,7 @@ open class KotlinDirectInheritorsSearcher : QueryExecutorBase<PsiClass, DirectCl
                 .get(name, project, noLibrarySourceScope).asSequence()
                 .map { candidate ->
                     ProgressManager.checkCanceled()
-                    candidate.toLightClassWithBuiltinMapping() ?: candidate.toFakeLightClass()
+                    candidate.toLightClassWithBuiltinMapping() ?: candidate.asFakePsiClass()
                 }
                 .filter { candidate ->
                     ProgressManager.checkCanceled()

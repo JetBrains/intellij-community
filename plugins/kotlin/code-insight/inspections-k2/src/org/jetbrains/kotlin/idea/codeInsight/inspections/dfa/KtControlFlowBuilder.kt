@@ -77,7 +77,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.PsiVariable
@@ -98,6 +97,7 @@ import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsIn
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractInvocationKind
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.expressions.functionType
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiField
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -130,7 +130,6 @@ import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.api.types.withNullability
-import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KtClassDef.Companion.classDef
 import org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KtVariableDescriptor.Companion.variableDescriptor
@@ -205,7 +204,6 @@ import org.jetbrains.kotlin.psi.KtWhenConditionIsPattern
 import org.jetbrains.kotlin.psi.KtWhenConditionWithExpression
 import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.KtWhileExpression
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolution.KtResolvable
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
@@ -1861,8 +1859,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
 
             is KtEnumEntry -> {
-                val ktClass = target.containingClass()
-                val enumConstant = ktClass?.toLightClass()?.fields?.firstOrNull { f -> f is PsiEnumConstant && f.name == target.name }
+                val enumConstant = target.symbol.asPsiField()
                 val dfType = expr.getKotlinType().toDfType()
                 if (enumConstant != null && dfType is DfReferenceType) {
                     DfTypes.constant(enumConstant, dfType)

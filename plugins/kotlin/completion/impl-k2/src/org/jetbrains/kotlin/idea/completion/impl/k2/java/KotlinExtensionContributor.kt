@@ -43,6 +43,7 @@ import com.intellij.util.ProcessingContext
 import com.intellij.util.application
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.javaInterop.asKaType
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiMethods
 import org.jetbrains.kotlin.analysis.api.session.analysisScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.canBeAnalysed
@@ -59,7 +60,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaUnificationSubstitutorPolicy
 import org.jetbrains.kotlin.analysis.api.types.createSubtypingUnificationSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
-import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
@@ -76,7 +76,6 @@ import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -340,11 +339,8 @@ private object KotlinExtensionCompletionProvider : CompletionProvider<Completion
             if (unifier == null) return@forEach
 
             if (extension is KaPropertySymbol) {
-                val psi = extension.psi as? KtProperty ?: return@forEach
-                val methods = LightClassUtil.getLightClassPropertyMethods(psi)
-                val getter = methods.getter
-                // Only show the setter if it is not declared as private
-                val setter = methods.setter?.takeIf {
+                val getter = extension.getter?.asPsiMethods()?.firstOrNull()
+                val setter = extension.setter?.asPsiMethods()?.firstOrNull()?.takeIf {
                     !it.hasModifier(JvmModifier.PRIVATE)
                 }
 
@@ -352,8 +348,7 @@ private object KotlinExtensionCompletionProvider : CompletionProvider<Completion
                     processor(extension, accessor)
                 }
             } else if (extension is KaNamedFunctionSymbol) {
-                val psi = extension.psi as? KtFunction ?: return@forEach
-                val methodWrapper = LightClassUtil.getLightClassMethod(psi) ?: return@forEach
+                val methodWrapper = extension.asPsiMethods().firstOrNull() ?: return@forEach
                 processor(extension, methodWrapper)
             }
         }

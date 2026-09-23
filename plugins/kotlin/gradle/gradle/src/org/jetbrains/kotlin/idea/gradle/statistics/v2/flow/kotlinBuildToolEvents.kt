@@ -70,6 +70,15 @@ val kotlinBuildToolsFusEvenList = listOf(
     ),
 
     FusFlowSendingStep(
+        GradleStatisticsEventGroups.SwiftExport, listOf(
+            KotlinBuildToolFusMetricName.SWIFT_EXPORT_DSL_CONFIGURED,
+            KotlinBuildToolFusMetricName.SWIFT_EXPORT_DSL_MODULE_OPTIONS_OVERRIDES,
+            KotlinBuildToolFusMetricName.SWIFT_EXPORT_DSL_XCODE_INTEGRATION_ACTIVATED,
+            KotlinBuildToolFusMetricName.SWIFT_EXPORT_DSL_XCODE_INTEGRATION_OVERRIDES,
+        )
+    ),
+
+    FusFlowSendingStep(
         GradleStatisticsEventGroups.Libraries, listOf(
             KotlinBuildToolFusMetricName.LIBRARY_SPRING_VERSION,
             KotlinBuildToolFusMetricName.LIBRARY_VAADIN_VERSION,

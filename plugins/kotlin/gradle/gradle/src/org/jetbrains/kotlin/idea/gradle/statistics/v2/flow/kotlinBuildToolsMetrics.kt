@@ -99,6 +99,10 @@ enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>)
 
     // Swift export
     ENABLED_SWIFT_EXPORT(KotlinBuildToolBooleanFusMetric("ENABLED_SWIFT_EXPORT")),
+    SWIFT_EXPORT_DSL_CONFIGURED(KotlinBuildToolBooleanFusMetric("SWIFT_EXPORT_DSL_CONFIGURED")),
+    SWIFT_EXPORT_DSL_MODULE_OPTIONS_OVERRIDES(JoinedListValuesStringFusMetric("SWIFT_EXPORT_DSL_MODULE_OPTIONS_OVERRIDES")),
+    SWIFT_EXPORT_DSL_XCODE_INTEGRATION_ACTIVATED(KotlinBuildToolBooleanFusMetric("SWIFT_EXPORT_DSL_XCODE_INTEGRATION_ACTIVATED")),
+    SWIFT_EXPORT_DSL_XCODE_INTEGRATION_OVERRIDES(JoinedListValuesStringFusMetric("SWIFT_EXPORT_DSL_XCODE_INTEGRATION_OVERRIDES")),
 
     //Build reports
     FILE_BUILD_REPORT(KotlinBuildToolBooleanFusMetric("FILE_BUILD_REPORT")),

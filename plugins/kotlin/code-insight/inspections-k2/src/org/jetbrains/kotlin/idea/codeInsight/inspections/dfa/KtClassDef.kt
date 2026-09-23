@@ -9,6 +9,7 @@ import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.asPsiType
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiClass
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.useSiteModule
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.symbols.isSubClassOf
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
@@ -25,7 +27,6 @@ import org.jetbrains.kotlin.analysis.api.types.allSupertypes
 import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
-import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -71,7 +72,7 @@ class KtClassDef(
         val classLikeSymbol = pointer.restoreSymbol() ?: return@analyze null
         val psiClass = when (val psi = classLikeSymbol.psi) {
             is PsiClass -> psi
-            is KtClassOrObject -> psi.toLightClass() ?: return@analyze null
+            is KtClassOrObject -> psi.classSymbol?.asPsiClass() ?: return@analyze null
             else -> return@analyze null
         }
         var cur = 0

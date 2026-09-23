@@ -9,13 +9,13 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.util.EmptyQuery
 import com.intellij.util.Query
-import org.jetbrains.kotlin.asJava.toFakeLightClass
-import org.jetbrains.kotlin.asJava.toLightClassWithBuiltinMapping
+import org.jetbrains.kotlin.util.toLightClassWithBuiltinMapping
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.util.asFakePsiClass
 
 fun HierarchySearchRequest<*>.searchInheritors(): Query<PsiClass> {
     val psiClass: PsiClass = when (originalElement) {
-        is KtClassOrObject -> runReadAction { originalElement.toLightClassWithBuiltinMapping() ?: originalElement.toFakeLightClass() }
+        is KtClassOrObject -> runReadAction { originalElement.toLightClassWithBuiltinMapping() ?: originalElement.asFakePsiClass() }
         is PsiClass -> originalElement
         else -> null
     } ?: return EmptyQuery.getEmptyQuery()
