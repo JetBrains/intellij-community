@@ -24,15 +24,7 @@ internal fun buildPlatformSpecificPluginResources(
   context: BuildContext,
   isDevMode: Boolean,
 ): List<DistributionFileEntry> {
-  if (!isDevMode) {
-    // Legacy branch. Delete it together with `PluginLayout.legacyPlatformResourceGenerators`.
-    @Suppress("DEPRECATION")
-    for ((dist, generators) in plugin.legacyPlatformResourceGenerators) {
-      handlePlatformResourceGenerator(dist, generators, pluginDirs, context)
-    }
-  }
-
-  for ((dist, generators) in plugin.declaredPlatformResourceGenerators) {
+  for ((dist, generators) in plugin.platformResourceGenerators) {
     val selected = if (isDevMode) generators.filter { it.run == DeclaredResourceGeneratorRun.BUNDLED_AND_DEV } else generators
     handlePlatformResourceGenerator(dist, selected, pluginDirs, context)
   }

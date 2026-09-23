@@ -212,23 +212,10 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     private set
 
   /**
-   * Legacy: undeclared platform resource generators. They run for a bundled plugin only, and the dev-distribution
-   * generator cannot plan them.
-   *
-   * Delete this map, the [PluginLayoutBuilder.withGeneratedPlatformResources] overload without a layout asset spec,
-   * and the legacy branch of `buildPlatformSpecificPluginResources` when the last caller is declared.
-   * See [declaredPlatformResourceGenerators] for the replacement.
+   * The platform resource generators. The dev-distribution generator plans each one from its [DevPluginLayoutAssetSpec].
+   * [DeclaredPluginLayoutResourceGenerator.run] states where each one runs. See [PluginLayoutBuilder.withGeneratedPlatformResources].
    */
-  @Deprecated("Legacy undeclared platform generators. Use declaredPlatformResourceGenerators.")
-  internal var legacyPlatformResourceGenerators: PersistentMap<SupportedDistribution, PersistentList<ResourceGenerator>> = persistentMapOf()
-    private set
-
-  /**
-   * Declared platform resource generators. The dev-distribution generator plans each one from its
-   * [DevPluginLayoutAssetSpec]. [DeclaredPluginLayoutResourceGenerator.run] states where each one runs.
-   * See [PluginLayoutBuilder.withGeneratedPlatformResources].
-   */
-  internal var declaredPlatformResourceGenerators: PersistentMap<SupportedDistribution, PersistentList<DeclaredPluginLayoutResourceGenerator>> = persistentMapOf()
+  internal var platformResourceGenerators: PersistentMap<SupportedDistribution, PersistentList<DeclaredPluginLayoutResourceGenerator>> = persistentMapOf()
     private set
 
   internal var executablePatterns: PersistentMap<SupportedDistribution, PersistentList<String>> = persistentMapOf()
@@ -244,10 +231,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   fun getExecutablePatterns(): Map<SupportedDistribution, List<String>> = executablePatterns
 
   val hasPlatformSpecificResources: Boolean
-    @Suppress("DEPRECATION")
-    get() = legacyPlatformResourceGenerators.isNotEmpty() ||
-            declaredPlatformResourceGenerators.isNotEmpty() ||
-            customAssets.any { it.platformSpecific != null }
+    get() = platformResourceGenerators.isNotEmpty() || customAssets.any { it.platformSpecific != null }
 
   fun getMainJarName(): String = mainJarName
 
@@ -456,19 +440,9 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
 
     /**
-     * Legacy: an undeclared platform resource generator for a bundled plugin only. The dev-distribution generator
-     * cannot plan it; see [legacyPlatformResourceGenerators]. Pass a [DevPluginLayoutAssetSpec] to the declared overload instead.
-     */
-    @Deprecated("Undeclared; the dev-distribution generator cannot plan it. Pass a DevPluginLayoutAssetSpec.")
-    @Suppress("DEPRECATION")
-    fun withGeneratedPlatformResources(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, generator: ResourceGenerator) {
-      val key = SupportedDistribution(os, arch, libc)
-      layout.legacyPlatformResourceGenerators += key to (layout.legacyPlatformResourceGenerators.get(key) ?: persistentListOf()) + generator
-    }
-
-    /**
-     * A declared platform resource generator. The dev-distribution generator plans it from [layoutAssetSpec];
-     * see [declaredPlatformResourceGenerators]. [run] states whether classic dev mode also runs [generator].
+     * A platform resource generator. The dev-distribution generator plans it from [layoutAssetSpec], and
+     * [DevPluginLayoutAssetSpec.OMITTED] states that the dev distribution leaves its files out.
+     * [run] states whether classic dev mode also runs [generator]. See [platformResourceGenerators].
      */
     fun withGeneratedPlatformResources(
       os: OsFamily,
@@ -480,7 +454,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     ) {
       val key = SupportedDistribution(os, arch, libc)
       val declared = DeclaredPluginLayoutResourceGenerator(layoutAssetSpec, generator, run)
-      layout.declaredPlatformResourceGenerators += key to (layout.declaredPlatformResourceGenerators.get(key) ?: persistentListOf()) + declared
+      layout.platformResourceGenerators += key to (layout.platformResourceGenerators.get(key) ?: persistentListOf()) + declared
     }
 
     /**

@@ -15,7 +15,7 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.nio.file.Path
 
-/** The run policy of `buildPlatformSpecificPluginResources` for the legacy and the declared platform generators. */
+/** The run policy of `buildPlatformSpecificPluginResources` for the declared platform generators. */
 class PlatformResourceGeneratorRunTest {
   private val distribution = SupportedDistribution(OsFamily.LINUX, JvmArchitecture.x64, LinuxLibcImpl.GLIBC)
 
@@ -36,7 +36,7 @@ class PlatformResourceGeneratorRunTest {
 
     buildPlatformSpecificPluginResources(layout, pluginDirs(tempDir), createContext(tempDir), isDevMode = false)
 
-    assertThat(invocations).containsExactly("legacy", "bundled-and-dev", "bundled-only")
+    assertThat(invocations).containsExactly("bundled-and-dev", "bundled-only")
   }
 
   @Test
@@ -63,7 +63,7 @@ class PlatformResourceGeneratorRunTest {
     }
 
     assertThat(layout.hasPlatformSpecificResources).isTrue()
-    assertThat(layout.declaredPlatformResourceGenerators.getValue(distribution).single().run).isEqualTo(DeclaredResourceGeneratorRun.BUNDLED_ONLY)
+    assertThat(layout.platformResourceGenerators.getValue(distribution).single().run).isEqualTo(DeclaredResourceGeneratorRun.BUNDLED_ONLY)
   }
 
   @Test
@@ -77,13 +77,11 @@ class PlatformResourceGeneratorRunTest {
       ) { _, _ -> }
     }
 
-    assertThat(layout.declaredPlatformResourceGenerators.getValue(distribution).single().run).isEqualTo(DeclaredResourceGeneratorRun.BUNDLED_AND_DEV)
+    assertThat(layout.platformResourceGenerators.getValue(distribution).single().run).isEqualTo(DeclaredResourceGeneratorRun.BUNDLED_AND_DEV)
   }
 
-  @Suppress("DEPRECATION")
   private fun createLayout(invocations: MutableList<String>): PluginLayout {
     return PluginLayout.pluginAuto(listOf("test.plugin")) { spec ->
-      spec.withGeneratedPlatformResources(distribution.os, distribution.arch, distribution.libcImpl) { _, _ -> invocations.add("legacy") }
       spec.withGeneratedPlatformResources(
         os = distribution.os,
         arch = distribution.arch,

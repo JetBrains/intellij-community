@@ -205,6 +205,32 @@ dev_launch_extracted_repo = repository_rule(
     },
 )
 
+def text_repo_files(file_name, content):
+    """The files of a [dev_launch_text_repo], by path: `file_name` with `content`, and a BUILD that exports it."""
+    return {
+        "BUILD": 'package(default_visibility = ["//visibility:public"])\n\nexports_files(["%s"])\n' % file_name,
+        file_name: content,
+    }
+
+def _text_repo_impl(repository_ctx):
+    for path, content in text_repo_files(repository_ctx.attr.file_name, repository_ctx.attr.content).items():
+        repository_ctx.file(path, content, executable = False)
+    return repository_ctx.repo_metadata(reproducible = True)
+
+dev_launch_text_repo = repository_rule(
+    doc = """One file that holds a pinned value as text, byte for byte, such as a version a plugin ships.
+
+    Not a download: it joins no dev-launch set and has no preloaded-downloads manifest. A plugin component reads it as a
+    declared input, so the dev layout of the plugin copies a file instead of running the production generator. The
+    extension passes the value as `content`, so a bump of it refetches this repository and no other.
+    """,
+    implementation = _text_repo_impl,
+    attrs = {
+        "content": attr.string(mandatory = True),
+        "file_name": attr.string(mandatory = True),
+    },
+)
+
 def merge_repo_sets(*repo_sets):
     """Unions repository sets platform by platform, preserving order and dropping repeats."""
     merged = {}

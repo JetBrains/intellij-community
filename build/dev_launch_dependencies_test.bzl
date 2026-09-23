@@ -18,6 +18,7 @@ load(
     "maven_coordinates_urls",
     "maven_url",
     "platform_parts",
+    "text_repo_files",
 )
 load(":test_deps_extension.bzl", "all_downloads_pinned", "find_download_conflict")
 
@@ -148,6 +149,21 @@ def _download_repository_integrity_test_impl(ctx):
 
 download_repository_integrity_test = unittest.make(_download_repository_integrity_test_impl)
 
+# The file holds the value byte for byte, with no trailing newline, as `Files.writeString` of the production generator.
+def _text_repo_files_test_impl(ctx):
+    env = unittest.begin(ctx)
+    asserts.equals(
+        env,
+        {
+            "BUILD": 'package(default_visibility = ["//visibility:public"])\n\nexports_files(["build.txt"])\n',
+            "build.txt": "3.2.0.65851",
+        },
+        text_repo_files("build.txt", "3.2.0.65851"),
+    )
+    return unittest.end(env)
+
+text_repo_files_test = unittest.make(_text_repo_files_test_impl)
+
 def dev_launch_dependencies_test_suite(name):
     """Test suite for the URL builders in dev_launch_dependencies.bzl."""
     unittest.suite(
@@ -159,4 +175,5 @@ def dev_launch_dependencies_test_suite(name):
         maven_url_test,
         maven_coordinates_urls_test,
         download_repository_integrity_test,
+        text_repo_files_test,
     )
