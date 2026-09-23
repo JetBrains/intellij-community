@@ -11,6 +11,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="org.jetbrains.idea.devkit.gradle.IntelliJPlatformVersionCatalogUpdater"
-                    serviceImplementation="org.jetbrains.idea.devkit.gradle.toml.TomlIntelliJPlatformVersionCatalogUpdater"/>
+                    serviceImplementation="com.intellij.devkit.gradle.toml.TomlIntelliJPlatformVersionCatalogUpdater"/>
   </extensions>
 </idea-plugin>
