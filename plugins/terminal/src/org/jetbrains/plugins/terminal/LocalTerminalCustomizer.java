@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.runner.TerminalCustomizerLocalPathTranslator;
 import org.jetbrains.plugins.terminal.startup.MutableShellExecOptions;
 import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer;
+import org.jetbrains.plugins.terminal.startup.TerminalWorkingDirectoryCustomizer;
 
 import java.util.Arrays;
 import java.util.List;
@@ -112,7 +113,7 @@ public abstract class LocalTerminalCustomizer {
   }
 
   /**
-   * @deprecated use {@link ShellExecOptionsCustomizer#getDefaultStartWorkingDirectory(Project)} instead
+   * @deprecated use {@link TerminalWorkingDirectoryCustomizer#getDefaultStartWorkingDirectory} instead
    * @return path to the directory to run the terminal in or null if default directory should be used
    */
   @Deprecated

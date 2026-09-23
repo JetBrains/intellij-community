@@ -29,15 +29,7 @@ interface ShellExecOptionsCustomizer {
   @RequiresReadLockAbsence(generateAssertion = false)
   fun customizeExecOptions(project: Project, shellExecOptions: MutableShellExecOptions)
 
-  /**
-   * Customizes the default start working directory for the given project.
-   * It serves as a default value for the "Start directory" field in "Settings | Tools | Terminal".
-   * The value of this field determines the working directory for new shell sessions.
-   * 
-   * The method can be called on any thread without a read action.
-   *
-   * @return the starting directory, or `null` to use the default start working directory
-   */
+  @Deprecated("Use TerminalWorkingDirectoryCustomizer.getDefaultStartWorkingDirectory instead")
   fun getDefaultStartWorkingDirectory(project: Project): Path? = null
 
   companion object {
