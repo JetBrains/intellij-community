@@ -119,6 +119,7 @@
     "intellij.database.dialects.oracle",
     "intellij.database.dialects.oracle.ex",
     "intellij.database.dialects.oracle.ex.coverage",
+    "intellij.database.dialects.oracle.ex.debugger",
     "intellij.database.dialects.oracle.minicat",
     "intellij.database.dialects.postgres",
     "intellij.database.dialects.postgres.ex",
