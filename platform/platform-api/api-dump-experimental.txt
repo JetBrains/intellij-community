@@ -80,6 +80,17 @@ a:com.intellij.ide.ui.LafManager
 - f:updateChildren(javax.swing.tree.DefaultMutableTreeNode,java.util.List,kotlin.jvm.functions.Function1):V
 - f:updateNode(javax.swing.tree.DefaultMutableTreeNode,java.lang.Object):V
 - valueForPathChanged(javax.swing.tree.TreePath,java.lang.Object):V
+*f:com.intellij.openapi.actionSystem.ActionId
+- bsf:box-impl(java.lang.String):com.intellij.openapi.actionSystem.ActionId
+- s:constructor-impl(java.lang.String):java.lang.String
+- equals(java.lang.Object):Z
+- s:equals-impl(java.lang.String,java.lang.Object):Z
+- sf:equals-impl0(java.lang.String,java.lang.String):Z
+- f:getValue():java.lang.String
+- hashCode():I
+- s:hashCode-impl(java.lang.String):I
+- s:toString-impl(java.lang.String):java.lang.String
+- bf:unbox-impl():java.lang.String
 c:com.intellij.openapi.actionSystem.PlatformDataKeys
 - com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 - *sf:CONTEXT_MENU_LOCATOR:com.intellij.openapi.actionSystem.DataKey
