@@ -7,11 +7,8 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
-import com.intellij.execution.Location;
 import com.intellij.execution.ProgramRunnerUtil;
-import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -33,15 +30,12 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.model.psi.PsiSymbolReferenceService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUiKind;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -59,7 +53,6 @@ import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.paths.UrlReference;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.progress.ProgressManager;
@@ -1345,17 +1338,15 @@ public final class PlatformTestUtil {
     return HeavyTestHelper.getOrCreateProjectBaseDir(project);
   }
 
-  public static @Nullable RunConfiguration getRunConfiguration(@NotNull PsiElement element, @NotNull RunConfigurationProducer<?> producer) {
-    var dataContext = SimpleDataContext.builder()
-      .add(CommonDataKeys.PROJECT, element.getProject())
-      .add(PlatformCoreDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(element))
-      .add(Location.DATA_KEY, PsiLocation.fromPsiElement(element))
-      .build();
-
-    var cc = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
-
-    var configuration = producer.createConfigurationFromContext(cc);
-    return configuration != null ? configuration.getConfiguration() : null;
+  /**
+   * @deprecated use {@link ExecutionTestUtil#getRunConfiguration(PsiElement, RunConfigurationProducer)} instead
+   */
+  /* RunConfigurationProducer is intentionally used as a raw type here to avoid adding a dependency on `intellij.platform.execution` in
+     every module that uses this class due to JDK-8370800 */
+  @SuppressWarnings("rawtypes")
+  @Deprecated
+  public static @Nullable RunConfiguration getRunConfiguration(@NotNull PsiElement element, @NotNull RunConfigurationProducer producer) {
+    return ExecutionTestUtil.getRunConfiguration(element, producer);
   }
 
   /**
