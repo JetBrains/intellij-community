@@ -112,7 +112,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     // the value in `literalValue`. Detect this before falling through to the generic
     // class-type path so we surface `Literal[5]` / `Literal["foo"]` instead of bare `int` /
     // `str` — otherwise `tuple[Literal[1], Literal[2], Literal[3]]` collapses to `tuple[int, int, int]`.
-    if (tspType.kind == "3" && tspType.flags?.and(PyreflyLsp4jServer.LITERAL_FLAG) != 0) {
+    if (tspType.kind == "3" && tspType.flags != null && tspType.flags.and(PyreflyLsp4jServer.LITERAL_FLAG) != 0) {
       buildPyLiteralType(pyElement, tspType)?.let { return it }
     }
     return when (tspType.kind) {
