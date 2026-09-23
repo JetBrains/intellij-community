@@ -15,6 +15,7 @@ import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.io.copyRecursively
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.relativeTo
@@ -44,6 +45,14 @@ class CachedTestContext internal constructor(val testContext: IDETestContext) {
     }
 
   /**
+   * Whether a restore wrote to the project files while no IDE has refreshed its VFS for them yet.
+   *
+   * A restore writes with plain file-system calls, so the IDE does not see it. The restore runs before the test
+   * starts an IDE, so the refresh waits for that IDE, and this flag carries the need across.
+   */
+  private val projectFilesVfsRefreshPending = AtomicBoolean(false)
+
+  /**
    * Creates a current test context over this entry, in the directory [contextDirName].
    *
    * [testContext] stays the baseline location, for example `out/ide-tests/cache/IU-LOCAL/hello-world/config`.
@@ -68,12 +77,31 @@ class CachedTestContext internal constructor(val testContext: IDETestContext) {
   }
 
   /**
+   * Whether [testContext] was created from this entry.
+   *
+   * A current test context shares the `system` directory of its cached context, and every cached context has its own.
+   * A split context has a second one for the frontend, and a split run holds the frontend context.
+   */
+  internal fun isSourceOf(testContext: IDETestContext): Boolean {
+    val cachedSystemDirs = listOfNotNull(this.testContext, (this.testContext as? IDERemDevTestContext)?.frontendIDEContext)
+      .map { it.paths.systemDir }
+    return testContext.paths.systemDir in cachedSystemDirs
+  }
+
+  /**
    * Rewinds the project files to the prepared state. No IDE may run on them during this call.
    *
-   * @return whether the restore wrote to the project files.
+   * @return whether the restore wrote to the project files. The next IDE then owes a VFS refresh.
    */
   @ApiStatus.Internal
   fun restorePreparedProjectFiles(): Boolean = preparedProjectFiles?.restore() == true
+
+  /** Tells the next IDE over this entry to refresh its VFS for the project files, see [consumeProjectFilesVfsRefresh]. */
+  internal fun requestProjectFilesVfsRefresh() {
+    projectFilesVfsRefreshPending.set(true)
+  }
+
+  internal fun consumeProjectFilesVfsRefresh(): Boolean = projectFilesVfsRefreshPending.getAndSet(false)
 }
 
 /** Creates the current test context of one IDE of this cached context: the backend, the frontend, or the monolith. */

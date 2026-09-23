@@ -1,10 +1,13 @@
 package com.intellij.ide.starter.driver.engine
 
 import com.intellij.driver.client.Driver
+import com.intellij.driver.sdk.step
+import com.intellij.driver.sdk.ui.syncVfs
 import com.intellij.driver.sdk.waitFor
 import com.intellij.ide.starter.driver.nextRestartLaunchNameOf
 import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.report.DetailsOnCI
+import com.intellij.ide.starter.testContextCache.TestContextCache
 import com.intellij.ide.starter.runner.IDEHandle
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.utils.catchAll
@@ -69,7 +72,10 @@ open class BackgroundRun(
     shutdownHook: Driver.() -> Unit = {},
     block: Driver.() -> R,
   ): IDEStartResult {
-    val testError = runCatching { driver.withContext { block(this) } }.exceptionOrNull()
+    val testError = runCatching {
+      syncVfsAfterProjectFilesRestore()
+      driver.withContext { block(this) }
+    }.exceptionOrNull()
     catchAll { shutdownHook(driver) }
     val closeResult = runCatching { driver.closeIdeAndWait(closeIdeTimeout, takeScreenshot) }
     if (testError == null) return closeResult.getOrThrow()
@@ -85,6 +91,7 @@ open class BackgroundRun(
   open fun <R> useDriverAndWaitIdeIsClosed(closeIdeTimeout: Duration = 1.minutes, block: Driver.() -> R): IDEStartResult {
     lateinit var ideStartResult: IDEStartResult
     runCatching {
+      syncVfsAfterProjectFilesRestore()
       driver.withContext {
         block(this)
         if (isConnected) takeScreenshot("beforeIdeClosed")
@@ -214,6 +221,33 @@ open class BackgroundRun(
     }
     logOutput("[Closing ${process.id}] Performing force kill")
     process.kill()
+  }
+}
+
+/**
+ * Refreshes the VFS when a restore of [com.intellij.ide.starter.testContextCache.CachedProjectConfiguration.createTestContext] still owes one, and takes that need.
+ *
+ * `ProjectFilesRestorer` rewinds the project directory with plain file-system calls, so the IDE does not see them.
+ * The restore runs before the test starts an IDE, so the cache entry carries the need across.
+ * The first caller with a live IDE discharges it.
+ * A reusable session holds its IDE, so it calls [syncVfsWithRestoredProjectFiles] itself after its restore.
+ *
+ * Only a restore that wrote to the project owes a refresh. A context over no cached project owes nothing, and
+ * neither does the baseline capture of the first test over one, which only reads the project files.
+ *
+ * A test that changes a file outside the IDE still calls [syncVfs] itself. No restore reports such a change.
+ * See https://youtrack.jetbrains.com/issue/AT-4588.
+ */
+internal fun BackgroundRun.syncVfsAfterProjectFilesRestore() {
+  if (TestContextCache.consumeProjectFilesVfsRefresh(runContext.testContext)) {
+    syncVfsWithRestoredProjectFiles()
+  }
+}
+
+/** Refreshes the VFS after a restore that wrote to the project files. */
+internal fun BackgroundRun.syncVfsWithRestoredProjectFiles() {
+  step("Sync the VFS with the restored project files") {
+    driver.syncVfs()
   }
 }
 

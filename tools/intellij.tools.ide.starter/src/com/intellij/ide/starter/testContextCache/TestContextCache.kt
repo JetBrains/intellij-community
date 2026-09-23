@@ -47,6 +47,29 @@ object TestContextCache {
     }
   }
 
+  /**
+   * The cache entry that [testContext] was created from, or `null` when it comes from no cached project.
+   *
+   * For a caller that holds a test context and no configuration, which is every caller that did not create the
+   * context. The `system` directory tells the entries apart, see [CachedTestContext.isSourceOf]. The project home
+   * cannot: one configuration in the monolith and the split mode has two entries over one unpacked project.
+   *
+   * A context with an in-memory file system has no `system` link. It falls back to the project home, and only when
+   * one entry owns that home.
+   */
+  fun cachedTestContextOf(testContext: IDETestContext): CachedTestContext? {
+    cache.values.firstOrNull { it.isSourceOf(testContext) }?.let { return it }
+    val projectHome = testContext._resolvedProjectHome?.toAbsolutePath()?.normalize() ?: return null
+    return cache.values.singleOrNull { entry ->
+      entry.testContext._resolvedProjectHome?.toAbsolutePath()?.normalize() == projectHome
+    }
+  }
+
+  /** Returns whether a VFS refresh is owed for the project files of [testContext], and takes that need. */
+  fun consumeProjectFilesVfsRefresh(testContext: IDETestContext): Boolean {
+    return cachedTestContextOf(testContext)?.consumeProjectFilesVfsRefresh() ?: false
+  }
+
   fun getOrCreate(configuration: CachedProjectConfiguration): CachedTestContext {
     return getOrCreate(configuration, contextDiscriminator = null) { contextName, _ ->
       newTestContainer().newContext(

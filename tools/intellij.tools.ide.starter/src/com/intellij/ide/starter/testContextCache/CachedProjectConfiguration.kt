@@ -46,7 +46,9 @@ open class CachedProjectConfiguration(
    */
   fun createTestContext(): IDETestContext {
     val cachedTestContext = TestContextCache.getOrCreate(this)
-    cachedTestContext.restorePreparedProjectFiles()
+    if (cachedTestContext.restorePreparedProjectFiles()) {
+      cachedTestContext.requestProjectFilesVfsRefresh()
+    }
     val currentTestContext = cachedTestContext.createCurrentTestContext(currentTestContextDirName())
     logOutput(
       "The current test runs on the context at ${currentTestContext.paths.testHome}, " +
