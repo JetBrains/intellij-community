@@ -159,6 +159,14 @@ public class GridUtilCore {
     return pageSize < 1;
   }
 
+  /**
+   * Name for a column the source did not name: the 1-based convention CSV-backed grids already show.
+   * Callers that must guarantee unique, non-blank names share this so their generated names cannot drift apart.
+   */
+  public static @NlsSafe @NotNull String defaultColumnName(int columnIndex) {
+    return "C" + (columnIndex + 1);
+  }
+
   public static int getPageSize(@Nullable DataGridSettings settings) {
     return settings == null
            ? DEFAULT_PAGE_SIZE
