@@ -20,4 +20,10 @@ interface ProjectInfoSpec {
   val configureProjectBeforeUse: (IDETestContext) -> Unit
 
   fun getDescription(): String = ""
+
+  /**
+   * A short name of the project, known before the download. It is not unique. A directory name built from it shows
+   * which project the directory holds. The default is the class name.
+   */
+  fun getName(): String = javaClass.simpleName
 }

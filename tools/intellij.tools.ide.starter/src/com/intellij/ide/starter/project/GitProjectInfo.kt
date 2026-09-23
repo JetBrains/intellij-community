@@ -204,4 +204,7 @@ data class GitProjectInfo(
   override fun getDescription(): String {
     return description
   }
+
+  /** The name of the project directory. It holds the sub-folder of [projectHomeRelativePath], so it needs no clone. */
+  override fun getName(): String = projectPath.fileName.toString()
 }

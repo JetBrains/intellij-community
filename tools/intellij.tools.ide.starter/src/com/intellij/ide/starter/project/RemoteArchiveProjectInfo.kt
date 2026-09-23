@@ -122,4 +122,7 @@ data class RemoteArchiveProjectInfo(
   override fun getDescription(): String {
     return description
   }
+
+  /** The name of the archive. The content of the archive is not known before the download. */
+  override fun getName(): String = projectURL.transformUrlToZipName().removeSuffix(".zip")
 }

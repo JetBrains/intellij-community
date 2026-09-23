@@ -11,9 +11,11 @@ import kotlin.io.path.div
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
-open class IDEDataPaths(
+open class IDEDataPaths @JvmOverloads constructor(
   open val testHome: Path,
   private val inMemoryRoot: Path?,
+  /** The system directory of a cached context that this context shares, or `null` when the context has its own. */
+  val sharedSystemDir: Path? = null,
 ) : AutoCloseable {
 
   companion object {
@@ -44,7 +46,7 @@ open class IDEDataPaths(
   val tempDir = (testHome / "temp").createDirectories()
 
   val configDir = ((inMemoryRoot ?: testHome) / "config").createDirectories()
-  val systemDir = ((inMemoryRoot ?: testHome) / "system").createDirectories()
+  val systemDir = (sharedSystemDir ?: ((inMemoryRoot ?: testHome) / "system")).createDirectories()
   val pluginsDir = (testHome / "plugins").createDirectories()
   open val eventLogMetadataDir = (configDir / "event-log-metadata").createDirectories()
   open val eventLogDataDir = (systemDir / "event-log-data").createDirectories()
@@ -56,7 +58,7 @@ open class IDEDataPaths(
    * Unlike [createPaths] this neither wipes nor re-creates [testHome], so it is safe to call for paths already in use.
    */
   internal fun asFrontendDataPaths(): FrontendIDEDataPaths {
-    val frontendPaths = FrontendIDEDataPaths(testHome, inMemoryRoot)
+    val frontendPaths = FrontendIDEDataPaths(testHome, inMemoryRoot, sharedSystemDir)
     inMemoryRootOwner.released = true
     return frontendPaths
   }

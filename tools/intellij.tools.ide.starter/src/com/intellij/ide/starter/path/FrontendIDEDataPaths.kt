@@ -4,10 +4,11 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.div
 
-class FrontendIDEDataPaths(
+class FrontendIDEDataPaths @JvmOverloads constructor(
   testHome: Path,
   inMemoryRoot: Path?,
-) : IDEDataPaths(testHome, inMemoryRoot) {
+  sharedSystemDir: Path? = null,
+) : IDEDataPaths(testHome, inMemoryRoot, sharedSystemDir) {
   companion object {
     /** The directory a frontend takes for itself, both for its own data below the test and for its reports inside a launch. */
     const val FRONTEND_DIR_NAME: String = "frontend"
