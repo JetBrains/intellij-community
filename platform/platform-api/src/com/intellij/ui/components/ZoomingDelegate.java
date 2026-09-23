@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.ui.ComponentUtil;
@@ -6,11 +6,14 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -38,7 +41,7 @@ public class ZoomingDelegate {
 
       Rectangle clip = g.getClipBounds();
 
-      g.setColor(myContentComponent.getBackground());
+      g.setColor(getSnapshotBackground());
       g.fillRect(clip.x, clip.y, clip.width, clip.height);
 
       Graphics2D translated = (Graphics2D)g.create();
@@ -90,6 +93,22 @@ public class ZoomingDelegate {
     return myCachedImage != null;
   }
 
+  /**
+   * The colour under the snapshot, in the snapshot itself and around it while it is scaled down.
+   * <p>
+   * An opaque viewport paints its whole area itself, so the view's background is used, as it always was. A non-opaque viewport
+   * shows its ancestors where it paints nothing, so the background of the nearest opaque ancestor is used. That is the colour
+   * a live paint shows in those places.
+   */
+  private @Nullable Color getSnapshotBackground() {
+    if (!myViewportComponent.isOpaque()) {
+      Component opaque = UIUtil.findNearestOpaque(myViewportComponent);
+      Color background = opaque == null ? null : opaque.getBackground();
+      if (background != null) return background;
+    }
+    return myContentComponent.getBackground();
+  }
+
   protected static double magnificationToScale(double magnification) {
     return magnification < 0 ? 1f / (1 - magnification) : (1 + magnification);
   }
@@ -107,6 +126,11 @@ public class ZoomingDelegate {
 
       Graphics graphics = image.getGraphics();
       graphics.setClip(0, 0, bounds.width, bounds.height);
+      if (!myViewportComponent.isOpaque()) {
+        // The image starts black, and a non-opaque viewport leaves its background to its ancestors.
+        graphics.setColor(getSnapshotBackground());
+        graphics.fillRect(0, 0, bounds.width, bounds.height);
+      }
       myViewportComponent.paint(graphics);
 
       myCachedImage = image;
