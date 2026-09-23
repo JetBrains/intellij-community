@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -6,11 +6,13 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Wraps a {@link RuntimeConfigurationProducer} in a {@link ConfigurationFromContext}.
  */
+@ApiStatus.Internal
 public class ConfigurationFromContextWrapper extends ConfigurationFromContext {
   private final RuntimeConfigurationProducer myProducer;
 

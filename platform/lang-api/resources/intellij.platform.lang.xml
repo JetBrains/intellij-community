@@ -108,7 +108,6 @@
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.config.inlaySettingsProvider" interface="com.intellij.codeInsight.hints.settings.InlaySettingsProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.config.inlayGroupSettingProvider" interface="com.intellij.codeInsight.hints.settings.InlayGroupSettingProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.runConfigurationProducerSuppressor" interface="com.intellij.execution.RunConfigurationProducerSuppressor" dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.codeStyleSettingsProvider" interface="com.intellij.psi.codeStyle.CodeStyleSettingsProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.pathReferenceProvider" interface="com.intellij.openapi.paths.PathReferenceProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.anchorReferenceProvider" interface="com.intellij.openapi.paths.PathReferenceProvider" dynamic="true"/>
@@ -142,10 +141,6 @@
     <extensionPoint qualifiedName="com.intellij.consoleFilterProvider" interface="com.intellij.execution.filters.ConsoleFilterProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.invisibleHyperlinkFilterProvider" interface="com.intellij.execution.filters.InvisibleHyperlinkFilterProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.consoleInputFilterProvider" interface="com.intellij.execution.filters.ConsoleInputFilterProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.consoleActionsPostProcessor" interface="com.intellij.execution.actions.ConsoleActionsPostProcessor" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.configurationProducer" interface="com.intellij.execution.junit.RuntimeConfigurationProducer" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.runConfigurationProducer" interface="com.intellij.execution.actions.RunConfigurationProducer" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.multipleRunLocationsProvider" interface="com.intellij.execution.actions.MultipleRunLocationsProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.runDashboardCustomizer" interface="com.intellij.execution.dashboard.RunDashboardCustomizer" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.legacyRunDashboardServiceSubstitutor" interface="com.intellij.execution.dashboard.LegacyRunDashboardServiceSubstitutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.runDashboardDefaultTypesProvider" interface="com.intellij.execution.dashboard.RunDashboardDefaultTypesProvider" dynamic="true"/>
@@ -290,7 +285,6 @@
     <notificationGroup id="Incorrect Formatting" displayType="STICKY_BALLOON" bundle="messages.LangBundle"
                        key="inspection.incorrect.formatting.notification.group"/>
     <microservices.requestNavigator implementation="com.intellij.microservices.http.request.DefaultRequestNavigator" order="last"/>
-    <runToolbarProcess implementation="com.intellij.execution.runToolbar.RunToolbarRunProcess"/>
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService" open="true"/>
   </extensions>
 

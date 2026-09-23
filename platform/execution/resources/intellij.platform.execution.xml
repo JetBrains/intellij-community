@@ -33,6 +33,11 @@
     <extensionPoint qualifiedName="com.intellij.runToolbarProcess" interface="com.intellij.execution.runToolbar.RunToolbarProcess" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.stepsBeforeRunProvider" interface="com.intellij.execution.BeforeRunTaskProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.runConfigurationTargetEnvironmentAdjusterFactory" interface="com.intellij.execution.target.RunConfigurationTargetEnvironmentAdjuster$Factory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.consoleActionsPostProcessor" interface="com.intellij.execution.actions.ConsoleActionsPostProcessor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.configurationProducer" interface="com.intellij.execution.junit.RuntimeConfigurationProducer" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.runConfigurationProducer" interface="com.intellij.execution.actions.RunConfigurationProducer" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.multipleRunLocationsProvider" interface="com.intellij.execution.actions.MultipleRunLocationsProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.runConfigurationProducerSuppressor" interface="com.intellij.execution.RunConfigurationProducerSuppressor" dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.executionTargetType"
                     interface="com.intellij.execution.target.TargetEnvironmentType" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.executionTargetLanguageRuntimeType"

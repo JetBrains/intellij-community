@@ -151,6 +151,7 @@
     <remote.customDataContextSerializer implementation="com.intellij.execution.ExecutionEnvironmentIdSerializer"/>
     <uiDataRule implementation="com.intellij.execution.RunContentDescriptorIdDataRule"/>
     <uiDataRule implementation="com.intellij.execution.ExecutionEnvironmentIdDataRule"/>
+    <runToolbarProcess implementation="com.intellij.execution.runToolbar.RunToolbarRunProcess"/>
     <projectSettings service="com.intellij.execution.startup.ProjectStartupLocalConfiguration"/>
     <projectSettings service="com.intellij.execution.startup.ProjectStartupSharedConfiguration"/>
     <projectSettings service="com.intellij.execution.impl.IprRunManagerImpl"/>

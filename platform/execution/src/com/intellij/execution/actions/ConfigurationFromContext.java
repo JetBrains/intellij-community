@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,6 +136,7 @@ public abstract class ConfigurationFromContext {
   /**
    * Compares configurations according to precedence.
    */
+  @ApiStatus.Internal
   public static final Comparator<ConfigurationFromContext> COMPARATOR = (configuration1, configuration2) -> {
     if (PsiTreeUtil.isAncestor(configuration1.getSourceElement(), configuration2.getSourceElement(), true)) {
       return 1;
@@ -164,5 +166,6 @@ public abstract class ConfigurationFromContext {
   /**
    * Compares configurations according to configuration type name.
    */
+  @ApiStatus.Internal
   public static final Comparator<ConfigurationFromContext> NAME_COMPARATOR = Comparator.comparing(p -> p.getConfigurationType().getDisplayName());
 }

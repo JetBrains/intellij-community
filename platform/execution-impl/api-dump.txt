@@ -428,6 +428,17 @@ a:com.intellij.execution.options.LifetimedSettingsEditor
 f:com.intellij.execution.runToolbar.RunToolbarMoreActionGroup
 - com.intellij.openapi.actionSystem.DefaultActionGroup
 - <init>():V
+f:com.intellij.execution.runToolbar.RunToolbarRunProcess
+- com.intellij.execution.runToolbar.RunToolbarProcess
+- <init>():V
+- getActionId():java.lang.String
+- getExecutorId():java.lang.String
+- getID():java.lang.String
+- getMoreActionSubGroupName():java.lang.String
+- getName():java.lang.String
+- getPillColor():com.intellij.ui.JBColor
+- getShortName():java.lang.String
+- getShowInBar():Z
 c:com.intellij.execution.runners.ConsoleTitleGen
 - p:getActiveConsoles(java.lang.String):java.util.List
 - f:makeTitle():java.lang.String
@@ -449,6 +460,46 @@ f:com.intellij.execution.target.RunTargetsEnabled
 com.intellij.execution.target.TargetEnvironmentWizard$ValidationCallbackConsumer
 - java.util.function.Consumer
 - a:doValidateAll():java.util.List
+com.intellij.execution.testframework.PoolOfTestIcons
+- sf:ERROR_ICON:javax.swing.Icon
+- sf:ERROR_ICON_MARK:javax.swing.Icon
+- sf:FAILED_ICON:javax.swing.Icon
+- sf:IGNORED_ICON:javax.swing.Icon
+- sf:NOT_RAN:javax.swing.Icon
+- sf:PASSED_ICON:javax.swing.Icon
+- sf:PASSED_IGNORED:javax.swing.Icon
+- sf:SKIPPED_ICON:javax.swing.Icon
+- sf:TEAR_DOWN_FAILURE:javax.swing.Icon
+- sf:TERMINATED_ICON:javax.swing.Icon
+f:com.intellij.execution.testframework.TestIconMapper
+- com.intellij.execution.testframework.PoolOfTestIcons
+- <init>():V
+- s:getIcon(com.intellij.execution.testframework.sm.runner.states.TestStateInfo$Magnitude):javax.swing.Icon
+- s:getMagnitude(I):com.intellij.execution.testframework.sm.runner.states.TestStateInfo$Magnitude
+- s:getToolbarIcon(com.intellij.execution.testframework.sm.runner.states.TestStateInfo$Magnitude,Z,java.util.function.BooleanSupplier):javax.swing.Icon
+com.intellij.execution.testframework.sm.runner.states.TestStateInfo
+- a:getMagnitude():com.intellij.execution.testframework.sm.runner.states.TestStateInfo$Magnitude
+- a:isDefect():Z
+- a:isFinal():Z
+- a:isInProgress():Z
+- a:wasLaunched():Z
+- a:wasTerminated():Z
+e:com.intellij.execution.testframework.sm.runner.states.TestStateInfo$Magnitude
+- java.lang.Enum
+- sf:COMPLETE_INDEX:com.intellij.execution.testframework.sm.runner.states.TestStateInfo$Magnitude
+- sf:ERROR_INDEX:com.intellij.execution.testframework.sm.runner.states.TestStateInfo$Magnitude
+- sf:FAILED_INDEX:com.intellij.execution.testframework.sm.runner.states.TestStateInfo$Magnitude
+- sf:IGNORED_INDEX:com.intellij.execution.testframework.sm.runner.states.TestStateInfo$Magnitude
+- sf:NOT_RUN_INDEX:com.intellij.execution.testframework.sm.runner.states.TestStateInfo$Magnitude
+- sf:PASSED_INDEX:com.intellij.execution.testframework.sm.runner.states.TestStateInfo$Magnitude
+- sf:RUNNING_INDEX:com.intellij.execution.testframework.sm.runner.states.TestStateInfo$Magnitude
+- sf:SKIPPED_INDEX:com.intellij.execution.testframework.sm.runner.states.TestStateInfo$Magnitude
+- sf:TERMINATED_INDEX:com.intellij.execution.testframework.sm.runner.states.TestStateInfo$Magnitude
+- getSortWeight():I
+- getTitle():java.lang.String
+- getValue():I
+- s:valueOf(java.lang.String):com.intellij.execution.testframework.sm.runner.states.TestStateInfo$Magnitude
+- s:values():com.intellij.execution.testframework.sm.runner.states.TestStateInfo$Magnitude[]
 a:com.intellij.execution.ui.BaseContentCloseListener
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.project.VetoableProjectManagerListener

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.actions;
 
@@ -35,6 +35,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -77,6 +78,7 @@ public class ConfigurationContext {
     return getFromContext(dataContext, ActionPlaces.UNKNOWN);
   }
 
+  @ApiStatus.Internal
   public static @NotNull ConfigurationContext getFromEvent(AnActionEvent event) {
     return event.getUpdateSession().sharedData(SHARED_CONTEXT, () -> {
       ConfigurationContext context = getFromContext(event.getDataContext(), event.getPlace());

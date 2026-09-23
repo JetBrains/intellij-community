@@ -12,6 +12,10 @@ a:com.intellij.execution.ExecutionManager
 - *a:executePreparationTasks(com.intellij.execution.runners.ExecutionEnvironment,com.intellij.execution.configurations.RunProfileState):org.jetbrains.concurrency.Promise
 a:com.intellij.execution.Executor
 - *:isSupportedOnTarget():Z
+*:com.intellij.execution.RunConfigurationProducerSuppressor
+- *sf:Companion:com.intellij.execution.RunConfigurationProducerSuppressor$Companion
+- a:shouldSuppress(com.intellij.execution.actions.RunConfigurationProducer,com.intellij.openapi.project.Project):Z
+*f:com.intellij.execution.RunConfigurationProducerSuppressor$Companion
 *f:com.intellij.execution.configurations.JavaTargetDependentParameters
 - <init>():V
 - addParameter(java.util.function.Function):V
