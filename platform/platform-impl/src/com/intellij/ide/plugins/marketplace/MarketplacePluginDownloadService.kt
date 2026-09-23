@@ -29,7 +29,7 @@ import kotlin.io.path.moveTo
 import kotlin.io.path.outputStream
 
 @ApiStatus.Internal
-open class MarketplacePluginDownloadService {
+open class MarketplacePluginDownloadService(private val targetDir: Path = PathManager.getStartupScriptDir()) {
   companion object {
     private val LOG = logger<MarketplacePluginDownloadService>()
 
@@ -38,9 +38,6 @@ open class MarketplacePluginDownloadService {
     private const val HASH_FILENAME_SUFFIX = ".hash.json"
     private const val FILENAME = "filename="
     private const val MAXIMUM_DOWNLOAD_PERCENT = 0.65 // 100% = 1.0
-
-    @Throws(IOException::class)
-    private fun getPluginTempFile(): Path = createTempFile(PathManager.getStartupScriptDir().createDirectories(), "plugin_", "_download")
 
     @JvmStatic
     @Throws(IOException::class)
@@ -53,6 +50,10 @@ open class MarketplacePluginDownloadService {
   }
 
   private val objectMapper by lazy { ObjectMapper() }
+
+  @Throws(IOException::class)
+  private fun getPluginTempFile(): Path = createTempFile(targetDir.createDirectories(), "plugin_", "_download")
+
 
   @Throws(IOException::class)
   open fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator?): Path {
@@ -250,7 +251,7 @@ open class MarketplacePluginDownloadService {
 
   private fun getPrevPluginArchive(prevPlugin: Path): Path {
     val suffix = if (prevPlugin.endsWith(".jar")) "" else ".zip"
-    return PathManager.getStartupScriptDir().resolve("${prevPlugin.fileName}$suffix")
+    return targetDir.resolve("${prevPlugin.fileName}$suffix")
   }
 
   fun storeArchive(file: Path) {
