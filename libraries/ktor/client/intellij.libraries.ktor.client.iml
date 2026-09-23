@@ -9,31 +9,31 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="ktor-client-core" type="repository">
-        <properties maven-id="io.ktor:ktor-client-core-jvm:3.4.1">
+        <properties maven-id="io.ktor:ktor-client-core-jvm:3.4.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/3.4.1/ktor-client-core-jvm-3.4.1.jar">
-              <sha256sum>ec96ff9c9d6be26b630c6d7cdf1a9cccfc7c1d2c0e56eb4616021bb35ee1d008</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/3.4.2/ktor-client-core-jvm-3.4.2.jar">
+              <sha256sum>a254666b65984f7133190b4a0c1b810bb08b018ac7ed2c5cc3623edff82bc3c2</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/3.4.1/ktor-http-jvm-3.4.1.jar">
-              <sha256sum>c460cba4b48dc528c6cd03b0c6e36516fbd83c7eb84c8d1951c9273a2d3eb223</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/3.4.2/ktor-http-jvm-3.4.2.jar">
+              <sha256sum>b84550e8af91cfea996f8c0a1f85fb49114618544462bbbf62c9a066aacddd2d</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/3.4.1/ktor-http-cio-jvm-3.4.1.jar">
-              <sha256sum>fb0fc54a46d52c18c6c225b9f15ac8c57d25f717a31b405a95c369d2cc30b45e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/3.4.2/ktor-http-cio-jvm-3.4.2.jar">
+              <sha256sum>1ac95e1c44e3b7e438d89ec855c0846533efa62579dcd6780985fa9dfb6f169a</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/3.4.1/ktor-events-jvm-3.4.1.jar">
-              <sha256sum>23298cc59f787e5d4f0f61b297a5990197910b2d368a0cac20c05a26b97f2419</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/3.4.2/ktor-events-jvm-3.4.2.jar">
+              <sha256sum>22bb4b337f242d3b70d05fa523ce8fa0ab8ddccd33cd0fe020bcb9b8894dbf90</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/3.4.1/ktor-websocket-serialization-jvm-3.4.1.jar">
-              <sha256sum>c10c3bd39e69a1958434e332450ff5b70e9da3531a1818cdac958ee085a3fdac</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/3.4.2/ktor-websocket-serialization-jvm-3.4.2.jar">
+              <sha256sum>c5b55d92bd4f65f420b6e220eee93068faeb90e0ee9bd9eb9c878e1f851b60e5</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/3.4.1/ktor-serialization-jvm-3.4.1.jar">
-              <sha256sum>93d162051f614a7e922b4c11d2e7ba46c78c83f5809cea9fae1134d6d5d17286</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/3.4.2/ktor-serialization-jvm-3.4.2.jar">
+              <sha256sum>6da53b8e9e2e9d6110ecda076d768215acb8b384c7597dd7b44a5f9593867e9a</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3.4.1/ktor-websockets-jvm-3.4.1.jar">
-              <sha256sum>2236bda6b82df0bd4722e2e86a9cb623185d944c399123531d033dc3d4672dc8</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3.4.2/ktor-websockets-jvm-3.4.2.jar">
+              <sha256sum>d1f454306e2c1896cbb928afbb24732b2cb33218f09c03221322953f514f5750</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-sse-jvm/3.4.1/ktor-sse-jvm-3.4.1.jar">
-              <sha256sum>f2f3c39b38e6f112e450841661004f7f011f0bcf71c1169cc01957979944c17d</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-sse-jvm/3.4.2/ktor-sse-jvm-3.4.2.jar">
+              <sha256sum>9ce15e6ba4922ef994ecd7caa222507704a42b40baa601149ec727f60e666662</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -48,91 +48,91 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/3.4.1/ktor-client-core-jvm-3.4.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/3.4.1/ktor-http-jvm-3.4.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/3.4.1/ktor-http-cio-jvm-3.4.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/3.4.1/ktor-events-jvm-3.4.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/3.4.1/ktor-websocket-serialization-jvm-3.4.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/3.4.1/ktor-serialization-jvm-3.4.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3.4.1/ktor-websockets-jvm-3.4.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-sse-jvm/3.4.1/ktor-sse-jvm-3.4.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/3.4.2/ktor-client-core-jvm-3.4.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/3.4.2/ktor-http-jvm-3.4.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/3.4.2/ktor-http-cio-jvm-3.4.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/3.4.2/ktor-events-jvm-3.4.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/3.4.2/ktor-websocket-serialization-jvm-3.4.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/3.4.2/ktor-serialization-jvm-3.4.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3.4.2/ktor-websockets-jvm-3.4.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-sse-jvm/3.4.2/ktor-sse-jvm-3.4.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/3.4.1/ktor-client-core-jvm-3.4.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/3.4.1/ktor-http-jvm-3.4.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/3.4.1/ktor-http-cio-jvm-3.4.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/3.4.1/ktor-events-jvm-3.4.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/3.4.1/ktor-websocket-serialization-jvm-3.4.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/3.4.1/ktor-serialization-jvm-3.4.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3.4.1/ktor-websockets-jvm-3.4.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-sse-jvm/3.4.1/ktor-sse-jvm-3.4.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/3.4.2/ktor-client-core-jvm-3.4.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/3.4.2/ktor-http-jvm-3.4.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/3.4.2/ktor-http-cio-jvm-3.4.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/3.4.2/ktor-events-jvm-3.4.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/3.4.2/ktor-websocket-serialization-jvm-3.4.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/3.4.2/ktor-serialization-jvm-3.4.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3.4.2/ktor-websockets-jvm-3.4.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-sse-jvm/3.4.2/ktor-sse-jvm-3.4.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="ktor-client-java" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-java-jvm:3.4.1">
+        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-java-jvm:3.4.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/3.4.1/ktor-client-java-jvm-3.4.1.jar">
-              <sha256sum>4cec7db20b08dc1b75d56dd90fbb56144351dc5214d4b82da1fcf6ace7b1ac96</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/3.4.2/ktor-client-java-jvm-3.4.2.jar">
+              <sha256sum>8b837596a499bd813bcee24b3b79dc685e4311a3a8699bc9f4a25beb4449dfc4</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/3.4.1/ktor-client-java-jvm-3.4.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/3.4.2/ktor-client-java-jvm-3.4.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/3.4.1/ktor-client-java-jvm-3.4.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/3.4.2/ktor-client-java-jvm-3.4.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="ktor-client-encoding" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-encoding-jvm:3.4.1">
+        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-encoding-jvm:3.4.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-encoding-jvm/3.4.1/ktor-client-encoding-jvm-3.4.1.jar">
-              <sha256sum>f1c045ccedbc36b19ff43a2000cde9d444be443a2f45a00867cbc757b1f2325f</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-encoding-jvm/3.4.2/ktor-client-encoding-jvm-3.4.2.jar">
+              <sha256sum>0dfb83a16c3ff3d5f9824151bafb5e21298ae8eeaf46f3f2ebf467e83707e359</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-encoding-jvm/3.4.1/ktor-client-encoding-jvm-3.4.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-encoding-jvm/3.4.2/ktor-client-encoding-jvm-3.4.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-encoding-jvm/3.4.1/ktor-client-encoding-jvm-3.4.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-encoding-jvm/3.4.2/ktor-client-encoding-jvm-3.4.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="ktor-client-content-negotiation" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-content-negotiation-jvm:3.4.1">
+        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-content-negotiation-jvm:3.4.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-content-negotiation-jvm/3.4.1/ktor-client-content-negotiation-jvm-3.4.1.jar">
-              <sha256sum>6c6a27ea1690b06ab4beab2e187f9b0bec449efb76762688c2a4adf20ebf2f3e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-content-negotiation-jvm/3.4.2/ktor-client-content-negotiation-jvm-3.4.2.jar">
+              <sha256sum>93b0f677335acc71ecd455e971bca62838ee189d0778bac4a09432accc263269</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-content-negotiation-jvm/3.4.1/ktor-client-content-negotiation-jvm-3.4.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-content-negotiation-jvm/3.4.2/ktor-client-content-negotiation-jvm-3.4.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-content-negotiation-jvm/3.4.1/ktor-client-content-negotiation-jvm-3.4.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-content-negotiation-jvm/3.4.2/ktor-client-content-negotiation-jvm-3.4.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="ktor-serialization-kotlinx-json" type="repository">
-        <properties maven-id="io.ktor:ktor-serialization-kotlinx-json-jvm:3.4.1">
+        <properties maven-id="io.ktor:ktor-serialization-kotlinx-json-jvm:3.4.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-json-jvm/3.4.1/ktor-serialization-kotlinx-json-jvm-3.4.1.jar">
-              <sha256sum>9133a9241650cb4010b22cf3af30c0d8bfce6b972798790311774875d03966db</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-json-jvm/3.4.2/ktor-serialization-kotlinx-json-jvm-3.4.2.jar">
+              <sha256sum>a1b199cd332dc0f00233c84ec1b2c848708753442004ecbf67d3e5b412c4cdd9</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-jvm/3.4.1/ktor-serialization-kotlinx-jvm-3.4.1.jar">
-              <sha256sum>614e2ae6aee5565d0aaf555edb409d816d5b2e082ec217ac6f188594f9fb81e4</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-jvm/3.4.2/ktor-serialization-kotlinx-jvm-3.4.2.jar">
+              <sha256sum>5f76fc843303ccfab9ccce1cec9964b8392c450531d29b49e57365a64447cb7c</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -146,50 +146,50 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-json-jvm/3.4.1/ktor-serialization-kotlinx-json-jvm-3.4.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-jvm/3.4.1/ktor-serialization-kotlinx-jvm-3.4.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-json-jvm/3.4.2/ktor-serialization-kotlinx-json-jvm-3.4.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-jvm/3.4.2/ktor-serialization-kotlinx-jvm-3.4.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-json-jvm/3.4.1/ktor-serialization-kotlinx-json-jvm-3.4.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-jvm/3.4.1/ktor-serialization-kotlinx-jvm-3.4.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-json-jvm/3.4.2/ktor-serialization-kotlinx-json-jvm-3.4.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-jvm/3.4.2/ktor-serialization-kotlinx-jvm-3.4.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json.io" exported="" />
     <orderEntry type="module-library" exported="">
       <library name="ktor-client-auth" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-auth-jvm:3.4.1">
+        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-auth-jvm:3.4.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/3.4.1/ktor-client-auth-jvm-3.4.1.jar">
-              <sha256sum>b3bee0707cb099afb14d2075c7a6b6f2a66761b75275682beaef4cce0ecccf67</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/3.4.2/ktor-client-auth-jvm-3.4.2.jar">
+              <sha256sum>7c1443363a9a195e2320f7165ab2637c1ce3d22967ae8f916e7f3792668c2e4f</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/3.4.1/ktor-client-auth-jvm-3.4.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/3.4.2/ktor-client-auth-jvm-3.4.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/3.4.1/ktor-client-auth-jvm-3.4.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/3.4.2/ktor-client-auth-jvm-3.4.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="ktor-client-logging" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-logging-jvm:3.4.1">
+        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-logging-jvm:3.4.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/3.4.1/ktor-client-logging-jvm-3.4.1.jar">
-              <sha256sum>89a2bb53e58b99b0ffd8d3df2b2b11f083656e0fee3a6ec4431e5182c0850029</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/3.4.2/ktor-client-logging-jvm-3.4.2.jar">
+              <sha256sum>fd2169900cf97faa651db182bce908887545c39254e368675fc2a9cdc905575c</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/3.4.1/ktor-client-logging-jvm-3.4.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/3.4.2/ktor-client-logging-jvm-3.4.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/3.4.1/ktor-client-logging-jvm-3.4.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/3.4.2/ktor-client-logging-jvm-3.4.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -53,17 +53,17 @@
     <dependency>
       <groupId>io.ktor</groupId>
       <artifactId>ktor-client-java-jvm</artifactId>
-      <version>3.4.1</version>
+      <version>3.4.2</version>
     </dependency>
     <dependency>
       <groupId>io.ktor</groupId>
       <artifactId>ktor-client-encoding-jvm</artifactId>
-      <version>3.4.1</version>
+      <version>3.4.2</version>
     </dependency>
     <dependency>
       <groupId>io.ktor</groupId>
       <artifactId>ktor-client-auth-jvm</artifactId>
-      <version>3.4.1</version>
+      <version>3.4.2</version>
     </dependency>
     <dependency>
       <groupId>io.opentelemetry</groupId>

@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="ktor-server-content-negotiation" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-server-content-negotiation-jvm:3.4.1">
+        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-server-content-negotiation-jvm:3.4.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-server-content-negotiation-jvm/3.4.1/ktor-server-content-negotiation-jvm-3.4.1.jar">
-              <sha256sum>c58392aa2b481f08c79cb6fda2cc14990ac4a205bb98fca871abf3bcdcd86f77</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-server-content-negotiation-jvm/3.4.2/ktor-server-content-negotiation-jvm-3.4.2.jar">
+              <sha256sum>a375fb2ecae4d97e824f549c1c0ed47dfb383bfd98ed57111332198848933780</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-content-negotiation-jvm/3.4.1/ktor-server-content-negotiation-jvm-3.4.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-content-negotiation-jvm/3.4.2/ktor-server-content-negotiation-jvm-3.4.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-content-negotiation-jvm/3.4.1/ktor-server-content-negotiation-jvm-3.4.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-content-negotiation-jvm/3.4.2/ktor-server-content-negotiation-jvm-3.4.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

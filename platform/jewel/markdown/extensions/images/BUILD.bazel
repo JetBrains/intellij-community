@@ -56,7 +56,6 @@ jvm_library(
         "//platform/jewel/foundation",
         "//libraries/coil",
         "//libraries/compose-runtime-desktop",
-        "//libraries/ktor/client",
         "//libraries/compose-foundation-desktop",
     ],
 )
@@ -81,7 +80,6 @@ jvm_library(
         "//platform/jewel/foundation:foundation_test_lib",
         "//libraries/coil:coil_test_lib",
         "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
-        "//libraries/ktor/client:client_test_lib",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
     ],
 )
@@ -166,8 +164,6 @@ jvm_library(
         "//libraries/kotlinx/coroutines/test:test_test_lib",
         "//libraries/compose-foundation-desktop-junit",
         "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
-        "//libraries/ktor/client",
-        "//libraries/ktor/client:client_test_lib",
         "//libraries/compose-foundation-desktop",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
     ],

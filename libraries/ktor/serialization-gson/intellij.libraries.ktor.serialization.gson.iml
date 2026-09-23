@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="ktor-serialization-gson" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-serialization-gson-jvm:3.4.1">
+        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-serialization-gson-jvm:3.4.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-gson-jvm/3.4.1/ktor-serialization-gson-jvm-3.4.1.jar">
-              <sha256sum>95a6cbfd2e390c0419012efa245779b2ab19fd45f52ea44824b7ef50d0575a7d</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-gson-jvm/3.4.2/ktor-serialization-gson-jvm-3.4.2.jar">
+              <sha256sum>8b9b6ba5d237fcb339e9675f212a28fd00c1ee1aadabc6e6f09be05332b1ee06</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-gson-jvm/3.4.1/ktor-serialization-gson-jvm-3.4.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-gson-jvm/3.4.2/ktor-serialization-gson-jvm-3.4.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-gson-jvm/3.4.1/ktor-serialization-gson-jvm-3.4.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-gson-jvm/3.4.2/ktor-serialization-gson-jvm-3.4.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

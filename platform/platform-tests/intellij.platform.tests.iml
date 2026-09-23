@@ -138,7 +138,9 @@
     <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.platform.buildData" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="ktor-server-cio" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.server.cio" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.client" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.network.tls" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.rhino" scope="TEST" />

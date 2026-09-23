@@ -956,10 +956,6 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     .apache("https://github.com/ktorio/ktor/blob/main/LICENSE")
     .suppliedByOrganizations(Suppliers.JETBRAINS),
 
-  LibraryLicense(libraryName = "ktor-client-cio", url = "https://github.com/ktorio/ktor")
-    .apache("https://github.com/ktorio/ktor/blob/main/LICENSE")
-    .suppliedByOrganizations(Suppliers.JETBRAINS),
-
   LibraryLicense(libraryName = "ktor-client-cio-internal", url = "https://github.com/ktorio/ktor")
     .apache("https://github.com/ktorio/ktor/blob/main/LICENSE")
     .suppliedByOrganizations(Suppliers.JETBRAINS),
