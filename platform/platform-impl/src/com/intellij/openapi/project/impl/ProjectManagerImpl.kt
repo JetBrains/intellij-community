@@ -99,6 +99,7 @@ import com.intellij.openapi.vfs.impl.ZipHandler
 import com.intellij.openapi.vfs.impl.jar.TimedZipHandler
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.ex.isBackgroundActivitiesSuppressed
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame

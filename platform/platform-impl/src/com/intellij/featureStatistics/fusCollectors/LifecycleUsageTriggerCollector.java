@@ -29,6 +29,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
 
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 81);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 82);
 
   private static final AtomicInteger MAX_SIMULTANEOUS_PROJECTS = new AtomicInteger(0);
 
@@ -62,10 +63,16 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     EventFields.Enum("session_type", SessionType.class);
   private static final VarargEventId IDE_CLOSE = LIFECYCLE.registerVarargEvent("ide.close", restartField, sessionTypeField);
 
-  private static final EventId2<Long, Boolean> PROJECT_OPENING_FINISHED =
-    LIFECYCLE.registerEvent("project.opening.finished", EventFields.Long("duration_ms"), EventFields.Boolean("project_tab"));
+  private static final BooleanEventField isWelcomeScreenDummyProjectField =
+    EventFields.Boolean("is_non_modal_welcome_screen_project",
+                        "Flag is used to show if current project is dummy welcome screen project and not a real user project");
 
-  private static final VarargEventId PROJECT_OPENED = LIFECYCLE.registerVarargEvent("project.opened", EventFields.Projectless);
+  private static final EventId3<Long, Boolean, Boolean> PROJECT_OPENING_FINISHED =
+    LIFECYCLE.registerEvent("project.opening.finished", EventFields.Long("duration_ms"), EventFields.Boolean("project_tab"),
+                            isWelcomeScreenDummyProjectField);
+
+  private static final VarargEventId PROJECT_OPENED =
+    LIFECYCLE.registerVarargEvent("project.opened", EventFields.Projectless, isWelcomeScreenDummyProjectField);
 
   private static final EventId1<Integer> PROJECT_MAX_SIMULTANEOUS =
     LIFECYCLE.registerEvent("project.max.simultaneous",
@@ -177,12 +184,13 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   }
 
   public static void onProjectOpenFinished(@NotNull Project project, long time, boolean isTab) {
-    PROJECT_OPENING_FINISHED.log(project, time, isTab);
+    PROJECT_OPENING_FINISHED.log(project, time, isTab, WelcomeScreenProjectProvider.isWelcomeScreenProject(project));
   }
 
   public static void onProjectOpened(@NotNull Project project) {
-    var data = new ArrayList<EventPair<?>>(1);
+    var data = new ArrayList<EventPair<?>>(2);
     ContainerUtil.addIfNotNull(data, ProjectlessData.forProject(project));
+    data.add(isWelcomeScreenDummyProjectField.with(WelcomeScreenProjectProvider.isWelcomeScreenProject(project)));
     PROJECT_OPENED.log(project, data);
     int current = ProjectManager.getInstance().getOpenProjects().length;
     MAX_SIMULTANEOUS_PROJECTS.updateAndGet(prev -> Math.max(prev, current));
