@@ -8,13 +8,20 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
-      <library name="kotlinc.kotlin-script-runtime">
+      <library name="kotlinc.kotlin-script-runtime" type="repository">
+        <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:2.5.0-dev-8355">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.5.0-dev-8355/kotlin-script-runtime-2.5.0-dev-8355.jar">
+              <sha256sum>878cd8c94dd830b092c7bc51cb71e420fa08bb2f804c7f41fcf25ea340eb69e5</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-script-runtime/2.5.255-dev-255/kotlin-script-runtime-2.5.255-dev-255.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.5.0-dev-8355/kotlin-script-runtime-2.5.0-dev-8355.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-script-runtime/2.5.255-dev-255/kotlin-script-runtime-2.5.255-dev-255-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.5.0-dev-8355/kotlin-script-runtime-2.5.0-dev-8355-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -1,11 +1,18 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-jps-plugin-classpath-bootstrap-for-tests">
+  <library name="kotlinc.kotlin-jps-plugin-classpath-bootstrap-for-tests" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-classpath:2.5.0-dev-8355">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.5.0-dev-8355/kotlin-jps-plugin-classpath-2.5.0-dev-8355.jar">
+          <sha256sum>62a8b4654afbc084e62c2313a0594c562e8cafea21f4881b8d29694fffb0033a</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.5.255-dev-255/kotlin-jps-plugin-classpath-2.5.255-dev-255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.5.0-dev-8355/kotlin-jps-plugin-classpath-2.5.0-dev-8355.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.5.255-dev-255/kotlin-jps-plugin-classpath-2.5.255-dev-255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.5.0-dev-8355/kotlin-jps-plugin-classpath-2.5.0-dev-8355-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
