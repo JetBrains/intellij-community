@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NonNls;
@@ -81,6 +81,7 @@ public interface CommonClassNames {
   String JAVA_IO_FILE_WRITER = "java.io.FileWriter";
   String JAVA_IO_PRINT_STREAM = "java.io.PrintStream";
   String JAVA_IO_PRINT_WRITER = "java.io.PrintWriter";
+  String JAVA_IO_WRITER = "java.io.Writer";
 
   String JAVA_LANG_STRING = "java.lang.String";
   @NonNls String JAVA_LANG_STRING_SHORT = "String";

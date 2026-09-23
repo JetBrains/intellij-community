@@ -83,8 +83,11 @@ import java.util.function.Function;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.psi.CommonClassNames.JAVA_IO_BYTE_ARRAY_OUTPUT_STREAM;
+import static com.intellij.psi.CommonClassNames.JAVA_IO_PRINT_STREAM;
+import static com.intellij.psi.CommonClassNames.JAVA_IO_WRITER;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHARACTER;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHAR_SEQUENCE;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING_BUFFER;
@@ -113,16 +116,15 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
   private static final CallMatcher STRING_INTERN = exactInstanceCall(JAVA_LANG_STRING, "intern").parameterCount(0);
   private static final CallMatcher STRING_LENGTH = exactInstanceCall(JAVA_LANG_STRING, HardcodedMethodConstants.LENGTH).parameterCount(0);
   private static final CallMatcher STRING_SUBSTRING_ONE_ARG = exactInstanceCall(JAVA_LANG_STRING, "substring").parameterTypes("int");
-  private static final CallMatcher STRING_BUILDER_SUBSTRING_ONE_ARG = exactInstanceCall(JAVA_LANG_ABSTRACT_STRING_BUILDER, "substring").parameterTypes("int");
+  private static final CallMatcher STRING_BUILDER_SUBSTRING_ONE_ARG = instanceCall(JAVA_LANG_ABSTRACT_STRING_BUILDER, "substring").parameterTypes("int");
   private static final CallMatcher STRING_SUBSTRING_TWO_ARG = exactInstanceCall(JAVA_LANG_STRING, "substring").parameterTypes("int", "int");
-  private static final CallMatcher STRING_BUILDER_SUBSTRING_TWO_ARG = exactInstanceCall(JAVA_LANG_ABSTRACT_STRING_BUILDER, "substring").parameterTypes("int", "int");
+  private static final CallMatcher STRING_BUILDER_SUBSTRING_TWO_ARG = instanceCall(JAVA_LANG_ABSTRACT_STRING_BUILDER, "substring").parameterTypes("int", "int");
   private static final CallMatcher STRING_SUBSTRING = anyOf(STRING_SUBSTRING_ONE_ARG, STRING_SUBSTRING_TWO_ARG);
   private static final CallMatcher SUBSTRING = anyOf(STRING_BUILDER_SUBSTRING_ONE_ARG, STRING_BUILDER_SUBSTRING_TWO_ARG,
                                                      STRING_SUBSTRING_ONE_ARG, STRING_SUBSTRING_TWO_ARG);
-  private static final CallMatcher STRING_BUILDER_APPEND =
-    instanceCall(JAVA_LANG_ABSTRACT_STRING_BUILDER, "append").parameterTypes(JAVA_LANG_STRING);
-  private static final CallMatcher SINGLE_ARG_STRING_BUILDER_APPEND =
-    instanceCall(JAVA_LANG_ABSTRACT_STRING_BUILDER, "append").parameterCount(1);
+  private static final CallMatcher STRING_BUILDER_APPEND = instanceCall(JAVA_LANG_ABSTRACT_STRING_BUILDER, "append").parameterTypes(JAVA_LANG_STRING);
+  private static final CallMatcher WRITER_APPEND = instanceCall(JAVA_IO_WRITER, "append").parameterTypes(JAVA_LANG_CHAR_SEQUENCE);
+  private static final CallMatcher WRITER_WRITE = instanceCall(JAVA_IO_WRITER, "write").parameterTypes(JAVA_LANG_STRING);
   private static final CallMatcher STRING_BUILDER_TO_STRING = instanceCall(JAVA_LANG_ABSTRACT_STRING_BUILDER, TO_STRING).parameterCount(0);
   private static final CallMatcher PRINTSTREAM_PRINTLN = instanceCall("java.io.PrintStream", "println")
     .parameterTypes(JAVA_LANG_STRING);
@@ -167,8 +169,9 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
     private final CallMapper<ProblemDescriptor> myProcessors = new CallMapper<ProblemDescriptor>()
       .register(STRING_TO_STRING, call -> getProblem(call, "inspection.redundant.string.call.message"))
       .register(SUBSTRING, this::getSubstringProblem)
-      .register(SUBSTRING, this::getAppendSubstringProblem)
+      .register(SUBSTRING, this::getRedundantSubstringProblem)
       .register(STRING_BUILDER_APPEND, this::getAppendProblem)
+      .register(WRITER_APPEND, this::getAppendProblem)
       .register(STRING_BUILDER_TO_STRING, this::getStringBuilderToStringProblem)
       .register(STRING_INTERN, this::getInternProblem)
       .register(PRINTSTREAM_PRINTLN, call ->
@@ -621,7 +624,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
       return ExpressionUtils.isLiteral(PsiUtil.skipParenthesizedExprDown(args[0]), "") ? args[0] : null;
     }
 
-    private @Nullable ProblemDescriptor getAppendSubstringProblem(PsiMethodCallExpression call) {
+    private @Nullable ProblemDescriptor getRedundantSubstringProblem(PsiMethodCallExpression call) {
       PsiExpression[] args = call.getArgumentList().getExpressions();
       PsiExpression stringExpression = call.getMethodExpression().getQualifierExpression();
       if (args.length == 1) {
@@ -639,7 +642,9 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
       }
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
       if (parent instanceof PsiExpressionList list && list.getExpressionCount() == 1 &&
-          parent.getParent() instanceof PsiMethodCallExpression parentCall && SINGLE_ARG_STRING_BUILDER_APPEND.test(parentCall)) {
+          parent.getParent() instanceof PsiMethodCallExpression parentCall &&
+          (STRING_BUILDER_APPEND.test(parentCall) || WRITER_APPEND.test(parentCall) ||
+           WRITER_WRITE.test(parentCall) && ExpressionUtils.hasStringType(stringExpression))) {
         PsiElement nameElement = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
         return myManager.createProblemDescriptor(nameElement,
                                                  InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
@@ -717,7 +722,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
       final boolean diffByOne = ExpressionUtils.isDifference(args[0], args[1], one);
       if (!diffByOne) return false;
 
-      return !ExpressionUtils.isConversionToStringNecessary(call, false);
+      return !ExpressionUtils.isConversionToStringNecessary(call, false, PsiTypes.charType());
     }
 
     private static boolean isLengthOf(PsiExpression stringLengthCandidate, PsiExpression stringExpression) {

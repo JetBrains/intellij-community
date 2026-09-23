@@ -1,4 +1,5 @@
 import java.io.ByteArrayOutputStream;
+import java.io.StringWriter;
 
 class Substring {
 
@@ -19,7 +20,13 @@ class Substring {
     if (s.substring(0, 1).equals(1)) {
 
     }
-
+    StringWriter stringWriter = new StringWriter();
+    stringWriter.<warning descr="Call to 'append()' is redundant">append</warning>("")
+      .append("morsel".<warning descr="'substring()' call can be replaced with 'charAt()'">substring</warning>(0, 1))
+      .append("bite".<warning descr="Call to 'substring()' is redundant">substring</warning>(2, 4))
+      .write("tidbit".<warning descr="Call to 'substring()' is redundant">substring</warning>(4, 6));
+    stringWriter.write("nibble".<warning descr="'substring()' call can be replaced with 'charAt()'">substring</warning>(2, 3));
+    stringWriter.write(new StringBuilder("nugget").substring(1, 3));
 
   }
 

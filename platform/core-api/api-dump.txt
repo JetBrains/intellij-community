@@ -2275,6 +2275,7 @@ com.intellij.psi.CommonClassNames
 - sf:JAVA_IO_PRINT_WRITER:java.lang.String
 - sf:JAVA_IO_SERIAL:java.lang.String
 - sf:JAVA_IO_SERIALIZABLE:java.lang.String
+- sf:JAVA_IO_WRITER:java.lang.String
 - sf:JAVA_LANG_ABSTRACT_STRING_BUILDER:java.lang.String
 - sf:JAVA_LANG_ANNOTATION_ANNOTATION:java.lang.String
 - sf:JAVA_LANG_ANNOTATION_INHERITED:java.lang.String
