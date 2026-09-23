@@ -92,11 +92,12 @@ internal class GithubApiRequestExecutorTest(private val client: TestedClient, pr
 
   @Test
   fun `the registry key and the token select the implementation`() {
-    assertInstanceOf(when {
-                       client == TestedClient.JDK_11_HTTP -> GithubApiHelperRequestExecutor::class.java
-                       auth == TestedAuth.TOKEN_AUTH -> GithubApiRequestExecutor.WithTokenAuth::class.java
-                       else -> GithubApiRequestExecutor.NoAuth::class.java
-                     }, executor)
+    val expectedClass: Class<out GithubApiRequestExecutor> = when {
+      client == TestedClient.JDK_11_HTTP -> GithubApiHelperRequestExecutor::class.java
+      auth == TestedAuth.TOKEN_AUTH -> GithubApiRequestExecutor.WithTokenAuth::class.java
+      else -> GithubApiRequestExecutor.NoAuth::class.java
+    }
+    assertInstanceOf(expectedClass, executor)
   }
 
   @Test
