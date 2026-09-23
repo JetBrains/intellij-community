@@ -43,6 +43,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -101,6 +102,7 @@ public final class MoveClassesOrPackagesImpl {
    * @param targetElement destination directory or package.
    * @return array of adjusted elements or error that can be displayed to the user.
    */
+  @ApiStatus.Internal
   public static @NotNull ElementsOrError getTargetsForMove(final PsiElement @NotNull [] elements,
                                                            final @Nullable PsiElement targetElement) {
     final PsiElement[] psiElements = new PsiElement[elements.length];
@@ -421,6 +423,7 @@ public final class MoveClassesOrPackagesImpl {
   /**
    * Represents the result of adjusting move candidates for move.
    */
+  @ApiStatus.Internal
   public sealed interface ElementsOrError
     permits ElementsOrError.Elements, ElementsOrError.Error {
 
