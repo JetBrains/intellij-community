@@ -10,6 +10,7 @@ buildifier(
     name = "format",
     exclude_patterns = [
         "./out/**",
+        "./.bazelbsp/**",
         "./**/~BUILD.bazel",
     ],
     mode = "fix",
@@ -20,6 +21,7 @@ buildifier(
     name = "format.check",
     exclude_patterns = [
         "./out/**",
+        "./.bazelbsp/**",
         "./**/~BUILD.bazel",
     ],
     mode = "check",
