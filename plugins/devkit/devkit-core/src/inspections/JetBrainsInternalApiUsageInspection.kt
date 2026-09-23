@@ -8,6 +8,9 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.UnstableApiUsageInspectionBase
 import com.intellij.codeInspection.UnstableApiUsageMessageProvider
 import com.intellij.codeInspection.deprecation.DeprecationInspection
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -23,6 +26,19 @@ import org.jetbrains.idea.devkit.DevKitBundle
  * The IntelliJ Platform project declares the internal API itself, so the inspection reports nothing there.
  */
 internal class JetBrainsInternalApiUsageInspection : UnstableApiUsageInspectionBase() {
+
+  @JvmField
+  var myIgnoreApiDeclaredInThisProject: Boolean = true
+
+  override val ignoreApiDeclaredInThisProject: Boolean
+    get() = myIgnoreApiDeclaredInThisProject
+
+  override fun getOptionsPane(): OptPane {
+    return pane(
+      checkbox("myIgnoreApiDeclaredInThisProject",
+               DevKitBundle.message("devkit.internal.api.usage.ignore.declared.inside.this.project"))
+    )
+  }
 
   override val annotationsToCheck: List<String>
     get() = StaticAnalysisAnnotationManager.getInstance().knownInternalApiAnnotations.asList()
@@ -89,7 +105,7 @@ private object JetBrainsInternalApiMessageProvider : UnstableApiUsageMessageProv
 
   override fun buildMessageUnstableTypeIsUsedInSignatureOfReferencedApi(
     referencedApi: PsiModifierListOwner,
-    annotatedTypeUsedInSignature: AnnotatedContainingDeclaration
+    annotatedTypeUsedInSignature: AnnotatedContainingDeclaration,
   ): String = DevKitBundle.message(
     "inspections.jetbrains.internal.api.usage.internal.type.is.used.in.signature.of.referenced.api",
     DeprecationInspection.getPresentableName(referencedApi),

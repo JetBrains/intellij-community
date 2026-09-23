@@ -9,7 +9,7 @@ import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 
-@TestDataPath("\$CONTENT_ROOT/testData/inspections/jetBrainsExtensionsUsage")
+@TestDataPath($$"$CONTENT_ROOT/testData/inspections/jetBrainsExtensionsUsage")
 internal class ExtensionsUsageInspectionTest : JavaCodeInsightFixtureTestCase() {
 
   override fun getBasePath(): String = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/jetBrainsExtensionsUsage"
@@ -83,18 +83,18 @@ internal class ExtensionsUsageInspectionTest : JavaCodeInsightFixtureTestCase() 
   }
 
   fun testInternalExtensionsUsage() {
-    myFixture.enableInspections(JetBrainsInternalExtensionsUsageInspection())
+    myFixture.enableInspections(JetBrainsInternalExtensionsUsageInspection().apply { ignoreApiDeclaredInThisProject = false })
     myFixture.testHighlighting(true, false, true, "internalExtensionsUsage.xml")
   }
 
   fun testUnstableExtensionsUsage() {
-    myFixture.enableInspections(UnstableExtensionsUsageInspection())
+    myFixture.enableInspections(UnstableExtensionsUsageInspection().apply { ignoreApiDeclaredInThisProject = false })
     myFixture.testHighlighting(true, false, true, "unstableExtensionsUsage.xml")
   }
 
   fun testUnstableExtensionsUsageDeclaredInThisProject() {
     val inspection = UnstableExtensionsUsageInspection()
-    inspection.ignoreUnstableApiDeclaredInThisProject = true
+    inspection.ignoreApiDeclaredInThisProject = true
     myFixture.enableInspections(inspection)
     myFixture.testHighlighting(true, false, true, "unstableExtensionsUsageDeclaredInThisProject.xml")
   }

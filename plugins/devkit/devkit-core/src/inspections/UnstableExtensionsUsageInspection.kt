@@ -1,14 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
-import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.IntelliJProjectUtil.isIntelliJPlatformProject
-import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiField
 import com.intellij.psi.search.GlobalSearchScope.projectScope
 import com.intellij.util.xml.DomElement
@@ -28,21 +24,11 @@ import org.jetbrains.idea.devkit.dom.ExtensionPoint
 internal class UnstableExtensionsUsageInspection : DevKitPluginXmlInspectionBase() {
 
   @Suppress("MemberVisibilityCanBePrivate")
-  var ignoreUnstableApiDeclaredInThisProject: Boolean = false
-
-  override fun buildVisitor(
-    holder: ProblemsHolder,
-    isOnTheFly: Boolean,
-    session: LocalInspectionToolSession,
-  ): PsiElementVisitor {
-    if (isIntelliJPlatformProject(holder.project)) return PsiElementVisitor.EMPTY_VISITOR
-
-    return super.buildVisitor(holder, isOnTheFly, session)
-  }
+  var ignoreApiDeclaredInThisProject: Boolean = true
 
   override fun getOptionsPane(): OptPane {
     return pane(
-      checkbox("ignoreUnstableApiDeclaredInThisProject",
+      checkbox("ignoreApiDeclaredInThisProject",
                DevKitBundle.message("devkit.unstable.api.usage.ignore.declared.inside.this.project"))
     )
   }
@@ -52,8 +38,8 @@ internal class UnstableExtensionsUsageInspection : DevKitPluginXmlInspectionBase
     if (!isAllowed(holder)) return
 
     val extensionPoint = element.extensionPoint ?: return
-    if (extensionPoint.extensionPointStatus.kind == ExtensionPoint.Status.Kind.EXPERIMENTAL_API &&
-        !isIgnored(extensionPoint, element.module)) {
+    if (extensionPoint.extensionPointStatus.kind == ExtensionPoint.Status.Kind.EXPERIMENTAL_API
+        && !isIgnored(extensionPoint, element.module)) {
       highlightExperimental(element, holder)
     }
 
@@ -70,7 +56,7 @@ internal class UnstableExtensionsUsageInspection : DevKitPluginXmlInspectionBase
   }
 
   private fun isIgnored(extensionPoint: ExtensionPoint, module: Module?): Boolean {
-    if (!ignoreUnstableApiDeclaredInThisProject || module == null) return false
+    if (!ignoreApiDeclaredInThisProject || module == null) return false
 
     val file = extensionPoint.effectiveClass?.containingFile?.virtualFile ?: return false
     return projectScope(module.project).contains(file)
