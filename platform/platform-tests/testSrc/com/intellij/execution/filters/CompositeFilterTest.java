@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.execution.impl.InlayProvider;
 import com.intellij.mock.MockDumbService;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -71,6 +72,25 @@ public class CompositeFilterTest extends LightPlatformTestCase {
     }
   }
 
+  public void testLoneResultKeepsItsClass() {
+    InlayResult inlayResult = new InlayResult();
+    myCompositeFilter.addFilter((_, _) -> inlayResult);
+
+    Assert.assertSame(inlayResult, applyFilter());
+  }
+
+  public void testMergedResultKeepsItemClass() {
+    InlayResult inlayResult = new InlayResult();
+    inlayResult.setNextAction(Filter.NextAction.CONTINUE_FILTERING);
+    myCompositeFilter.addFilter((_, _) -> inlayResult);
+    myCompositeFilter.addFilter(returnResultFilter());
+
+    Filter.Result result = applyFilter();
+    notNullResultOfSize(result, 2);
+    Assert.assertNotSame(inlayResult, result);
+    Assert.assertSame(inlayResult, result.getResultItems().getFirst());
+  }
+
   private Filter.Result applyFilter() {
     return myCompositeFilter.applyFilter("foo\n", 10);
   }
@@ -114,5 +134,11 @@ public class CompositeFilterTest extends LightPlatformTestCase {
 
   private static Filter.Result createFilterResult() {
     return new Filter.Result(1, 1, null, null);
+  }
+
+  private static final class InlayResult extends Filter.Result implements InlayProvider {
+    private InlayResult() {
+      super(1, 1, null, null);
+    }
   }
 }
