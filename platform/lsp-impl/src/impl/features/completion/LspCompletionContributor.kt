@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProcessEx
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.FrontendCompletionContributor
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -23,7 +24,7 @@ import org.eclipse.lsp4j.Range
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class LspCompletionContributor : CompletionContributor(), DumbAware {
+class LspCompletionContributor : CompletionContributor(), DumbAware, FrontendCompletionContributor {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val psiFile = parameters.originalFile
     val project = psiFile.getProject()
