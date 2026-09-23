@@ -565,6 +565,11 @@ Untested: No focused test verifies Shift-selection or Select All across sections
     `unified error spans the action column`
   )
 
+- A section error must start at the same left position as a plugin icon.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt (
+    `section failure renders a scoped retry action`
+  )
+
 - Plugin details must use single-row tabs and offer an overflow menu when the tabs do not fit.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
     `details page spacing is enabled only for the unified page`

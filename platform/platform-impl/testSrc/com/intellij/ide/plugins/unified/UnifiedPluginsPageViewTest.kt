@@ -203,7 +203,7 @@ internal class UnifiedPluginsPageViewTest {
 
     val errorLabel = componentsOfType(view.component, JBLabel::class.java).single { it.text == "Marketplace unavailable" }
     val errorPanel = errorLabel.parent as JComponent
-    assertThat(errorPanel.border.getBorderInsets(errorPanel)).isEqualTo(JBUI.insets(10))
+    assertThat(errorPanel.border.getBorderInsets(errorPanel)).isEqualTo(JBUI.insets(10, 16, 10, 10))
     val retry = componentsOfType(view.component, ActionLink::class.java)
       .single { it.text == IdeBundle.message("plugin.manager.refresh") }
     retry.doClick()

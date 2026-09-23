@@ -566,7 +566,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     private val errorPanel = JPanel(HorizontalLayout(JBUI.scale(ERROR_RETRY_GAP))).apply {
       isOpaque = false
       isVisible = false
-      border = JBUI.Borders.empty(ERROR_INSET)
+      border = JBUI.Borders.empty(ERROR_INSET, ERROR_LEFT_INSET, ERROR_INSET, ERROR_INSET)
       add(errorLabel)
     }
     private val list = JBList(model)
@@ -1342,6 +1342,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
   private companion object {
     const val DEFAULT_SPLIT_PROPORTION: Float = 0.45f
     const val ERROR_INSET: Int = 10
+    const val ERROR_LEFT_INSET: Int = 16
     const val ERROR_RETRY_GAP: Int = 8
     const val PLUGIN_LIST_MIN_WIDTH: Int = 280
     const val REALIZATION_CHUNK_SIZE: Int = 100
