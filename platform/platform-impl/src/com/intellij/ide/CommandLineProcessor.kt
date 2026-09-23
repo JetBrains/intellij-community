@@ -11,7 +11,6 @@ import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.lightEdit.isClaimedByWelcomeScreenProject
-import com.intellij.ide.trustedProjects.TrustedFiles
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.idea.ApplicationStartArguments
 import com.intellij.notification.Notification

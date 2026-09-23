@@ -27,7 +27,7 @@ import javax.swing.JComponent
 import kotlin.io.path.pathString
 
 /**
- * Asks the user to trust a single file opened in the safe mode (see [com.intellij.ide.trustedProjects.TrustedFiles]).
+ * Asks the user to trust a single file opened in the safe mode (see [com.intellij.ide.TrustedFiles]).
  *
  * The dialog offers to trust the file, or the whole parent folder of the file, or to stay in the safe mode.
  * There is no cancel button: an escape or a close counts as "stay in the safe mode".

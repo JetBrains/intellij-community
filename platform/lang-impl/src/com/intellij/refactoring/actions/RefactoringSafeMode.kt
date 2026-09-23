@@ -2,7 +2,7 @@
 package com.intellij.refactoring.actions
 
 import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.ide.trustedProjects.TrustedFiles
+import com.intellij.ide.TrustedFiles
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext

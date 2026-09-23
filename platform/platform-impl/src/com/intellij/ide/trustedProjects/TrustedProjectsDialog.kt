@@ -157,7 +157,7 @@ object TrustedProjectsDialog {
 
   /**
    * Shows a warning confirmation for trusting the location of a single file opened in the safe mode
-   * inside [hostProject]'s frame (see [TrustedFiles]) and marks [filePath] trusted if the user confirms.
+   * inside [hostProject]'s frame (see [com.intellij.ide.TrustedFiles]) and marks [filePath] trusted if the user confirms.
    *
    * @return `true` if the file became trusted
    */

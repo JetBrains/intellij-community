@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema;
 
-import com.intellij.ide.trustedProjects.TrustedFiles;
+import com.intellij.ide.TrustedFiles;
 import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.registry.Registry;

@@ -2,7 +2,7 @@
 package com.intellij.openapi.editor
 
 import com.intellij.ide.dnd.FileCopyPasteUtil
-import com.intellij.ide.trustedProjects.TrustedFiles
+import com.intellij.ide.TrustedFiles
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction

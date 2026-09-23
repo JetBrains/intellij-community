@@ -2,6 +2,7 @@
 package com.intellij.ide.trustedProjects
 
 import com.intellij.ide.CommandLineProcessor
+import com.intellij.ide.TrustedFiles
 import com.intellij.ide.impl.TrustedPaths
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess

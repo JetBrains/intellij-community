@@ -450,6 +450,8 @@
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <iw.actionProvider implementation="com.intellij.openapi.editor.impl.multiverse.CodeInsightContextSwitcherProvider"/>
+    <applicationService serviceInterface="com.intellij.ide.TrustedFilesService"
+                        serviceImplementation="com.intellij.ide.trustedProjects.TrustedFilesServiceImpl"/>
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.UpdateStrategyCustomization" open="true"/>
     <applicationService serviceInterface="com.intellij.toolWindow.DefaultToolWindowLayoutProvider" open="true"
                         serviceImplementation="com.intellij.toolWindow.IntellijPlatformDefaultToolWindowLayoutProvider"/>

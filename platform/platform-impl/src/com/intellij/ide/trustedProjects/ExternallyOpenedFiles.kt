@@ -12,7 +12,7 @@ import java.nio.file.Path
 /**
  * Remembers the files the user opened from an external source: the system file manager,
  * the command line, a protocol URI, or drag and drop. Only such files are safe-mode
- * candidates (see [TrustedFiles]); an IDE-internal file (a scratch, a console, the custom
+ * candidates (see [com.intellij.ide.TrustedFiles]); an IDE-internal file (a scratch, a console, the custom
  * VM options file) is never marked and stays trusted.
  *
  * The state is application-level, so a marked file stays a safe-mode candidate after

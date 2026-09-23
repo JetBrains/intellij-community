@@ -32,7 +32,7 @@ import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.icons.AllIcons.Actions.AiIntentionBulb
 import com.intellij.icons.AllIcons.Actions.IntentionBulbGrey
 import com.intellij.icons.AllIcons.Actions.Lightning
-import com.intellij.ide.trustedProjects.TrustedFiles
+import com.intellij.ide.TrustedFiles
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.idea.AppMode
 import com.intellij.injected.editor.DocumentWindow

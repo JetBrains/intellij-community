@@ -1,3 +1,6 @@
+*f:com.intellij.ide.TrustedFiles
+- sf:INSTANCE:com.intellij.ide.TrustedFiles
+- sf:isTrusted(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
 com.intellij.ide.dnd.DnDEvent$DropTargetHighlightingType
 - *sf:BOTTOM:I
 *f:com.intellij.ide.settings.SettingsComponentDescriptor

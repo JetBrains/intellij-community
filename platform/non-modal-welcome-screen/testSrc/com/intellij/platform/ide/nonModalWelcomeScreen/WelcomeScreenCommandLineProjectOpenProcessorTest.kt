@@ -2,7 +2,7 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen
 
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.trustedProjects.TrustedFiles
+import com.intellij.ide.TrustedFiles
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.ExtensionPointName

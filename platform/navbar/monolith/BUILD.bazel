@@ -32,6 +32,7 @@ jvm_library(
         "//platform/navbar/frontend",
         "//platform/platform-api:ide",
         "//platform/platform-impl:ide-impl",
+        "//platform/ide-core",
     ],
 )
 
@@ -54,6 +55,7 @@ jvm_library(
         "//platform/navbar/frontend:frontend_test_lib",
         "//platform/platform-api:ide_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.navbar.monolith` end

@@ -3,7 +3,7 @@ package com.intellij.ide.browsers
 
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.trustedProjects.TrustedFiles
+import com.intellij.ide.TrustedFiles
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction

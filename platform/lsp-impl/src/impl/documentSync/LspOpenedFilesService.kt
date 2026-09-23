@@ -1,6 +1,6 @@
 package com.intellij.platform.lsp.impl.documentSync
 
-import com.intellij.ide.trustedProjects.TrustedFiles
+import com.intellij.ide.TrustedFiles
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction

@@ -4,7 +4,7 @@ package com.intellij.sh.backend.run;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.LazyRunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.ide.trustedProjects.TrustedFiles;
+import com.intellij.ide.TrustedFiles;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;

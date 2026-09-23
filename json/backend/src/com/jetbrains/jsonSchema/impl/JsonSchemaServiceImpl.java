@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.ide.trustedProjects.TrustedFiles;
+import com.intellij.ide.TrustedFiles;
 import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.ide.trustedProjects.TrustedProjectsListener;
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator;

@@ -11,7 +11,7 @@ import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.impl.toOpenProjectTask
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.isClaimedByWelcomeScreenProject
-import com.intellij.ide.trustedProjects.TrustedFiles
+import com.intellij.ide.TrustedFiles
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT

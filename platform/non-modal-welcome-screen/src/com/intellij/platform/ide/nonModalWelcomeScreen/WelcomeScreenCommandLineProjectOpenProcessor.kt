@@ -5,7 +5,7 @@ import com.intellij.configurationStore.ProjectStorePathManager
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.projectView.ProjectView
-import com.intellij.ide.trustedProjects.TrustedFiles
+import com.intellij.ide.TrustedFiles
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager

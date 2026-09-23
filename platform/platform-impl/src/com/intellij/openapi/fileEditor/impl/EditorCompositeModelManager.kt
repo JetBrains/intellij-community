@@ -5,7 +5,7 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.ide.trustedProjects.TrustedFiles
+import com.intellij.ide.TrustedFiles
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement

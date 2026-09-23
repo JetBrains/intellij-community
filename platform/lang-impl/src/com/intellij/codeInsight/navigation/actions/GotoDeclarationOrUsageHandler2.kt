@@ -13,7 +13,7 @@ import com.intellij.codeInsight.navigation.impl.gotoDeclarationOrUsages
 import com.intellij.codeInsight.navigation.impl.toGTDUActionData
 import com.intellij.find.FindUsagesSettings
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.trustedProjects.TrustedFiles
+import com.intellij.ide.TrustedFiles
 import com.intellij.find.actions.ShowUsagesAction.showUsages
 import com.intellij.find.actions.TargetVariant
 import com.intellij.find.findUsages.FindUsagesOptions
