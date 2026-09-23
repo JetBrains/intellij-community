@@ -388,8 +388,17 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       layout.resourceGenerators += generator
     }
 
-    fun withGeneratedResources(layoutAssetSpec: DevPluginLayoutAssetSpec, generator: ResourceGenerator) {
-      layout.resourceGenerators += DeclaredPluginLayoutResourceGenerator(layoutAssetSpec, generator)
+    /**
+     * A resource generator. The dev-distribution generator plans it from [layoutAssetSpec], and
+     * [DevPluginLayoutAssetSpec.OMITTED] states that the dev distribution leaves its files out.
+     * [run] states whether classic dev mode also runs [generator].
+     */
+    fun withGeneratedResources(
+      layoutAssetSpec: DevPluginLayoutAssetSpec,
+      run: DeclaredResourceGeneratorRun = DeclaredResourceGeneratorRun.BUNDLED_AND_DEV,
+      generator: ResourceGenerator,
+    ) {
+      layout.resourceGenerators += DeclaredPluginLayoutResourceGenerator(layoutAssetSpec, generator, run)
     }
 
     /** Copies a module resource tree through the same declaration in production and development. */

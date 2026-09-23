@@ -946,7 +946,9 @@ private fun layoutAdditionalResources(layout: BaseLayout, targetDirectory: Path,
     return
   }
 
-  val resourceGenerators = layout.resourceGenerators
+  val resourceGenerators = layout.resourceGenerators.let { all ->
+    if (context.options.isDevDistribution) all.filter(::runsInClassicDevMode) else all
+  }
   if (!resourceGenerators.isEmpty()) {
     spanBuilder("generate and pack resources").use {
       for (item in resourceGenerators) {

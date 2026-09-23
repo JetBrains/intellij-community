@@ -7,7 +7,7 @@ import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
 import java.nio.file.Path
 
 /**
- * States when a declared platform resource generator runs.
+ * States when a declared resource generator runs, an ordinary one and a platform one alike.
  * The dev-distribution generator plans the declared tree in both cases.
  */
 enum class DeclaredResourceGeneratorRun {
@@ -16,6 +16,11 @@ enum class DeclaredResourceGeneratorRun {
 
   /** Runs in a bundled build only. Classic dev mode skips it. */
   BUNDLED_ONLY,
+}
+
+/** Whether classic dev mode runs [generator]. A declared generator states it; any other generator runs in both modes. */
+internal fun runsInClassicDevMode(generator: ResourceGenerator): Boolean {
+  return (generator as? DeclaredPluginLayoutResourceGenerator)?.run != DeclaredResourceGeneratorRun.BUNDLED_ONLY
 }
 
 internal class DeclaredPluginLayoutResourceGenerator(

@@ -40,7 +40,9 @@ private const val PYREFLY_BINARY_NAME: String = "pyrefly"
 private val PYREFLY_DEV_SPEC: DevPluginLayoutAssetSpec = DevPluginLayoutAssetSpec.OMITTED
 
 fun PluginLayout.PluginLayoutSpec.withBundledPyrefly() {
-  withGeneratedResources(PYREFLY_DEV_SPEC) { targetDir, context -> copyPyreflyLicenseReport(targetDir, context) }
+  withGeneratedResources(PYREFLY_DEV_SPEC, run = DeclaredResourceGeneratorRun.BUNDLED_ONLY) { targetDir, context ->
+    copyPyreflyLicenseReport(targetDir, context)
+  }
 
   for (platform in SUPPORTED_DISTRIBUTIONS) {
     val (os, arch) = platform

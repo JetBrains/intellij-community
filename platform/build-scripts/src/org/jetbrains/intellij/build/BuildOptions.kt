@@ -126,8 +126,9 @@ data class BuildOptions(
    * the single owner of the dev overrides, so both dev paths - the in-process assembly and the one nested in a real
    * build - agree on it.
    *
-   * The one thing it currently decides is the build date stamped into `ApplicationInfo.xml`: a dev distribution stamps
-   * none, so that the IDE resolves its build time at startup and no EAP expiration period can run out on it.
+   * It decides two things. The build date stamped into `ApplicationInfo.xml`: a dev distribution stamps none, so that
+   * the IDE resolves its build time at startup and no EAP expiration period can run out on it. And the resource
+   * generators of a plugin: a dev distribution skips a generator declared with `DeclaredResourceGeneratorRun.BUNDLED_ONLY`.
    */
   @JvmField internal val isDevDistribution: Boolean = false,
 

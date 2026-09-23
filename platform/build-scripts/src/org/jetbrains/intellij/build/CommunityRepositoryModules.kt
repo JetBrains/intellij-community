@@ -101,9 +101,10 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
     // The relative paths below (`lib/maven3`, `lib/intellij.maven.server3`, ...) are a runtime contract, not an
     // internal packaging detail: the Maven plugin reads them back at runtime through
     // `MavenClasspathBuilder.addMavenServerLibraries` and `MavenDistributionsCache.resolveEmbeddedMavenHome`.
-    // This layout is produced identically for a release build and a dev build (resource generators run in both -
-    // only `BuildOptions.skipCustomResourceGenerators`, used by build tests, suppresses them), which is why the
-    // runtime has no dev-build-specific branch. Renaming a path here breaks the IDE, not just the distribution.
+    // This layout is produced identically for a release build and a dev build (its resource generators keep the
+    // default run policy, so they run in both - only `BuildOptions.skipCustomResourceGenerators`, used by build tests,
+    // suppresses them), which is why the runtime has no dev-build-specific branch. Renaming a path here breaks the
+    // IDE, not just the distribution.
     plugin("intellij.maven.plugin") { spec ->
       spec.doNotCopyModuleLibrariesAutomatically(
         listOf(

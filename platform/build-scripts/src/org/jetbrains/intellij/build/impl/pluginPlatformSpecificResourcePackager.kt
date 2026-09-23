@@ -25,7 +25,7 @@ internal fun buildPlatformSpecificPluginResources(
   isDevMode: Boolean,
 ): List<DistributionFileEntry> {
   for ((dist, generators) in plugin.platformResourceGenerators) {
-    val selected = if (isDevMode) generators.filter { it.run == DeclaredResourceGeneratorRun.BUNDLED_AND_DEV } else generators
+    val selected = if (isDevMode) generators.filter(::runsInClassicDevMode) else generators
     handlePlatformResourceGenerator(dist, selected, pluginDirs, context)
   }
 

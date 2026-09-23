@@ -15,9 +15,23 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.nio.file.Path
 
-/** The run policy of `buildPlatformSpecificPluginResources` for the declared platform generators. */
+/**
+ * The run policy of the declared resource generators: `buildPlatformSpecificPluginResources` for the platform ones, and
+ * [runsInClassicDevMode], which `layoutAdditionalResources` applies to the ordinary ones.
+ */
 class PlatformResourceGeneratorRunTest {
   private val distribution = SupportedDistribution(OsFamily.LINUX, JvmArchitecture.x64, LinuxLibcImpl.GLIBC)
+
+  @Test
+  fun `classic dev mode skips a bundled-only ordinary generator and runs every other one`() {
+    val layout = PluginLayout.pluginAuto(listOf("test.plugin")) { spec ->
+      spec.withGeneratedResources(DevPluginLayoutAssetSpec.OMITTED) { _, _ -> }
+      spec.withGeneratedResources(DevPluginLayoutAssetSpec.OMITTED, run = DeclaredResourceGeneratorRun.BUNDLED_ONLY) { _, _ -> }
+      spec.withResourceTree(moduleName = "test.plugin", resourcePath = "resources", relativeOutputPath = "resources")
+    }
+
+    assertThat(layout.resourceGenerators.map(::runsInClassicDevMode)).containsExactly(true, false, true)
+  }
 
   @Test
   fun `dev mode runs only a declared BUNDLED_AND_DEV generator`(@TempDir tempDir: Path) {
