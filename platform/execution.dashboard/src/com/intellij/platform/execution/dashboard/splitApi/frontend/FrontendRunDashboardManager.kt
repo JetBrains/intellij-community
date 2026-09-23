@@ -34,15 +34,13 @@ import com.intellij.platform.execution.serviceView.shouldEnableServicesViewInCur
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.content.Content
-import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.atomic.AtomicReference
 
-@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 internal class FrontendRunDashboardManager(private val project: Project) : RunDashboardManager {
   private val frontendSettings = MutableStateFlow(RunDashboardSettingsDto())
