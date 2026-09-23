@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.CanonicalPathPrefixTree.CanonicalPathElement
 import com.intellij.util.containers.prefixTree.PrefixTreeFactory
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -88,6 +89,22 @@ fun Path.findOrCreateFile(relativePath: String): Path {
 @ApiStatus.Internal
 fun Path.findOrCreateDirectory(relativePath: String): Path {
   return getResolvedPath(relativePath).findOrCreateDirectory()
+}
+
+/**
+ * nio.Path version of [FileUtil.findSequentNonexistentFile].
+ */
+@Suppress("UsagesOfObsoleteApi")
+@ApiStatus.Internal
+fun Path.findSequentNonexistentFile(filePrefix: String, extension: String): Path {
+  var candidate = resolve(if (extension.isEmpty()) filePrefix else "$filePrefix.$extension")
+  var index = 1
+  while (Files.exists(candidate)) {
+    val indexedName = if (extension.isEmpty()) "$filePrefix$index" else "$filePrefix$index.$extension"
+    candidate = resolve(indexedName)
+    index++
+  }
+  return candidate
 }
 
 fun String.toNioPathOrNull(): Path? {
