@@ -248,9 +248,8 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
             }
           }
         }
-        val accepted = runReadActionBlocking {
-          fileInfo.findFileSet(fileSetFilter) != null && (customFilter == null || customFilter.accept(file))
-        }
+        val accepted = fileInfo.findFileSet(fileSetFilter) != null &&
+                       (customFilter == null || runReadActionBlocking { customFilter.accept(file) })
         val status = if (accepted) processor.processFileEx(file) else TreeNodeProcessingResult.CONTINUE
         return when (status) {
           TreeNodeProcessingResult.CONTINUE -> CONTINUE

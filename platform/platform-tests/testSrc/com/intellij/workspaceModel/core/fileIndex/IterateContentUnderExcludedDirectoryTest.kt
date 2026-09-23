@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.vfs.VfsUtil
@@ -35,6 +36,45 @@ internal class IterateContentUnderExcludedDirectoryTest {
   private val rootDir = TempDirectoryExtension()
 
   private val project: Project get() = projectExtension.project
+
+  @Test
+  fun `file set filter is called without read lock when custom filter is null`(): Unit = runBlocking {
+    val contentRoot = createContentRoot("content")
+    val readStates = mutableListOf<Boolean>()
+    val processor = ContentIteratorEx { _ -> TreeNodeProcessingResult.CONTINUE }
+
+    WorkspaceFileIndexEx.getInstance(project)
+      .processContentUnderDirectory(contentRoot, processor, null) {
+        readStates.add(ApplicationManager.getApplication().isReadAccessAllowed)
+        true
+      }
+
+    assertThat(readStates).isNotEmpty()
+    assertThat(readStates).containsOnly(false)
+  }
+
+  @Test
+  fun `custom filter is called with read lock`(): Unit = runBlocking {
+    val contentRoot = createContentRoot("content")
+    val fileSetFilterReadStates = mutableListOf<Boolean>()
+    val customFilterReadStates = mutableListOf<Boolean>()
+    val processor = ContentIteratorEx { _ -> TreeNodeProcessingResult.CONTINUE }
+    val customFilter = VirtualFileFilter {
+      customFilterReadStates.add(ApplicationManager.getApplication().isReadAccessAllowed)
+      true
+    }
+
+    WorkspaceFileIndexEx.getInstance(project)
+      .processContentUnderDirectory(contentRoot, processor, customFilter) {
+        fileSetFilterReadStates.add(ApplicationManager.getApplication().isReadAccessAllowed)
+        true
+      }
+
+    assertThat(fileSetFilterReadStates).isNotEmpty()
+    assertThat(fileSetFilterReadStates).containsOnly(false)
+    assertThat(customFilterReadStates).isNotEmpty()
+    assertThat(customFilterReadStates).containsOnly(true)
+  }
 
   @Test
   fun `content fileset under exclude by-pattern`(): Unit = runBlocking {
@@ -133,6 +173,19 @@ internal class IterateContentUnderExcludedDirectoryTest {
 
   private fun VirtualFile.toVirtualFileUrl(): VirtualFileUrl =
     this.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
+
+  private suspend fun createContentRoot(relativePath: String): VirtualFile {
+    val contentRootPath = rootDir.newDirectoryPath(relativePath)
+    val contentRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(contentRootPath)!!
+    val urlManager = project.workspaceModel.getVirtualFileUrlManager()
+    val contentRootUrl = contentRootPath.toVirtualFileUrl(urlManager)
+    project.workspaceModel.update("create content root") { storage ->
+      storage.addEntity(ModuleEntity("module", emptyList(), NonPersistentEntitySource) {
+        contentRoots = listOf(ContentRootEntity(contentRootUrl, emptyList(), NonPersistentEntitySource))
+      })
+    }
+    return contentRoot
+  }
 
   private fun createTempDirectory(parent: VirtualFile, relativePath: String): VirtualFile {
     val fileSystem = TempFileSystem.getInstance()
