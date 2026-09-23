@@ -6,8 +6,8 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.devkit.gradle.tooling.IntelliJPlatformGradleModel
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Version
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
-import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncListener
 
@@ -82,14 +82,12 @@ internal fun IntelliJPlatformGradleModelProviderImpl.importProjectModels(
 /** Returns the current and the latest plugin version of the first model that uses an outdated plugin. */
 internal fun findOutdatedIntelliJPlatformGradlePluginVersion(
   models: Collection<IntelliJPlatformGradleModel>,
-): Pair<GradleVersion, GradleVersion>? {
+): Pair<Version, Version>? {
   return models.asSequence()
     .mapNotNull { model ->
-      val currentVersion = model.currentPluginVersion.toGradleVersion() ?: return@mapNotNull null
-      val latestVersion = model.latestPluginVersion.toGradleVersion() ?: return@mapNotNull null
+      val currentVersion = Version.parseVersion(model.currentPluginVersion) ?: return@mapNotNull null
+      val latestVersion = Version.parseVersion(model.latestPluginVersion) ?: return@mapNotNull null
       currentVersion to latestVersion
     }
     .firstOrNull { (currentVersion, latestVersion) -> currentVersion < latestVersion }
 }
-
-private fun String.toGradleVersion(): GradleVersion? = runCatching { GradleVersion.version(this) }.getOrNull()
