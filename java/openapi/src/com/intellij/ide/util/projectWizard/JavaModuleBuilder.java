@@ -4,10 +4,10 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -100,7 +100,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
 
   @Override
   public ModuleType<?> getModuleType() {
-    return StdModuleTypes.JAVA;
+    return JavaModuleType.getModuleType();
   }
 
   @Override
@@ -110,7 +110,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
 
   @Override
   public @Nullable ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
-    return StdModuleTypes.JAVA.modifySettingsStep(settingsStep, this);
+    return JavaModuleType.getModuleType().modifySettingsStep(settingsStep, this);
   }
 
   @Override
