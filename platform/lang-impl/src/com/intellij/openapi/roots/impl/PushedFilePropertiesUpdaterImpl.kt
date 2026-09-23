@@ -27,7 +27,7 @@ import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.roots.impl.FilesScanExecutor.runOnAllThreads
+import com.intellij.openapi.roots.impl.ScanningExecutor.runOnAllThreads
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId

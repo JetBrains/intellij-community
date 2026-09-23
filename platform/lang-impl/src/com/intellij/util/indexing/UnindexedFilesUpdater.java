@@ -70,7 +70,7 @@ public final class UnindexedFilesUpdater {
   }
 
   private static int getMaxBackgroundThreadCount() {
-    // note that getMaxBackgroundThreadCount is used to calculate threads count is FilesScanExecutor, which is also used for "FindInFiles"
+    // note that getMaxBackgroundThreadCount is used to calculate threads count is ScanningExecutor, which is also used for "FindInFiles"
     return Runtime.getRuntime().availableProcessors() - getCoresToLeaveForOtherActivitiesCount();
   }
 

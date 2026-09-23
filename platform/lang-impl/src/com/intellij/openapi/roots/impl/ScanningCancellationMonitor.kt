@@ -48,7 +48,7 @@ const val SCANNING_MONITOR_MAX_REPORTS_KEY: String = "ide.scanning.cancellation.
 /** The shortest wait before the monitor judges whether a repair worked. */
 private const val REPAIR_VERIFICATION_MIN_MS = 1_000L
 
-/** Why a [FilesScanExecutor] worker was still holding a read action after a write action asked it to stop. */
+/** Why a [ScanningExecutor] worker was still holding a read action after a write action asked it to stop. */
 @Internal
 enum class ScanningStallKind {
   /** The write-action-priority protocol never canceled the indicator. */
@@ -138,7 +138,7 @@ class ScanningStallReport(
 }
 
 /**
- * Watches [FilesScanExecutor]'s workers and reacts when one of them keeps holding a read action after a write action has
+ * Watches [ScanningExecutor]'s workers and reacts when one of them keeps holding a read action after a write action has
  * asked it to stop.
  *
  * A pending write action makes the write-action-priority protocol cancel every scan read action, and the worker is
@@ -341,7 +341,7 @@ private const val MAX_DUMPED_READ_ACTIONS = 64
 /**
  * Renders the active scanning read actions for a thread dump.
  *
- * [FilesScanExecutor] registers a read action per item, so `held for` stays small even during a long
+ * [ScanningExecutor] registers a read action per item, so `held for` stays small even during a long
  * freeze. Compare two consecutive dumps to tell a blind worker from a busy one. The same thread in
  * both, with a small but different age, means the worker keeps taking items while a write action is
  * pending.

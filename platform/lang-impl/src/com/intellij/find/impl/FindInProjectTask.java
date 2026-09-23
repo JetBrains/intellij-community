@@ -92,7 +92,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
-import static com.intellij.openapi.roots.impl.FilesScanExecutor.processOnAllThreadsInReadActionWithRetries;
+import static com.intellij.openapi.roots.impl.ScanningExecutor.processOnAllThreadsInReadActionWithRetries;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 
 final class FindInProjectTask {
