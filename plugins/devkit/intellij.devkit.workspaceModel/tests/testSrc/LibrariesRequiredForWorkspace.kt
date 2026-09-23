@@ -43,6 +43,7 @@ internal object LibrariesRequiredForWorkspace {
   private val androidProjectSystem = ModuleLibrary("intellij.android.projectSystem")
   private val androidGradleModels = ModuleLibrary("intellij.android.projectSystem.gradle.models")
   private val bazelCommons = ModuleLibrary("intellij.bazel.commons")
+  private val bazelBackend = ModuleLibrary("intellij.bazel.backend")
 
   private val kotlinJpsCommon = JarLibrary("kotlinc-kotlin-jps-common", KotlinModuleKind::class.java)
   private val kotlinScriptingCommon = JarLibrary("kotlinc-kotlin-scripting-common", SourceCode::class.java)
@@ -79,6 +80,9 @@ internal object LibrariesRequiredForWorkspace {
       }
       "intellij.bazel.backend" -> {
         listOf(bazelCommons)
+      }
+      "intellij.bazel.clion.common" -> {
+        listOf(bazelBackend, bazelCommons)
       }
       "intellij.gradle" -> {
         listOf(gradleToolingExtension, gradleExternalSystemImpl)
