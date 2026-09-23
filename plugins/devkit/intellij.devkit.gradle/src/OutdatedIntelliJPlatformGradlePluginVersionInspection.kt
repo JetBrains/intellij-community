@@ -38,7 +38,7 @@ internal class OutdatedIntelliJPlatformGradlePluginVersionInspection : LocalInsp
           element,
           message,
           UpdatePluginVersionQuickFix(latestVersion.toString(), newContent),
-          ProblemHighlightType.WARNING,
+          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
           isOnTheFly,
         )
       }
