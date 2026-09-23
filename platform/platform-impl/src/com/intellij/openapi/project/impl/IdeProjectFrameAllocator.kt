@@ -35,13 +35,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorComposite
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
-import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.stopOpenFilesActivity
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -106,6 +105,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -138,7 +138,7 @@ internal class IdeProjectFrameAllocator(
 
   override suspend fun preInitProject(project: Project) {
     project.getOrCreatePostOpenEditorsDeferred()
-    (project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl)?.initJob?.join()
+    (FileEditorManager.getInstanceAsync(project) as? FileEditorManagerImpl)?.initJob?.join()
   }
 
   override suspend fun runInBackground(projectInitObservable: ProjectInitObservable) {
@@ -198,7 +198,7 @@ internal class IdeProjectFrameAllocator(
           }
 
           launch {
-            val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl
+            val fileEditorManager = FileEditorManager.getInstanceAsync(project) as FileEditorManagerImpl
             fileEditorManager.initJob.join()
             span("frame document component install", Dispatchers.UiWithModelAccess) {
               frameHelper.toolWindowPane.setDocumentComponent(fileEditorManager.mainSplitters)
@@ -215,7 +215,7 @@ internal class IdeProjectFrameAllocator(
         val reopeningEditorJob = launch {
           val project = projectInitObservable.awaitProjectInit()
           span("restoreEditors") {
-            val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl
+            val fileEditorManager = FileEditorManager.getInstanceAsync(project) as FileEditorManagerImpl
             restoreEditors(
               project = project,
               fileEditorManager = fileEditorManager,
@@ -297,7 +297,7 @@ internal class IdeProjectFrameAllocator(
             span("post open editors") {
               postOpenEditors(
                 frameHelper = frameHelper,
-                fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl,
+                fileEditorManager = FileEditorManager.getInstanceAsync(project) as FileEditorManagerImpl,
                 toolWindowInitJob = toolWindowInitJob,
                 project = project,
               )
@@ -858,9 +858,20 @@ private suspend fun focusSelectedEditor(editorComponent: EditorsSplitters) {
   }
   else {
     // let's focus the editor synchronously in local mode
+    // a composite closed before it published its editors cancels its own wait; that must not cancel project opening
     val isAvailable = withTimeoutOrNull(10.seconds) {
-      composite.waitForAvailable()
-      true
+      try {
+        composite.waitForAvailable()
+        true
+      }
+      catch (@Suppress("IncorrectCancellationExceptionHandling") _: CancellationException) {
+        // the wait belongs to the composite, so only our own cancellation may stop project opening
+        currentCoroutineContext().ensureActive()
+        false
+      }
+    }
+    if (isAvailable == false) {
+      return
     }
     if (isAvailable == null) {
       logger<ProjectFrameAllocator>().warn(
@@ -1101,7 +1112,7 @@ private suspend fun findAndOpenReadmeIfNeeded(project: Project) {
       val layout =
         if (ScreenReader.isActive()) TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW else TextEditorWithPreview.Layout.SHOW_PREVIEW
       readme.putUserData(TextEditorWithPreview.DEFAULT_LAYOUT_FOR_FILE, layout)
-      (project.serviceAsync<FileEditorManager>() as FileEditorManagerEx).openFile(readme, FileEditorOpenOptions(requestFocus = true))
+      FileEditorManager.getInstanceAsync(project).openFile(readme, FileEditorOpenRequest.withFocus(true))
 
       readme.putUserData(README_OPENED_ON_START_TS, Instant.now())
       FUSProjectHotStartUpMeasurer.openedReadme(readme, System.nanoTime())
