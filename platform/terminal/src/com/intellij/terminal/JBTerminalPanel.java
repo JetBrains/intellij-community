@@ -254,9 +254,9 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     ).getComponent();
   }
 
-  private static @NotNull ActionGroup wrapTerminalActions(@NotNull TerminalActionProvider provider) {
+  private @NotNull ActionGroup wrapTerminalActions(@NotNull TerminalActionProvider provider) {
     var result = new DefaultActionGroup();
-    TerminalAction.buildMenu(provider, new TerminalActionMenuBuilder() {
+    var builder = new TerminalActionMenuBuilder() {
       @Override
       public void addAction(@NotNull TerminalAction action) {
         result.add(new TerminalActionWrapper(action));
@@ -266,7 +266,23 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
       public void addSeparator() {
         result.addSeparator();
       }
-    });
+    };
+    // JediTerm lists the provider chain outermost-first, which puts a hyperlink's actions under the terminal's own.
+    // The hyperlink provider is the head of the chain and is not this panel; its actions belong at the top.
+    TerminalActionProvider next = provider.getNextProvider();
+    if (provider != this && next != null) {
+      boolean added = false;
+      for (TerminalAction action : provider.getActions()) {
+        if (action.isHidden()) continue;
+        builder.addAction(action);
+        added = true;
+      }
+      if (added) builder.addSeparator();
+      TerminalAction.buildMenu(next, builder);
+    }
+    else {
+      TerminalAction.buildMenu(provider, builder);
+    }
     return result;
   }
 
