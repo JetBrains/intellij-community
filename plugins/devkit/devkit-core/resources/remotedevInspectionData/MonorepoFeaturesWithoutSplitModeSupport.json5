@@ -145,6 +145,7 @@
     "intellij.database.flameGraphs",
     "intellij.database.grazie",
     "intellij.database.impl",
+    "intellij.database.impl.cli",
     "intellij.database.impl.bookmarks",
     "intellij.database.impl.jcef",
     "intellij.database.impl.navbar",
