@@ -21,6 +21,7 @@ import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement
 import com.intellij.ide.util.DirectoryChooserUtil
+import com.intellij.ide.util.EditorHelper
 import com.intellij.idea.AppMode
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -52,6 +53,7 @@ import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 import com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
@@ -394,6 +396,11 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
 
     override fun selectElement(element: PsiElement) {
       currentTreeState.load()?.scheduleSelectElement(element)
+      // In the monolith mode, clients of this 20 years old API expect the file to be open immediately,
+      // because they can correct the caret placement according to the new file template.
+      if (IdeProductMode.isMonolith && element !is PsiDirectory) {
+        EditorHelper.openInEditor(element, false, true)
+      }
     }
   }
   
@@ -654,7 +661,8 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
       val nodePath = findNodePathForTarget(target) ?: return
       var requestFocus = isDir
       // Old school legacy stuff: open the new file if it's a file.
-      if (!isDir) {
+      // In the monolith, for legacy reasons we open the file immediately and synchronously in MyIdeView.
+      if (!isDir && !IdeProductMode.isMonolith) {
         withContext(request.clientId.asContextElement()) { // the editor has to know the client ID to focus it on the frontend
           if (!navigate(nodePath.nodeIds.last(), ProjectViewPaneNavigateOptionsImpl(requestFocus = true))) {
             // If the editor can't be opened, focus the new file in the PV at least.
