@@ -14,7 +14,8 @@ public final class DumbUnawareHider extends JBPanelWithEmptyText {
   public DumbUnawareHider(@NotNull JComponent dumbUnawareContent) {
     super(new BorderLayout());
     this.myDumbUnawareContent = dumbUnawareContent;
-    getEmptyText().setText(IdeBundle.message("empty.text.this.view.is.not.available.until.indices.are.built"));
+    getEmptyText().setText(DumbUtil.dumbModeMessage(IdeBundle.message("empty.text.this.view.is.not.available.until.indices.are.built"),
+                                                    IdeBundle.message("empty.text.this.view.is.not.available.until.indices.are.built")));
     add(dumbUnawareContent, BorderLayout.CENTER);
   }
 
