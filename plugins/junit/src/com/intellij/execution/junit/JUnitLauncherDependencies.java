@@ -87,10 +87,16 @@ public final class JUnitLauncherDependencies {
     myModularized = modularized;
   }
 
+  public enum ModulePathUse {
+    FORBIDDEN,
+    EMPTY,
+    IN_USE,
+  }
+
   public static @Nullable JUnitLauncherDependencies detect(@NotNull Project project,
                                                            @NotNull GlobalSearchScope scope,
                                                            @NotNull String runnerName,
-                                                           boolean modulePathAllowed) {
+                                                           @NotNull ModulePathUse modulePathUse) {
     String launcherVersion = getLibraryVersion("org.junit.platform.commons.JUnitException", scope, project);
     if (launcherVersion == null) {
       LOG.info("Failed to detect junit " + TestObject.RUNNER_VERSIONS.getOrDefault(runnerName, "5") +
@@ -98,10 +104,12 @@ public final class JUnitLauncherDependencies {
       return null;
     }
 
-    boolean modularized = modulePathAllowed &&
-                          ReadAction.nonBlocking(() -> !FilenameIndex.getVirtualFilesByName(PsiJavaModule.MODULE_INFO_FILE, scope)
-                            .isEmpty()).executeSynchronously() &&
-                          VersionComparatorUtil.compare(launcherVersion, "1.5.0") >= 0;
+    boolean runsOnModulePath = switch (modulePathUse) {
+      case FORBIDDEN -> false;
+      case IN_USE -> true;
+      case EMPTY -> ReadAction.nonBlocking(() -> !FilenameIndex.getVirtualFilesByName(PsiJavaModule.MODULE_INFO_FILE, scope).isEmpty()).executeSynchronously();
+    };
+    boolean modularized = runsOnModulePath && VersionComparatorUtil.compare(launcherVersion, "1.5.0") >= 0;
     return new JUnitLauncherDependencies(project, scope, runnerName, launcherVersion, modularized);
   }
 

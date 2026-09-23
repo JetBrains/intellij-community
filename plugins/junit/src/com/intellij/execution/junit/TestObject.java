@@ -104,6 +104,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import static com.intellij.execution.junit.JUnitLauncherDependencies.LAUNCHER_MODULE_NAME;
+import static com.intellij.execution.junit.JUnitLauncherDependencies.ModulePathUse;
 import static com.intellij.execution.junit.JUnitLauncherDependencies.isCustomJUnit;
 
 public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitConfiguration> implements PossiblyDumbAware {
@@ -410,8 +411,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                          Project project,
                                          GlobalSearchScope globalSearchScope,
                                          boolean ensureOnModulePath) throws CantRunException {
-    boolean modulePathAllowed = ensureOnModulePath && JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_9);
-    JUnitLauncherDependencies dependencies = JUnitLauncherDependencies.detect(project, globalSearchScope, runnerName, modulePathAllowed);
+    ModulePathUse type = (!ensureOnModulePath || !JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_9))
+                         ? ModulePathUse.FORBIDDEN
+                         : javaParameters.getModulePath().getPathList().isEmpty() ? ModulePathUse.EMPTY : ModulePathUse.IN_USE;
+    JUnitLauncherDependencies dependencies = JUnitLauncherDependencies.detect(project, globalSearchScope, runnerName, type);
     if (dependencies == null) return;
 
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);

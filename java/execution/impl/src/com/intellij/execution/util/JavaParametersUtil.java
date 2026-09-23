@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
 import com.intellij.execution.CantRunException;
@@ -249,7 +249,6 @@ public final class JavaParametersUtil {
       forModulePath.addAll(JavaPsiModuleUtil.collectServiceProviders(project, forModulePath));
     }
 
-    JarFileSystem jarFS = JarFileSystem.getInstance();
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
 
@@ -259,11 +258,11 @@ public final class JavaParametersUtil {
     forModulePath.stream()
       .filter(javaModule -> !PsiJavaModule.JAVA_BASE.equals(javaModule.getName()))
       .flatMap(javaModule -> psiFacade.findModules(javaModule.getName(), GlobalSearchScope.allScope(project)).stream())
-      .map(javaModule -> getClasspathEntry(javaModule, fileIndex, jarFS))
+      .map(javaModule -> getClasspathEntry(javaModule, fileIndex))
       .filter(Objects::nonNull)
       .forEach(file -> putOnModulePath(modulePath, classPath, file));
 
-    VirtualFile productionOutput = getClasspathEntry(module, fileIndex, jarFS);
+    String productionOutput = getClasspathEntry(module, fileIndex);
     if (productionOutput != null) {
       putOnModulePath(modulePath, classPath, productionOutput);
     }
@@ -285,26 +284,27 @@ public final class JavaParametersUtil {
     }
   }
 
-  private static void putOnModulePath(PathsList modulePath, PathsList classPath, VirtualFile virtualFile) {
-    String path = PathUtil.getLocalPath(virtualFile.getPath());
+  private static void putOnModulePath(PathsList modulePath, PathsList classPath, String path) {
     if (classPath.getPathList().contains(path)) {
       classPath.remove(path);
       modulePath.add(path);
     }
   }
 
-  private static VirtualFile getClasspathEntry(PsiJavaModule javaModule, ProjectFileIndex fileIndex, JarFileSystem jarFileSystem) {
+  private static @Nullable String getClasspathEntry(PsiJavaModule javaModule, ProjectFileIndex fileIndex) {
     var moduleFile = PsiImplUtil.getModuleVirtualFile(javaModule);
     var moduleDependency = fileIndex.getModuleForFile(moduleFile);
     if (moduleDependency != null) {
       var moduleExtension = CompilerModuleExtension.getInstance(moduleDependency);
       if (moduleExtension != null) {
         var inTests = fileIndex.isInTestSourceContent(moduleFile);
-        return inTests ? moduleExtension.getCompilerOutputPathForTests() : moduleExtension.getCompilerOutputPath();
+        var output = inTests ? moduleExtension.getCompilerOutputPathForTests() : moduleExtension.getCompilerOutputPath();
+        return output == null ? null : PathUtil.getLocalPath(output.getPath());
       }
     }
 
-    return jarFileSystem.getLocalByEntry(moduleFile);
+    int separator = moduleFile.getPath().indexOf(JarFileSystem.JAR_SEPARATOR);
+    return separator < 0 ? null : moduleFile.getPath().substring(0, separator);
   }
 
   public static void applyModifications(JavaParameters parameters, List<ModuleBasedConfigurationOptions.ClasspathModification> modifications) {
