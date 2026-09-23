@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.migrations
 
+import com.intellij.ide.plugins.DisabledPluginsState
 import com.intellij.ide.plugins.writePluginStringSet
-import com.intellij.openapi.project.impl.processPerProjectSupport
 import com.intellij.openapi.util.text.StringUtil
 import java.io.IOException
 import java.nio.file.Files
@@ -27,7 +27,7 @@ internal class AIAssistantMigration263 : PluginMigration() {
     }
 
     // the old configuration, including its disabled plugins file, is already copied to the new one at this point
-    val file = options.newConfigDir.resolve(processPerProjectSupport().disabledPluginsFileName)
+    val file = options.newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
     try {
       val disabledPlugins = LinkedHashSet<String>()
       if (Files.exists(file)) {
