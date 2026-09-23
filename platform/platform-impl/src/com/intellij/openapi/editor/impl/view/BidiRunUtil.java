@@ -25,10 +25,10 @@ final class BidiRunUtil {
 
   static List<LineBidiRun> createRuns(@NotNull EditorView view, char @NotNull [] chars, int startOffsetInEditor) {
     int textLength = chars.length;
-    if (view.getEditor().myDisableRtl || !Bidi.requiresBidi(chars, 0, textLength)) {
-      return Collections.singletonList(new LineBidiRun(textLength));
+    if (view.isRtlEnabled() && Bidi.requiresBidi(chars, 0, textLength)) {
+      return createRunsBidi(view, chars, startOffsetInEditor, textLength);
     }
-    return createRunsBidi(view, chars, startOffsetInEditor, textLength);
+    return Collections.singletonList(new LineBidiRun(textLength));
   }
 
   private static @NotNull List<LineBidiRun> createRunsBidi(

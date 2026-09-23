@@ -524,8 +524,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private CaretImpl myPrimaryCaret;
 
-  public final boolean myDisableRtl = Registry.is("editor.disable.rtl");
-
   private final EditorModel myEditorModel;
   final EditorView myView;
 

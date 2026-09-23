@@ -9,14 +9,16 @@ internal data class EditorViewSnapshot(
   private val metrics: EditorViewMetrics,
   private val tabSize: Int,
   private val bidiFlags: Int,
+  private val rtlEnabled: Boolean,
   private val prefix: EditorPrefix?,
   private val paintCallback: Runnable?,
 ) {
-  constructor(fontRenderContext: FontRenderContext) : this(
+  constructor(fontRenderContext: FontRenderContext, rtlEnabled: Boolean) : this(
     fontRenderContext = fontRenderContext,
-    bidiFlags = 0,
-    tabSize = -1,
     metrics = EditorViewMetrics.UNINITIALIZED,
+    tabSize = -1,
+    bidiFlags = 0,
+    rtlEnabled = rtlEnabled,
     prefix = null,
     paintCallback = null,
   )
@@ -38,6 +40,7 @@ internal data class EditorViewSnapshot(
   fun prefixAttributes(): TextAttributes? = prefix?.prefixAttributes
   fun tabSize(): Int = tabSize
   fun bidiFlags(): Int = bidiFlags
+  fun rtlEnabled(): Boolean = rtlEnabled
   fun paintCallback(): Runnable? = paintCallback
   fun prefix(): EditorPrefix? = prefix
   fun metrics(): EditorViewMetrics = metrics

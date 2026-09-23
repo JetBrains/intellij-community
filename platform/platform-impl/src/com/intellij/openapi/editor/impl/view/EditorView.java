@@ -103,7 +103,10 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     @NotNull EditorPainterCache painterCache
   ) {
     myEditor = editor;
-    mySnapshot = new EditorViewSnapshot(normalizeFontRenderContext(readFontRenderContext(), true));
+    mySnapshot = new EditorViewSnapshot(
+      normalizeFontRenderContext(readFontRenderContext(), true),
+      !Registry.is("editor.disable.rtl", false)
+    );
     myEditorModel = editorModel;
     myDocument = myEditorModel.getDocument();
     myPainter = new EditorPainter(this, new EditorCaretPainter(this), painterCache);
@@ -722,6 +725,10 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
   int getBidiFlags() {
     return mySnapshot.bidiFlags();
+  }
+
+  boolean isRtlEnabled() {
+    return mySnapshot.rtlEnabled();
   }
 
   TextAttributes getPrefixAttributes() {

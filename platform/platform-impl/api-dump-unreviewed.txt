@@ -3118,7 +3118,6 @@ f:com.intellij.openapi.editor.impl.EditorImpl
 - sf:SOFT_WRAPS_EXIST:com.intellij.openapi.util.Key
 - sf:TEXT_ALIGNMENT_LEFT:I
 - sf:TEXT_ALIGNMENT_RIGHT:I
-- f:myDisableRtl:Z
 - addFocusListener(com.intellij.openapi.editor.ex.FocusChangeListener,com.intellij.openapi.Disposable):V
 - addHighlighterListener(com.intellij.openapi.editor.impl.HighlighterListener,com.intellij.openapi.Disposable):V
 - addPropertyChangeListener(java.beans.PropertyChangeListener):V
