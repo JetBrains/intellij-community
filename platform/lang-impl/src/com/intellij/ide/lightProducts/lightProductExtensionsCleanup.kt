@@ -73,7 +73,6 @@ fun unregisterExtensionsForLightProduct(checkNotInstantiated: Boolean = false) {
   StatusBarWidgetFactory.EP_NAME.appPoint
     .unregisterExtensionsById(
       "VfsRefresh",
-      "LanguageServiceStatusBarWidget",
       "LineSeparator",
       "Encoding",
       "PowerSaveMode",
