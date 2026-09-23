@@ -153,7 +153,7 @@ internal fun createRunConfigurationsActionGroup(project: Project, selectedFile: 
   val actions = ArrayList<AnAction>()
   val registry = ExecutorRegistry.getInstance()
   val runExecutor = registry.getExecutorById(RUN) ?: error("No '${RUN}' executor found")
-  val debugExecutor = registry.getExecutorById(DEBUG) ?: error("No '${DEBUG}' executor found")
+  val debugExecutor = registry.getExecutorById(DEBUG)
 
   val cfgMap = RunManager.getInstance(project).allSettings.associateBy { it.uniqueID }
 
@@ -609,7 +609,7 @@ open class AllRunConfigurationsToggle : DumbAwareToggleAction(), ActionRemoteBeh
 private fun createRunConfigurationWithInlines(project: Project,
                                               conf: RunnerAndConfigurationSettings,
                                               runExecutor: Executor,
-                                              debugExecutor: Executor,
+                                              debugExecutor: Executor?,
                                               isPinned: Boolean): AnAction {
   val activeExecutor = getActiveExecutor(project, conf)
   val showRerunAndStopButtons = !conf.configuration.isAllowRunningInParallel && activeExecutor != null
@@ -619,8 +619,8 @@ private fun createRunConfigurationWithInlines(project: Project,
     RunSpecifiedConfigExecutorAction(runExecutor, conf, false),
     StopConfigurationInlineAction(runExecutor, conf),
     resumeAction,
-    RunSpecifiedConfigExecutorAction(debugExecutor, conf, false),
-    StopConfigurationInlineAction(debugExecutor, conf),
+    if (debugExecutor != null) RunSpecifiedConfigExecutorAction(debugExecutor, conf, false) else null,
+    if (debugExecutor != null) StopConfigurationInlineAction(debugExecutor, conf) else null,
     (if (activeExecutor != null &&
          activeExecutor != runExecutor &&
          activeExecutor != debugExecutor)
@@ -656,7 +656,9 @@ private fun createRunConfigurationWithInlines(project: Project,
       var prefix = listOf<AnAction>(extraGroup)
       if (showRerunAndStopButtons) {
         val extraExecutor = if (activeExecutor === runExecutor) debugExecutor else runExecutor
-        prefix = prefix + RunSpecifiedConfigExecutorAction(extraExecutor, conf, false)
+        if (extraExecutor != null) {
+          prefix = prefix + RunSpecifiedConfigExecutorAction(extraExecutor, conf, false)
+        }
       }
       val pinAction = PinConfigurationAction(conf, isPinned)
       return (prefix + getDefaultChildren(exclude(e)) + pinAction).toTypedArray()
@@ -667,7 +669,7 @@ private fun createRunConfigurationWithInlines(project: Project,
 private fun createCurrentFileWithInlineActions(project: Project,
                                                selectedFile: VirtualFile?,
                                                runExecutor: Executor,
-                                               debugExecutor: Executor): AnAction {
+                                               debugExecutor: Executor?): AnAction {
   if (DumbService.isDumb(project)) {
     return RunConfigurationsComboBoxAction.RunCurrentFileAction()
   }
@@ -675,12 +677,12 @@ private fun createCurrentFileWithInlineActions(project: Project,
   val configs = psiFile?.let { ExecutorAction.getRunConfigsForCurrentFile(it, false) } ?: emptyList()
 
   val runRunningConfig = configs.firstOrNull { checkIfRunWithExecutor(it, runExecutor, project) }
-  val debugRunningConfig = configs.firstOrNull { checkIfRunWithExecutor(it, debugExecutor, project) }
+  val debugRunningConfig = configs.firstOrNull { debugExecutor != null && checkIfRunWithExecutor(it, debugExecutor, project) }
 
   val inlineActions = listOfNotNull(
     RunCurrentFileExecutorAction(runExecutor),
     runRunningConfig?.let { StopConfigurationInlineAction(runExecutor, it) },
-    RunCurrentFileExecutorAction(debugExecutor),
+    if (debugExecutor != null) RunCurrentFileExecutorAction(debugExecutor) else null,
     debugRunningConfig?.let { StopConfigurationInlineAction(runExecutor, it) },
   )
 
@@ -696,7 +698,7 @@ private fun createCurrentFileWithInlineActions(project: Project,
     override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
       var prefix = emptyList<AnAction>()
       if (debugRunningConfig != null) prefix = prefix + RunCurrentFileExecutorAction(runExecutor)
-      if (runRunningConfig != null) prefix = prefix + RunCurrentFileExecutorAction(debugExecutor)
+      if (runRunningConfig != null && debugExecutor != null) prefix = prefix + RunCurrentFileExecutorAction(debugExecutor)
       return (prefix + getDefaultChildren(exclude(e))).toTypedArray()
     }
   }
