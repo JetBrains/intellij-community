@@ -1188,8 +1188,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     TypeNullability typeNullability = TypeNullability.ofTypeParameter(typeParameter);
     Nullability nullability = typeNullability.nullability();
     if (nullability == Nullability.NULLABLE) return false;
-    //isUnspecifiedNullness - mostly for jspecify benchmark, the main error is nullability == Nullability.NOT_NULL
-    if (nullability == Nullability.UNKNOWN && !JavaTypeNullabilityUtil.isUnspecifiedNullness(typeNullability)) return false;
+    if (nullability == Nullability.UNKNOWN) return false;
     PsiIdentifier nameIdentifier = typeParameter.getNameIdentifier();
     PsiElement anchor = nameIdentifier != null ? nameIdentifier : typeParameter;
     String messageKey = nullability == Nullability.NOT_NULL
@@ -1425,19 +1424,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       if (DfaPsiUtil.getElementNullabilityForRead(superType, superParameter) == Nullability.NULLABLE) {
         return new NullableSuperParameter(superParameter, false);
       }
-      if (isUnspecifiedInstantiatedWithNullable(declaredSuperType, substitutor)) {
-        return new NullableSuperParameter(superParameter, true);
-      }
     }
     return null;
-  }
-
-  private static boolean isUnspecifiedInstantiatedWithNullable(@NotNull PsiType declaredType,
-                                                               @NotNull PsiSubstitutor substitutor) {
-    if (!JavaTypeNullabilityUtil.isUnspecifiedNullness(declaredType.getNullability())) return false;
-    if (!(PsiUtil.resolveClassInClassTypeOnly(declaredType) instanceof PsiTypeParameter typeParameter)) return false;
-    PsiType substituted = substitutor.substitute(typeParameter);
-    return substituted != null && substituted.getNullability().nullability() == Nullability.NULLABLE;
   }
 
   private boolean isNotNullParameterOverridingNonAnnotated(NullableNotNullManager nullableManager,

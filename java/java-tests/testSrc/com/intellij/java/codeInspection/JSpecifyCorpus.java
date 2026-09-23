@@ -88,7 +88,9 @@ public final class JSpecifyCorpus {
         new Pair<>("TypeVariableUnspecToParent.java", 68), // see: IDEA-380143
         new Pair<>("TypeVariableUnspecToParent.java", 83), // see: IDEA-380143
         new Pair<>("TypeVariableUnspecToParent.java", 98), // see: IDEA-380143
-        new Pair<>("UnionTypeArgumentWithUseSite.java", 95) // see: IDEA-380143
+        new Pair<>("UnionTypeArgumentWithUseSite.java", 95), // see: IDEA-380143
+        new Pair<>("ComplexParametric.java", 238), // see: IDEA-380143
+        new Pair<>("ComplexParametric.java", 246) // see: IDEA-380143
       );
 
   /**

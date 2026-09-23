@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.annoPackages;
 
 import com.intellij.codeInsight.ContextNullabilityInfo;
@@ -91,16 +91,6 @@ public interface AnnotationPackageSupport {
    * In this case, it won't be reported as redundant if it appears in the scope of container non-null annotation.
    */
   default boolean isNonNullUsedForInstrumentation() {
-    return false;
-  }
-
-  /**
-   * Tells whether the supplied annotation is this support's unspecified-nullness annotation in the sense of JSpecify.
-   *
-   * @param annotation annotation to check
-   * @return true if the bound walk may go through this annotation
-   */
-  default boolean shouldGoThroughUnspecifiedNullnessAnnotation(@NotNull PsiAnnotation annotation) {
     return false;
   }
 }
