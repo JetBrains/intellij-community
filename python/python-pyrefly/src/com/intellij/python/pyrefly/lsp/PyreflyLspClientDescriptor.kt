@@ -168,7 +168,10 @@ class PyreflyLspClientDescriptor(
     put("disableBundledThirdPartyStubs", true)
   }
 
-  private fun buildPyreflyAnalysisSettings(): Map<String, Any> = mapOf("completeFunctionParens" to true)
+  private fun buildPyreflyAnalysisSettings(): Map<String, Any> = mapOf(
+    "completeFunctionParens" to true,
+    "typeCheckingMode" to "default",
+  )
 
   /**
    * Pyrefly keeps one workspace for each folder, and each workspace holds its own interpreter. It
