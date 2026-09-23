@@ -2,12 +2,12 @@
 package org.jetbrains.idea.devkit.gradle
 
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter
+import com.intellij.devkit.gradle.toml.TomlIntelliJPlatformVersionCatalogUpdater
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.registerOrReplaceServiceInstance
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.idea.devkit.gradle.toml.TomlIntelliJPlatformVersionCatalogUpdater
 
 class IntelliJPlatformGradlePluginVersionQuickFixTest : LightJavaCodeInsightFixtureTestCase() {
 

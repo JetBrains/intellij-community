@@ -3,16 +3,12 @@
   <dependencies>
     <plugin id="org.toml.lang"/>
     <module name="intellij.devkit.gradle"/>
-    <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.codeStyle"/>
-    <module name="intellij.platform.core"/>
-    <module name="intellij.platform.core.impl"/>
     <module name="intellij.toml.core"/>
   </dependencies>
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="org.jetbrains.idea.devkit.gradle.IntelliJPlatformVersionCatalogUpdater"
-                    serviceImplementation="org.jetbrains.idea.devkit.gradle.toml.TomlIntelliJPlatformVersionCatalogUpdater"/>
+                    serviceImplementation="com.intellij.devkit.gradle.toml.TomlIntelliJPlatformVersionCatalogUpdater"/>
   </extensions>
 </idea-plugin>
