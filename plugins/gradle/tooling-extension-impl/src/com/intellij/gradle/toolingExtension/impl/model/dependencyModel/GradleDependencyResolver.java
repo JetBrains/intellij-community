@@ -87,6 +87,7 @@ public final class GradleDependencyResolver {
     "Required org.gradle.jvm.version '(\\d+)' (?:but no value provided|and found incompatible value '(\\d+)')\\."
   ).asPredicate();
 
+  private final @NotNull ModelBuilderContext myContext;
   private final @NotNull Project myProject;
   private final @NotNull GradleDependencyDownloadPolicy myDownloadPolicy;
 
@@ -97,6 +98,7 @@ public final class GradleDependencyResolver {
     @NotNull Project project,
     @NotNull GradleDependencyDownloadPolicy downloadPolicy
   ) {
+    myContext = context;
     myProject = project;
     myDownloadPolicy = downloadPolicy;
 
@@ -523,11 +525,11 @@ public final class GradleDependencyResolver {
       AuxiliaryArtifactProvider.class, AuxiliaryArtifactProvider.class.getClassLoader());
     for (AuxiliaryArtifactProvider provider : providers) {
       try {
-        AuxiliaryConfigurationArtifacts additional = provider.resolve(myProject, configuration, myDownloadPolicy);
+        AuxiliaryConfigurationArtifacts additional = provider.resolve(myContext, myProject, configuration, myDownloadPolicy);
         primaryArtifacts = primaryArtifacts.mergeWith(additional);
       }
-      catch (Exception ignore) {
-        // supplementary providers should not break the main resolution
+      catch (Exception | LinkageError ignore) {
+        // supplementary providers should not break the main resolution, also when they are binary incompatible
       }
     }
     return primaryArtifacts;
