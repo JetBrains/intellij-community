@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtilsCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.PossiblyDumbAware;
@@ -109,7 +110,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
         return true;
       }
     };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(contributors, processor)) {
+    if (!ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(contributors, processor))) {
       throw new ProcessCanceledException();
     }
     if (indicator != null) {
@@ -185,7 +186,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
 
     Processor<ChooseByNameContributor> processor = contributor ->
       processContributorForName(contributor, applicable.get(contributor), parameters, canceled, items);
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(applicable.keySet()), processor)) {
+    if (!ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(applicable.keySet()), processor))) {
       canceled.cancel();
     }
     canceled.checkCanceled(); // if parallel job execution was canceled because of PCE, rethrow it from here

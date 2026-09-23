@@ -6,7 +6,6 @@ import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
-import com.intellij.codeInsight.codeVision.CodeVisionState
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.concurrency.JobLauncher
@@ -51,7 +50,7 @@ class CodeVisionPass(
       val providerIdToLenses = ConcurrentHashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>()
       val indicator = EmptyProgressIndicator()
       ProgressManager.getInstance().runProcess({
-         collect(indicator, editor, file, providerIdToLenses, providers)
+         collect(editor, file, providerIdToLenses, providers)
       }, indicator)
 
       val allProviders = CodeVisionProviderFactory.createAllProviders(file.project)
@@ -66,8 +65,7 @@ class CodeVisionPass(
       return CodeVisionData(dataForAllProviders)
     }
 
-    private fun collect(progress: ProgressIndicator,
-                        editor: Editor,
+    private fun collect(editor: Editor,
                         file: PsiFile,
                         providerIdToLenses: ConcurrentHashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>,
                         providers: List<DaemonBoundCodeVisionProvider>) {
@@ -117,7 +115,7 @@ class CodeVisionPass(
     if (!CodeVisionProjectSettings.getInstance(myProject).isEnabledForProject()) return
     val providers = DaemonBoundCodeVisionProvider.extensionPoint.extensionList
       .filter {  settings.isProviderEnabled(it.groupId) }
-    collect(progress, editor, myFile, providerIdToLenses, providers)
+    collect(editor, myFile, providerIdToLenses, providers)
   }
 
   override fun doApplyInformationToEditor() {

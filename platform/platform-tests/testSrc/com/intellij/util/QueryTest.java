@@ -16,12 +16,13 @@ public class QueryTest extends LightPlatformTestCase {
   public void testForEachIsThreadSafeByDefault() {
     List<String> src = IntStream.range(0, 100).mapToObj(String::valueOf).toList();
     AtomicBoolean processing = new AtomicBoolean();
+    ProgressManager.getInstance().runProcess(()->
     parallelQuery(src).forEach(_ -> {
       assertTrue(processing.compareAndSet(false, true));
       TimeoutUtil.sleep(1);
       processing.set(false);
       return true;
-    });
+    }), new EmptyProgressIndicator());
   }
 
   public void testForEachIsParallelWhenAllowed() {
