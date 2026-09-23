@@ -240,6 +240,24 @@ public abstract class ChangeViewDiffRequestProcessor extends UpdatableMultipleCh
     return allChanges != null ? allChanges.indexOf(myCurrentChange) : -1;
   }
 
+  @ApiStatus.Internal
+  @Override
+  @RequiresEdt
+  public @NotNull List<FilePath> getAllChangePaths() {
+    return ContainerUtil.map(iterateAllChanges(), Wrapper::getFilePath);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  @RequiresEdt
+  public boolean showChange(@NotNull FilePath path) {
+    Wrapper change = ContainerUtil.find(iterateAllChanges(), it -> path.equals(it.getFilePath()));
+    if (change == null) return false;
+    setCurrentChange(change);
+    selectChange(change);
+    return true;
+  }
+
   @Override
   protected @Nullable AnAction createGoToChangeAction() {
     Supplier<ListSelection<? extends Wrapper>> changesSupplier =

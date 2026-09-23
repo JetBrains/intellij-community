@@ -3,6 +3,7 @@ package com.intellij.platform.vcs.impl.shared.changes
 
 import com.intellij.diff.impl.CacheDiffRequestProcessor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
@@ -32,4 +33,18 @@ abstract class UpdatableMultipleChangesDiffRequestProcessor(
    */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   abstract fun getCurrentChangeIndex(): Int
+
+  /**
+   * The paths of all the changes that the processor can show, in navigation order.
+   * The value is `null` if the processor cannot list its changes.
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  open fun getAllChangePaths(): List<FilePath>? = null
+
+  /**
+   * Shows the first change at [path] and selects it in the view that the processor follows.
+   * Returns `false` if there is no such change, or the processor cannot switch to it.
+   */
+  @RequiresEdt
+  open fun showChange(path: FilePath): Boolean = false
 }
