@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.inspections.remotedev.analysis
 
 import com.intellij.codeInsight.intention.FileModifier.SafeTypeForPreview
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -287,6 +288,7 @@ class SplitModeApiRestrictionsService(
         buildRestrictionsSnapshot()
       }
       catch (e: Exception) {
+        rethrowControlFlowException(e)
         LOG.error("Failed to load API restrictions", e)
         return loaded
       }
