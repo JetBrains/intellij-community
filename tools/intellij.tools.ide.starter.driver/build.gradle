@@ -44,6 +44,9 @@ dependencies {
   implementation "com.jetbrains.intellij.tools:ide-performance-testing-commands:LATEST-TRUNK-SNAPSHOT"
 
   implementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+
+  testImplementation 'org.junit.platform:junit-platform-launcher:1.10.2'
+  testImplementation 'org.junit-pioneer:junit-pioneer:2.2.0'
 }
 
 kotlin {

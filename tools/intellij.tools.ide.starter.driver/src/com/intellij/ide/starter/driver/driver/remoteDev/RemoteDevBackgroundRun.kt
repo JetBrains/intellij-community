@@ -26,6 +26,8 @@ open class RemoteDevBackgroundRun(
                   driverWithoutAwaitedConnection = frontendDriver,
                   process = frontendProcess,
                   runContext = frontendRunContext) {
+  override val ownedProcesses: List<IDEHandle> get() = backendRun.ownedProcesses + process
+
   override fun <R> useDriverAndCloseIde(closeIdeTimeout: Duration, takeScreenshot: Boolean, shutdownHook: Driver.() -> Unit, block: Driver.() -> R): IDEStartResult {
     val testError = runCatching {
       waitAndPrepareForTest()

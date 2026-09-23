@@ -4,6 +4,7 @@ import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.models.TestCase
 import com.intellij.ide.starter.path.IDEDataPaths
+import com.intellij.ide.starter.testContextCache.InstalledIdeFromCache
 import com.intellij.ide.starter.runner.CurrentTestMethod
 import com.intellij.ide.starter.runner.CurrentTestPlan
 import com.intellij.ide.starter.runner.IDERunContext
@@ -134,6 +135,19 @@ class IDERunContextTest {
     whileTheIdeStarts shouldBe listOf(ReportedMetadata("Link to Logs and artifacts", linkToArtifacts("in-test-launch-test")))
   }
 
+  @Test
+  fun `a reusable IDE publishes every launch under the reused layout, its startup launch included`() {
+    CurrentTestMethod.set(testMethod("first test"))
+    val runContext = IDERunContext(testContext("reused-ide-test", isReusableIdeContext = true))
+    val startupReportingData = runContext.originalIdeReportingData
+
+    CurrentTestMethod.set(testMethod("second test"))
+    val secondTestReportingData = runContext.registerNewIdeReportingData {}
+
+    startupReportingData.artifactPath shouldBe "reused-ide-test/ide-run-context-test/1-first-test"
+    secondTestReportingData.artifactPath shouldBe "reused-ide-test/ide-run-context-test/2-second-test"
+  }
+
   private fun testMethod(displayName: String, id: String = displayName): TestMethod = TestMethod(
     name = displayName,
     displayName = displayName,
@@ -141,13 +155,16 @@ class IDERunContextTest {
     id = id,
   )
 
-  private fun testContext(testName: String? = null): IDETestContext {
+  private fun testContext(testName: String? = null, isReusableIdeContext: Boolean = false): IDETestContext {
     val context = mock(IDETestContext::class.java)
     val testCase = mock(TestCase::class.java)
     val ideInfo = mock(IdeInfo::class.java)
     doReturn(testCase).`when`(context).testCase
     doReturn(ideInfo).`when`(testCase).ideInfo
     doReturn(false).`when`(ideInfo).isFrontend
+    if (isReusableIdeContext) {
+      doReturn(mock(InstalledIdeFromCache::class.java)).`when`(context).ide
+    }
     testName?.let {
       doReturn(it).`when`(context).testName
       doReturn(IDEDataPaths(tempDir, null)).`when`(context).paths

@@ -2,6 +2,7 @@ package com.intellij.ide.starter.runner
 
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.report.DetailsOnCI
+import com.intellij.ide.starter.testContextCache.InstalledIdeFromCache
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter
 import java.nio.file.Path
 
@@ -66,7 +67,7 @@ internal class IDEReportingDataRegistry(
         testMethod = reportingIdentity,
         launchName = launchName,
         isFrontend = testContext.testCase.ideInfo.isFrontend,
-        artifactLayout = if (registered.isNotEmpty()) IDEReportingData.ArtifactLayout.REUSED_IDE else IDEReportingData.ArtifactLayout.LEGACY
+        artifactLayout = artifactLayout(),
       )
       // only for a launch some test method claims, see CurrentTestMethod.get: an IDE started outside a test - from
       // `@BeforeAll` - would report its links onto the test that ran before it
@@ -81,6 +82,16 @@ internal class IDEReportingDataRegistry(
       return reportingData
     }
   }
+
+  /**
+   * Which artifact layout the launch being registered publishes under.
+   *
+   * A reusable IDE always uses the reused-IDE layout, its startup launch included, so each test method gets a path of its own.
+   * Any other IDE keeps the legacy path that IJ Perf rebuilds, until it reports for a second test method.
+   */
+  private fun artifactLayout(): IDEReportingData.ArtifactLayout =
+    if (testContext.ide is InstalledIdeFromCache || registered.isNotEmpty()) IDEReportingData.ArtifactLayout.REUSED_IDE
+    else IDEReportingData.ArtifactLayout.LEGACY
 
   /**
    * Publishes a link to the artifacts of a launch as soon as it is registered, so that a running test can already be followed on CI.

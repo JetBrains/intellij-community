@@ -36,6 +36,8 @@ open class BackgroundRun(
   @ApiStatus.Internal
   var restarter: ((launchName: String) -> BackgroundRun)? = null
 
+  internal open val ownedProcesses: List<IDEHandle> get() = listOf(process)
+
   val driver: Driver by lazy {
     if (!driverWithoutAwaitedConnection.isConnected) {
       runCatching {
@@ -120,15 +122,18 @@ open class BackgroundRun(
   }
 
   /**
-   * Closes this run, waits for its result, and starts a replacement from the same launch recipe.
+   * Closes this run with [close], and starts a replacement from the same launch recipe.
    *
-   * The replacement takes [launchName], or else [nextRestartLaunchNameOf] the current one. A failed run fails the
-   * restart. In split mode, this closes and waits for the frontend and the backend.
+   * The replacement takes [launchName], or else [nextRestartLaunchNameOf] the current one. The default [close] waits
+   * for the result, so a failed run fails the restart. In split mode, it closes the frontend and the backend.
    */
-  fun restart(launchName: String? = null): BackgroundRun {
+  fun restart(
+    launchName: String? = null,
+    close: BackgroundRun.() -> Unit = { closeIdeAndWait() },
+  ): BackgroundRun {
     val restarter = restarter
                     ?: error("This ${this::class.simpleName} cannot restart. Only a run that runIdeWithDriver started can restart.")
-    closeIdeAndWait()
+    close()
     return restarter(launchName ?: nextRestartLaunchNameOf(runContext.launchName))
   }
 

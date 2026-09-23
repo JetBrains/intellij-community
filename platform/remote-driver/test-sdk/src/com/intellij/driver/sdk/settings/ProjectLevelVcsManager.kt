@@ -11,9 +11,11 @@ fun Driver.getProjectLevelVcsManagerInstance(project: Project) = utility(Project
 interface ProjectLevelVcsManager {
   fun getInstance(project: Project): ProjectLevelVcsManager
   fun getDirectoryMappings(): List<VcsDirectoryMapping>
+  fun setDirectoryMappings(mappings: List<VcsDirectoryMapping>)
 }
 
 @Remote("com.intellij.openapi.vcs.VcsDirectoryMapping", plugin = "com.intellij.platform.vcs/intellij.platform.vcs")
 interface VcsDirectoryMapping {
   fun getDirectory(): String
+  fun getVcs(): String
 }
