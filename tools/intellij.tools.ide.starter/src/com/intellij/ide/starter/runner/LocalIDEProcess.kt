@@ -30,6 +30,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.runInterruptible
 import java.io.Closeable
 import java.nio.file.Path
+import java.nio.file.attribute.FileTime
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.writeText
 import kotlin.time.measureTimedValue
@@ -40,6 +41,9 @@ class LocalIDEProcess : IDEProcess {
   override suspend fun run(runContext: IDERunContext): IDEStartResult {
     with(runContext) {
       EventsBus.postAndWaitProcessing(IdeBeforeLaunchEvent(this))
+
+      // read just before the process starts, see below, so that the validation in the finally block compares against them
+      var dirWatermarks = emptyMap<Path, FileTime>()
 
       deleteSavedAppStateOnMac()
       val paths = testContext.paths
@@ -73,12 +77,16 @@ class LocalIDEProcess : IDEProcess {
         logDisabledPlugins(paths)
         logStartupInfo(vmOptions)
 
-        val finalArgs = startConfig.commandLine + commandLine(this).args
+        val ideArgs = commandLine(this).args
+        val finalArgs = startConfig.commandLine + ideArgs
         Path.of(finalArgs.first()).takeIf { it.isAbsolute }?.let {
           NioFiles.setExecutable(it)
         }
         val span = TestTelemetryService.spanBuilder("ide process").startSpan()
         EventsBus.postAndWaitProcessing(IdeBeforeRunIdeProcessEvent(runContext = this))
+        // after the last framework write, such as setProviderMemoryOnlyOnLinux, so that only the IDE moves them
+        // a run killed on purpose, or an informational one, can end before the IDE writes to its directories
+        dirWatermarks = if (expectedKill || isInformationalLaunch(ideArgs)) emptyMap() else readDirWatermarks(testContext.paths)
         val processPresentableName = "run-ide-$contextName"
         val (exitCode, executionTime) = measureTimedValue {
           ProcessExecutor(
@@ -170,7 +178,7 @@ class LocalIDEProcess : IDEProcess {
             EventsBus.postAndWaitProcessing(IdeAfterLaunchEvent(runContext = this, isRunSuccessful = isRunSuccessful))
 
             if (isRunSuccessful) {
-              validateVMOptionsWereSet(this)
+              validateVMOptionsWereSet(dirWatermarks)
             }
             ideProcessId?.let { lastIdeReportingData.collectJBRDiagnosticFiles(it) }
 

@@ -21,7 +21,8 @@ open class IDEDataPaths @JvmOverloads constructor(
   companion object {
     private val CLEANER = Cleaner.create()
 
-    inline fun <reified T> createPaths(testName: String, testHome: Path, useInMemoryFs: Boolean): T where T : Any {
+    /** Clears [testHome] and creates the paths over it. With [sharedSystemDir], the paths take that system directory. */
+    inline fun <reified T> createPaths(testName: String, testHome: Path, useInMemoryFs: Boolean, sharedSystemDir: Path? = null): T where T : Any {
       val isTestHomeCleanupSuccessful = testHome.listDirectoryEntriesQuietly()
         ?.filterNot { it.name == "system" && it.isDirectory() }
         ?.all { it.deleteRecursivelyQuietly() }
@@ -35,8 +36,8 @@ open class IDEDataPaths @JvmOverloads constructor(
       else {
         null
       }
-      return T::class.java.getConstructor(Path::class.java, Path::class.java)
-        .newInstance(testHome, inMemoryRoot)
+      return T::class.java.getConstructor(Path::class.java, Path::class.java, Path::class.java)
+        .newInstance(testHome, inMemoryRoot, sharedSystemDir)
     }
   }
 
