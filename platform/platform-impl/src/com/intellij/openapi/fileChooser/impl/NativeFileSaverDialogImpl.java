@@ -36,7 +36,9 @@ final class NativeFileSaverDialogImpl implements FileSaverDialog {
 
     var title = requireNonNullElseGet(descriptor.getTitle(), () -> UIBundle.message("file.chooser.default.title"));
     myFileDialog = OwnerOptional.create(
-      parent,
+      // getFocusOwner() isn't reliable so we need validate component otherwise use null to get active window as parent
+      // with invalid parent at least, we lose the UI theme background color.
+      parent != null && parent.isValid() ? parent : null,
       dialog -> new FileDialog(dialog, title, FileDialog.SAVE),
       frame -> new FileDialog(frame, title, FileDialog.SAVE));
 
