@@ -65,7 +65,8 @@ internal class TerminalEmulatorKeyEventEncoder(
       // The base character, not e.keyChar: on macOS Option+F types 'ƒ' while ESC f is
       // wanted. Uppercase under shift — zsh distinguishes ESC f from ESC F.
       val base = e.keyCode.toChar().let { if (e.isShiftDown) it.uppercaseChar() else it.lowercaseChar() }
-      return KeyEventProcessingResultDto.StringResult(Char(27) + base.toString(), false)
+      val string = Char(27) + base.toString()
+      return KeyEventProcessingResultDto.StringResult(string, settings.scrollToBottomOnTyping())
     }
 
     if ((e.isAltGraphDown || (SystemInfoRt.isWindows && e.isControlDown && e.isAltDown)) &&
@@ -87,7 +88,9 @@ internal class TerminalEmulatorKeyEventEncoder(
       if (writingKey != null) {
         val event = TerminalKeyEvent(writingKey.key, modifiers = terminalModifiers(e), unshiftedCodepoint = writingKey.codepoint)
         val bytes = emulator.encodeKeyEvent(event)
-        if (bytes.isNotEmpty()) return bytesResult(bytes, e)
+        if (bytes.isNotEmpty()) {
+          return KeyEventProcessingResultDto.BytesResult(bytes, settings.scrollToBottomOnTyping())
+        }
       }
     }
 
