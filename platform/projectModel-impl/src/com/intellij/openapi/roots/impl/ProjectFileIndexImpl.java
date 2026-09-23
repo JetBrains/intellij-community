@@ -84,10 +84,21 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
       allRecursiveRoots.addAll(allRecursiveNonIndexableRoots);
       List<VirtualFile> recursiveRoots =
         ContainerUtil.filter(allRecursiveRoots, root -> root.getParent() == null ||
-                                                        myWorkspaceFileIndex.getContentFileSetRoot(root.getParent(), false) == null);
+                                                        !hasRecursiveContentRoot(root.getParent()));
       return new Pair<>(recursiveRoots, allNonRecursiveRoots);
     });
     return iterateProvidedRootsOfContent(processor, filter, rootsPair.getFirst(), rootsPair.getSecond());
+  }
+
+  /**
+   * Whether iterating {@code parent} actually reaches the files below it. A non-recursive file set covers its own root
+   * only, so it must not suppress a recursive root nested under it.
+   *
+   * @see ModuleFileIndexImpl#hasRecursiveRootFromModuleContent
+   */
+  private boolean hasRecursiveContentRoot(@NotNull VirtualFile parent) {
+    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(parent, false, true, true, false, false, false, false);
+    return fileInfo.findFileSet(fileSet -> fileSet.getRecursive() && fileSet.getKind().isContent()) != null;
   }
 
   @Override
