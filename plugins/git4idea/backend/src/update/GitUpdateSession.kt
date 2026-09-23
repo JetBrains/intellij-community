@@ -7,6 +7,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -79,8 +80,10 @@ class GitUpdateSession(
                                              notificationData.receivedCommitsCount,
                                              notificationData.filteredCommitsCount)
 
-      notification.addAction(NotificationAction.createSimple(Supplier { GitBundle.message("action.NotificationAction.GitUpdateSession.text.view.commits") },
-                                                             notificationData.viewCommitAction))
+      if (project in ProjectManager.getInstance().openProjects) {
+        notification.addAction(NotificationAction.createSimple(Supplier { GitBundle.message("action.NotificationAction.GitUpdateSession.text.view.commits") },
+                                                               notificationData.viewCommitAction))
+      }
 
       GitPostUpdateHandler.getActions(project, notificationData.ranges).forEach { notification.addAction(it) }
 
