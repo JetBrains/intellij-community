@@ -3,17 +3,23 @@ package org.jetbrains.idea.devkit.gradle
 
 import com.intellij.codeInsight.AttachSourcesProvider
 import com.intellij.codeInsight.AttachSourcesProvider.AttachSourcesAction
-import com.intellij.jarFinder.InternetAttachSourceProvider
 import com.intellij.java.library.MavenCoordinates
 import com.intellij.java.library.getMavenCoordinates
+import com.intellij.notification.BrowseNotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -28,8 +34,8 @@ import org.jetbrains.idea.devkit.run.loadProductInfo
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.service.project.GradleNotification
 import org.jetbrains.plugins.gradle.util.GradleArtifactDownloader
-import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloaderErrorHandler
+import org.jetbrains.plugins.gradle.util.GradleModuleData
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
@@ -254,8 +260,8 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
 
 
       private fun performInternal(module: Module, libraries: Collection<Library>): ActionCallback {
-        val externalProjectPath = CachedModuleDataFinder.getGradleModuleData(module)?.directoryToRunTask
-                                  ?: return ActionCallback.REJECTED
+        val moduleData = CachedModuleDataFinder.getGradleModuleData(module)
+                         ?: return ActionCallback.REJECTED
 
         val executionResult = ActionCallback()
         val project = psiFile.project
@@ -267,7 +273,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
         val nightlySnapshotNotation = "$productCoordinates:$snapshotVersion:sources" // last chance, nightly snapshot
 
         fun downloadAndAttach(artifactNotation: String, onFailure: () -> Unit) {
-          GradleArtifactDownloader.downloadArtifact(project, name, artifactNotation, externalProjectPath,
+          GradleArtifactDownloader.downloadArtifact(project, name, artifactNotation, moduleData,
                                                     GradleDependencySourceDownloaderErrorHandler.Noop)
             .whenComplete { path, error ->
               when {
@@ -280,15 +286,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
         downloadAndAttach(primaryNotation, onFailure = {
           downloadAndAttach(fallbackNotation, onFailure = {
             downloadAndAttach(nightlySnapshotNotation, onFailure = {
-              GradleNotification.gradleNotificationGroup
-                .createNotification(
-                  title = GradleBundle.message("gradle.notifications.sources.download.failed.title"),
-                  content = GradleBundle.message("gradle.notifications.sources.download.failed.content", primaryNotation),
-                  type = NotificationType.WARNING
-                )
-                .setDisplayId("gradle.notifications.sources.download.failed")
-                .notify(project)
-
+              notifyDownloadFailed(project, moduleData, primaryNotation)
               executionResult.setRejected()
             })
           })
@@ -299,17 +297,50 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
     }
 
   /**
-   * Attaches sources jar to the specified libraries and executes the provided block of code.
+   * Attaches the sources archive in [path] to [libraries] and then runs [block].
+   * Refreshes the VFS for [path] on a background thread.
+   * Then adds the archive root as a sources root of [libraries] on the EDT.
    */
-  private fun attachSources(path: Path, orderEntries: MutableList<out LibraryOrderEntry>, block: () -> Unit) {
-    return attachSources(path, orderEntries.mapNotNull { it.library }, block)
+  private fun attachSources(path: Path, libraries: Collection<Library>, block: () -> Unit) {
+    val application = ApplicationManager.getApplication()
+    application.executeOnPooledThread {
+      val archiveRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)
+        ?.let { JarFileSystem.getInstance().getJarRootForLocalFile(it) }
+      application.invokeLater {
+        if (archiveRoot != null) {
+          addSourcesRoot(archiveRoot, libraries)
+        }
+        block()
+      }
+    }
   }
 
-  private fun attachSources(path: Path, libraries: Collection<Library>, block: () -> Unit) {
-    ApplicationManager.getApplication().invokeLater {
-      InternetAttachSourceProvider.attachSourceJar(path, libraries)
-      block()
+  private fun addSourcesRoot(root: VirtualFile, libraries: Collection<Library>) {
+    WriteAction.run<RuntimeException> {
+      for (library in libraries) {
+        if (library is LibraryEx && library.isDisposed) continue
+        if (root in library.getFiles(OrderRootType.SOURCES)) continue
+        val model = library.modifiableModel
+        model.addRoot(root, OrderRootType.SOURCES)
+        model.commit()
+      }
     }
+  }
+
+  private fun notifyDownloadFailed(project: Project, moduleData: GradleModuleData, notation: String) {
+    val gradleProject = moduleData.gradlePathOrNull ?: moduleData.gradleProjectDir
+    GradleNotification.gradleNotificationGroup
+      .createNotification(
+        title = DevKitGradleBundle.message("attachSources.intellijPlatform.failed.title"),
+        content = DevKitGradleBundle.message("attachSources.intellijPlatform.failed.content", notation, gradleProject),
+        type = NotificationType.WARNING
+      )
+      .setDisplayId("devkit.gradle.attachSources.intellijPlatform.failed")
+      .addAction(BrowseNotificationAction(
+        DevKitGradleBundle.message("attachSources.intellijPlatform.failed.documentation"),
+        REPOSITORIES_DOCUMENTATION_URL,
+      ))
+      .notify(project)
   }
 
   /**
@@ -358,6 +389,11 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
   private fun isJamSourcesArchive(psiFile: PsiFile): Boolean {
     val classPath = psiFile.virtualFile.path.substringAfter('!')
     return classPath.startsWith("/com/intellij/jam/")
+  }
+
+  private companion object {
+    const val REPOSITORIES_DOCUMENTATION_URL: String =
+      "https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html#configuration.repositories"
   }
 
   private fun resolveProductCoordinates(product: IntelliJPlatformProduct, majorVersion: Int) =

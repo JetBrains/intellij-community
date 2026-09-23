@@ -41,6 +41,9 @@
     <orderEntry type="module" module-name="intellij.devkit.gradle.toml" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.gradle.tooling" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.testFramework" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.devkit.gradle" />
 </module>
