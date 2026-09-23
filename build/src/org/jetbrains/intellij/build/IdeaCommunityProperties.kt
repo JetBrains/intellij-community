@@ -244,7 +244,6 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
   module("intellij.platform.ide.nonModalWelcomeScreen")
   module("intellij.platform.ide.nonModalWelcomeScreen.frontend")
   module("intellij.platform.ide.nonModalWelcomeScreen.backend")
-  module("intellij.platform.ide.nonModalWelcomeScreen.terminal")
 }
 
 inline fun ideaCommunityWindowsCustomizer(

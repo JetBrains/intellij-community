@@ -925,7 +925,6 @@ platform/new-users-onboarding
 platform/non-modal-welcome-screen
 platform/non-modal-welcome-screen/backend
 platform/non-modal-welcome-screen/frontend
-platform/non-modal-welcome-screen/terminal
 platform/object-serializer
 platform/observable
 platform/platform-api
