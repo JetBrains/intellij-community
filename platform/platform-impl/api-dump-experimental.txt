@@ -52,6 +52,8 @@
 *:com.intellij.execution.impl.InlayProvider
 - createInlay(com.intellij.openapi.editor.Editor,I):com.intellij.openapi.editor.Inlay
 - createInlayRenderer(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.EditorCustomElementRenderer
+com.intellij.execution.wsl.AbstractWslDistribution
+- *a:getUNCRootPath():java.nio.file.Path
 c:com.intellij.execution.wsl.WSLDistribution
 - com.intellij.execution.wsl.AbstractWslDistribution
 - *:getUNCRootPath():java.nio.file.Path

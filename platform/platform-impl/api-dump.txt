@@ -381,6 +381,13 @@ c:com.intellij.execution.impl.ExpirableTokenProvider
 - invalidateAll():V
 f:com.intellij.execution.process.ProcessHandlerFactoryImpl
 - com.intellij.execution.process.ProcessHandlerFactory
+com.intellij.execution.wsl.AbstractWslDistribution
+- a:getMsId():java.lang.String
+- a:getWslPath(java.nio.file.Path):java.lang.String
+- a:patchCommandLine(com.intellij.execution.configurations.GeneralCommandLine,com.intellij.openapi.project.Project,com.intellij.execution.wsl.WSLCommandLineOptions):com.intellij.execution.configurations.GeneralCommandLine
+f:com.intellij.execution.wsl.AbstractWslDistributionKt
+- sf:getToolLinuxPath(com.intellij.execution.wsl.AbstractWslDistribution,java.lang.String):java.lang.String
+- sf:getWslPathSafe(com.intellij.execution.wsl.AbstractWslDistribution,java.nio.file.Path):java.lang.String
 c:com.intellij.execution.wsl.WSLDistribution
 - com.intellij.execution.wsl.AbstractWslDistribution
 - <init>(java.lang.String):V

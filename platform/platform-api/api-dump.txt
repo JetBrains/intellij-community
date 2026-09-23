@@ -358,6 +358,27 @@ f:com.intellij.execution.ui.utils.VariantableTag
 - bs:variant$default(com.intellij.execution.ui.utils.VariantableTag,java.lang.Object,java.lang.String,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 f:com.intellij.execution.util.ExecutionErrorDialog
 - s:show(com.intellij.execution.ExecutionException,java.lang.String,com.intellij.openapi.project.Project):V
+f:com.intellij.execution.wsl.WSLCommandLineOptions
+- <init>():V
+- addInitCommand(java.lang.String):com.intellij.execution.wsl.WSLCommandLineOptions
+- getInitShellCommands():java.util.List
+- getRemoteWorkingDirectory():java.lang.String
+- getSleepTimeoutSec():D
+- isExecuteCommandInDefaultShell():Z
+- isExecuteCommandInInteractiveShell():Z
+- isExecuteCommandInLoginShell():Z
+- isExecuteCommandInShell():Z
+- isLaunchWithWslExe():Z
+- isPassEnvVarsUsingInterop():Z
+- isSudo():Z
+- setExecuteCommandInInteractiveShell(Z):com.intellij.execution.wsl.WSLCommandLineOptions
+- setExecuteCommandInLoginShell(Z):com.intellij.execution.wsl.WSLCommandLineOptions
+- setExecuteCommandInShell(Z):com.intellij.execution.wsl.WSLCommandLineOptions
+- setLaunchWithWslExe(Z):com.intellij.execution.wsl.WSLCommandLineOptions
+- setPassEnvVarsUsingInterop(Z):com.intellij.execution.wsl.WSLCommandLineOptions
+- setRemoteWorkingDirectory(java.lang.String):com.intellij.execution.wsl.WSLCommandLineOptions
+- setSleepTimeoutSec(D):com.intellij.execution.wsl.WSLCommandLineOptions
+- setSudo(Z):com.intellij.execution.wsl.WSLCommandLineOptions
 com.intellij.featureStatistics.ApplicabilityFilter
 - a:getPrefix():java.lang.String
 - a:isApplicable(java.lang.String,com.intellij.openapi.project.Project):Z

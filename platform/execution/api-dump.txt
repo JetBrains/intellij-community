@@ -956,19 +956,6 @@ com.intellij.execution.ui.layout.LayoutViewOptions
 - a:setTopRightToolbar(com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.execution.ui.layout.LayoutViewOptions
 e:com.intellij.execution.ui.layout.PlaceInGrid
 - java.lang.Enum
-com.intellij.execution.wsl.AbstractWslDistribution
-- a:getMsId():java.lang.String
-- a:getWslPath(java.nio.file.Path):java.lang.String
-- a:patchCommandLine(com.intellij.execution.configurations.GeneralCommandLine,com.intellij.openapi.project.Project,com.intellij.execution.wsl.WSLCommandLineOptions):com.intellij.execution.configurations.GeneralCommandLine
-f:com.intellij.execution.wsl.WSLCommandLineOptions
-- <init>():V
-- getInitShellCommands():java.util.List
-- setExecuteCommandInLoginShell(Z):com.intellij.execution.wsl.WSLCommandLineOptions
-- setExecuteCommandInShell(Z):com.intellij.execution.wsl.WSLCommandLineOptions
-- setLaunchWithWslExe(Z):com.intellij.execution.wsl.WSLCommandLineOptions
-- setPassEnvVarsUsingInterop(Z):com.intellij.execution.wsl.WSLCommandLineOptions
-- setRemoteWorkingDirectory(java.lang.String):com.intellij.execution.wsl.WSLCommandLineOptions
-- setSudo(Z):com.intellij.execution.wsl.WSLCommandLineOptions
 com.intellij.openapi.projectRoots.JavaSdkType
 - a:getBinPath(com.intellij.openapi.projectRoots.Sdk):java.lang.String
 - a:getToolsPath(com.intellij.openapi.projectRoots.Sdk):java.lang.String

@@ -12,6 +12,8 @@ f:com.intellij.execution.filters.HyperlinkInfoBaseKt
 - a:createProcessHandler(com.intellij.execution.configurations.GeneralCommandLine):com.intellij.execution.process.OSProcessHandler
 - s:getInstance():com.intellij.execution.process.ElevationService
 - isAvailable():Z
+f:com.intellij.execution.wsl.WSLCommandLineOptions
+- *:setExecuteCommandInDefaultShell(Z):com.intellij.execution.wsl.WSLCommandLineOptions
 *:com.intellij.featureStatistics.FeaturesRegistryListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:featureUsed(com.intellij.featureStatistics.FeatureDescriptor):V

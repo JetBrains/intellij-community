@@ -246,7 +246,3 @@ c:com.intellij.execution.ui.RunContentDescriptor
 - *:isHiddenContent():Z
 - *p:setDisplayName(java.lang.String):V
 - *p:setIcon(javax.swing.Icon):V
-com.intellij.execution.wsl.AbstractWslDistribution
-- *a:getUNCRootPath():java.nio.file.Path
-f:com.intellij.execution.wsl.WSLCommandLineOptions
-- *:setExecuteCommandInDefaultShell(Z):com.intellij.execution.wsl.WSLCommandLineOptions

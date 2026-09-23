@@ -78,6 +78,7 @@ fun AbstractWslDistribution.getToolLinuxPath(toolName: String): String =
 
 private var testOverrideWslToolRoot: String? = null
 
+@ApiStatus.Internal
 @TestOnly
 fun testOverrideWslToolRoot(linuxPath: String, disposable: Disposable) {
   require(!linuxPath.endsWith("/"))
