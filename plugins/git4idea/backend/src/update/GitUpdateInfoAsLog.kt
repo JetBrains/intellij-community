@@ -10,6 +10,8 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.TabGroupId
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -150,7 +152,7 @@ class GitUpdateInfoAsLog(private val project: Project,
       return
     }
     val logManager = projectLog.logManager
-    if (logManager == null) {
+    if (logManager == null || !isLogToolWindowAvailable()) {
       if (select) {
         VcsLogContentUtil.showLogIsNotAvailableMessage(project)
       }
@@ -163,6 +165,11 @@ class GitUpdateInfoAsLog(private val project: Project,
 
     createLogUi(logManager, MyLogUiFactory(logManager.colorManager, rangeFilter), select)
   }
+
+  // The VCS log opens in the Version Control tool window. A project loaded without a frame (e.g. a recent project updated from the welcome
+  // screen) has no such tool window, so skip the log tab instead of throwing later from getToolWindowOrThrow.
+  private fun isLogToolWindowAvailable(): Boolean =
+    ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) != null
 
   private fun getViewCommitsAction(rangeFilter: VcsLogRangeFilter): Runnable {
     return Runnable { findOrCreateLogUi(rangeFilter, true) }
