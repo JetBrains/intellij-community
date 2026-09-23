@@ -6,59 +6,47 @@ description: Create, amend, or rename IntelliJ commits and write commit messages
 
 # Commits
 
-SafePush/Patronus rejects malformed commit messages, so a bad subject line costs a CI round trip.
+SafePush rejects a malformed subject, and each rejection costs a CI round trip.
 
-## Subject line
+## Scope
+
+- One commit does one thing. Do not mix a cleanup or a refactoring into a behavioral change. When unsure, split.
+- Check the scope with `git status --short` and `git diff --stat`. Read the full diff only for changes you did not make in this session.
+
+## Message
 
 ```text
-IDEA-12345 <subject>              # behavioral change — ticket, no subsystem prefix
+IDEA-12345 <subject>              # behavioral change: ticket, no subsystem prefix
 <label> <subsystem>: <subject>    # clearly non-behavioral change
 ```
 
 - A behavioral change needs a YouTrack ticket. If you are unsure whether it is behavioral, it is.
 - Labels: `tests`, `cleanup`, `refactor`, `docs`, `format`, `style`, `setup`, `misc`.
-- Never begin a subject with `WIP`, `fixup!`, `squash!`, or `amend!`, and never use Conventional Commits (`fix(scope): …`).
+- Do not use Conventional Commits (`fix(scope): …`).
+- Write a body unless the change is mechanical (a typo, an import, a format pass). Tests and cleanups need one too.
+  Say why you made the change and what you decided. The diff already shows what changed.
+- Put a requested suffix such as `IJ-MR-100` in its own last paragraph.
 
-## Body
+## Passing the message
 
-Write a body for every change except a mechanical one (a typo, an import, a format pass). This includes a non-production change.
-Say why you made the change and what you decided. The diff already shows what changed.
-Write the body in ASD-STE100 Simplified Technical English, as the repository guide (`AGENTS.md`, section **Writing**) defines it.
-A requested suffix such as `IJ-MR-100` goes in its own trailing paragraph.
-
-## Safe message input
-
-On POSIX shells, pass a multiline commit message through stdin with `-F -` and a quoted heredoc:
+In a POSIX shell, use a quoted heredoc:
 
 ```bash
 git commit -F - <<'EOF'
 IDEA-12345 concise subject
 
-Explain why the change was made and what was decided.
+Why the change was made and what was decided.
 EOF
 ```
 
-On PowerShell, do **not** pipe a here-string into `git commit -F -`. Windows PowerShell may add a
-Unicode BOM to the first line, producing a malformed subject that SafePush rejects. Pass one
-paragraph per `-m` argument instead; the same form is safe with `git commit --amend`:
+In PowerShell, pass one `-m` per paragraph, also with `--amend`. Do not pipe a here-string into `-F -`.
+Windows PowerShell adds a BOM to the subject, and SafePush rejects it.
 
 ```powershell
-git commit `
-  -m "IDEA-12345 concise subject" `
-  -m "Explain why the change was made and what was decided." `
-  -m "IJ-MR-100"
+git commit -m "IDEA-12345 concise subject" -m "Why the change was made and what was decided." -m "IJ-MR-100"
 ```
 
-After committing or amending from PowerShell, inspect `git cat-file commit HEAD` and confirm that
-the subject begins directly with the ticket or label, without an invisible BOM.
-
-Do not stage commit messages in `/tmp`, `/private/tmp`, or another path outside the workspace. That can require an extra filesystem-access approval and leaves a plaintext artifact behind. If a reusable draft is genuinely needed, keep it under the repository's gitignored `out/` directory, for example `out/commit-message.txt`.
-
-## Before writing
-
-1. `git status --short` and `git diff --stat` for scope.
-   Read the full diff only for changes you did not make yourself in this session, and file by file when it is large.
-2. One commit does one thing — no cleanup or refactoring mixed into a behavior change. When unsure, split.
+Do not write the message to a file outside the workspace, such as `/tmp`. If you need a file, use the gitignored `out/commit-message.txt`.
 
 ## Examples
 
@@ -78,5 +66,4 @@ Convert remaining JUnit 4 suites under cidr/coverage to JUnit 5.
 Parametrized tests now use @MethodSource instead of the Theories runner.
 ```
 
-Uncovered case (isolated-commit algorithm, `misc` triage): [2_Commits.md](../../../../docs/IntelliJ-Platform/0_Intro/2_Commits.md).
-Pushing: use the `safe-push` skill.
+Other cases, such as isolated commits and `misc` triage: [2_Commits.md](../../../../docs/IntelliJ-Platform/0_Intro/2_Commits.md). To push, use the `safe-push` skill.
