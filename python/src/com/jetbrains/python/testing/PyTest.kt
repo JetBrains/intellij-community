@@ -16,10 +16,13 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
 import com.intellij.execution.ui.ConsoleView
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.search.GlobalSearchScope
@@ -31,6 +34,7 @@ import com.jetbrains.python.run.PythonScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.testing.PyTestSharedForm.create
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Pytest runner
@@ -87,23 +91,32 @@ class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environme
       return
     }
 
-    consoleView.resultsViewer.addEventsListener(object : TestResultsViewer.EventsListener {
-      override fun onSelected(
-        selectedTestProxy: SMTestProxy?,
-        viewer: TestResultsViewer,
-        model: TestFrameworkRunningModel,
-      ) {
-        if (selectedTestProxy != null &&
-            selectedTestProxy.children.isEmpty() &&
-            selectedTestProxy.isDefect && !selectedTestProxy.isInProgress) {
-          CompositePrintable.invokeInAlarm(Runnable {
-            consoleView.performWhenNoDeferredOutput(Runnable {
-              consoleView.scrollTo(consoleView.contentSize)
-            })
+    consoleView.resultsViewer.addEventsListener(PyScrollToBottomOnFailedTestSelection(consoleView))
+  }
+}
+
+/**
+ * Scrolls [consoleView] to the end when a user selects a failed leaf test.
+ * The console prints the output of the selected test on the test executor thread, so the scroll waits there for that output.
+ * The scroll itself runs on the EDT, because the console view allows access only from the EDT.
+ */
+internal class PyScrollToBottomOnFailedTestSelection(private val consoleView: SMTRunnerConsoleView) : TestResultsViewer.EventsListener {
+  override fun onSelected(
+    selectedTestProxy: SMTestProxy?,
+    viewer: TestResultsViewer,
+    model: TestFrameworkRunningModel,
+  ) {
+    if (selectedTestProxy != null &&
+        selectedTestProxy.children.isEmpty() &&
+        selectedTestProxy.isDefect && !selectedTestProxy.isInProgress) {
+      CompositePrintable.invokeInAlarm(Runnable {
+        ApplicationManager.getApplication().invokeLater(Runnable {
+          consoleView.performWhenNoDeferredOutput(Runnable {
+            consoleView.scrollTo(consoleView.contentSize)
           })
-        }
-      }
-    })
+        }, Condition<Any?> { Disposer.isDisposed(consoleView) })
+      })
+    }
   }
 }
 
