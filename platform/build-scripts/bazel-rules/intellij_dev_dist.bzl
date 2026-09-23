@@ -12,7 +12,7 @@ load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@community//build:project_model_manifest.bzl", "write_project_model_manifest")
 load("//build:dev_launch_dependencies.bzl", "platform_parts")
 load(":dev_dist_content.bzl", "DevDistContentInfo", "DevDistPlatformPayloadInfo")
-load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_DESCRIPTOR_KEY_PREFIX", "DevDistPluginDescriptorSetInfo", "DevDistProductInfo", "dev_dist_product_info_transition")
+load(":dev_dist_plugin_descriptor.bzl", "DevDistProductInfo", "dev_dist_product_info_transition")
 
 # Pinned so the fragments of one distribution agree and an assembly does not carry the wall clock into its outputs. It
 # dates archive entries and the `.SNAPSHOT` plugin version suffix, and both would otherwise differ between fragments
@@ -23,8 +23,7 @@ load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_DESCRIPTOR_KEY_PREFIX", "DevDi
 # chosen to outrun that period makes every dev IDE start expired, because a build date over a day ahead of the wall
 # clock is expired too.
 #
-# `dev_dist_plugin_descriptor` stamps the same date, and it reads the product's own value out of the generated plan.
-# `dev_dist_plugin_descriptor_helpers_test` compares the plan's value against this constant.
+# `dev_dist_plugin_descriptor` stamps the same date. It reads the product's own value out of `dev_dist_product_info.bzl`.
 DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS = "1767225600"  # 2026-01-01T00:00:00Z
 
 IntellijDevBuildInputsInfo = provider(
@@ -33,16 +32,11 @@ IntellijDevBuildInputsInfo = provider(
         "files": "The input files named by the manifest.",
         "manifest": "The logical Bazel input label to execution path manifest.",
         "inputs_origin": "The sidecar naming which half of the declaration each manifest key came from.",
-        "patched_descriptors": "The produced plugin descriptors this fragment reads instead of computing them.",
     },
 )
 
 # How strongly a declaration half demands its key, lowest first, for a key more than one half names.
-#
-# `descriptor` is highest, so a key some other half also names keeps that half's name. It cannot happen today - a
-# descriptor key is in a namespace of its own, see `DEV_DIST_DESCRIPTOR_KEY_PREFIX` - and the rank states what would
-# happen if it ever did.
-_ORIGIN_RANK = {"raw": 0, "member": 1, "library": 2, "descriptor": 3}
+_ORIGIN_RANK = {"raw": 0, "member": 1, "library": 2}
 
 def _add_input_entry(ctx, entries, origins, logical_key, files, source, origin):
     """Record one manifest entry, failing when two different file lists claim the same logical key.
@@ -77,7 +71,6 @@ def _add_input_entry(ctx, entries, origins, logical_key, files, source, origin):
 def _dev_build_inputs_impl(ctx):
     entries = {}
     origins = {}
-    patched_descriptors = []
 
     for target in ctx.attr.inputs:
         files = target[DefaultInfo].files.to_list()
@@ -121,24 +114,6 @@ def _dev_build_inputs_impl(ctx):
         for entry in content.library_jars.to_list():
             _add_input_entry(ctx, entries, origins, entry.label, entry.jars, entry.label, "library")
 
-    if ctx.attr.patched_descriptors:
-        # A produced descriptor is a *file* a fragment reads, so it travels in the manifest and not in a relation-only
-        # plan: the plan holds no path by design. The key is the plugin's main module, which is the one string that means
-        # the same thing on both sides - `KtJvmInfo.module_name` names the plugin here, and `PluginLayout.mainModule`
-        # names it in the assembly. The descriptor target's own label would not do: its name segment comes from the
-        # module *target*, which the Kotlin side cannot derive.
-        patched_descriptors = ctx.attr.patched_descriptors[DevDistPluginDescriptorSetInfo].descriptors.to_list()
-        for record in patched_descriptors:
-            _add_input_entry(
-                ctx,
-                entries,
-                origins,
-                DEV_DIST_DESCRIPTOR_KEY_PREFIX + record.plugin_main_module,
-                (record.descriptor,),
-                ctx.attr.patched_descriptors.label,
-                "descriptor",
-            )
-
     lines = []
     files = []
     for logical_key in sorted(entries.keys()):
@@ -168,11 +143,6 @@ def _dev_build_inputs_impl(ctx):
             files = depset(files),
             manifest = manifest,
             inputs_origin = inputs_origin,
-            # Published as well as written into the manifest, because the manifest is a file and an analysis test cannot
-            # read one. `_build_inputs_test` in `dev_dist_content_test.bzl` asserts this field. That assertion is the only
-            # guard against a dropped declaration. Both producers write the same bytes, so every byte gate stays green
-            # when a fragment silently goes back to computing the text.
-            patched_descriptors = depset(patched_descriptors),
         ),
     ]
 
@@ -204,12 +174,6 @@ intellij_dev_build_inputs = rule(
         "owned_inputs": attr.label_keyed_string_dict(
             allow_files = True,
             doc = "Raw input to the space-separated names of the payload modules that asked for it.",
-        ),
-        # One label and not a list: a set target selects the variant of each plugin its platform takes. No set target
-        # in `//build/dev-dist-descriptors` applies a partition today. See `DevDistPluginDescriptorSetInfo`.
-        "patched_descriptors": attr.label(
-            providers = [DevDistPluginDescriptorSetInfo],
-            doc = "The produced descriptors of this fragment's plugins, or unset for a fragment that patches its own.",
         ),
     },
 )

@@ -7,7 +7,7 @@ load(":content_module_jar.bzl", "ContentModuleJarInfo", "DevDistPlatformJarInfo"
 load(":content_module_jar_test.bzl", "content_module_jar_test_suite")
 load(":dev_dist_content.bzl", "DevDistContentInfo", "DevDistPlatformPayloadInfo", "dev_dist_platform_payload", "dev_dist_plugin_content")
 load(":dev_dist_plugin.bzl", "dev_dist_plugin")
-load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorSetInfo", "dev_dist_plugin_descriptor_target_name", "dev_dist_product_info")
+load(":dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor_target_name", "dev_dist_product_info")
 load(
     ":intellij_dev_dist.bzl",
     "IntellijDevBuildInputsInfo",
@@ -186,19 +186,6 @@ _plugin_content_test = analysistest.make(
     },
 )
 
-def _fake_descriptor_set_impl(ctx):
-    descriptor = ctx.actions.declare_file(ctx.label.name + ".xml")
-    ctx.actions.write(descriptor, "<idea-plugin/>")
-    return [DevDistPluginDescriptorSetInfo(descriptors = depset([struct(
-        plugin_main_module = ctx.attr.main_module,
-        descriptor = descriptor,
-    )]))]
-
-_fake_descriptor_set = rule(
-    implementation = _fake_descriptor_set_impl,
-    attrs = {"main_module": attr.string(mandatory = True)},
-)
-
 def _expected_failure_test_impl(ctx):
     env = analysistest.begin(ctx)
     asserts.expect_failure(env, ctx.attr.expected_message)
@@ -267,9 +254,6 @@ def _build_inputs_test_impl(ctx):
     expected.extend(ctx.attr.library[JavaInfo].transitive_runtime_jars.to_list())
     for file in expected:
         asserts.true(env, file in info.files.to_list(), file.path)
-    descriptors = ctx.attr.descriptors[DevDistPluginDescriptorSetInfo].descriptors.to_list()
-    asserts.equals(env, 1, len(info.patched_descriptors.to_list()))
-    asserts.true(env, descriptors[0].descriptor in info.files.to_list())
     asserts.equals(env, sorted([info.manifest, info.inputs_origin]), sorted(target[DefaultInfo].files.to_list()))
     asserts.equals(env, 2, len(analysistest.target_actions(env)))
     return analysistest.end(env)
@@ -277,7 +261,6 @@ def _build_inputs_test_impl(ctx):
 _build_inputs_test = analysistest.make(
     _build_inputs_test_impl,
     attrs = {
-        "descriptors": attr.label(mandatory = True, providers = [DevDistPluginDescriptorSetInfo]),
         "library": attr.label(mandatory = True, providers = [JavaInfo]),
         "modules": attr.label_list(mandatory = True, providers = [_KtJvmInfo]),
     },
@@ -628,19 +611,15 @@ def dev_dist_content_test_suite(name):
         expected_message = "does not have mandatory providers",
     )
 
-    descriptors = name + "_descriptors"
-    _fake_descriptor_set(name = descriptors, main_module = "test.plugin")
     inputs = name + "_inputs"
     intellij_dev_build_inputs(
         name = inputs,
         content = ":" + payload,
-        patched_descriptors = ":" + descriptors,
     )
     tests.append(inputs + "_test")
     _build_inputs_test(
         name = tests[-1],
         target_under_test = ":" + inputs,
-        descriptors = ":" + descriptors,
         library = ":" + library,
         modules = [":" + packed_owner],
     )

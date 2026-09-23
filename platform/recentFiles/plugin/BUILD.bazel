@@ -20,6 +20,9 @@ dev_dist_plugin(
         "lib/platform-recentFiles-plugin.jar": ["intellij.platform.recentFiles.plugin"],
     },
     main_module = "intellij.platform.recentFiles.plugin",
+    mode_refused_content_modules = {
+        "frontend": ["intellij.platform.recentFiles.backend"],
+    },
 )
 ### auto-generated section `dev intellij.platform.recentFiles.plugin` end
 

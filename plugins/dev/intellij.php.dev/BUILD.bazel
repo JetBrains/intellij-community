@@ -15,7 +15,7 @@ resourcegroup(
 # repository's execroot symlink farm. The label a Bazel action can read is this one.
 exports_files(
     ["resources/intellij.php.dev.xml"],
-    visibility = ["//visibility:public"],  # used by //build/dev-dist-descriptors, through build/dev_dist_plugin_descriptors.bzl
+    visibility = ["//visibility:public"],  # used by the descriptor leaf in //build/dev-dist-descriptors/intellij.dev
 )
 
 filegroup(

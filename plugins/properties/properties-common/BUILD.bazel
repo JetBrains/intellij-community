@@ -25,6 +25,12 @@ dev_dist_plugin(
         "lib/intellij.properties.jar": ["intellij.properties"],
     },
     main_module = "intellij.properties",
+    mode_refused_content_modules = {
+        "frontend": [
+            "intellij.properties.backend.psi",
+            "intellij.properties.backend",
+        ],
+    },
     module_jar_paths = {
         "intellij.properties.psi": "lib/intellij.properties.psi.jar",
     },

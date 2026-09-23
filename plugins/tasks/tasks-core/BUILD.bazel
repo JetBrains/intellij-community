@@ -42,6 +42,14 @@ dev_dist_plugin(
         "lib/axis.jar": ["//plugins/tasks/tasks-core/lib:tasks-core-axis-1-4"],
     },
     main_module = "intellij.tasks.core",
+    mode_refused_content_modules = {
+        "frontend": [
+            "intellij.tasks.trac",
+            "intellij.tasks.bugzilla",
+            "intellij.tasks.jira",
+            "intellij.tasks.java",
+        ],
+    },
 )
 ### auto-generated section `dev intellij.tasks.core` end
 

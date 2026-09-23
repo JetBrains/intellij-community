@@ -65,6 +65,12 @@ dev_dist_plugin(
         "lib/mcpserver-plugin.jar": ["intellij.mcpserver.plugin"],
     },
     main_module = "intellij.mcpserver.plugin",
+    mode_refused_content_modules = {
+        "frontend": [
+            "intellij.mcpserver.vcs",
+            "intellij.mcpserver.terminal",
+        ],
+    },
     module_jar_paths = {
         "intellij.mcpserver": "lib/intellij.mcpserver.jar",
         "intellij.mcpserver.stdio": "lib/intellij.mcpserver.stdio.jar",

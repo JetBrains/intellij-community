@@ -26,6 +26,9 @@ dev_dist_plugin(
         "lib/platform-problemView-plugin.jar": ["intellij.platform.problemView.plugin"],
     },
     main_module = "intellij.platform.problemView.plugin",
+    mode_refused_content_modules = {
+        "frontend": ["intellij.platform.problemView.backend"],
+    },
 )
 ### auto-generated section `dev intellij.platform.problemView.plugin` end
 

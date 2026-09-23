@@ -32,6 +32,12 @@ dev_dist_plugin(
         "lib/mermaid.jar": ["intellij.mermaid"],
     },
     main_module = "intellij.mermaid",
+    mode_refused_content_modules = {
+        "frontend": [
+            "intellij.mermaid.json",
+            "intellij.mermaid.spellchecker",
+        ],
+    },
 )
 ### auto-generated section `dev intellij.mermaid` end
 

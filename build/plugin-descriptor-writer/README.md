@@ -109,8 +109,7 @@ before a distribution builds. `./build/dev-dist.cmd snapshot diff` compares ever
 distribution against a recorded baseline. That guard runs over one producer. It is a regression guard, not a second
 producer.
 
-**The snapshot is also the control for a wrong marker row.** The assembly computes the text in the arm that does not
-read the produced descriptor (`fragment_reads` of the plan). A row that names `linux`/`x86_64` where the darwin variant
+**The snapshot is also the control for a wrong marker row.** A row that names `linux`/`x86_64` where the darwin variant
 should name `mac`/`arm64` moves three files of the snapshot, and the diff names them.
 
 Until 2026-09-14 the rule also ran a JVM reference producer over the same parameter file, and

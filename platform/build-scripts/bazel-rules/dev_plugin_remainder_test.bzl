@@ -6,10 +6,27 @@ load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "content_module_jar", "content_module_jar_target_name")
 load(":dev_dist_content.bzl", "DevDistContentInfo")
 load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_plugin_descriptor", "dev_dist_plugin_descriptor_target_name", "dev_dist_product_info", "dev_dist_product_info_transition")
-load(":dev_plugin_remainder.bzl", "DevPluginArtifactCatalogueInfo", "DevPluginGraphInfo", "DevPluginRemainderInfo", "dev_dist_complex_plugin", "dev_dist_complex_plugin_variant", "dev_plugin_artifact_catalogue", "dev_plugin_component", "dev_plugin_file_graph", "dev_plugin_remainder_from_plan", "plan_product_error", "platform_values_error", "product_name_error")
+load(":dev_plugin_remainder.bzl", "DevPluginArtifactCatalogueInfo", "DevPluginGraphInfo", "DevPluginRemainderInfo", "dev_dist_complex_plugin", "dev_dist_complex_plugin_variant", "dev_plugin_artifact_catalogue", "dev_plugin_component", "dev_plugin_file_graph", "dev_plugin_remainder_from_plan", "platform_values_error")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo")
 
 _EMPTY_JAR = "PK\005\006" + ("\000" * 18)
+
+_PACKAGE = "//platform/build-scripts/bazel-rules/dev-plugin-remainder-tests"
+_SUITE = "dev_plugin_remainder_tests"
+
+# A chain states no product, so a test of a remainder or a component sets the product the way a consumer does.
+_PRODUCT_CONFIG = {str(Label("//build:dev_dist_product_info")): str(Label(_PACKAGE + ":" + _SUITE + "_product_info"))}
+
+def _short_paths(files):
+    """The configuration-independent paths of [files]. A target under `config_settings` and a target reached through
+    `dev_dist_product_info_transition` state one product in two output roots, so a test compares these."""
+    return [file.short_path for file in files]
+
+# The attributes of a test that reads a chain target beside the one under test, in the product configuration.
+_PRODUCT_ATTRS = {
+    "product_info": attr.label(default = Label(_PACKAGE + ":" + _SUITE + "_product_info"), providers = [DevDistProductInfo]),
+    "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
+}
 
 def _fixture_module_impl(ctx):
     jar = ctx.outputs.jar
@@ -118,10 +135,11 @@ def _graph_resolution_test_impl(ctx):
     for slot, value in ctx.attr.platform_values.items():
         substitutions['"{platform:%s}"' % slot] = '"%s"' % value
     asserts.equals(env, substitutions, actions[0].substitutions)
-    consumers = [action for action in ctx.attr.consumer.actions if action.mnemonic == "PackDevPluginRemainder"]
+    consumers = [action for action in ctx.attr.consumer[0].actions if action.mnemonic == "PackDevPluginRemainder"]
     asserts.equals(env, 1, len(consumers))
-    asserts.true(env, "--projection=" + resolved.path in consumers[0].argv)
-    asserts.true(env, resolved in consumers[0].inputs.to_list())
+    projections = [file for file in consumers[0].inputs.to_list() if file.short_path == resolved.short_path]
+    asserts.equals(env, 1, len(projections))
+    asserts.true(env, "--projection=" + projections[0].path in consumers[0].argv)
     return analysistest.end(env)
 
 _graph_resolution_test = analysistest.make(
@@ -131,8 +149,8 @@ _graph_resolution_test = analysistest.make(
         "platform": attr.string(mandatory = True),
         "platform_values": attr.string_dict(),
         "execution_version": attr.int(mandatory = True),
-        "consumer": attr.label(mandatory = True, doc = "The from-plan remainder target of the chain."),
-    },
+        "consumer": attr.label(mandatory = True, cfg = dev_dist_product_info_transition, doc = "The from-plan remainder target of the chain."),
+    } | _PRODUCT_ATTRS,
 )
 
 def _source_tree_graph_test_impl(ctx):
@@ -293,15 +311,15 @@ _expected_failure_test = analysistest.make(
 def _component_test_impl(ctx):
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
-    remainder = ctx.attr.remainder[DevPluginRemainderInfo]
+    remainder = ctx.attr.remainder[0][DevPluginRemainderInfo]
     fragment = target[IntellijDevFragmentInfo]
     actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "CollectDevPluginComponent"]
     asserts.equals(env, 1, len(actions))
     action = actions[0]
     asserts.equals(env, ctx.attr.kind, fragment.name)
-    asserts.equals(env, [remainder.directory], fragment.payload.to_list())
+    asserts.equals(env, _short_paths([remainder.directory]), _short_paths(fragment.payload.to_list()))
     for input_file in [remainder.metadata, remainder.assets, remainder.classpath]:
-        asserts.true(env, input_file in action.inputs.to_list())
+        asserts.true(env, input_file.short_path in _short_paths(action.inputs.to_list()))
     asserts.true(env, "--kind=" + ctx.attr.kind in action.argv)
     asserts.true(env, "--platform-prefix=" + ctx.attr.platform_prefix in action.argv)
     platform_arguments = [argument for argument in action.argv if argument.startswith("--os=") or argument.startswith("--arch=")]
@@ -313,20 +331,21 @@ def _component_test_impl(ctx):
         asserts.equals(env, ["--os=linux", "--arch=x64"], platform_arguments)
 
     # The component forwards the raw content of its remainder unchanged.
-    remainder_content = ctx.attr.remainder[DevDistContentInfo]
+    remainder_content = ctx.attr.remainder[0][DevDistContentInfo]
     content = target[DevDistContentInfo]
-    asserts.equals(env, remainder_content.module_jars.to_list(), content.module_jars.to_list())
-    asserts.equals(env, remainder_content.library_jars.to_list(), content.library_jars.to_list())
+    asserts.equals(env, _short_paths(remainder_content.module_jars.to_list()), _short_paths(content.module_jars.to_list()))
+    asserts.equals(env, _short_paths(remainder_content.library_jars.to_list()), _short_paths(content.library_jars.to_list()))
     return analysistest.end(env)
 
 _component_test = analysistest.make(
     _component_test_impl,
+    config_settings = _PRODUCT_CONFIG,
     attrs = {
-        "remainder": attr.label(mandatory = True, providers = [DevPluginRemainderInfo]),
+        "remainder": attr.label(mandatory = True, cfg = dev_dist_product_info_transition, providers = [DevPluginRemainderInfo]),
         "neutral": attr.bool(doc = "Whether the component states no target platform."),
         "kind": attr.string(default = "plugin-test", doc = "The component name the collector receives as `--kind`."),
         "platform_prefix": attr.string(default = "idea", doc = "The product's platform prefix the collector receives as `--platform-prefix`."),
-    },
+    } | _PRODUCT_ATTRS,
 )
 
 def _derived_remainder_test_impl(ctx):
@@ -345,6 +364,7 @@ def _derived_remainder_test_impl(ctx):
 
 _derived_remainder_test = analysistest.make(
     _derived_remainder_test_impl,
+    config_settings = _PRODUCT_CONFIG,
     attrs = {
         "catalogue": attr.label(
             mandatory = True,
@@ -370,7 +390,8 @@ def _remainder_from_plan_test_impl(ctx):
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
     remainder = target[DevPluginRemainderInfo]
-    graph = ctx.attr.graph[DevPluginGraphInfo]
+    asserts.equals(env, 1, len(ctx.attr.graph))
+    graph = ctx.attr.graph[0][DevPluginGraphInfo]
     asserts.equals(env, 1, len(ctx.attr.catalogue))
     asserts.equals(env, 1, len(ctx.attr.descriptor))
     asserts.equals(env, 1, len(ctx.attr.raw))
@@ -406,7 +427,7 @@ def _remainder_from_plan_test_impl(ctx):
     actions = analysistest.target_actions(env)
     asserts.equals(env, ["PackDevPluginRemainder"], [action.mnemonic for action in actions])
     action = actions[0]
-    asserts.equals(env, ctx.attr.graph, remainder.graph)
+    asserts.equals(env, ctx.attr.graph[0].label, remainder.graph.label)
     asserts.equals(env, graph.execution_version, remainder.execution_version)
     asserts.true(env, remainder.directory.is_directory)
     asserts.equals(env, [], remainder.independent_artifacts.to_list())
@@ -415,16 +436,14 @@ def _remainder_from_plan_test_impl(ctx):
 
     # The tool inputs are the packer and its runfiles tree, both below the executable's path.
     expected_inputs = [graph.projection, catalogue.catalogue, classpath_descriptor, descriptor, raw]
-    asserts.equals(
-        env,
-        sorted([file.path for file in expected_inputs]),
-        sorted([file.path for file in action.inputs.to_list() if not file.path.startswith(packer)]),
-    )
+    inputs = [file for file in action.inputs.to_list() if not file.path.startswith(packer)]
+    asserts.equals(env, sorted(_short_paths(expected_inputs)), sorted(_short_paths(inputs)))
+    input_by_short_path = {file.short_path: file for file in inputs}
     asserts.equals(env, [remainder.directory, remainder.metadata, remainder.assets, remainder.classpath], action.outputs.to_list())
     asserts.equals(env, [
-        "--projection=" + graph.projection.path,
-        "--input-catalogue=" + catalogue.catalogue.path,
-        "--classpath-descriptor=" + classpath_descriptor.path,
+        "--projection=" + input_by_short_path[graph.projection.short_path].path,
+        "--input-catalogue=" + input_by_short_path[catalogue.catalogue.short_path].path,
+        "--classpath-descriptor=" + input_by_short_path[classpath_descriptor.short_path].path,
         "--plugin-directory=plugins/test",
         "--execution-version=%d" % graph.execution_version,
         "--output-dir=" + remainder.directory.path,
@@ -447,8 +466,9 @@ def _remainder_from_plan_test_impl(ctx):
 
 _remainder_from_plan_test = analysistest.make(
     _remainder_from_plan_test_impl,
+    config_settings = _PRODUCT_CONFIG,
     attrs = {
-        "graph": attr.label(mandatory = True, providers = [DevPluginGraphInfo]),
+        "graph": attr.label(mandatory = True, cfg = dev_dist_product_info_transition, providers = [DevPluginGraphInfo]),
         "catalogue": attr.label(
             mandatory = True,
             cfg = dev_dist_product_info_transition,
@@ -543,28 +563,10 @@ def _check_platform_values_refusals(main_module):
         if error != None:
             fail("platform_values_error refused %s: %s" % (accepted, error))
 
-def _check_plan_product_refusals(main_module):
-    """Fails at load time when `plan_product_error` or the chain-product check of `product_name_error` accepts a name
-    that is not the product, or refuses the empty one, the product itself, or the product's case-safe name."""
-    for refused in ["server", "ideacommunity", "Idea_community"]:
-        error = plan_product_error(main_module, "Idea", refused)
-        if error == None or "is not its product" not in error:
-            fail("plan_product_error accepted the plan product '%s' for 'Idea': %s" % (refused, error))
-        error = product_name_error(main_module, "Idea", refused, "chain product")
-        if error == None or "names the chain product '%s', which is not its product" % refused not in error:
-            fail("product_name_error accepted the chain product '%s' for 'Idea': %s" % (refused, error))
-    for accepted in ["", "Idea", "idea_community"]:
-        error = plan_product_error(main_module, "Idea", accepted)
-        if error != None:
-            fail("plan_product_error refused '%s': %s" % (accepted, error))
-        error = product_name_error(main_module, "Idea", accepted, "chain product")
-        if error != None:
-            fail("product_name_error refused the chain product '%s': %s" % (accepted, error))
-
 def _reused_component_test_impl(ctx):
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
-    remainder = ctx.attr.remainder[DevPluginRemainderInfo]
+    remainder = ctx.attr.remainder[0][DevPluginRemainderInfo]
     content = ctx.attr.content_jar[ContentModuleJarInfo]
     fragment = target[IntellijDevFragmentInfo]
     actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "CollectDevPluginComponent"]
@@ -574,7 +576,7 @@ def _reused_component_test_impl(ctx):
     # jar reaches the payload beside the remainder.
     payload = fragment.payload.to_list()
     asserts.equals(env, 2, len(payload))
-    asserts.true(env, remainder.directory in payload)
+    asserts.true(env, remainder.directory.short_path in _short_paths(payload))
     asserts.true(env, content.jar.short_path in [file.short_path for file in payload])
     asserts.equals(env, [content.jar.short_path], [file.short_path for file in remainder.independent_artifacts.to_list()])
 
@@ -583,15 +585,18 @@ def _reused_component_test_impl(ctx):
     asserts.equals(env, 1, len(spec_actions))
     spec = json.decode(spec_actions[0].content)
     asserts.equals(env, [content.module_name], [row["artifact"] for row in spec["independent"]])
-    asserts.equals(env, [content.jar.path], [row["source"] for row in spec["independent"]])
+    sources = [row["source"] for row in spec["independent"]]
+    asserts.equals(env, 1, len(sources))
+    asserts.true(env, sources[0].endswith("/" + content.jar.short_path.removeprefix("../")), sources[0])
     return analysistest.end(env)
 
 _reused_component_test = analysistest.make(
     _reused_component_test_impl,
+    config_settings = _PRODUCT_CONFIG,
     attrs = {
-        "remainder": attr.label(mandatory = True, providers = [DevPluginRemainderInfo]),
+        "remainder": attr.label(mandatory = True, cfg = dev_dist_product_info_transition, providers = [DevPluginRemainderInfo]),
         "content_jar": attr.label(mandatory = True, providers = [ContentModuleJarInfo]),
-    },
+    } | _PRODUCT_ATTRS,
 )
 
 def _reused_remainder_test_impl(ctx):
@@ -614,6 +619,7 @@ def _reused_remainder_test_impl(ctx):
 
 _reused_remainder_test = analysistest.make(
     _reused_remainder_test_impl,
+    config_settings = _PRODUCT_CONFIG,
     attrs = {"content_jar": attr.label(mandatory = True, providers = [ContentModuleJarInfo])},
 )
 
@@ -621,8 +627,11 @@ def dev_plugin_remainder_test_suite(name):
     """Declares the focused generated-component tests.
 
     Args:
-        name: The test suite name.
+        name: The test suite name. It must be `dev_plugin_remainder_tests`, because the test configurations name its
+            product info.
     """
+    if name != _SUITE or native.package_name() != _PACKAGE.lstrip("/"):
+        fail("dev_plugin_remainder_test_suite must be declared as '%s' in package '%s'" % (_SUITE, _PACKAGE))
     projection = name + "_projection"
     descriptor_source = name + "_descriptor_source"
     raw = name + "_raw"
@@ -635,6 +644,7 @@ def dev_plugin_remainder_test_suite(name):
         name = product_info,
         release_date = release_date,
         release_version = release_version,
+        platform_prefix = "idea",
     )
     _product_scoped_file(
         name = descriptor_source,
@@ -876,7 +886,6 @@ def dev_plugin_remainder_test_suite(name):
             artifact_catalogue = ":" + catalogue,
             descriptor = ":" + descriptor,
             plugin_directory = "plugins/test",
-            product_info = ":" + product_info,
             tags = ["manual"],
         )
         remainder_test = remainder + "_test"
@@ -900,7 +909,6 @@ def dev_plugin_remainder_test_suite(name):
         remainder = ":" + remainder,
         plugin_directory = "plugins/test",
         component_name = "plugin-test",
-        platform_prefix = "idea",
         target_platform = "linux_x64",
         tags = ["manual"],
     )
@@ -917,7 +925,6 @@ def dev_plugin_remainder_test_suite(name):
         remainder = ":" + remainder,
         plugin_directory = "plugins/test",
         component_name = "plugin-test",
-        platform_prefix = "idea",
         tags = ["manual"],
     )
     neutral_component_test = neutral_component + "_test"
@@ -942,8 +949,6 @@ def dev_plugin_remainder_test_suite(name):
         descriptor = ":" + normal_descriptor,
         plugin_directory = "plugins/test",
         component_name = "plugin-test",
-        platform_prefix = "idea",
-        product_info = ":" + product_info,
         target_platform = "linux_x64",
         resource_inputs = {
             ":" + normal_descriptor: "descriptor",
@@ -987,8 +992,6 @@ def dev_plugin_remainder_test_suite(name):
         descriptor = ":" + normal_descriptor,
         plugin_directory = "plugins/test",
         component_name = "plugin-test",
-        platform_prefix = "idea",
-        product_info = ":" + product_info,
         target_platform = "linux_x64",
         resource_inputs = {
             ":" + normal_descriptor: "descriptor",
@@ -1032,8 +1035,6 @@ def dev_plugin_remainder_test_suite(name):
         _file(name = derived_module + "." + platform + ".dev-plan.json")
     dev_dist_complex_plugin(
         main_module = derived_module,
-        product = "idea",
-        product_info = ":" + product_info,
         descriptor = ":" + normal_descriptor,
         execution_version = 1,
         platforms = derived_platforms,
@@ -1042,7 +1043,7 @@ def dev_plugin_remainder_test_suite(name):
     )
     derived_tests = []
     for platform in derived_platforms:
-        stem = "idea_" + platform + "_" + derived_module
+        stem = derived_module + "_" + platform
         _check_chain_shape(stem)
         derived_test = stem + "_test"
         _derived_remainder_test(
@@ -1075,16 +1076,14 @@ def dev_plugin_remainder_test_suite(name):
     _file(name = plan_home_raw)
     dev_dist_complex_plugin(
         main_module = plan_home_module,
-        product = "idea",
         plan_package = plan_home_package,
-        product_info = ":" + product_info,
         descriptor = ":" + normal_descriptor,
         execution_version = 1,
         platforms = ["linux_x64"],
         resource_inputs = {":" + plan_home_raw: "raw"},
         tags = ["manual"],
     )
-    plan_home_stem = "idea_linux_x64_" + plan_home_module
+    plan_home_stem = plan_home_module + "_linux_x64"
     _check_chain_shape(plan_home_stem)
     plan_home_test = plan_home_stem + "_graph_test"
     _graph_resolution_test(
@@ -1111,8 +1110,6 @@ def dev_plugin_remainder_test_suite(name):
         _file(name = name + "_folded_raw_" + platform)
     dev_dist_complex_plugin(
         main_module = folded_module,
-        product = "idea",
-        product_info = ":" + product_info,
         descriptor = ":" + normal_descriptor,
         execution_version = 1,
         platforms = folded_platforms,
@@ -1122,7 +1119,7 @@ def dev_plugin_remainder_test_suite(name):
     )
     folded_tests = []
     for platform in folded_platforms:
-        stem = "idea_" + platform + "_" + folded_module
+        stem = folded_module + "_" + platform
         _check_chain_shape(stem)
         folded_test = stem + "_graph_test"
         _graph_resolution_test(
@@ -1136,124 +1133,116 @@ def dev_plugin_remainder_test_suite(name):
         )
         folded_tests.append(folded_test)
 
-    # The product form: `plan_product` names the product in the plan file stem, `<main module>.<plan_product>`, before
-    # the platform of a refused fold and alone for a folded plan. The descriptor entry stays `descriptor:<main module>`.
-    _check_plan_product_refusals(name)
-    product_module = "test.%s.product" % name
-    product_platforms = ["linux_x64", "darwin_aarch64"]
-    for platform in product_platforms:
-        _file(name = name + "_product_raw_" + platform)
-        _file(name = product_module + ".idea." + platform + ".dev-plan.json")
+    # The plan class: `plan_class` names a plan text that differs from the baseline text, `<main module>.<plan_class>`,
+    # before the platform of a refused fold and alone for a folded plan. The descriptor entry stays
+    # `descriptor:<main module>`, and the chain stem does not change.
+    class_module = "test.%s.plan_class" % name
+    class_platforms = ["linux_x64", "darwin_aarch64"]
+    for platform in class_platforms:
+        _file(name = name + "_plan_class_raw_" + platform)
+        _file(name = class_module + ".Light." + platform + ".dev-plan.json")
     dev_dist_complex_plugin(
-        main_module = product_module,
-        product = "idea",
-        plan_product = "idea",
-        product_info = ":" + product_info,
+        main_module = class_module,
+        plan_class = "Light",
         descriptor = ":" + normal_descriptor,
         execution_version = 1,
-        platforms = product_platforms,
-        resource_inputs = {":" + name + "_product_raw_{platform}": "raw"},
+        platforms = class_platforms,
+        resource_inputs = {":" + name + "_plan_class_raw_{platform}": "raw"},
         tags = ["manual"],
     )
-    product_tests = []
-    for platform in product_platforms:
-        stem = "idea_" + platform + "_" + product_module
+    class_tests = []
+    for platform in class_platforms:
+        stem = class_module + "_" + platform
         _check_chain_shape(stem)
-        product_graph_test = stem + "_graph_test"
+        class_graph_test = stem + "_graph_test"
         _graph_resolution_test(
-            name = product_graph_test,
+            name = class_graph_test,
             target_under_test = ":" + stem + "_graph",
-            projection = ":" + product_module + ".idea." + platform + ".dev-plan.json",
+            projection = ":" + class_module + ".Light." + platform + ".dev-plan.json",
             platform = platform,
             execution_version = 1,
             consumer = ":" + stem + "_remainder",
         )
-        product_tests.append(product_graph_test)
-        product_remainder_test = stem + "_remainder_test"
+        class_tests.append(class_graph_test)
+        class_remainder_test = stem + "_remainder_test"
         _derived_remainder_test(
-            name = product_remainder_test,
+            name = class_remainder_test,
             target_under_test = ":" + stem + "_remainder",
             catalogue = ":" + stem + "_catalogue",
-            raw = ":" + name + "_product_raw_" + platform,
+            raw = ":" + name + "_plan_class_raw_" + platform,
             product_info = ":" + product_info,
-            descriptor_id = "descriptor:" + product_module,
-            plugin_directory = "plugins/" + product_module.replace(".", "-"),
+            descriptor_id = "descriptor:" + class_module,
+            plugin_directory = "plugins/" + class_module.replace(".", "-"),
         )
-        product_tests.append(product_remainder_test)
-    product_folded_module = "test.%s.product_folded" % name
-    product_folded_projection = product_folded_module + ".idea.dev-plan.json"
-    _file(name = product_folded_projection, content = _FOLDED_PLAN)
-    for platform in product_platforms:
-        _file(name = name + "_product_folded_raw_" + platform)
+        class_tests.append(class_remainder_test)
+    class_folded_module = "test.%s.plan_class_folded" % name
+    class_folded_projection = class_folded_module + ".Light.dev-plan.json"
+    _file(name = class_folded_projection, content = _FOLDED_PLAN)
+    for platform in class_platforms:
+        _file(name = name + "_plan_class_folded_raw_" + platform)
     dev_dist_complex_plugin(
-        main_module = product_folded_module,
-        product = "idea",
-        plan_product = "idea",
-        product_info = ":" + product_info,
+        main_module = class_folded_module,
+        plan_class = "Light",
         descriptor = ":" + normal_descriptor,
         execution_version = 1,
-        platforms = product_platforms,
+        platforms = class_platforms,
         platform_values = folded_values,
-        resource_inputs = {":" + name + "_product_folded_raw_{platform}": "raw"},
+        resource_inputs = {":" + name + "_plan_class_folded_raw_{platform}": "raw"},
         tags = ["manual"],
     )
-    for platform in product_platforms:
-        stem = "idea_" + platform + "_" + product_folded_module
+    for platform in class_platforms:
+        stem = class_folded_module + "_" + platform
         _check_chain_shape(stem)
-        product_folded_test = stem + "_graph_test"
+        class_folded_test = stem + "_graph_test"
         _graph_resolution_test(
-            name = product_folded_test,
+            name = class_folded_test,
             target_under_test = ":" + stem + "_graph",
-            projection = ":" + product_folded_projection,
+            projection = ":" + class_folded_projection,
             platform = platform,
             platform_values = folded_values[platform],
             execution_version = 1,
             consumer = ":" + stem + "_remainder",
         )
-        product_tests.append(product_folded_test)
+        class_tests.append(class_folded_test)
 
-    # The case-safe form: `chain_product` names the product's case-safe name as the first element of the chain stem,
-    # so the outputs of an `Idea` chain never share a path with an `idea` chain on a case-insensitive file system.
-    # The chain still stamps the product `Idea` as its platform prefix, and it reads the baseline plan file.
-    chain_product_module = "test.%s.chain_product" % name
-    chain_product_platforms = ["linux_x64"]
-    for platform in chain_product_platforms:
-        _file(name = name + "_chain_product_raw_" + platform)
-        _file(name = chain_product_module + "." + platform + ".dev-plan.json")
+    # The chain class: `chain_class` keeps the chain stems of a second call of one plugin apart,
+    # `<main module>.<chain_class>[_<platform>]`. The call still reads the baseline plan file, and the collector stamps
+    # the platform prefix of the configured product.
+    chain_class_module = "test.%s.chain_class" % name
+    chain_class_platforms = ["linux_x64"]
+    for platform in chain_class_platforms:
+        _file(name = name + "_chain_class_raw_" + platform)
+        _file(name = chain_class_module + "." + platform + ".dev-plan.json")
     dev_dist_complex_plugin(
-        main_module = chain_product_module,
-        product = "Idea",
-        chain_product = "idea_community",
-        product_info = ":" + product_info,
+        main_module = chain_class_module,
+        chain_class = "Light",
         descriptor = ":" + normal_descriptor,
         execution_version = 1,
-        platforms = chain_product_platforms,
-        resource_inputs = {":" + name + "_chain_product_raw_{platform}": "raw"},
+        platforms = chain_class_platforms,
+        resource_inputs = {":" + name + "_chain_class_raw_{platform}": "raw"},
         tags = ["manual"],
     )
-    chain_product_tests = []
-    for platform in chain_product_platforms:
-        stem = "idea_community_" + platform + "_" + chain_product_module
+    for platform in chain_class_platforms:
+        stem = chain_class_module + ".Light_" + platform
         _check_chain_shape(stem)
-        chain_product_graph_test = stem + "_graph_test"
+        chain_class_graph_test = stem + "_graph_test"
         _graph_resolution_test(
-            name = chain_product_graph_test,
+            name = chain_class_graph_test,
             target_under_test = ":" + stem + "_graph",
-            projection = ":" + chain_product_module + "." + platform + ".dev-plan.json",
+            projection = ":" + chain_class_module + "." + platform + ".dev-plan.json",
             platform = platform,
             execution_version = 1,
             consumer = ":" + stem + "_remainder",
         )
-        chain_product_tests.append(chain_product_graph_test)
-        chain_product_component_test = stem + "_component_test"
+        class_tests.append(chain_class_graph_test)
+        chain_class_component_test = stem + "_component_test"
         _component_test(
-            name = chain_product_component_test,
+            name = chain_class_component_test,
             target_under_test = ":" + stem + "_component",
             remainder = ":" + stem + "_remainder",
-            kind = chain_product_module,
-            platform_prefix = "Idea",
+            kind = chain_class_module,
         )
-        chain_product_tests.append(chain_product_component_test)
+        class_tests.append(chain_class_component_test)
 
     # The graph refuses a slot value on a chain that serves every platform, and a value that cannot stand as a whole
     # JSON string leaf.
@@ -1301,5 +1290,5 @@ def dev_plugin_remainder_test_suite(name):
             plan_chain_remainder_test,
             plan_chain_component_test,
             plan_home_test,
-        ] + derived_tests + folded_tests + product_tests + chain_product_tests + refused_graph_tests,
+        ] + derived_tests + folded_tests + class_tests + refused_graph_tests,
     )

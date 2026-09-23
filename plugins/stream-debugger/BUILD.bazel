@@ -46,6 +46,12 @@ dev_dist_plugin(
         "lib/debugger-streams-plugin.jar": ["intellij.debugger.streams.plugin"],
     },
     main_module = "intellij.debugger.streams.plugin",
+    mode_refused_content_modules = {
+        "frontend": [
+            "intellij.debugger.streams.backend",
+            "intellij.debugger.streams.java",
+        ],
+    },
     module_jar_paths = {
         "intellij.debugger.streams.java.rt": "lib/intellij.debugger.streams.java.rt.jar",
         "intellij.debugger.streams.java.rt.gatherers": "lib/intellij.debugger.streams.java.rt.gatherers.jar",

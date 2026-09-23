@@ -19,6 +19,12 @@ dev_dist_plugin(
         "lib/java-ide-customization.jar": ["intellij.java.ide.customization"],
     },
     main_module = "intellij.java.ide.customization",
+    mode_refused_content_modules = {
+        "frontend": [
+            "intellij.java.ide.customization.training",
+            "intellij.java.ide.customization.backend",
+        ],
+    },
 )
 ### auto-generated section `dev intellij.java.ide.customization` end
 

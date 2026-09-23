@@ -1,8 +1,8 @@
 """Writes one plugin's patched `META-INF/plugin.xml` in an action of its own.
 
 The rule runs one action per plugin. Its declared inputs are the descriptors the patch reads. Its output is the text
-the plugin's main jar receives. Every fragment of the product reads that output instead of computing it inside the
-assembly that evaluates the whole product layout. The Go writer is the one producer of the text.
+the plugin's main jar receives. Both plugin tiers read that output through `DevDistPluginDescriptorInfo`. The Go writer
+is the one producer of the text.
 
 Modelled on two neighbours, each for what it already settled. `ij_plugin` for the per-plugin grain and for the build
 number arriving as a declared file. `content_module_jar` for the provider, for the `manual` tag and for a packer named
@@ -28,33 +28,27 @@ DevDistPluginDescriptorInfo = provider(
 
         Always in its final byte form: a classpath writer copies the bytes and applies no XML rewrite.""",
         "platforms": "The `HOST_PLATFORMS` entries this layout variant serves.",
+        "mode_refused_content_modules": "The content modules the leaf refuses because of its product's mode. `dev_plugin` drops them from the shared packaging.",
         "_declaration": "Private versioned metadata with the declared File objects and action parameters.",
         "_declaration_file": "The private metadata file. It is not a default output or an action input.",
     },
 )
-
-# The manifest key a fragment reads a produced descriptor under. Its own namespace: every other key of the input
-# manifest is a Bazel label string, so it starts with `@` or `//`, and a module jar's key also ends in `.jar`. This one
-# starts with a word and holds no `//`, so it can collide with nothing already there.
-#
-# Written once here and once in Kotlin, in `BazelBuildInputs.producedPluginDescriptorIfDeclared`. Both spellings name
-# each other, because a drift between them reads as "no descriptor was declared" and the patch then runs as before.
-DEV_DIST_DESCRIPTOR_KEY_PREFIX = "dev-dist-descriptor:"
 
 DevDistProductInfo = provider(
     doc = """The product scalars every plugin's descriptor stamp needs.
 
     A configuration and not four attributes on the leaf rule. One plugin's patched descriptor differs between two
     products only in these values, so a leaf that stated them would be a leaf per (plugin, product). Read through
-    a `label_flag`, a product's set target names its own values, and one leaf per plugin then answers every product
-    that bundles the plugin. The exception is a plugin two products state differently. The later product gets a leaf
-    of its own under `build/dev-dist-descriptors/<module>/<product>`, and that leaf still reads its stamps here.""",
+    a `label_flag` that the consumer of a plugin component sets, so one leaf per plugin answers every product that
+    bundles the plugin. The exception is a plugin two products state differently. The later product gets a leaf of
+    its own, and that leaf still reads its stamps here.""",
     fields = {
         "eap": "The `eap` attribute of the product's `ApplicationInfo.xml`.",
         "release_date": "`ApplicationInfoProperties.majorReleaseDate`.",
         "release_version": "`ApplicationInfoProperties.releaseVersionForLicensing`.",
         "marketplace_names": "`OsFamily.osId` and `JvmArchitecture.marketplaceName`, keyed by the token `HOST_PLATFORMS` spells.",
         "platform_prefix": "The product's platform prefix, `idea` for example. Empty in the flag's default.",
+        "mode": "The product mode in lower case, `monolith` or `frontend` for example. Empty in the flag's default.",
         "_producer": "The actual provider declaration, not the forwarding label flag or a consumer label.",
     },
 )
@@ -66,6 +60,7 @@ def _dev_dist_product_info_impl(ctx):
         release_version = ctx.attr.release_version,
         marketplace_names = ctx.attr.marketplace_names,
         platform_prefix = ctx.attr.platform_prefix,
+        mode = ctx.attr.mode,
         _producer = _descriptor_producer_identity(ctx),
     )]
 
@@ -88,6 +83,11 @@ a one-platform layout variant without stating the table - see `dev_dist_plugin_d
         ),
         "platform_prefix": attr.string(
             doc = "The product's platform prefix. A packed plugin component states it to the collector. Empty in the flag's default.",
+        ),
+        "mode": attr.string(
+            doc = """The product mode in lower case, such as `monolith` or `frontend`. Empty in the flag's default.
+
+A leaf adds the refusals `mode_refused_content_modules` states for this mode, so one leaf serves a frontend product too.""",
         ),
     },
 )
@@ -142,80 +142,6 @@ The transition on the leaf attribute reads this label, so a leaf serves the prod
         default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist"),
     ),
 }
-
-DevDistPluginDescriptorSetInfo = provider(
-    doc = """The produced descriptors of one fragment of one product.
-
-    A set target and not a `label_list` on the fragment: the set selects, per plugin, the variant its platform takes.
-    No macro of this package declares a set today. The rule `_dev_dist_plugin_descriptor_set` stays for a fragment that
-    reads produced descriptors.
-
-    The set is also where the product is named. It transitions every descriptor below it onto its own
-    `dev_dist_product_info`, so one leaf per plugin serves any number of products.""",
-    fields = {
-        "descriptors": "A depset of `struct(plugin_main_module, descriptor)`, one per plugin the fragment patches.",
-    },
-)
-
-def _dev_dist_plugin_descriptor_set_impl(ctx):
-    if ctx.attr.platform not in HOST_PLATFORMS:
-        fail("'%s' is not one of %s" % (ctx.attr.platform, HOST_PLATFORMS), attr = "platform")
-    records = []
-    metadata = []
-    seen = {}
-    for target in ctx.attr.descriptors:
-        info = target[DevDistPluginDescriptorInfo]
-        if ctx.attr.platform not in info.platforms:
-            continue
-        main_module = info.plugin_main_module
-        earlier = seen.get(main_module)
-        if earlier != None:
-            # A fragment reads a produced descriptor under one manifest key per plugin, so two variants reaching one
-            # platform would make the key ambiguous. Refused here, where both are in one list.
-            #
-            # Load-bearing, and not a guard against a generator defect. Every variant of one plugin is in this list, so
-            # the platform filter above is the whole reason exactly one of them survives.
-            fail("%s and %s both produce the descriptor of '%s' on '%s'" % (
-                earlier,
-                target.label,
-                main_module,
-                ctx.attr.platform,
-            ), attr = "descriptors")
-        seen[main_module] = target.label
-        records.append(struct(
-            plugin_main_module = main_module,
-            descriptor = info.descriptor,
-        ))
-        metadata.append(info._declaration_file)
-    return [
-        DevDistPluginDescriptorSetInfo(descriptors = depset(records)),
-        OutputGroupInfo(_dev_dist_descriptor_metadata = depset(metadata)),
-    ]
-
-_dev_dist_plugin_descriptor_set = rule(
-    doc = "One fragment's produced plugin descriptors, as the one label a fragment declares.",
-    implementation = _dev_dist_plugin_descriptor_set_impl,
-    attrs = {
-        "descriptors": attr.label_list(
-            doc = """Every `dev_dist_plugin_descriptor` target of the plugins this fragment lays out.
-
-Every layout variant of each of them, because which variant one platform takes follows from the variant itself. So one
-list serves all six platforms, and `platform` selects inside it.
-
-The provider gate is the whole check. A target that produces no descriptor has no plugin to name.""",
-            cfg = dev_dist_product_info_transition,
-            providers = [DevDistPluginDescriptorInfo],
-        ),
-        "platform": attr.string(
-            doc = """The `HOST_PLATFORMS` entry this set is the set of.
-
-A plugin restricted to one operating system or one architecture reaches a fragment of that platform alone, so the set
-holds the variant that platform takes and nothing else. Selected while Bazel analyses, from the provider each variant
-carries.""",
-            mandatory = True,
-        ),
-    } | DEV_DIST_PRODUCT_INFO_ATTR,
-)
 
 def _dev_dist_plugin_descriptor_group_impl(ctx):
     return [
@@ -326,7 +252,7 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
         parameters.append(("--compatible-build-range", ctx.attr.compatible_build_range, "formatted"))
     parameters.extend([
         ("--marker", stamps.markers, "repeated"),
-        ("--refused-content-module", ctx.attr.refused_content_modules, "repeated"),
+        ("--refused-content-module", _refused_content_modules(ctx, product), "repeated"),
         ("--separate-jar", ctx.attr.separate_jar, "repeated"),
         ("--plugin-module", ctx.attr.plugin_modules, "repeated"),
         ("--platform-module", ctx.attr.platform_modules, "repeated"),
@@ -557,6 +483,10 @@ def _descriptor_declaration_json(declaration):
         "default_outputs": [_descriptor_file_identity(file) for file in declaration.default_outputs],
     }) + "\n"
 
+def _refused_content_modules(ctx, product):
+    """The content modules this leaf refuses: the stated ones, then the ones its product's mode refuses."""
+    return ctx.attr.refused_content_modules + ctx.attr.mode_refused_content_modules.get(product.mode, [])
+
 def _dev_dist_plugin_descriptor_impl(ctx):
     if ctx.attr.unresolved_descriptor_modules:
         fail("Missing selected descriptors for %s: %s. Regenerate the dev sections." % (
@@ -568,7 +498,7 @@ def _dev_dist_plugin_descriptor_impl(ctx):
         fail("The plugin must state its main module", attr = "main_module")
 
     # Fail closed. The flag's default states no product, and a descriptor stamped from it would carry an empty release
-    # date and an empty release version. A product's set target sets the flag on the way down. A leaf built on its own
+    # date and an empty release version. The consumer of a plugin component sets the flag on the way down. A leaf built on its own
     # has to set the flag itself, and the failure below says which flag that is.
     product = ctx.attr._product_info[DevDistProductInfo]
     if not product.release_date or not product.release_version:
@@ -647,6 +577,7 @@ def _dev_dist_plugin_descriptor_impl(ctx):
             descriptor = descriptor,
             classpath_descriptor = classpath_descriptor,
             platforms = platforms,
+            mode_refused_content_modules = ctx.attr.mode_refused_content_modules.get(product.mode, []),
             _declaration = declaration,
             _declaration_file = metadata,
         ),
@@ -748,6 +679,12 @@ The assembly drops an optional `<module/>` a `ContentModuleFilter` refuses, and 
 The survivors are `descriptor`'s own `<content>`, which this action already declares, so only the refusals are stated
 here. A refusal that reaches no `<module/>` fails the action.""",
         ),
+        "mode_refused_content_modules": attr.string_list_dict(
+            doc = """The content modules the leaf refuses in a product of each mode, keyed by the mode, such as `frontend`.
+
+A frontend product refuses the content modules that reach a backend root, and that rule reads the module alone. So the
+leaf of every product states one list, and the leaf adds the list of the mode `dev_dist_product_info` names.""",
+        ),
         "separate_jar": attr.string_list(
             doc = "Which content module's embedded descriptor takes `separate-jar=\"true\"`. A deviation, normally empty.",
         ),
@@ -786,7 +723,7 @@ build's critical path.""",
         "_product_info": attr.label(
             doc = """The product the stamps come from, as a flag rather than three attributes.
 
-The default states nothing, so a leaf reached by no product's set target fails at analysis. See `DevDistProductInfo`.""",
+The default states nothing, so a leaf reached by no product's consumer fails at analysis. See `DevDistProductInfo`.""",
             default = Label("//build:dev_dist_product_info"),
             providers = [DevDistProductInfo],
         ),
@@ -799,14 +736,8 @@ _HOST_PLATFORM_OPERATING_SYSTEMS = sorted({platform_parts(platform).os: None for
 
 _HOST_PLATFORM_ARCHITECTURES = sorted({platform_parts(platform).arch: None for platform in HOST_PLATFORMS})
 
-# What a descriptor target's name ends in. One owner, because `dev_dist_plugin_descriptor_target_name` writes it and
-# `dev_dist_plugin_descriptor_entry_of` strips it.
+# What a descriptor target's name ends in. `dev_dist_plugin_descriptor_target_name` writes it.
 _DEV_DESCRIPTOR_SUFFIX = "_dev_descriptor"
-
-# Every variant a descriptor target's name can carry. `HOST_PLATFORMS` comes first, because `darwin_aarch64` ends in
-# `aarch64` and the shorter token must not claim it. The operating-system tokens and the architecture tokens are
-# disjoint, so their order between themselves says nothing.
-_DEV_DESCRIPTOR_VARIANTS = HOST_PLATFORMS + _HOST_PLATFORM_OPERATING_SYSTEMS + _HOST_PLATFORM_ARCHITECTURES
 
 def dev_dist_plugin_descriptor_platforms(variant):
     """Which `HOST_PLATFORMS` entries one layout variant serves - `"darwin"` gives the two macOS platforms.
@@ -892,62 +823,6 @@ def dev_dist_plugin_descriptor_target_name(main_module, variant = ""):
         return main_module + "_" + variant + _DEV_DESCRIPTOR_SUFFIX
     return main_module + _DEV_DESCRIPTOR_SUFFIX
 
-def dev_dist_plugin_descriptor_entry_of(label):
-    """The plugin and the layout variant `dev_dist_plugin_descriptor_target_name` was called with, read back from what
-    it returned.
-
-    The inverse of that function, and it takes a label as well as a bare name, because what names a descriptor target
-    names it as `":<name>"`. The plan states one label per plan entry, and both readers of that list need the plugin and
-    its variant, so the label carries the pair and no second list has to.
-
-    Only a variant this repository knows is stripped, and the target-name suffix is required. A name that ends in
-    neither is a name this function did not write, and it fails here rather than answering with a plugin that does not
-    exist.
-
-    A main module whose own name ends in `_x64` or another variant token therefore parses as a shorter plugin with a
-    variant. A JPS module name states dots and no underscore of that shape, and the leaf reads its `module_name` out of
-    its own module target, so such a name would not match its leaf.
-
-    Args:
-        label: a descriptor target's label or its bare name.
-
-    Returns:
-        `struct(main_module, variant)`. `variant` is empty for a plugin whose one layout serves every platform.
-    """
-    name = label.rpartition(":")[2]
-    if not name.endswith(_DEV_DESCRIPTOR_SUFFIX):
-        fail("dev_dist_plugin_descriptor: '%s' names no descriptor target, because a name of one ends in '%s'" % (
-            label,
-            _DEV_DESCRIPTOR_SUFFIX,
-        ))
-    stem = name[:-len(_DEV_DESCRIPTOR_SUFFIX)]
-    entry_variant = ""
-    for variant in _DEV_DESCRIPTOR_VARIANTS:
-        if stem.endswith("_" + variant):
-            stem = stem[:-(len(variant) + 1)]
-            entry_variant = variant
-            break
-    if not stem:
-        fail("dev_dist_plugin_descriptor: '%s' names no plugin, because everything before '%s' is a variant" % (
-            label,
-            _DEV_DESCRIPTOR_SUFFIX,
-        ))
-    return struct(main_module = stem, variant = entry_variant)
-
-def _descriptor_key(main_module, variant = ""):
-    """The key every deviation table of the plan is keyed by - `("intellij.jcef.plugin", "darwin_aarch64")`.
-
-    A deviation is a fact about one (plugin, variant) and not about the plugin: two variants state different markers, and
-    the OS-specific ones state different versions. `planEntryKey` composes the same key on the generator side.
-
-    Args:
-        main_module: the plugin's main JPS module.
-        variant: the layout variant, or empty for a plugin whose one layout serves every platform.
-    """
-    if variant:
-        return main_module + "/" + variant
-    return main_module
-
 def dev_dist_plugin_descriptor(
         main_module,
         descriptor = "",
@@ -1002,85 +877,4 @@ def dev_dist_plugin_descriptor(
         tags = tags + ["manual"],
         visibility = visibility,
         **kwargs
-    )
-
-# What `fragment_reads` states. `all` means every fragment reads the produced descriptor of every plugin the plan
-# expresses, which is the state of every product today. `none` puts every fragment back on the computed path, and it is
-# the second arm of the two-arm measurement.
-_FRAGMENT_READS_MODES = ["all", "none"]
-
-def _descriptor_fragment_reads_mode(product):
-    """The plan's `fragment_reads` mode, refused when it states neither `all` nor `none`.
-
-    The one owner of that refusal, because a mode the plan misspells would otherwise read as `none` and take every
-    fragment off the produced descriptor without saying so.
-
-    Args:
-        product: one product's entry of `DEV_DIST_PLUGIN_DESCRIPTORS`.
-    """
-    if product.fragment_reads not in _FRAGMENT_READS_MODES:
-        fail("dev_dist_plugin_descriptor: fragment_reads is '%s', and it states one of %s" % (
-            product.fragment_reads,
-            _FRAGMENT_READS_MODES,
-        ))
-    return product.fragment_reads
-
-def dev_dist_plugin_descriptors(name, product, platform_prefix, visibility = ["//visibility:public"]):
-    """One group over every descriptor target of a product, and one `dev_dist_product_info`.
-
-    The group is one product's whole population. The population is a single-file toggle: with `descriptor_targets = []`
-    the group still resolves and names no descriptor.
-
-    Args:
-        name: the group target's name.
-        product: one product's entry of `DEV_DIST_PLUGIN_DESCRIPTORS`.
-        platform_prefix: the product's platform prefix, which names the product info target.
-        visibility: the group's and the product info's visibility.
-    """
-
-    # The product's own scalars, as the one target every descriptor of this product is configured with.
-    product_info = platform_prefix + "_product_info"
-    dev_dist_product_info(
-        name = product_info,
-        eap = product.eap,
-        marketplace_names = product.marketplace_names,
-        release_date = product.release_date,
-        release_version = product.release_version,
-        platform_prefix = platform_prefix,
-        # `manual`, for the reason every other target of this package is: `bazel build //...` must run no descriptor
-        # action. This one runs none and declares no output, and the tag keeps the package's rule one sentence.
-        tags = ["manual"],
-        visibility = visibility,
-    )
-
-    # The plugin and the variant of each label, read out of the label itself. Two labels that name one plan entry are
-    # refused here, where the plan is read: the set below refuses them as well, and its failure speaks about a platform
-    # rather than about a plan that states one leaf twice.
-    entry_by_key = {}
-    entries = []
-    plugin_names = {}
-    for label in product.descriptor_targets:
-        entry = dev_dist_plugin_descriptor_entry_of(label)
-        key = _descriptor_key(entry.main_module, entry.variant)
-        earlier = entry_by_key.get(key)
-        if earlier != None:
-            fail("dev_dist_plugin_descriptors: both %s and %s name the descriptor of '%s'" % (earlier, label, key))
-        entry_by_key[key] = label
-        entries.append((label, entry))
-        plugin_names[entry.main_module] = None
-
-    # The switch, checked over the whole plan. No rule reads it today, so this check is what keeps a misspelled mode
-    # and a stale opt-out name from passing as the default.
-    if _descriptor_fragment_reads_mode(product) == "none" and product.fragment_reads_opt_out:
-        fail("dev_dist_plugin_descriptors: fragment_reads is 'none', so an opt-out list restates it")
-    for main_module in product.fragment_reads_opt_out:
-        if main_module not in plugin_names:
-            fail("dev_dist_plugin_descriptors: fragment_reads_opt_out names '%s', which is not in the population" % main_module)
-
-    dev_dist_plugin_descriptor_group(
-        name = name,
-        descriptors = product.descriptor_targets,
-        product_info = ":" + product_info,
-        tags = ["manual"],
-        visibility = visibility,
     )

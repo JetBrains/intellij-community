@@ -28,6 +28,12 @@ dev_dist_plugin(
         ],
     },
     main_module = "intellij.platform.bookmarks.plugin",
+    mode_refused_content_modules = {
+        "frontend": [
+            "intellij.platform.bookmarks.backend",
+            "intellij.platform.vcs.log.impl.bookmarks",
+        ],
+    },
 )
 ### auto-generated section `dev intellij.platform.bookmarks.plugin` end
 

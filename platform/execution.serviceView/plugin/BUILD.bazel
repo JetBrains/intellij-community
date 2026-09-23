@@ -30,6 +30,12 @@ dev_dist_plugin(
         "lib/platform-execution-serviceView-plugin.jar": ["intellij.platform.execution.serviceView.plugin"],
     },
     main_module = "intellij.platform.execution.serviceView.plugin",
+    mode_refused_content_modules = {
+        "frontend": [
+            "intellij.platform.execution.dashboard.backend",
+            "intellij.platform.execution.serviceView.backend",
+        ],
+    },
 )
 ### auto-generated section `dev intellij.platform.execution.serviceView.plugin` end
 

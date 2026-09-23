@@ -171,8 +171,7 @@ object CommunityKotlinPluginBuilder : KotlinPluginBuilder()
  * keeps the two branches a released build needs. A `kotlin.plugin.since` and `kotlin.plugin.until` pair states a
  * compatibility range of its own, and a build version that already holds `IJ` takes the kind spliced in rather than
  * appended. A Bazel dev fragment sets no such property and stamps a build version of the `<baseline>.<date>.<counter>`
- * shape, so neither branch runs there. `checkProducedPluginDescriptor` refuses a produced descriptor whose version or
- * compatibility range is not the one the assembly computed, which is what makes a divergence loud.
+ * shape, so neither branch runs there.
  */
 private class KotlinPluginVersion(private val kind: KotlinPluginBuilder.KotlinPluginKind) : DataPluginVersionEvaluator {
   override val versionSuffix: String

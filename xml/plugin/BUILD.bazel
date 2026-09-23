@@ -78,6 +78,20 @@ dev_dist_plugin(
         "lib/xml-plugin.jar": ["intellij.xml.plugin"],
     },
     main_module = "intellij.xml.plugin",
+    mode_refused_content_modules = {
+        "frontend": [
+            "intellij.xml.dom",
+            "intellij.xml.dom.impl",
+            "intellij.xml.structureView",
+            "intellij.xml.structureView.impl",
+            "intellij.xml.analysis",
+            "intellij.xml.emmet.backend",
+            "intellij.relaxng",
+            "intellij.xml.impl",
+            "intellij.xml.analysis.impl",
+            "intellij.xml.langInjection",
+        ],
+    },
 )
 ### auto-generated section `dev intellij.xml.plugin` end
 

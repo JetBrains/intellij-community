@@ -181,19 +181,7 @@ dev_dist_plugin(
 )
 
 exports_files(
-    [
-        "intellij.kotlin.plugin.AndroidStudio.dev-plan.json",
-        "intellij.kotlin.plugin.dev-plan.json",
-        "intellij.kotlin.plugin.ideaAirJetBrainsClient.dev-plan.json",
-        "intellij.kotlin.plugin.ideaAirLlmJetBrainsClient.dev-plan.json",
-        "intellij.kotlin.plugin.ideaClionRadlerJetBrainsClient.dev-plan.json",
-        "intellij.kotlin.plugin.ideaDockerJetBrainsClient.dev-plan.json",
-        "intellij.kotlin.plugin.ideaHibernateDebuggerJetBrainsClient.dev-plan.json",
-        "intellij.kotlin.plugin.ideaJetBrainsClient.dev-plan.json",
-        "intellij.kotlin.plugin.ideaLlmJetBrainsClient.dev-plan.json",
-        "intellij.kotlin.plugin.ideaLspUiJetBrainsClient.dev-plan.json",
-        "intellij.kotlin.plugin.idea_community.dev-plan.json",
-    ],
+    ["intellij.kotlin.plugin.dev-plan.json"],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev intellij.kotlin.plugin` end

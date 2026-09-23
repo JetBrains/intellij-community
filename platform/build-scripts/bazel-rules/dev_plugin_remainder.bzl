@@ -6,7 +6,7 @@ load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load("//build:dev_launch_dependencies.bzl", "HOST_PLATFORMS", "platform_parts")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "library_entries", "module_output_jar")
 load(":dev_dist_content.bzl", "DevDistContentInfo")
-load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_neutral_product_transition", "dev_dist_product_info_transition")
+load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_neutral_product_transition")
 load(":dev_plugin.bzl", "dev_dist_plugin_directory")
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo")
@@ -644,8 +644,8 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
     graph = ctx.attr.graph[DevPluginGraphInfo]
     projection = graph.projection
     execution_version = graph.execution_version
-    artifact_catalogue = _transitioned_target(ctx.attr.artifact_catalogue, "artifact_catalogue")
-    descriptor_target = _transitioned_target(ctx.attr.descriptor, "descriptor")
+    artifact_catalogue = ctx.attr.artifact_catalogue
+    descriptor_target = ctx.attr.descriptor
     reused_jars = _reused_jars(ctx)
     binding = _catalogue_binding(ctx, artifact_catalogue, reused_jars)
     classpath_descriptor = _descriptor_classpath_file(descriptor_target)
@@ -706,18 +706,16 @@ prepared directory exist as a file.""",
         "graph": attr.label(mandatory = True, providers = [DevPluginGraphInfo]),
         "descriptor": attr.label(
             mandatory = True,
-            cfg = dev_dist_product_info_transition,
             providers = [DevDistPluginDescriptorInfo],
-            doc = "The produced descriptor target. The action reads its classpath descriptor. The primary descriptor reaches the action as a catalogue artifact.",
+            doc = """The produced descriptor target. The action reads its classpath descriptor. The primary descriptor reaches the action
+as a catalogue artifact. The product reaches it through the configuration the consumer of the component sets.""",
         ),
         "plugin_directory": attr.string(mandatory = True),
         "artifact_catalogue": attr.label(
             mandatory = True,
-            cfg = dev_dist_product_info_transition,
             providers = [DevPluginArtifactCatalogueInfo],
             doc = "The catalogue. The action reads every artifact of it.",
         ),
-        "product_info": attr.label(mandatory = True, providers = [DevDistProductInfo]),
         "independent_artifacts": attr.label_list(
             providers = [ContentModuleJarInfo],
             cfg = _module_transition,
@@ -732,6 +730,12 @@ reaches each jar's module and compiles it a second time. No input of the action 
 )
 
 def _dev_plugin_component_impl(ctx):
+    product = ctx.attr._product_info[DevDistProductInfo]
+    if not product.platform_prefix:
+        fail("dev_plugin_component requires a product configuration: %s states no platform prefix, so no product asked for %s" % (
+            ctx.attr._product_info.label,
+            ctx.label,
+        ))
     remainder = ctx.attr.remainder[DevPluginRemainderInfo]
     execution_version = _execution_version(remainder, "DevPluginRemainderInfo")
     if not remainder.directory.is_directory:
@@ -791,7 +795,7 @@ def _dev_plugin_component_impl(ctx):
     arguments.add(manifest, format = "--component-manifest=%s")
     arguments.add(classpath, format = "--plugin-classpath-part=%s")
     arguments.add(ctx.attr.component_name, format = "--kind=%s")
-    arguments.add(ctx.attr.platform_prefix, format = "--platform-prefix=%s")
+    arguments.add(product.platform_prefix, format = "--platform-prefix=%s")
     if ctx.attr.target_platform:
         platform = platform_parts(ctx.attr.target_platform)
         arguments.add("macos" if platform.os == "darwin" else platform.os, format = "--os=%s")
@@ -851,8 +855,12 @@ remainder use.""",
         ),
         "plugin_directory": attr.string(mandatory = True),
         "component_name": attr.string(mandatory = True),
-        "platform_prefix": attr.string(mandatory = True),
         "target_platform": attr.string(doc = "A `HOST_PLATFORMS` entry, or empty for a component that serves every platform."),
+        "_product_info": attr.label(
+            doc = "The product, read through the flag the consumer's transition sets. The default states no product, and the rule fails on it.",
+            default = Label("//build:dev_dist_product_info"),
+            providers = [DevDistProductInfo],
+        ),
         "_trace_spans": attr.label(default = "//platform/build-scripts/bazel-rules:trace_spans", providers = [BuildSettingInfo]),
         "_collector": attr.label(default = "//build/content-module-packer/dev-dist-collector", executable = True, cfg = "exec"),
         "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
@@ -904,51 +912,14 @@ def platform_values_error(main_module, platforms, platform_values):
                 return "%s on %s: %s" % (main_module, platform, error)
     return None
 
-def product_name_error(main_module, product, name, what):
-    """Returns why the product name `name` does not fit `product`, or None when it does.
-
-    `dev_dist_complex_plugin` fails with the message at load time. A non-empty `name` is the product itself, or its
-    case-safe name: the case-folded product key, an underscore and a suffix, such as `idea_community` for `Idea`. The
-    generator assigns a case-safe name to a product whose key collides with another key on a case-insensitive file
-    system. The plan file and the chain stem of such a product are named by that name, so two products never write
-    one output path, and a chain never reads the plan file of another product.
-
-    Args:
-        main_module: The plugin's main module, named in the message.
-        product: The `product` argument of the call.
-        name: The name to check: the `plan_product` or the `chain_product` argument of the call.
-        what: The name of the checked argument in the message, such as `plan product`.
-
-    Returns:
-        The message, or None.
-    """
-    if name and name != product and not name.startswith(product.lower() + "_"):
-        return "%s names the %s '%s', which is not its product '%s'" % (main_module, what, name, product)
-    return None
-
-def plan_product_error(main_module, product, plan_product):
-    """Returns why `plan_product` does not fit `product`, or None when it does. See `product_name_error`.
-
-    Args:
-        main_module: The plugin's main module, named in the message.
-        product: The `product` argument of the call.
-        plan_product: The `plan_product` argument of the call.
-
-    Returns:
-        The message, or None.
-    """
-    return product_name_error(main_module, product, plan_product, "plan product")
-
 def dev_dist_complex_plugin(
         main_module,
-        product,
-        product_info,
         descriptor,
         execution_version,
         platforms = None,
         platform_values = {},
-        plan_product = "",
-        chain_product = "",
+        plan_class = "",
+        chain_class = "",
         plan_package = "",
         directory_name = "",
         artifact_inputs = {},
@@ -962,36 +933,34 @@ def dev_dist_complex_plugin(
         visibility = ["//visibility:public"]):
     """Declares the execution chains of one complex plugin: one chain per platform it is bundled on, or one for all.
 
+    One call serves every product whose rendered call is the same. The call states no product. The consumer of the
+    component sets the product through `dev_dist_product_info_transition`, and the descriptor and the collector read it
+    there.
+
     The generator states the facts that vary per plugin. The macro derives everything that follows from them: the chain
-    stem `<chain product>[_<platform>]_<main module>`, the component name, the plan file label
-    `<plan_package>:<main module>[.<plan_product>][.<platform>].dev-plan.json`, the plugin directory, and the
-    descriptor's catalogue entry `descriptor:<main module>`, which every product shares. A `{platform}` token in a
-    label or an ID is replaced by the chain's platform, so a plugin whose platform layouts differ only in that token is
-    one call. A plan file holds the same token and `{platform:<name>}` slots as whole string leaves. The graph of each
-    chain resolves them from `platform_values`. Each chain is one `dev_dist_complex_plugin_variant`.
+    stem `<main module>[.<chain class>][_<platform>]`, the component name, the plan file label
+    `<plan_package>:<main module>[.<plan class>][.<platform>].dev-plan.json`, the plugin directory, and the
+    descriptor's catalogue entry `descriptor:<main module>`. A `{platform}` token in a label or an ID is replaced by the
+    chain's platform, so a plugin whose platform layouts differ only in that token is one call. A plan file holds the
+    same token and `{platform:<name>}` slots as whole string leaves. The graph of each chain resolves them from
+    `platform_values`. Each chain is one `dev_dist_complex_plugin_variant`.
 
     Args:
         main_module: The plugin's main module. It is the component name and the plan file stem.
-        product: The product's platform prefix. It is the first element of every chain stem unless `chain_product`
-            names another one.
-        plan_product: The product in the plan file name, `<main module>.<plan_product>[.<platform>].dev-plan.json`,
-            for a product whose plan text differs from the baseline product's: the product, or its case-safe name,
-            see `product_name_error`. Empty for a plan file the product shares with the baseline product.
-        chain_product: The first element of every chain stem, `<chain product>[_<platform>]_<main module>`: the
-            product, or its case-safe name, see `product_name_error`. Empty for the product itself. A product whose
-            key collides with another key on a case-insensitive file system states its case-safe name here, so the
-            outputs of its chains never share a path with the chains of the other product.
-        plan_package: The package that holds the plan file, as an absolute label such as
-            `@community//plugins/kotlin/plugin`. Empty for a plan file in the package of the call.
-        product_info: The product info target that configures the descriptor and the catalogue.
         descriptor: The produced descriptor target. It may hold the platform token.
         execution_version: The execution version derived from the projection assets.
         platforms: The `HOST_PLATFORMS` entries the plugin is bundled on, one chain each, or `None` for one chain
             that serves every platform.
         platform_values: The value of each plan file slot per platform, `{platform: {slot name: value}}`. A non-empty
             dict needs `platforms`, names every one of them, states the same slot names on each, and names the plan
-            file `<main module>[.<plan_product>].dev-plan.json`. An empty dict with `platforms` names one plan file
-            per chain, `<main module>[.<plan_product>].<platform>.dev-plan.json`.
+            file `<main module>[.<plan class>].dev-plan.json`. An empty dict with `platforms` names one plan file
+            per chain, `<main module>[.<plan class>].<platform>.dev-plan.json`.
+        plan_class: The name of a plan text that differs from the baseline text, the first product that states it.
+            Empty for the baseline text.
+        chain_class: The name of a call that differs from the baseline call, the first product that states it. Empty
+            for the baseline call. It keeps the chain stems of two calls of one plugin apart.
+        plan_package: The package that holds the plan file, as an absolute label such as
+            `@community//plugins/kotlin/plugin`. Empty for a plan file in the package of the call.
         directory_name: The layout's explicit directory name, or empty for the one derived from the main module.
         artifact_inputs: Compiled targets mapped to stable artifact IDs.
         resource_inputs: Resource targets mapped to stable artifact IDs, without the descriptor.
@@ -1013,14 +982,9 @@ def dev_dist_complex_plugin(
     error = platform_values_error(main_module, platforms, platform_values)
     if error:
         fail(error)
-    error = plan_product_error(main_module, product, plan_product)
-    if error:
-        fail(error)
-    error = product_name_error(main_module, product, chain_product, "chain product")
-    if error:
-        fail(error)
     descriptor_id = "descriptor:" + main_module
-    plan_stem = plan_package + ":" + main_module + ("." + plan_product if plan_product else "")
+    plan_stem = plan_package + ":" + main_module + ("." + plan_class if plan_class else "")
+    chain_stem = main_module + ("." + chain_class if chain_class else "")
     for platform in platforms or [None]:
         projection = plan_stem + ("." + platform if platform and not platform_values else "") + ".dev-plan.json"
         chain_descriptor = _for_platform(descriptor, platform)
@@ -1029,14 +993,12 @@ def dev_dist_complex_plugin(
             fail("%s states its descriptor %s in resource_inputs; the macro adds that entry" % (main_module, chain_descriptor))
         chain_resources[chain_descriptor] = descriptor_id
         dev_dist_complex_plugin_variant(
-            name = "_".join([chain_product or product] + ([platform] if platform else []) + [main_module]),
+            name = chain_stem + ("_" + platform if platform else ""),
             projection = projection,
             execution_version = execution_version,
             descriptor = chain_descriptor,
             plugin_directory = dev_dist_plugin_directory(main_module, directory_name),
             component_name = main_module,
-            platform_prefix = product,
-            product_info = product_info,
             target_platform = platform,
             platform_values = platform_values[platform] if platform_values else {},
             source_tree_targets = _dict_for_platform(source_tree_targets, platform, "source_tree_targets"),
@@ -1057,8 +1019,6 @@ def dev_dist_complex_plugin_variant(
         descriptor,
         plugin_directory,
         component_name,
-        platform_prefix,
-        product_info,
         target_platform = None,
         platform_values = {},
         source_tree_targets = {},
@@ -1079,15 +1039,13 @@ def dev_dist_complex_plugin_variant(
     cache policies stay separate.
 
     Args:
-        name: The chain stem, `<chain product>[_<platform>]_<main module>`.
+        name: The chain stem, `<main module>[.<chain class>][_<platform>]`.
         projection: The plan file label, in this package or in another one. The graph resolves it for
             `target_platform`.
         execution_version: The execution version derived from the projection assets.
         descriptor: The produced descriptor target.
         plugin_directory: The plugin directory in the distribution, `plugins/<directory name>`.
         component_name: The component kind, the plugin's main module.
-        platform_prefix: The product's platform prefix.
-        product_info: The product info target that configures the descriptor and the catalogue.
         target_platform: A `HOST_PLATFORMS` entry, or `None` for a component that serves every platform.
         platform_values: The value of each `{platform:<name>}` slot of the plan file for `target_platform`, keyed by
             name. Empty for a chain that serves every platform.
@@ -1132,7 +1090,6 @@ def dev_dist_complex_plugin_variant(
         artifact_catalogue = ":" + catalogue,
         descriptor = descriptor,
         plugin_directory = plugin_directory,
-        product_info = product_info,
         independent_artifacts = independent_artifacts,
         tags = tags,
     )
@@ -1142,7 +1099,6 @@ def dev_dist_complex_plugin_variant(
         independent_artifacts = independent_artifacts,
         plugin_directory = plugin_directory,
         component_name = component_name,
-        platform_prefix = platform_prefix,
         target_platform = target_platform,
         tags = tags,
         visibility = visibility,

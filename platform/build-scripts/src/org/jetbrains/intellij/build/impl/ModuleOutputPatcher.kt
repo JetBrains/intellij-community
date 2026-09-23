@@ -6,7 +6,6 @@ package org.jetbrains.intellij.build.impl
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import org.jetbrains.intellij.build.FileSource
 import org.jetbrains.intellij.build.InMemoryContentSource
 import org.jetbrains.intellij.build.Source
 import java.nio.ByteBuffer
@@ -25,15 +24,9 @@ class ModuleOutputPatcher {
   /**
    * The paths a module's jar carries that the module output does not hold, in the order they were stated.
    *
-   * A patch says "this path is in the jar, and its bytes are not in the module output". It does not say where the bytes
-   * come from, and two kinds do. An [InMemoryContentSource] holds text this build computed that no file holds. A
-   * [FileSource] names a declared file - a produced plugin descriptor is that kind, and the executed recipe then states
-   * the file's label rather than reporting that code made the bytes.
-   *
-   * **One ordered map, and not one per kind.** The insertion order is the order the entries reach the jar, so it decides
-   * the jar's bytes through `__index__`. Two maps re-order a module that states both kinds: it moved
-   * `META-INF/plugin.xml` behind the Kotlin plugin's other patched entries and changed that jar, while every entry in it
-   * stayed byte-identical.
+   * A patch says "this path is in the jar, and its bytes are not in the module output". An [InMemoryContentSource] holds
+   * the text this build computed. The insertion order is the order the entries reach the jar, so it decides the jar's
+   * bytes through `__index__`.
    */
   private val patches = ConcurrentHashMap<String, MutableMap<String, Source>>()
 
@@ -79,31 +72,6 @@ class ModuleOutputPatcher {
         AttributeKey.stringKey("path"), path,
       ))
     }
-  }
-
-  /**
-   * Patches [path] of [moduleName] with the bytes a declared file holds.
-   *
-   * `IF_EQUAL` semantics, which is what the one caller needs: an OS-specific plugin is laid out several times, and every
-   * pass states the same file. Equality is by file, because the file is one manifest entry resolved to one path, so two
-   * states of it are the same bytes by construction.
-   */
-  fun patchModuleOutputWithFile(moduleName: String, path: String, source: FileSource) {
-    require(source.relativePath == path) {
-      "FileSource must state the path it patches (path=$path, source=$source)"
-    }
-
-    val pathToSource = patches.computeIfAbsent(moduleName) { Collections.synchronizedMap(LinkedHashMap()) }
-    val existing = pathToSource.putIfAbsent(path, source)
-    require(existing == null || existing == source) {
-      "Patched file '$path' of module $moduleName is already stated (existing=$existing, new=$source)"
-    }
-
-    Span.current().addEvent("patch module output with a file", Attributes.of(
-      AttributeKey.stringKey("module"), moduleName,
-      AttributeKey.stringKey("path"), path,
-      AttributeKey.stringKey("file"), source.file.toString(),
-    ))
   }
 
   private fun byteArrayToTraceStringValue(value: ByteArray): String {

@@ -22,6 +22,9 @@ dev_dist_plugin(
         "lib/platform-structureView-plugin.jar": ["intellij.platform.structureView.plugin"],
     },
     main_module = "intellij.platform.structureView.plugin",
+    mode_refused_content_modules = {
+        "frontend": ["intellij.platform.structureView.backend"],
+    },
 )
 ### auto-generated section `dev intellij.platform.structureView.plugin` end
 
