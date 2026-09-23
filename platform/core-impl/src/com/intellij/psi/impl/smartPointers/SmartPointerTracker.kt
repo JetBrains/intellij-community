@@ -189,10 +189,13 @@ class SmartPointerTracker(initialModCount: Long) {
   }
 
   @Synchronized
-  internal fun getFileInfos(): List<FileElementInfo> = buildList(fileInfoList.size) {
+  internal fun getContextAwareInfos(): List<ContextAwareInfo> = buildList(selfInfoList.size + fileInfoList.size) {
+    selfInfoList.processAlivePointers { pointer ->
+      add(pointer.selfInfo)
+      true
+    }
     fileInfoList.processAlivePointers { pointer ->
-      val info = pointer.elementInfo as FileElementInfo
-      this@buildList.add(info)
+      add(pointer.elementInfo as FileElementInfo)
       true
     }
   }
@@ -238,7 +241,7 @@ class SmartPointerTracker(initialModCount: Long) {
 
     validationModCount = currentModCount
 
-    val allInfos = getSortedInfos() + getFileInfos()
+    val allInfos = getContextAwareInfos()
     if (allInfos.isEmpty()) {
       pendingContextMappings.clear()
       return
