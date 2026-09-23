@@ -185,6 +185,11 @@
             defaultValue="true"
             restartRequired="false"/>
     <registryKey
+            key="kotlin.gradle.parallelModelFetch.enabled"
+            description="Fetch the Kotlin Gradle models in parallel. The IDE fetches the models one after another when this key is off."
+            defaultValue="false"
+            restartRequired="false"/>
+    <registryKey
             key="gradle.daemon.jvm.criteria.suggest.migration"
             description="Enable to recommend migrate project from existing Gradle JDK configuration to Gradle Daemon JVM criteria"
             defaultValue="false"/>
