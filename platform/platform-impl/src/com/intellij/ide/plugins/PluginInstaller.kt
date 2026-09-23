@@ -459,9 +459,7 @@ object PluginInstaller {
       }
 
       if (file.toString().endsWith(".zip") && keepArchive()) {
-        val tempFile = MarketplacePluginDownloadService.getPluginTempFile()
-        Files.copy(file, tempFile, StandardCopyOption.REPLACE_EXISTING)
-        MarketplacePluginDownloadService.renameFileToZipRoot(tempFile)
+        MarketplacePluginDownloadService().storeArchive(file)
       }
     }
     catch (ex: IOException) {

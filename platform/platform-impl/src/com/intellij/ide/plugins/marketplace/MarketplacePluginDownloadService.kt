@@ -16,7 +16,9 @@ import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.net.URLConnection
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.util.zip.ZipInputStream
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createTempFile
@@ -37,9 +39,8 @@ open class MarketplacePluginDownloadService {
     private const val FILENAME = "filename="
     private const val MAXIMUM_DOWNLOAD_PERCENT = 0.65 // 100% = 1.0
 
-    @JvmStatic
     @Throws(IOException::class)
-    fun getPluginTempFile(): Path = createTempFile(PathManager.getStartupScriptDir().createDirectories(), "plugin_", "_download")
+    private fun getPluginTempFile(): Path = createTempFile(PathManager.getStartupScriptDir().createDirectories(), "plugin_", "_download")
 
     @JvmStatic
     @Throws(IOException::class)
@@ -83,7 +84,8 @@ open class MarketplacePluginDownloadService {
         .connect { request ->
           request.readError() == null
         }
-    } catch (_: IOException) {
+    }
+    catch (_: IOException) {
       return false
     }
   }
@@ -249,6 +251,12 @@ open class MarketplacePluginDownloadService {
   private fun getPrevPluginArchive(prevPlugin: Path): Path {
     val suffix = if (prevPlugin.endsWith(".jar")) "" else ".zip"
     return PathManager.getStartupScriptDir().resolve("${prevPlugin.fileName}$suffix")
+  }
+
+  fun storeArchive(file: Path) {
+    val tempFile = getPluginTempFile()
+    Files.copy(file, tempFile, StandardCopyOption.REPLACE_EXISTING)
+    renameFileToZipRoot(tempFile)
   }
 }
 
