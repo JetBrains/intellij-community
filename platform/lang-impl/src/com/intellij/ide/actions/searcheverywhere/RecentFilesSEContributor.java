@@ -67,7 +67,7 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
     List<VirtualFile> opened = Arrays.asList(FileEditorManager.getInstance(myProject).getSelectedFiles());
     List<VirtualFile> history = Lists.reverse(EditorHistoryManager.getInstance(myProject).getFileList());
 
-    boolean shouldIncludeOpened = WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject(myProject);
+    boolean shouldIncludeOpened = WelcomeScreenProjectProvider.isWelcomeScreenProject(myProject);
     List<FoundItemDescriptor<Object>> res = new ArrayList<>();
     ProgressIndicatorUtils.yieldToPendingWriteActions();
     ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(

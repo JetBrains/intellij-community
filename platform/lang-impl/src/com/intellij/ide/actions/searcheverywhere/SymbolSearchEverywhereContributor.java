@@ -112,7 +112,7 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
     @Override
     public boolean isAvailable(Project project) {
       // The welcome-screen project has no source, so the contributor can never return a result.
-      return !WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject(project) &&
+      return !WelcomeScreenProjectProvider.isWelcomeScreenProject(project) &&
              GotoContributorsAvailabilityService.hasLocalSymbolContributors(project);
     }
   }

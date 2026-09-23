@@ -28,7 +28,7 @@ public abstract class SearchEverywhereBaseAction extends AnAction implements Act
     final DataContext dataContext = event.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     boolean hasContributors = hasContributors(dataContext);
-    boolean isWelcomeScreenProject = project != null && WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject(project);
+    boolean isWelcomeScreenProject = project != null && WelcomeScreenProjectProvider.isWelcomeScreenProject(project);
 
     if (isWelcomeScreenProject && !isVisibleOnWelcomeScreen()) {
       presentation.setEnabledAndVisible(false);

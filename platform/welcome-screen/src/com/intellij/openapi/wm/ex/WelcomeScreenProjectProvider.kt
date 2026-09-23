@@ -63,6 +63,7 @@ interface WelcomeScreenProjectSupport {
 @Internal
 abstract class WelcomeScreenProjectProvider {
   companion object {
+    @JvmStatic
     fun isWelcomeScreenProject(project: Project): Boolean {
       val extension = getWelcomeScreenProjectProvider() ?: return false
       return extension.doIsWelcomeScreenProject(project)
