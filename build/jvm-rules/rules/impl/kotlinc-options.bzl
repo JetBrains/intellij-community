@@ -12,6 +12,7 @@ KotlincExtraOptionsInfo = provider(
     fields = {
         "plugin_options": "Additional -P compiler options.",
         "x_allow_result_return_type": "Enable kotlin.Result as a return type.",
+        "x_jsr305": "Nullability modes for JSR-305 annotations.",
         "x_strict_java_nullability_assertions": "Enable strict Java nullability assertions.",
         "x_warning_level": "Per-diagnostic warning levels passed as repeated -Xwarning-level flags.",
         "x_wasm_attach_js_exception": "Enable attaching JS exceptions for Wasm.",
@@ -23,6 +24,7 @@ KotlincExtraOptionsInfo = provider(
 _EXTRA_OPTION_FIELDS = [
     "plugin_options",
     "x_allow_result_return_type",
+    "x_jsr305",
     "x_strict_java_nullability_assertions",
     "x_warning_level",
     "x_wasm_attach_js_exception",
@@ -38,6 +40,10 @@ _EXTRA_OPTION_ATTRS = {
     "x_allow_result_return_type": attr.bool(
         default = False,
         doc = "Enable kotlin.Result as a return type.",
+    ),
+    "x_jsr305": attr.string_list(
+        default = [],
+        doc = "Nullability modes for JSR-305 annotations.",
     ),
     "x_strict_java_nullability_assertions": attr.bool(
         default = False,
@@ -149,6 +155,9 @@ def _extra_options_to_flags(kotlinc_extra_options):
 
     if getattr(kotlinc_extra_options, "x_allow_result_return_type", False):
         flags.append("-Xallow-result-return-type")
+    jsr305 = getattr(kotlinc_extra_options, "x_jsr305", None)
+    if jsr305:
+        flags.append("-Xjsr305=" + ",".join(jsr305))
     if getattr(kotlinc_extra_options, "x_strict_java_nullability_assertions", False):
         flags.append("-Xstrict-java-nullability-assertions")
     for level in getattr(kotlinc_extra_options, "x_warning_level", None) or []:
@@ -192,6 +201,7 @@ _WORKER_OPTION_NAMES = [
     "x_context_receivers",
     "x_explicit_api",
     "x_inline_classes",
+    "x_jsr305",
     "jvm_default",
     "x_lambdas",
     "x_no_call_assertions",

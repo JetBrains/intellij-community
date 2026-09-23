@@ -256,6 +256,10 @@ public class BuildContextImpl implements BuildContext {
     if (CLFlags.X_ALLOW_RESULT_RETURN_TYPE.isFlagSet(flags)) {
       options.add("-Xallow-result-return-type");
     }
+    Iterable<String> jsr305 = CLFlags.X_JSR305.getValue(flags);
+    if (jsr305.iterator().hasNext()) {
+      options.add("-Xjsr305=" + String.join(",", jsr305));
+    }
     if (CLFlags.X_STRICT_JAVA_NULLABILITY_ASSERTIONS.isFlagSet(flags)) {
       options.add("-Xstrict-java-nullability-assertions");
     }

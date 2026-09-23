@@ -531,6 +531,26 @@ class BazelGeneratorIntegrationTests {
     }
   }
 
+  @Test
+  fun `generator preserves JSR-305 nullability modes from a facet`() {
+    val projectDir = Files.createTempDirectory("jsr305-options")
+    getTestDataPath("MRI-4701").resolve("project").copyToRecursively(projectDir, followLinks = true, overwrite = false)
+    val moduleFile = projectDir.resolve("module/intellij.module.iml")
+    moduleFile.writeText(moduleFile.readText().replace(
+      "-Xjvm-default=all",
+      "-Xjvm-default=all -Xjsr305=strict,under-migration:warn,@org.example.Nullable:ignore",
+    ))
+
+    generateMetadataProject(projectDir)
+
+    softly.assertThat(projectDir.resolve("module/BUILD.bazel").readText())
+      .contains("x_jsr305 = [")
+      .contains("\"strict\"")
+      .contains("\"under-migration:warn\"")
+      .contains("\"@org.example.Nullable:ignore\"")
+    if (softly.wasSuccess()) projectDir.deleteRecursively()
+  }
+
   private fun createManifest(projectDir: Path): Path {
     val manifest = Files.createTempFile("manifest", ".txt")
     val lines = mutableListOf<String>()

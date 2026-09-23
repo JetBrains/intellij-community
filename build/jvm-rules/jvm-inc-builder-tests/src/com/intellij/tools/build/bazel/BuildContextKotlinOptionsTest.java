@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,29 @@ import java.util.zip.ZipEntry;
  * constraints actually reorder the compiler-plugin invocations in a real in-process compilation.
  */
 public final class BuildContextKotlinOptionsTest extends TestCase {
+
+  public void testJsr305ModesPassedToCompilerArguments() throws Exception {
+    BuildContext context = createBuildContext(
+      "--target_label", "//test:lib",
+      "--out", "out/lib.jar",
+      "--kotlin_module_name", "lib",
+      "--x_jsr305", "strict", "under-migration:warn", "@org.example.Nullable:ignore"
+    );
+
+    K2JVMCompilerArguments arguments = buildKotlinCompilerArguments(context);
+    assertEquals(List.of("strict", "under-migration:warn", "@org.example.Nullable:ignore"), List.of(arguments.getJsr305()));
+  }
+
+  public void testDefaultJsr305ModesWhenFlagAbsent() throws Exception {
+    BuildContext context = createBuildContext(
+      "--target_label", "//test:lib",
+      "--out", "out/lib.jar",
+      "--kotlin_module_name", "lib"
+    );
+
+    K2JVMCompilerArguments arguments = buildKotlinCompilerArguments(context);
+    assertTrue(Arrays.toString(arguments.getJsr305()), Arrays.equals(new K2JVMCompilerArguments().getJsr305(), arguments.getJsr305()));
+  }
 
   public void testCompilerPluginOrderConstraintsPassedToCompilerArguments() throws Exception {
     BuildContext context = createBuildContext(
