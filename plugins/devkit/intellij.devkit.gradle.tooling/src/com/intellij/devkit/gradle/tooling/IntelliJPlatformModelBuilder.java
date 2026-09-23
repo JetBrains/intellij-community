@@ -57,15 +57,16 @@ public final class IntelliJPlatformModelBuilder extends AbstractModelBuilderServ
     }
 
     Task initializeTask = project.getTasks().findByName(INITIALIZE_INTELLIJ_PLATFORM_PLUGIN_TASK_NAME);
-    if (initializeTask == null) return null;
-    taskNames.add(initializeTask.getPath());
+    if (initializeTask != null) {
+      taskNames.add(initializeTask.getPath());
+    }
 
     project.getGradle().getStartParameter().setTaskNames(taskNames);
 
     try {
       @NotNull Map<String, String> dependencyHelperProductCodes = loadDependencyHelperProductCodes(extension.getClass());
       @Nullable String productReleasesFile = dumpTask == null ? null : dumpTask.getOutputs().getFiles().getSingleFile().getAbsolutePath();
-      @NotNull String currentPluginVersion = readProvider(initializeTask, "getPluginVersion");
+      @NotNull String currentPluginVersion = readCurrentPluginVersion(initializeTask);
       @NotNull String latestPluginVersion = readLatestPluginVersion(initializeTask, currentPluginVersion);
 
       return new IntelliJPlatformGradleModelImpl(
@@ -77,6 +78,16 @@ public final class IntelliJPlatformModelBuilder extends AbstractModelBuilderServ
     }
     catch (ReflectiveOperationException exception) {
       throw new IllegalStateException(exception);
+    }
+  }
+
+  private static @NotNull String readCurrentPluginVersion(@Nullable Task task) {
+    if (task == null) return "0.0.0";
+    try {
+      return readProvider(task, "getPluginVersion");
+    }
+    catch (ReflectiveOperationException | RuntimeException exception) {
+      return "0.0.0";
     }
   }
 
@@ -97,7 +108,8 @@ public final class IntelliJPlatformModelBuilder extends AbstractModelBuilderServ
    * The plugin resolves the latest version from a remote repository.
    * A failure must not drop the whole model, so the current version is used instead.
    */
-  private static @NotNull String readLatestPluginVersion(@NotNull Task task, @NotNull String currentPluginVersion) {
+  private static @NotNull String readLatestPluginVersion(@Nullable Task task, @NotNull String currentPluginVersion) {
+    if (task == null) return currentPluginVersion;
     try {
       return readProvider(task, "getLatestPluginVersion");
     }
