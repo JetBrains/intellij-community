@@ -99,6 +99,7 @@ jvm_library(
         "//platform/execution-impl",
         "//platform/consoleView",
         "//platform/consoleView/impl",
+        "//platform/scratch",
     ],
 )
 
@@ -169,6 +170,7 @@ jvm_library(
         "//platform/execution-impl:execution-impl_test_lib",
         "//platform/consoleView:consoleView_test_lib",
         "//platform/consoleView/impl:impl_test_lib",
+        "//platform/scratch:scratch_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.scripting.scratch` end

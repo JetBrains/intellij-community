@@ -76,6 +76,7 @@ jvm_library(
         "//platform/execution",
         "//platform/searchEverywhere/frontend",
         "//platform/util:util-ui",
+        "//platform/scratch",
     ],
 )
 
@@ -122,6 +123,7 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//platform/searchEverywhere/frontend:frontend_test_lib",
         "//platform/util:util-ui_test_lib",
+        "//platform/scratch:scratch_test_lib",
     ],
 )
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.core` end

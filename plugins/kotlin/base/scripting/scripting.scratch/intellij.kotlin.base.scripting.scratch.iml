@@ -79,5 +79,6 @@
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.consoleView" />
     <orderEntry type="module" module-name="intellij.platform.consoleView.impl" />
+    <orderEntry type="module" module-name="intellij.platform.scratch" />
   </component>
 </module>

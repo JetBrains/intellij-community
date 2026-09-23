@@ -112,6 +112,7 @@ jvm_library(
         "//platform/diagnostic",
         "//platform/execution",
         "//platform/xdebugger-impl/ui",
+        "//platform/scratch",
     ],
 )
 
@@ -173,6 +174,7 @@ jvm_library(
         "//platform/diagnostic:diagnostic_test_lib",
         "//platform/execution:execution_test_lib",
         "//platform/xdebugger-impl/ui:ui_test_lib",
+        "//platform/scratch:scratch_test_lib",
     ],
 )
 ### auto-generated section `build intellij.featuresTrainer` end

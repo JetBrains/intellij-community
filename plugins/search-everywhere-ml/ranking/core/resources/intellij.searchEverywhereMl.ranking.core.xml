@@ -26,6 +26,7 @@
     <module name="intellij.platform.ml.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.scratch"/>
     <module name="intellij.platform.searchEverywhere.frontend"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.usageView"/>

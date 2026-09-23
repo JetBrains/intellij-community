@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.ide.scratch.ScratchFileService
-import com.intellij.ide.scratch.ScratchRootType
+import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.smartReadAction
@@ -136,7 +136,7 @@ class JavaToKotlinService(val project: Project) {
             }
 
             val newFileName =
-                if (ScratchRootType.getInstance().containsFile(virtualFile)) null
+                if (ScratchUtil.isInScratchesRoot(virtualFile)) null
                 else uniqueKotlinFileName(virtualFile, reservedFileNamesByDirectory)
             prepared += PreparedConversionResult(virtualFile, document, text, newFileName)
         }

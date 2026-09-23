@@ -8,8 +8,9 @@ import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.execution.ui.ShortenCommandLineModeCombo;
+import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
-import com.intellij.ide.scratch.ScratchRootType;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
@@ -74,8 +75,10 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
       public void actionPerformed(ActionEvent e) {
         VirtualFile toSelect = getVFileFromEditor();
         if (toSelect == null) {
-          final String scratchesRoot = ScratchFileService.getInstance().getRootPath(ScratchRootType.getInstance());
-          toSelect = StandardFileSystems.local().findFileByPath(scratchesRoot);
+          RootType scratchesRoot = ScratchUtil.findScratchesRootType();
+          if (scratchesRoot != null) {
+            toSelect = StandardFileSystems.local().findFileByPath(ScratchFileService.getInstance().getRootPath(scratchesRoot));
+          }
         }
         final VirtualFile file =
           FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withEnvironmentRestricted(true), myScratchPathField.getComponent(), project, toSelect);
