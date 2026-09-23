@@ -6,9 +6,11 @@ import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
 import com.intellij.python.uv.backend.cli.uv.UvInitKind
+import com.intellij.python.uv.backend.cli.uv.UvSelfUpdateResult
 import com.intellij.python.uv.backend.runtime.uvCli
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.getOrNull
 import com.jetbrains.python.getOrThrow
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -184,6 +186,30 @@ class UvCliTest {
   fun testSelf() = timeoutRunBlocking {
     val version = myRuntime.uvCli().self().version(short = true).getOrThrow()
     assertTrue(version.isNotBlank())
+  }
+
+  /**
+   * `uv self update --dry-run`, which is what tells the Package Managers page whether uv has a release to move to.
+   * Asserts the flag really is a preview: uv must still report the version it started on.
+   *
+   * The outcome is not asserted: uv in this environment may be current, and a uv installed by a package manager
+   * cannot self-update at all, which uv answers with a failure. What must hold either way is that a version uv does
+   * offer is a real upgrade — never the version already installed, which would put a no-op upgrade on the page.
+   */
+  @Test
+  fun testSelfUpdateDryRun(): Unit = timeoutRunBlocking(60.seconds) {
+    val self = myRuntime.uvCli().self()
+    val before = self.version(short = true).getOrThrow().trim()
+    val update = self.update(dryRun = true).getOrNull()
+    assertEquals(before, self.version(short = true).getOrThrow().trim())
+    when (update) {
+      is UvSelfUpdateResult.VersionChange -> {
+        assertEquals(before, update.fromVersion)
+        assertNotEquals(before, update.targetVersion)
+      }
+      // uv here may be current, and one installed by a package manager cannot self-update at all (a failure).
+      UvSelfUpdateResult.NoVersionChange, null -> Unit
+    }
   }
 
   @Test

@@ -9,8 +9,8 @@ import java.nio.file.Path
  * environment (a project's EEL) by the [GenericPyToolManagerProvider] that created it, so [install] / [upgrade]
  * take no `eel` argument.
  *
- * Backends (uv, pip, …) provide managers via [GenericPyToolManagerProvider]; callers obtain one with
- * [GenericPyToolManagerProvider.managerFor] and use it for every operation.
+ * Backends (uv, pip, …) provide managers via [GenericPyToolManagerProvider]; a caller that needs the backend of one
+ * particular installation obtains it with [GenericPyToolManagerProvider.managerOf].
  */
 interface GenericPyToolManager {
   /** Installs [tool]; returns the resolved executable path. */
@@ -20,10 +20,15 @@ interface GenericPyToolManager {
   suspend fun upgrade(tool: PyTool): PyResult<Path>
 
   /**
-   * All managed tools installed in this manager's environment, keyed by [PyTool], with their installed
-   * and latest available version (the latest resolved from PyPI). Empty when no managed tool is installed.
+   * What this backend knows about those of [tools] it manages — each one's executable, installed version and latest
+   * available version. A tool this backend does not manage is simply absent from the result.
+   *
+   * The caller asks the machine's backends in order and narrows [tools] to what the earlier ones left uncovered, so
+   * a backend that has to reach the package repository is asked only about tools no cheaper backend claimed. That is
+   * also why a backend must not report a tool it does not manage: the next one would never be asked, and an upgrade
+   * would go to a backend that leaves the resolved executable untouched.
    */
-  suspend fun list(): Map<PyTool, InstalledInfo>
+  suspend fun list(tools: Collection<PyTool>): Map<PyTool, InstalledInfo>
 }
 
 /**

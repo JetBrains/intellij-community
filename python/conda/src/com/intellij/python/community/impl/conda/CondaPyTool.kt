@@ -13,6 +13,7 @@ import com.intellij.python.pytools.backend.PackageManagerPyTool
 import com.intellij.python.pytools.backend.PyExecutableCache
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.PyToolManager
+import com.intellij.python.pytools.backend.PyToolSupport
 import com.intellij.python.pytools.backend.ToolCommandSpec
 import com.intellij.python.pytools.backend.ToolSearchPath
 import com.intellij.python.pytools.backend.pyExecutableSpec
@@ -73,7 +74,10 @@ private object CondaPyToolManager : PyToolManager {
   override suspend fun upgrade(tool: PyTool, eel: EelApi): PyResult<Path> =
     PyResult.localizedError(PyCondaBundle.message("python.conda.update.not.supported"))
 
-  /** The Miniconda installer only targets the local machine, so Install is offered on local eels only. */
-  override fun canInstall(eelDescriptor: EelDescriptor): Boolean =
-    eelDescriptor.getResolvedEelMachine() is LocalEelMachine
+  /**
+   * The Miniconda installer only targets the local machine, so nothing is offered for a remote one. Updating the
+   * conda distribution is not something the IDE does anywhere, so an upgrade is never offered.
+   */
+  override fun support(eelDescriptor: EelDescriptor): PyToolSupport =
+    if (eelDescriptor.getResolvedEelMachine() is LocalEelMachine) PyToolSupport.INSTALL_ONLY else PyToolSupport.NONE
 }

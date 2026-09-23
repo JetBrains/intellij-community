@@ -24,11 +24,42 @@ interface PyToolManager {
   suspend fun upgrade(tool: PyTool, eel: EelApi): PyResult<Path>
 
   /**
-   * Whether this tool can be installed onto [eelDescriptor]'s machine from the IDE. Default `true`
-   * (uv/pip work against any target). An installer that only works locally — conda's Miniconda
-   * installer — returns `false` for remote machines, so the settings row hides its Install action there.
+   * What the IDE can do with this tool on [eelDescriptor]'s machine. Default [PyToolSupport.INSTALL_AND_UPGRADE]
+   * (uv/pip work against any target, and always install the newest release).
+   *
+   * An installer that only works locally — conda's Miniconda installer — reports [PyToolSupport.NONE] for a remote
+   * machine, so the settings row there offers no action and only lets the user point at an executable.
    */
-  fun canInstall(eelDescriptor: EelDescriptor): Boolean = true
+  fun support(eelDescriptor: EelDescriptor): PyToolSupport = PyToolSupport.INSTALL_AND_UPGRADE
+}
+
+/**
+ * What the IDE can do with a tool on one machine. A single value rather than a flag per operation, because "upgrade
+ * but not install" is not a state any tool is in, and a row that offers an upgrade it cannot perform is worse than
+ * one that offers nothing.
+ */
+enum class PyToolSupport {
+  /** Neither: the row only lets the user point at an existing executable. */
+  NONE,
+
+  /** Install, but not upgrade — the conda distribution, whose own installer owns updates. */
+  INSTALL_ONLY,
+
+  /** Both. */
+  INSTALL_AND_UPGRADE,
+  ;
+
+  val canInstall: Boolean
+    get() = when (this) {
+      NONE -> false
+      INSTALL_ONLY, INSTALL_AND_UPGRADE -> true
+    }
+
+  val canUpgrade: Boolean
+    get() = when (this) {
+      NONE, INSTALL_ONLY -> false
+      INSTALL_AND_UPGRADE -> true
+    }
 }
 
 /**
@@ -38,10 +69,15 @@ interface PyToolManager {
  */
 object PackagePyToolManager : PyToolManager {
   override suspend fun install(tool: PyTool, eel: EelApi): PyResult<Path> =
-    GenericPyToolManagerProvider.managerFor(eel)?.install(tool) ?: noInstaller(tool)
+    GenericPyToolManagerProvider.managersFor(eel).firstOrNull()?.install(tool) ?: noInstaller(tool)
 
+  /**
+   * Upgrades through the backend that manages this installation rather than the machine's highest-priority one: a
+   * tool pip placed on a machine that also has uv is upgraded by pip, because `uv tool install` would leave the
+   * resolved executable alone and put a second copy in uv's own bin directory.
+   */
   override suspend fun upgrade(tool: PyTool, eel: EelApi): PyResult<Path> =
-    GenericPyToolManagerProvider.managerFor(eel)?.upgrade(tool) ?: noInstaller(tool)
+    GenericPyToolManagerProvider.managerOf(eel, tool)?.upgrade(tool) ?: noInstaller(tool)
 
   private fun noInstaller(tool: PyTool): PyResult<Path> =
     PyResult.localizedError(message("python.tool.install.no.installer", tool.packageName.name))

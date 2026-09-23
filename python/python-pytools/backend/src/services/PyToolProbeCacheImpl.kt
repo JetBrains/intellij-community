@@ -61,8 +61,13 @@ internal class PyToolProbeCacheImpl(private val coroutineScope: CoroutineScope) 
     versionCache.synchronous().asMap().keys.removeIf { it.machineInternalName == machine.internalName }
   }
 
+  /**
+   * Every known tool, asked of the machine's backends in order. The backends narrow the list between them, so the
+   * uv backend answers for its own tools in the two calls it always costs, and only what it disowns — uv itself when
+   * uv cannot self-update, a tool that pip placed — reaches the pip backend.
+   */
   private suspend fun list(eel: EelApi): Map<PyTool, InstalledInfo> =
-    GenericPyToolManagerProvider.managerFor(eel)?.list().orEmpty()
+    GenericPyToolManagerProvider.listAll(eel, PyTool.EP_NAME.extensionList)
 
   private suspend fun probe(tool: PyTool, path: Path): Version? = tool.validateCustomPath(path).getOrNull()
 }

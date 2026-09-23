@@ -38,7 +38,7 @@ internal suspend fun buildToolState(
       // where the page shows it.
       version = managed?.installedVersion,
       minimumSupportedVersion = executable.minimumSupportedVersion?.toCompactString(),
-      canInstall = executable.manager?.canInstall(descriptor) == true,
+      support = executable.manager?.support(descriptor) ?: PyToolSupport.NONE,
       selectedAsTypeEngine = (executable as? ProjectLevelPyTool<*>)?.isSelectedAsTypeEngine(project) == true,
     )
     else -> PyToolDetails()
@@ -53,11 +53,11 @@ internal suspend fun buildToolState(
       else -> null
     },
     version = details.version,
-    canInstall = details.canInstall,
+    canInstall = details.support.canInstall,
     // `uv tool list --outdated` repeats the installed version when a tool is up to date; report an
-    // upgrade only when the latest one is actually newer.
+    // upgrade only when the latest one is actually newer, and only for a tool the IDE can actually upgrade.
     latestVersion = managed?.latestVersion?.takeIf {
-      PyPackageVersionComparator.STR_COMPARATOR.compare(it, managed.installedVersion) > 0
+      details.support.canUpgrade && PyPackageVersionComparator.STR_COMPARATOR.compare(it, managed.installedVersion) > 0
     },
     selectedAsTypeEngine = details.selectedAsTypeEngine,
   )
@@ -66,6 +66,6 @@ internal suspend fun buildToolState(
 private data class PyToolDetails(
   val version: String? = null,
   val minimumSupportedVersion: String? = null,
-  val canInstall: Boolean = false,
+  val support: PyToolSupport = PyToolSupport.NONE,
   val selectedAsTypeEngine: Boolean = false,
 )

@@ -23,7 +23,27 @@ interface GenericPyToolManagerProvider {
     val EP_NAME: ExtensionPointName<GenericPyToolManagerProvider> =
       ExtensionPointName.create("com.intellij.python.pytools.genericPyToolManagerProvider")
 
-    /** The [GenericPyToolManager] from the highest-priority provider that can operate in [eel], or `null`. */
-    suspend fun managerFor(eel: EelApi): GenericPyToolManager? = EP_NAME.extensionList.firstNotNullOfOrNull { it.forEel(eel) }
+    /**
+     * Every backend that can operate in [eel], in provider order.
+     *
+     * The first is the one to install a tool the machine does not have yet, where the question is "who can place
+     * this" and nothing manages the tool yet. For a tool that is already installed, ask [managerOf]: the first
+     * backend is not the one managing every installation on the machine.
+     */
+    suspend fun managersFor(eel: EelApi): List<GenericPyToolManager> = EP_NAME.extensionList.mapNotNull { it.forEel(eel) }
+
+    /**
+     * Everything the machine's backends know about [tools], each backend asked only about what the ones before it
+     * left uncovered, and none asked at all once nothing is left.
+     */
+    suspend fun listAll(eel: EelApi, tools: Collection<PyTool>): Map<PyTool, InstalledInfo> =
+      managersFor(eel).fold(emptyMap()) { covered, manager ->
+        val remaining = tools - covered.keys
+        if (remaining.isEmpty()) covered else covered + manager.list(remaining)
+      }
+
+    /** The backend that manages [tool]'s installation in [eel], or `null` when none does. */
+    suspend fun managerOf(eel: EelApi, tool: PyTool): GenericPyToolManager? =
+      managersFor(eel).firstOrNull { it.list(listOf(tool)).isNotEmpty() }
   }
 }
