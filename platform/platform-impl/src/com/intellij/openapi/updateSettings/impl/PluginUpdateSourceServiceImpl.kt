@@ -132,7 +132,7 @@ internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
 
   internal fun resetPluginUpdateSources() {
     updateState({ State() }) {
-      "Reset plugin update sources"
+      "Erase plugin update sources"
     }
   }
 
