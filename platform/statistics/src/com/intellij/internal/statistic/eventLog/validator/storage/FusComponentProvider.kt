@@ -427,8 +427,8 @@ object FusComponentProvider {
     val listenersManager = ApplicationManager.getApplication().getService(EventLogListenersManager::class.java)
     val testMode = StatisticsRecorderUtil.isTestModeEnabled(recorderId)
     messageHandler(RAW_EVENT_TOPIC) { fusEvent ->
-      val recorderHasJcpListener = service<EventLogListenersManager>().hasJcpListener(recorderId)
-      val keepRawData = testMode || recorderHasJcpListener
+      val recorderHasRawDataListener = service<EventLogListenersManager>().hasRawDataListener(recorderId)
+      val keepRawData = testMode || recorderHasRawDataListener
       val event = fusEvent.event as? LogEvent ?: return@messageHandler
       listenersManager.notifySubscribers(
         recorderId,
