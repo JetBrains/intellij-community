@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import org.gradle.tooling.model.idea.IdeaModule
+import org.jetbrains.kotlin.idea.gradle.utils.KotlinGradleModelFetchProperties
 import org.jetbrains.kotlin.idea.gradleJava.configuration.getMppModel
 import org.jetbrains.kotlin.idea.gradleTooling.IdeaMppProjectProvider
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
@@ -28,7 +29,9 @@ open class KotlinTestTasksResolver : AbstractProjectResolverExtension() {
 
     override fun getToolingExtensionsClasses(): Set<Class<*>> = IdeaMppProjectProvider.MODEL_CLASSPATH
 
-    override fun getModelProvider(): ProjectImportModelProvider = IdeaMppProjectProvider
+    override fun getModelProvider(): ProjectImportModelProvider = IdeaMppProjectProvider(
+        KotlinGradleModelFetchProperties.getExecutionMode(),
+    )
 
     override fun populateModuleTasks(
         gradleModule: IdeaModule,

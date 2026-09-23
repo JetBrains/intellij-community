@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.gradle.configuration.ResolveModulesPerSourceSet
 import org.jetbrains.kotlin.idea.gradle.configuration.buildClasspathData
 import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById
 import org.jetbrains.kotlin.idea.gradle.ui.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
+import org.jetbrains.kotlin.idea.gradle.utils.KotlinGradleModelFetchProperties
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.Context
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.KotlinMppGradleProjectResolverExtension
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.buildInstance
@@ -60,7 +61,9 @@ open class KotlinMppGradleProjectResolver : AbstractProjectResolverExtension() {
 
     override fun getToolingExtensionsClasses(): Set<Class<*>> = IdeaMppProjectProvider.MODEL_CLASSPATH
 
-    override fun getModelProvider(): ProjectImportModelProvider = IdeaMppProjectProvider
+    override fun getModelProvider(): ProjectImportModelProvider = IdeaMppProjectProvider(
+        KotlinGradleModelFetchProperties.getExecutionMode(),
+    )
 
     override fun getExtraCommandLineArgs(): List<String> =
         /**
