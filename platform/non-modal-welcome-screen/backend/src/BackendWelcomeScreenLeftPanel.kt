@@ -49,8 +49,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Container
 import javax.swing.BoxLayout
 import javax.swing.JComponent
+import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 
@@ -139,6 +142,13 @@ internal class BackendWelcomeScreenLeftPanel(
     mainPanel.add(topPanel, BorderLayout.NORTH)
     mainPanel.add(createScrollPane(projectFilteringTree.component, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER, true),
                   BorderLayout.CENTER)
+
+    mainPanel.isFocusTraversalPolicyProvider = true
+    mainPanel.focusTraversalPolicy = object : LayoutFocusTraversalPolicy() {
+      override fun getDefaultComponent(aContainer: Container): Component {
+        return searchField.textEditor
+      }
+    }
 
     return mainPanel
   }
