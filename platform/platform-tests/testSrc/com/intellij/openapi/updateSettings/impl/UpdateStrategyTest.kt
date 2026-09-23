@@ -42,6 +42,41 @@ class UpdateStrategyTest {
     assertNull(assertLoaded("IU-145.258", ChannelStatus.RELEASE, channels).patches)
   }
 
+  @Test
+  fun `build without a patch is offered as a manual download`() {
+    val result = assertLoaded(
+      currentBuild = "IU-262.1234",
+      selectedChannel = ChannelStatus.RELEASE,
+      testData = """
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="263.1234" version="2026.3.1">
+          <button name="Download" url="https://www.jetbrains.com/idea/download/" download="true"/>
+        </build>
+      </channel>""",
+    )
+    assertBuild("263.1234", result.newBuild)
+    assertNull(result.patches)
+    assertEquals("https://www.jetbrains.com/idea/download/", result.newBuild.downloadUrl)
+    assertEquals(UpdateMode.MANUAL_DOWNLOAD, getUpdateMode(result, testPatch = null))
+  }
+
+  @Test
+  fun `build without a patch and a download button is not offered`() {
+    val result = assertLoaded(
+      currentBuild = "IU-262.1234",
+      selectedChannel = ChannelStatus.RELEASE,
+      testData = """
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="263.1234" version="2026.3.1">
+          <button name="Release notes" url="https://www.jetbrains.com/idea/whatsnew/"/>
+        </build>
+      </channel>""",
+    )
+    assertNull(result.patches)
+    assertNull(result.newBuild.downloadUrl)
+    assertNull(getUpdateMode(result, testPatch = null))
+  }
+
   @Test fun `order of builds does not matter`() {
     val resultDesc = assertLoaded("IU-143.2332", ChannelStatus.RELEASE, """
       <channel id="IDEA_Release" status="release" licensing="release">
