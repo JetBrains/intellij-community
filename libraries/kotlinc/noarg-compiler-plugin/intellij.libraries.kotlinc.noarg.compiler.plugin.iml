@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.noarg-compiler-plugin" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:noarg-compiler-plugin-for-ide:2.5.0-dev-7866">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:noarg-compiler-plugin-for-ide:2.5.0-dev-8355">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.0-dev-7866/noarg-compiler-plugin-for-ide-2.5.0-dev-7866.jar">
-              <sha256sum>d5ea02a6580707a0d81665e0edcaef4b469cefc2285dc6f381772ae6a83f1f6e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.0-dev-8355/noarg-compiler-plugin-for-ide-2.5.0-dev-8355.jar">
+              <sha256sum>628543c2467ee427e98b58f17f2b942301d6127eeb987eb6d1bb956ada581cb4</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.0-dev-7866/noarg-compiler-plugin-for-ide-2.5.0-dev-7866.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.0-dev-8355/noarg-compiler-plugin-for-ide-2.5.0-dev-8355.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.0-dev-7866/noarg-compiler-plugin-for-ide-2.5.0-dev-7866-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.0-dev-8355/noarg-compiler-plugin-for-ide-2.5.0-dev-8355-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

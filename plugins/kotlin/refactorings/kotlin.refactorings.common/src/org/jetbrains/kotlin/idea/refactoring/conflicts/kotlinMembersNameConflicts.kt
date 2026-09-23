@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.importingScopeContext
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiClass
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.scopes.combinedDeclaredMemberScope
 import org.jetbrains.kotlin.analysis.api.scopes.combinedMemberScope
@@ -39,6 +40,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.findPackage
 import org.jetbrains.kotlin.analysis.api.symbols.namedClassSymbol
@@ -50,7 +52,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.asJava.accessorNameByPropertyName
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -84,8 +85,8 @@ fun checkRedeclarationConflicts(declaration: KtNamedDeclaration, newName: String
         checkDeclarationNewNameConflicts(declaration, Name.identifier(newName), result) {
             filterCandidates(symbol, it)
         }
+        checkRedeclarationConflictsInInheritors(declaration, newName, result)
     }
-    checkRedeclarationConflictsInInheritors(declaration, newName, result)
 }
 
 context(_: KaSession)
@@ -332,12 +333,13 @@ fun PsiNamedElement.renderDescription(): String {
   return "$type '$name'".trim()
 }
 
+context(_: KaSession)
 private fun checkRedeclarationConflictsInInheritors(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
     if (!declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
 
         if (declaration.name == newName || !PsiNameHelper.getInstance(declaration.project).isIdentifier(newName)) return
 
-        val initialPsiClass = declaration.containingClassOrObject?.toLightClass()
+        val initialPsiClass = declaration.containingClassOrObject?.classSymbol?.asPsiClass()
         if (initialPsiClass != null) {
             val elementFactory = JavaPsiFacade.getInstance(declaration.project).elementFactory
             val methods = declaration.toLightMethods().map {

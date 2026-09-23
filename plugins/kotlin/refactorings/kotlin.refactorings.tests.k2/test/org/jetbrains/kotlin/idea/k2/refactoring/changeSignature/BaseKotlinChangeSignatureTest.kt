@@ -28,7 +28,12 @@ import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.VisibilityUtil
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiMethods
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -1613,6 +1618,7 @@ public @interface NotNull {
         newParameters[0].setType(PsiTypes.intType())
     }
 
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun testJavaParameterPropagation() = doJavaTest {
         newParameters.add(ParameterInfoImpl(-1, "n", PsiTypes.intType(), "1"))
         newParameters.add(ParameterInfoImpl(-1, "s", stringPsiType, "\"abc\""))
@@ -1622,7 +1628,12 @@ public @interface NotNull {
         parameterPropagationTargets.add(methodBar)
 
         val functionTest = KotlinTopLevelFunctionFqnNameIndex.get("test", project, project.allScope()).first()
-        parameterPropagationTargets.add(functionTest.getRepresentativeLightMethod()!!)
+        // FIXME: KTIJ-40145
+        allowAnalysisOnEdt {
+            analyze(functionTest) {
+                parameterPropagationTargets.add(functionTest.symbol.asPsiMethods().first())
+            }
+        }
     }
 
 

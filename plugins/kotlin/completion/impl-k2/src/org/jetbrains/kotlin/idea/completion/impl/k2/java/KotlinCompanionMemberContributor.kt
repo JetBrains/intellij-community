@@ -29,6 +29,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.visibility.KaUseSiteVisibilityChecker
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiField
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiMethods
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -39,8 +41,6 @@ import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.utils.addIfNotNull
 
@@ -101,20 +101,16 @@ private object KotlinCompanionMemberCompletionProvider : CompletionProvider<Comp
     private fun createCompanionLookupElements(declaration: KaDeclarationSymbol): List<LookupElement> {
         val lightDeclarations = when (declaration) {
             is KaPropertySymbol -> {
-                val psi = declaration.psi as? KtProperty ?: return emptyList()
-                val methods = LightClassUtil.getLightClassPropertyMethods(psi)
-                val getter = methods.getter
-                // Only show the setter if it is not declared as private or protected
-                val setter = methods.setter?.takeIf {
+                val getter = declaration.getter?.asPsiMethods()?.firstOrNull()
+                val setter = declaration.setter?.asPsiMethods()?.firstOrNull()?.takeIf {
+                    // Only show the setter if it is not declared as private or protected
                     !it.hasModifier(JvmModifier.PRIVATE) && !it.hasModifier(JvmModifier.PROTECTED)
                 }
-
                 listOfNotNull(getter, setter)
             }
 
             is KaFunctionSymbol -> {
-                val psi = declaration.psi as? KtFunction ?: return emptyList()
-                val method = LightClassUtil.getLightClassMethod(psi) ?: return emptyList()
+                val method = declaration.asPsiMethods().firstOrNull() ?: return emptyList()
                 listOf(method)
             }
 
@@ -136,18 +132,19 @@ private object KotlinCompanionMemberCompletionProvider : CompletionProvider<Comp
         val qualifierExpression = parent.qualifierExpression as? PsiReferenceExpression ?: return
         val resolvedElement = qualifierExpression.resolve() ?: return
         val ktClass = (resolvedElement as? KtLightElement<*, *>)?.kotlinOrigin as? KtClassOrObject ?: return
-
         val companionObject = ktClass.companionObjects.firstOrNull() ?: return
-        val companionObjectField = LightClassUtil.getLightFieldForCompanionObject(companionObject) ?: return
-        val companionObjectLookupElement = VariableLookupItem(companionObjectField, true)
 
-        val expectedTypes by lazy {
-            JavaSmartCompletionContributor.getExpectedTypes(parameters)
-        }
+        analyze(ktClass) {
+            val companionObjectField = companionObject.symbol.asPsiField() ?: return
 
-        val completedMembers: MutableSet<PsiElement> = mutableSetOf()
+            val companionObjectLookupElement = VariableLookupItem(companionObjectField, true)
 
-        analyze(companionObject) {
+            val expectedTypes by lazy {
+                JavaSmartCompletionContributor.getExpectedTypes(parameters)
+            }
+
+            val completedMembers: MutableSet<PsiElement> = mutableSetOf()
+
             val resolvedCompanion = companionObject.symbol
             val allMembers = resolvedCompanion.memberScope
 
@@ -177,14 +174,14 @@ private object KotlinCompanionMemberCompletionProvider : CompletionProvider<Comp
                     result.addElement(wrappedElement)
                 }
             }
-        }
 
-        // Because both regular Java completion and this contributor can produce elements contained within the companion object,
-        // we need to ensure that we do not duplicate elements.
-        result.runRemainingContributors(parameters) { completionResult ->
-            val lookupElement = completionResult.lookupElement
-            if (lookupElement.psiElement in completedMembers) return@runRemainingContributors
-            result.passResult(completionResult)
+            // Because both regular Java completion and this contributor can produce elements contained within the companion object,
+            // we need to ensure that we do not duplicate elements.
+            result.runRemainingContributors(parameters) { completionResult ->
+                val lookupElement = completionResult.lookupElement
+                if (lookupElement.psiElement in completedMembers) return@runRemainingContributors
+                result.passResult(completionResult)
+            }
         }
     }
 }

@@ -8,12 +8,12 @@ import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
-import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.util.asFakePsiClass
 
 internal fun getTestMethodForKotlinTest(location: Location<*>): PsiMethod? {
     val leaf = when (val psi = location.psiElement) {
@@ -30,5 +30,5 @@ internal fun getTestClassForKotlinTest(location: Location<*>): PsiClass? {
         else -> psi
     }
     val owner = leaf?.getParentOfType<KtDeclaration>(false) as? KtClassOrObject ?: return null
-    return owner.toLightClass() ?: owner.toFakeLightClass()
+    return owner.toLightClass() ?: owner.asFakePsiClass()
 }

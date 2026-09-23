@@ -21,6 +21,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.usageView.UsageViewUtil
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiClass
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -32,7 +33,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.defaultType
-import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.deleteSingle
@@ -356,7 +356,9 @@ open class K2MoveDeclarationsRefactoringProcessor(
                     val referencedNestedDeclaration = usage.referencedElement?.unwrapped as? KtNamedDeclaration
                     if (referencedNestedDeclaration == declarationToMove) {
                         val outerClass = referencedNestedDeclaration.containingClassOrObject
-                        val lightOuterClass = outerClass?.toLightClass()
+                        val lightOuterClass = analyze(referencedNestedDeclaration) {
+                            outerClass?.classSymbol?.asPsiClass()
+                        }
                         if (lightOuterClass != null) {
                             // While this is called the `MoveInnerClassUsagesHandler`, it will also correctly modify usages
                             // of inner methods from Kotlin code (but not from Java code!).

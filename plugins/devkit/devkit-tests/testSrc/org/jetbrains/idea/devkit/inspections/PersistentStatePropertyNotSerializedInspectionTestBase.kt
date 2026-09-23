@@ -13,6 +13,7 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.kotlin.KotlinTester
 import com.intellij.util.PathUtil
+import com.intellij.util.ThreeState
 import com.intellij.util.xmlb.annotations.OptionTag
 
 abstract class PersistentStatePropertyNotSerializedInspectionTestBase : JavaCodeInsightFixtureTestCase() {
@@ -22,6 +23,8 @@ abstract class PersistentStatePropertyNotSerializedInspectionTestBase : JavaCode
     moduleBuilder.addLibrary("platform-projectModel-api", PathUtil.getJarPathForClass(PersistentStateComponent::class.java))
     moduleBuilder.addLibrary("platform-util", PathUtil.getJarPathForClass(OptionTag::class.java))
     moduleBuilder.addLibrary("platform-util-base", PathUtil.getJarPathForClass(Logger::class.java))
+    // The compiler resolves every parameter type of `@Storage`, so the test needs the real `ThreeState`.
+    moduleBuilder.addLibrary("platform-util-multiplatform", PathUtil.getJarPathForClass(ThreeState::class.java))
     moduleBuilder.addLibrary("platform-core-api", PathUtil.getJarPathForClass(ModificationTracker::class.java))
     // The inspection skips a member that holds a dependency of the component, so the test needs the real `Project`.
     moduleBuilder.addLibrary("platform-project-api", PathUtil.getJarPathForClass(Project::class.java))

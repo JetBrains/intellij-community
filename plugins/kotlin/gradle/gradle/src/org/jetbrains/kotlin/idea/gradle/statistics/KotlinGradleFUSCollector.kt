@@ -179,4 +179,5 @@ enum class GradleStatisticsEventGroups {
     UseScenarios,
     BuildReports,
     JsTestBrowser,
+    SwiftExport,
 }
