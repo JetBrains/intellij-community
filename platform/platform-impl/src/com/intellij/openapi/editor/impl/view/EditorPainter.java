@@ -1472,7 +1472,7 @@ public final class EditorPainter implements TextDrawingCallback {
             }
           }
         }
-        curY = y + myLineHeight;
+        curY = y + visLinesIterator.getLineHeight();
         List<Inlay<?>> inlaysBelow = visLinesIterator.getBlockInlaysBelow();
         if (!inlaysBelow.isEmpty()) {
           TextAttributes attributes = getInlayAttributes(visualLine + 1);

@@ -20,6 +20,8 @@ import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewUtils
 import org.intellij.plugins.markdown.editor.livepreview.toMarkdownLivePreviewRange
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
@@ -61,12 +63,16 @@ private const val BULLET_PLACEHOLDERS = "•◦▪"
 @ApiStatus.Internal
 fun computeLivePreviewSpecs(file: PsiFile, editor: Editor): MarkdownLivePreviewSpecSet {
   val blockQuotes by lazy { BlockQuoteSpecBuilder(file.viewProvider.contents, editor.document) }
+  val headings = HeadingHtmlGenerator()
   val elements = SyntaxTraverser.psiTraverser(file)
     .expand { PsiUtilCore.getElementType(it) !in NoDescendTypes }
     .asSequence()
     .mapNotNull {
-      if (PsiUtilCore.getElementType(it) == MarkdownElementTypes.BLOCK_QUOTE) blockQuotes.create(it.textRange)
-      else it.toDecorationSpecs(editor)
+      when {
+        PsiUtilCore.getElementType(it) == MarkdownElementTypes.BLOCK_QUOTE -> blockQuotes.create(it.textRange)
+        it is MarkdownHeader -> it.toHeadingSpec(editor, headings)
+        else -> it.toDecorationSpecs(editor)
+      }
     }
     .sortedWith(compareBy({ it.range.startOffset }, { it.range.endOffset }))
     .toList()
@@ -178,6 +184,13 @@ private fun CharSequence.listMarkerEnd(offset: Int, lineEnd: Int): Int {
 }
 
 private fun PsiElement.isInsideTable(): Boolean = PsiTreeUtil.getParentOfType(this, MarkdownTable::class.java) != null
+
+private fun MarkdownHeader.toHeadingSpec(editor: Editor, headings: HeadingHtmlGenerator): MarkdownLivePreviewSpec.Heading? {
+  val content = contentElement
+  if (parent !is MarkdownFile || content?.isAtxContent != true) return null
+  val range = logicalLineRange(editor)
+  return MarkdownLivePreviewSpec.Heading(range.toMarkdownLivePreviewRange(), level, headings.generate(content, range.startOffset))
+}
 
 private fun PsiElement.toImageSpec(editor: Editor): MarkdownLivePreviewSpec.Image? {
   val image = this as? MarkdownImage ?: return null

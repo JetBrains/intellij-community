@@ -37,17 +37,17 @@ internal class MarkdownLivePreviewElementPresentation(
   val folds: List<MarkdownLivePreviewFold>,
 )
 
-/**
- * Describes one source range that the reconciler must hide.
- *
- * [placeholderText] replaces the hidden range.
- * [decoration] adds an optional editor resource after the fold is created.
- */
-internal data class MarkdownLivePreviewFold(
-  val range: TextRange,
-  val placeholderText: String = "",
-  val decoration: MarkdownLivePreviewFoldDecoration? = null,
-)
+/** Describes a fold and the operations that the reconciler runs to mount it. */
+internal interface MarkdownLivePreviewFold {
+  val range: TextRange
+  val decoration: MarkdownLivePreviewFoldDecoration? get() = null
+
+  /** Checks whether the reconciler can retain an existing region for this presentation. */
+  fun isSame(region: FoldRegion): Boolean
+
+  /** Creates a region after obsolete folds are removed. The reconciler owns the returned region and runs the folding batch. */
+  fun create(editor: EditorEx): FoldRegion?
+}
 
 /**
  * Converts backend elements to folds and manages editor resources for one element type.
@@ -61,7 +61,10 @@ internal interface MarkdownLivePreviewElementRenderer : Disposable {
   /** Updates state that depends on the document before the factory creates new elements. */
   fun documentChanged()
 
-  /** Updates resources that do not belong to source folds. The argument is null when the reconciler clears its state. */
+  /**
+   * Updates resources outside folds in the same editor update, after the reconciler has applied the fold changes.
+   * A null presentation clears them.
+   */
   fun reconcile(presentation: MarkdownLivePreviewPresentation?)
 
   /** Releases all resources registered by this renderer. */
@@ -94,12 +97,13 @@ internal interface MarkdownLivePreviewMountedDecoration : Disposable {
 /** Adapts backend elements to editor presentations and owns resources that survive source reveal. */
 internal class MarkdownLivePreviewPresentationFactory(project: Project, editor: EditorEx) : Disposable {
   private val elementRenderers: Map<Class<out MarkdownLivePreviewSpec>, MarkdownLivePreviewElementRenderer> = mapOf(
-    MarkdownLivePreviewSpec.Conceal::class.java to MarkdownLivePreviewConcealRenderer(),
+    MarkdownLivePreviewSpec.Conceal::class.java to MarkdownLivePreviewConcealRenderer(editor),
     MarkdownLivePreviewSpec.Bullet::class.java to MarkdownLivePreviewBulletRenderer(),
     MarkdownLivePreviewSpec.BlockQuote::class.java to MarkdownLivePreviewBlockQuoteRenderer(editor),
     MarkdownLivePreviewSpec.HorizontalRule::class.java to MarkdownLivePreviewHorizontalRuleRenderer(editor),
     MarkdownLivePreviewSpec.TaskCheckbox::class.java to MarkdownLivePreviewCheckboxRenderer(project, editor),
     MarkdownLivePreviewSpec.Image::class.java to MarkdownLivePreviewImageRenderer(project, editor),
+    MarkdownLivePreviewSpec.Heading::class.java to MarkdownLivePreviewHeadingRenderer(editor),
   )
 
   init {

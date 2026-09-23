@@ -110,6 +110,19 @@ sealed interface MarkdownLivePreviewSpec {
   data class HorizontalRule(override val range: MarkdownLivePreviewRange) : MarkdownLivePreviewSpec
 
   /**
+   * Renders a top-level ATX heading over its full logical line.
+   * The frontend uses [level] to select the HTML heading element.
+   * [html] is inline HTML. Each text run in it is a span with its `md-src-pos` source range.
+   * The source ranges are relative to the start of [range].
+   */
+  @Serializable
+  data class Heading(
+    override val range: MarkdownLivePreviewRange,
+    val level: Int,
+    val html: String,
+  ) : MarkdownLivePreviewSpec
+
+  /**
    * The loaded file behind an [Image]: its modification [stamp] and its intrinsic size in logical pixels.
    * A new [stamp] means new pixels behind the same destination.
    */

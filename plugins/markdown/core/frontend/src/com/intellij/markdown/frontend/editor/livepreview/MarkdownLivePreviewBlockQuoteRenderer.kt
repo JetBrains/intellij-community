@@ -23,7 +23,7 @@ internal class MarkdownLivePreviewBlockQuoteRenderer(private val editor: Editor)
     val blockQuote = spec as MarkdownLivePreviewSpec.BlockQuote
     val range = blockQuote.range.toTextRange()
     return blockQuote.markerRanges.mapIndexed { index, markerRange ->
-      MarkdownLivePreviewFold(
+      MarkdownLivePreviewTextFold(
         range = markerRange.toTextRange(),
         placeholderText = BLOCK_QUOTE_PLACEHOLDER,
         decoration = if (index == 0) BlockQuoteMarkerDecoration(editor, range) else null,

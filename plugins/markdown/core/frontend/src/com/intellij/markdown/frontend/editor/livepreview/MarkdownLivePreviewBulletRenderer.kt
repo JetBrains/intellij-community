@@ -7,7 +7,7 @@ import org.intellij.plugins.markdown.editor.livepreview.toTextRange
 internal class MarkdownLivePreviewBulletRenderer : MarkdownLivePreviewElementRenderer {
   override fun presentation(spec: MarkdownLivePreviewSpec): List<MarkdownLivePreviewFold> {
     val bullet = spec as MarkdownLivePreviewSpec.Bullet
-    return listOf(MarkdownLivePreviewFold(bullet.concealRange.toTextRange(), bullet.placeholderText))
+    return listOf(MarkdownLivePreviewTextFold(bullet.concealRange.toTextRange(), bullet.placeholderText))
   }
 
   override fun documentChanged() = Unit

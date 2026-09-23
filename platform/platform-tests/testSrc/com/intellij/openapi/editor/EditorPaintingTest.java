@@ -37,7 +37,9 @@ import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 @TestDataPath("$CONTENT_ROOT/testData/editor/painting")
 public class EditorPaintingTest extends EditorPaintingTestCase {
@@ -238,6 +240,37 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     addBlockInlay(0);
     addLineHighlighter(0, 0, HighlighterLayer.CARET_ROW + 1, null, Color.red);
     checkResultWithGutterForNewUI();
+  }
+
+  public void testBlockInlayBelowCustomFoldRegionIsPaintedAtItsBounds() throws Exception {
+    initText("line1\nline2");
+    CustomFoldRegion region = addCustomFoldRegion(0, 0, 50);
+    assertNotNull(region);
+    List<Double> paintedY = new ArrayList<>();
+    Inlay<?> inlay = getEditor().getInlayModel().addBlockElement(5, new InlayProperties().relatesToPrecedingText(true), new EditorCustomElementRenderer() {
+      @Override
+      public int calcWidthInPixels(@NotNull Inlay inlay) {
+        return 10;
+      }
+
+      @Override
+      public int calcHeightInPixels(@NotNull Inlay inlay) {
+        return 20;
+      }
+
+      @Override
+      public void paint(@NotNull Inlay inlay, @NotNull Graphics2D g, @NotNull Rectangle2D targetRegion, @NotNull TextAttributes textAttributes) {
+        paintedY.add(targetRegion.getY());
+      }
+    });
+    assertNotNull(inlay);
+
+    paintEditor(false, null, null);
+
+    Rectangle bounds = inlay.getBounds();
+    assertNotNull(bounds);
+    assertEquals(region.getLocation().y + region.getHeightInPixels(), bounds.y);
+    assertEquals(Collections.singletonList((double)bounds.y), paintedY);
   }
 
   private void runTestBlockInlaysWithSelection() throws Exception {

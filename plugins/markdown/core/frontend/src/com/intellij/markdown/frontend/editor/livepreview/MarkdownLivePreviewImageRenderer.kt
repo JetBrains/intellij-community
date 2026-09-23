@@ -48,7 +48,7 @@ internal class MarkdownLivePreviewImageRenderer(project: Project, private val ed
   }
 
   private fun presentation(spec: MarkdownLivePreviewSpec.Image): List<MarkdownLivePreviewFold> {
-    return if (spec.source == null) emptyList() else listOf(MarkdownLivePreviewFold(spec.range.toTextRange(), spec.placeholderText))
+    return if (spec.source == null) emptyList() else listOf(MarkdownLivePreviewTextFold(spec.range.toTextRange(), spec.placeholderText))
   }
 
   /** Updates image resources independently of source concealment. */

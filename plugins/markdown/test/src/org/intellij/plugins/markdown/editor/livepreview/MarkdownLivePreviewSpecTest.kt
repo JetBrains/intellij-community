@@ -6,6 +6,8 @@ import com.intellij.markdown.backend.editor.livepreview.computeLivePreviewSpecs
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Element
 
 class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
 
@@ -143,8 +145,100 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertTrue("The inner element must be contained in the outer one", outer.range.contains(inner.range))
   }
 
-  fun testHeaderInlineMarkersAreConcealed() {
-    assertEquals(listOf("*", "*"), concealed("### Deep *header*"))
+  fun testHeaderInlineMarkersAreConcealedInsideTheHeading() {
+    assertEquals(listOf("### Deep *header*", "*", "*"), concealed("### Deep *header*"))
+  }
+
+  fun testTopLevelAtxHeadingsCoverTheirLines() {
+    val content = "# One\n## Two\n### Three\n#### Four\n##### Five\n###### Six"
+    val headings = headings(content)
+
+    assertEquals((1..6).toList(), headings.map { it.level })
+    assertEquals(listOf("One", "Two", "Three", "Four", "Five", "Six"), headings.map { it.body().text() })
+    assertEquals(content.lines(), headings.map { content.substring(it.range.startOffset, it.range.endOffset) })
+  }
+
+  fun testHeadingHtmlHidesMarkersIndentAndLinkDestinations() {
+    val content = "before\n  ### [visible](https://example.org) text ###  \n\nafter"
+    val heading = headings(content).single()
+
+    assertEquals("  ### [visible](https://example.org) text ###  ", content.substring(heading.range.startOffset, heading.range.endOffset))
+    assertEquals("visible text", heading.body().text())
+    assertEquals("https://example.org", heading.body().select("a").attr("href"))
+  }
+
+  fun testHeadingHtmlRendersInlineStyles() {
+    val body = headings("# **bold** *em* `code` ~~gone~~ [link](https://example.org)").single().body()
+
+    assertEquals("bold", body.select("strong").text())
+    assertEquals("em", body.select("em").text())
+    assertEquals("code", body.select("code").text())
+    assertEquals("gone", body.select(".user-del").text())
+    assertEquals("link", body.select("a").text())
+    assertEquals("bold em code gone link", body.text())
+  }
+
+  fun testHeadingKeepsRawHtmlAndMathAsText() {
+    val content = $$"# Use <kbd>Ctrl</kbd> if $a<b$"
+    val body = headings(content).single().body()
+
+    assertEmpty(body.select("kbd"))
+    val tag = body.select("span[md-src-pos]").first { it.wholeText() == "<kbd>" }
+    val (start, end) = tag.attr("md-src-pos").split("..").map(String::toInt)
+    assertEquals("<kbd>", content.substring(start, end))
+    assertTrue(body.text(), body.text().startsWith("Use <kbd>Ctrl</kbd> if "))
+    assertTrue(body.text(), body.text().contains("a<b"))
+  }
+
+  fun testHeadingDropsImagesAndKeepsTheImageSpec() {
+    val content = "# ![logo](logo.png) Title"
+
+    assertEquals("Title", headings(content).single().body().text())
+    assertEmpty(headings(content).single().body().select("img"))
+    assertEquals(1, images(content).size)
+  }
+
+  fun testHeadingSpansCoverTheirSource() {
+    val content = "before\n# Hello **big** (world): *yes* & \\*no\\*"
+    val heading = headings(content).single()
+    val line = content.substring(heading.range.startOffset, heading.range.endOffset)
+    val spans = heading.body().select("span[md-src-pos]")
+
+    assertEquals("Hello big (world): yes & *no*", spans.joinToString("") { it.wholeText() })
+    for (span in spans.filter { it.wholeText().none { char -> char == '&' || char == '*' } }) {
+      val (start, end) = span.attr("md-src-pos").split("..").map(String::toInt)
+      assertEquals(span.toString(), span.wholeText(), line.substring(start, end))
+    }
+  }
+
+  fun testHeadingHtmlDoesNotDependOnTheTextBeforeTheHeading() {
+    assertEquals(headings("# Hello **big**").single().html, headings("some text\n\n# Hello **big**").single().html)
+  }
+
+  fun testNestedAndUnsupportedHeadingsAreNotReported() {
+    val content = """
+      |- # list heading
+      |> ## quote heading
+      |```markdown
+      |### code heading
+      |```
+      |<section>
+      |#### html heading
+      |</section>
+      |
+      |Setext heading
+      |--------------
+      |
+      |####### too deep
+      |
+      |    # indented code
+      |
+      |# top-level heading
+    """.trimMargin()
+    val heading = headings(content).single()
+
+    assertEquals(1, heading.level)
+    assertEquals("# top-level heading", content.substring(heading.range.startOffset, heading.range.endOffset))
   }
 
   fun testUnorderedListBulletsUseDepthPlaceholders() {
@@ -329,6 +423,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     is MarkdownLivePreviewSpec.Conceal -> conceals
     is MarkdownLivePreviewSpec.BlockQuote -> markerRanges
     is MarkdownLivePreviewSpec.HorizontalRule -> listOf(range)
+    is MarkdownLivePreviewSpec.Heading -> listOf(range)
     is MarkdownLivePreviewSpec.Image -> listOf(range)
     is MarkdownLivePreviewSpec.Bullet -> listOf(concealRange)
     is MarkdownLivePreviewSpec.TaskCheckbox -> listOf(concealRange)
@@ -355,6 +450,11 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
 
   private fun images(content: String): List<MarkdownLivePreviewSpec.Image> =
     elements(content).filterIsInstance<MarkdownLivePreviewSpec.Image>()
+
+  private fun headings(content: String): List<MarkdownLivePreviewSpec.Heading> =
+    elements(content).filterIsInstance<MarkdownLivePreviewSpec.Heading>()
+
+  private fun MarkdownLivePreviewSpec.Heading.body(): Element = Jsoup.parseBodyFragment(html).body()
 
   private fun imageRanges(content: String): List<String> =
     images(content).map { content.substring(it.range.startOffset, it.range.endOffset) }

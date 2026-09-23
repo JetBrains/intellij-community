@@ -17,7 +17,7 @@ import java.awt.Graphics2D
 
 internal class MarkdownLivePreviewHorizontalRuleRenderer(private val editor: Editor) : MarkdownLivePreviewFoldDecoration, MarkdownLivePreviewElementRenderer {
   override fun presentation(spec: MarkdownLivePreviewSpec): List<MarkdownLivePreviewFold> =
-    listOf(MarkdownLivePreviewFold(spec.range.toTextRange(), decoration = this))
+    listOf(MarkdownLivePreviewTextFold(spec.range.toTextRange(), decoration = this))
 
   override fun documentChanged() = Unit
   override fun reconcile(presentation: MarkdownLivePreviewPresentation?) = Unit

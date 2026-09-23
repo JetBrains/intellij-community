@@ -2,17 +2,20 @@
 package org.intellij.plugins.markdown.editor.livepreview
 
 import com.intellij.markdown.backend.editor.livepreview.computeLivePreviewSpecs
-import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewImageInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewCheckboxInlayRenderer
+import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewImageInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewReconciler
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
+import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.DocumentEx
@@ -20,6 +23,7 @@ import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FoldingKeys
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,6 +40,7 @@ import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
+import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
@@ -61,6 +66,316 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals("Some bold, italic and code here", visibleText())
     assertTrue(concealedLivePreviewRegions(myFixture.editor).none { FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND.isIn(it) })
   }
+
+  fun testTopLevelHeadingsUseHtmlHeadingStyles() {
+    val content = (1..6).joinToString("\n") { "#".repeat(it) + " title" } + "\n\nbody\nmore body"
+    configure("$content<caret>")
+
+    val document = myFixture.editor.document
+    val folds = headingFolds()
+    assertEquals((0..5).map { document.getLineStartOffset(it) }, folds.map { it.startOffset })
+    assertEquals((0..5).map { document.getLineEndOffset(it) }, folds.map { it.endOffset })
+    val heights = folds.map { it.heightInPixels }
+    assertEquals(heights.sortedDescending(), heights)
+    assertTrue("The HTML h1 style must be larger than the h6 style", heights.first() > heights.last())
+    assertEquals(content, document.text)
+  }
+
+  fun testHeadingRevealKeepsSurroundingLinesAtEveryCaretOffset() {
+    val heading = "# A **bold** heading ###"
+    val content = "before\n$heading\n\nafter"
+    configure("$content<caret>")
+    val renderer = headingFolds().single().renderer
+    val beforeY = myFixture.editor.offsetToXY(0).y
+    val afterY = myFixture.editor.offsetToXY(content.indexOf("after")).y
+    for (offset in "before\n".length..content.indexOf("\n\n")) {
+      myFixture.editor.caretModel.moveToOffset(offset)
+      assertEmpty("The source must appear immediately", headingFolds())
+      assertEquals(offset, myFixture.editor.caretModel.offset)
+      assertEquals(beforeY, myFixture.editor.offsetToXY(0).y)
+      assertEquals(afterY, myFixture.editor.offsetToXY(content.indexOf("after")).y)
+      moveCaretTo(content.length)
+      assertEquals(renderer, headingFolds().single().renderer)
+      assertEquals(afterY, myFixture.editor.offsetToXY(content.indexOf("after")).y)
+    }
+  }
+
+  fun testHeadingSelectionAndMultipleCaretsKeepTheSourceVisible() {
+    val content = "before\n# title\n\nafter"
+    configure("$content<caret>")
+    val editor = myFixture.editor
+    val afterY = editor.offsetToXY(content.indexOf("after")).y
+    select(0, content.indexOf("title") + 2)
+    assertEmpty(headingFolds())
+    assertEquals(afterY, editor.offsetToXY(content.indexOf("after")).y)
+    editor.selectionModel.removeSelection()
+    moveCaretTo(content.length)
+    val caret = editor.caretModel.addCaret(editor.offsetToVisualPosition(content.indexOf('#')))!!
+    assertEmpty(headingFolds())
+    assertEquals(afterY, editor.offsetToXY(content.indexOf("after")).y)
+    editor.caretModel.removeCaret(caret)
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    assertEquals(1, headingFolds().size)
+    assertEquals(afterY, editor.offsetToXY(content.indexOf("after")).y)
+  }
+
+  fun testHeadingReplacesAnExpandedFoldThatStartsOnItsLineAndKeepsACollapsedOne() {
+    val content = "# one\n\nbody\n\n# two\n\nmore"
+    configure("<caret>$content")
+    val editor = myFixture.editor
+    lateinit var expanded: FoldRegion
+    editor.foldingModel.runBatchFoldingOperation { expanded = editor.foldingModel.addFoldRegion(0, content.length, "...")!! }
+    moveCaretTo(content.length)
+    assertEquals(2, headingFolds().size)
+    assertFalse(expanded.isValid)
+
+    moveCaretTo(0)
+    lateinit var collapsed: FoldRegion
+    editor.foldingModel.runBatchFoldingOperation {
+      collapsed = editor.foldingModel.addFoldRegion(0, content.indexOf("body\n") + 5, "...")!!
+      collapsed.isExpanded = false
+    }
+    moveCaretTo(content.length)
+    assertEquals(listOf(content.indexOf("# two")), headingFolds().map { it.startOffset })
+    assertTrue(collapsed.isValid)
+    assertFalse(collapsed.isExpanded)
+  }
+
+  fun testHeadingsReplaceTheSectionFoldsOfTheCodeFoldingBuilder() {
+    val content = "# one\n\nbody\n\n## two\n\nmore\n\n# three\n\ntail"
+    configure("<caret>$content")
+    val editor = myFixture.editor
+    EditorTestUtil.buildInitialFoldingsInBackground(editor, null)
+    val section = editor.foldingModel.getFoldRegion(0, content.indexOf("\n\n# three"))!!
+    assertFalse(section is CustomFoldRegion)
+
+    moveCaretTo(content.length)
+    assertEquals(3, headingFolds().size)
+    assertFalse(section.isValid)
+
+    EditorTestUtil.buildInitialFoldingsInBackground(editor, null)
+    assertEquals(3, headingFolds().size)
+    assertEquals(content, editor.document.text)
+  }
+
+  fun testHeadingBulkUpdateReplacesItsResources() {
+    configure("# title\n\ntail<caret>")
+    moveCaretTo(0)
+    val spacer = myFixture.editor.inlayModel.getBlockElementsInRange(0, 7).single()
+    writeCommandAction(project).run<RuntimeException> {
+      DocumentUtil.executeInBulk(myFixture.editor.document, true) {
+        myFixture.editor.document.setText("plain\n\ntail")
+      }
+    }
+    myFixture.doHighlighting()
+    waitForCurrentSpecs()
+    assertEmpty(headingFolds())
+    assertFalse(spacer.isValid)
+  }
+
+  fun testHeadingClickAndArrowNavigationRevealTheSource() {
+    val content = "before\n# title\n\nafter"
+    configure("$content<caret>")
+    val editor = myFixture.editor as EditorImpl
+    EditorTestUtil.setEditorVisibleSize(editor, 80, 12)
+    val fold = headingFolds().single()
+    val location = fold.location!!
+    EditorMouseFixture(editor).clickAtXY(location.x + 5, location.y + fold.heightInPixels / 2)
+    assertEmpty(headingFolds())
+    assertTrue(editor.caretModel.offset in content.indexOf('#')..content.indexOf("\n\n"))
+    moveCaretTo(0)
+    moveCaretDown()
+    assertEmpty(headingFolds())
+  }
+
+  fun testHeadingTypingDeletionUndoAndClipboardUseSource() {
+    val content = "before\n# title\n\nafter"
+    configure("$content<caret>")
+    moveCaretTo(content.indexOf("title"))
+    myFixture.type("new ")
+    myFixture.checkResult("before\n# new <caret>title\n\nafter")
+    myFixture.performEditorAction(IdeActions.ACTION_UNDO)
+    myFixture.checkResult("before\n# <caret>title\n\nafter")
+    select(content.indexOf('#'), content.indexOf("\n\n"))
+    myFixture.performEditorAction(IdeActions.ACTION_COPY)
+    myFixture.editor.selectionModel.removeSelection()
+    moveCaretTo(content.length)
+    myFixture.performEditorAction(IdeActions.ACTION_PASTE)
+    assertEquals("$content# title", myFixture.editor.document.text)
+    myFixture.performEditorAction(IdeActions.ACTION_UNDO)
+    moveCaretTo(content.indexOf('#') + 1)
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+    myFixture.doHighlighting()
+    waitForCurrentSpecs()
+    assertEmpty(headingFolds())
+    assertEmpty(myFixture.editor.inlayModel.getBlockElementsInRange(0, content.length - 1))
+  }
+
+  fun testHeadingRendererSurvivesUnrelatedEditsAndRejectsStaleSpecs() {
+    val content = "before\n# title\n\nafter"
+    configure("$content<caret>")
+    val renderer = headingFolds().single().renderer
+    val stale = computeLivePreviewSpecs(myFixture.file, myFixture.editor)
+    moveCaretTo(0)
+    myFixture.type("more ")
+    myFixture.doHighlighting()
+    waitForCurrentSpecs()
+    assertSame(renderer, headingFolds().single().renderer)
+    MarkdownLivePreviewReconciler.getExisting(myFixture.editor)!!.publishSpecs(stale)
+    assertSame(renderer, headingFolds().single().renderer)
+    assertTrue(MarkdownLivePreviewReconciler.getExisting(myFixture.editor)!!.hasCurrentSpecs())
+  }
+
+  fun testHeadingSpacerIsDisposedWhenPreviewIsDisabled() {
+    configure("# title\n\ntail<caret>")
+    moveCaretTo(0)
+    val inlay = myFixture.editor.inlayModel.getBlockElementsInRange(0, 7).single()
+    settings.enableLivePreview = false
+    MarkdownLivePreviewReconciler.getExisting(myFixture.editor)!!.reconcileNow()
+    assertFalse(inlay.isValid)
+    assertEmpty(headingFolds())
+  }
+
+  fun testHeadingFoldRefreshesAfterEditorFontChange() {
+    val content = "before\n# title\n\nafter"
+    configure("$content<caret>")
+    val editor = myFixture.editor as EditorImpl
+    val oldHeight = headingFolds().single().heightInPixels
+
+    editor.fontSize = editor.colorsScheme.editorFontSize + 4
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
+    assertTrue(headingFolds().single().heightInPixels > oldHeight)
+    assertHeadingHeightIsStable(content)
+  }
+
+  fun testHeadingPaintsWithLightAndDarkEditorSchemes() {
+    val content = "before\n# **bold** *italic* `code` ~~gone~~ [link](https://example.org)\n\nafter"
+    configure("$content<caret>")
+    val manager = EditorColorsManager.getInstance() as EditorColorsManagerImpl
+    val originalScheme = manager.globalScheme
+    Disposer.register(testRootDisposable) { manager.setGlobalScheme(originalScheme, processChangeSynchronously = true) }
+    for (name in listOf("Darcula", "Default")) {
+      val scheme = manager.getScheme(name)!!
+      manager.setGlobalScheme(scheme, processChangeSynchronously = true)
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+      val fold = headingFolds().single()
+      val bitmap = BufferedImage(fold.widthInPixels, fold.heightInPixels, BufferedImage.TYPE_INT_RGB)
+      val graphics = bitmap.createGraphics()
+      try {
+        graphics.color = scheme.defaultBackground
+        graphics.fillRect(0, 0, bitmap.width, bitmap.height)
+        fold.renderer.paint(fold, graphics, Rectangle2D.Double(0.0, 0.0, bitmap.width.toDouble(), bitmap.height.toDouble()), TextAttributes())
+      }
+      finally {
+        graphics.dispose()
+      }
+      val pixels = bitmap.getRGB(0, 0, bitmap.width, bitmap.height, null, 0, bitmap.width)
+      assertTrue("The heading must paint text in $name", pixels.count { it != scheme.defaultBackground.rgb } > 100)
+      assertHeadingHeightIsStable(content)
+    }
+  }
+
+  fun testHeadingAtDocumentEnd() {
+    configure("<caret>before\n## last")
+    assertEquals(1, headingFolds().size)
+    moveCaretTo(myFixture.editor.document.textLength)
+    assertEmpty(headingFolds())
+    moveCaretTo(0)
+    assertEquals(1, headingFolds().size)
+  }
+
+  fun testHtmlHeadingElementsKeepInlineSourceMapping() {
+    val content = "before\n## Hello **big** world\n\nafter"
+    configure("$content<caret>")
+    EditorTestUtil.setEditorVisibleSize(myFixture.editor, 80, 12)
+    val start = content.indexOf("Hello")
+
+    assertEquals(start, clickHeading { 1 })
+  }
+
+  fun testClickOnARenderedHeadingPlacesTheCaretAtTheClickedSource() {
+    val content = "before\n# Hello **big** world\n\nafter"
+    configure("$content<caret>")
+    EditorTestUtil.setEditorVisibleSize(myFixture.editor, 80, 12)
+    val start = content.indexOf("Hello")
+    val end = content.indexOf("\n\n")
+
+    assertEquals(start, clickHeading { 1 })
+    val middle = clickHeading { it.widthInPixels / 2 }
+    assertTrue("$middle", middle in start + 1 until end)
+    val last = clickHeading { it.widthInPixels - 1 }
+    assertTrue("$last", last in end - 1..end)
+  }
+
+  fun testClickOnRenderedCodePlacesTheCaretInsideTheCode() {
+    val content = "before\n# `code`\n\nafter"
+    configure("$content<caret>")
+    EditorTestUtil.setEditorVisibleSize(myFixture.editor, 80, 12)
+    val start = content.indexOf("code")
+
+    assertEquals(start, clickHeading { 1 })
+    val middle = clickHeading { it.widthInPixels / 2 }
+    assertTrue("$middle", middle in start + 1 until start + "code".length)
+  }
+
+  fun testImageInAHeadingStaysBelowTheHeadingWhenTheHeadingShowsItsSource() {
+    addPng(200, 200)
+    val content = "before\n\n# Parent ![image1](image.png)\n\ntail"
+    configureProjectFile(content)
+    val imageY = waitForImageInlay().bounds!!.y
+    val fold = headingFolds().single()
+    assertEquals(fold.location!!.y + fold.heightInPixels, imageY)
+
+    moveCaretTo(content.indexOf("Parent"))
+
+    assertEmpty(headingFolds())
+    assertEquals(imageY, imageInlays().single().bounds!!.y)
+  }
+
+  fun testWrappedHeadingRelayoutsItsRegionWhenTheEditorNarrows() {
+    val content = "before\n# " + "word ".repeat(30).trim() + "\n\nafter"
+    configure("$content<caret>")
+    val editor = myFixture.editor
+    EditorTestUtil.configureSoftWraps(editor, 2000, 1000, 10)
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    val region = headingFolds().single()
+    val wideHeight = region.heightInPixels
+
+    EditorTestUtil.configureSoftWraps(editor, 300, 1000, 10)
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
+    assertSame(region, headingFolds().single())
+    assertTrue("${region.heightInPixels} > $wideHeight", region.heightInPixels > wideHeight)
+    assertHeadingHeightIsStable(content)
+  }
+
+  /** Clicks the folded heading at the x that [x] gives, and returns the caret offset after the click. */
+  private fun clickHeading(x: (CustomFoldRegion) -> Int): Int {
+    moveCaretTo(myFixture.editor.document.textLength)
+    val fold = headingFolds().single()
+    val location = fold.location!!
+    EditorMouseFixture(myFixture.editor as EditorImpl).clickAtXY(location.x + x(fold), location.y + fold.heightInPixels / 2)
+    assertEmpty(headingFolds())
+    return myFixture.editor.caretModel.offset
+  }
+
+  private fun assertHeadingHeightIsStable(content: String) {
+    val editor = myFixture.editor
+    val after = content.indexOf("after")
+    val y = editor.offsetToXY(after).y
+    repeat(3) {
+      moveCaretTo(content.indexOf('#'))
+      assertEmpty(headingFolds())
+      assertEquals(y, editor.offsetToXY(after).y)
+      moveCaretTo(content.length)
+      assertEquals(1, headingFolds().size)
+      assertEquals(y, editor.offsetToXY(after).y)
+    }
+  }
+
+  private fun headingFolds(): List<CustomFoldRegion> =
+    myFixture.editor.foldingModel.allFoldRegions.filterIsInstance<CustomFoldRegion>().sortedBy { it.startOffset }
 
   fun testInlineLinkShowsOnlyItsTitle() {
     configure("Read [the docs](https://example.org) today<caret>")
@@ -513,6 +828,32 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals(1, thematicBreakHighlighters().size)
   }
 
+  fun testHeadingAndTextFoldsReplaceEachOtherAtTheSameRange() {
+    configure("-----\n\ntail<caret>")
+    val textFold = concealedLivePreviewRegions(myFixture.editor).single()
+    val rule = thematicBreakHighlighters().single()
+
+    writeCommandAction(project).run<RuntimeException> {
+      myFixture.editor.document.replaceString(0, 5, "# abc")
+    }
+    myFixture.doHighlighting()
+    waitForCurrentSpecs()
+    val headingFold = headingFolds().single()
+    assertFalse(textFold.isValid)
+    assertFalse(rule.isValid)
+    assertEquals(listOf("# abc"), concealed())
+
+    writeCommandAction(project).run<RuntimeException> {
+      myFixture.editor.document.replaceString(0, 5, "-----")
+    }
+    myFixture.doHighlighting()
+    waitForCurrentSpecs()
+    assertFalse(headingFold.isValid)
+    assertEmpty(headingFolds())
+    assertEquals(listOf("-----"), concealed())
+    assertEquals(1, thematicBreakHighlighters().size)
+  }
+
   fun testThematicBreakDoesNotConcealInlineCodeOnThePreviousLine() {
     val content = "`---`\n---\ntail"
     configure("$content<caret>")
@@ -602,7 +943,8 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
     waitForImageInlays(3)
     assertEquals(listOf("![a](image.png)", "![b](image.png)", "![c](image.png)"), concealed().filter { it.startsWith("![") })
-    assertEquals("• a\n\nb\n\n# c\n\ntail", visibleText())
+    assertEquals(content.indexOf("# "), headingFolds().single().startOffset)
+    assertTrue(visibleText().startsWith("• a\n\nb\n\n"))
     assertEquals(
       listOf(0, 2, 4),
       imageInlays().map { myFixture.editor.document.getLineNumber(it.offset) }.sorted(),
@@ -1054,7 +1396,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertFalse(image.isValid)
 
     reconciler.publishSpecs(specs)
-    assertEquals(3, concealed().size)
+    assertEquals(4, concealed().size)
     assertEquals(1, checkboxInlays().size)
     assertEquals(1, thematicBreakHighlighters().size)
     assertEquals(1, imageInlays().size)
@@ -1191,9 +1533,9 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
   private fun configureAllDecorations() {
     addPng(80, 40)
-    configureProjectFile("- [ ] task\n\n-----\n\n![alt](image.png)\n\ntail")
+    configureProjectFile("- [ ] task\n\n-----\n\n![alt](image.png)\n\n# heading\n\ntail")
     waitForImageInlay()
-    assertEquals(3, concealed().size)
+    assertEquals(4, concealed().size)
     assertEquals(1, checkboxInlays().size)
     assertEquals(1, thematicBreakHighlighters().size)
   }

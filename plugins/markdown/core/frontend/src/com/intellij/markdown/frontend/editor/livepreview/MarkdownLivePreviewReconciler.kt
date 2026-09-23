@@ -1,15 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.frontend.editor.livepreview
 
-import com.intellij.markdown.frontend.editor.tables.ui.alignment.MarkdownTableAlignmentController
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.Caret
-import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
@@ -18,9 +18,9 @@ import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
+import com.intellij.openapi.editor.ex.SoftWrapChangeListener
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.editor.impl.FoldingKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -28,7 +28,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
 import org.intellij.plugins.markdown.editor.livepreview.isLivePreviewEnabled
-import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -76,6 +75,14 @@ class MarkdownLivePreviewReconciler private constructor(
     editor.foldingModel.addListener(object : FoldingListener {
       override fun onFoldProcessingEnd() = scheduleReconcile()
     }, this)
+    editor.addPropertyChangeListener({ scheduleReconcile() }, this)
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
+      scheduleReconcile()
+    })
+    editor.softWrapModel.addSoftWrapChangeListener(object : SoftWrapChangeListener {
+      override fun softWrapsChanged() = scheduleReconcile()
+      override fun recalculationEnds() = scheduleReconcile()
+    })
   }
 
   /**
@@ -85,6 +92,7 @@ class MarkdownLivePreviewReconciler private constructor(
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun publishSpecs(specSet: MarkdownLivePreviewSpecSet?) {
     if (editor.isDisposed || disposed) return
+    if (specSet != null && !specSet.documentVersion.matches(editor.document, project)) return
     if (specSet != null && presentation?.documentVersion?.matchesDocument(specSet.documentVersion) != true) {
       presentationFactory.documentChanged()
     }
@@ -111,8 +119,10 @@ class MarkdownLivePreviewReconciler private constructor(
     }
     val presentation = currentPresentation() ?: return
     val revealed = findRevealedElements(presentation)
-    reconcileFoldRegions(desiredRegions(presentation, revealed))
-    presentationFactory.reconcile(presentation)
+    runEditorUpdate {
+      reconcileFoldRegions(desiredRegions(presentation, revealed))
+      presentationFactory.reconcile(presentation)
+    }
     revealedElements = revealed
   }
 
@@ -120,7 +130,7 @@ class MarkdownLivePreviewReconciler private constructor(
     disposed = true
     presentation = null
     val cleanup = Runnable {
-      if (!editor.isDisposed) removeOwned(ownedRegions.keys.toList())
+      if (!editor.isDisposed) runEditorUpdate { removeOwned(ownedRegions.keys.toList()) }
       ownedRegions.clear()
     }
     val application = ApplicationManager.getApplication()
@@ -156,12 +166,13 @@ class MarkdownLivePreviewReconciler private constructor(
     val missing = LinkedHashMap<TextRange, MarkdownLivePreviewFold>()
     for ((range, wanted) in desired) {
       val owned = existing.remove(range)
-      if (owned == null || owned.region.placeholderText != wanted.placeholderText) {
+      if (owned != null && wanted.isSame(owned.region)) {
+        kept[range] = owned
+      }
+      else {
         if (owned != null) obsolete += owned
         missing[range] = wanted
-        continue
       }
-      kept[range] = owned
     }
     obsolete += existing.values
     val decorationChanges = LinkedHashSet<TextRange>()
@@ -172,16 +183,10 @@ class MarkdownLivePreviewReconciler private constructor(
     if (obsolete.isEmpty() && missing.isEmpty() && decorationChanges.isEmpty()) return
     ownedRegions.clear()
     ownedRegions.putAll(kept)
-    val foldsChanged = !obsolete.isEmpty() || !missing.isEmpty()
-    val failed = ArrayList<OwnedFold>()
-    runEditorUpdate {
-      updateFoldRegions(obsolete, missing)
-      val rangesToReconcile = LinkedHashSet<TextRange>(missing.keys)
-      rangesToReconcile.addAll(decorationChanges)
-      failed.addAll(reconcileDecorations(desired, rangesToReconcile).mapNotNull { ownedRegions.remove(it) })
-      updateFoldRegions(failed)
-    }
-    if (foldsChanged || !failed.isEmpty()) refreshTableInlays()
+    updateFoldRegions(obsolete, missing)
+    val rangesToReconcile = missing.keys + decorationChanges
+    val failed = reconcileDecorations(desired, rangesToReconcile).mapNotNull { ownedRegions.remove(it) }
+    updateFoldRegions(failed)
   }
 
   private fun reconcileDecorations(
@@ -228,29 +233,26 @@ class MarkdownLivePreviewReconciler private constructor(
     val revealed = findRevealedElements(presentation)
     val newlyRevealed = revealed - revealedElements
     if (newlyRevealed.isEmpty()) return
-    removeOwned(newlyRevealed.flatMap { element -> element.folds.map { it.range } })
-    revealedElements = revealedElements + newlyRevealed
+    runEditorUpdate {
+      removeOwned(newlyRevealed.flatMap { element -> element.folds.map { it.range } })
+      revealedElements = revealedElements + newlyRevealed
+      presentationFactory.reconcile(presentation)
+    }
   }
 
   /** Removes the owned folds and decorations at the current document [ranges]. */
   private fun removeOwned(ranges: Collection<TextRange>) {
     val regions = ranges.mapNotNull { ownedRegions.remove(it) }
     if (regions.isNotEmpty()) {
-      runEditorUpdate {
-        updateFoldRegions(regions)
-      }
-      refreshTableInlays()
+      updateFoldRegions(regions)
     }
   }
 
-  private fun refreshTableInlays() {
-    MarkdownTableAlignmentController.getExisting(editor)?.performRefresh()
-    HorizontalBarPresentation.refresh(editor)
-  }
-
   private fun removeAllOwned() {
-    removeOwned(ownedRegions.keys.toList())
-    presentationFactory.reconcile(null)
+    runEditorUpdate {
+      removeOwned(ownedRegions.keys.toList())
+      presentationFactory.reconcile(null)
+    }
     revealedElements = emptySet()
   }
 
@@ -312,39 +314,29 @@ class MarkdownLivePreviewReconciler private constructor(
     return low
   }
 
-  /** Removes old decorations before the fold batch. The caller creates new decorations after the batch. */
+  /** Completes removal before creating replacement folds. Decorations are mounted after the folding batches. */
   private fun updateFoldRegions(
     removed: Collection<OwnedFold>,
     added: Map<TextRange, MarkdownLivePreviewFold> = emptyMap(),
   ) {
-    if (removed.isEmpty() && added.isEmpty()) return
     removed.forEach(Disposer::dispose)
-    editor.foldingModel.runBatchFoldingOperation({
-      for (owned in removed) {
-        if (owned.region.isValid) editor.foldingModel.removeFoldRegion(owned.region)
-      }
-      for ((range, wanted) in added) {
-        val region = createTextRegion(range, wanted.placeholderText) ?: continue
-        val owned = OwnedFold(region)
-        Disposer.register(this, owned)
-        ownedRegions[range] = owned
-      }
-    }, false, false)
-  }
-
-  private fun createTextRegion(range: TextRange, placeholderText: String): FoldRegion? {
-    val foldingModel = editor.foldingModel
-    val existing = foldingModel.getFoldRegion(range.startOffset, range.endOffset)
-    val region = when {
-      // The folding model can refuse a region: folding may be off, or a boundary may split a character pair.
-      existing == null -> foldingModel.createFoldRegion(range.startOffset, range.endOffset, placeholderText, null, true)
-      // A region is already here, most likely restored from the clipboard together with pasted text. The
-      // folding model refuses a second region over the same range, so adopt this one instead.
-      existing.isValid && existing !is CustomFoldRegion && existing.shouldNeverExpand() && existing.placeholderText == placeholderText -> existing
-      else -> null
-    } ?: return null
-    if (placeholderText.isNotEmpty()) region.putUserData(FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND, true)
-    return region
+    if (removed.isNotEmpty()) {
+      editor.foldingModel.runBatchFoldingOperation({
+        for (owned in removed) {
+          if (owned.region.isValid) editor.foldingModel.removeFoldRegion(owned.region)
+        }
+      }, false, false)
+    }
+    if (added.isNotEmpty()) {
+      editor.foldingModel.runBatchFoldingOperation({
+        for ((range, wanted) in added) {
+          val region = wanted.create(editor) ?: continue
+          val owned = OwnedFold(region)
+          Disposer.register(this, owned)
+          ownedRegions[range] = owned
+        }
+      }, false, false)
+    }
   }
 
   /** Preserves each caret and the viewport across fold changes, decoration updates, and any failed decoration cleanup. */
