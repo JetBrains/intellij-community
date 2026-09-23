@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.BundleBase;
@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.DelegatingFontPreferences;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
@@ -137,7 +136,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     metaInfo.setProperty(META_INFO_IDE_VERSION, ApplicationInfo.getInstance().getStrictVersion());
     if (parentScheme != null &&
         parentScheme != EmptyColorScheme.getEmptyScheme() &&
-        !parentScheme.getName().startsWith(Scheme.EDITABLE_COPY_PREFIX)) {
+        !parentScheme.getName().startsWith(EDITABLE_COPY_PREFIX)) {
       metaInfo.setProperty(META_INFO_ORIGINAL, parentScheme.getName());
       String pluginId = parentScheme.getMetaProperties().getProperty(META_INFO_PLUGIN_ID);
       if (pluginId != null) {
@@ -280,7 +279,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Override
   public @NotNull Font getFont(EditorFontType key) {
-    return fontPreferences instanceof DelegatingFontPreferences ? EditorFontCache.getInstance().getFont(key) : super.getFont(key);
+    return fontPreferences instanceof DelegatingFontPreferences ? getInstance().getFont(key) : super.getFont(key);
   }
 
   @Override
@@ -489,7 +488,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
         // This setting has been deprecated to usages of HighlighterColors.TEXT attributes.
         deprecatedBackgroundColor = valueColor;
       }
-      ColorKey name = ColorKey.find(keyName);
+      ColorKey name = ColorKey.find(Objects.requireNonNull(keyName));
       colorMap.put(name, valueColor == null ? NULL_COLOR_MARKER : valueColor);
     }
   }
@@ -784,7 +783,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   private @Nullable EditorColorsScheme getBaseScheme() {
-    if (schemeName.startsWith(Scheme.EDITABLE_COPY_PREFIX)) {
+    if (schemeName.startsWith(EDITABLE_COPY_PREFIX)) {
       EditorColorsScheme original = getOriginal();
       if (original != null) {
         return original;

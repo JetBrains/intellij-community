@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JdkConstants;
 import com.jetbrains.JBR;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -26,8 +27,11 @@ import java.util.Objects;
 @ApiStatus.Internal
 public class EditorFontCacheImpl extends EditorFontCache {
   private static final Logger LOG = Logger.getInstance(EditorFontCacheImpl.class);
-
   private static final Map<TextAttribute, Integer> LIGATURES_ATTRIBUTES = Map.of(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON);
+
+  public static @NotNull Font deriveFontWithLigatures(@NotNull Font font, boolean enableLigatures) {
+    return enableLigatures ? font.deriveFont(LIGATURES_ATTRIBUTES) : font;
+  }
 
   private final @NotNull Map<EditorFontType, Font> fonts = new EnumMap<>(EditorFontType.class);
 
@@ -37,7 +41,6 @@ public class EditorFontCacheImpl extends EditorFontCache {
       if (fonts.isEmpty()) {
         initFonts();
       }
-
       EditorFontType fontType = Objects.requireNonNullElse(key, EditorFontType.PLAIN);
       Font font = fonts.get(fontType);
       assert font != null : "Font " + fontType + " not found.";
@@ -97,29 +100,36 @@ public class EditorFontCacheImpl extends EditorFontCache {
     setFont(EditorFontType.CONSOLE_BOLD_ITALIC, consoleFontName, Font.BOLD | Font.ITALIC, consoleFontSize, consolePreferences);
   }
 
-  private void setFont(EditorFontType fontType,
-                       String familyName,
-                       int style,
-                       float fontSize,
-                       FontPreferences fontPreferences) {
-    Font editorFont = FontFamilyService.getFont(familyName, fontPreferences.getRegularSubFamily(), fontPreferences.getBoldSubFamily(),
-                                              style, fontSize);
+  private void setFont(
+    @NotNull EditorFontType fontType,
+    @NotNull String familyName,
+    @JdkConstants.FontStyle int style,
+    float fontSize,
+    @NotNull FontPreferences fontPreferences
+  ) {
+    Font editorFont = FontFamilyService.getFont(
+      familyName,
+      fontPreferences.getRegularSubFamily(),
+      fontPreferences.getBoldSubFamily(),
+      style,
+      fontSize
+    );
     editorFont = deriveFontWithLigatures(editorFont, fontPreferences.useLigatures());
     if (!fontPreferences.getCharacterVariants().isEmpty()) {
-      editorFont = JBR.getFontExtensions().deriveFontWithFeatures(editorFont, ArrayUtil.toStringArray(fontPreferences.getCharacterVariants()));
+      editorFont = JBR.getFontExtensions().deriveFontWithFeatures(
+        editorFont,
+        ArrayUtil.toStringArray(fontPreferences.getCharacterVariants())
+      );
     }
     fonts.put(fontType, editorFont);
   }
 
   private static @Nullable String getFallbackName(@NotNull String fontName) {
     Font plainFont = new Font(fontName, Font.PLAIN, 12);
-    if (plainFont.getFamily().equals("Dialog") && !("Dialog".equals(fontName) || fontName.startsWith("Dialog."))) {
+    boolean isDialogFont = plainFont.getFamily().equals("Dialog");
+    if (isDialogFont && !("Dialog".equals(fontName) || fontName.startsWith("Dialog."))) {
       return AppEditorFontOptions.getInstance().getFontPreferences().getFontFamily();
     }
     return null;
-  }
-
-  public static @NotNull Font deriveFontWithLigatures(@NotNull Font font, boolean enableLigatures) {
-    return enableLigatures ? font.deriveFont(LIGATURES_ATTRIBUTES) : font;
   }
 }

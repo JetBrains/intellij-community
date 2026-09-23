@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JdkConstants;
 import com.jetbrains.JBR;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
 
 final class EditorColorSchemeDelegate extends DelegateColorScheme {
 
@@ -250,7 +250,9 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
   public @NotNull Font getFont(EditorFontType key) {
     if (myFontsMap != null) {
       Font font = myFontsMap.get(key);
-      if (font != null) return font;
+      if (font != null) {
+        return font;
+      }
     }
     return getDelegate().getFont(key);
   }
@@ -387,7 +389,7 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
   private void setFont(
     @NotNull EditorFontType fontType,
     @NotNull String familyName,
-    int style,
+    @JdkConstants.FontStyle int style,
     float fontSize,
     @NotNull FontPreferences fontPreferences
   ) {
