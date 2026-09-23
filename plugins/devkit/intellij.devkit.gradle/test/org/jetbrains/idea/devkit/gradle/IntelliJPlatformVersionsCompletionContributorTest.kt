@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.devkit.core.icons.DevkitCoreIcons
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -25,6 +26,14 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     productReleases = mapOf(
       "IC" to listOf(release("2023.1"), release("2023.2")),
       "IU" to listOf(release("2023.2"), release("2024.1")),
+    ),
+    bundledPlugins = listOf(
+      IntelliJPlatformBundledPlugin("com.intellij.java", "Java"),
+      IntelliJPlatformBundledPlugin("org.jetbrains.kotlin", "Kotlin"),
+    ),
+    bundledModules = listOf(
+      IntelliJPlatformBundledModule("intellij.platform.vcs.impl", "VCS Implementation"),
+      IntelliJPlatformBundledModule("intellij.java.psi", "Java PSI"),
     ),
   )
   private var modelRequestFile: PsiFile? = null
@@ -219,6 +228,215 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertNoPlatformVersions()
   }
 
+  fun testSuggestsBundledPluginInKotlinStringLiteral() {
+    myFixture.configureByText(
+      "build.gradle.kts",
+      """
+        dependencies {
+          intellijPlatform {
+            bundledPlugin("<caret>")
+          }
+        }
+      """.trimIndent(),
+    )
+
+    assertBundledPlugins("com.intellij.java", "org.jetbrains.kotlin")
+    val elements = completeBasicElements()
+    val presentation = LookupElementPresentation()
+    elements.first { it.lookupString == "com.intellij.java" }.renderElement(presentation)
+    assertSame(AllIcons.Nodes.Plugin, presentation.icon)
+    assertEquals(" (Java)", presentation.tailText)
+    assertEquals("Bundled Plugin", presentation.typeText)
+  }
+
+  fun testSuggestsBundledPluginsInVarargs() {
+    myFixture.configureByText(
+      "build.gradle.kts",
+      """
+        dependencies {
+          intellijPlatform {
+            bundledPlugins("com.intellij.java", "<caret>")
+          }
+        }
+      """.trimIndent(),
+    )
+
+    assertBundledPlugins("com.intellij.java", "org.jetbrains.kotlin")
+  }
+
+  fun testSuggestsTestBundledPlugin() {
+    myFixture.configureByText(
+      "build.gradle.kts",
+      """
+        dependencies {
+          intellijPlatform {
+            testBundledPlugin("<caret>")
+          }
+        }
+      """.trimIndent(),
+    )
+
+    assertBundledPlugins("com.intellij.java", "org.jetbrains.kotlin")
+  }
+
+  fun testSuggestsTestBundledPlugins() {
+    myFixture.configureByText(
+      "build.gradle.kts",
+      """
+        dependencies {
+          intellijPlatform {
+            testBundledPlugins("<caret>")
+          }
+        }
+      """.trimIndent(),
+    )
+
+    assertBundledPlugins("com.intellij.java", "org.jetbrains.kotlin")
+  }
+
+  fun testSuggestsBundledModuleInKotlinStringLiteral() {
+    myFixture.configureByText(
+      "build.gradle.kts",
+      """
+        dependencies {
+          intellijPlatform {
+            bundledModule("<caret>")
+          }
+        }
+      """.trimIndent(),
+    )
+
+    assertBundledModules("intellij.platform.vcs.impl", "intellij.java.psi")
+    val elements = completeBasicElements()
+    val presentation = LookupElementPresentation()
+    elements.first { it.lookupString == "intellij.platform.vcs.impl" }.renderElement(presentation)
+    assertSame(DevkitCoreIcons.PluginModule, presentation.icon)
+    assertEquals(" (VCS Implementation)", presentation.tailText)
+    assertEquals("Bundled Module", presentation.typeText)
+  }
+
+  fun testSuggestsBundledModulesInVarargs() {
+    myFixture.configureByText(
+      "build.gradle.kts",
+      """
+        dependencies {
+          intellijPlatform {
+            bundledModules("intellij.platform.vcs.impl", "<caret>")
+          }
+        }
+      """.trimIndent(),
+    )
+
+    assertBundledModules("intellij.platform.vcs.impl", "intellij.java.psi")
+  }
+
+  fun testSuggestsTestBundledModule() {
+    myFixture.configureByText(
+      "build.gradle.kts",
+      """
+        dependencies {
+          intellijPlatform {
+            testBundledModule("<caret>")
+          }
+        }
+      """.trimIndent(),
+    )
+
+    assertBundledModules("intellij.platform.vcs.impl", "intellij.java.psi")
+  }
+
+  fun testSuggestsTestBundledModules() {
+    myFixture.configureByText(
+      "build.gradle.kts",
+      """
+        dependencies {
+          intellijPlatform {
+            testBundledModules("<caret>")
+          }
+        }
+      """.trimIndent(),
+    )
+
+    assertBundledModules("intellij.platform.vcs.impl", "intellij.java.psi")
+  }
+
+  fun testDoesNotSuggestBundledPluginsWithoutData() {
+    gradleData = gradleData.copy(bundledPlugins = emptyList())
+    myFixture.configureByText(
+      "build.gradle.kts",
+      """
+        dependencies {
+          intellijPlatform {
+            bundledPlugin("<caret>")
+          }
+        }
+      """.trimIndent(),
+    )
+
+    assertNoBundledPlugins()
+  }
+
+  fun testDoesNotSuggestBundledModulesWithoutData() {
+    gradleData = gradleData.copy(bundledModules = emptyList())
+    myFixture.configureByText(
+      "build.gradle.kts",
+      """
+        dependencies {
+          intellijPlatform {
+            bundledModule("<caret>")
+          }
+        }
+      """.trimIndent(),
+    )
+
+    assertNoBundledModules()
+  }
+
+  fun testSuggestsBundledPluginsCaseInsensitively() {
+    myFixture.configureByText(
+      "build.gradle.kts",
+      """
+        dependencies {
+          intellijPlatform {
+            bundledPlugin("COM.INTELLIJ<caret>")
+          }
+        }
+      """.trimIndent(),
+    )
+
+    assertBundledPlugins("com.intellij.java")
+  }
+
+  fun testSuggestsBundledModulesCaseInsensitively() {
+    myFixture.configureByText(
+      "build.gradle.kts",
+      """
+        dependencies {
+          intellijPlatform {
+            bundledModule("INTELLIJ.PLATFORM<caret>")
+          }
+        }
+      """.trimIndent(),
+    )
+
+    assertBundledModules("intellij.platform.vcs.impl")
+  }
+
+  fun testSuggestsCreateHelperProductReleasesCaseInsensitively() {
+    myFixture.configureByText(
+      "build.gradle.kts",
+      """
+        dependencies {
+          intellijPlatform {
+            create(type = "iu", version = "<caret>")
+          }
+        }
+      """.trimIndent(),
+    )
+
+    assertPlatformVersions("2023.2", "2024.1")
+  }
+
   private fun completeBasic(): List<String> {
     return completeBasicElements().map { it.lookupString }
   }
@@ -243,8 +461,26 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertEquals(expected.toSet(), completeBasic().filter { it in PLATFORM_VERSIONS }.toSet())
   }
 
+  private fun assertNoBundledPlugins() {
+    assertDoesntContain(completeBasic(), *BUNDLED_PLUGINS.toTypedArray())
+  }
+
+  private fun assertBundledPlugins(vararg expected: String) {
+    assertEquals(expected.toSet(), completeBasic().filter { it in BUNDLED_PLUGINS }.toSet())
+  }
+
+  private fun assertNoBundledModules() {
+    assertDoesntContain(completeBasic(), *BUNDLED_MODULES.toTypedArray())
+  }
+
+  private fun assertBundledModules(vararg expected: String) {
+    assertEquals(expected.toSet(), completeBasic().filter { it in BUNDLED_MODULES }.toSet())
+  }
+
   companion object {
     private val PLATFORM_VERSIONS = listOf("2023.1", "2023.2", "2024.1")
+    private val BUNDLED_PLUGINS = listOf("com.intellij.java", "org.jetbrains.kotlin")
+    private val BUNDLED_MODULES = listOf("intellij.platform.vcs.impl", "intellij.java.psi")
 
     private fun release(version: String, channel: String = "RELEASE") = IntelliJPlatformProductRelease(version, channel)
   }

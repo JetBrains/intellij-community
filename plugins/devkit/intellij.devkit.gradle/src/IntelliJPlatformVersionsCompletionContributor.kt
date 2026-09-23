@@ -9,6 +9,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.devkit.core.icons.DevkitCoreIcons
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns
@@ -30,15 +31,20 @@ private const val INTELLIJ_PLATFORM_BLOCK = "intellijPlatform"
 private const val CREATE_HELPER = "create"
 private const val TYPE_PARAMETER = "type"
 private const val VERSION_PARAMETER = "version"
+private const val ID_PARAMETER = "id"
+private const val IDS_PARAMETER = "ids"
 private const val COMPLETION_PRIORITY = 100.0
 
-/** Completes IntelliJ Platform dependency versions from metadata imported during Gradle sync. */
+private val BUNDLED_PLUGIN_HELPERS = setOf("bundledPlugin", "bundledPlugins", "testBundledPlugin", "testBundledPlugins")
+private val BUNDLED_MODULE_HELPERS = setOf("bundledModule", "bundledModules", "testBundledModule", "testBundledModules")
+
+/** Completes IntelliJ Platform dependency versions, bundled plugins, and bundled modules from metadata imported during Gradle sync. */
 internal class IntelliJPlatformVersionsCompletionContributor : CompletionContributor() {
 
   init {
     val place = PlatformPatterns.psiElement()
       .withParent(KtLiteralStringTemplateEntry::class.java)
-      .with(object : PatternCondition<PsiElement>("intellijPlatformVersionLiteral") {
+      .with(object : PatternCondition<PsiElement>("intellijPlatformLiteral") {
         override fun accepts(element: PsiElement, context: ProcessingContext?): Boolean {
           if (!element.containingFile.name.endsWith(GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)) return false
 
@@ -52,12 +58,24 @@ internal class IntelliJPlatformVersionsCompletionContributor : CompletionContrib
             ?.takeIf { it.calleeExpression?.text == DEPENDENCIES_BLOCK }
             ?: return false
 
+          val calleeName = callExpression.calleeExpression?.text
+          if (calleeName in BUNDLED_PLUGIN_HELPERS || calleeName in BUNDLED_MODULE_HELPERS) {
+            return callExpression.isBundledArgument(element)
+          }
+
           return callExpression.isVersionArgument(element) ||
                  (callExpression.containsInLambda(element) && element.isVersionAssignmentValue())
         }
       })
 
     extend(CompletionType.BASIC, place, IntelliJPlatformVersionsCompletionProvider())
+  }
+
+  private fun KtCallExpression.isBundledArgument(element: PsiElement): Boolean {
+    val argument = valueArguments.firstOrNull { PsiTreeUtil.isAncestor(it, element, false) } ?: return false
+    val argumentName = argument.getArgumentName()?.asName?.asString()
+    if (argumentName != null) return argumentName == ID_PARAMETER || argumentName == IDS_PARAMETER
+    return true
   }
 
   private fun KtCallExpression.isVersionArgument(element: PsiElement): Boolean {
@@ -89,8 +107,44 @@ internal class IntelliJPlatformVersionsCompletionContributor : CompletionContrib
       val callExpression = parameters.position.getParentOfType<KtCallExpression>(true) ?: return
       val dependencyHelper = callExpression.calleeExpression?.text ?: return
       val gradleModel = IntelliJPlatformGradleModelProvider.getInstance(parameters.position.project).getModel(parameters.originalFile) ?: return
+      val resultSet = result.caseInsensitive()
+
+      if (dependencyHelper in BUNDLED_PLUGIN_HELPERS) {
+        val plugins = gradleModel.bundledPlugins
+          .asSequence()
+          .distinctBy { it.id }
+          .sortedBy { it.id }
+          .toList()
+
+        plugins.forEachIndexed { index, plugin ->
+          val lookupElement = LookupElementBuilder.create(plugin.id)
+            .withIcon(AllIcons.Nodes.Plugin)
+            .withTailText(if (plugin.name.isNotEmpty()) " (${plugin.name})" else "", true)
+            .withTypeText("Bundled Plugin", true)
+          resultSet.addElement(PrioritizedLookupElement.withPriority(lookupElement, COMPLETION_PRIORITY + plugins.size - index))
+        }
+        return
+      }
+
+      if (dependencyHelper in BUNDLED_MODULE_HELPERS) {
+        val modules = gradleModel.bundledModules
+          .asSequence()
+          .distinctBy { it.id }
+          .sortedBy { it.id }
+          .toList()
+
+        modules.forEachIndexed { index, module ->
+          val lookupElement = LookupElementBuilder.create(module.id)
+            .withIcon(DevkitCoreIcons.PluginModule)
+            .withTailText(if (module.name.isNotEmpty()) " (${module.name})" else "", true)
+            .withTypeText("Bundled Module", true)
+          resultSet.addElement(PrioritizedLookupElement.withPriority(lookupElement, COMPLETION_PRIORITY + modules.size - index))
+        }
+        return
+      }
+
       val productCode = when (dependencyHelper) {
-        CREATE_HELPER -> callExpression.getCreateProductCode()
+        CREATE_HELPER -> callExpression.getCreateProductCode(gradleModel)
         else -> gradleModel.dependencyHelperProductCodes[dependencyHelper]
       } ?: return
 
@@ -112,17 +166,18 @@ internal class IntelliJPlatformVersionsCompletionContributor : CompletionContrib
           .withIcon(DevkitCoreIcons.Sdk_closed)
           .withTailText(" $channel", true)
           .withTypeText("$productName ($productCode)", true)
-        result.addElement(PrioritizedLookupElement.withPriority(lookupElement, COMPLETION_PRIORITY + releases.size - index))
+        resultSet.addElement(PrioritizedLookupElement.withPriority(lookupElement, COMPLETION_PRIORITY + releases.size - index))
       }
     }
 
-    private fun KtCallExpression.getCreateProductCode(): String? {
+    private fun KtCallExpression.getCreateProductCode(gradleModel: IntelliJPlatformGradleData): String? {
       val typeArgument = valueArguments.firstOrNull {
         it.getArgumentName()?.asName?.asString() == TYPE_PARAMETER
       } ?: valueArguments.firstOrNull { it.getArgumentName() == null }
       val typeExpression = typeArgument?.getArgumentExpression() as? KtStringTemplateExpression ?: return null
 
-      return (typeExpression.entries.singleOrNull() as? KtLiteralStringTemplateEntry)?.text
+      val rawProductCode = (typeExpression.entries.singleOrNull() as? KtLiteralStringTemplateEntry)?.text ?: return null
+      return gradleModel.productReleases.keys.firstOrNull { it.equals(rawProductCode, ignoreCase = true) } ?: rawProductCode
     }
 
     private fun String.toPresentableChannel(): String {

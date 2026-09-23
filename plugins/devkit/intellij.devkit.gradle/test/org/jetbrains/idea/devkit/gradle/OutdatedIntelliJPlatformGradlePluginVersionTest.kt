@@ -29,6 +29,8 @@ internal class OutdatedIntelliJPlatformGradlePluginVersionTest : TestCase() {
   private fun model(currentVersion: String, latestVersion: String) = object : IntelliJPlatformGradleModel {
     override fun getDependencyHelperProductCodes() = emptyMap<String, String>()
     override fun getProductReleasesFile(): String? = null
+    override fun getBundledPluginsFile(): String? = null
+    override fun getBundledModulesFile(): String? = null
     override fun getCurrentPluginVersion() = currentVersion
     override fun getLatestPluginVersion() = latestVersion
   }

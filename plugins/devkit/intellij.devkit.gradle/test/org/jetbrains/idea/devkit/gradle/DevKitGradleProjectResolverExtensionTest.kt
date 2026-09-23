@@ -61,4 +61,57 @@ internal class DevKitGradleProjectResolverExtensionTest : TestCase() {
       Files.deleteIfExists(file)
     }
   }
+
+  fun testReadsBundledPluginsCatalog() {
+    val file = Files.createTempFile("bundled-plugins", ".txt")
+    try {
+      Files.writeString(
+        file,
+        """
+          com.intellij.java${'\t'}Java
+          org.jetbrains.kotlin${'\t'}Kotlin
+          com.intellij.copyright
+          ${'\t'}empty-id
+        """.trimIndent(),
+      )
+
+      assertEquals(
+        listOf(
+          IntelliJPlatformBundledPlugin("com.intellij.java", "Java"),
+          IntelliJPlatformBundledPlugin("org.jetbrains.kotlin", "Kotlin"),
+          IntelliJPlatformBundledPlugin("com.intellij.copyright", ""),
+        ),
+        file.toString().readBundledPlugins(),
+      )
+    }
+    finally {
+      Files.deleteIfExists(file)
+    }
+  }
+
+  fun testReadsBundledModulesCatalog() {
+    val file = Files.createTempFile("bundled-modules", ".txt")
+    try {
+      Files.writeString(
+        file,
+        """
+          intellij.platform.vcs.impl${'\t'}VCS Implementation
+          intellij.java.psi${'\t'}Java PSI
+          intellij.platform.core
+        """.trimIndent(),
+      )
+
+      assertEquals(
+        listOf(
+          IntelliJPlatformBundledModule("intellij.platform.vcs.impl", "VCS Implementation"),
+          IntelliJPlatformBundledModule("intellij.java.psi", "Java PSI"),
+          IntelliJPlatformBundledModule("intellij.platform.core", ""),
+        ),
+        file.toString().readBundledModules(),
+      )
+    }
+    finally {
+      Files.deleteIfExists(file)
+    }
+  }
 }

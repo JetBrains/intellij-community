@@ -13,6 +13,8 @@ import kotlin.io.path.readLines
 internal data class IntelliJPlatformGradleData(
   val dependencyHelperProductCodes: Map<String, String> = emptyMap(),
   val productReleases: Map<String, List<IntelliJPlatformProductRelease>> = emptyMap(),
+  val bundledPlugins: List<IntelliJPlatformBundledPlugin> = emptyList(),
+  val bundledModules: List<IntelliJPlatformBundledModule> = emptyList(),
   val currentPluginVersion: String = "0.0.0",
   val latestPluginVersion: String = "0.0.0",
 ) : Serializable {
@@ -28,15 +30,27 @@ internal data class IntelliJPlatformProductRelease(
   val channel: String = "",
 ) : Serializable
 
+internal data class IntelliJPlatformBundledPlugin(
+  val id: String = "",
+  val name: String = "",
+) : Serializable
+
+internal data class IntelliJPlatformBundledModule(
+  val id: String = "",
+  val name: String = "",
+) : Serializable
+
 internal fun IntelliJPlatformGradleModel.toIntelliJPlatformGradleData() = IntelliJPlatformGradleData(
   dependencyHelperProductCodes = dependencyHelperProductCodes,
   productReleases = productReleasesFile.readProductReleases(),
+  bundledPlugins = bundledPluginsFile.readBundledPlugins(),
+  bundledModules = bundledModulesFile.readBundledModules(),
   currentPluginVersion = currentPluginVersion,
   latestPluginVersion = latestPluginVersion,
 )
 
 internal fun IntelliJPlatformGradleData.hasUsableData(): Boolean =
-  productReleases.isNotEmpty() || dependencyHelperProductCodes.isNotEmpty() || currentPluginVersion != "0.0.0"
+  productReleases.isNotEmpty() || bundledPlugins.isNotEmpty() || bundledModules.isNotEmpty() || dependencyHelperProductCodes.isNotEmpty() || currentPluginVersion != "0.0.0"
 
 /** Reads `product-code<TAB>version<TAB>channel` records written by the Gradle task. */
 internal fun String?.readProductReleases(): Map<String, List<IntelliJPlatformProductRelease>> {
@@ -59,5 +73,45 @@ private fun parseProductRelease(value: String): Pair<String, IntelliJPlatformPro
   return fields[0] to IntelliJPlatformProductRelease(
     version = fields[1],
     channel = fields[2],
+  )
+}
+
+/** Reads `plugin-id<TAB>plugin-name` records written by the Gradle task. */
+internal fun String?.readBundledPlugins(): List<IntelliJPlatformBundledPlugin> {
+  val file = this?.let { Path.of(it) }?.takeIf { it.isRegularFile() } ?: return emptyList()
+
+  return runCatching {
+    file.readLines().mapNotNull(::parseBundledPlugin)
+  }.getOrDefault(emptyList())
+}
+
+private fun parseBundledPlugin(value: String): IntelliJPlatformBundledPlugin? {
+  val fields = value.split('\t')
+  val id = fields.firstOrNull()?.trim() ?: return null
+  if (id.isEmpty()) return null
+
+  return IntelliJPlatformBundledPlugin(
+    id = id,
+    name = fields.getOrElse(1) { "" }.trim(),
+  )
+}
+
+/** Reads `module-id<TAB>module-name` records written by the Gradle task. */
+internal fun String?.readBundledModules(): List<IntelliJPlatformBundledModule> {
+  val file = this?.let { Path.of(it) }?.takeIf { it.isRegularFile() } ?: return emptyList()
+
+  return runCatching {
+    file.readLines().mapNotNull(::parseBundledModule)
+  }.getOrDefault(emptyList())
+}
+
+private fun parseBundledModule(value: String): IntelliJPlatformBundledModule? {
+  val fields = value.split('\t')
+  val id = fields.firstOrNull()?.trim() ?: return null
+  if (id.isEmpty()) return null
+
+  return IntelliJPlatformBundledModule(
+    id = id,
+    name = fields.getOrElse(1) { "" }.trim(),
   )
 }

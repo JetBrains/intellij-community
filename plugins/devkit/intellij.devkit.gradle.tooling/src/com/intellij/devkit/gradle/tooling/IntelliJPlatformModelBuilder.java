@@ -31,6 +31,8 @@ public final class IntelliJPlatformModelBuilder extends AbstractModelBuilderServ
     "org.jetbrains.intellij.platform.gradle.extensions.IntelliJPlatformDependencyConfiguration";
   private static final String INTELLIJ_PLATFORM_TYPE_CLASS = "org.jetbrains.intellij.platform.gradle.IntelliJPlatformType";
   private static final String DUMP_PRODUCTS_RELEASES_TASK_NAME = "dumpProductsReleases";
+  private static final String DUMP_BUNDLED_PLUGINS_TASK_NAME = "dumpBundledPlugins";
+  private static final String DUMP_BUNDLED_MODULES_TASK_NAME = "dumpBundledModules";
   private static final String INITIALIZE_INTELLIJ_PLATFORM_PLUGIN_TASK_NAME = "initializeIntellijPlatformPlugin";
   private static final String GRADLE_ACTION_CLASS = "org.gradle.api.Action";
   private static final String PRODUCT_CODE_GETTER = "getCode";
@@ -56,6 +58,16 @@ public final class IntelliJPlatformModelBuilder extends AbstractModelBuilderServ
       taskNames.add(dumpTask.getPath());
     }
 
+    Task dumpBundledPluginsTask = project.getTasks().findByName(DUMP_BUNDLED_PLUGINS_TASK_NAME);
+    if (dumpBundledPluginsTask != null) {
+      taskNames.add(dumpBundledPluginsTask.getPath());
+    }
+
+    Task dumpBundledModulesTask = project.getTasks().findByName(DUMP_BUNDLED_MODULES_TASK_NAME);
+    if (dumpBundledModulesTask != null) {
+      taskNames.add(dumpBundledModulesTask.getPath());
+    }
+
     Task initializeTask = project.getTasks().findByName(INITIALIZE_INTELLIJ_PLATFORM_PLUGIN_TASK_NAME);
     if (initializeTask != null) {
       taskNames.add(initializeTask.getPath());
@@ -66,12 +78,16 @@ public final class IntelliJPlatformModelBuilder extends AbstractModelBuilderServ
     try {
       @NotNull Map<String, String> dependencyHelperProductCodes = loadDependencyHelperProductCodes(extension.getClass());
       @Nullable String productReleasesFile = dumpTask == null ? null : dumpTask.getOutputs().getFiles().getSingleFile().getAbsolutePath();
+      @Nullable String bundledPluginsFile = dumpBundledPluginsTask == null ? null : dumpBundledPluginsTask.getOutputs().getFiles().getSingleFile().getAbsolutePath();
+      @Nullable String bundledModulesFile = dumpBundledModulesTask == null ? null : dumpBundledModulesTask.getOutputs().getFiles().getSingleFile().getAbsolutePath();
       @NotNull String currentPluginVersion = readCurrentPluginVersion(initializeTask);
       @NotNull String latestPluginVersion = readLatestPluginVersion(initializeTask, currentPluginVersion);
 
       return new IntelliJPlatformGradleModelImpl(
         dependencyHelperProductCodes,
         productReleasesFile,
+        bundledPluginsFile,
+        bundledModulesFile,
         currentPluginVersion,
         latestPluginVersion
       );
