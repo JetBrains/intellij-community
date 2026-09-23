@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleProjectData
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleSourceSetData
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinGradleSourceSetDataNodes
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
+import org.jetbrains.kotlin.idea.gradle.utils.KotlinGradleModelFetchProperties
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getDependencyModules
 import org.jetbrains.kotlin.idea.gradleJava.internLargeArguments
 import org.jetbrains.kotlin.idea.gradleJava.interner
@@ -92,7 +93,10 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         val isAndroidPluginRequestingKotlinGradleModelKey = Key.findKeyByName("IS_ANDROID_PLUGIN_REQUESTING_KOTLIN_GRADLE_MODEL_KEY")
         val isAndroidPluginRequestingKotlinGradleModel =
             isAndroidPluginRequestingKotlinGradleModelKey != null && resolverCtx.getUserData(isAndroidPluginRequestingKotlinGradleModelKey) != null
-        return AndroidAwareGradleModelProvider(isAndroidPluginRequestingKotlinGradleModel)
+        return AndroidAwareGradleModelProvider(
+            androidPluginIsRequestingVariantSpecificModels = isAndroidPluginRequestingKotlinGradleModel,
+            executionMode = KotlinGradleModelFetchProperties.getExecutionMode(),
+        )
     }
 
     override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>): DataNode<ModuleData>? {
