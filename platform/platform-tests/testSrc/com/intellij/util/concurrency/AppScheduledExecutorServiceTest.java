@@ -3,6 +3,7 @@ package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.util.Pair;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ConcurrencyUtil;
@@ -12,6 +13,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assume;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,6 +35,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class AppScheduledExecutorServiceTest extends CatchLogErrorsInAllThreadsTestCase {
   private record LogInfo(int runnable, @NotNull Thread currentThread) {
     private LogInfo(int runnable) {

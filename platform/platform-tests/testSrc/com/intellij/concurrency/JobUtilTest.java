@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -48,6 +49,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assume;
+import org.junit.runner.RunWith;
 
 import javax.swing.SwingUtilities;
 import java.util.ArrayList;
@@ -74,6 +76,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class JobUtilTest extends LightPlatformTestCase {
   private static final AtomicInteger COUNT = new AtomicInteger();
   private TestTimeOut t;
