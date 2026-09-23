@@ -77,7 +77,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @RunWith(JUnit38AssumeSupportRunner.class)
-public class JobUtilTest extends LightPlatformTestCase {
+public class JobLauncherImplTest extends LightPlatformTestCase {
   private static final AtomicInteger COUNT = new AtomicInteger();
   private TestTimeOut t;
 
