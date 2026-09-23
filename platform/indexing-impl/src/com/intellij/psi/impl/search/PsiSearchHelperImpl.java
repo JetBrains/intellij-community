@@ -97,20 +97,20 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
@@ -1046,7 +1046,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                         @NotNull Map<VirtualFile, Collection<T>> nearDirectoryFiles,
                                                                         @NotNull Map<VirtualFile, Collection<T>> intersectionCandidateFiles,
                                                                         @NotNull Map<VirtualFile, Collection<T>> restCandidateFiles,
-                                                                        @NotNull List<VirtualFile> queryFiles) {
+                                                                        @NotNull List<? extends VirtualFile> queryFiles) {
     Project project = myManager.getProject();
     for (Map<VirtualFile, Collection<T>> chunk : List.of(targetFiles, nearDirectoryFiles, intersectionCandidateFiles, restCandidateFiles)) {
       CandidateFilesBatchesIterator batches = batchCandidateFiles(project, queryFiles, new ArrayList<>(chunk.keySet()));
@@ -1075,8 +1075,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private static @Nullable CandidateFilesBatchesIterator batchCandidateFiles(@NotNull Project project,
-                                                                              @NotNull List<VirtualFile> queryFiles,
-                                                                              @NotNull List<VirtualFile> candidateFiles) {
+                                                                             @NotNull List<? extends VirtualFile> queryFiles,
+                                                                             @NotNull List<? extends VirtualFile> candidateFiles) {
     for (SearchCandidateBatcher organizer : SearchCandidateBatcher.EP_NAME.getExtensionList()) {
       CandidateFilesBatchesIterator result = organizer.batchCandidateFiles(project, queryFiles, candidateFiles);
       if (result != null) return result;
@@ -1109,10 +1109,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static @NotNull QueryRequestsRunResult appendCollectorsFromQueryRequests(@NotNull ProgressIndicator progress,
                                                                                    @NotNull Map<SearchRequestCollector, Processor<? super PsiReference>> collectors) {
     boolean changed = false;
-    Deque<SearchRequestCollector> queue = new LinkedList<>(collectors.keySet());
+    Queue<SearchRequestCollector> queue = new ArrayDeque<>(collectors.keySet());
     while (!queue.isEmpty()) {
       progress.checkCanceled();
-      SearchRequestCollector each = queue.removeFirst();
+      SearchRequestCollector each = queue.remove();
       for (QuerySearchRequest request : each.takeQueryRequests()) {
         progress.checkCanceled();
         if (!request.runQuery()) {
@@ -1120,7 +1120,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
         assert !collectors.containsKey(request.collector) || collectors.get(request.collector) == request.processor;
         collectors.put(request.collector, request.processor);
-        queue.addLast(request.collector);
+        queue.add(request.collector);
         changed = true;
       }
     }
@@ -1251,7 +1251,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                            @NotNull Set<RequestWithProcessor> locals,
                                            @NotNull Map<TextIndexQuery, Collection<RequestWithProcessor>> globals,
                                            @NotNull List<? super Computable<Boolean>> customs,
-                                           @NotNull Map<RequestWithProcessor, Processor<? super CandidateFileInfo>> localProcessors) {
+                                           @NotNull Map<? super RequestWithProcessor, Processor<? super CandidateFileInfo>> localProcessors) {
     for (Map.Entry<SearchRequestCollector, Processor<? super PsiReference>> entry : collectors.entrySet()) {
       ProgressManager.checkCanceled();
       Processor<? super PsiReference> processor = entry.getValue();
