@@ -4822,8 +4822,6 @@ f:com.intellij.ui.FontInfoRendererBuilder
 - <init>():V
 - f:build():javax.swing.ListCellRenderer
 - f:editorFont():com.intellij.ui.FontInfoRendererBuilder
-f:com.intellij.ui.GotItMessage
-- setCallback(java.lang.Runnable):com.intellij.ui.GotItMessage
 com.intellij.ui.GotItTextBuilder
 - browserLink(java.lang.String,java.net.URL):java.lang.String
 - code(java.lang.String):java.lang.String
