@@ -19,8 +19,10 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.openapi.vfs.VirtualFilePrefixTree
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -47,6 +49,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.ListCellRenderer
@@ -239,14 +242,11 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
               val shouldProcessSelf = state.processItem(item, handle)
 
               fun processResult(file: VirtualFile) {
-                val filePath = file.path
-                val rootOfFile = state.getPathRootOfPath(filePath)
-                if (rootOfFile == null) {
+                val pathFromNonIndexableRoot = state.getPathFromRoot(file)
+                if (pathFromNonIndexableRoot == null) {
                   LOG.warn("File $file that was yielded as a file under a non-indexable root didn't match any non-indexable roots; Continue search...")
                   return
                 }
-
-                val pathFromNonIndexableRoot = filePath.substring(rootOfFile.lastIndexOf("/") + 1)
 
                 if (pathMatcher.matches(pathFromNonIndexableRoot)) {
                   val matchingDegree = nameMatcher.matchingDegree(file.name)
@@ -367,16 +367,16 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
 
 private class SearchJobsState {
   val roots: Collection<TraversalItem>
-  private val rootsPaths: List<String>
+  private val pathFromRootResolver: PathFromRootResolver
   private val resultsChannel: Channel<Pair<VirtualFile, Int>> = Channel(Channel.UNLIMITED)
 
   constructor(traversal: ConcurrentFileTraversal) {
     this.roots = traversal.roots
-    this.rootsPaths = roots.map { it.file.path }
+    this.pathFromRootResolver = PathFromRootResolver(roots.map { it.file })
   }
 
-  fun getPathRootOfPath(filePath: String): String? {
-    return rootsPaths.firstOrNull { filePath.startsWith(it) }
+  fun getPathFromRoot(file: VirtualFile): String? {
+    return pathFromRootResolver.getPathFromRoot(file)
   }
 
   fun processItem(item: TraversalItem, handle: ParallelQueueProcessor<TraversalItem>): Boolean {
@@ -399,6 +399,29 @@ private class SearchJobsState {
 
   fun producerCompleted() {
     resultsChannel.close()
+  }
+}
+
+@ApiStatus.Internal
+@VisibleForTesting
+class PathFromRootResolver(roots: Collection<VirtualFile>) {
+  // "outer" here means that we remove nested roots, and getPathFromRoot will provide the longest possible path
+  private val outerRoots = VirtualFilePrefixTree.createMap<VirtualFile>().also { outerRoots ->
+    val allRoots = VirtualFilePrefixTree.createMap<VirtualFile>()
+    roots.forEach { root -> allRoots.put(root, root) }
+    allRoots.getRootValues().forEach { root -> outerRoots.put(root, root) }
+  }
+
+  fun getPathFromRoot(file: VirtualFile): String? {
+    val ancestorRoots = outerRoots.getAncestorValues(file)
+    if (ancestorRoots.isEmpty()) return null
+    if (ancestorRoots.size > 1) {
+      LOG.error("File $file has multiple outer roots: $ancestorRoots")
+      return null
+    }
+    val root = ancestorRoots.single()
+    val relativePath = VfsUtilCore.getRelativePath(file, root, '/') ?: return null
+    return if (relativePath.isEmpty()) root.name else "${root.name}/$relativePath"
   }
 }
 
