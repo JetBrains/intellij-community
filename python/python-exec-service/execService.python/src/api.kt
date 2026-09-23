@@ -27,7 +27,7 @@ private val logger = fileLogger()
 typealias PythonBinaryOnEelOrTarget = BinaryToExec
 
 /**
- * Execute [helper] on [python]. For remote eels, [helper] is copied (but only one file, however see [PyHelper.addDependency]!).
+ * Execute [helper] on [python]. For a remote eel, we copy the full helpers directory, because helpers can import other helpers.
  * To write something into the `stdin` of [helper], use [stdInProvider].
  * The process output is reported as progress.
  * Returns `stdout`.
@@ -100,3 +100,4 @@ class StdInProvider(
   internal val data: ByteArray,
   internal val onError: (IOException) -> Unit = { logger.error(it) }, // Inability to write to stdin usually means helper is broken
 )
+

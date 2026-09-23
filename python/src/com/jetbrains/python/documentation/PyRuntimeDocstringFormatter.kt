@@ -29,7 +29,7 @@ import org.jetbrains.annotations.VisibleForTesting
 
 internal object PyRuntimeDocstringFormatter {
 
-  private val helper = PyHelper("docstring_formatter.py", addDependency = true)
+  private val helper = PyHelper("docstring_formatter.py")
 
   internal sealed interface ModuleOrSdk {
     data class TheSdk(val sdk: Sdk) : ModuleOrSdk

@@ -1,15 +1,16 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService.python.advancedApi
 
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.FileReporter
-import com.intellij.python.community.execService.HowToReportFile
+import com.intellij.python.community.execService.HowToReportFile.AnArgument
+import com.intellij.python.community.execService.HowToReportFile.EnvVar
 import com.intellij.python.community.execService.ProcessInteractiveHandler
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.PyProcessListener
 import com.intellij.python.community.execService.impl.transformerToHandler
+import com.intellij.python.community.execService.RelativePath
 import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.community.execService.python.StdInProvider
 import com.intellij.python.community.execService.python.impl.asChannelConsumer
@@ -40,7 +41,7 @@ suspend fun <T> ExecService.executePythonAdvanced(
 
 
 /**
- * Execute [helper] on [python]. For remote eels, [helper] is copied (but only one file!).
+ * Execute [helper] on [python]. For a remote eel, we copy the full helpers directory, because helpers can import other helpers.
  * To write something into the `stdin` of [helper], use [stdInProvider].
  * The process output is reported as progress.
  */
@@ -61,17 +62,14 @@ suspend fun <T> ExecService.executeHelperAdvanced(
 }
 
 /**
- * Adds helper by copying it to the remote system (if needed)
+ * Adds [helper] as an argument, and the helper dependencies directory to `PYTHONPATH`.
+ * The full helpers directory is copied to the remote system if necessary.
  */
 private suspend fun Args.addHelper(helper: PyHelper): Args =
   withContext(Dispatchers.IO) {
-    if (helper.addDependency) {
-      // Helper needs a dependency
-      val additionalDir = PythonHelpersLocator.findPathInHelpers(PY3_HELPER_DEPENDENCIES_DIR)
-      addLocalFile(additionalDir, FileReporter { it to HowToReportFile.EnvVar(PYTHONPATH) })
+    addLocalDir(PythonHelpersLocator.getCommunityHelpersRoot()) {
+      findChild(helper, andReport = { it to AnArgument })
+      findChild(RelativePath(PY3_HELPER_DEPENDENCIES_DIR), andReport = { it to EnvVar(PYTHONPATH) })
     }
-
-    val helper = PythonHelpersLocator.findPathInHelpers(helper.name)
-    addLocalFile(helper)
-    this@addHelper
   }
+

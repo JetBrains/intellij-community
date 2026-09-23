@@ -22,12 +22,14 @@ import com.intellij.python.community.execService.impl.Arg
 import com.intellij.python.community.execService.impl.ArgsAndEnv
 import com.intellij.python.community.execService.impl.ExecServiceImpl
 import com.intellij.python.community.execService.impl.PyExecBundle.message
+import com.intellij.python.community.execService.impl.Uploader
 import com.intellij.python.community.execService.impl.transformerToHandler
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.venvReader.Directory
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
@@ -360,10 +362,10 @@ data class TtySize(val rows: UShort, val cols: UShort)
  */
 fun interface FileReporter {
   /**
-   * File is available on a remote machine as [fileOnRemoteMatchine]
-   * Return a value (could be [fileOnRemoteMatchine]) and [HowToReportFile]
+   * The file is available on the remote machine as [fileOnRemoteMachine].
+   * Return a value (it can be [fileOnRemoteMachine]) and [HowToReportFile].
    */
-  fun howToReportFile(fileOnRemoteMatchine: FullPathOnTarget): Pair<String, HowToReportFile>
+  fun howToReportFile(fileOnRemoteMachine: FullPathOnTarget): Pair<String, HowToReportFile>
 }
 
 /**
@@ -372,9 +374,9 @@ fun interface FileReporter {
  */
 sealed interface HowToReportFile {
   /**
-   * Just as a positional arugument e.g. `/tmp/foo`
+   * As a positional argument, e.g. `/tmp/foo`
    * */
-  data object AsArgument : HowToReportFile
+  data object AnArgument : HowToReportFile
 
   /**
    * As a value of env variable [varName]
@@ -382,6 +384,17 @@ sealed interface HowToReportFile {
   class EnvVar(internal val varName: String) : HowToReportFile
 }
 
+
+/**
+ * Scope of [Args.addLocalDir].
+ */
+@ApiStatus.NonExtendable
+interface DirScope {
+  /**
+   * Give [file] (relative to the directory) to the process. [andReport] tells how to give it.
+   */
+  fun findChild(file: RelativePath, andReport: FileReporter)
+}
 
 /**
  * ```kotlin
@@ -403,8 +416,30 @@ class Args(vararg initialArgs: String) {
    * This file will be copied to remote machine, and its remote name will be added to the list of arguments or env.
    * Use [fileReporter] to control it.
    */
-  fun addLocalFile(localFile: Path, fileReporter: FileReporter = FileReporter { Pair(it, HowToReportFile.AsArgument) }): Args {
+  fun addLocalFile(localFile: Path, fileReporter: FileReporter = FileReporter { Pair(it, HowToReportFile.AnArgument) }): Args {
     _args.add(Arg.FileArg(localFile, fileReporter))
+    return this
+  }
+
+
+  /**
+   * Make the full [localDir] available on the remote machine.
+   * In [dirScope], call [DirScope.findChild] for each file in [localDir] that you must give to the process.
+   * ```kotlin
+   *     addLocalDir(etc) {
+   *       findChild(RelativePath("passwd"), andReport = { it to AnArgument })
+   *       findChild(RelativePath{ "config.d" / "file.cfg"}, andReport = { it to EnvVar("MYENV") })
+   *     }
+   * ```
+   */
+  fun addLocalDir(localDir: Directory, dirScope: DirScope.() -> Unit): Args {
+    val files = mutableListOf<Pair<RelativePath, FileReporter>>()
+    object : DirScope {
+      override fun findChild(file: RelativePath, andReport: FileReporter) {
+        files.add(file to andReport)
+      }
+    }.dirScope()
+    _args.add(Arg.DirArg(localDir, files))
     return this
   }
 
@@ -413,37 +448,21 @@ class Args(vararg initialArgs: String) {
     return this
   }
 
-  internal val localFiles: List<Path>
+  /**
+   * Arguments from [addLocalFile] and [addLocalDir].
+   */
+  internal val localArgs: List<Arg.LocalArg>
     get() = _args.mapNotNull {
       when (it) {
-        is Arg.FileArg -> it.file
+        is Arg.LocalArg -> it
         is Arg.StringArg -> null
       }
     }
 
-  internal suspend fun getArgsAndEnv(mapFileToRemote: suspend (local: Path) -> String): ArgsAndEnv {
-    val args = mutableListOf<String>()
-    val env = mutableMapOf<String, String>()
-    for (arg in _args) {
-      when (arg) {
-        is Arg.FileArg -> {
-          val (value, howToReport) = arg.fileReporter.howToReportFile(mapFileToRemote(arg.file))
-          when (howToReport) {
-            HowToReportFile.AsArgument -> {
-              args.add(value)
-            }
-            is HowToReportFile.EnvVar -> {
-              env[howToReport.varName] = value
-            }
-          }
-        }
-        is Arg.StringArg -> {
-          args.add(arg.arg)
-        }
-      }
-    }
-    return ArgsAndEnv(args, env)
-  }
+  /**
+   * An eel or a target implementation calls this function. It must supply an [Uploader].
+   */
+  internal suspend fun getArgsAndEnv(uploader: Uploader): ArgsAndEnv = ArgsAndEnv.create(_args, uploader)
 }
 
 

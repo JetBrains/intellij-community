@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePlatformProcessAwaitExit")
 
 package com.intellij.python.community.execService.impl.processLaunchers
@@ -27,13 +27,18 @@ import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.DownloadConfig
 import com.intellij.python.community.execService.ExecuteGetProcessError
 import com.intellij.python.community.execService.UploadConfig
+import com.intellij.python.community.execService.impl.Arg
+import com.intellij.python.community.execService.impl.PathMapper
 import com.intellij.python.community.execService.impl.PyExecBundle
 import com.intellij.python.community.execService.impl.TargetEnvironmentRequestHandler
+import com.intellij.python.community.execService.impl.Uploader
+import com.intellij.python.community.execService.resolveAgainst
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.Exe
 import com.jetbrains.python.errorProcessing.ExecErrorReason
 import com.jetbrains.python.errorProcessing.MessageError
+import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -72,7 +77,12 @@ internal suspend fun createProcessLauncherOnTarget(
   // Targets API maps local roots as directories; callers may still restrict which files are uploaded below.
   val workingDir = binOnTarget.workingDir?.takeIf { it.pathString.isNotBlank() }
   val dirsToMap = buildSet {
-    addAll(launchRequest.args.localFiles.map { it.parent })
+    for (localArg in launchRequest.args.localArgs) {
+      when (localArg) {
+        is Arg.FileArg -> add(localArg.file.parent)
+        is Arg.DirArg -> add(localArg.root)
+      }
+    }
     workingDir?.also {
       add(it)
     }
@@ -110,13 +120,21 @@ internal suspend fun createProcessLauncherOnTarget(
   for (volume in targetEnv.uploadVolumes.values) {
     val skipUploading = uploadRoots[volume.localRoot]?.uploadVolumeExplicitly == false
     if (!skipUploading) { // Volume explicitly marked as non-uploadable, i.e.: helpers (they are uploaded by handlers)
-      uploadVolume(volume, workingDir, uploadConfig, launchRequest.args.localFiles)
+      uploadVolume(volume, workingDir, uploadConfig, launchRequest.args.localArgs)
     }
   }
 
-  val (args, env) = launchRequest.args.getArgsAndEnv { localFile ->
-    targetEnv.getTargetPaths(localFile.pathString).first()
-  }
+  fun getRemotePath(localPath: Path): FullPathOnTarget = targetEnv.getTargetPaths(localPath.pathString).first()
+
+  val (args, env) = launchRequest.args.getArgsAndEnv(object : Uploader {
+    override suspend fun uploadFile(localFile: Path): FullPathOnTarget =
+      getRemotePath(localFile)
+
+    override suspend fun uploadDir(localDir: Directory): PathMapper = PathMapper { relativePath ->
+      getRemotePath(relativePath.resolveAgainst(localDir))
+    }
+  })
+
   val exePath: FullPathOnTarget
   val cmdLine = TargetedCommandLineBuilder(request).also { commandLineBuilder ->
     binOnTarget.configureTargetCmdLine(commandLineBuilder)
@@ -159,13 +177,18 @@ private fun uploadVolume(
   volume: TargetEnvironment.UploadableVolume,
   workingDir: Path?,
   uploadConfig: UploadConfig?,
-  localFiles: List<Path>,
+  localArgs: List<Arg.LocalArg>,
 ) {
   if (uploadConfig != null && workingDir != null && volume.localRoot == workingDir) {
-    val localFileRelativePaths = localFiles
-      .filter { it.parent == workingDir }
-      .map { workingDir.relativize(it).pathString }
-    val pathsToUpload = (uploadConfig.relativePaths + localFileRelativePaths).distinct()
+    // Upload only the files and the directories that the process needs, not the full working directory.
+    val localPathsInWorkingDir = localArgs.mapNotNull { localArg ->
+      when (localArg) {
+        is Arg.FileArg -> localArg.file.takeIf { it.parent == workingDir }
+        is Arg.DirArg -> localArg.root.takeIf { it.startsWith(workingDir) }
+      }
+    }
+    val localRelativePaths = localPathsInWorkingDir.map { workingDir.relativize(it).pathString.ifEmpty { "." } }
+    val pathsToUpload = (uploadConfig.relativePaths + localRelativePaths).distinct()
     for (path in pathsToUpload) {
       volume.uploadMeasureTime(path, TargetProgressIndicator.EMPTY, "execService")
     }
@@ -319,7 +342,10 @@ fun TargetEnvironment.UploadableVolume.uploadMeasureTime(
  */
 @ApiStatus.Internal
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-fun measureUploadTime(@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */) upload: () -> Unit, genMessage: () -> @NlsSafe String) {
+fun measureUploadTime(
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */) upload: () -> Unit,
+  genMessage: () -> @NlsSafe String,
+) {
   val duration = measureTime { upload() }
   logger.debug { "upload ${genMessage()} : $duration" }
 }

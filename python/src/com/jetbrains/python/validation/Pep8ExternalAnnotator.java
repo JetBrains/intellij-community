@@ -33,7 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.python.community.execService.python.PyHelper;
+import com.intellij.python.community.execService.RelativePath;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
@@ -83,11 +83,11 @@ import static com.jetbrains.python.validation.PyPep8HelperBridgeKt.execPep8Helpe
 
 public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotator.State, Pep8ExternalAnnotator.Results> {
   @VisibleForTesting
-  static final @NotNull PyHelper PYCODESTYLE_2_8_0_PY = new PyHelper("pycodestyle-2.8.0.py", false);
+  static final @NotNull RelativePath PYCODESTYLE_2_8_0_PY = new RelativePath("pycodestyle-2.8.0.py");
   @VisibleForTesting
-  static final @NotNull PyHelper PYCODESTYLE_2_10_0_PY = new PyHelper("pycodestyle-2.10.0.py", false);
+  static final @NotNull RelativePath PYCODESTYLE_2_10_0_PY = new RelativePath("pycodestyle-2.10.0.py");
   @VisibleForTesting
-  static final @NotNull PyHelper PYCODESTYLE_PY = new PyHelper("pycodestyle.py", false);
+  static final @NotNull RelativePath PYCODESTYLE_PY = new RelativePath("pycodestyle.py");
 
   // Taken directly from the sources of pycodestyle.py
   private static final String DEFAULT_IGNORED_ERRORS = "E121,E123,E126,E226,E24,E704,W503,W504";
@@ -210,7 +210,7 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
     options.add("--max-line-length=" + collectedInfo.margin);
     options.add("-");
 
-    PyHelper pycodestyleScript = selectPycodestyleHelper(collectedInfo.interpreterVersion);
+    var pycodestyleScript = selectPycodestyleHelper(collectedInfo.interpreterVersion);
     var stdin = collectedInfo.fileText.getBytes(StandardCharsets.UTF_8);
     var output = execPep8Helper(pycodestyleScript, collectedInfo.interpreterPath, stdin, options);
 
@@ -233,7 +233,7 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
    * The two older copies guard that call with a version check, so they also run on an older interpreter.
    */
   @VisibleForTesting
-  static @NotNull PyHelper selectPycodestyleHelper(@NotNull LanguageLevel level) {
+  static @NotNull RelativePath selectPycodestyleHelper(@NotNull LanguageLevel level) {
     if (level.isOlderThan(LanguageLevel.PYTHON36)) {
       return PYCODESTYLE_2_8_0_PY;
     }

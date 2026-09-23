@@ -43,6 +43,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//libraries/caffeine",
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
         "//python/openapi:community",
@@ -80,6 +81,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":community-execService",
+        "//libraries/caffeine:caffeine_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//python/openapi:community_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
