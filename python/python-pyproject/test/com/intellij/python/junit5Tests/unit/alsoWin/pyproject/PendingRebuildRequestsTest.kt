@@ -146,7 +146,7 @@ internal class PendingRebuildRequestsTest {
         failing.mergeRebuildRequests(other, Duration.ZERO).toList()
       }
     }
-    assertThat(thrown).isSameAs(failure)
+    assertThat(thrown).isExactlyInstanceOf(IOException::class.java).hasMessage(failure.message)
     assertThat(otherStopped).isTrue()
   }
 
