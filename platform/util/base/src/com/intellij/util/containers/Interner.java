@@ -11,7 +11,7 @@ import java.util.Set;
 public abstract class Interner<T> {
   /**
    * Allow reusing structurally equal objects to avoid memory being wasted on them. Objects are cached on weak references
-   * and garbage-collected when not needed anymore.
+   * and garbage-collected when not needed anymore. The returned interner is thread-safe.
    */
   public static @NotNull <T> Interner<T> createWeakInterner() {
     return new WeakInterner<>();
