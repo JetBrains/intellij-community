@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelController
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.api.Project
@@ -10,6 +12,8 @@ import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import org.gradle.internal.build.BuildState
+import org.gradle.tooling.model.gradle.GradleBuild
+import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
@@ -26,13 +30,46 @@ interface PrepareKotlinIdeImportTaskModel : Serializable {
     ) : PrepareKotlinIdeImportTaskModel
 }
 
+class PrepareKotlinIdeImportModelProvider(
+    private val executionMode: GradleModelController.GradleModelFetchRequest.GradleExecutionMode,
+    private val isIsolatedProjectsEnabled: Boolean,
+) : ProjectImportModelProvider {
+    override fun populateModels(
+        modelController: GradleModelController,
+        buildModels: Collection<GradleBuild>,
+        modelConsumer: ProjectImportModelProvider.GradleModelConsumer
+    ) {
+        modelController.fetchRequest(buildModels, PrepareKotlinIdeImportTaskModel::class.java)
+            .executionMode(getEffectiveExecutionMode())
+            .execute(modelConsumer)
+    }
+
+    private fun getEffectiveExecutionMode(): GradleModelController.GradleModelFetchRequest.GradleExecutionMode {
+        // Workaround for https://github.com/gradle/gradle/issues/39040
+        if (isIsolatedProjectsEnabled && GradleVersionUtil.isCurrentGradleOlderThan("9.9")) {
+            return GradleModelController.GradleModelFetchRequest.GradleExecutionMode.SEQUENTIAL
+        }
+        return executionMode
+    }
+
+    override fun getPhase(): GradleModelFetchPhase = GradleModelFetchPhase.PROJECT_LOADED_PHASE
+
+    companion object {
+        val MODELS: Set<Class<*>> = setOf(PrepareKotlinIdeImportTaskModel::class.java)
+    }
+}
+
 class PrepareKotlinIdeaImportTaskModelBuilder : AbstractModelBuilderService() {
 
     override fun canBuild(modelName: String?): Boolean {
         return PrepareKotlinIdeImportTaskModel::class.java.name == modelName
     }
 
-    override fun buildAll(modelName: String, project: Project, context: ModelBuilderContext): PrepareKotlinIdeImportTaskModel? {
+    override fun buildAll(
+        modelName: String,
+        project: Project,
+        context: ModelBuilderContext
+    ): PrepareKotlinIdeImportTaskModel? {
         return GradleOpenTelemetry.callWithSpan("kotlin_import_daemon_prepare_kotlin_ide_import_buildAll") {
             buildAllWithTelemetry(project)
         }
