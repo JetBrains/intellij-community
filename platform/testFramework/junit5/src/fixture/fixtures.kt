@@ -241,7 +241,7 @@ fun projectFixture(
     runAllSuspend(
       { testWorkspaceModelLeak(project) },
       { ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = false) },
-      { application.checkEditorsReleased() },
+      { application.checkEditorsReleased(project) },
     )
   }
 }

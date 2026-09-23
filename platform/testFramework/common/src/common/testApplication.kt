@@ -29,10 +29,12 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.P3SupportInstaller
 import com.intellij.openapi.util.Disposer
@@ -284,6 +286,7 @@ fun Application.cleanApplicationState() {
   }.onFailure(::addError)
 
   cleanApplicationStateCatching()?.let(::addError)
+  runCatching(Application::checkUnownedEditorsReleased).onFailure(::addError)
   runCatching(Application::cleanupApplicationCaches).onFailure(::addError)
   error?.let { throw it }
 }
@@ -323,14 +326,48 @@ fun Application.clearEncodingManagerDocumentQueue() {
 @Internal
 fun Application.checkEditorsReleased() {
   val editorFactory = serviceIfCreated<EditorFactory>() ?: return
+  reportAndReleaseEditors(editorFactory, editorFactory.allEditors.asList())
+}
+
+/**
+ * Checks only the editors of [project], after the project is closed.
+ *
+ * Other projects are not checked: sibling project fixtures close concurrently, so another project may still be releasing its editors,
+ * and a class-level project stays open across tests.
+ */
+@TestOnly
+@Internal
+fun Application.checkEditorsReleased(project: Project) {
+  val editorFactory = serviceIfCreated<EditorFactory>() ?: return
+  reportAndReleaseEditors(editorFactory, editorFactory.allEditors.filter { it.project === project })
+}
+
+/**
+ * Checks the editors that no open project owns: without a project, of the default project, or of a disposed project.
+ * The editors of an open project are checked when that project is closed, see [checkEditorsReleased].
+ */
+@TestOnly
+@Internal
+fun Application.checkUnownedEditorsReleased() {
+  val editorFactory = serviceIfCreated<EditorFactory>() ?: return
+  reportAndReleaseEditors(editorFactory, editorFactory.allEditors.filter { editor ->
+    val project = editor.project
+    project == null || project.isDefault || project.isDisposed
+  })
+}
+
+private fun reportAndReleaseEditors(editorFactory: EditorFactory, editors: List<Editor>) {
   val actions = mutableListOf<() -> Unit>()
-  for (editor in editorFactory.allEditors) {
+  for (editor in editors) {
     actions.add {
       EditorFactoryImpl.throwNotReleasedError(editor)
     }
     actions.add {
       ApplicationManager.getApplication().invokeAndWait {
-        editorFactory.releaseEditor(editor)
+        // the owner may have released it after the leak was reported
+        if (!editor.isDisposed) {
+          editorFactory.releaseEditor(editor)
+        }
       }
     }
   }
