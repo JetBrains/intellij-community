@@ -185,7 +185,10 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     List<NavigationItem> items = Collections.synchronizedList(new ArrayList<>());
 
     Processor<ChooseByNameContributor> processor = contributor ->
+    {
       processContributorForName(contributor, applicable.get(contributor), parameters, canceled, items);
+      return true;
+    };
     if (!ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(applicable.keySet()), processor))) {
       canceled.cancel();
     }
@@ -196,13 +199,13 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     return ArrayUtil.toObjectArray(items);
   }
 
-  private boolean processContributorForName(@NotNull ChooseByNameContributor contributor,
+  private void processContributorForName(@NotNull ChooseByNameContributor contributor,
                                             @NotNull String name,
                                             @NotNull FindSymbolParameters parameters,
                                             @NotNull ProgressIndicator canceled,
                                             @NotNull List<? super NavigationItem> items) {
     if (myProject.isDisposed()) {
-      return true;
+      return;
     }
     try {
       boolean searchInLibraries = parameters.isSearchInLibraries();
@@ -223,7 +226,6 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     catch (Throwable ex) {
       LOG.error(ex);
     }
-    return true;
   }
 
   @ApiStatus.Internal
@@ -238,7 +240,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
       ((ChooseByNameContributorEx)contributor).processElementsWithName(name, item -> {
         canceled.checkCanceled();
         count[0]++;
-        if (acceptItem(item)) items.add(item);
+        if (acceptItem(item)) {
+          items.add(item);
+        }
         return true;
       }, parameters);
     }
