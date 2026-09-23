@@ -201,14 +201,27 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
       Comparator.comparing((MatchResult mr) -> !rawPattern.equalsIgnoreCase(mr.elementName))
         .thenComparing((MatchResult mr) -> !comparingPattern.equalsIgnoreCase(mr.elementName))
         .thenComparing(Comparator.naturalOrder());
-    namesList.sort((mr1, mr2) -> {
-      ProgressManager.checkCanceled();
-      return byNameEquality.compare(mr1, mr2);
-    });
+    namesList.sort(cancellable(byNameEquality));
     if (LOG.isDebugEnabled()) {
       LOG.debug("sorted:"+ (System.currentTimeMillis() - started) + ",results:" + namesList.size());
     }
     return namesList;
+  }
+
+  /**
+   * Makes a sort cancellable without paying for {@link ProgressManager#checkCanceled()} on every comparison:
+   * sorting ~100k names performs millions of comparisons, so the check is done once per {@code 1024} of them.
+   * The returned comparator is stateful and must be used for a single-threaded sort only.
+   */
+  @ApiStatus.Internal
+  protected static @NotNull <T> Comparator<T> cancellable(@NotNull Comparator<? super T> delegate) {
+    int[] counter = {0};
+    return (o1, o2) -> {
+      if ((++counter[0] & 0x3FF) == 0) {
+        ProgressManager.checkCanceled();
+      }
+      return delegate.compare(o1, o2);
+    };
   }
 
   private static @NotNull List<MatchResult> getAllNames(@NotNull ChooseByNameViewModel base,
