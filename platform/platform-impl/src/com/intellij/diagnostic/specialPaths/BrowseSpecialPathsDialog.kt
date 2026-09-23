@@ -1,8 +1,8 @@
 package com.intellij.diagnostic.specialPaths
 
+import com.intellij.CommonBundle
 import com.intellij.diagnostic.DiagnosticBundle
 import com.intellij.diagnostic.specialPaths.SpecialPathEntry.Kind
-import com.intellij.execution.ExecutionBundle
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.notification.Notification
@@ -192,7 +192,7 @@ internal class BrowseSpecialPathsDialog(val project: Project?) : DialogWrapper(p
       Notifications.Bus.notify(
         Notification(
           "System Messages",
-          ExecutionBundle.message("error.common.title"),
+          CommonBundle.message ("title.error"),
           DiagnosticBundle.message ("notification.content.there.no.such.file", path),
           NotificationType.ERROR
         ), project
