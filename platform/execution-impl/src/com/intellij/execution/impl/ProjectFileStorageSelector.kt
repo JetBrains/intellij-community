@@ -92,7 +92,7 @@ abstract class ProjectFileStorageSelector @JvmOverloads constructor(
   protected open fun isPathInvalid(): Boolean = getPathError(getStoragePath()) != null
   protected open fun getStoragePathComment(): @NlsContexts.DetailedDescription String? = null
 
-  fun createComponent(): JPanel = FormBuilder.createFormBuilder().setFormLeftIndent(10).setHorizontalGap(0)
+  open fun createComponent(): JPanel = FormBuilder.createFormBuilder().setFormLeftIndent(10).setHorizontalGap(0)
     .addLabeledComponent(storeAsFileCheckBox, storeAsFileGearButton)
     .panel
 
@@ -110,7 +110,7 @@ abstract class ProjectFileStorageSelector @JvmOverloads constructor(
 
   val focusOrder: List<JComponent> get() = listOf(storeAsFileCheckBox, storeAsFileGearButton)
 
-  fun addStoreAsFileCheckBoxListener(listener: ActionListener) {
+  open fun addStoreAsFileCheckBoxListener(listener: ActionListener) {
     storeAsFileCheckBox.addActionListener(listener)
   }
 

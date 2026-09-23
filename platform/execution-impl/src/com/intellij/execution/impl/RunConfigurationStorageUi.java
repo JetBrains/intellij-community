@@ -23,12 +23,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
+
+import javax.swing.JPanel;
 
 public final class RunConfigurationStorageUi extends ProjectFileStorageSelector {
   private static final Logger LOG = Logger.getInstance(RunConfigurationStorageUi.class);
@@ -50,6 +53,16 @@ public final class RunConfigurationStorageUi extends ProjectFileStorageSelector 
 
     myProject = project;
     myOnModifiedRunnable = onModifiedRunnable;
+  }
+
+  @Override
+  public @NotNull JPanel createComponent() {
+    return super.createComponent();
+  }
+
+  @Override
+  public void addStoreAsFileCheckBoxListener(@NotNull ActionListener listener) {
+    super.addStoreAsFileCheckBoxListener(listener);
   }
 
   @Override
