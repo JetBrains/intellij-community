@@ -1,0 +1,81 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.platform.scratch.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.platform.scratch",
+        "intellij.platform.scratch.backend",
+    ],
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/platform-scratch-plugin.jar": ["intellij.platform.scratch.plugin"],
+    },
+    main_module = "intellij.platform.scratch.plugin",
+    mode_refused_content_modules = {
+        "frontend": ["intellij.platform.scratch.backend"],
+    },
+)
+### auto-generated section `dev intellij.platform.scratch.plugin` end
+
+### auto-generated section `build intellij.platform.scratch.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.scratch.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//platform/scratch"],
+    runtime_deps = ["//platform/scratch"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.scratch.plugin",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/scratch",
+        "//platform/scratch:scratch_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":plugin",
+        "//platform/scratch:scratch_test_lib",
+    ],
+)
+
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    content_modules = [
+        # do not sort,
+        "//platform/scratch",
+        "//platform/scratch/backend",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.platform.scratch.plugin` end
+
+### auto-generated section `iml intellij.platform.scratch.plugin` start
+exports_files(
+    [
+        "intellij.platform.scratch.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.scratch.plugin` end

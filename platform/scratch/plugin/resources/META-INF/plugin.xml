@@ -1,0 +1,15 @@
+<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
+     checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
+<!--suppress SplitModeMixedDependencies -->
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>com.intellij.scratch</id>
+  <name>Scratch Files</name>
+  <description>Scratch files and scratch buffers: quick throwaway files in any language, kept outside the project under
+    Scratches and Consoles.</description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.scratch" loading="required"/>
+    <module name="intellij.platform.scratch.backend" required-if-available="intellij.platform.backend"/>
+  </content>
+</idea-plugin>

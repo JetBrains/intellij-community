@@ -33,11 +33,7 @@ internal class ScratchFilesUsagesCollector : ApplicationUsagesCollector() {
    * @return Triple of number of files, total size of files in bytes, maximum file size
    */
   private fun getScratchFileMetrics(): Triple<Int, Long, Long> {
-    val scratchRootType = try {
-      RootType.findById("scratches")
-    } catch (e: Exception) {
-      return Triple(0, 0, 0)
-    }
+    val scratchRootType = ScratchUtil.findScratchesRootType() ?: return Triple(0, 0, 0)
     val scratchPath = ScratchFileService.getInstance().getRootPath(scratchRootType)
     val scratchDirectory = File(scratchPath)
 

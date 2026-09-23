@@ -1,0 +1,11 @@
+c:com.intellij.ide.scratch.ScratchFileType
+- getDefaultExtension():java.lang.String
+- getDescription():java.lang.String
+- getIcon():javax.swing.Icon
+- getName():java.lang.String
+- isReadOnly():Z
+f:com.intellij.ide.scratch.ScratchRootType
+- createScratchFile(com.intellij.openapi.project.Project,java.lang.String,com.intellij.lang.Language,java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- createScratchFile(com.intellij.openapi.project.Project,java.lang.String,com.intellij.lang.Language,java.lang.String,com.intellij.ide.scratch.ScratchFileService$Option):com.intellij.openapi.vfs.VirtualFile
+- patchIcon(javax.swing.Icon,com.intellij.openapi.vfs.VirtualFile,I,com.intellij.openapi.project.Project):javax.swing.Icon
+- substituteLanguage(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.lang.Language

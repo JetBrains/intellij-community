@@ -3260,11 +3260,6 @@ f:com.intellij.ide.scratch.ScratchFileServiceImpl
 - com.intellij.ide.scratch.ScratchFileService
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.components.PersistentStateComponent
-c:com.intellij.ide.scratch.ScratchFileType
-- com.intellij.openapi.fileTypes.LanguageFileType
-f:com.intellij.ide.scratch.ScratchRootType
-- com.intellij.ide.scratch.RootType
-- s:getInstance():com.intellij.ide.scratch.ScratchRootType
 f:com.intellij.ide.scratch.ScratchTreeStructureProvider
 - com.intellij.ide.projectView.TreeStructureProvider
 - com.intellij.openapi.project.DumbAware

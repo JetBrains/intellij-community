@@ -36,7 +36,6 @@ import com.intellij.util.containers.JBIterable;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,20 +52,6 @@ import java.io.IOException;
 public final class ScratchFileCreator {
   private static final Logger LOG = Logger.getInstance(ScratchFileCreator.class);
 
-  /** The id of the "Scratches" root type, the default target of {@link ScratchFileCreationHelper.Context#defaultRootType}. */
-  public static final @NonNls String SCRATCHES_ROOT_TYPE_ID = "scratches";
-
-  private ScratchFileCreator() {
-  }
-
-  /** @return the "Scratches" root type, or null when the scratch plugin is not loaded */
-  public static @Nullable RootType findScratchesRootType() {
-    for (RootType rootType : RootType.getAllRootTypes()) {
-      if (SCRATCHES_ROOT_TYPE_ID.equals(rootType.getId())) return rootType;
-    }
-    return null;
-  }
-
   public static @Nullable PsiFile doCreateNewScratch(@NotNull Project project, @NotNull ScratchFileCreationHelper.Context context) {
     return doCreateNewScratch(project, context, DataContext.EMPTY_CONTEXT);
   }
@@ -74,9 +59,9 @@ public final class ScratchFileCreator {
   public static @Nullable PsiFile doCreateNewScratch(@NotNull Project project,
                                                      @NotNull ScratchFileCreationHelper.Context context,
                                                      @NotNull DataContext dataContext) {
-    RootType targetRootType = context.defaultRootType != null ? context.defaultRootType : findScratchesRootType();
+    RootType targetRootType = context.defaultRootType != null ? context.defaultRootType : ScratchUtil.findScratchesRootType();
     if (targetRootType == null) {
-      LOG.warn("Cannot create a scratch file: no root type with id '" + SCRATCHES_ROOT_TYPE_ID + "' is registered");
+      LOG.warn("Cannot create a scratch file: no root type with id '" + ScratchUtil.SCRATCHES_ROOT_TYPE_ID + "' is registered");
       return null;
     }
     context.defaultRootType = targetRootType;

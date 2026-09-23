@@ -41,12 +41,6 @@
 
     <intentionAction>
       <language/>
-      <className>com.intellij.ide.scratch.ScratchFromSelectionIntention</className>
-      <bundleName>messages.LangBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <language/>
       <className>com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction</className>
     </intentionAction>
     <intentionAction>

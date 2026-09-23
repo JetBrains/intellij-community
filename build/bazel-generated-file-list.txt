@@ -1042,6 +1042,9 @@ platform/runtime/repository
 platform/runtime/repository/tests
 platform/scopes
 platform/scopes/backend
+platform/scratch
+platform/scratch/backend
+platform/scratch/plugin
 platform/script-debugger/backend
 platform/script-debugger/debugger-ui
 platform/script-debugger/protocol/protocol-reader

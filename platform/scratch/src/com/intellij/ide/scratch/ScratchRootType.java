@@ -21,7 +21,7 @@ public final class ScratchRootType extends RootType {
   }
 
   ScratchRootType() {
-    super(ScratchFileCreator.SCRATCHES_ROOT_TYPE_ID, LangBundle.message("root.type.scratches"));
+    super(ScratchUtil.SCRATCHES_ROOT_TYPE_ID, LangBundle.message("root.type.scratches"));
   }
 
   @Override

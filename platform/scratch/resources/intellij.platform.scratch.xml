@@ -1,0 +1,49 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectFrame"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <scratch.rootType implementation="com.intellij.ide.scratch.ScratchRootType"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.ide.scratch.ScratchFilesUsagesCollector"/>
+  </extensions>
+
+  <actions>
+    <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction">
+      <override-text place="EditorPopup"/>
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="WelcomeNewEmptyFile"/>
+      <add-to-group group-id="ConsoleEditorPopupMenu" anchor="before" relative-to-action="CompareClipboardWithSelection"/>
+    </action>
+    <action id="NewScratchBuffer" class="com.intellij.ide.scratch.ScratchFileActions$NewBufferAction"/>
+    <action id="Scratch.ChangeLanguage" class="com.intellij.ide.scratch.ScratchChangeLanguageAction">
+      <add-to-group group-id="EditorPopupMenu2"/>
+      <add-to-group group-id="ProjectViewPopupMenuModifyGroup" anchor="after" relative-to-action="$Delete"/>
+      <add-to-group group-id="EditorTabPopupMenuEx" anchor="before" relative-to-action="AssociateWithFileType"/>
+    </action>
+    <action id="Scratch.ShowFilesPopup" class="com.intellij.ide.scratch.ScratchFileActions$ShowFilesPopupAction"/>
+    <action id="Scratch.ExportToScratch" class="com.intellij.ide.scratch.ScratchFileActions$ExportToScratchAction"/>
+    <action id="WelcomeFileChangeLanguage" class="com.intellij.ide.scratch.WelcomeChangeLanguageAction" use-shortcut-of="Scratch.ChangeLanguage">
+      <add-to-group group-id="EditorPopupMenu2" anchor="after" relative-to-action="Scratch.ChangeLanguage"/>
+    </action>
+  </actions>
+</idea-plugin>

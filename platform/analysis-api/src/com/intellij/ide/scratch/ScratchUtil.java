@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,29 @@ import java.util.Objects;
  * @author gregsh
  */
 public final class ScratchUtil {
+  /** The id of the "Scratches" root type, which the scratch plugin registers. */
+  public static final @NonNls String SCRATCHES_ROOT_TYPE_ID = "scratches";
+
   private ScratchUtil() {
+  }
+
+  /** @return the "Scratches" root type, or null when the scratch plugin is not loaded */
+  public static @Nullable RootType findScratchesRootType() {
+    for (RootType rootType : RootType.getAllRootTypes()) {
+      if (SCRATCHES_ROOT_TYPE_ID.equals(rootType.getId())) return rootType;
+    }
+    return null;
+  }
+
+  /**
+   * Returns true if a file is under the "Scratches" root, as opposed to a console or another root type.
+   *
+   * @see #isScratch(VirtualFile)
+   */
+  @Contract("null -> false")
+  public static boolean isInScratchesRoot(@Nullable VirtualFile file) {
+    RootType rootType = RootType.forFile(file);
+    return rootType != null && SCRATCHES_ROOT_TYPE_ID.equals(rootType.getId());
   }
 
   /**

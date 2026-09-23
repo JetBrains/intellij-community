@@ -6,6 +6,8 @@
          customization plugin is also included in JetBrains Client layouts where backend-only VCS
          modules are unavailable. -->
     <module name="intellij.platform.vcs.impl"/>
+    <!-- The reference to NewScratchFile resolves only where the scratch plugin registers the action. -->
+    <module name="intellij.platform.scratch"/>
   </dependencies>
 
   <actions>
@@ -14,6 +16,10 @@
     <reference ref="Vcs.VcsClone">
       <add-to-group group-id="PlatformOpenProjectGroup" relative-to-action="NewProjectOrModuleGroup" anchor="after"/>
       <add-to-group group-id="ProjectWidget.Actions" anchor="after" relative-to-action="OpenFile"/>
+    </reference>
+    <!-- The product places the NewScratchFile action of the scratch plugin. -->
+    <reference ref="NewScratchFile">
+      <add-to-group group-id="PlatformOpenProjectGroup" anchor="after" relative-to-action="NewElement"/>
     </reference>
   </actions>
 </idea-plugin>

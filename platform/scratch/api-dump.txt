@@ -1,0 +1,5 @@
+c:com.intellij.ide.scratch.ScratchFileType
+- com.intellij.openapi.fileTypes.LanguageFileType
+f:com.intellij.ide.scratch.ScratchRootType
+- com.intellij.ide.scratch.RootType
+- s:getInstance():com.intellij.ide.scratch.ScratchRootType

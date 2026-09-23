@@ -103,6 +103,7 @@ val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.platform.problemView.plugin",
   "intellij.platform.testRunner.plugin",
   "intellij.platform.recentFiles.plugin",
+  "intellij.platform.scratch.plugin",
   "intellij.platform.structuralSearch.plugin",
   "intellij.platform.structureView.plugin",
   "intellij.platform.tasks.plugin",

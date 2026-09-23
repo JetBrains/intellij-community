@@ -1239,6 +1239,9 @@ a:com.intellij.ide.scratch.ScratchFileService
 e:com.intellij.ide.scratch.ScratchFileService$Option
 - java.lang.Enum
 f:com.intellij.ide.scratch.ScratchUtil
+- sf:SCRATCHES_ROOT_TYPE_ID:java.lang.String
+- s:findScratchesRootType():com.intellij.ide.scratch.RootType
+- s:isInScratchesRoot(com.intellij.openapi.vfs.VirtualFile):Z
 - s:isScratch(com.intellij.openapi.vfs.VirtualFile):Z
 f:com.intellij.lang.BracePair
 - getLeftBraceType():com.intellij.psi.tree.IElementType

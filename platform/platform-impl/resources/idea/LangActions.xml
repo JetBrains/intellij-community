@@ -396,15 +396,6 @@
     <group id="ToolsBasicGroup">
       <add-to-group group-id="ToolsMenu" anchor="first"/>
     </group>
-    <reference ref="NewScratchFile">
-      <add-to-group group-id="ConsoleEditorPopupMenu" anchor="before" relative-to-action="CompareClipboardWithSelection"/>
-    </reference>
-    <reference ref="NewScratchBuffer"/>
-    <reference ref="Scratch.ChangeLanguage">
-      <add-to-group group-id="EditorPopupMenu2"/>
-    </reference>
-    <reference ref="Scratch.ShowFilesPopup"/>
-    <reference ref="Scratch.ExportToScratch"/>
 
     <!-- A place where actions for external tools will be added if intellij.platform.execution module is loaded -->
     <group id="ExternalToolsGroupPlaceholder"/>
@@ -412,7 +403,6 @@
     <group id="NewGroup" popup="true" searchable="false">
       <reference ref="NewFile"/>
       <reference ref="WelcomeNewEmptyFile"/>
-      <reference ref="NewScratchFile"/>
       <reference ref="NewDir"/>
       <group id="FileTemplateSeparatorGroup" searchable="false"/> <!-- kept for backward compatibility -->
       <reference ref="NewWebDevelopment"/>
@@ -457,7 +447,6 @@
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
       <reference ref="$Delete"/>
-      <reference ref="Scratch.ChangeLanguage"/>
       <group id="MarkFileAs">
         <reference ref="OverrideFileTypeAction"/>
         <reference ref="ReverteOverrideFileTypeAction"/>
@@ -590,7 +579,6 @@
 
     <group id="EditorTabPopupMenuEx" searchable="false">
       <separator/>
-      <reference ref="Scratch.ChangeLanguage"/>
       <reference ref="AssociateWithFileType"/>
       <reference ref="MarkFileAs"/>
       <separator/>

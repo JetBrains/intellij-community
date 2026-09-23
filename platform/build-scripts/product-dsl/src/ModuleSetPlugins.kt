@@ -12,6 +12,7 @@ private val HAND_WRITTEN_MODULE_SET_PLUGIN_MODULES: Set<String> = setOf(
   "intellij.platform.navbar.plugin",
   "intellij.platform.problemView.plugin",
   "intellij.platform.recentFiles.plugin",
+  "intellij.platform.scratch.plugin",
   "intellij.platform.ssh.plugin",
   "intellij.platform.structuralSearch.plugin",
   "intellij.platform.structureView.plugin",
