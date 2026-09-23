@@ -101,7 +101,6 @@ class BazelGeneratorIntegrationTests {
   fun `community ultimate and nested package labels do not need BUILD metadata`() {
     val projectDir = Files.createTempDirectory("build-metadata-ultimate")
     projectDir.resolve(".ultimate.root.marker").writeText("")
-    projectDir.resolve("build/dev_server_run_configurations.bzl").createParentDirectories().writeText("def dev_server_run_configurations():\n    pass\n")
     val communityDir = projectDir.resolve("community")
     getTestDataPath("MRI-4552").resolve("project").copyToRecursively(communityDir, followLinks = true, overwrite = false)
     communityDir.resolve(".idea").copyToRecursively(projectDir.resolve(".idea"), followLinks = true, overwrite = false)

@@ -164,7 +164,8 @@ def intellij_dev_prebuilt_binary(
         local_home_tool = None,
         data = [],
         before_run_main_class = "",
-        before_run_runtime_deps = []):
+        before_run_runtime_deps = [],
+        ide_config = None):
     """Launches a built distribution or a linked local home without packaging it.
 
     The distribution declares its product and additional modules.
@@ -172,16 +173,21 @@ def intellij_dev_prebuilt_binary(
     `data` is the launcher's extra runfiles, on top of the distribution and its config.
     With `before_run_main_class`, `BeforeRunDevMain` runs that class over `before_run_runtime_deps` first, then
     `PreBuiltDevMain`, as `intellij_dev_binary` does before `DevMainKt`.
+    `ide_config` is the `intellij_dev_dist_config` of `dist` when several launchers share one distribution; `dist` then
+    names a single target, and the macro declares no alias and no config of its own.
     """
-    ide_config = name + "_ide_config"
 
     # Manual, like the distribution in `data`: a wildcard build must not compose it. `bazel run` names the launcher and
     # is not affected.
     tags = ["manual"]
 
-    dist_target = name + "_distribution"
-    native.alias(name = dist_target, actual = dist, tags = tags, visibility = ["//visibility:private"])
-    intellij_dev_dist_config(name = ide_config, dist = dist_target, tags = tags, visibility = ["//visibility:private"])
+    if ide_config:
+        dist_target = dist
+    else:
+        ide_config = name + "_ide_config"
+        dist_target = name + "_distribution"
+        native.alias(name = dist_target, actual = dist, tags = tags, visibility = ["//visibility:private"])
+        intellij_dev_dist_config(name = ide_config, dist = dist_target, tags = tags, visibility = ["//visibility:private"])
 
     local_home_data = [local_home_tool] if local_home_tool else []
     local_home_flags = ["-Didea.dev.local.home.tool=$(rlocationpath %s)" % local_home_tool] if local_home_tool else []

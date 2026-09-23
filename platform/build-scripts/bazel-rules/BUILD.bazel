@@ -48,7 +48,6 @@ test_suite(
         "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:non-classpath-data-attributes-tests",
         "@jps_to_bazel//:bazel-generator-integration-tests",
         "@jps_to_bazel//:kotlinc-project-defaults-tests",
-        "@jps_to_bazel//:run-configurations-tests",
     ],
     visibility = ["//visibility:public"],
 )

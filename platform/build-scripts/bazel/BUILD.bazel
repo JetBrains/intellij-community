@@ -157,25 +157,6 @@ java_test(
     runtime_deps = [":bazel-generator-integration-tests-lib"],
 )
 
-filegroup(
-    name = "run-configurations-test-data",
-    srcs = glob(["testData/run-configurations/**"]),
-)
-
-java_test(
-    name = "run-configurations-tests",
-    size = "small",
-    data = [
-        "testData/run-configurations/expected.txt",
-        ":run-configurations-test-data",
-    ],
-    env = {
-        "BAZEL_GENERATOR_RUN_CONFIGURATIONS_TEST_DATA_MARKER": "$(rlocationpath testData/run-configurations/expected.txt)",
-    },
-    test_class = "org.jetbrains.intellij.build.bazel.RunConfigurationsFileTest",
-    runtime_deps = [":bazel-generator-integration-tests-lib"],
-)
-
 java_binary(
     name = "jps-to-bazel",
     jvm_flags = [],
