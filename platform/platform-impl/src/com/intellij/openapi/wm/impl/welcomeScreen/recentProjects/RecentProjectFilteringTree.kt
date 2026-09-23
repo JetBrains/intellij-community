@@ -511,7 +511,7 @@ class RecentProjectFilteringTree(
                 gaps = if (ExperimentalUI.isNewUI()) UnscaledGaps(6, 6, 0, 8) else UnscaledGaps(top = 8, right = 8),
                 verticalAlign = VerticalAlign.TOP)
           .cell(projectNamePanel, resizableColumn = true, horizontalAlign = HorizontalAlign.FILL, gaps = UnscaledGaps(4, 4, 4, 4))
-          .cell(projectProgressLabel, gaps = UnscaledGaps(left = 8, right = 8))
+          .cell(projectProgressLabel, resizableColumn = true, horizontalAlign = HorizontalAlign.RIGHT, gaps = UnscaledGaps(left = 8, right = 8))
           .cell(projectActions, gaps = UnscaledGaps(right = ActionsButton.RIGHT_GAP))
       }
 
