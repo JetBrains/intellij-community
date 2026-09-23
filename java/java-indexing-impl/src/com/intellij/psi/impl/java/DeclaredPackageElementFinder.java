@@ -78,11 +78,29 @@ public final class DeclaredPackageElementFinder extends PsiElementFinder {
   public boolean processPackageFiles(@NotNull PsiPackage psiPackage,
                                      @NotNull GlobalSearchScope scope,
                                      @NotNull Processor<? super VirtualFile> consumer) {
+    return processPackageFiles(psiPackage, scope, false, consumer);
+  }
+
+  @Override
+  public boolean processPackageFiles(@NotNull PsiPackage psiPackage,
+                                     @NotNull GlobalSearchScope scope,
+                                     boolean includeSubpackages,
+                                     @NotNull Processor<? super VirtualFile> consumer) {
     String qualifiedName = psiPackage.getQualifiedName();
+    List<VirtualFile> files = includeSubpackages
+                              ? JavaDeclaredPackageIndex.getFilesWithPackageOrSubPackage(qualifiedName, scope)
+                              : JavaDeclaredPackageIndex.getFilesWithExactPackage(qualifiedName, scope);
+    // an empty qualified name matches every directory of a source root, so the loop below then reports nothing, as it should:
+    // every file which the index knows lies in source content, hence in a directory of the default package or of a subpackage of it
+    String subPackagePrefix = qualifiedName.isEmpty() ? "" : qualifiedName + ".";
     PackageIndex packageIndex = PackageIndex.getInstance(myProject);
-    for (VirtualFile file : JavaDeclaredPackageIndex.getFilesWithExactPackage(qualifiedName, scope)) {
+    for (VirtualFile file : files) {
       // a directory of the package already reports this file, and PsiElementFinderImpl collects its classes through the directory
-      if (qualifiedName.equals(packageIndex.getPackageName(file))) continue;
+      String directoryPackage = packageIndex.getPackageName(file);
+      if (directoryPackage != null &&
+          (directoryPackage.equals(qualifiedName) || includeSubpackages && directoryPackage.startsWith(subPackagePrefix))) {
+        continue;
+      }
       if (!consumer.process(file)) return false;
     }
     return true;

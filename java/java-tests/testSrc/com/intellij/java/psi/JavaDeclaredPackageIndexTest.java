@@ -35,6 +35,11 @@ public class JavaDeclaredPackageIndexTest extends LightJavaCodeInsightFixtureTes
 
     assertEquals("ClassA.java", assertOneElement(filesWithExactPackage("org.classa")).getName());
     assertEmpty(filesWithExactPackage("org"));
+
+    assertEquals("ClassA.java", assertOneElement(filesWithPackageOrSubPackage("org.classa")).getName());
+    assertEquals("ClassA.java", assertOneElement(filesWithPackageOrSubPackage("org")).getName());
+    assertEquals("ClassA.java", assertOneElement(filesWithPackageOrSubPackage("")).getName());
+    assertEmpty(filesWithPackageOrSubPackage("org.classb"));
   }
 
   public void testDefaultPackage() {
@@ -82,6 +87,10 @@ public class JavaDeclaredPackageIndexTest extends LightJavaCodeInsightFixtureTes
 
   private List<VirtualFile> filesWithExactPackage(String packageName) {
     return JavaDeclaredPackageIndex.getFilesWithExactPackage(packageName, scope());
+  }
+
+  private List<VirtualFile> filesWithPackageOrSubPackage(String packageName) {
+    return JavaDeclaredPackageIndex.getFilesWithPackageOrSubPackage(packageName, scope());
   }
 
   private GlobalSearchScope scope() {

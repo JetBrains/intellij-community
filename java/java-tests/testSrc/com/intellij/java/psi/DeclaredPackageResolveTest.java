@@ -2,10 +2,13 @@
 package com.intellij.java.psi;
 
 import com.intellij.idea.TestFor;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
@@ -88,6 +91,37 @@ public class DeclaredPackageResolveTest extends LightJavaCodeInsightFixtureTestC
     PsiPackage parent = facade.findPackage("org");
     assertNotNull(parent);
     assertTrue(ContainerUtil.exists(parent.getSubPackages(), aPackage -> "org.classa".equals(aPackage.getQualifiedName())));
+  }
+
+  public void testPackageScopeOfDeclaredSubpackage() {
+    PsiFile nested = myFixture.addFileToProject("Nested.java", """
+      package org.classa.sub;
+
+      public class Nested { }
+      """);
+    PsiFile sibling = myFixture.addFileToProject("Sibling.java", """
+      package org.classb;
+
+      public class Sibling { }
+      """);
+    VirtualFile nestedFile = nested.getVirtualFile();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+
+    PsiPackage sub = facade.findPackage("org.classa.sub");
+    assertNotNull(sub);
+    assertTrue(PackageScope.packageScope(sub, false).contains(nestedFile));
+
+    // no directory holds org.classa, so only the subpackage mode reaches a file which declares a subpackage of it
+    PsiPackage classa = facade.findPackage("org.classa");
+    assertNotNull(classa);
+    assertFalse(PackageScope.packageScope(classa, false).contains(nestedFile));
+    assertTrue(PackageScope.packageScope(classa, true).contains(nestedFile));
+    assertFalse(PackageScope.packageScope(classa, true).contains(sibling.getVirtualFile()));
+
+    PsiPackage org = facade.findPackage("org");
+    assertNotNull(org);
+    assertTrue(PackageScope.packageScope(org, true).contains(nestedFile));
+    assertTrue(PackageScope.packageScope(org, true).contains(sibling.getVirtualFile()));
   }
 
   public void testUnknownPackageIsStillUnresolved() {

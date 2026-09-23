@@ -82,6 +82,20 @@ public final class JavaDeclaredPackageIndex extends FileBasedIndexExtension<Stri
     return result;
   }
 
+  /**
+   * @return the files which declare {@code packageName} or a subpackage of it
+   */
+  public static @NotNull List<VirtualFile> getFilesWithPackageOrSubPackage(@NotNull String packageName,
+                                                                          @NotNull GlobalSearchScope scope) {
+    // the indexer adds an entry for every prefix of the declared package, so every file below packageName is a value of that key
+    List<VirtualFile> result = new ArrayList<>();
+    FileBasedIndex.getInstance().processValues(INDEX_ID, packageName, null, (file, _) -> {
+      result.add(file);
+      return true;
+    }, scope);
+    return result;
+  }
+
   @Override
   public @NotNull ID<String, String> getName() {
     return INDEX_ID;

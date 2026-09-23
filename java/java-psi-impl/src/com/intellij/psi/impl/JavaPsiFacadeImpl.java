@@ -455,9 +455,22 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   public void processPackageFiles(@NotNull PsiPackage psiPackage,
                                   @NotNull GlobalSearchScope scope,
                                   @NotNull Processor<? super VirtualFile> consumer) {
+    processPackageFiles(psiPackage, scope, false, consumer);
+  }
+
+  /**
+   * @param psiPackage package to process
+   * @param scope scope to filter
+   * @param includeSubpackages whether the files of the subpackages of {@code psiPackage} should be processed as well
+   * @param consumer consumer that accepts single file source roots that belong to the specified package
+   */
+  public void processPackageFiles(@NotNull PsiPackage psiPackage,
+                                  @NotNull GlobalSearchScope scope,
+                                  boolean includeSubpackages,
+                                  @NotNull Processor<? super VirtualFile> consumer) {
     for (PsiElementFinder finder : filteredFinders()) {
       try {
-        if (!finder.processPackageFiles(psiPackage, scope, consumer)) {
+        if (!finder.processPackageFiles(psiPackage, scope, includeSubpackages, consumer)) {
           return;
         }
       }

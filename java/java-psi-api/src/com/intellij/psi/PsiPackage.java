@@ -86,6 +86,17 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
   }
 
   /**
+   * @param scope scope to limit the query to
+   * @param includeSubpackages whether the files of the subpackages of this package should be returned as well
+   * @return list of individual files declared as single file source roots that belong to this package and the supplied scope.
+   */
+  @ApiStatus.Experimental
+  default @NotNull @Unmodifiable Collection<@NotNull PsiFile> getIndividualFiles(@NotNull GlobalSearchScope scope,
+                                                                                boolean includeSubpackages) {
+    return getIndividualFiles(scope);
+  }
+
+  /**
    * Returns the list of all files in the package, restricted by the specified scope. (This is
    * normally the list of all files in all directories corresponding to the package, but it can
    * be modified by custom language plugins which have a different notion of packages.)

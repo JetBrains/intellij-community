@@ -178,6 +178,21 @@ public abstract class PsiElementFinder implements PossiblyDumbAware {
   }
 
   /**
+   * @param psiPackage package to search
+   * @param scope scope to search in
+   * @param includeSubpackages whether the files of the subpackages of {@code psiPackage} should be reported as well
+   * @param consumer processor that processes every single-file source root that belongs to this package
+   * @return true if the consumer never returned false
+   */
+  public boolean processPackageFiles(@NotNull PsiPackage psiPackage,
+                                     @NotNull GlobalSearchScope scope,
+                                     boolean includeSubpackages,
+                                     @NotNull Processor<? super VirtualFile> consumer) {
+    // a finder which does not support the subpackages still reports the files of the package itself
+    return processPackageFiles(psiPackage, scope, consumer);
+  }
+
+  /**
    * Returns the array of classes in the specified package and in the specified search scope.
    *
    * @param className short name of the class

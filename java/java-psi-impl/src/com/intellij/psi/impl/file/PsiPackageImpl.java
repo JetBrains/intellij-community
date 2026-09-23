@@ -84,6 +84,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectoriesWithLibSources;
   private volatile CachedValue<Collection<VirtualFile>> myFiles;
+  private volatile CachedValue<Collection<VirtualFile>> myFilesWithSubpackages;
   private volatile SoftReference<Map<GlobalSearchScope, Map<String, PsiClass[]>>> myDumbModeFullCache;
   private volatile SoftReference<Map<Pair<GlobalSearchScope, String>, PsiClass[]>> myDumbModePartialCache;
 
@@ -109,11 +110,27 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @Override
   public @Unmodifiable @NotNull Collection<@NotNull PsiFile> getIndividualFiles(@NotNull GlobalSearchScope scope) {
-    if (myFiles == null) {
-      myFiles = createCachedFiles();
+    return getIndividualFiles(scope, false);
+  }
+
+  @Override
+  public @Unmodifiable @NotNull Collection<@NotNull PsiFile> getIndividualFiles(@NotNull GlobalSearchScope scope,
+                                                                               boolean includeSubpackages) {
+    CachedValue<Collection<VirtualFile>> cache;
+    if (includeSubpackages) {
+      if (myFilesWithSubpackages == null) {
+        myFilesWithSubpackages = createCachedFiles(true);
+      }
+      cache = myFilesWithSubpackages;
+    }
+    else {
+      if (myFiles == null) {
+        myFiles = createCachedFiles(false);
+      }
+      cache = myFiles;
     }
 
-    Collection<VirtualFile> value = myFiles.getValue();
+    Collection<VirtualFile> value = cache.getValue();
     if (value.isEmpty()) {
       return Collections.emptyList();
     }
@@ -142,11 +159,11 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     }, false);
   }
 
-  private @NotNull CachedValue<Collection<VirtualFile>> createCachedFiles() {
+  private @NotNull CachedValue<Collection<VirtualFile>> createCachedFiles(boolean includeSubpackages) {
     return CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
       Collection<VirtualFile> result = new ArrayList<>();
       Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
-      getFacade().processPackageFiles(this, allScope(), processor);
+      getFacade().processPackageFiles(this, allScope(), includeSubpackages, processor);
       return CachedValueProvider.Result.create(result, PsiPackageImplementationHelper.getInstance().getDirectoryCachedValueDependencies(this));
     }, false);
   }
