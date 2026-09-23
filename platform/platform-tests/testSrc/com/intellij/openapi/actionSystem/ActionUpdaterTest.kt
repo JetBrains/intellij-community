@@ -23,9 +23,12 @@ import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.DockToolWindowAction
+import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
@@ -35,6 +38,7 @@ import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.RunMethodInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.replaceService
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.TimeoutUtil
@@ -53,6 +57,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -61,6 +67,9 @@ import kotlin.coroutines.CoroutineContext
 @TestApplication
 @RunInEdt(allMethods = false)
 class ActionUpdaterTest {
+
+  @TestDisposable
+  lateinit var disposable: Disposable
 
   @BeforeEach
   internal fun setUp() {
@@ -95,9 +104,13 @@ class ActionUpdaterTest {
     assertEmpty(actions)
   }
 
-  @Test
-  @RunMethodInEdt
-  fun testNonTrivialActionGroupDisabled() {
+  @ParameterizedTest(name = "lightMode={0}")
+  @ValueSource(booleans = [false, true])
+  fun testNonTrivialActionGroupHidesEmptyPopup(lightMode: Boolean): Unit = timeoutRunBlocking {
+    application.replaceService(IdeProductMode::class.java, object : IdeProductMode {
+      override val currentMode: ProductMode = if (lightMode) ProductMode.LIGHT else ProductMode.MONOLITH
+    }, disposable)
+
     val group = NonTrivialActionGroup()
     group.add(DefaultActionGroup(DefaultActionGroup(
       newAction(ActionUpdateThread.BGT) { it.presentation.isEnabledAndVisible = false })))
@@ -105,6 +118,24 @@ class ActionUpdaterTest {
     val actions = expandActionGroup(group, presentations)
     assertEmpty(actions)
     assertFalse(presentations.getPresentation(group).isEnabled)
+  }
+
+  @Test
+  fun testLightModeSkipsIncompatibleActionUpdate(): Unit = timeoutRunBlocking {
+    application.replaceService(IdeProductMode::class.java, object : IdeProductMode {
+      override val currentMode: ProductMode = ProductMode.LIGHT
+    }, disposable)
+
+    val childUpdated = AtomicBoolean()
+    withContext(Dispatchers.EDT) {
+      val child = newAction(ActionUpdateThread.BGT) {
+        childUpdated.set(true)
+      }
+      val rootGroup = object : DefaultActionGroup(child), DumbAware {}
+
+      assertEmpty(expandActionGroup(rootGroup))
+      assertFalse(childUpdated.get())
+    }
   }
 
   @Test
