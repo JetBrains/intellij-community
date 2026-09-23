@@ -389,6 +389,9 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
       return false;
     }
     final int reportedLine = problem.myLine - 1;
+    if (reportedLine < 0 || reportedLine >= document.getLineCount()) {
+      return false;
+    }
     final int lineLastOffset = Math.max(document.getLineStartOffset(reportedLine), document.getLineEndOffset(reportedLine) - 1);
     final PsiComment comment = as(file.findElementAt(lineLastOffset), PsiComment.class);
     if (comment != null) {
