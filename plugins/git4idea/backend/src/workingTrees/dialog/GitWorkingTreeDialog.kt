@@ -44,6 +44,7 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardLocalBranch
+import git4idea.GitUtil
 import git4idea.GitWorkingTree
 import git4idea.branch.GitNewBranchDialog
 import git4idea.branch.GitNewBranchDialog.Companion.cleanBranchNameAndAdjustCursorIfNeeded
@@ -60,6 +61,7 @@ import java.awt.event.ItemEvent
 import java.nio.file.InvalidPathException
 import java.nio.file.NoSuchFileException
 import java.nio.file.NotDirectoryException
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Vector
 import javax.swing.DefaultComboBoxModel
@@ -82,6 +84,7 @@ internal class GitWorkingTreeDialog(
   private lateinit var parentPathCell: Cell<TextFieldWithBrowseButton>
   private lateinit var projectNameCell: Cell<JBTextField>
   private lateinit var refComboBox: ComboBox<RefWithWorkingTree?>
+  private lateinit var refCellRenderer: RefWithTreeCellRenderer
   private lateinit var submoduleWarningRow: Row
   private lateinit var existingRefCell: Cell<ComboBox<RefWithWorkingTree?>>
 
@@ -235,7 +238,8 @@ internal class GitWorkingTreeDialog(
     val component = ComboBox<RefWithWorkingTree?>(model)
     component.isSwingPopup = false
     component.isUsePreferredSizeAsMinimum = false
-    component.renderer = RefWithTreeCellRenderer(data.project, getCurrentRepository())
+    refCellRenderer = RefWithTreeCellRenderer(data.project, getCurrentRepository())
+    component.renderer = refCellRenderer
     refComboBox = component
 
     // Set prototype to calculate proper size upfront and prevent resizing on first selection
@@ -262,13 +266,7 @@ internal class GitWorkingTreeDialog(
     val currentBranch = getCurrentRepository().currentBranch
     existingRefWithWorkingTree.set(refs.firstOrNull { it.ref == currentBranch } ?: refs.firstOrNull())
     submoduleWarningRow.visible(getCurrentRepository().isSubmodule())
-    (refComboBox.renderer as RefWithTreeCellRenderer).updateRepository(getCurrentRepository())
-  }
-
-  private fun supportExistingRefComment() {
-    updateExistingRefComment()
-    existingRefWithWorkingTree.afterChange { updateExistingRefComment() }
-    createNewBranch.afterChange { updateExistingRefComment() }
+    refCellRenderer.updateRepository(getCurrentRepository())
   }
 
   private fun updateExistingRefComment() {
@@ -384,8 +382,8 @@ internal class GitWorkingTreeDialog(
     }
   }
 
-  //should be the main repo root in case of working in a worktree
-  private fun resolveProjectNameBase() = getCurrentRepository().repositoryFiles.configFile.toPath().parent.parent
+  //should be the main repo root in case of working in a worktree, or the submodule root in case of a submodule
+  private fun resolveProjectNameBase(): Path = resolveProjectNameBase(getCurrentRepository())
 
   private fun createBranchNameCompletion(): GitNewBranchDialog.BranchNamesCompletion {
     val branches = getCurrentRepository().branches
@@ -460,6 +458,35 @@ internal class GitWorkingTreeDialog(
   companion object {
 
     const val PROJECT_NAME_FIELD_NAME: String = "Git.Worktree.Dialog.ProjectNameField"
+
+    @VisibleForTesting
+    internal fun resolveProjectNameBase(repository: GitRepository): Path {
+      val files = repository.repositoryFiles
+      val worktreeGitDir = files.worktreeGitDir.toNioPath()
+      val commonGitDir = files.commonGitDir.toNioPath()
+      if (worktreeGitDir == commonGitDir) {
+        // Not a linked working tree: a plain repository, a bare repository, or a submodule's own working tree.
+        // The repository's own root is the right name in every one of these cases.
+        return repository.root.toNioPath()
+      }
+      // A linked working tree of another repository. For a plain repository or a bare repository, the common
+      // git dir sits right inside the main root, so the parent is the main root. For a submodule, it is
+      // "<parent>/.git/modules/<submodule>" instead, and the submodule's own name is the common git dir's own
+      // name (see GitRepositoryFiles.getCommonGitDir).
+      return if (isSubmoduleModulesDir(commonGitDir)) commonGitDir else commonGitDir.parent
+    }
+
+    // Detects the "<parent>/.git/modules/<submodule>" shape from GitRepositoryFiles.getCommonGitDir.
+    // A plain or a bare repository never puts its common git dir under a "modules" directory of a ".git" directory,
+    // so this check tells a submodule's common git dir apart from a repository whose own git dir has a custom name.
+    private fun isSubmoduleModulesDir(commonGitDir: Path): Boolean {
+      var dir = commonGitDir.parent
+      while (dir != null) {
+        if (dir.name == "modules" && dir.parent?.name == GitUtil.DOT_GIT) return true
+        dir = dir.parent
+      }
+      return false
+    }
 
     @VisibleForTesting
     internal fun validateWorktreeParentPath(parentPath: String): @NlsContexts.DialogMessage String? {
