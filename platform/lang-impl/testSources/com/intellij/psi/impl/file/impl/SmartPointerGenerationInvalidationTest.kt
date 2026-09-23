@@ -1,23 +1,37 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager
+import com.intellij.codeInsight.multiverse.CodeInsightContextProvider
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.multiverseProjectFixture
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerEx
+import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.disposableFixture
+import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.testFramework.junit5.fixture.sourceRootFixture
+import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import com.intellij.testFramework.utils.vfs.createFile
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -33,6 +47,10 @@ import kotlin.io.path.Path
 @TestApplication
 internal class SmartPointerGenerationInvalidationTest {
   private val projectFixture = multiverseProjectFixture(withSharedSourceEnabled = true) {}
+  private val sourceRoot = projectFixture.moduleFixture("SmartPointerGenerationInvalidationTest").sourceRootFixture()
+  private val javaFile by sourceRoot.virtualFileFixture("A.java", "class A {}")
+  private val twoContextJavaFile by sourceRoot.virtualFileFixture("B.java", "class B {}")
+  private val disposable by disposableFixture()
 
   /**
    * The generation counter exposed by [SmartPointerManagerEx.getPossiblyInvalidationModCounter]
@@ -221,6 +239,102 @@ internal class SmartPointerGenerationInvalidationTest {
     assertEquals(rangeBefore, rangeAfter, "Range value should match across invalidation")
   }
 
+  @Test
+  fun `stub-based pointer resolves into a reassigned view provider after its context is replaced`() = timeoutRunBlocking {
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+    val oldContext = readAction { CodeInsightContextManager.getInstance(project).getCodeInsightContexts(javaFile).single() }
+
+    val (psiFile, pointer) = readAction {
+      val psiFile = PsiManager.getInstance(project).findFile(javaFile, oldContext) as PsiFileImpl
+      val psiClass = psiFile.stubTree!!.plainList.map { it.psi }.single { it is PsiNamedElement && it.name == "A" }
+      assertNull(psiFile.treeElement, "The pointer must be stub-based")
+      psiFile to SmartPointerManager.createPointer(psiClass)
+    }
+
+    edtWriteAction {
+      CodeInsightContextManager.getInstance(project)
+        .registerTestOnlyCodeInsightContextProvider(TestFileContextProvider(javaFile, listOf(TestContext("new"))), disposable)
+      DebugUtil.performPsiModification<Throwable>("") {
+        fileManager.possiblyInvalidatePhysicalPsi()
+      }
+    }
+
+    readAction {
+      val element = pointer.element
+      assertNotNull(element, "Pointer should resolve after its context is replaced")
+      assertEquals(listOf(psiFile.viewProvider), fileManager.findCachedViewProviders(javaFile),
+                   "Pointer must not create a view provider for the old context")
+      assertSame(psiFile, element!!.containingFile)
+    }
+  }
+
+  /**
+   * One [com.intellij.psi.impl.smartPointers.SmartPointerTracker] serves all contexts of a file.
+   * Two dead contexts can collapse into one new context. Each context has its own view provider,
+   * so only one of them can continue into the new context. The pointers of that context must
+   * survive and must resolve into the new context, and the pointers of the other context must not.
+   *
+   * The two pointers also differ in kind. The stub-based pointer has no range, so `getSortedInfos()`
+   * left it out and `revalidate` never saw its context. `getContextAwareInfos()` reports it.
+   *
+   * A pointer can answer from its own soft element cache for a while, so a non-null result is not
+   * proof of a live context. The test checks the context of the restored file instead.
+   */
+  @Test
+  fun `pointers of one of two collapsed contexts survive`() = timeoutRunBlocking {
+    val contextManager = CodeInsightContextManager.getInstance(project)
+    val contextA = TestContext("A")
+    val contextB = TestContext("B")
+
+    val twoContextDisposable = Disposer.newDisposable(disposable, "B.java has the contexts A and B")
+    edtWriteAction {
+      contextManager.registerTestOnlyCodeInsightContextProvider(
+        TestFileContextProvider(twoContextJavaFile, listOf(contextA, contextB)), twoContextDisposable)
+    }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
+    assertEquals(listOf(contextA, contextB), readAction { contextManager.getCodeInsightContexts(twoContextJavaFile) })
+
+    // A stub-based pointer in context B. Its element info has no range.
+    val stubPointer = readAction {
+      val psiFile = PsiManager.getInstance(project).findFile(twoContextJavaFile, contextB) as PsiFileImpl
+      val psiClass = psiFile.stubTree!!.plainList.map { it.psi }.single { it is PsiNamedElement && it.name == "B" }
+      assertNull(psiFile.treeElement, "The pointer must be stub-based")
+      SmartPointerManager.createPointer(psiClass)
+    }
+
+    // A range-based pointer in context A. Both pointers share one tracker, because the file is the same.
+    val rangePointer = readAction {
+      val psiFile = PsiManager.getInstance(project).findFile(twoContextJavaFile, contextA)!!
+      SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(psiFile, TextRange(0, 1))
+    }
+    assertNotNull(readAction { rangePointer.element }, "The range pointer must resolve before the context change")
+
+    // Both contexts die, and one new context replaces them.
+    edtWriteAction {
+      Disposer.dispose(twoContextDisposable)
+      contextManager.registerTestOnlyCodeInsightContextProvider(
+        TestFileContextProvider(twoContextJavaFile, listOf(TestContext("new"))), disposable)
+      DebugUtil.performPsiModification<Throwable>("") {
+        fileManager.possiblyInvalidatePhysicalPsi()
+      }
+    }
+
+    // Context A and context B cannot both continue into the new context, so exactly one set survives,
+    // and it must resolve into the new context. A plain non-null check is not enough here: both
+    // `element` and `containingFile` fall back to a soft element cache or to the document, and
+    // neither fallback knows about a context.
+    readAction {
+      val newContext = contextManager.getCodeInsightContexts(twoContextJavaFile).single()
+      val files = listOfNotNull(rangePointer.containingFile, stubPointer.containingFile)
+      assertEquals(1, files.size,
+                   "Exactly one context must survive. Range pointer: ${rangePointer.containingFile}, " +
+                   "stub-based pointer: ${stubPointer.containingFile}")
+      assertEquals(newContext, contextManager.getCodeInsightContext(files.single().viewProvider),
+                   "The surviving pointers must resolve into the new context")
+    }
+  }
+
   ///**
   // * `SmartPointerManagerEx.getInstanceEx(project).getPossiblyInvalidatedGeneration()` and
   // * `((PsiManagerImpl)).fileManagerEx.getPossiblyInvalidatedGeneration()` are independent
@@ -265,4 +379,21 @@ internal class SmartPointerGenerationInvalidationTest {
     return vFile to psi
   }
 
+}
+
+private class TestContext(private val name: String) : CodeInsightContext {
+  override fun toString(): String = "TestContext($name)"
+}
+
+// Answers [contexts] for [targetFile] and claims no other file.
+private class TestFileContextProvider(
+  private val targetFile: VirtualFile,
+  @Volatile var contexts: List<CodeInsightContext>,
+) : CodeInsightContextProvider {
+  override fun isOwnerOf(context: CodeInsightContext): Boolean = context is TestContext
+
+  override fun getContexts(file: VirtualFile, project: Project): List<CodeInsightContext>? =
+    if (file == targetFile) contexts else null
+
+  override fun subscribeToChanges(project: Project, invalidator: CodeInsightContextProvider.Invalidator) {}
 }
