@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -53,7 +54,7 @@ public class PyImportChooser implements ImportChooser {
   protected void processPopup(IPopupChooserBuilder<? extends ImportCandidateHolder> popup, boolean useQualifiedImport) {
     popup.setRenderer(new CellRenderer())
       .setTitle(useQualifiedImport ? PyPsiBundle.message("ACT.qualify.with.module") : PyPsiBundle.message("ACT.from.some.module.import"))
-      .setNamerForFiltering(o -> o.getPresentableText());
+      .setNamerForFiltering(o -> ReadAction.compute(() -> o.getPresentableText()));
   }
 
   // Stolen from FQNameCellRenderer
@@ -74,13 +75,14 @@ public class PyImportChooser implements ImportChooser {
                                                   boolean cellHasFocus) {
       clear();
 
-      PsiElement importable = value.getImportable();
-      if (importable != null) {
-        Icon icon = ReadAction.compute(() -> importable.getIcon(0));
-        setIcon(icon);
+      Pair<Icon, String> presentation = ReadAction.compute(() -> {
+        PsiElement importable = value.getImportable();
+        return Pair.create(importable != null ? importable.getIcon(0) : null, value.getPresentableText());
+      });
+      if (presentation.first != null) {
+        setIcon(presentation.first);
       }
-      String item_name = value.getPresentableText();
-      append(item_name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      append(presentation.second, SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
       setFont(FONT);
       if (isSelected) {
