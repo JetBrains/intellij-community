@@ -2,10 +2,10 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtilsCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaElementVisitor;
@@ -67,8 +67,8 @@ public final class AllClassesSearchExecutor implements QueryExecutor<PsiClass, A
     sorted.sort(String.CASE_INSENSITIVE_ORDER);
 
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-    return JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(sorted, name ->
-      processByName(project, scope, processor, cache, name));
+    return ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(sorted, name ->
+      processByName(project, scope, processor, cache, name)));
   }
 
   public static boolean processClassesByNames(@NotNull Project project,

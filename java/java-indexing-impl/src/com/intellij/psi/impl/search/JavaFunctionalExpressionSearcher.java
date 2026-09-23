@@ -16,6 +16,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtilsCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -213,9 +214,11 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       }
       return true;
     };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(filesFirst), vFileProcessor)) return;
+    if (!ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(filesFirst), vFileProcessor))) {
+      return;
+    }
     allFiles.removeAll(filesFirst);
-    JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(allFiles), vFileProcessor);
+    ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(allFiles), vFileProcessor));
   }
 
   private static @NotNull Map<FunExprOccurrence, Confidence> filterInapplicable(@NotNull List<? extends PsiClass> samClasses,
