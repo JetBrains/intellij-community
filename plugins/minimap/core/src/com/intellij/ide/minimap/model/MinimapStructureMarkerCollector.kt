@@ -56,6 +56,7 @@ internal class MinimapStructureMarkerCollector(
     if (!structureMarkerPolicy.isRelevantStructureElement(element, value)) return@computeBlocking null
 
     val source = resolveStructureMarkerSource(element)
+    if (source.psiElement != null && !isInDocument(source.psiElement, document)) return@computeBlocking null
     val range = source.range ?: return@computeBlocking null
     val pointer = resolvePointer(existing, source.psiElement)
     if (pointerManager != null && source.psiElement != null && pointer == null) return@computeBlocking null

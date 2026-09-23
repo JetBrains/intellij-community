@@ -4,16 +4,21 @@ package com.jetbrains.python;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
+import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.structureView.PyStructureViewElement;
 
 import javax.swing.Icon;
 import javax.swing.JTree;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertTreeEqual;
 
@@ -150,6 +155,41 @@ public class PyStructureViewTest extends PyTestCase {
                __module__
              """,
            true);
+  }
+
+  // IJPL-255407
+  public void testChildrenOfInheritedMembersAreInherited() {
+    final PyFile file = (PyFile)myFixture.configureByText("a.py", """
+      class Base:
+          class Config:
+              frozen = True
+          def method(self):
+              def helper():
+                  pass
+      class A(Base):
+          def own(self):
+              pass
+      """);
+    final PyClass cls = file.findTopLevelClass("A");
+    assertNotNull(cls);
+
+    final List<String> ownMembers = new ArrayList<>();
+    final List<String> notInheritedNestedInInherited = new ArrayList<>();
+    for (TreeElement child : new PyStructureViewElement(cls).getChildren()) {
+      final PyStructureViewElement member = (PyStructureViewElement)child;
+      if (!member.isInherited()) {
+        ownMembers.add(member.getPresentation().getPresentableText());
+        continue;
+      }
+      for (TreeElement nested : member.getChildren()) {
+        if (!((PyStructureViewElement)nested).isInherited()) {
+          notInheritedNestedInInherited.add(nested.getPresentation().getPresentableText());
+        }
+      }
+    }
+
+    assertEquals(List.of("own(self)"), ownMembers);
+    assertEmpty(notInheritedNestedInInherited);
   }
 
   private void doTest(final String expected, final boolean inherited) {

@@ -129,6 +129,25 @@ class MinimapHoverHitCheckTest : AbstractEditorTest() {
     assertNull("a point outside every entry rect must not produce a hover target", result)
   }
 
+  // IJPL-255407
+  fun testEntryBeyondDocumentProducesNoTarget() {
+    initText((0 until 20).joinToString("\n") { "line$it" })
+    val context = context()
+    val hitChecker = MinimapHoverHitCheck(editor)
+
+    val (entry, _) = lineEntry(line = 5, text = "fn five")
+    val document = editor.document
+    val foreignElement = RecordingStructureElement(TextRange(document.textLength + 100, document.textLength + 200), "foreign")
+    val foreignEntry = MinimapRenderEntry(element = foreignElement, rect2d = Rectangle2D.Double())
+    val snapshot = snapshotOf(context, foreignEntry, entry)
+
+    val rect = hitChecker.computeHoverRect(entry, context)!!
+    val result = resolveHitOffEdt(hitChecker, snapshot, Point(rect.centerX.toInt(), rect.centerY.toInt()))
+
+    assertNull("an entry beyond the document must have no hover rect", hitChecker.computeHoverRect(foreignEntry, context))
+    assertEquals("fn five", result?.text)
+  }
+
   private class RecordingStructureElement(private val range: TextRange, private val text: String) : StructureViewTreeElement {
     var presentationResolved: Boolean = false
       private set

@@ -128,7 +128,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
 
     final Collection<StructureViewTreeElement> children = new ArrayList<>();
     for (PyElement e : getElementChildren(element)) {
-      children.add(createChild(e, getElementVisibility(e), false, elementIsField(e)));
+      children.add(createChild(e, getElementVisibility(e), myInherited, elementIsField(e)));
     }
     PyPsiUtils.assertValid(element);
     if (element instanceof PyClass) {
