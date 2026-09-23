@@ -53,6 +53,7 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle-tooling/impl",
         "//platform/lang-api:lang",
         "//plugins/gradle:gradle-common",
+        "//plugins/kotlin/gradle/gradle",
     ],
 )
 
@@ -78,6 +79,7 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//plugins/gradle:gradle-common_test_lib",
+        "//plugins/kotlin/gradle/gradle:gradle_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.compilerPlugins.kapt` end

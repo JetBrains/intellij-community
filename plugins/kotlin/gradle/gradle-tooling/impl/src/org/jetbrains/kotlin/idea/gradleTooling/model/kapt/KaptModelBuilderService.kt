@@ -3,10 +3,12 @@
 package org.jetbrains.kotlin.idea.gradleTooling.model.kapt
 
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelController
 import org.gradle.api.Named
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.tooling.model.gradle.GradleBuild
 import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.AndroidAwareGradleModelProvider
 import org.jetbrains.kotlin.idea.gradleTooling.capitalize
@@ -14,6 +16,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.compilations
 import org.jetbrains.kotlin.idea.gradleTooling.getCompileKotlinTaskName
 import org.jetbrains.kotlin.idea.gradleTooling.getTarget
 import org.jetbrains.kotlin.idea.gradleTooling.getTargets
+import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
@@ -54,6 +57,26 @@ class KaptGradleModelImpl(
     override val sourceSets: List<KaptSourceSetModel>
 ) : KaptGradleModel
 
+class KaptGradleModelProvider(
+    private val executionMode: GradleModelController.GradleModelFetchRequest.GradleExecutionMode,
+) : ProjectImportModelProvider {
+
+    override fun populateModels(
+        modelController: GradleModelController,
+        buildModels: Collection<GradleBuild>,
+        modelConsumer: ProjectImportModelProvider.GradleModelConsumer
+    ) {
+        modelController.fetchRequest(buildModels, KaptGradleModel::class.java)
+            .executionMode(executionMode)
+            .execute(modelConsumer)
+    }
+
+    companion object {
+        val MODELS: Set<Class<*>> = setOf(
+            KaptGradleModel::class.java
+        )
+    }
+}
 
 class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilderService.ParameterizedModelBuilderService  {
 

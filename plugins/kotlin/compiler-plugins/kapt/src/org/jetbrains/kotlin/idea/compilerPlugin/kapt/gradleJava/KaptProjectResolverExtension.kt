@@ -14,8 +14,10 @@ import com.intellij.openapi.externalSystem.model.project.LibraryPathType
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.util.Key
 import org.gradle.tooling.model.idea.IdeaModule
+import org.jetbrains.kotlin.idea.gradle.utils.KotlinGradleModelFetchProperties
 import org.jetbrains.kotlin.idea.gradleTooling.model.kapt.KaptGradleModel
-import org.jetbrains.kotlin.idea.gradleTooling.model.kapt.KaptModelBuilderService
+import org.jetbrains.kotlin.idea.gradleTooling.model.kapt.KaptGradleModelProvider
+import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -26,16 +28,18 @@ class KaptProjectResolverExtension : AbstractProjectResolverExtension() {
         private val LOG = Logger.getInstance(KaptProjectResolverExtension::class.java)
     }
 
-    override fun getExtraProjectModelClasses(): Set<Class<KaptGradleModel>> {
+    override fun getModelProvider(): ProjectImportModelProvider = KaptGradleModelProvider(
+        KotlinGradleModelFetchProperties.getExecutionMode()
+    )
+
+    override fun getToolingExtensionsClasses(): Set<Class<*>> {
         val isAndroidPluginRequestingKotlinGradleModelKey = Key.findKeyByName("IS_ANDROID_PLUGIN_REQUESTING_KAPT_GRADLE_MODEL_KEY")
-        if (isAndroidPluginRequestingKotlinGradleModelKey != null && resolverCtx.getUserData(isAndroidPluginRequestingKotlinGradleModelKey) != null) {
-            return emptySet()
+        return if (isAndroidPluginRequestingKotlinGradleModelKey != null && resolverCtx.getUserData(isAndroidPluginRequestingKotlinGradleModelKey) != null) {
+            emptySet()
+        } else {
+            KaptGradleModelProvider.MODELS
         }
-
-        return setOf(KaptGradleModel::class.java)
     }
-
-    override fun getToolingExtensionsClasses() = setOf(KaptModelBuilderService::class.java, Unit::class.java)
 
     override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
         val kaptModel = resolverCtx.getExtraProject(gradleModule, KaptGradleModel::class.java)
