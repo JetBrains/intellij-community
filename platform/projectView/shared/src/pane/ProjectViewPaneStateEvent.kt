@@ -26,6 +26,10 @@ sealed class ProjectViewPaneStateSerializableEvent : ProjectViewPaneStateEvent, 
 
 @ApiStatus.Internal
 @Serializable
+data object ProjectViewActivateStateEvent : ProjectViewPaneStateSerializableEvent()
+
+@ApiStatus.Internal
+@Serializable
 data object ProjectViewClearStateEvent : ProjectViewPaneStateSerializableEvent()
 
 @ApiStatus.Internal

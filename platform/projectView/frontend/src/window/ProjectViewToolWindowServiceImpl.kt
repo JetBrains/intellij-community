@@ -36,6 +36,7 @@ import com.intellij.platform.projectView.frontend.impl.TreeBasedFrontendProjectV
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneAggregator
 import com.intellij.platform.projectView.frontend.pane.id
+import com.intellij.platform.projectView.pane.ProjectViewClearStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
@@ -97,6 +98,7 @@ internal class ProjectViewToolWindowServiceImpl(
   val currentPaneFlow: StateFlow<FrontendProjectViewPane?> = currentPaneMutableFlow.asStateFlow()
   val panes: Map<ProjectViewPaneId, FrontendProjectViewPane>
     field = ConcurrentHashMap<ProjectViewPaneId, FrontendProjectViewPane>()
+  private val activePanes = ConcurrentHashMap.newKeySet<ProjectViewPaneId>()
   private val currentPaneListener: ContentManagerListener = object : ContentManagerListener {
     override fun selectionChanged(event: ContentManagerEvent) {
       if (event.operation == ContentManagerEvent.ContentOperation.add) {
@@ -327,7 +329,7 @@ internal class ProjectViewToolWindowServiceImpl(
       // and we don't want to overwrite whatever was loaded from the persistent storage.
       val currentPane = currentPaneFlow.value
       if (currentPane != null) {
-        savePaneState(currentPane)
+        savePaneStateIfActive(currentPane)
       }
     }
   }
@@ -353,7 +355,12 @@ internal class ProjectViewToolWindowServiceImpl(
     LOG.debug { "Applied the loaded state for ${pane.id}" }
   }
   
-  private fun savePaneState(pane: FrontendProjectViewPane) {
+  @RequiresEdt
+  private fun savePaneStateIfActive(pane: FrontendProjectViewPane) {
+    if (pane.id !in activePanes) {
+      LOG.debug { "Not saving the state of ${pane.id} because it's not active" }
+      return
+    }
     val paneElement = Element("pane")
     paneElement.setAttribute("pane", pane.id.idString)
     pane.saveStateTo(paneElement)
@@ -387,7 +394,7 @@ internal class ProjectViewToolWindowServiceImpl(
               awaitCancellation()
             }
             finally {
-              savePaneState(pane)
+              savePaneStateIfActive(pane)
             }
           }
           val selectedPaneId = persistentState.getSelectedPaneState() ?: defaultSelection
@@ -439,6 +446,15 @@ internal class ProjectViewToolWindowServiceImpl(
                     paneStateFlow.collect { event ->
                       try {
                         LOG.trace { "Update pane state for ${pane.id}: $event" }
+                        if (event is ProjectViewClearStateEvent) {
+                          withContext(Dispatchers.UI) {
+                            savePaneStateIfActive(pane) // save before clearing
+                          }
+                          activePanes -= pane.id
+                        }
+                        else {
+                          activePanes += pane.id
+                        }
                         pane.applyStateChange(event)
                       }
                       catch (e: Exception) {

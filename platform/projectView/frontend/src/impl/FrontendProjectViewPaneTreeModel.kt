@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.actions.ProjectViewOptionMenuUpdater
 import com.intellij.platform.projectView.frontend.actions.SplitProjectViewSelectInTarget
+import com.intellij.platform.projectView.pane.ProjectViewActivateStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
 import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
 import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
@@ -151,6 +152,7 @@ internal class FrontendProjectViewPaneTreeModel(
 
   internal fun applyStateChange(event: ProjectViewPaneStateEvent) {
     when (event) {
+      is ProjectViewActivateStateEvent -> { } // do nothing, used only to mark the pane as active
       is ProjectViewClearStateEvent -> {
         treeModel.root = null
       }

@@ -40,10 +40,10 @@ class ProjectViewPaneStateBuilderImpl(
 
     override suspend fun applyUpdate(update: ProjectViewPaneStateEvent): ProjectViewPaneStateEvent? {
       LOG.debug { "Handling update: $update" }
-      if (update !is ProjectViewClearStateEvent) {
-        isInitialized.value = true
-      }
       when (update) {
+        is ProjectViewActivateStateEvent -> {
+          isInitialized.value = true
+        }
         is ProjectViewClearStateEvent -> {
           isInitialized.value = false
           actionState = null
@@ -302,6 +302,9 @@ class ProjectViewPaneStateBuilderImpl(
   }
 
   private suspend fun updateState(update: ProjectViewPaneStateEvent) {
+    if (update !is ProjectViewClearStateEvent) {
+      flowProducer.handleUpdate(ProjectViewActivateStateEvent)
+    }
     flowProducer.handleUpdate(update)
   }
 
