@@ -6,15 +6,14 @@ import com.intellij.build.issue.ConfigurableBuildIssue
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Version
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import java.util.concurrent.CompletableFuture
 
 internal class OutdatedIntelliJPlatformGradlePluginVersionIssue(
   projectPath: String,
-  currentVersion: Version,
-  latestVersion: Version,
+  currentVersion: String,
+  latestVersion: String,
 ) : ConfigurableBuildIssue() {
 
   init {
@@ -23,7 +22,7 @@ internal class OutdatedIntelliJPlatformGradlePluginVersionIssue(
     addDescription(
       DevKitGradleBundle.message(
         "intellij.platform.gradle.plugin.outdated.version.description",
-        currentVersion.toString()
+        currentVersion,
       )
     )
 
@@ -32,10 +31,10 @@ internal class OutdatedIntelliJPlatformGradlePluginVersionIssue(
 
   private fun addIntelliJPlatformGradlePluginVersionQuickFix(
     projectPath: String,
-    currentVersion: Version,
-    latestVersion: Version,
+    currentVersion: String,
+    latestVersion: String,
   ) {
-    val quickFix = IntelliJPlatformGradlePluginVersionQuickFix(projectPath, currentVersion.toString(), latestVersion.toString())
+    val quickFix = IntelliJPlatformGradlePluginVersionQuickFix(projectPath, currentVersion, latestVersion)
     val hyperlinkReference = addQuickFix(quickFix)
 
     @Suppress("DialogTitleCapitalization")

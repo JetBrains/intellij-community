@@ -68,14 +68,37 @@ intellij-platform = { id = "org.jetbrains.intellij.platform", version = "2.2.1" 
     )
   }
 
-  private fun assertQuickFix(fileName: String, before: String, after: String) {
+  fun testOffersQuickFixOnPreReleasePluginVersion() {
+    project.registerOrReplaceServiceInstance(
+      IntelliJPlatformGradleModelProvider::class.java,
+      IntelliJPlatformGradleModelProvider {
+        IntelliJPlatformGradleData(currentPluginVersion = "2.0.0-beta9", latestPluginVersion = LATEST_VERSION)
+      },
+      testRootDisposable,
+    )
+    assertQuickFix(
+      "libs.versions.toml",
+      """[plugins]
+intellij-platform = { id = "org.jetbrains.intellij.platform", version = "2.0.0-beta9" }""",
+      """[plugins]
+intellij-platform = { id = "org.jetbrains.intellij.platform", version = "2.2.1" }""",
+      expectedOldVersion = "2.0.0-beta9",
+    )
+  }
+
+  private fun assertQuickFix(
+    fileName: String,
+    before: String,
+    after: String,
+    expectedOldVersion: String = CURRENT_VERSION,
+  ) {
     val inspection = OutdatedIntelliJPlatformGradlePluginVersionInspection()
     myFixture.enableInspections(inspection)
     val file = myFixture.configureByText(fileName, before)
     assertTrue(inspection.isAvailableForFile(file))
     val problem = assertOneElement(myFixture.doHighlighting().filter { it.inspectionToolId == inspection.id })
 
-    assertEquals("\"2.1.0\"", file.text.substring(problem.startOffset, problem.endOffset))
+    assertEquals("\"$expectedOldVersion\"", file.text.substring(problem.startOffset, problem.endOffset))
     myFixture.editor.caretModel.moveToOffset(problem.startOffset + 1)
     myFixture.launchAction(myFixture.findSingleIntention("Update to 2.2.1"))
     myFixture.checkResult(after)

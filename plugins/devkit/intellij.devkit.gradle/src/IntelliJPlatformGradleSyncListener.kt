@@ -82,10 +82,10 @@ internal fun IntelliJPlatformGradleModelProviderImpl.importProjectModels(
 /** Returns the current and the latest plugin version of the first model that uses an outdated plugin. */
 internal fun findOutdatedIntelliJPlatformGradlePluginVersion(
   models: Collection<IntelliJPlatformGradleModel>,
-): Pair<Version, Version>? = models.asSequence()
+): Pair<String, String>? = models.asSequence()
   .mapNotNull { model ->
     val currentVersion = Version.parseVersion(model.currentPluginVersion) ?: return@mapNotNull null
     val latestVersion = Version.parseVersion(model.latestPluginVersion) ?: return@mapNotNull null
-    currentVersion to latestVersion
+    if (currentVersion < latestVersion) model.currentPluginVersion to model.latestPluginVersion else null
   }
-  .firstOrNull { (currentVersion, latestVersion) -> currentVersion < latestVersion }
+  .firstOrNull()
