@@ -37,7 +37,7 @@ internal fun buildPlatformSpecificPluginResources(
         targetPlatform = platform,
         context = context,
         pluginDir = pluginDir,
-        isDevMode = isDevMode,
+        runCustomAssetShimTasks = !isDevMode,
       )
     )
   }
@@ -63,12 +63,16 @@ private fun handlePlatformResourceGenerator(
   }
 }
 
+/**
+ * @param runCustomAssetShimTasks whether a [CustomAssetShimSource] runs its task. A bundled build runs them; classic dev
+ * mode and a published plugin do not.
+ */
 internal fun handleCustomPlatformSpecificAssets(
   layout: PluginLayout,
   targetPlatform: SupportedDistribution?,
   context: BuildContext,
   pluginDir: Path,
-  isDevMode: Boolean,
+  runCustomAssetShimTasks: Boolean,
 ): List<DistributionFileEntry> {
   val distEntries = ArrayList<DistributionFileEntry>()
   for (customAsset in layout.customAssets) {
@@ -119,7 +123,7 @@ internal fun handleCustomPlatformSpecificAssets(
           }
 
           is CustomAssetShimSource -> {
-            if (!isDevMode) {
+            if (runCustomAssetShimTasks) {
               distEntries.addAll(source.task(pluginDir, context))
             }
           }

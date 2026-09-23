@@ -57,6 +57,10 @@ class UnpackedZipSource(
   }
 }
 
+/**
+ * A custom asset source that is code: [task] writes into the plugin directory itself and returns the entries it wrote.
+ * Only a bundled build runs it, when it places the platform-specific plugin resources.
+ */
 class CustomAssetShimSource(
   @JvmField val task: (pluginDir: Path, context: BuildContext) -> List<DistributionFileEntry>,
 ) : Source

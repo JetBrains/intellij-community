@@ -186,7 +186,13 @@ private fun buildNonBundledPlugins(
       pluginSpecs.add(PluginRepositorySpec(destFile, pluginXml))
 
       val entries = if (layout != null) {
-        handleCustomPlatformSpecificAssets(layout = layout, targetPlatform = null, context = context, pluginDir = pluginDirOrFile, isDevMode = true)
+        handleCustomPlatformSpecificAssets(
+          layout = layout,
+          targetPlatform = null,
+          context = context,
+          pluginDir = pluginDirOrFile,
+          runCustomAssetShimTasks = false,
+        )
       }
       else {
         emptyList()
