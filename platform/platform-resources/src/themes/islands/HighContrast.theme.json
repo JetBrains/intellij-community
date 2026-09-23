@@ -529,6 +529,10 @@
         "hoverBackground": "#3333FF",
         "selectedBackground": "#3333FF",
         "selectedForeground": "#FFFFFF"
+      },
+      "DragAndDrop": {
+        "areaBackground": "#00EAFF7F",
+        "hintBackground": "#00EAFF40"
       }
     },
 
