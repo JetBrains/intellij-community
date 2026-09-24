@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
 import com.intellij.openapi.wm.impl.status.TextPanel
@@ -28,7 +29,6 @@ import com.intellij.ui.IconManager
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.RowIcon
 import com.intellij.util.IconUtil
-import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -56,8 +56,13 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
 
   override fun createInstance(project: Project): StatusBarWidget = LanguageServiceWidget(project, scope)
 
-  override fun registerCustomListeners(connection: MessageBusConnection) {
-    LanguageServiceWidgetItemsProvider.EP_NAME.extensionList.forEach { it.registerWidgetUpdaters(project, connection, ::update) }
+  /**
+   * Registers the item updaters here, not in the constructor hook `registerCustomListeners`: a provider may call `update`
+   * from another thread right away, and before construction ends the update flow of the superclass is still null.
+   */
+  override fun install(statusBar: StatusBar) {
+    LanguageServiceWidgetItemsProvider.EP_NAME.extensionList.forEach { it.registerWidgetUpdaters(project, myConnection, ::update) }
+    super.install(statusBar)
   }
 
   override fun getWidgetState(file: VirtualFile?): WidgetState {
