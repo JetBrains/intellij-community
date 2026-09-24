@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.testFramework.UsefulTestCase.assertSameLinesWithFile
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.jetbrains.idea.devkit.inspections.remotedev.MONOREPO_FEATURES_WITHOUT_SPLIT_MODE_SUPPORT_RELATIVE_PATH
@@ -11,10 +12,9 @@ import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionResour
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionResourceReader
 import org.jetbrains.idea.devkit.inspections.remotedev.createSplitModeExcludedModulesScopeXml
 import org.jetbrains.idea.devkit.inspections.remotedev.createSplitModeExcludedPathsScopeXml
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import kotlin.io.path.exists
-import kotlin.io.path.readText
+import kotlin.io.path.pathString
 import kotlin.io.path.writeText
 
 private const val UPDATE_SPLIT_MODE_EXCLUDED_MODULES_SCOPE_PROPERTY = "devkit.split.mode.excluded.modules.scope.update"
@@ -49,12 +49,10 @@ internal class SplitModeExcludedModulesScopeConsistencyTest {
           scopeFile.writeText(expectedXml)
         }
 
-        val actualXml = scopeFile.readText()
-        assertEquals(
-          expectedXml,
-          actualXml,
-          "$relativePath must be generated from $MONOREPO_FEATURES_WITHOUT_SPLIT_MODE_SUPPORT_RELATIVE_PATH",
-        )
+        assertSameLinesWithFile(
+          scopeFile.pathString,
+          expectedXml
+        ) { "$relativePath must be generated from $MONOREPO_FEATURES_WITHOUT_SPLIT_MODE_SUPPORT_RELATIVE_PATH" }
       }
     }
   }
