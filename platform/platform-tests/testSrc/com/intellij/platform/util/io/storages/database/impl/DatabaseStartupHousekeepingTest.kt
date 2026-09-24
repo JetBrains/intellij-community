@@ -5,6 +5,10 @@ import com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory
 import com.intellij.platform.util.io.storages.database.DurableDatabaseFactory
 import com.intellij.platform.util.io.storages.database.spi.housekeeping.OnStartupHousekeeper
+import com.intellij.platform.util.io.storages.database.impl.layout.BlockHeaderLayout
+import com.intellij.platform.util.io.storages.database.impl.layout.ChunkHeaderLayout
+import com.intellij.platform.util.io.storages.database.spi.BlocksStore
+import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState
 import com.intellij.util.ConcurrencyUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -14,9 +18,12 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import java.io.IOException
 import java.lang.foreign.MemorySegment
 import java.lang.foreign.ValueLayout.JAVA_INT
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
@@ -24,6 +31,145 @@ import java.util.concurrent.TimeUnit
 
 @Suppress("SuspiciousPackagePrivateAccess")
 class DatabaseStartupHousekeepingTest {
+  @Test
+  fun `startup retires empty chunks before dropping them`(@TempDir directory: Path) {
+    val emptyChunkPath = DatabaseChunks.chunkPath(directory, 1)
+
+    BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
+      val store = database.openStore("store", 1)
+      val retiredBlock = store.allocateBlock(0, LIVE_BLOCK_CONTENT_SIZE)
+      retiredBlock.activate()
+      retiredBlock.seal()
+      retiredBlock.retire()
+      val retiredFiller = store.allocateBlock(0, FILLER_BLOCK_CONTENT_SIZE)
+      retiredFiller.activate()
+      retiredFiller.seal()
+      retiredFiller.retire()
+
+      store.allocateBlock(0, LIVE_BLOCK_CONTENT_SIZE).activate()
+      store.allocateBlock(0, FILLER_BLOCK_CONTENT_SIZE).activate()
+      store.allocateBlock(0, LIVE_BLOCK_CONTENT_SIZE).activate()
+    }
+
+    val factory = BlocksDatabaseFactory(CHUNK_SIZE).withStartupHousekeepers(
+      listOf(
+        SparseChunksEvacuationHousekeeper(0.1f, 1, 1),
+        DropRetiredChunksHousekeeper(),
+      ),
+    )
+    factory.open(directory).use { database ->
+      val implementation = database as BlocksDatabaseImpl
+      assertEquals(0, implementation.metrics(true).chunks().retiredCurrent(),
+                   "Startup drop must release the empty chunk")
+      assertEquals(1, implementation.metrics(true).chunks().released(),
+                   "Startup drop must report the released empty chunk")
+      assertTrue(object : WaitFor(10_000) {
+        override fun condition(): Boolean = Files.notExists(emptyChunkPath)
+      }.isConditionRealized, "Startup drop must delete the empty chunk file")
+    }
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = LifecycleState::class, names = ["ACTIVE", "SEALED"])
+  fun `startup evacuation moves live blocks and keeps their state`(state: LifecycleState, @TempDir directory: Path) {
+    val firstChunkPath = DatabaseChunks.chunkPath(directory, 1)
+    var liveBlockId = 0
+
+    BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
+      val store = database.openStore("store", 1)
+      val liveBlock = store.allocateBlock(17, LIVE_BLOCK_CONTENT_SIZE)
+      liveBlockId = liveBlock.id()
+      liveBlock.content().set(JAVA_INT, 0, 42)
+      liveBlock.activate()
+      if (state == LifecycleState.SEALED) {
+        liveBlock.seal()
+      }
+
+      val filler = store.allocateBlock(0, FILLER_BLOCK_CONTENT_SIZE)
+      filler.activate()
+      filler.seal()
+      filler.retire()
+
+      val trigger = store.allocateBlock(0, LIVE_BLOCK_CONTENT_SIZE)
+      trigger.activate()
+      store.allocateBlock(0, FILLER_BLOCK_CONTENT_SIZE).activate()
+      store.allocateBlock(0, LIVE_BLOCK_CONTENT_SIZE).activate()
+    }
+
+    val factory = BlocksDatabaseFactory(CHUNK_SIZE).withStartupHousekeepers(
+      listOf(
+        SparseChunksEvacuationHousekeeper(0.1f, DatabaseBlock.blockLengthForContent(LIVE_BLOCK_CONTENT_SIZE).toLong(), 1),
+        DropRetiredChunksHousekeeper(),
+      ),
+    )
+    factory.open(directory).use { database ->
+      val store = requireNotNull(database.findStore("store"))
+      val copies = store.blocks().filter { it.id() == liveBlockId }
+      assertEquals(1, copies.size, "Startup evacuation must remove the retired source copy")
+      assertEquals(state, copies.single().state())
+      assertEquals(state, requireNotNull(store.findBlock(liveBlockId)).state())
+      assertEquals(42, requireNotNull(store.findBlock(liveBlockId)).content().get(JAVA_INT, 0))
+      assertFalse(Files.exists(firstChunkPath), "Startup drop must delete the retired source chunk file")
+    }
+
+    BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
+      val current = requireNotNull(requireNotNull(database.findStore("store")).findBlock(liveBlockId))
+      assertEquals(state, current.state())
+      assertEquals(42, current.content().get(JAVA_INT, 0))
+    }
+  }
+
+  @Test
+  fun `startup evacuation sorts chunks and observes both budgets`(@TempDir directory: Path) {
+    var largeBlockId = 0
+    var twoBlocksIds = emptyList<Int>()
+    var smallBlockId = 0
+
+    BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
+      val store = database.openStore("store", 1)
+
+      val largeBlock = store.allocateBlock(0, 80)
+      largeBlock.activate()
+      largeBlockId = largeBlock.id()
+      retireFiller(store, DatabaseBlock.blockLengthForContent(80))
+
+      val firstBlock = store.allocateBlock(0, 20)
+      firstBlock.activate()
+      val secondBlock = store.allocateBlock(0, 20)
+      secondBlock.activate()
+      twoBlocksIds = listOf(firstBlock.id(), secondBlock.id())
+      retireFiller(store, 2 * DatabaseBlock.blockLengthForContent(20))
+
+      val smallBlock = store.allocateBlock(0, 60)
+      smallBlock.activate()
+      smallBlockId = smallBlock.id()
+      retireFiller(store, DatabaseBlock.blockLengthForContent(60))
+
+      store.allocateBlock(0, LIVE_BLOCK_CONTENT_SIZE).activate()
+      retireFiller(store, DatabaseBlock.blockLengthForContent(LIVE_BLOCK_CONTENT_SIZE))
+      store.allocateBlock(0, LIVE_BLOCK_CONTENT_SIZE).activate()
+    }
+
+    val preferredChunkBytes = DatabaseBlock.blockLengthForContent(60).toLong()
+    val factory = BlocksDatabaseFactory(CHUNK_SIZE).withStartupHousekeepers(
+      listOf(SparseChunksEvacuationHousekeeper(0.1f, preferredChunkBytes, 2)),
+    )
+    factory.open(directory).use { database ->
+      val implementation = database as BlocksDatabaseImpl
+      val store = requireNotNull(database.findStore("store"))
+      assertEquals(1, store.blocks().count { it.id() == largeBlockId }, "A chunk above the byte budget must not be evacuated")
+      for (blockId in twoBlocksIds) {
+        assertEquals(1, store.blocks().count { it.id() == blockId }, "Evacuation must remove the retired source copy")
+      }
+      assertEquals(1, store.blocks().count { it.id() == smallBlockId },
+                   "The selected chunk must exhaust both budgets, so this chunk must not be evacuated")
+      assertEquals(LifecycleState.ACTIVE, requireNotNull(store.findBlock(smallBlockId)).state(),
+                   "A block in a chunk skipped after budget exhaustion must keep its state")
+      assertEquals(listOf(1, 3), implementation.sealedChunks().map { it.chunkId() },
+                   "For equal live bytes, evacuation must retire the chunk with more blocks")
+    }
+  }
+
   @Test
   fun `startup sees recovered blocks and runs in order before open returns`(@TempDir directory: Path) {
     BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
@@ -166,6 +312,16 @@ class DatabaseStartupHousekeepingTest {
 
   companion object {
     private const val CHUNK_SIZE = 1024 * 1024
+    private const val LIVE_BLOCK_CONTENT_SIZE = 32
+    private val FILLER_BLOCK_CONTENT_SIZE =
+      CHUNK_SIZE - ChunkHeaderLayout.HEADER_SIZE - 2 * BlockHeaderLayout.HEADER_SIZE - LIVE_BLOCK_CONTENT_SIZE
 
+    private fun retireFiller(store: BlocksStore, liveBytes: Int) {
+      val fillerContentLength = CHUNK_SIZE - ChunkHeaderLayout.HEADER_SIZE - liveBytes - BlockHeaderLayout.HEADER_SIZE
+      val filler = store.allocateBlock(0, fillerContentLength)
+      filler.activate()
+      filler.seal()
+      filler.retire()
+    }
   }
 }

@@ -3,21 +3,23 @@ package com.intellij.platform.util.io.storages.database.impl;
 
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
 import com.intellij.platform.util.io.storages.database.spi.StoreMetadata;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
 /// Provides access to the blocks that belong to one store
 final class BlocksStoreImpl implements BlocksStore {
   private final @NotNull BlocksDatabaseImpl database;
   private final @NotNull DatabaseCatalog.StoreInfo storeInfo;
-  private final Int2ObjectMap<BlockAccessor> blockAccessors = new Int2ObjectOpenHashMap<>();
+
+  /// DatabaseBlock identity is used instead of blockId -- because during blocks evacuation blockId could be duplicated
+  private final Map<DatabaseBlock, BlockAccessor> blockAccessors = new IdentityHashMap<>();
 
   BlocksStoreImpl(@NotNull BlocksDatabaseImpl database,
                   @NotNull DatabaseCatalog.StoreInfo storeInfo) {
@@ -97,7 +99,7 @@ final class BlocksStoreImpl implements BlocksStore {
 
   /// Adapts [DatabaseBlock] to [Block] SPI interface
   private synchronized @NotNull BlockAccessor wrap(@NotNull DatabaseBlock block) {
-    return blockAccessors.computeIfAbsent(block.blockId(), _ -> new BlockAccessor(block));
+    return blockAccessors.computeIfAbsent(block, BlockAccessor::new);
   }
 
   /** An implementation of [Block] SPI over [DatabaseBlock] */

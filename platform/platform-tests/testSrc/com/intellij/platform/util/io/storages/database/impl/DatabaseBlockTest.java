@@ -17,6 +17,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 
 import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ALLOCATED;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.file.StandardOpenOption.WRITE;
@@ -63,6 +64,37 @@ public class DatabaseBlockTest {
       assertEquals(BLOCK_LENGTH, block.blockLength());
       assertEquals(ChunkHeaderLayout.HEADER_SIZE + BLOCK_LENGTH, chunk.committedTail());
       assertEquals(chunk.committedTail(), chunk.allocatedTail());
+    }
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = BlocksStore.Block.LifecycleState.class, names = {"ACTIVE", "SEALED"})
+  public void copyBlockPreservesIdentityContentAndState(BlocksStore.Block.LifecycleState state,
+                                                        @TempDir Path directory) throws Exception {
+    try (var sourceChunk = DatabaseChunk.create(directory.resolve("source.dat"), DATABASE_ID, CHUNK_ID, CHUNK_SIZE);
+         var targetChunk = DatabaseChunk.create(directory.resolve("target.dat"), DATABASE_ID, CHUNK_ID + 1, CHUNK_SIZE)) {
+      var origin = sourceChunk.allocateBlock(BLOCK_ID, STORE_ID, VALUE_ROLE, BLOCK_LENGTH);
+      origin.contentSegment().set(JAVA_INT, 0, 42);
+      origin.activate();
+      if (state == BlocksStore.Block.LifecycleState.SEALED) {
+        origin.seal();
+      }
+
+      var copy = targetChunk.copyBlock(origin);
+
+      assertEquals(CHUNK_ID + 1, copy.chunkId());
+      assertEquals(origin.blockId(), copy.blockId());
+      assertEquals(origin.storeId(), copy.storeId());
+      assertEquals(origin.role(), copy.role());
+      assertEquals(origin.blockLength(), copy.blockLength());
+      assertEquals(state, copy.state());
+      assertEquals(42, copy.contentSegment().get(JAVA_INT, 0));
+      assertEquals(ChunkHeaderLayout.HEADER_SIZE + BLOCK_LENGTH, targetChunk.committedTail());
+      assertThrows(
+        IllegalArgumentException.class,
+        () -> sourceChunk.copyBlock(copy),
+        "Evacuation must never move a block to an older chunk"
+      );
     }
   }
 

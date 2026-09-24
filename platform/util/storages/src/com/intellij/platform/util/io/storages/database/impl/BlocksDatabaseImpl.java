@@ -219,11 +219,42 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
     }
   }
 
+  /// Returns a snapshot for startup housekeeping. The caller must prevent application access to the database.
+  @NotNull List<DatabaseChunk> sealedChunks() {
+    synchronized (databaseLock) {
+      ensureNotClosed();
+      return databaseChunks.sealedChunks();
+    }
+  }
+
+  int chunkSize() {
+    return databaseChunks.chunkSize();
+  }
+
+  /// Evacuates all non-retired blocks from one sealed chunk and retires the source chunk.
+  /// The caller must invoke this method during startup, before application storages access the database.
+  void evacuateChunk(@NotNull DatabaseChunk sourceChunk) throws IOException {
+    synchronized (databaseLock) {
+      ensureNotClosed();
+      if (sourceChunk.state() != DatabaseCatalog.ChunkState.SEALED) {
+        throw new IllegalArgumentException("Chunk " + sourceChunk.chunkId() + " is not sealed");
+      }
+
+      for (var block : sourceChunk.blocks()) {
+        if (block.state() != BlocksStore.Block.LifecycleState.RETIRED) {
+          databaseBlocks.evacuateBlock(block);
+        }
+      }
+      if (!retireIfUnused(sourceChunk)) {
+        throw new IllegalStateException("Evacuated chunk " + sourceChunk.chunkId() + " is not ready for retirement");
+      }
+    }
+  }
+
   /// Retires the chunk if it is sealed and contains only retired blocks.
   /// Retirement hides the chunk and its blocks from the database API. The database keeps the chunk resources until close.
   ///
   /// @return true if the chunk is retired successfully, false if some preconditions for retirement are not met
-  @SuppressWarnings("UnusedReturnValue")
   private boolean retireIfUnused(@NotNull DatabaseChunk chunk) throws IOException {
     synchronized (databaseLock) {
       ensureNotClosed();

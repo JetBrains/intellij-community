@@ -141,6 +141,26 @@ class PatchableDurableMapOverBlocksTest {
   }
 
   @Test
+  fun replayOrdersDataBlocksByLogicalBlockId() {
+    BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
+      val store = database.openStore("map", 1)
+      openMap(store).use { map ->
+        map.put("key", setOf(1))
+        for (value in 2..50) map.patchValue("key", listOf(value))
+      }
+      assertTrue(store.blocks().count { it.role() == DATA.persistentCode() } > 1)
+      dropRecordRefIndex(store)
+
+      val storeWithReorderedBlocks = object : BlocksStore by store {
+        override fun blocks(): List<BlocksStore.Block> = store.blocks().reversed()
+      }
+      openMap(storeWithReorderedBlocks).use { map ->
+        assertEquals((1..50).toSet(), map.get("key"), "Replay must use logical block order after physical block relocation")
+      }
+    }
+  }
+
+  @Test
   fun replaySkipsAnObsoletePatchWhosePredecessorBlockWasRetired() {
     BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
       val store = database.openStore("map", 1)

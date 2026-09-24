@@ -175,6 +175,31 @@ public final class BlockHeaderLayout {
     }
   }
 
+  /// Retires an old block copy of evacuated block, after block evacuation publishes a newer copy;
+  /// The block could be in any state except [LifecycleState#ALLOCATED] (allocated blocks can't be evacuated);
+  /// If the block is already retired => the method does nothing;
+  public static void retireEvacuatedBlock(@NotNull MemorySegment blockSegment) {
+    while (true) {
+      int stateCode = (int)STATE_HANDLE.getVolatile(blockSegment, 0L);
+      switch (stateCode) {
+        case ALLOCATED_STATE_CODE -> {
+          throw new IllegalStateException("An ALLOCATED block cannot be an evacuated source");
+        }
+        case RETIRED_STATE_CODE -> {
+          return;
+        }
+        case ACTIVE_STATE_CODE,
+             SEALED_STATE_CODE -> {
+          if (STATE_HANDLE.compareAndSet(blockSegment, 0L, stateCode, RETIRED_STATE_CODE)) {
+            return;
+          }
+        }
+
+        default -> throw new IllegalStateException("unexpected stateCode(=" + stateCode + ")");
+      }
+    }
+  }
+
   public static int readStoreId(@NotNull MemorySegment source) {
     return (int)STORE_ID_HANDLE.get(source, 0L);
   }

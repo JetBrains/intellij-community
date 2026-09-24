@@ -2,6 +2,7 @@
 package com.intellij.platform.util.io.storages.database.impl;
 
 import com.intellij.platform.util.io.storages.database.impl.layout.ChunkHeaderLayout;
+import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
 import com.intellij.util.io.CorruptedException;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -40,12 +41,12 @@ final class DatabaseBlocks implements Closeable {
     for (var store : databaseCatalog.stores()) {
       currentStoreIds.add(store.storeId());
     }
+    Int2ObjectMap<BlocksStore.Block.LifecycleState> recoveredStatesById = new Int2ObjectOpenHashMap<>();
     for (var chunk : chunks.chunks()) {
       for (var block : chunk.blocks()) {
-        registerBlock(block);
-
         //Recovery/clean up after possible crash:
 
+        var recoveredState = block.state();
         if (block.state() == ALLOCATED) {
           //block is allocated, but requestor hasn't finished block initialization => discard
           block.discard();
@@ -55,6 +56,7 @@ final class DatabaseBlocks implements Closeable {
           // RETIRED already; but if DB was crashed, some blocks could be left in active/sealed state => fix that:
           block.retireForStoreDrop();
         }
+        registerRecoveredBlock(block, recoveredState, recoveredStatesById);
       }
     }
   }
@@ -101,15 +103,30 @@ final class DatabaseBlocks implements Closeable {
     }
   }
 
+  /// Evacuates block: copies it into the newly allocated region, and retires the old copy afterward;
+  /// Method replaces old copy with the new one in blocks catalog, but it DOES NOT replace external references to the old
+  /// block -- its caller's responsibility to deal with such references, if any.
+  void evacuateBlock(@NotNull DatabaseBlock blockToEvacuate) throws IOException {
+    synchronized (lock) {
+      ensureNotClosed();
+      if (blocksById.get(blockToEvacuate.blockId()) != blockToEvacuate) {
+        throw new IllegalArgumentException("Block " + blockToEvacuate.blockId() + " is not the current physical copy");
+      }
+      var targetChunk = chunks.chunkForAllocation(blockToEvacuate.blockLength());
+      var evacuatedBlock = targetChunk.copyBlock(blockToEvacuate);
+
+      blocksById.put(evacuatedBlock.blockId(), evacuatedBlock);
+      blocksByStoreId.computeIfAbsent(evacuatedBlock.storeId(), _ -> new ArrayList<>()).add(evacuatedBlock);
+      blockToEvacuate.retireEvacuatedBlock();
+    }
+  }
+
   void removeChunkBlocks(@NotNull DatabaseChunk chunk) {
     synchronized (lock) {
       for (var block : chunk.blocks()) {
-        if (blocksById.get(block.blockId()) != block) {
-          throw new IllegalStateException("Unknown blockId(=" + block.blockId() + ") in chunk " + chunk.chunkId());
-        }
-      }
-      for (var block : chunk.blocks()) {
-        blocksById.remove(block.blockId());
+        if (blocksById.get(block.blockId()) == block) {
+          blocksById.remove(block.blockId());
+        }//else: old copy of evacuated block
         var storeBlocks = blocksByStoreId.get(block.storeId());
         if (storeBlocks == null || !storeBlocks.remove(block)) {
           throw new IllegalStateException("Block " + block.blockId() + " is absent from storeId(=" + block.storeId() + ")");
@@ -155,6 +172,56 @@ final class DatabaseBlocks implements Closeable {
       blocksByStoreId.computeIfAbsent(block.storeId(), _ -> new ArrayList<>()).add(block);
       lastBlockId = Math.max(lastBlockId, blockId);
     }
+  }
+
+  private void registerRecoveredBlock(@NotNull DatabaseBlock block,
+                                      @NotNull BlocksStore.Block.LifecycleState recoveredState,
+                                      @NotNull Int2ObjectMap<BlocksStore.Block.LifecycleState> recoveredStatesById) throws CorruptedException {
+    synchronized (lock) {
+      var blockId = block.blockId();
+      var previous = blocksById.get(blockId);
+      if (previous != null) {
+        //likely, the block was evacuated, but old remnants remains => check is it true
+        var previousRecoveredState = recoveredStatesById.get(blockId);
+        if (previousRecoveredState == null) {
+          throw new IllegalStateException("Missing recovered state for block " + blockId);
+        }
+        validateEvacuatedCopy(previous, previousRecoveredState, block, recoveredState);
+        previous.retireEvacuatedBlock(); //if not yet retired (e.g. crash interrupts evacuation) => fix it
+      }
+      blocksById.put(blockId, block);
+      recoveredStatesById.put(blockId, recoveredState);
+      blocksByStoreId.computeIfAbsent(block.storeId(), _ -> new ArrayList<>()).add(block);
+      lastBlockId = Math.max(lastBlockId, blockId);
+    }
+  }
+
+  private static void validateEvacuatedCopy(@NotNull DatabaseBlock previous,
+                                            @NotNull BlocksStore.Block.LifecycleState previousRecoveredState,
+                                            @NotNull DatabaseBlock current,
+                                            @NotNull BlocksStore.Block.LifecycleState currentRecoveredState) throws CorruptedException {
+    if (currentRecoveredState == ALLOCATED) {
+      throw duplicateBlock(previous, current, "the newer copy is ALLOCATED");
+    }
+    if (previous.chunkId() >= current.chunkId()) {
+      throw duplicateBlock(previous, current, "copies are not ordered by increasing chunkId");
+    }
+    if (previous.storeId() != current.storeId() ||
+        previous.role() != current.role() ||
+        previous.blockLength() != current.blockLength()) {
+      throw duplicateBlock(previous, current, "immutable block metadata does not match");
+    }
+    if (previousRecoveredState == ALLOCATED) {
+      throw duplicateBlock(previous, current, "the older copy is ALLOCATED");
+    }
+  }
+
+  private static @NotNull CorruptedException duplicateBlock(@NotNull DatabaseBlock previous,
+                                                             @NotNull DatabaseBlock current,
+                                                             @NotNull String details) {
+    return new CorruptedException(
+      "Duplicate blockId(=" + current.blockId() + ") in chunks " + previous.chunkId() + " and " + current.chunkId() + ": " + details
+    );
   }
 
   @Override

@@ -23,6 +23,8 @@ import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Bl
 
 /// Chunk is a fixed-size file mmapped as a single memory region: it is used to allocate [DatabaseBlock]s inside it.
 /// [BlocksDatabaseImpl] consists of such chunks, while each chunk contains some (variable-size) [DatabaseBlock]s;
+/// Chunk represents a **physical** unit of allocation/compaction -- while e.g., [DatabaseBlock] represents a **logical**
+/// unit of data.
 ///
 /// Chunk **lifecycle**:
 /// - [ChunkState#ACTIVE]: a new chunk started in this state -- active chunk accepts (=allocates) blocks until it is not
@@ -147,6 +149,49 @@ final class DatabaseChunk implements Closeable, Flushable {
       blocks.add(block);
       ChunkHeaderLayout.publishCommittedTail(chunkSegment, blockEnd);
       return block;
+    }
+  }
+
+  /// Copies a complete block (including block header) into this chunk;
+  /// `origin`s chunk must be different and older than this, i.e.: `origin.chunk.chunkId < this.chunkId`;
+  /// The caller must prevent changes to the origin block until this method returns.
+  @NotNull DatabaseBlock copyBlock(@NotNull DatabaseBlock origin) throws IOException {
+    synchronized (lock) {
+      if (state() != ChunkState.ACTIVE) {
+        throw new IllegalStateException("Chunk " + chunkId.chunkId() + " does not accept evacuated blocks");
+      }
+
+      if (chunkId.chunkId() <= origin.chunkId()) {
+        // Important invariant: blocks evacuation interrupted in the middle leaves >1 block copies with same blockId.
+        // For recovery, we need an ordering over those block copies -- to unambiguously determine which copy is the
+        // most recent one. The ordering currently used is 'by chunkId': we always evacuate block into a different,
+        // newer chunk => the block copy with highest chunkId is the most recent (=actual) one
+        throw new IllegalArgumentException(
+          "Target chunkId(=" + chunkId.chunkId() + ") must be newer than source chunkId(=" + origin.chunkId() + ")"
+        );
+      }
+
+      var originState = origin.state();
+      if (originState != LifecycleState.ACTIVE && originState != LifecycleState.SEALED) {
+        throw new IllegalArgumentException("Only an active or sealed block can be evacuated: " + originState);
+      }
+
+      var blockOffset = allocatedTail();
+      if (blockOffset != committedTail()) {
+        throw new IllegalStateException("Chunk " + chunkId.chunkId() + " has an unfinished block allocation");
+      }
+      var blockEnd = blockOffset + origin.blockLength();
+      if (blockEnd > chunkSegment.byteSize()) {
+        throw new IllegalArgumentException("The block does not fit in chunk " + chunkId.chunkId());
+      }
+
+      ChunkHeaderLayout.publishAllocatedTail(chunkSegment, blockEnd);
+      origin.copyTo(chunkSegment.asSlice(blockOffset, origin.blockLength()));
+      var copy = DatabaseBlock.open(storagePath(), chunkSegment, chunkId.chunkId(), blockOffset, blockEnd);
+      blocks.add(copy);
+      ChunkHeaderLayout.publishCommittedTail(chunkSegment, blockEnd);
+      storage.flush();
+      return copy;
     }
   }
 

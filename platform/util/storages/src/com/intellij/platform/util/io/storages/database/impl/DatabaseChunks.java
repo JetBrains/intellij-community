@@ -132,10 +132,12 @@ final class DatabaseChunks implements Closeable, Flushable {
     }
   }
 
-  /** @return a snapshot of open (active & sealed) chunks */
+  /** @return a snapshot of open (active & sealed) chunks in `chunkId` order */
   @NotNull List<DatabaseChunk> chunks() {
     synchronized (lock) {
-      return List.copyOf(chunksById.values());
+      return chunksById.values().stream()
+        .sorted(Comparator.comparingInt(DatabaseChunk::chunkId))
+        .toList();
     }
   }
 

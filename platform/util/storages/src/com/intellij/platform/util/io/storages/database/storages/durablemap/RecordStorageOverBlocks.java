@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
+import java.util.Comparator;
 
 import static com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.DATA;
 
@@ -129,7 +130,11 @@ public final class RecordStorageOverBlocks {
 
   public void forEachCommittedRecordWithLinks(@NotNull LinkedRecordReader reader) throws IOException {
     synchronized (appendLock){
-      for (var block : blockCatalog.blocks(DATA)) {
+      //actual order in blockCatalog could be changed by evacuations
+      var blocksInAllocationOrder = blockCatalog.blocks(DATA).stream()
+        .sorted(Comparator.comparingInt(BlocksStore.Block::id))
+        .toList();
+      for (var block : blocksInAllocationOrder) {
         if (block.state() == BlocksStore.Block.LifecycleState.RETIRED) {
           continue;
         }

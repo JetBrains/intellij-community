@@ -11,11 +11,9 @@ import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 import java.nio.file.Path;
 
-/// Block of data that belongs to one store and has one role.
-/// Chunk is split into blocks to:
-/// 1. amortise the storeId and role cost over many records in a block
-/// 2. reduce contention on chunk's allocation cursors: different blocks could be filled up in parallel
-/// 3. group the data of one store and role, so compaction can move the block as a whole
+/// Block of data that belongs to a specific store [#storeId] and has a specific role [#role] inside that store.
+/// Block has unique [#blockId] that is unchanged for whole block lifetime;
+/// Block represents a logical unit of data -- while e.g. a [DatabaseChunk] represents a physical unit of allocation/compaction;
 ///
 /// Block lifecycle states:
 /// 1. [LifecycleState#ALLOCATED]: allocated but not yet usable -- a block-allocating site is still initializing it;
@@ -228,6 +226,22 @@ final class DatabaseBlock {
     //Could be implemented as if(active) -> seal(); if(sealed) -> retire()
     // but I prefer slightly faster method:
     BlockHeaderLayout.retireForStoreDrop(blockSegment);
+  }
+
+  /// Retires this physical copy after evacuation publishes the same logical block in a newer chunk.
+  void retireEvacuatedBlock() {
+    BlockHeaderLayout.retireEvacuatedBlock(blockSegment);
+  }
+
+  /// Copies full block, including header, onto target;
+  /// target size must be == current block size
+  void copyTo(@NotNull MemorySegment target) {
+    if (target.byteSize() != blockSegment.byteSize()) {
+      throw new IllegalArgumentException(
+        "Target size(=" + target.byteSize() + ") must match blockLength(=" + blockSegment.byteSize() + ")"
+      );
+    }
+    MemorySegment.copy(blockSegment, 0, target, 0, blockSegment.byteSize());
   }
 
   @NotNull MemorySegment contentSegment() {

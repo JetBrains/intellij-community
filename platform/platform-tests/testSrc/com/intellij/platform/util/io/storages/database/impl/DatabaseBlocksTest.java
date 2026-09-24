@@ -6,6 +6,7 @@ import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.lang.foreign.ValueLayout;
@@ -200,6 +201,60 @@ public class DatabaseBlocksTest {
       var thirdBlock = blocks.allocateBlock(firstStore, 17, BLOCK_LENGTH);
       assertEquals(3, thirdBlock.blockId(), "Recovery must continue logical identifier allocation");
       assertEquals(List.of(firstBlock, thirdBlock), blocks.blocks(firstStore.storeId()));
+    }
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = BlocksStore.Block.LifecycleState.class, names = {"ACTIVE", "SEALED"})
+  public void recoverySelectsTheNewestEvacuatedCopy(BlocksStore.Block.LifecycleState state,
+                                                    @TempDir Path databaseDirectory) throws Exception {
+    var catalogPath = databaseDirectory.resolve("database.meta");
+    int storeId;
+    int blockId;
+    try (var metadata = DatabaseCatalogOverAppendOnlyLog.open(catalogPath, CHUNK_SIZE);
+         var chunks = DatabaseChunks.open(databaseDirectory, metadata);
+         var blocks = DatabaseBlocks.open(metadata, chunks)) {
+      storeId = metadata.nextStoreId();
+      metadata.registerNewStore(storeId, "store", 1);
+      var store = metadata.findStore("store");
+      assertNotNull(store);
+
+      var origin = blocks.allocateBlock(store, 17, BLOCK_LENGTH);
+      blockId = origin.blockId();
+      origin.contentSegment().set(ValueLayout.JAVA_INT, 0, 42);
+      origin.activate();
+      if (state == BlocksStore.Block.LifecycleState.SEALED) {
+        origin.seal();
+      }
+
+      var fillerLength = CHUNK_SIZE - ChunkHeaderLayout.HEADER_SIZE - BLOCK_LENGTH;
+      var filler = blocks.allocateBlock(store, 0, fillerLength);
+      filler.activate();
+      var trigger = blocks.allocateBlock(store, 0, BLOCK_LENGTH);
+      trigger.activate();
+
+      var targetChunk = chunks.chunkForAllocation(origin.blockLength());
+      var copy = targetChunk.copyBlock(origin);
+      assertTrue(copy.chunkId() > origin.chunkId());
+      chunks.flush();
+      metadata.flush();
+    }
+
+    try (var metadata = DatabaseCatalogOverAppendOnlyLog.open(catalogPath, CHUNK_SIZE);
+         var chunks = DatabaseChunks.open(databaseDirectory, metadata);
+         var blocks = DatabaseBlocks.open(metadata, chunks)) {
+      var current = blocks.findBlock(blockId);
+      assertNotNull(current);
+      assertEquals(2, current.chunkId(), "The copy from the newest chunk must become current");
+      assertEquals(state, current.state());
+      assertEquals(42, current.contentSegment().get(ValueLayout.JAVA_INT, 0));
+
+      var copies = blocks.blocks(storeId).stream()
+        .filter(block -> block.blockId() == blockId)
+        .toList();
+      assertEquals(2, copies.size());
+      assertEquals(BlocksStore.Block.LifecycleState.RETIRED, copies.getFirst().state());
+      assertEquals(state, copies.getLast().state());
     }
   }
 
