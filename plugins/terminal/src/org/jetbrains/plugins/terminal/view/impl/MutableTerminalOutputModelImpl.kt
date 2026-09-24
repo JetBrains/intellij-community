@@ -8,9 +8,9 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.FrozenDocument
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.TerminalColorPalette
-import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.util.diff.Diff
 import com.intellij.util.diff.FilesTooBigForDiffException
 import org.jetbrains.annotations.ApiStatus
@@ -30,6 +30,7 @@ import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelSnapshot
 import org.jetbrains.plugins.terminal.view.TerminalOutputOsc8Hyperlink
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * [maxOutputLength] limits the length of the document. Zero means unlimited length.
@@ -49,7 +50,7 @@ class MutableTerminalOutputModelImpl(
 
   private val osc8HyperlinksModel = Osc8HyperlinksModel()
 
-  private val listeners = DisposableWrapperList<TerminalOutputModelListener>()
+  private val listeners = CopyOnWriteArrayList<TerminalOutputModelListener>()
 
   @VisibleForTesting
   var trimmedLinesCount: Long = 0
@@ -488,7 +489,13 @@ class MutableTerminalOutputModelImpl(
   }
 
   override fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener) {
-    listeners.add(listener, parentDisposable)
+    listeners.add(listener)
+    val registered = Disposer.tryRegister(parentDisposable) {
+      listeners.remove(listener)
+    }
+    if (!registered) {
+      listeners.remove(listener)
+    }
   }
 
   override fun withTypeAhead(block: () -> Unit) {
