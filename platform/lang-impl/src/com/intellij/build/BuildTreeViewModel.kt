@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build
 
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.ide.rpc.weakRpcId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
@@ -122,7 +124,7 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
         LOG.warn("Couldn't find selected node (id=$selectedNodeId)")
       }
       else {
-        scope.launch(Dispatchers.EDT) {
+        scope.launch(Dispatchers.EDT + ClientId.current.asContextElement()) {
           LOG.debug { "Node id=$selectedNodeId selected" }
           consoleView.selectNode(node)
         }

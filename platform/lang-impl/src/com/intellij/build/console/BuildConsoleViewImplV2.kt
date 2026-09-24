@@ -13,6 +13,7 @@ import com.intellij.build.events.FileMessageEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.OutputReferenceEvent
+import com.intellij.codeWithMe.ClientId
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.ConsoleViewWithDelegate
@@ -20,6 +21,7 @@ import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.ClientEditorManager.Companion.getClientEditor
 import com.intellij.openapi.editor.ComponentInlayAlignment
 import com.intellij.openapi.editor.ComponentInlayRenderer
 import com.intellij.openapi.editor.Editor
@@ -216,20 +218,28 @@ internal class BuildConsoleViewImplV2(
   }
 
   override fun scrollToNodeOutput(nodeId: Any) {
+    val clientId = ClientId.currentOrNull
     state.access {
-      // Many inlays can share one offset, so an offset scroll shows a wrong callout. Scroll to the inlay itself.
+      val targetEditor = getClientEditor(editor, clientId)
       val inlay = nodeInlays(nodeId).firstOrNull()
       val bounds = inlay?.bounds
       if (inlay != null && bounds != null) {
-        editor.caretModel.moveToOffset(inlay.offset)
-        editor.scrollingModel.scrollVertically(bounds.y)
+        targetEditor.caretModel.moveToOffset(inlay.offset)
+        // local environment
+        if (targetEditor === editor) {
+          targetEditor.scrollingModel.scrollVertically(bounds.y)
+        }
+        else {
+          // rem-dev environment with a remote editor
+          targetEditor.scrollingModel.scrollTo(targetEditor.offsetToLogicalPosition(inlay.offset), ScrollType.CENTER)
+        }
         flashInlayComponent(editor, inlay.renderer.component)
         return@access
       }
       val outputMarker = sortedOutputMarkers(nodeId).firstOrNull()
       if (outputMarker != null) {
-        editor.caretModel.moveToOffset(outputMarker.startOffset)
-        editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
+        targetEditor.caretModel.moveToOffset(outputMarker.startOffset)
+        targetEditor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
       }
     }
   }
@@ -257,17 +267,19 @@ internal class BuildConsoleViewImplV2(
   }
 
   override fun selectProgressOutput(nodeId: Any) {
+    val clientId = ClientId.currentOrNull
     state.access {
-      editor.caretModel.removeSecondaryCarets()
-      editor.caretModel.primaryCaret.removeSelection()
+      val targetEditor = getClientEditor(editor, clientId)
+      targetEditor.caretModel.removeSecondaryCarets()
+      targetEditor.caretModel.primaryCaret.removeSelection()
       for ((index, outputMarker) in sortedOutputMarkers(nodeId).withIndex()) {
         if (index == 0) {
-          editor.caretModel.primaryCaret.moveToOffset(outputMarker.startOffset)
-          editor.caretModel.primaryCaret.setSelection(outputMarker.startOffset, outputMarker.endOffset)
+          targetEditor.caretModel.primaryCaret.moveToOffset(outputMarker.startOffset)
+          targetEditor.caretModel.primaryCaret.setSelection(outputMarker.startOffset, outputMarker.endOffset)
         }
         else {
-          val visualPosition = editor.offsetToVisualPosition(outputMarker.startOffset)
-          val secondaryCaret = editor.caretModel.addCaret(visualPosition, false) ?: run {
+          val visualPosition = targetEditor.offsetToVisualPosition(outputMarker.startOffset)
+          val secondaryCaret = targetEditor.caretModel.addCaret(visualPosition, false) ?: run {
             thisLogger().error("Failed to allocate console caret at $visualPosition")
             continue
           }
