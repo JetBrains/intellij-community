@@ -54,7 +54,6 @@ import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.platform.ide.bootstrap.SplashManagerKt;
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter;
 import com.intellij.ui.AppUIUtil;
@@ -209,14 +208,15 @@ public final class ConfigImportHelper {
                 vmOptionFileChanged = false;
               }
               var disabledPluginsFileName = P3SupportKt.processPerProjectSupport().getDisabledPluginsFileName();
-              if (Files.isRegularFile(newConfigDir.resolve(disabledPluginsFileName))) {
-                currentlyDisabledPlugins = Files.readAllLines(newConfigDir.resolve(disabledPluginsFileName));
+              var disabledPluginsFile = newConfigDir.resolve(disabledPluginsFileName);
+              if (Files.isRegularFile(disabledPluginsFile)) {
+                currentlyDisabledPlugins = Files.readAllLines(disabledPluginsFile);
               }
-              else if (
-                !DisabledPluginsState.DISABLED_PLUGINS_FILENAME.equals(disabledPluginsFileName) &&
-                Files.isRegularFile(newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME))
-              ) {
-                currentlyDisabledPlugins = Files.readAllLines(newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME));
+              else if (!DisabledPluginsState.DISABLED_PLUGINS_FILENAME.equals(disabledPluginsFileName)) {
+                disabledPluginsFile = newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME);
+                if (Files.isRegularFile(disabledPluginsFile)) {
+                  currentlyDisabledPlugins = Files.readAllLines(disabledPluginsFile);
+                }
               }
             }
             tempBackup = backupAndDeleteCurrentConfig(newConfigDir, log, importSettings);
@@ -265,13 +265,13 @@ public final class ConfigImportHelper {
 
         if (currentlyDisabledPlugins != null) {
           try {
-            var newDisablePluginsFile = newConfigDir.resolve(P3SupportKt.processPerProjectSupport().getDisabledPluginsFileName());
+            var newDisabledPluginsFile = newConfigDir.resolve(P3SupportKt.processPerProjectSupport().getDisabledPluginsFileName());
             var newDisabledPlugins = new LinkedHashSet<String>();
-            if (Files.isRegularFile(newDisablePluginsFile)) {
-              newDisabledPlugins.addAll(Files.readAllLines(newDisablePluginsFile, CharsetToolkit.getPlatformCharset()));
+            if (Files.isRegularFile(newDisabledPluginsFile)) {
+              newDisabledPlugins.addAll(Files.readAllLines(newDisabledPluginsFile));
             }
             newDisabledPlugins.addAll(currentlyDisabledPlugins);
-            Files.write(newDisablePluginsFile, newDisabledPlugins, CharsetToolkit.getPlatformCharset());
+            Files.write(newDisabledPluginsFile, newDisabledPlugins);
             log.info("Disabled plugins file updated with " + newDisabledPlugins.size() + " plugins");
           }
           catch (IOException e) {
@@ -858,7 +858,7 @@ public final class ConfigImportHelper {
   }
 
   private static Path computeOldPluginsDir(Path oldConfigDir, @Nullable Path oldIdeHome) {
-    var oldPluginsDir = oldConfigDir.resolve(PLUGINS);
+    @Nullable var oldPluginsDir = oldConfigDir.resolve(PLUGINS);
     if (!Files.isDirectory(oldPluginsDir)) {
       oldPluginsDir = null;
       if (oldIdeHome != null) {
@@ -913,10 +913,16 @@ public final class ConfigImportHelper {
         return FileVisitResult.CONTINUE;
       }
     });
+
     var disabledPluginsFileName = P3SupportKt.processPerProjectSupport().getDisabledPluginsFileName();
-    if (!disabledPluginsFileName.equals(DisabledPluginsState.DISABLED_PLUGINS_FILENAME) &&
-        Files.exists(oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)) && !Files.exists(newConfigDir.resolve(disabledPluginsFileName))) {
-      Files.copy(oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME), newConfigDir.resolve(disabledPluginsFileName));
+    if (!disabledPluginsFileName.equals(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)) {
+      var oldDisabledPluginsFile = oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME);
+      if (Files.isRegularFile(oldDisabledPluginsFile)) {
+        var newDisabledPluginsFile = newConfigDir.resolve(disabledPluginsFileName);
+        if (!Files.isRegularFile(newDisabledPluginsFile)) {
+          Files.copy(oldDisabledPluginsFile, newDisabledPluginsFile);
+        }
+      }
     }
 
     var actionScript = findStartupActionScript(oldConfigDir, oldIdeHome, oldPluginsDir);
@@ -957,7 +963,7 @@ public final class ConfigImportHelper {
 
   private static @Nullable Path findStartupActionScript(Path oldConfigDir, @Nullable Path oldIdeHome, Path oldPluginsDir) {
     if (Files.isDirectory(oldPluginsDir)) {
-      var oldSystemDir = oldConfigDir.getParent().resolve(SYSTEM);
+      @Nullable var oldSystemDir = oldConfigDir.getParent().resolve(SYSTEM);
       if (!Files.isDirectory(oldSystemDir)) {
         oldSystemDir = null;
         if (oldIdeHome != null) {
