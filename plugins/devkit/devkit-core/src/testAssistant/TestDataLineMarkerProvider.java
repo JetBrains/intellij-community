@@ -71,7 +71,10 @@ public final class TestDataLineMarkerProvider extends LineMarkerProviderDescript
     for (PsiElement element : elements) {
       RunLineMarkerContributor.Info info = getSlowInfo(element);
       if (info != null) {
-        result.add(RunLineMarkerProvider.createLineMarker(element, AllIcons.Nodes.Folder, Collections.singletonList(info)));
+        LineMarkerInfo<?> lineMarker = RunLineMarkerProvider.createLineMarker(element, AllIcons.Nodes.Folder, Collections.singletonList(info));
+        if (lineMarker != null) {
+          result.add(lineMarker);
+        }
       }
     }
   }

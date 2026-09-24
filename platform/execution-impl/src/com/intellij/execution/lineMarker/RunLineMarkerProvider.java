@@ -96,8 +96,8 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
   @Override
   public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements,
                                      @NotNull Collection<? super LineMarkerInfo<?>> result) {
-    if (!elements.isEmpty() && isUntrustedFile(elements.getFirst())) return;
     for (PsiElement element : elements) {
+      if (isUntrustedFile(element)) continue;
       List<RunLineMarkerContributor> contributors = DumbService.getInstance(element.getProject())
         .filterByDumbAwareness(RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage()));
       Icon icon = null;
@@ -117,7 +117,10 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
         infos.add(info);
       }
       if (icon != null) {
-         result.add(createLineMarker(element, icon, infos));
+        LineMarkerInfo<PsiElement> lineMarker = createLineMarker(element, icon, infos);
+        if (lineMarker != null) {
+          result.add(lineMarker);
+        }
       }
     }
 
@@ -130,9 +133,10 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
     return virtualFile != null && !TrustedFiles.isTrusted(virtualFile, element.getProject());
   }
 
-  public static @NotNull LineMarkerInfo<PsiElement> createLineMarker(@NotNull PsiElement element,
-                                                                     @NotNull Icon icon,
-                                                                     @NotNull List<? extends Info> infos) {
+  public static @Nullable LineMarkerInfo<PsiElement> createLineMarker(@NotNull PsiElement element,
+                                                                      @NotNull Icon icon,
+                                                                      @NotNull List<? extends Info> infos) {
+    if (isUntrustedFile(element)) return null;
     if (infos.size() > 1) {
       infos = new ArrayList<>(infos);
       infos.sort(COMPARATOR);
