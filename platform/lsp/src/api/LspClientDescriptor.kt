@@ -29,6 +29,7 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.lsp.api.customization.LspCustomization
+import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.io.BaseDataReader
@@ -273,6 +274,7 @@ abstract class LspClientDescriptor protected constructor(
   protected open fun findLocalFileByPath(path: String): VirtualFile? {
     val descriptor = project.getEelDescriptor()
     if (descriptor !is LocalEelDescriptor) {
+      if (PlatformUtils.isJetBrainsClient()) return VirtualFileManager.getInstance().findFileByUrl("cwm://$path")
       val file = runCatching {
         StandardFileSystems.local().findFileByPath(EelPath.parse(path, descriptor).asNioPath().toString())
       }.getOrNull()
