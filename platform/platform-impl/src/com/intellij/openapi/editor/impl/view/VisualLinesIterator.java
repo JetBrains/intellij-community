@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.CustomFoldRegion;
@@ -175,8 +175,10 @@ public final class VisualLinesIterator {
     int foldIndex = myLocation.foldRegion;
     if (foldIndex < myFoldRegions.length) {
       FoldRegion foldRegion = myFoldRegions[foldIndex];
-      if (foldRegion instanceof CustomFoldRegion && foldRegion.getStartOffset() == myLocation.offset) {
-        return (CustomFoldRegion)foldRegion;
+      if (foldRegion instanceof CustomFoldRegion customRegion) {
+        if (foldRegion.getStartOffset() == myLocation.offset) {
+          return customRegion;
+        }
       }
     }
     return null;

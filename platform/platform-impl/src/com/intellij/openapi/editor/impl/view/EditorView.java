@@ -109,11 +109,11 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     );
     myEditorModel = editorModel;
     myDocument = myEditorModel.getDocument();
+    myLogicalPositionCache = new LogicalPositionCache(myDocument, () -> myEditor.throwDisposalError("Editor is already disposed"));
     myPainter = new EditorPainter(this, new EditorCaretPainter(this), painterCache);
-    myMapper = new EditorCoordinateMapper(this);
+    myMapper = new EditorCoordinateMapper(this, myLogicalPositionCache);
     mySizeManager = new EditorSizeManager(this);
     myTextLayoutCache = new TextLayoutCache(this, new ComponentVisibilityTracker(myEditor.getContentComponent()));
-    myLogicalPositionCache = new LogicalPositionCache(myDocument, () -> myEditor.throwDisposalError("Editor is already disposed"));
     myCharWidthCache = new CharWidthCache(this);
     myTabFragment = new TabFragment(this);
     mySelectionVisualModel = new SelectionVisualModel(myEditor);
@@ -370,7 +370,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   public int getVisibleLineCount() {
-    return Math.max(1, getVisibleLogicalLinesCount() + getSoftWrapModel().getSoftWrapsIntroducedLinesNumber());
+    return myMapper.getVisibleLineCount();
   }
 
   public @NotNull LogicalPosition xyToLogicalPosition(@NotNull Point p) {
@@ -655,13 +655,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
         invalidateFoldRegionLayout(region);
       }
     });
-  }
-
-  /**
-   * @return the number of visible logical lines, which is the number of total logical lines minus the number of folded lines
-   */
-  private int getVisibleLogicalLinesCount() {
-    return getDocument().getLineCount() - getFoldingModel().getTotalNumberOfFoldedLines();
   }
 
   @NotNull FontRenderContext getFontRenderContext() {
