@@ -148,7 +148,7 @@ public final class VcsFacadeImpl extends VcsFacade {
     if (trackerRanges == null) return emptyList();
     return trackerRanges.stream()
       .filter(range -> range.getType() == Range.DELETED)
-      .map( range -> range.getLine1())
+      .map(range -> range.getLine1())
       .toList();
   }
 
@@ -222,50 +222,13 @@ public final class VcsFacadeImpl extends VcsFacade {
     return ContainerUtil.filter(elements, element -> isElementChanged(element, document, changedLines));
   }
 
-  /**
-   * creates light files for before and after contents and returns changed elements
-   */
-  public @NotNull @Unmodifiable <T extends PsiElement> List<T> getCommitChangedElements(@NotNull Change change,
-                                                                                        @NotNull PsiCollector<T> elementExtractor) {
-    ContentRevision beforeRevision = change.getBeforeRevision();
-    ContentRevision afterRevision = change.getAfterRevision();
-
-    // todo do we care about /r here
-    String contentBefore = getRevisionedContentFrom(beforeRevision);
-    String contentAfter = getRevisionedContentFrom(afterRevision);
-
-    List<T> elementsBefore = contentBefore != null ? elementExtractor.collectTargetPsi(contentBefore, beforeRevision.getFile().getFileType()) : emptyList();
-    List<T> elementsAfter = contentAfter != null ? elementExtractor.collectTargetPsi(contentAfter, afterRevision.getFile().getFileType()) : emptyList();
-
-    if (elementsBefore.isEmpty() && elementsAfter.isEmpty()) return emptyList();
-
-    if (change.getType() == Change.Type.NEW) {
-      return elementsAfter;
-    }
-    if (change.getType() == Change.Type.DELETED) {
-      return elementsBefore;
-    }
-
-    assert contentBefore != null && contentAfter != null;
-
-    List<? extends Range> ranges = getChangedRangesForCommit(contentBefore, contentAfter);
-    BitSet changedLinesBefore = createLinesBitSetBefore(ranges);
-    BitSet changedLinesAfter = createLinesBitSetAfter(ranges);
-
-    List<T> changedPsiBefore = filterChanged(elementsBefore, changedLinesBefore);
-    List<T> changedPsiAfter = filterChanged(elementsAfter, changedLinesAfter);
-
-    return ContainerUtil.concat(changedPsiBefore, changedPsiAfter);
-  }
-
-  private static <T extends PsiElement> @NotNull List<T> filterChanged(@NotNull List<T> elements,
-                                                                       @NotNull BitSet changedLines) {
+  static <T extends PsiElement> @NotNull List<T> filterChanged(@NotNull List<T> elements, @NotNull BitSet changedLines) {
     if (elements.isEmpty()) return elements;
-    Document document = elements.get(0).getContainingFile().getFileDocument();
+    Document document = elements.getFirst().getContainingFile().getFileDocument();
     return ContainerUtil.filter(elements, element -> isElementChanged(element, document, changedLines));
   }
 
-  private static @NotNull List<Range> getChangedRangesForCommit(@NotNull String contentBefore, @NotNull String contentAfter) {
+  static @NotNull List<Range> getChangedRangesForCommit(@NotNull String contentBefore, @NotNull String contentAfter) {
     CharSequence beforeText = fixLineSeparators(contentBefore);
     CharSequence afterText = fixLineSeparators(contentAfter);
 
@@ -277,7 +240,7 @@ public final class VcsFacadeImpl extends VcsFacade {
     return ContainerUtil.map(committedLines.changes(), it -> new Range(it.start2, it.end2, it.start1, it.end1, null));
   }
 
-  private static @NotNull BitSet createLinesBitSetAfter(@NotNull List<? extends Range> ranges) {
+  static @NotNull BitSet createLinesBitSetAfter(@NotNull List<? extends Range> ranges) {
     BitSet changedLines = new BitSet();
     for (Range range : ranges) {
       if (range.hasLines()) {
@@ -287,7 +250,7 @@ public final class VcsFacadeImpl extends VcsFacade {
     return changedLines;
   }
 
-  private static @NotNull BitSet createLinesBitSetBefore(@NotNull List<? extends Range> ranges) {
+  static @NotNull BitSet createLinesBitSetBefore(@NotNull List<? extends Range> ranges) {
     BitSet changedLines = new BitSet();
     for (Range range : ranges) {
       if (range.hasLines()) {
@@ -372,7 +335,7 @@ public final class VcsFacadeImpl extends VcsFacade {
     return nextSetBit != -1 && nextSetBit < endLine;
   }
 
-  private static @Nullable String getRevisionedContentFrom(@Nullable ContentRevision contentRevision) {
+  static @Nullable String getRevisionedContentFrom(@Nullable ContentRevision contentRevision) {
     if (contentRevision == null) {
       return null;
     }
