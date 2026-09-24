@@ -27,11 +27,13 @@ sealed class BaseLayout {
     field = LinkedHashSet<ModuleItem>()
 
   /** list of additional resources which should be included in the distribution */
-  @JvmField
-  internal var resourcePaths: PersistentList<ModuleResourceData> = persistentListOf()
+  @ApiStatus.Internal
+  var resourcePaths: PersistentList<ModuleResourceData> = persistentListOf()
+    internal set
 
   /** module name to entries which should be excluded from its output */
-  internal var moduleExcludes: PersistentMap<String, MutableList<String>> = persistentMapOf()
+  @ApiStatus.Internal
+  var moduleExcludes: PersistentMap<String, MutableList<String>> = persistentMapOf()
     private set
 
   @ApiStatus.Internal
@@ -43,7 +45,8 @@ sealed class BaseLayout {
   internal var includedModuleLibraries = persistentSetOf<ModuleLibraryData>()
     private set
 
-  internal var patchers: PersistentList<LayoutPatcher> = persistentListOf()
+  @ApiStatus.Internal
+  var patchers: PersistentList<LayoutPatcher> = persistentListOf()
     private set
 
   fun withPatch(patcher: LayoutPatcher) {
@@ -252,7 +255,8 @@ class ModuleItem(
     }
   }
 
-  internal fun isProductModule(): Boolean = ModuleIncludeReasons.isProductModule(reason)
+  @ApiStatus.Internal
+  fun isProductModule(): Boolean = ModuleIncludeReasons.isProductModule(reason)
 
   override fun equals(other: Any?): Boolean {
     return this === other || other is ModuleItem && moduleName == other.moduleName && relativeOutputFile == other.relativeOutputFile

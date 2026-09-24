@@ -1,11 +1,13 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.io.Decompressor
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import java.nio.file.Path
 
 /** Extracts the one jar of the project library [libraryName] into [targetPath]. The dev-dist plan states it as an `archive-tree` asset. */
-internal data class LibraryResourceGenerator(
+@ApiStatus.Internal
+data class LibraryResourceGenerator(
   @JvmField val libraryName: String,
   @JvmField val targetPath: String,
 ) : ResourceGenerator {

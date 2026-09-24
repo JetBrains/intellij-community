@@ -1,5 +1,6 @@
 package org.jetbrains.intellij.build.impl
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CustomAssetDescriptor
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetOwner
@@ -23,7 +24,8 @@ internal fun runsInClassicDevMode(generator: ResourceGenerator): Boolean {
   return (generator as? DeclaredPluginLayoutResourceGenerator)?.run != DeclaredResourceGeneratorRun.BUNDLED_ONLY
 }
 
-internal class DeclaredPluginLayoutResourceGenerator(
+@ApiStatus.Internal
+class DeclaredPluginLayoutResourceGenerator(
   override val devPluginLayoutAssetSpec: DevPluginLayoutAssetSpec,
   private val delegate: ResourceGenerator,
   @JvmField val run: DeclaredResourceGeneratorRun = DeclaredResourceGeneratorRun.BUNDLED_AND_DEV,

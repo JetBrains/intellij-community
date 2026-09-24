@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.dev
 
 import com.intellij.platform.buildScripts.concurrency.Subtask
 import io.opentelemetry.api.common.AttributeKey
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -197,7 +198,8 @@ internal fun devModePluginCandidates(request: BuildRequest, context: BuildContex
 }
 
 /** Selects original layouts from source/model facts. Dev builds do not apply release-cycle restrictions. */
-internal fun devModePluginCandidates(
+@ApiStatus.Internal
+fun devModePluginCandidates(
   owned: List<PluginLayout>,
   bundledMainModuleNames: Set<String>,
   demanded: Set<String>,

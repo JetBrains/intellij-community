@@ -11,6 +11,7 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.plus
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.BuildContext
@@ -199,7 +200,8 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   @Internal
   fun getExcludedModuleLibraries(): Map<String, List<String>> = excludedModuleLibraries
 
-  internal var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
+  @ApiStatus.Internal
+  var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
     private set
 
   /** Project libraries that [PluginLayoutBuilder.withLibraryResources] unpacks into the plugin directory. */
@@ -208,17 +210,20 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     return resourceGenerators.mapNotNullTo(LinkedHashSet()) { (it as? LibraryResourceGenerator)?.libraryName }
   }
 
-  internal var customAssets: PersistentList<CustomAssetDescriptor> = persistentListOf()
+  @ApiStatus.Internal
+  var customAssets: PersistentList<CustomAssetDescriptor> = persistentListOf()
     private set
 
   /**
    * The platform resource generators. The dev-distribution generator plans each one from its [DevPluginLayoutAssetSpec].
    * [DeclaredPluginLayoutResourceGenerator.run] states where each one runs. See [PluginLayoutBuilder.withGeneratedPlatformResources].
    */
-  internal var platformResourceGenerators: PersistentMap<SupportedDistribution, PersistentList<DeclaredPluginLayoutResourceGenerator>> = persistentMapOf()
+  @ApiStatus.Internal
+  var platformResourceGenerators: PersistentMap<SupportedDistribution, PersistentList<DeclaredPluginLayoutResourceGenerator>> = persistentMapOf()
     private set
 
-  internal var executablePatterns: PersistentMap<SupportedDistribution, PersistentList<String>> = persistentMapOf()
+  @ApiStatus.Internal
+  var executablePatterns: PersistentMap<SupportedDistribution, PersistentList<String>> = persistentMapOf()
     private set
 
   /**
