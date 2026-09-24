@@ -107,8 +107,8 @@ abstract class LspClientDescriptor protected constructor(
    *   override fun isSupportedFile(file: VirtualFile) = file.fileType == FooFileType.INSTANCE
    * ```
    *
-   * @param file the file is guaranteed to be valid, in a local file system, and within project content roots. However, it might be not
-   *             within the roots configured for this LSP server, which is usually fine.
+   * @param file the file is guaranteed to be valid and within project content roots. It may be located on a remote
+   *             execution host and might not be within the roots configured for this LSP server, which is usually fine.
    */
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   abstract fun isSupportedFile(file: VirtualFile): Boolean

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Unmodifiable
 internal class LspHighlightUsagesHandlerFactory : HighlightUsagesHandlerFactory, DumbAware {
   override fun createHighlightUsagesHandler(editor: Editor, psiFile: PsiFile): HighlightUsagesHandlerBase<PsiElement>? {
     val virtualFile = psiFile.virtualFile ?: return null
-    if (virtualFile is VirtualFileWindow || !virtualFile.isInLocalFileSystem) return null
+    if (virtualFile is VirtualFileWindow) return null
     val clients = LspClientManagerImpl.getInstanceImpl(psiFile.project).getClientsWithThisFileOpen(virtualFile)
       .filter { shouldProceedWithClient(it, psiFile) }
 

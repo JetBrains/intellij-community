@@ -14,7 +14,6 @@ internal class LspFileDocumentManagerListener : FileDocumentManagerListener {
 
   override fun beforeDocumentSaving(document: Document) {
     val file = FileDocumentManager.getInstance().getFile(document) ?: return
-    if (!file.isInLocalFileSystem) return
 
     for (project in ProjectManager.getInstance().openProjects) {
       for (lspClient in LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(file)) {

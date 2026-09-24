@@ -29,7 +29,7 @@ internal class LspCodeVisionProvider : CodeVisionProvider<Unit>, DumbAware {
     val project = editor.project ?: return CodeVisionState.Ready(emptyList())
     val document = editor.document
     val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return CodeVisionState.Ready(emptyList())
-    if (virtualFile is VirtualFileWindow || !virtualFile.isInLocalFileSystem) return CodeVisionState.Ready(emptyList())
+    if (virtualFile is VirtualFileWindow) return CodeVisionState.Ready(emptyList())
 
     val clients = LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(virtualFile)
 

@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 object LspDidChangeUtil {
   fun getFileToHandle(event: DocumentEvent): VirtualFile? =
     FileDocumentManager.getInstance().getFile(event.document)?.takeIf {
-      it.isInLocalFileSystem && !StringUtil.equals(event.oldFragment, event.newFragment)
+      !StringUtil.equals(event.oldFragment, event.newFragment)
     }
 
   /**

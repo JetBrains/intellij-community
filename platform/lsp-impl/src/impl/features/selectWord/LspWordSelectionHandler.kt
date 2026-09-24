@@ -31,7 +31,7 @@ internal class LspWordSelectionHandler : ExtendWordSelectionHandler {
   override fun select(e: PsiElement, editorText: CharSequence, cursorOffset: Int, editor: Editor): List<TextRange>? {
     val psiFile: PsiFile = e.containingFile ?: return null
     val file = psiFile.virtualFile ?: return null
-    if (file is VirtualFileWindow || !file.isInLocalFileSystem) return null
+    if (file is VirtualFileWindow) return null
 
     val lspClients = LspClientManagerImpl.getInstanceImpl(psiFile.project)
       .getClientsWithThisFileOpen(file)

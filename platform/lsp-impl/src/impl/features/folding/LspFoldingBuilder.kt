@@ -21,7 +21,7 @@ internal class LspFoldingBuilder : FoldingBuilderEx(), DumbAware {
     val psiFile = root as? PsiFile ?: return emptyArray()
 
     val file = psiFile.virtualFile ?: return emptyArray()
-    if (file is VirtualFileWindow || !file.isInLocalFileSystem) return emptyArray()
+    if (file is VirtualFileWindow) return emptyArray()
 
     val foldingRangeInfos = LspClientManagerImpl.getInstanceImpl(psiFile.project)
       .getClientsWithThisFileOpen(file)

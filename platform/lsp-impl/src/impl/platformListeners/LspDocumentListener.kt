@@ -58,7 +58,6 @@ internal class LspDocumentListener : DocumentListener {
               continue  // didOpen not needed
             }
 
-            if (!file.isInLocalFileSystem) continue
 
             if (!client.isFileOpened(file) && client.isSupportedFile(file)) {
               data.clientsToSendDidOpen.add(client to file)

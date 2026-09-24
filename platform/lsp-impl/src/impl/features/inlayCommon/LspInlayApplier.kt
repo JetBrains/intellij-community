@@ -72,7 +72,7 @@ internal class LspInlayApplier(private val project: Project) {
    * [com.intellij.platform.lsp.impl.features.highlighting.LspHighlightingApplier]).
    */
   fun scheduleRefresh(file: VirtualFile) {
-    if (file is VirtualFileWindow || !file.isInLocalFileSystem) return
+    if (file is VirtualFileWindow) return
 
     val generationCounter = fileToCurrentGeneration.computeIfAbsent(file) { AtomicLong() }
     val gen = generationCounter.incrementAndGet()

@@ -158,9 +158,9 @@ class LspClientImpl internal constructor(
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   internal fun isSupportedFile(file: VirtualFile): Boolean {
-    if (!file.isInLocalFileSystem) return false
     if (unsupportedFilePaths.contains(file.path)) return false
-    if (!ProjectFileIndex.getInstance(project).isInContent(file)) return false
+    // TODO discuss
+    //if (!ProjectFileIndex.getInstance(project).isInContent(file)) return false
 
     return descriptor.isSupportedFile(file)
       .also { if (!it) unsupportedFilePaths.add(file.path) }

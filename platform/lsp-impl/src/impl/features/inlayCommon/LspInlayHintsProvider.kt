@@ -38,7 +38,7 @@ internal class LspInlayHintsProvider : InlayHintsProvider<NoSettings>, DumbAware
 
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
     val virtualFile = file.virtualFile ?: return null
-    if (virtualFile is VirtualFileWindow || !virtualFile.isInLocalFileSystem) return null
+    if (virtualFile is VirtualFileWindow) return null
 
     // The daemon runs this pass per editor (including splits), so it's our per-editor hook. scheduleRefresh triggers
     // the server request (when the cache is stale) and re-applies the cache to every editor of the file, so a newly

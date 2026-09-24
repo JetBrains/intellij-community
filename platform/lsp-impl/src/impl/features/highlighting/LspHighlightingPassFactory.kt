@@ -28,7 +28,6 @@ internal class LspHighlightingPassFactory : MainHighlightingPassFactory, TextEdi
 
   override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? {
     val file = psiFile.virtualFile ?: return null
-    if (!file.isInLocalFileSystem) return null
 
     val currentStamp = psiFile.manager.modificationTracker.modificationCount
     if (editor.getUserData(PSI_MODIFICATION_STAMP) == currentStamp) return null
@@ -43,7 +42,6 @@ internal class LspHighlightingPassFactory : MainHighlightingPassFactory, TextEdi
   ): TextEditorHighlightingPass? {
     // For read-only / batch analysis (e.g., "Inspect Code")
     val file = psiFile.virtualFile ?: return null
-    if (!file.isInLocalFileSystem) return null
     return LspHighlightingPass(psiFile.project, document, psiFile, file, editor = null)
   }
 }

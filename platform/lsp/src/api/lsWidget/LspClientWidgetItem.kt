@@ -54,7 +54,6 @@ open class LspClientWidgetItem(
 
   override val widgetActionLocation: LanguageServicePopupSection by lazy {
     if (currentFile != null &&
-        currentFile.isInLocalFileSystem &&
         lspClient.descriptor.isSupportedFile(currentFile) &&
         lspClient.descriptor.roots.any { root -> VfsUtil.isAncestor(root, currentFile, true) } &&
         ProjectFileIndex.getInstance(lspClient.project).isInContent(currentFile)) {

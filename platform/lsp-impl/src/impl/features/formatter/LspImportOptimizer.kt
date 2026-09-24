@@ -42,7 +42,7 @@ internal class LspImportOptimizer : ImportOptimizer {
   override fun supports(psiFile: PsiFile): Boolean = findClientToOptimizeImports(psiFile) != null
 
   override fun processFile(psiFile: PsiFile): Runnable {
-    val virtualFile = psiFile.virtualFile?.takeIf { it.isInLocalFileSystem && it !is VirtualFileWindow } ?: return noResult
+    val virtualFile = psiFile.virtualFile?.takeIf { it !is VirtualFileWindow } ?: return noResult
     val lspClient = findClientToOptimizeImports(psiFile) ?: return noResult
 
     val codeAction = requestCodeAction(lspClient, virtualFile) ?: return noResult
@@ -93,7 +93,7 @@ internal class LspImportOptimizer : ImportOptimizer {
 
 internal fun findClientToOptimizeImports(psiFile: PsiFile): LspClient? {
   if (psiFile.project.isDefault) return null
-  val virtualFile = psiFile.virtualFile?.takeIf { it.isInLocalFileSystem && it !is VirtualFileWindow } ?: return null
+  val virtualFile = psiFile.virtualFile?.takeIf { it !is VirtualFileWindow } ?: return null
 
   return LspClientManagerImpl.getInstanceImpl(psiFile.project).findRunningClient { lspClient ->
     lspClient.descriptor.isSupportedFile(virtualFile) && canClientOptimizeImports(lspClient, psiFile, virtualFile)

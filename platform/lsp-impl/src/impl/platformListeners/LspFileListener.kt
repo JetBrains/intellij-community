@@ -30,8 +30,6 @@ internal class LspFileListener : AsyncFileListener {
     val deleteCreateCopyChangeEvents: MutableList<VFileEvent> = ArrayList()
 
     for (event in events) {
-      if (!event.fileSystem.isLocal) continue
-
       if (event is VFileMoveEvent) {
         renamedFilesAndDirs.add(event.file)
       }

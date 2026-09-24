@@ -53,7 +53,7 @@ internal class LspOpenedFilesService(private val project: Project) {
     var changed = false
     // LSP servers are external processes: never send the content of files opened in the safe mode to them
     files.asSequence()
-      .filter { it.isInLocalFileSystem && TrustedFiles.isTrusted(it, project) }
+      .filter { TrustedFiles.isTrusted(it, project) }
       .forEach { if (openedFilesToHandle.put(it, requestStamp) != requestStamp) changed = true }
     if (changed) scheduleOpenedFilesProcessing()
   }
@@ -98,7 +98,7 @@ internal class LspOpenedFilesService(private val project: Project) {
             }
           }
 
-          if (!fileWithinServerRootsAndSupported && ProjectFileIndex.getInstance(project).isInContent(openedFile)) {
+          if (!fileWithinServerRootsAndSupported /*&& ProjectFileIndex.getInstance(project).isInContent(openedFile)*/) {
             val starter = LspClientManagerImpl.LspStarterImpl()
             provider.fileOpened(project, openedFile, starter)
             starter.descriptor?.let { descriptor -> data.newClientsToStart.add(ClientToStart(providerClass, descriptor, requestStamp)) }

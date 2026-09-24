@@ -73,7 +73,7 @@ internal class LspFormattingService : AsyncDocumentFormattingService() {
   override fun getImportOptimizers(file: PsiFile): Set<ImportOptimizer> = setOf(LspImportOptimizer())
 
   private fun extractValidFile(psiFile: PsiFile): VirtualFile? =
-    psiFile.virtualFile?.takeIf { it.isInLocalFileSystem && it !is VirtualFileWindow }
+    psiFile.virtualFile?.takeIf { it !is VirtualFileWindow }
 
   override fun createFormattingTask(formattingRequest: AsyncFormattingRequest): FormattingTask? {
     val file: VirtualFile = formattingRequest.context.virtualFile ?: return null

@@ -69,7 +69,7 @@ private fun shouldPerformOnTypeFormatting(editor: Editor): Boolean {
 @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 private fun performOnTypeFormatting(editor: Editor, virtualFile: VirtualFile, charTyped: Char) {
   val project = editor.project ?: return
-  if (!virtualFile.isInLocalFileSystem || virtualFile is VirtualFileWindow) return
+  if (virtualFile is VirtualFileWindow) return
   val document = FileDocumentManager.getInstance().getCachedDocument(virtualFile) ?: return
   val modificationStamp = document.modificationStamp
 

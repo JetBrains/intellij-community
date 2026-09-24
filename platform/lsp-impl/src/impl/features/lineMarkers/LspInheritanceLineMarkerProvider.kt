@@ -51,7 +51,7 @@ internal class LspInheritanceLineMarkerProvider : LineMarkerProviderDescriptor()
   override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
     val psiFile = elements.firstOrNull()?.containingFile ?: return
     val virtualFile = psiFile.virtualFile ?: return
-    if (virtualFile is VirtualFileWindow || !virtualFile.isInLocalFileSystem) return
+    if (virtualFile is VirtualFileWindow) return
 
     // computed lazily: most files have no LSP client with this feature
     var elementSet: Set<PsiElement>? = null

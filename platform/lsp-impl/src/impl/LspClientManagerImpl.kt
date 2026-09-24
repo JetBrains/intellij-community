@@ -151,7 +151,6 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
 
         for (file in FileEditorManager.getInstance(project).openFiles) {
           ProgressManager.checkCanceled()
-          if (!file.isInLocalFileSystem) continue
           if (!ProjectFileIndex.getInstance(project).isInContent(file)) continue
 
           if (clients.any { client ->
