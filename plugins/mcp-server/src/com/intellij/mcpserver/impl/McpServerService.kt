@@ -529,7 +529,9 @@ open class McpServerService(val cs: CoroutineScope) {
               experimental = null,
               prompts = null,
               resources = null,
-            )
+            ),
+            // The SDK runs a handler in its own scope, not in the HTTP call; the tools expect the context of this service.
+            handlerCoroutineContext = cs.coroutineContext,
           )
         )
 

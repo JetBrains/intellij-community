@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="io.modelcontextprotocol.kotlin.sdk" type="repository">
-        <properties maven-id="io.modelcontextprotocol:kotlin-sdk-jvm:0.12.0">
+        <properties maven-id="io.modelcontextprotocol:kotlin-sdk-jvm:0.15.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.12.0/kotlin-sdk-jvm-0.12.0.jar">
-              <sha256sum>88c25c0136e9be9539a906c2dc25d1ba7b2bedae0c8c3f7421ca3fb8090192dc</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.15.0/kotlin-sdk-jvm-0.15.0.jar">
+              <sha256sum>8551d45a4d75753e27c4b14309d51cb9a9b6013074bcc19fb868d68d65a26580</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0.12.0/kotlin-sdk-client-jvm-0.12.0.jar">
-              <sha256sum>455f06a612d433479c542f65824d397d1b5f7ba7e26c644098fb231abc0cbc27</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0.15.0/kotlin-sdk-client-jvm-0.15.0.jar">
+              <sha256sum>d6b5871d04c9de8aee270e0667e5497e7b91af66ec8594b768c871337c29ec27</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0.12.0/kotlin-sdk-server-jvm-0.12.0.jar">
-              <sha256sum>bff9a09a6804ff0165a92310bea379056eaeef0a721bded277fa97a74a11d83e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0.15.0/kotlin-sdk-server-jvm-0.15.0.jar">
+              <sha256sum>2a3720c631a2e1ba15194838ac0244dc93f702e79e6c361bb35b4ab2e15e3c16</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0.12.0/kotlin-sdk-core-jvm-0.12.0.jar">
-              <sha256sum>dfe26fbe3e06dc82b2f9551f4fa86e2e54455cfcb0e995a6c81bdd2752299e9b</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0.15.0/kotlin-sdk-core-jvm-0.15.0.jar">
+              <sha256sum>286b34892ab362365d4d9ba09b6c949199128470f83cf7dd410854f18cc625e1</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -45,17 +45,17 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.12.0/kotlin-sdk-jvm-0.12.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0.12.0/kotlin-sdk-client-jvm-0.12.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0.12.0/kotlin-sdk-server-jvm-0.12.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0.12.0/kotlin-sdk-core-jvm-0.12.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.15.0/kotlin-sdk-jvm-0.15.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0.15.0/kotlin-sdk-client-jvm-0.15.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0.15.0/kotlin-sdk-server-jvm-0.15.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0.15.0/kotlin-sdk-core-jvm-0.15.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.12.0/kotlin-sdk-jvm-0.12.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0.12.0/kotlin-sdk-client-jvm-0.12.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0.12.0/kotlin-sdk-server-jvm-0.12.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0.12.0/kotlin-sdk-core-jvm-0.12.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.15.0/kotlin-sdk-jvm-0.15.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0.15.0/kotlin-sdk-client-jvm-0.15.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0.15.0/kotlin-sdk-server-jvm-0.15.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0.15.0/kotlin-sdk-core-jvm-0.15.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

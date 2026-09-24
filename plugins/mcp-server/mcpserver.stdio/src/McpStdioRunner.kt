@@ -43,7 +43,7 @@ suspend fun main() {
     info("Debug mode can be enabled by setting the $IJ_MCP_DEBUG environment variable to any value (empty string or TRUE). Debug messages will be printed to stderr.")
   }
 
-  val stdioServerTransport = StdioServerTransport(inputStream.asSource().buffered(), outputStream.asSink().buffered())
+  val stdioServerTransport = StdioServerTransport(input = inputStream.asSource().buffered(), output = outputStream.asSink().buffered())
 
   val httpClient = HttpClient {
     install(SSE)

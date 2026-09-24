@@ -20,7 +20,6 @@ import io.modelcontextprotocol.kotlin.sdk.types.ElicitRequest
 import io.modelcontextprotocol.kotlin.sdk.types.ElicitRequestFormParams
 import io.modelcontextprotocol.kotlin.sdk.types.ElicitRequestParams.RequestedSchema
 import io.modelcontextprotocol.kotlin.sdk.types.ElicitResult
-import io.modelcontextprotocol.kotlin.sdk.types.EmptyJsonObject
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import io.modelcontextprotocol.kotlin.sdk.types.TitledMultiSelectEnumSchema
 import io.modelcontextprotocol.kotlin.sdk.types.UntitledSingleSelectEnumSchema
@@ -72,7 +71,7 @@ class McpElicitationCliProviderTest : McpToolsetTestBase() {
   @Test
   fun accept_is_decoded_into_typed_result() =
     cliElicitationTest(
-      capabilities = ClientCapabilities(elicitation = EmptyJsonObject),
+      capabilities = ClientCapabilities(elicitation = ClientCapabilities.Elicitation()),
       elicitHandler = { ElicitResult(ElicitResult.Action.Accept, buildJsonObject { put("confirm", true) }) },
     ) {
       val result = callAndAwait(elicitationTool, confirmationResult)
@@ -82,7 +81,7 @@ class McpElicitationCliProviderTest : McpToolsetTestBase() {
   @Test
   fun decline_is_mapped() =
     cliElicitationTest(
-      capabilities = ClientCapabilities(elicitation = EmptyJsonObject),
+      capabilities = ClientCapabilities(elicitation = ClientCapabilities.Elicitation()),
       elicitHandler = { ElicitResult(ElicitResult.Action.Decline) },
     ) {
       val result = callAndAwait(elicitationTool, confirmationResult)
@@ -92,7 +91,7 @@ class McpElicitationCliProviderTest : McpToolsetTestBase() {
   @Test
   fun cancel_is_mapped() =
     cliElicitationTest(
-      capabilities = ClientCapabilities(elicitation = EmptyJsonObject),
+      capabilities = ClientCapabilities(elicitation = ClientCapabilities.Elicitation()),
       elicitHandler = { ElicitResult(ElicitResult.Action.Cancel) },
     ) {
       val result = callAndAwait(elicitationTool, confirmationResult)
@@ -115,7 +114,7 @@ class McpElicitationCliProviderTest : McpToolsetTestBase() {
     // even though the client fully supports elicitation.
     val capableClient = Client(
       Implementation(name = "test client", version = "1.0"),
-      ClientOptions(capabilities = ClientCapabilities(elicitation = EmptyJsonObject)),
+      ClientOptions(capabilities = ClientCapabilities(elicitation = ClientCapabilities.Elicitation())),
     )
     capableClient.setElicitationHandler { ElicitResult(ElicitResult.Action.Accept, buildJsonObject { put("confirm", true) }) }
 
@@ -164,7 +163,7 @@ class McpElicitationCliProviderTest : McpToolsetTestBase() {
   fun complex_form_maps_all_field_kinds() {
     val capturedSchema = CompletableDeferred<RequestedSchema>()
     cliElicitationTest(
-      capabilities = ClientCapabilities(elicitation = EmptyJsonObject),
+      capabilities = ClientCapabilities(elicitation = ClientCapabilities.Elicitation()),
       elicitHandler = { request ->
         capturedSchema.complete((request.params as ElicitRequestFormParams).requestedSchema)
         val clientResponse = buildJsonObject {

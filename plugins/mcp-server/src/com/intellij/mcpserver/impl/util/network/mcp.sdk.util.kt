@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.registry.Registry
+import io.ktor.http.Headers
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
@@ -38,18 +39,23 @@ import io.modelcontextprotocol.kotlin.sdk.server.StreamableHttpServerTransport
 import io.modelcontextprotocol.kotlin.sdk.shared.Transport
 import io.modelcontextprotocol.kotlin.sdk.shared.TransportSendOptions
 import io.modelcontextprotocol.kotlin.sdk.types.JSONRPCMessage
+import io.modelcontextprotocol.kotlin.sdk.types.JSONRPCError
 import io.modelcontextprotocol.kotlin.sdk.types.JSONRPCRequest
+import io.modelcontextprotocol.kotlin.sdk.types.JSONRPCResponse
 import io.modelcontextprotocol.kotlin.sdk.types.McpJson
+import io.modelcontextprotocol.kotlin.sdk.types.RequestId
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -72,14 +78,14 @@ private val sseHeartbeatPeriod: Duration
  * Serves the MCP endpoints of an IDE. The legacy SSE stream is on `/sse`, with its POST endpoint on `/message`.
  * Streamable HTTP is on `/stream`, for GET, POST and DELETE.
  *
- * [createSession] connects the MCP SDK [ServerSession] of a new session to the [Transport] it is given, and returns it.
+ * [createSession] connects the MCP SDK [ServerSession] of a new session to the [HttpCallTransport] it is given, and returns it.
  * Closing that transport is what ends the session: the `onClose` callbacks unregister it here, and cancel the scope
  * that serves it. This [Application] is the scope the sessions run in, so cancelling it closes every live session.
  */
 @KtorDsl
 fun Application.mcpPatched(
   prePhase: suspend PipelineContext<*, PipelineCall>.() -> Unit,
-  createSession: suspend (ApplicationCall, Transport) -> ServerSession,
+  createSession: suspend (ApplicationCall, HttpCallTransport) -> ServerSession,
 ) {
   val sseTransports = ConcurrentMap<String, SseServerTransport>()
   val streamableSessions = ConcurrentMap<String, StreamableHttpSession>()
@@ -137,11 +143,11 @@ fun Application.mcpPatched(
 private suspend fun ServerSSESession.mcpSseEndpoint(
   postEndpoint: String,
   transports: ConcurrentMap<String, SseServerTransport>,
-  createSession: suspend (ApplicationCall, Transport) -> ServerSession,
+  createSession: suspend (ApplicationCall, HttpCallTransport) -> ServerSession,
 ) {
   val transport = mcpSseTransport(postEndpoint, transports)
   try {
-    createSession(call, ClientDisconnectTolerantTransport(transport))
+    createSession(call, HttpCallTransport(ClientDisconnectTolerantTransport(transport)))
     logger.trace { "Server connected to transport for sessionId: ${transport.sessionId}" }
     awaitCancellation()
   }
@@ -233,7 +239,7 @@ private suspend fun obtainOrCreateStreamableSession(
   call: ApplicationCall,
   sessions: ConcurrentMap<String, StreamableHttpSession>,
   serverScope: CoroutineScope,
-  createSession: suspend (ApplicationCall, Transport) -> ServerSession,
+  createSession: suspend (ApplicationCall, HttpCallTransport) -> ServerSession,
 ): StreamableHttpSession? {
   if (call.request.headers[MCP_SESSION_ID_HEADER] != null) return call.sessionForRequest(sessions)
 
@@ -243,7 +249,7 @@ private suspend fun obtainOrCreateStreamableSession(
   val session = StreamableHttpSession(transport)
 
   val serverSession = try {
-    createSession(call, ClientDisconnectTolerantTransport(transport))
+    createSession(call, HttpCallTransport(ClientDisconnectTolerantTransport(transport)))
   }
   catch (e: Throwable) {
     transport.closeUninterruptibly()
@@ -291,6 +297,48 @@ class ClientDisconnectTolerantTransport(private val delegate: Transport) : Trans
       rethrowControlFlowException(e)
       if (message is JSONRPCRequest || (e !is IOException && e !is IllegalStateException)) throw e
       logger.debug("Client disconnected before an outgoing ${message::class.simpleName} could be delivered", e)
+    }
+  }
+}
+
+/**
+ * The transport of one MCP session over HTTP. Since MCP SDK 0.15 a request handler runs in the scope of its session,
+ * not in the coroutine of the HTTP call that delivered the request, so [HttpRequestElement] does not reach it.
+ * This transport copies the headers of that call when the request arrives, and drops them once the response goes out.
+ */
+@ApiStatus.Internal
+class HttpCallTransport(private val delegate: Transport) : Transport by delegate {
+  private val headersByRequest = ConcurrentHashMap<RequestId, Headers>()
+
+  init {
+    delegate.onClose { headersByRequest.clear() }
+  }
+
+  /** The headers of the HTTP call that delivered the request [id], or null when no HTTP call delivered it. */
+  fun callHeaders(id: RequestId?): Headers? = id?.let(headersByRequest::get)
+
+  override fun onMessage(block: suspend (JSONRPCMessage) -> Unit) {
+    delegate.onMessage { message ->
+      if (message is JSONRPCRequest) {
+        // A copy, because the call releases its header buffers when it completes, and that may come before the handler reads them.
+        currentCoroutineContext().httpRequestOrNull?.let { request ->
+          headersByRequest[message.id] = Headers.build { appendAll(request.headers) }
+        }
+      }
+      block(message)
+    }
+  }
+
+  override suspend fun send(message: JSONRPCMessage, options: TransportSendOptions?) {
+    try {
+      delegate.send(message, options)
+    }
+    finally {
+      when (message) {
+        is JSONRPCResponse -> headersByRequest.remove(message.id)
+        is JSONRPCError -> message.id?.let(headersByRequest::remove)
+        else -> Unit
+      }
     }
   }
 }
