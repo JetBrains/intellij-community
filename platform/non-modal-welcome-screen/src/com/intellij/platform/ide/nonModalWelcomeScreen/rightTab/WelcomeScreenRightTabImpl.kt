@@ -278,7 +278,7 @@ internal class WelcomeScreenRightTabImpl(
    */
   private suspend fun createFeatureContents(availableFeatureIds: Set<String>): List<WelcomeScreenFeatureUI.Content> {
     return WelcomeScreenFeatureUI.features()
-      .filter { it.featureKey in availableFeatureIds }
+      .filter { it.isAlwaysAvailable || it.featureKey in availableFeatureIds }
       .sortedBy { it.contentOrder }
       .mapNotNull { feature ->
         try {
