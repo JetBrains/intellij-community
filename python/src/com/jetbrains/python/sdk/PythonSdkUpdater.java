@@ -318,6 +318,11 @@ public final class PythonSdkUpdater {
       if (myProject.isDisposed() || isSdkDisposed()) {
         return;
       }
+      // An SDK built outside the blessed creation path carries no PythonSdkAdditionalData, and the package manager is
+      // keyed by it. Nothing here can recover that, and this task runs in the background, so skip such an SDK.
+      if (!(mySdk.getSdkAdditionalData() instanceof PythonSdkAdditionalData)) {
+        return;
+      }
       PythonPackageManager manager = PythonPackageManager.Companion.forSdk(myProject, mySdk);
       // Cancel the indicator when the SDK is disposed to terminate any running processes (e.g., skeleton generation).
       // This explicit cancellation should become unnecessary on migrating PythonSdkUpdater to coroutines and withBackgroundProgress.

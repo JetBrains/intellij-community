@@ -6,18 +6,23 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 /**
  * Reports usages of packages and versions
  */
 internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
   override suspend fun collect(project: Project): Set<MetricEvent> = buildSet {
-    for (sdk in project.sdks.filter(PythonSdkUtil::isPythonSdk)) {
-      val manager = PythonPackageManager.forSdk(project, sdk)
+    // The project model's own interpreters, rather than every module's raw SDK: an SDK built outside the blessed
+    // creation path carries no PythonSdkAdditionalData, which `forSdk` is keyed by, and reporting statistics must not
+    // fail over one (PY-90784).
+    for (interpreter in project.service<EvoPyProjectModel>().snapshot().interpreters) {
+      val manager = PythonPackageManager.forSdk(project, interpreter.getSdkAPI())
       addAll(manager.getDeclaredPackages())
       addAll(manager.getInstalledPackages())
     }

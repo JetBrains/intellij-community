@@ -55,6 +55,8 @@ import com.jetbrains.python.statistics.InterpreterType.PYENV
 import com.jetbrains.python.statistics.InterpreterType.REGULAR
 import com.jetbrains.python.statistics.InterpreterType.UV
 import com.jetbrains.python.statistics.InterpreterType.VIRTUALENV
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.jetbrains.annotations.ApiStatus
@@ -72,6 +74,16 @@ val Project.sdks: List<Sdk> get() = modules.mapNotNull(Module::getSdk)
 @ApiStatus.Internal
 fun getPythonSpecificInfo(module: Module): List<EventPair<*>> =
   module.getSdk()?.let { sdk -> getPythonSpecificInfo(sdk) } ?: emptyList()
+
+/**
+ * Adds python language and interpreter version.
+ *
+ * Takes the interpreter the project model holds, so that a caller never has to find an SDK of its own: one built
+ * outside the blessed creation path carries no [com.jetbrains.python.sdk.PythonSdkAdditionalData] and makes the
+ * reporting below throw (PY-90784).
+ */
+@ApiStatus.Internal
+fun getPythonSpecificInfo(interpreter: PythonInterpreter): List<EventPair<*>> = getPythonSpecificInfo(interpreter.getSdkAPI())
 
 /**
  * Adds python language and interpreter version
