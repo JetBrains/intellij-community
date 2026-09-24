@@ -66,6 +66,13 @@ class PyTypeIgnoreWithoutCodeInspectionTest : PyCodeInsightTestCase() {
     """)
 
   @Test
+  @TestFor(issues = ["PY-90627"])
+  fun `bare pycharm ignore flagged`() = test("""
+    x = 1  # pycharm: ignore
+    #      ^^^^^^^^^^^^^^^^^ WARNING $LINE_MESSAGE
+    """)
+
+  @Test
     /** One known code is enough, and it still suppresses the inspection that it names. */
   fun `foreign code beside known code not flagged`() = test("""
     x: int = 'foo'  # type: ignore[attr-defined, PyTypeChecker]

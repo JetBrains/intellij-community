@@ -281,6 +281,27 @@ class TypeIgnoreInspectionSuppressorTest : PyTestCase() {
     """)
   }
 
+  // PY-90627: the `# pycharm: ignore[...]` directive.
+
+  @TestFor(issues = ["PY-90627"])
+  fun testPyCharmIgnoreDirectiveWholeInspection() {
+    doTestByText("""
+      def foo(x: str):
+          print(x.bar)  # pycharm: ignore[PyUnresolvedReferences]
+          print(x.<warning descr="Unresolved attribute reference 'bar' for class 'str'">bar</warning>)
+    """)
+  }
+
+  @TestFor(issues = ["PY-90627"])
+  fun testPyCharmIgnoreDirectiveAtFileLevel() {
+    doTestByText("""
+      # pycharm: ignore[PyUnresolvedReferences]
+      def foo(x: str):
+          print(x.bar)
+          print(2 + <warning descr="Expected type 'int', got 'Literal[\"foo\"]' instead">'foo'</warning>)
+    """)
+  }
+
   private fun doTestByText(notTrimmedText: String) {
     val text = notTrimmedText.trimIndent()
     myFixture.enableInspections(inspections)

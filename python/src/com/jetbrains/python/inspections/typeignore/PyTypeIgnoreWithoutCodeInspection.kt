@@ -10,7 +10,7 @@ import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
 
 /**
- * Reports a `# type: ignore` comment that names no known inspection code.
+ * Reports a `# type: ignore` or `# pycharm: ignore` comment that names no known inspection code.
  *
  * Such a comment suppresses every inspection on its line, or in the whole file when it stands in the leading
  * comments of the file. It can therefore hide a problem that appears there later. The comment keeps this

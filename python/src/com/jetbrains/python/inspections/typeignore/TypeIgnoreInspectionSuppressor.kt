@@ -10,12 +10,14 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.impl.PyPsiUtils
 
 /**
- * Suppresses inspections on lines (or whole files) annotated with a `# type: ignore` comment.
+ * Suppresses inspections on lines (or whole files) annotated with a `# type: ignore` or `# pycharm: ignore`
+ * comment.
  *
  * A comment with a code in brackets suppresses only the inspection whose suppress id matches the code. The
  * code is the suppress id, with an optional `pycharm:` namespace prefix. A comment that names no known
  * inspection code suppresses every inspection on the line. The one exception is
- * [PyTypeIgnoreWithoutCodeInspection], which reports such a comment.
+ * [PyTypeIgnoreWithoutCodeInspection], which reports such a comment. Every bare code of a `# pycharm: ignore`
+ * comment is a PyCharm code.
  */
 class TypeIgnoreInspectionSuppressor : InspectionSuppressor {
 
