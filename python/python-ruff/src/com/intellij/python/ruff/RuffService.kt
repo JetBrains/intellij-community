@@ -18,6 +18,7 @@ import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.executeOn
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.findPythonSdk
 import kotlinx.coroutines.CoroutineScope
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
@@ -102,8 +103,8 @@ class RuffService(val project: Project, val cs: CoroutineScope) {
    * outlives a module and must not keep it. The module is also where a query runs, so the answer
    * comes from the binary that the server of the module runs.
    *
-   * `null` until a server reports. An answer published while it is `null` came from project scope,
-   * which is a guess, so the first server to report replaces it.
+   * `null` until a server reports. An answer published while it is `null` came from a guessed scope,
+   * so the first server to report replaces it.
    */
   private class AnswerSource(val version: String, val moduleName: String)
 
@@ -229,7 +230,7 @@ class RuffService(val project: Project, val cs: CoroutineScope) {
    * to say that the cache does not already know, and retires the answer when it does.
    *
    * Only three things are news. Nothing has claimed the cache yet, so whatever answer it holds came
-   * from project scope and is a guess. Or the module the answer came from now reports a different
+   * from a guessed scope. Or the module the answer came from now reports a different
    * version, which is its Ruff replaced under it. Or that module is gone, and someone has to take
    * over the scope a query runs in.
    *
@@ -267,17 +268,31 @@ class RuffService(val project: Project, val cs: CoroutineScope) {
    * `null` for it, so `toolExecutableWithBaseArgs` skips the interpreter and resolves the custom
    * path, then `PATH`, then `uvx`. Every LSP server resolves its binary in module scope instead, so
    * once one has reported in, its module is the scope whose answer matches what the user sees.
-   * Before that, and for a module that has since gone, project scope is all there is.
+   * Before that, and for a module that has since gone, [guessScope] picks the scope.
    */
-  private suspend fun queryScope(): ModuleOrProject {
-    val name = answerSource.get()?.moduleName ?: return ModuleOrProject.ProjectOnly(project)
+  @VisibleForTesting
+  suspend fun queryScope(): ModuleOrProject {
+    val name = answerSource.get()?.moduleName ?: return guessScope()
     val module = readAction { ModuleManager.getInstance(project).findModuleByName(name) }
     if (module == null) {
-      // The module went away. Project scope answers from whatever Ruff it can find, which is not
-      // necessarily one any server runs, so say so rather than let a mismatch look deliberate.
-      LOG.debug("Module $name is gone; querying Ruff in project scope")
-      return ModuleOrProject.ProjectOnly(project)
+      LOG.debug("Module $name is gone; guessing the scope of the Ruff query")
+      return guessScope()
     }
+    return ModuleOrProject.ModuleAndProject(module)
+  }
+
+  /**
+   * The scope of a query that no server has claimed: the first module with a Python SDK.
+   *
+   * A read can come before any server reports. The inlay hints read the rule table when a file
+   * opens. Project scope skips the interpreter, so it can find a `PATH` shim that fails on every
+   * run, such as a pyenv shim. A module with a Python SDK resolves the Ruff of its interpreter first,
+   * as the server of that module does. Project scope stays for a project with no such module.
+   */
+  private suspend fun guessScope(): ModuleOrProject {
+    val modules = readAction { ModuleManager.getInstance(project).modules }
+    val module = modules.firstOrNull { !it.isDisposed && it.findPythonSdk() != null }
+                 ?: return ModuleOrProject.ProjectOnly(project)
     return ModuleOrProject.ModuleAndProject(module)
   }
 
