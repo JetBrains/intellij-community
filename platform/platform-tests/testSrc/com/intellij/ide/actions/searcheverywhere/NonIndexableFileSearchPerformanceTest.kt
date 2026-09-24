@@ -7,10 +7,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
@@ -38,9 +40,13 @@ import com.intellij.workspaceModel.ide.registerProjectRootBlocking
 import com.intellij.workspaceModel.ide.unregisterProjectRoot
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestMethodOrder
 import org.junit.jupiter.api.condition.DisabledOnOs
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -55,7 +61,8 @@ import kotlin.time.toJavaDuration
 @StressTestApplication
 @RegistryKey(key = "se.enable.non.indexable.files.contributor", value = "true")
 @PerformanceUnitTest
-open class NonIndexableFileSearchPerformanceTest {
+@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
+internal class NonIndexableFileSearchPerformanceTest {
   @RegisterExtension
   private val projectModel: ProjectModelExtension = ProjectModelExtension()
 
@@ -64,8 +71,14 @@ open class NonIndexableFileSearchPerformanceTest {
 
 
   companion object {
-    private val communityPath = Path(PathManager.getCommunityHomePath())
-    private val communityVirtualFile = VfsUtil.findFile(communityPath, true)!!
+    private val LOG = logger<NonIndexableFileSearchPerformanceTest>()
+
+    private val communityPath = TemporaryDirectory.generateTemporaryPath("community").also { path ->
+      NioFiles.createDirectories(path)
+    }
+    private val communityVirtualFile = VfsUtil.findFile(communityPath, true)!!.also {
+      NioFiles.copyRecursively(Path(PathManager.getCommunityHomePath()), communityPath)
+    }
 
     private val nonIndexableFilesCount: Int = run {
       var nonIndexableFiles = 0
@@ -73,7 +86,32 @@ open class NonIndexableFileSearchPerformanceTest {
         nonIndexableFiles++
         true
       }
+      LOG.info("nonIndexableFiles: $nonIndexableFiles")
       nonIndexableFiles
+    }
+
+    private fun cachedFilesCount(file: VirtualFile = communityVirtualFile): Int {
+      return 1 + (file as NewVirtualFile).iterInDbChildren().sumOf { cachedFilesCount(it) }
+    }
+
+    private fun assertColdVfs() {
+      val cachedFiles = cachedFilesCount()
+      assertThat(cachedFiles.toLong() * 100)
+        .`as`("cached files: %d of %d", cachedFiles, nonIndexableFilesCount)
+        .isLessThan(nonIndexableFilesCount.toLong())
+    }
+
+    private fun assertWarmVfs() {
+      val cachedFiles = cachedFilesCount()
+      assertThat(cachedFiles)
+        .`as`("cached files: %d of %d", cachedFiles, nonIndexableFilesCount)
+        .isGreaterThanOrEqualTo(nonIndexableFilesCount)
+    }
+
+    @AfterAll
+    @JvmStatic
+    fun deleteCopiedCommunity() {
+      NioFiles.deleteRecursively(communityPath)
     }
   }
 
@@ -92,18 +130,39 @@ open class NonIndexableFileSearchPerformanceTest {
   }
 
   @Test
+  @Order(1)
   fun `iterate over all files`() {
+    assertColdVfs()
+
     val searchPattern = "ProjectRootEntity"
     val contributor = createContributor()
     newBenchmarkWithVariableInputSize("search \"$searchPattern\"", nonIndexableFilesCount) {
       contributor.search(searchPattern, createIndicator())
       nonIndexableFilesCount
-    }.start()
+    }.attempts(1).warmupIterations(0).start()
+  }
+
+  @Test
+  @Order(100) // run this test after every other, so they won't have files loaded into vfs
+  fun `iterate over all files (cached files)`() {
+    communityVirtualFile.refresh(false, true)
+    VfsUtil.processFilesRecursively(communityVirtualFile) { true }
+    assertWarmVfs()
+
+    val searchPattern = "ProjectRootEntity"
+    val contributor = createContributor()
+    newBenchmarkWithVariableInputSize("search \"$searchPattern\"", nonIndexableFilesCount) {
+      contributor.search(searchPattern, createIndicator())
+      nonIndexableFilesCount
+    }.attempts(1).warmupIterations(0).start()
   }
 
   @DisabledOnOs(OS.WINDOWS)
   @Test
+  @Order(1)
   fun `do not search in libraries with scope 'Project Files'`(@TestDisposable disposable: Disposable): Unit = runBlocking {
+    assertColdVfs()
+
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonIndexableExternalKindFileSetTestContributor(), disposable)
     val virtualFileManager = project.workspaceModel.getVirtualFileUrlManager()
     val externalRoot = TemporaryDirectory
@@ -111,7 +170,7 @@ open class NonIndexableFileSearchPerformanceTest {
       .createSymbolicLinkPointingTo(communityPath)
       .toVirtualFileUrl(virtualFileManager)
 
-    unregisterProjectRoot(project, communityVirtualFile.toVirtualFileUrl(virtualFileManager))
+    unregisterProjectRoot(project, virtualFileManager.storeAndGet(communityVirtualFile.url))
     project.workspaceModel.update("create EXTERNAL_NON_INEXABLE root") { storage ->
       storage.addEntity(NonIndexableTestEntity(externalRoot, NonPersistentEntitySource))
     }
@@ -125,12 +184,15 @@ open class NonIndexableFileSearchPerformanceTest {
       val items = contributor.search(searchPattern, createIndicator())
       assertThat(items).isEmpty()
       nonIndexableFilesCount
-    }.start()
+    }.attempts(1).warmupIterations(0).start()
   }
 
 
   @Test
+  @Order(1)
   fun `search for one file deep inside`() {
+    assertColdVfs()
+
     val searchPattern = "ProjectRootEntity"
     val contributor = createContributor()
     newBenchmarkWithVariableInputSize("search \"$searchPattern\"", nonIndexableFilesCount) {
@@ -139,11 +201,14 @@ open class NonIndexableFileSearchPerformanceTest {
       val elementsLimit = 0
       contributor.search(searchPattern, createIndicator(), elementsLimit)
       nonIndexableFilesCount
-    }.start()
+    }.attempts(1).warmupIterations(0).start()
   }
 
   @Test
+  @Order(1)
   fun `search for one last root child`() {
+    assertColdVfs()
+
     val filename = communityVirtualFile.getChildren(true)!!.last().name
     val contributor = createContributor()
     newBenchmarkWithVariableInputSize("search \"$filename\"", nonIndexableFilesCount) {
@@ -152,11 +217,14 @@ open class NonIndexableFileSearchPerformanceTest {
       val elementsLimit = 0
       contributor.search(filename, createIndicator(), elementsLimit)
       nonIndexableFilesCount
-    }.start()
+    }.attempts(1).warmupIterations(0).start()
   }
 
   @Test
+  @Order(1)
   fun `search for the first root child`() {
+    assertColdVfs()
+
     val filename = communityVirtualFile.getChildren(true)!!.first().name
     val contributor = createContributor()
     newBenchmark("search \"$filename\"") {
@@ -164,7 +232,7 @@ open class NonIndexableFileSearchPerformanceTest {
       // Because it actually searches for `elementsLimit + 1` files
       val elementsLimit = 0
       contributor.search(filename, createIndicator(), elementsLimit)
-    }.start()
+    }.attempts(1).warmupIterations(0).start()
   }
 
 
