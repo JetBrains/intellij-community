@@ -1,11 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.typeignore
 
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.idea.TestFor
+import com.intellij.testFramework.runInEdtAndWait
 import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.inspections.PyTypeCheckerInspection
+import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -15,7 +20,7 @@ private val FILE_MESSAGE = PyPsiBundle.message("INSP.type.ignore.without.code.fi
 @Subsystems.Inspections
 @Layers.Functional
 @PyCodeInsightTestCase.TestInspections(enableInspections = [PyTypeIgnoreWithoutCodeInspection::class])
-@TestFor(issues = ["PY-90290"], classes = [PyTypeIgnoreWithoutCodeInspection::class])
+@TestFor(issues = ["PY-90290", "PY-90787"], classes = [PyTypeIgnoreWithoutCodeInspection::class])
 class PyTypeIgnoreWithoutCodeInspectionTest : PyCodeInsightTestCase() {
 
   @Test
@@ -63,6 +68,16 @@ class PyTypeIgnoreWithoutCodeInspectionTest : PyCodeInsightTestCase() {
   @Test
   fun `pycharm namespace code not flagged`() = test("""
     x = 1  # type: ignore[pycharm:PyTypeChecker]
+    """)
+
+  @Test
+  fun `granular code not flagged`() = test("""
+    x = 1  # type: ignore[unsupported-operator]
+    """)
+
+  @Test
+  fun `kebab alias not flagged`() = test("""
+    x = 1  # type: ignore[unresolved-references]
     """)
 
   @Test
@@ -155,5 +170,48 @@ class PyTypeIgnoreWithoutCodeInspectionTest : PyCodeInsightTestCase() {
   /** The suppressor compares the tool id against the constant, so the two must not diverge. */
   fun `suppress id matches the tool id`() {
     assertEquals(PyTypeIgnoreWithoutCodeInspection.SUPPRESS_ID, PyTypeIgnoreWithoutCodeInspection().id)
+  }
+
+  /** The quick fix adds the granular code of the type-checker problem on the line. */
+  @Test
+  fun `quick fix adds granular code`() = doQuickFixTest(
+    before = "print(2 + 'foo')  # type: igno<caret>re",
+    after = "print(2 + 'foo')  # type: ignore[unsupported-operator]",
+  )
+
+  /** The quick fix keeps a foreign code and appends the computed code. */
+  @Test
+  fun `quick fix keeps foreign code`() = doQuickFixTest(
+    before = "print(2 + 'foo')  # type: igno<caret>re[attr-defined]",
+    after = "print(2 + 'foo')  # type: ignore[attr-defined, unsupported-operator]",
+  )
+
+  /** A problem of a whole inspection gives the kebab-case alias of the inspection. */
+  @Test
+  fun `quick fix adds kebab alias`() = doQuickFixTest(
+    before = """
+      def foo(x: str):
+          print(x.bar)  # type: igno<caret>re
+    """.trimIndent(),
+    after = """
+      def foo(x: str):
+          print(x.bar)  # type: ignore[unresolved-references]
+    """.trimIndent(),
+    inspection = PyUnresolvedReferencesInspection(),
+  )
+
+  private fun doQuickFixTest(before: String, after: String, inspection: LocalInspectionTool = PyTypeCheckerInspection()) {
+    runInEdtAndWait {
+      val inspections = arrayOf(inspection, PyTypeIgnoreWithoutCodeInspection())
+      myFixture.enableInspections(*inspections)
+      try {
+        myFixture.configureByText(PythonFileType.INSTANCE, before)
+        myFixture.launchAction(myFixture.findSingleIntention(PyPsiBundle.message("INSP.type.ignore.add.code.fix")))
+        myFixture.checkResult(after)
+      }
+      finally {
+        myFixture.disableInspections(*inspections)
+      }
+    }
   }
 }

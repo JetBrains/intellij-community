@@ -18,9 +18,10 @@ import java.util.regex.Pattern
  *
  * Used by [PyInspectionsSuppressor] (whole-inspection ids such as `PyMethodOverriding` and their kebab-case
  * aliases such as `method-overriding`) and by [PyTypeCheckerProblemReporter] (the granular
- * [PyTypeCheckerSuppressionCode] ids), so the scope-scanning stays in one place.
+ * [PyTypeCheckerSuppressionCode] ids), so the scope-scanning stays in one place. [toSuppressionCode] is also
+ * reused by the `# type: ignore` suppressor to recognize the same kebab aliases inside brackets.
  */
-internal object PySuppressionUtil {
+object PySuppressionUtil {
   private val SUPPRESS_PATTERN: Pattern = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP)
 
   /**

@@ -2,11 +2,14 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.psi.impl.PyPsiUtils
 import java.util.regex.Pattern
 
 /**
- * Parsing for the two inline suppression directives PyCharm understands:
+ * Parsing and matching for the two inline suppression directives PyCharm understands:
  *
  *  - `# type: ignore[<code>, ...]` — the PEP 484 comment; a bare code may name a foreign checker's code
  *    (e.g. mypy's `attr-defined`);
@@ -14,8 +17,9 @@ import java.util.regex.Pattern
  *    PyCharm code.
  *
  * A `<code>` may carry an explicit `pycharm:` namespace prefix. This object stays purely syntactic: it does
- * not know which codes name real inspections. The callers in [com.jetbrains.python.inspections.typeignore]
- * resolve the codes.
+ * not know which codes name real inspections. Semantic resolution (known suppress ids, kebab aliases,
+ * granular type-checker codes) lives with the callers — [com.jetbrains.python.inspections.typeignore]
+ * on the impl side for whole-inspection suppression, and [PyTypeCheckerProblemReporter] for granular codes.
  */
 object PyIgnoreCommentUtil {
   private const val PYCHARM_NAMESPACE = "pycharm"
@@ -68,4 +72,27 @@ object PyIgnoreCommentUtil {
 
   /** All canonical [CodeRef]s listed by [parsed], dropping foreign-namespaced codes. */
   fun codeRefs(parsed: ParsedIgnore): List<CodeRef> = parsed.rawCodes.mapNotNull { codeRef(parsed.directive, it) }
+
+  /**
+   * `true` when a same-line trailing ignore comment for [element], or a leading file-level ignore comment,
+   * explicitly lists [codeName] (in any non-foreign namespace). Used by [PyTypeCheckerProblemReporter] so a
+   * granular type-checker code can be silenced with `# type: ignore[<code>]` / `# pycharm: ignore[<code>]`
+   * exactly like `# noinspection <code>`.
+   */
+  fun isExplicitlyIgnored(element: PsiElement, codeName: String): Boolean {
+    val sameLine = PyPsiUtils.findSameLineComment(element)
+    if (sameLine != null && namesCode(sameLine, codeName)) return true
+    val file = element.containingFile ?: return false
+    var node = file.firstChild
+    while (node is PsiComment || node is PsiWhiteSpace) {
+      if (node is PsiComment && namesCode(node, codeName)) return true
+      node = node.nextSibling
+    }
+    return false
+  }
+
+  private fun namesCode(comment: PsiComment, codeName: String): Boolean {
+    val parsed = parse(comment) ?: return false
+    return codeRefs(parsed).any { it.name == codeName }
+  }
 }

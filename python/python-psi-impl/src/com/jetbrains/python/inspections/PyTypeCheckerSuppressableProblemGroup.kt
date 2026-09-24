@@ -17,6 +17,9 @@ import com.intellij.psi.PsiElement
  * dropped. The problem must stay keyed to the `PyTypeChecker` inspection for severity/enablement.
  */
 internal class PyTypeCheckerSuppressableProblemGroup(private val code: PyTypeCheckerSuppressionCode) : SuppressableProblemGroup {
+  /** The granular code id (e.g. `unsupported-operator`); read off a descriptor by [PyIgnoreCodeComputer]. */
+  val codeId: String get() = code.id
+
   override fun getProblemName(): String? = null
 
   override fun getSuppressActions(element: PsiElement?): Array<SuppressIntentionAction> {

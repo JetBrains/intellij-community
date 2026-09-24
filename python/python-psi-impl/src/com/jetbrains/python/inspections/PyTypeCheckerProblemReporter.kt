@@ -15,9 +15,10 @@ import com.jetbrains.python.psi.PyFile
  * Registers [PyTypeCheckerInspection] problems tagged with a granular [PyTypeCheckerSuppressionCode].
  *
  * Unlike the plain `PyInspectionVisitor.registerProblem` helpers, every problem reported here:
- *  - is skipped when the element is covered by a `# noinspection <code>` comment for its own code
- *    ([PySuppressionUtil]); the broad `# noinspection PyTypeChecker` is still handled afterwards by
- *    the platform via [PyInspectionsSuppressor];
+ *  - is skipped when the element is covered by a `# noinspection <code>`, `# type: ignore[<code>]`, or
+ *    `# pycharm: ignore[<code>]` comment for its own code ([PySuppressionUtil], [PyIgnoreCommentUtil]); the
+ *    broad `# noinspection PyTypeChecker` / bare `# type: ignore` is still handled afterwards by the platform
+ *    via [PyInspectionsSuppressor] / the type-ignore suppressor;
  *  - carries a [PyTypeCheckerSuppressableProblemGroup] so Alt-Enter offers the per-code suppress actions.
  */
 internal object PyTypeCheckerProblemReporter {
@@ -30,7 +31,7 @@ internal object PyTypeCheckerProblemReporter {
     type: ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
     vararg fixes: LocalQuickFix,
   ): Boolean {
-    if (element == null || !canRegister(element) || PySuppressionUtil.isSuppressed(element, code.id)) return false
+    if (element == null || !canRegister(element) || isSuppressed(element, code)) return false
     val descriptor = holder.manager.createProblemDescriptor(
       element, null as TextRange?, message.description, type, message.tooltip, holder.isOnTheFly, *fixes
     )
@@ -62,7 +63,7 @@ internal object PyTypeCheckerProblemReporter {
     type: ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
     vararg fixes: LocalQuickFix,
   ): Boolean {
-    if (element == null || !canRegister(element) || PySuppressionUtil.isSuppressed(element, code.id)) return false
+    if (element == null || !canRegister(element) || isSuppressed(element, code)) return false
     val descriptor = holder.manager.createProblemDescriptor(element, message, true, type, holder.isOnTheFly, *fixes)
     descriptor.problemGroup = PyTypeCheckerSuppressableProblemGroup(code)
     holder.registerProblem(descriptor)
@@ -84,7 +85,7 @@ internal object PyTypeCheckerProblemReporter {
     vararg fixes: LocalQuickFix,
     tooltip: () -> @NlsContexts.Tooltip String?,
   ): Boolean {
-    if (element == null || !canRegister(element) || PySuppressionUtil.isSuppressed(element, code.id)) return false
+    if (element == null || !canRegister(element) || isSuppressed(element, code)) return false
     val onTheFlyTooltip = if (holder.isOnTheFly) tooltip() else null
     val descriptor = holder.manager.createProblemDescriptor(
       element, null as TextRange?, message.description, type, onTheFlyTooltip ?: message.tooltip, holder.isOnTheFly, *fixes
@@ -103,7 +104,7 @@ internal object PyTypeCheckerProblemReporter {
     type: ProblemHighlightType,
     tooltip: () -> @NlsContexts.Tooltip String?,
   ): Boolean {
-    if (element == null || !canRegister(element) || PySuppressionUtil.isSuppressed(element, code.id)) return false
+    if (element == null || !canRegister(element) || isSuppressed(element, code)) return false
     val onTheFlyTooltip = if (holder.isOnTheFly) tooltip() else null
     val descriptor = if (onTheFlyTooltip != null)
       holder.manager.createProblemDescriptor(element, null as TextRange?, message, type, onTheFlyTooltip, holder.isOnTheFly)
@@ -113,6 +114,12 @@ internal object PyTypeCheckerProblemReporter {
     holder.registerProblem(descriptor)
     return true
   }
+
+  // A granular code is silenced by `# noinspection <code>` (scanned by PySuppressionUtil over the enclosing
+  // statement/function/class) or by an explicit `# type: ignore[<code>]` / `# pycharm: ignore[<code>]`
+  // trailing/file-level comment (PyIgnoreCommentUtil).
+  private fun isSuppressed(element: PsiElement, code: PyTypeCheckerSuppressionCode): Boolean =
+    PySuppressionUtil.isSuppressed(element, code.id) || PyIgnoreCommentUtil.isExplicitlyIgnored(element, code.id)
 
   // Mirrors PyInspectionVisitor.canRegisterProblem.
   private fun canRegister(element: PsiElement): Boolean = element.textLength > 0 || element is PyFile

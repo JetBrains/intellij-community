@@ -6,7 +6,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.childrenSequence
-import com.jetbrains.python.inspections.PyIgnoreCommentUtil
 
 internal enum class IgnoreScope { LINE, FILE }
 
@@ -21,11 +20,6 @@ internal fun PsiFile.leadingFileLevelComments(): Sequence<PsiComment> =
     .takeWhile { it is PsiComment || it is PsiWhiteSpace }
     .filterIsInstance<PsiComment>()
 
-internal fun typeIgnoreTargets(comment: PsiComment): Set<String>? {
-  val parsed = PyIgnoreCommentUtil.parse(comment) ?: return null
-  return PyIgnoreCommentUtil.codeRefs(parsed).mapNotNullTo(HashSet(), ::specificTarget)
-}
-
 private fun followsCodeOnItsLine(comment: PsiComment): Boolean {
   var previous = PsiTreeUtil.prevLeaf(comment) ?: return false
   while (previous is PsiWhiteSpace) {
@@ -33,14 +27,4 @@ private fun followsCodeOnItsLine(comment: PsiComment): Boolean {
     previous = PsiTreeUtil.prevLeaf(previous) ?: return false
   }
   return previous !is PsiComment
-}
-
-/**
- * Returns the suppress id that a single code targets, or `null` when [ref] names no PyCharm inspection. A
- * PyCharm code, with the `pycharm:` namespace or from `# pycharm: ignore`, always has a target. A bare code of
- * `# type: ignore` must match a registered suppress id.
- */
-private fun specificTarget(ref: PyIgnoreCommentUtil.CodeRef): String? {
-  if (ref.pycharmNamespaced) return ref.name
-  return ref.name.takeIf { PyTypeIgnoreSuppressIds.getInstance().isKnownSuppressId(it) }
 }
