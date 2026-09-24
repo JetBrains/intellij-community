@@ -158,6 +158,31 @@ internal class PythonPackageManagerUnusedSdkTest {
     assertThat(watcherGone.get()).describedAs("The watcher outlived the interpreter it watches").isTrue()
   }
 
+  /**
+   * A watcher is parented to the interpreter, which lives as long as the application, and the change it runs holds the
+   * service and through it the project. Closing the project therefore has to take the watcher, or the interpreter keeps
+   * the closed project alive (PY-89433).
+   */
+  @Test
+  fun `the watcher of an interpreter goes when the project goes`(
+    @TempDir home: Path,
+    @TestDisposable disposable: Disposable,
+  ): Unit = timeoutRunBlocking(1.minutes) {
+    val project = projectFixture.get()
+    val module = moduleFixture.get()
+    val sdk = registerSdk("PY-89433 packages of a closed project", home, disposable)
+    module.useSdk(sdk)
+    val service = project.service<PythonPackageManagerService>()
+    service.forSdk(project, sdk)
+    service.awaitWatcher(sdk, watched = true)
+
+    val watcherGone = AtomicBoolean()
+    Disposer.register(service.impl().interpreterPathsWatcher(sdk)!!, Disposable { watcherGone.set(true) })
+    Disposer.dispose(service.impl())
+
+    assertThat(watcherGone.get()).describedAs("The watcher outlived the project that owns it").isTrue()
+  }
+
   private fun PythonPackageManagerService.impl(): PythonPackageManagerServiceImpl = this as PythonPackageManagerServiceImpl
 
   /** The structure is published on a flow, so a watcher appears and goes after the change, not with it. */

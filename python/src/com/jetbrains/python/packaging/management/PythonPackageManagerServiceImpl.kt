@@ -177,7 +177,20 @@ internal class PythonPackageManagerServiceImpl(
     }
   }
 
+  /**
+   * Takes the watcher from every entry before dropping them.
+   *
+   * Clearing the cache alone leaks the project: a watcher is parented to the interpreter, which lives as long as the
+   * application, and the change it runs holds this service and through it the project (PY-89433). The reference runs
+   * from the interpreter inward, so letting go of the entries does not break it — the watcher has to go.
+   */
   override fun dispose() {
+    watchersLock.withLock {
+      for (entry in cache.values) {
+        entry.watcher?.let { Disposer.dispose(it) }
+        entry.watcher = null
+      }
+    }
     cache.clear()
   }
 
