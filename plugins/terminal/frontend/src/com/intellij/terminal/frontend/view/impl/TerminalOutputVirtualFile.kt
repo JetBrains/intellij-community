@@ -1,5 +1,6 @@
 package com.intellij.terminal.frontend.view.impl
 
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.AbstractFileViewProvider
 import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputFileType
@@ -17,5 +18,10 @@ internal class TerminalOutputVirtualFile : LightVirtualFile("terminal_output", T
 
   override fun shouldSkipEventSystem(): Boolean {
     return true
+  }
+
+  /** Skips the possibly expensive [com.intellij.openapi.fileTypes.FileTypeRegistry] lookup */
+  override fun getFileType(): FileType {
+    return TerminalOutputFileType
   }
 }
