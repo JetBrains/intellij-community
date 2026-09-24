@@ -129,6 +129,6 @@ fun TextContent.getTextDomain(): TextStyleDomain {
   if (style != null) return style
   val file = this.containingFile
   if (CommitMessage.isCommitMessage(file)) return Commit
-  if ("ChatInput" == file.getLanguage().id) return AIPrompt
+  if ("ChatInput" == file.getLanguage().id || file.viewProvider.virtualFile.name.startsWith("AirPrompt")) return AIPrompt
   return Other
 }
