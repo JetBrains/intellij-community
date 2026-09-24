@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="io.github.oshai.kotlin.logging.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.github.oshai:kotlin-logging-jvm:7.0.3">
+        <properties include-transitive-deps="false" maven-id="io.github.oshai:kotlin-logging-jvm:8.0.4">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/7.0.3/kotlin-logging-jvm-7.0.3.jar">
-              <sha256sum>241daa21665dd0ca55576a4bc4d8e9ace8891ae3c698cc77f13bb4bdac372e94</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/8.0.4/kotlin-logging-jvm-8.0.4.jar">
+              <sha256sum>0bbac3f9dac5067b40d02fe461a053782bc8d3ef5162a923581b369adef7e02d</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/7.0.3/kotlin-logging-jvm-7.0.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/8.0.4/kotlin-logging-jvm-8.0.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/7.0.3/kotlin-logging-jvm-7.0.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/8.0.4/kotlin-logging-jvm-8.0.4-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

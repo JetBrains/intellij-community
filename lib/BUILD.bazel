@@ -10796,17 +10796,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "io.github.oshai/kotlin-logging-jvm-7.0.3.jar_copy",
-    src = "@io_github_oshai-kotlin-logging-jvm-7_0_3_http//file",
-    out = "io.github.oshai/kotlin-logging-jvm-7.0.3.jar",
+    name = "io.github.oshai/kotlin-logging-jvm-8.0.4.jar_copy",
+    src = "@io_github_oshai-kotlin-logging-jvm-8_0_4_http//file",
+    out = "io.github.oshai/kotlin-logging-jvm-8.0.4.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-kotlin-logging-io-github-oshai-kotlin-logging-jvm",
-    jar = "@io_github_oshai-kotlin-logging-jvm-7_0_3_http//file",
-    source_jar = "@io_github_oshai-kotlin-logging-jvm-7_0_3-sources_http//file",
+    jar = "@io_github_oshai-kotlin-logging-jvm-8_0_4_http//file",
+    source_jar = "@io_github_oshai-kotlin-logging-jvm-8_0_4-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

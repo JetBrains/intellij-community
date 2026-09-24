@@ -25,6 +25,9 @@ private val IJ_MCP_DEBUG: String = ::IJ_MCP_DEBUG.name
  */
 
 suspend fun main() {
+  // kotlin-logging prints a banner to stdout when the SDK creates its first logger, and stdout carries the MCP protocol.
+  System.setProperty("kotlin-logging.logStartupMessage", "false")
+
   val inputStream = System.`in`
   val outputStream = System.out
 
