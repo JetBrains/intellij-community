@@ -44,6 +44,13 @@ internal object PyreflyExecutableProvider {
     throw ExecutionException(PyreflyBundle.message("pyrefly.executable.unavailable", relativePath.toString()))
   }
 
+  fun executableExists(): Boolean {
+    val relativePath = hostRelativePath() ?: return false
+    return listOf(PYTHON_CORE_PLUGIN_ID, PYREFLY_BINARIES_PLUGIN_ID).any { pluginId ->
+      PluginManagerCore.getPlugin(pluginId)?.pluginPath?.resolve(relativePath)?.isRegularFile() == true
+    }
+  }
+
   /** The executable inside [plugin], or `null` when the plugin is absent or carries no executable for this host. */
   private suspend fun executableIn(plugin: IdeaPluginDescriptor?, relativePath: Path): Path? {
     val executable = plugin?.pluginPath?.resolve(relativePath) ?: return null

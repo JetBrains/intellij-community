@@ -121,12 +121,8 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
       return
     attach(descriptor)
 
-    try {
-      runBlockingMaybeCancellable { descriptor.resolveCommandLine() }
-    }
-    catch (_: ExecutionException) {
+    if (!descriptor.hasExecutable())
       return
-    }
 
     clientStarter.ensureClientStarted(descriptor)
   }
@@ -619,6 +615,8 @@ abstract class PyLspToolDescriptor(
   }
 
   override fun createCommandLine(): GeneralCommandLine = runBlockingMaybeCancellable { resolveCommandLine() }
+
+  open fun hasExecutable(): Boolean = findExecutable() != null
 
   lateinit var supportProvider: PyLspToolIntegrationProvider
 
