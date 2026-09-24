@@ -1028,6 +1028,7 @@ platform/settings
 platform/settings-local
 platform/settings-sync-core
 platform/smRunner
+platform/smRunner/dashboard
 platform/smRunner/vcs
 platform/smart-update
 platform/sqlite

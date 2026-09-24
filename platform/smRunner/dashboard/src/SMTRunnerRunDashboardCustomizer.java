@@ -1,11 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.testframework.sm.runner;
+package com.intellij.platform.smRunner.dashboard;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.dashboard.RunDashboardCustomizationBuilder;
 import com.intellij.execution.dashboard.RunDashboardCustomizer;
 import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.TestsUIUtil;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer;
