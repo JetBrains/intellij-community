@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.writeaheadlog
 
+import com.intellij.util.io.ChannelsAccessor
+import com.intellij.util.io.FileChannelInterruptsRetryer
 import com.intellij.util.io.PageCacheUtils
 import com.intellij.util.io.blobstorage.ByteBufferWriter
 import org.junit.jupiter.api.Assertions.assertArrayEquals
@@ -314,6 +316,19 @@ class FileChannelWithWALTest {
     }
   }
 
+  @Test
+  fun `close releases underlying accessor when write ahead log flush fails`(@TempDir tempDir: Path) {
+    val file = tempDir.storageFile()
+    val channelsAccessor = CloseRecordingChannelsAccessor()
+    val channel = FileChannelWithWAL(file, FailingFlushWriteAheadLog(), channelsAccessor, readOnly = false)
+
+    assertThrows<IOException>("The injected write-ahead-log flush failure must propagate from close") {
+      channel.close()
+    }
+
+    assertTrue(channelsAccessor.closed, "Channel close must release the underlying accessor after a flush failure")
+  }
+
   private fun Path.storageFile(): Path = resolve("storage.bin").also { Files.createFile(it) }
 
   private fun openWritableChannel(file: Path, writeAheadLog: WriteAheadLog): FileChannelWithWAL {
@@ -448,6 +463,50 @@ class FileChannelWithWALTest {
     override fun close() = Unit
 
     override fun hasUnfinished(): Boolean = false
+  }
+
+  private class FailingFlushWriteAheadLog : WriteAheadLog {
+    override fun openFor(file: Path): WriteAheadLog.PerFileWriter {
+      return object : WriteAheadLog.PerFileWriter {
+        override fun write(fileOffset: Long, writer: ByteBufferWriter, recordSize: Int) = Unit
+
+        override fun hasUnfinished(): Boolean = true
+
+        override fun maxUnfinishedWriteOffset(): Long = -1
+
+        override fun applyUnfinished(fileOffset: Long, length: Int, buffer: ByteBuffer, offsetInBuffer: Int) = Unit
+
+        override fun flush(): Int = throw IOException("Expected flush failure")
+      }
+    }
+
+    override fun flush(): Int = throw IOException("Expected flush failure")
+
+    override fun close() = Unit
+
+    override fun hasUnfinished(): Boolean = true
+  }
+
+  private class CloseRecordingChannelsAccessor : ChannelsAccessor {
+    var closed: Boolean = false
+      private set
+
+    override fun isReadOnly(): Boolean = false
+
+    override fun <T> executeOp(path: Path, operation: ChannelsAccessor.FileChannelOperation<T>): T {
+      error("No underlying channel operation is expected")
+    }
+
+    override fun <T> executeIdempotentOp(
+      path: Path,
+      operation: FileChannelInterruptsRetryer.FileChannelIdempotentOperation<T>,
+    ): T {
+      error("No underlying channel operation is expected")
+    }
+
+    override fun closeChannel(path: Path) {
+      closed = true
+    }
   }
 
   private class CountingFlushWriteAheadLog(vararg flushedRecords: Int) : WriteAheadLog {

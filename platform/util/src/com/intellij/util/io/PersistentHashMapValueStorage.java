@@ -6,8 +6,10 @@ import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.MathUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.AppendablePersistentMap.ValueDataAppender;
 import com.intellij.util.io.PersistentMapImpl.CompactionRecordInfo;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -181,14 +183,32 @@ public final class PersistentHashMapValueStorage {
     myFileAccessor = new ChannelAccessorBackedFileAccessor(path, storageLockContext, options.myReadOnly);
     myAppender = new SyncAbleBufferedOutputStreamOverFileAccessor(myFileAccessor);
 
-    if (myOptions.useCompression()) {
-      myCompressedAppendableFile = new MyCompressedAppendableFile();
-      mySize = myCompressedAppendableFile.length();
+    MyCompressedAppendableFile compressedAppendableFile = null;
+    long size;
+    try {
+      if (myOptions.useCompression()) {
+        compressedAppendableFile = new MyCompressedAppendableFile();
+        size = compressedAppendableFile.length();
+      }
+      else {
+        size = myFileAccessor.sizeIfExists();
+      }
     }
-    else {
-      myCompressedAppendableFile = null;
-      mySize = myFileAccessor.sizeIfExists();
+    catch (IOException | RuntimeException | Error e) {
+      MyCompressedAppendableFile fileToDispose = compressedAppendableFile;
+      runAllCleanupTasksAndAddErrorsAsSuppressed(
+        e,
+        () -> {
+          if (fileToDispose != null) fileToDispose.dispose();
+        },
+        () -> disposeAppender(myAppender),
+        () -> closeFileAccessor(myFileAccessor),
+        myFileAccessor::assertNoOpenChannels
+      );
+      throw e;
     }
+    myCompressedAppendableFile = compressedAppendableFile;
+    mySize = size;
   }
 
   public long appendBytes(ByteArraySequence data, long prevChunkAddress) throws IOException {
@@ -725,24 +745,56 @@ public final class PersistentHashMapValueStorage {
   }
 
   public void dispose() {
-    try {
-      if (myCompressedAppendableFile != null) myCompressedAppendableFile.dispose();
-    }
-    finally {
-      if (mySize < 0) assert false; // volatile read
-      disposeAppender(myAppender);
-      closeFileAccessor(myFileAccessor);
+    runAllCleanupTasks(
+      () -> {
+        if (myCompressedAppendableFile != null) myCompressedAppendableFile.dispose();
+      },
+      () -> {
+        if (mySize < 0) assert false; // volatile read
+        disposeAppender(myAppender);
+      },
+      () -> closeFileAccessor(myFileAccessor),
+      this::disposeCompactionModeReader,
+      this::assertNoOpenChannels      //ensure dispose succeed
+    );
+  }
 
-      if (myCompactionModeReader != null) {
-        try {
-          myCompactionModeReader.dispose();
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-        myCompactionModeReader = null;
+  private void disposeCompactionModeReader() throws IOException {
+    RAReader reader = myCompactionModeReader;
+    myCompactionModeReader = null;
+    if (reader != null) {
+      reader.dispose();
+    }
+  }
+
+  /**
+   * Runs all the tasks. Failed task N does not prevent following task to run.
+   * All the exceptions are accumulated, and rethrown at the end as first exception with following exceptions in suppressed list.
+   */
+  @SafeVarargs
+  private static void runAllCleanupTasks(ThrowableRunnable<? extends Exception> @NotNull ... tasks) {
+    List<? extends Throwable> errors = ExceptionUtil.runAllAndCollectExceptions(tasks);
+    if (errors.isEmpty()) return;
+
+    Throwable primaryError = errors.get(0);
+    for (int i = 1; i < errors.size(); i++) {
+      primaryError.addSuppressed(errors.get(i));
+    }
+    ExceptionUtil.rethrow(primaryError);
+  }
+
+  /**
+   * Runs all the tasks. Failed task N does not prevent following task to run.
+   * All the exceptions are appended to primaryError's suppressed list.
+   */
+  @SafeVarargs
+  private static void runAllCleanupTasksAndAddErrorsAsSuppressed(@NotNull Throwable primaryError,
+                                                                 ThrowableRunnable<? extends Exception> @NotNull ... cleanupTasks) {
+    List<? extends Throwable> errors = ExceptionUtil.runAllAndCollectExceptions(cleanupTasks);
+    for (Throwable cleanupError : errors) {
+      if (cleanupError != primaryError) {
+        primaryError.addSuppressed(cleanupError);
       }
-      assertNoOpenChannels();
     }
   }
 
@@ -804,7 +856,16 @@ public final class PersistentHashMapValueStorage {
       myStorageLockContext = storageLockContext;
       myChannelsAccessor = storageLockContext.getChannelsAccessor(readOnly);
       myReadOnly = readOnly;
-      myAppendAtOffset = initialSize();
+      try {
+        myAppendAtOffset = initialSize();
+      }
+      catch (IOException | RuntimeException | Error e) {
+        runAllCleanupTasksAndAddErrorsAsSuppressed(
+          e,
+          () -> myChannelsAccessor.closeChannel(myPath)
+        );
+        throw e;
+      }
     }
 
     synchronized void append(byte @NotNull [] src, int off, int len) throws IOException {
@@ -1033,10 +1094,24 @@ public final class PersistentHashMapValueStorage {
 
     MyCompressedAppendableFile() throws IOException {
       super(myPath);
-      myChunkLengthFileAccessor = new ChannelAccessorBackedFileAccessor(getChunkLengthFile(), myStorageLockContext, myOptions.myReadOnly);
-      myChunkLengthAppender = new SyncAbleBufferedOutputStreamOverFileAccessor(myChunkLengthFileAccessor);
-      myIncompleteChunkFileAccessor =
-        new ChannelAccessorBackedFileAccessor(getIncompleteChunkFile(), myStorageLockContext, myOptions.myReadOnly);
+      ChannelAccessorBackedFileAccessor chunkLengthFileAccessor = new ChannelAccessorBackedFileAccessor(getChunkLengthFile(), myStorageLockContext, myOptions.myReadOnly);
+      SyncAbleBufferedOutputStreamOverFileAccessor chunkLengthAppender = new SyncAbleBufferedOutputStreamOverFileAccessor(chunkLengthFileAccessor);
+      ChannelAccessorBackedFileAccessor incompleteChunkFileAccessor;
+      try {
+        incompleteChunkFileAccessor = new ChannelAccessorBackedFileAccessor(getIncompleteChunkFile(), myStorageLockContext, myOptions.myReadOnly);
+      }
+      catch (IOException | RuntimeException | Error e) {
+        runAllCleanupTasksAndAddErrorsAsSuppressed(
+          e,
+          () -> disposeAppender(chunkLengthAppender),
+          () -> closeFileAccessor(chunkLengthFileAccessor),
+          chunkLengthFileAccessor::assertNoOpenChannels  //ensure cleanup succeeded
+        );
+        throw e;
+      }
+      myChunkLengthFileAccessor = chunkLengthFileAccessor;
+      myChunkLengthAppender = chunkLengthAppender;
+      myIncompleteChunkFileAccessor = incompleteChunkFileAccessor;
     }
 
     @Override
@@ -1100,12 +1175,13 @@ public final class PersistentHashMapValueStorage {
 
     @Override
     public synchronized void dispose() {
-      super.dispose();
-
-      disposeAppender(myChunkLengthAppender);
-      closeFileAccessor(myChunkLengthFileAccessor);
-      closeFileAccessor(myIncompleteChunkFileAccessor);
-      assertNoOpenChannels();
+      runAllCleanupTasks(
+        super::dispose,
+        () -> disposeAppender(myChunkLengthAppender),
+        () -> closeFileAccessor(myChunkLengthFileAccessor),
+        () -> closeFileAccessor(myIncompleteChunkFileAccessor),
+        this::assertNoOpenChannels
+      );
     }
 
     /** Checks compressed side-files against both mode-bound cache views. */

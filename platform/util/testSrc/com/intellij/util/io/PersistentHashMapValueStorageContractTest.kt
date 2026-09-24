@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.api.assertThrows
 import java.io.DataOutputStream
+import java.io.IOException
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.nio.ByteBuffer
@@ -315,6 +316,52 @@ internal class PersistentHashMapValueStorageContractTest {
   }
 
   @Test
+  fun `dispose closes all value storage channels after compressed flush failure`() {
+    val storageFile = tempDir.resolve("compressed-dispose-failure.values")
+    val chunkLengthFile = storageFile.resolveSibling("${storageFile.fileName}.s")
+    val incompleteChunkFile = storageFile.resolveSibling("${storageFile.fileName}.at")
+    val channelsAccessor = RecordingChannelsAccessor()
+    val lockContext = StorageLockContext(false, channelsAccessor.readOnlyAccessor, channelsAccessor.writableAccessor)
+    val config = TestConfig(name = "compressed", hasNoChunks = false, useCompression = true)
+    val storage = PersistentHashMapValueStorage.create(storageFile, config.options(readOnly = false), lockContext)
+    storage.appendPayload(byteArrayOf(1, 2, 3), previousTailAddress = 0)
+    channelsAccessor.writeFailurePath = incompleteChunkFile
+
+    assertThrows<RuntimeException>("The injected incomplete-tail write failure must propagate from dispose") {
+      storage.dispose()
+    }
+
+    assertTrue(channelsAccessor.closedPaths.contains(storageFile), "Dispose must close the main value file after a side-file failure")
+    assertTrue(channelsAccessor.closedPaths.contains(chunkLengthFile), "Dispose must close the chunk-length file after a side-file failure")
+    assertTrue(channelsAccessor.closedPaths.contains(incompleteChunkFile), "Dispose must close the incomplete-tail file after its write fails")
+  }
+
+  @Test
+  fun `failed compressed storage construction closes all initialized channels`() {
+    val storageFile = tempDir.resolve("compressed-construction-failure.values")
+    val chunkLengthFile = storageFile.resolveSibling("${storageFile.fileName}.s")
+    val incompleteChunkFile = storageFile.resolveSibling("${storageFile.fileName}.at")
+    Files.createFile(storageFile)
+    Files.createFile(chunkLengthFile)
+    Files.createFile(incompleteChunkFile)
+    val channelsAccessor = RecordingChannelsAccessor()
+    val lockContext = StorageLockContext(false, channelsAccessor.readOnlyAccessor, channelsAccessor.writableAccessor)
+    val config = TestConfig(name = "compressed", hasNoChunks = false, useCompression = true)
+    channelsAccessor.sizeFailurePath = incompleteChunkFile
+
+    assertThrows<IOException>("The injected side-file initialization failure must propagate from the constructor") {
+      PersistentHashMapValueStorage.create(storageFile, config.options(readOnly = false), lockContext)
+    }
+
+    assertTrue(channelsAccessor.closedPaths.contains(storageFile), "Failed construction must close the initialized main value file")
+    assertTrue(channelsAccessor.closedPaths.contains(chunkLengthFile), "Failed construction must close the initialized chunk-length file")
+    assertTrue(channelsAccessor.closedPaths.contains(incompleteChunkFile), "The failing accessor must close its own incomplete-tail file")
+
+    channelsAccessor.sizeFailurePath = null
+    PersistentHashMapValueStorage.create(storageFile, config.options(readOnly = false), lockContext).dispose()
+  }
+
+  @Test
   fun `compressed incomplete chunk clear does not force when side file becomes empty`() {
     val storageFile = tempDir.resolve("compressed-unforced-incomplete-tail-clear.values")
     val incompleteChunkFile = storageFile.resolveSibling("${storageFile.fileName}.at")
@@ -536,6 +583,8 @@ internal class PersistentHashMapValueStorageContractTest {
     val operations = ArrayList<Operation>()
     val channelOperations = ArrayList<ChannelOperation>()
     val closedPaths = ArrayList<Path>()
+    var sizeFailurePath: Path? = null
+    var writeFailurePath: Path? = null
     var activeChannels = 0
       private set
     var idempotentOperations = 0
@@ -589,7 +638,7 @@ internal class PersistentHashMapValueStorageContractTest {
       return channelOperations.filter { it.path == path && it.name == "force" }
     }
 
-    private class RecordingFileChannel(
+    private inner class RecordingFileChannel(
       private val path: Path,
       private val readOnly: Boolean,
       private val delegate: FileChannel,
@@ -611,7 +660,10 @@ internal class PersistentHashMapValueStorageContractTest {
 
       override fun write(srcs: Array<out ByteBuffer>, offset: Int, length: Int): Long = delegate.write(srcs, offset, length)
 
-      override fun write(src: ByteBuffer, position: Long): Int = delegate.write(src, position)
+      override fun write(src: ByteBuffer, position: Long): Int {
+        if (path == writeFailurePath) throw IOException("Expected write failure for $path")
+        return delegate.write(src, position)
+      }
 
       override fun position(): Long = delegate.position()
 
@@ -620,7 +672,10 @@ internal class PersistentHashMapValueStorageContractTest {
         return this
       }
 
-      override fun size(): Long = delegate.size()
+      override fun size(): Long {
+        if (path == sizeFailurePath) throw IOException("Expected size failure for $path")
+        return delegate.size()
+      }
 
       override fun truncate(size: Long): FileChannel {
         operations.add(ChannelOperation(path, "truncate", size))

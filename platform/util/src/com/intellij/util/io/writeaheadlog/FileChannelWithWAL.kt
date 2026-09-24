@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.writeaheadlog
 
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.SystemProperties.getBooleanProperty
 import com.intellij.util.io.ChannelsAccessor
 import com.intellij.util.io.ChannelsAccessor.FileChannelOperation
@@ -223,9 +224,20 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
   @Synchronized
   @Throws(IOException::class)
   protected override fun implCloseChannel() {
-    val entriesFlushed = perFileWriter.flush()
-    entriesFlushedOnClose.add(entriesFlushed)
-    channelOpExecutor.close()
+    ExceptionUtil.runAllAndCollectExceptions(
+      {
+        val entriesFlushed = perFileWriter.flush()
+        entriesFlushedOnClose.add(entriesFlushed)
+      },
+      { channelOpExecutor.close() },
+    ).also { errors ->
+      if (errors.isNotEmpty()) {
+        val primaryError = errors.first()
+        errors.drop(1).forEach(primaryError::addSuppressed)
+        if (primaryError is IOException) throw primaryError
+        ExceptionUtil.rethrow(primaryError)
+      }
+    }
   }
 
   override fun <T> executeOperation(operation: FileChannelIdempotentOperation<T>): T {
