@@ -26,7 +26,7 @@ private const val GROUP_ID = "terminal"
 object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 22)
+  private val GROUP = EventLogGroup(GROUP_ID, 23)
 
   private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
   private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
@@ -68,6 +68,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   // Latency measurement related fields
   private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_ms")
   private val TOTAL_DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "total_duration_ms", "Sum of all durations")
+  private val DURATION_MEDIAN_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "median_ms", "50% percentile")
   private val DURATION_90_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_90_ms", "90% percentile")
   private val SECOND_LARGEST_DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "second_largest_duration_ms")
   private val THIRD_LARGEST_DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "third_largest_duration_ms")
@@ -116,6 +117,11 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val osVersion: String by lazy {
     Version.parseVersion(OS.CURRENT.version())?.toCompactString() ?: "unknown"
   }
+
+  private val typingLatencyEvent = GROUP.registerVarargEvent(
+    "typing.latency",
+    DURATION_MEDIAN_FIELD, DURATION_90_FIELD, SECOND_LARGEST_DURATION_FIELD
+  )
 
   private val backendOutputLatencyEvent = GROUP.registerVarargEvent(
     "backend.output.latency",
@@ -229,6 +235,14 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   @JvmStatic
   fun logSessionRestored(project: Project, tabCount: Int) {
     sessionRestoredEvent.log(project, tabCount)
+  }
+
+  fun logTypingLatency(durationMedian: Duration, duration90: Duration, secondLargestDuration: Duration) {
+    typingLatencyEvent.log(
+      DURATION_MEDIAN_FIELD with durationMedian,
+      DURATION_90_FIELD with duration90,
+      SECOND_LARGEST_DURATION_FIELD with secondLargestDuration,
+    )
   }
 
   fun logBackendOutputLatency(totalDuration: Duration, duration90: Duration, thirdLargestDuration: Duration) {
