@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
@@ -38,6 +37,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.MemoryDumpHelper;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.GCWatcher;
@@ -48,11 +48,13 @@ import org.junit.Assert;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -409,10 +411,22 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   private static void changeOnDisk(@NotNull VirtualFile file, byte @NotNull [] content) throws IOException {
+    PlatformTestUtil.flushPendingVFSUpdatesFor(file); //otherwise AsyncableLocalFileSystem will wake up later and overwrite the file again
     File ioFile = new File(file.getPath());
+    byte[] loaded;
     long oldTimestamp = ioFile.lastModified();
     FileUtil.writeToFile(ioFile, content);
-    assertTrue("cannot move the timestamp of " + ioFile, ioFile.setLastModified(oldTimestamp + 2000));
+    // make sure the FS's written file on disk to ensure the file stamp's changed to ensure the refresh's picked this file up and's refreshed it to ensure the document text's updated
+    boolean modified = ioFile.setLastModified(oldTimestamp + 2000);
+    assertTrue("cannot move the timestamp of " + ioFile, modified);
+    loaded = FileUtil.loadFileBytes(ioFile);
+    if (!Arrays.equals(loaded, content)) {
+    // WTF but it does happen
+      LOG.warn("FileUtil.write("+ioFile+", '"+new String(content, StandardCharsets.UTF_8)+"') completed successfully, but FileUtil.load='"+new String(loaded, StandardCharsets.UTF_8)+"'. Retrying.");
+      TimeoutUtil.sleep(1000);
+      try (FileOutputStream stream = new FileOutputStream(ioFile)) {
+        stream.getFD().sync();
+    }}
     file.refresh(false, false);
   }
 
@@ -762,8 +776,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     long modificationStamp = file.getModificationStamp();
 
     DocumentEx document = (DocumentEx)myDocumentManager.getDocument(file);
-    FileUtil.writeToFile(new File(file.getPath()), "xxx");
-    file.refresh(false, false);
+    changeOnDisk(file, "xxx");
     assertNotNull(file.toString(), document);
 
     assertNotSame(file.getModificationStamp(), modificationStamp);
@@ -833,6 +846,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
 
   public void testDocumentUnsavedInsideChangeListener() throws IOException {
     VirtualFile file = createFile("a.txt", "a");
+    long oldFileTimeStamp = file.getTimeStamp();
     FileDocumentManager manager = FileDocumentManager.getInstance();
     Document document = manager.getDocument(file);
     assertFalse(manager.isDocumentUnsaved(document));
@@ -858,13 +872,15 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
 
     assertTrue(manager.isDocumentUnsaved(document));
     assertEquals(2, invoked.get());
+    assertEquals("ba", document.getText());
 
     expectUnsaved.set(false);
-    FileDocumentManager.getInstance().saveAllDocuments();
-    FileUtil.writeToFile(VfsUtilCore.virtualToIoFile(file), "something");
-    file.refresh(false, false);
+    manager.saveAllDocuments();
+    assertFalse(manager.isDocumentUnsaved(document));
+    changeOnDisk(file, "something");
+    assertFalse(file.getTimeStamp() == oldFileTimeStamp);
 
-    assertEquals("something", document.getText());
+    assertEquals("vfs text: "+new String(file.contentsToByteArray(), StandardCharsets.UTF_8)+"; io text:"+FileUtil.loadFile(new File(file.getPath())), "something", document.getText());
     assertFalse(manager.isDocumentUnsaved(document));
     assertEquals(4, invoked.get());
   }
