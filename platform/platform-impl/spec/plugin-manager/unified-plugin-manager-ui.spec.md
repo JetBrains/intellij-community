@@ -66,7 +66,7 @@ targets:
 # Unified Plugin Manager UI
 
 Status: Active
-Date: 2026-09-23
+Date: 2026-09-24
 
 ## Purpose
 
@@ -117,6 +117,7 @@ This specification covers the page structure, section model, search, source load
 - With the standalone dialog switch enabled, the toolbar, File menu, action search, and local welcome buttons must open the unified Plugins page without the Settings tree.
 - The Settings tree must keep Plugins. The legacy page must keep its current entry-point route.
 - The standalone entry-point dialog must prefer a content width of 900 scaled pixels and use its own saved window size.
+- The standalone entry-point dialog must show Apply so users can save plugin changes without closing it.
   [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageFeatureTest.kt (
     `standalone dialog is available when both switches are enabled`;
     `standalone dialog switch restores the Settings route`;
@@ -125,7 +126,7 @@ This specification covers the page structure, section model, search, source load
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerConfigurableRoutingTest.kt (
     `standalone entry point prefers a wider unified page`;
     `standalone entry point does not widen the legacy page`;
-    `entry point opens a standalone dialog with its own size key`;
+    `entry point opens a standalone dialog with Apply and its own size key`;
     `welcome entry point keeps the Settings route when the switch is off`
   )
 

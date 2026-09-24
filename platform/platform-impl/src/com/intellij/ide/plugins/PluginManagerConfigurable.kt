@@ -395,6 +395,7 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
         project,
         STANDALONE_DIALOG_DIMENSION_KEY,
         createForStandaloneEntryPoint(source),
+        true,
       )
     }
 

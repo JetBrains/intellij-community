@@ -111,7 +111,7 @@ internal class PluginManagerConfigurableRoutingTest {
   @Test
   @RegistryKey(key = UnifiedPluginsPageFeature.REGISTRY_KEY, value = "true")
   @RegistryKey(key = UnifiedPluginsPageFeature.STANDALONE_DIALOG_REGISTRY_KEY, value = "true")
-  fun `entry point opens a standalone dialog with its own size key`(@TestDisposable disposable: Disposable): Unit =
+  fun `entry point opens a standalone dialog with Apply and its own size key`(@TestDisposable disposable: Disposable): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val settings = RecordingShowSettingsUtil()
       ApplicationManager.getApplication().replaceService(ShowSettingsUtil::class.java, settings, disposable)
@@ -120,6 +120,7 @@ internal class PluginManagerConfigurableRoutingTest {
 
       assertThat(settings.editedConfigurable).isInstanceOf(PluginManagerConfigurable::class.java)
       assertThat(settings.editedDimensionKey).isEqualTo("UnifiedPluginsPage.StandaloneDialog")
+      assertThat(settings.applyButtonRequested).isTrue()
       assertThat(settings.settingsOpened).isFalse()
     }
 
@@ -407,11 +408,13 @@ internal class PluginManagerConfigurableRoutingTest {
   private class RecordingShowSettingsUtil : ShowSettingsUtilImpl() {
     var editedConfigurable: Configurable? = null
     var editedDimensionKey: String? = null
+    var applyButtonRequested: Boolean? = null
     var settingsOpened: Boolean = false
 
-    override fun editConfigurable(project: Project?, dimensionServiceKey: String, configurable: Configurable): Boolean {
+    override fun editConfigurable(project: Project?, dimensionServiceKey: String, configurable: Configurable, showApplyButton: Boolean): Boolean {
       editedConfigurable = configurable
       editedDimensionKey = dimensionServiceKey
+      applyButtonRequested = showApplyButton
       return true
     }
 
