@@ -9,7 +9,7 @@ The search wrappers are `./community/tools/fd.cmd` and `./community/tools/rg.cmd
 ## Search wrappers
 
 - `fd.cmd` and `rg.cmd` skip a dot-directory by default. Agent assets live in `.agents/`, `.claude/`,
-  `.junie/`, and `.opencode/`. Pass `-H` (`--hidden`) to find a skill, a guideline, or a hook. Without it you
+  and `.codex/`. Pass `-H` (`--hidden`) to find a skill, a guideline, or a hook. Without it you
   will conclude they do not exist.
 - An absolute path through a wrapper is fine. Pipe into `rg.cmd` instead of `| grep`, because it reads stdin.
 
