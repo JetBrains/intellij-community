@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution;
+package com.intellij.java.execution.impl.dashboard;
 
+import com.intellij.execution.CommonJavaRunConfigurationParameters;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.SingleClassConfiguration;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
