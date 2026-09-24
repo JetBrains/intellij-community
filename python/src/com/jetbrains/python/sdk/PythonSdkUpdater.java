@@ -798,14 +798,20 @@ public final class PythonSdkUpdater {
   /**
    * Applies a processor to an SDK modificator or an SDK and commits it.
    * <p>
-   * You may invoke it from any threads. Blocks until the commit is done in the AWT thread.
+   * You may invoke it from any thread. Blocks until the commit is done, in a write action on the calling thread.
+   * <p>
+   * The commit needs write access and not the EDT ({@link com.intellij.openapi.projectRoots.impl.ProjectJdkImpl#commitChanges}
+   * asserts the former only), and every caller here already runs in the background. Hopping to the EDT for it held the
+   * lock on the EDT for the whole of the workspace-model update the commit performs, which is a freeze (PY-89734).
+   * <p>
+   * The modificator is built inside the write action, so the SDK cannot change between the two.
    */
   private static void changeSdkModificator(@NotNull Sdk sdk, @NotNull Processor<? super SdkModificator> processor) {
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
-    ApplicationManager.getApplication().invokeAndWait(() -> {
+    ApplicationManager.getApplication().runWriteAction(() -> {
       final SdkModificator effectiveModificator = sdk.getSdkModificator();
       if (processor.process(effectiveModificator)) {
-        ApplicationManager.getApplication().runWriteAction(() -> effectiveModificator.commitChanges());
+        effectiveModificator.commitChanges();
       }
     });
   }
