@@ -218,11 +218,11 @@ abstract class FileBasedStorage internal constructor(
         ConfigurationStoreBundle.message("notification.load.settings.action.content.will.be.recreated")
         else ConfigurationStoreBundle.message("notification.load.settings.action.please.correct.file.content")
       @Suppress("removal", "DEPRECATION")
-      Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                   ConfigurationStoreBundle.message("notification.load.settings.title"),
-                   "${ConfigurationStoreBundle.message("notification.load.settings.content", file)}: $reason\n$action",
-                   NotificationType.WARNING)
-        .notify(null)
+      val notification = Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
+                                      ConfigurationStoreBundle.message("notification.load.settings.title"),
+                                      "${ConfigurationStoreBundle.message("notification.load.settings.content", file)}: $reason\n$action",
+                                      NotificationType.WARNING)
+      app.invokeLater { notification.notify(null) }
     }
   }
 
