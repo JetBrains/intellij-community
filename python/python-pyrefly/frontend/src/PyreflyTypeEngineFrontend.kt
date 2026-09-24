@@ -8,7 +8,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.project.projectId
 import com.intellij.python.lsp.core.common.PyLspToolConfigurationDto
 import com.intellij.python.pytools.common.ProjectLevelPyToolApi
-import com.intellij.python.pytools.common.PyToolId
+import com.intellij.python.pytools.common.FusId
 import com.intellij.python.pytools.common.PyToolRequest
 import com.intellij.python.pytools.common.getConfiguration
 import com.intellij.python.pytools.common.PyToolSetConfigurationRequest
@@ -26,7 +26,7 @@ internal class PyreflyTypeEngineFrontend : PyTypeEngineFrontend {
   override val presentableName: @NlsSafe String = "Pyrefly"
 
   override fun Panel.createConfigurableContent(project: Project, propertyGraph: PropertyGraph): RowsRange {
-    val request = PyToolRequest(project.projectId(), PyToolId(id.packageName))
+    val request = PyToolRequest(project.projectId(), FusId(id.packageName))
     fun load(): PyLspToolConfigurationDto = runWithModalProgressBlocking(project, presentableName) {
       ProjectLevelPyToolApi.getInstance().getConfiguration<PyLspToolConfigurationDto>(request)
     }

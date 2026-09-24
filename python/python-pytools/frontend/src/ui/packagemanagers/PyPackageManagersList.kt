@@ -115,13 +115,13 @@ internal class PyPackageManagersList(
     rows.forEach { row ->
       scope.launch {
         val path = PyToolApi.getInstance().getPaths(
-          PyToolsRequest(project.projectId(), listOf(row.tool.toolId)),
+          PyToolsRequest(project.projectId(), listOf(row.tool.fusId)),
         ).singleOrNull() ?: return@launch
         if (row.applyBackendPath(path)) refreshRow(row)
       }
       scope.launch {
         val state = PyToolApi.getInstance().getStates(
-          PyToolsRequest(project.projectId(), listOf(row.tool.toolId)),
+          PyToolsRequest(project.projectId(), listOf(row.tool.fusId)),
         ).singleOrNull()
         state?.let { row.applyBackendState(it, updateStagedPath = true) }
         refreshRow(row)
@@ -142,7 +142,7 @@ internal class PyPackageManagersList(
           PyToolsUiBundle.message("settings.external.tools.apply.progress"),
         ) {
           PyToolApi.getInstance().setPath(
-            PyToolSetPathRequest(PyToolRequest(project.projectId(), row.tool.toolId), row.staged.customPath),
+            PyToolSetPathRequest(PyToolRequest(project.projectId(), row.tool.fusId), row.staged.customPath),
           )
         }
         row.applyBackendState(state)

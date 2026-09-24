@@ -8,7 +8,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.project.projectId
 import com.intellij.python.pytools.common.ProjectLevelPyToolApi
 import com.intellij.python.pytools.common.PyToolEnabledStateDto
-import com.intellij.python.pytools.common.PyToolId
+import com.intellij.python.pytools.common.FusId
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference
 /** Frontend mirror of backend-authoritative tool enablement. */
 @Service(Service.Level.PROJECT)
 class PyToolsFrontendState(project: Project, scope: CoroutineScope) {
-  private val enabled = AtomicReference<Map<PyToolId, Boolean>>(emptyMap())
+  private val enabled = AtomicReference<Map<FusId, Boolean>>(emptyMap())
   private val initialized = CompletableDeferred<Unit>()
 
   init {
@@ -40,7 +40,7 @@ class PyToolsFrontendState(project: Project, scope: CoroutineScope) {
     initialized.await()
   }
 
-  fun isEnabled(toolId: PyToolId): Boolean = enabled.get()[toolId] == true
+  fun isEnabled(toolId: FusId): Boolean = enabled.get()[toolId] == true
 
   fun apply(state: PyToolEnabledStateDto) {
     enabled.updateAndGet { it + (state.toolId to state.enabled) }

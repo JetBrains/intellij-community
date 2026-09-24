@@ -4,7 +4,7 @@ package com.intellij.python.pytools.backend
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.pytools.common.PyToolDescriptorDto
-import com.intellij.python.pytools.common.PyToolId
+import com.intellij.python.pytools.common.FusId
 import com.intellij.python.pytools.common.PyToolPathDto
 import com.intellij.python.pytools.common.PyToolPathKind
 import com.intellij.python.pytools.common.PyToolStateDto
@@ -44,9 +44,9 @@ internal suspend fun buildToolState(
     else -> PyToolDetails()
   }
   return PyToolStateDto(
-    toolId = PyToolId(executable.fusId),
+    fusId = FusId(executable.fusId),
     descriptor = PyToolDescriptorDto(details.minimumSupportedVersion),
-    enabled = PyToolsState.getInstance(project).isEnabled(PyToolId(executable.fusId)),
+    enabled = PyToolsState.getInstance(project).isEnabled(FusId(executable.fusId)),
     path = when {
       custom != null -> PyToolPathDto(custom.toString(), PyToolPathKind.CUSTOM)
       path != null -> PyToolPathDto(path.toString(), PyToolPathKind.DETECTED)

@@ -4,7 +4,7 @@ package com.intellij.python.junit5Tests.unit.pytools
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.configurationStore.serialize
 import com.intellij.python.pytools.backend.PyToolsState
-import com.intellij.python.pytools.common.PyToolId
+import com.intellij.python.pytools.common.FusId
 import com.intellij.util.xmlb.XmlSerializer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -57,7 +57,7 @@ internal class PyToolsStateSerializationTest {
   @Test
   fun `state has no storage content at defaults, gains it on change, and loses it again on revert`() {
     val component = PyToolsState()
-    val toolId = PyToolId("ruff")
+    val toolId = FusId("ruff")
 
     // All tools at their defaults -> nothing to persist -> no .idea/pyLspTools.xml.
     assertNull(serialize(component.state), "a default state must serialize to nothing (no storage file)")

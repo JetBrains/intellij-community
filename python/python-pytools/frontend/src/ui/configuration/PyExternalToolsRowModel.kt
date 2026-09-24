@@ -200,7 +200,7 @@ internal fun ToolRow.probeVersion(
       versionLoaded = false
       versionedFor = customPath
       when (val result = PyToolApi.getInstance().validatePath(
-        PyToolPathRequest(PyToolRequest(project.projectId(), tool.toolId), customPath),
+        PyToolPathRequest(PyToolRequest(project.projectId(), tool.fusId), customPath),
       )) {
         is PyToolValidationDto.Valid -> {
           pathError = null
@@ -217,7 +217,7 @@ internal fun ToolRow.probeVersion(
       return@launch
     }
     val state = PyToolApi.getInstance().getStates(
-      PyToolsRequest(project.projectId(), listOf(tool.toolId)),
+      PyToolsRequest(project.projectId(), listOf(tool.fusId)),
     ).singleOrNull() ?: return@launch
     applyBackendState(state, updateStagedPath = !isCustomEdit)
     onUpdated(this@probeVersion)
@@ -259,7 +259,7 @@ internal fun ToolRow.loadVersion(scope: CoroutineScope, project: Project, onUpda
   val resolvedPath = pathFieldValue.pathOrNull()
   if (versionLoaded && versionedFor == resolvedPath) return
   scope.launch {
-    val reported = PyToolApi.getInstance().getVersion(PyToolRequest(project.projectId(), tool.toolId))
+    val reported = PyToolApi.getInstance().getVersion(PyToolRequest(project.projectId(), tool.fusId))
     version = reported?.let(Version::parseVersion)
     versionLoaded = true
     versionedFor = pathFieldValue.pathOrNull()

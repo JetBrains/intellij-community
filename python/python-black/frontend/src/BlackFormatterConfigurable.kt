@@ -17,6 +17,7 @@ import com.intellij.python.pytools.common.PyToolRequest
 import com.intellij.python.pytools.common.PyToolSetConfigurationRequest
 import com.intellij.python.pytools.common.getConfiguration
 import com.intellij.python.black.frontend.PyBlackFrontendBundle.message
+import com.intellij.python.pytools.frontend.pyToolFrontend
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
@@ -28,7 +29,7 @@ internal class BlackFormatterConfigurable(
   private val project: Project,
   private val descriptor: PyToolDescriptorDto,
 ) : BoundConfigurable(message("black.configurable.name")) {
-  private val request = PyToolRequest(project.projectId(), BLACK_TOOL_ID)
+  private val request = PyToolRequest(project.projectId(), pyToolFrontend<BlackPyToolFrontend>().fusId)
   private val configuration = runWithModalProgressBlocking(project, message("black.configurable.name")) {
     ProjectLevelPyToolApi.getInstance().getConfiguration<PyBlackToolConfigurationDto>(request)
   }

@@ -13,7 +13,7 @@ import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.project.projectId
 import com.intellij.python.pytools.common.PyToolApi
 import com.intellij.python.pytools.common.PyToolDependencyGroupDto
-import com.intellij.python.pytools.common.PyToolId
+import com.intellij.python.pytools.common.FusId
 import com.intellij.python.pytools.common.PyToolOperationResultDto
 import com.intellij.python.pytools.common.PyToolRequest
 import com.intellij.python.pytools.common.PyToolSdkDto
@@ -154,7 +154,7 @@ internal class PyToolManagementController(
     val title = PyToolsUiBundle.message("settings.external.tools.install.uv.progress")
     val errorTitle = PyToolsUiBundle.message("settings.external.tools.install.uv.error.title")
     val result = runWithModalProgressBlocking(project, title) {
-      PyToolApi.getInstance().install(PyToolRequest(project.projectId(), PyToolId("uv")))
+      PyToolApi.getInstance().install(PyToolRequest(project.projectId(), FusId("uv")))
     }
     when (result) {
       is PyToolOperationResultDto.Success -> Unit
@@ -218,7 +218,7 @@ internal class PyToolManagementController(
    */
   private suspend fun refreshUvAvailability() {
     val state = PyToolApi.getInstance().getPaths(
-      PyToolsRequest(project.projectId(), listOf(PyToolId("uvx"))),
+      PyToolsRequest(project.projectId(), listOf(FusId("uvx"))),
     ).singleOrNull()
     uvAvailable.set(state?.path != null)
     onStateChanged()
@@ -226,7 +226,7 @@ internal class PyToolManagementController(
 
   private suspend fun refreshToolState(toolRow: ToolRow) {
     val state = PyToolApi.getInstance().getStates(
-      PyToolsRequest(project.projectId(), listOf(toolRow.tool.toolId)),
+      PyToolsRequest(project.projectId(), listOf(toolRow.tool.fusId)),
     ).singleOrNull() ?: return
     toolRow.applyBackendState(state)
     refreshRow(toolRow)
@@ -244,7 +244,7 @@ internal class PyToolManagementController(
     }
   }
 
-  private fun ToolRow.request(): PyToolRequest = PyToolRequest(project.projectId(), tool.toolId)
+  private fun ToolRow.request(): PyToolRequest = PyToolRequest(project.projectId(), tool.fusId)
 
   private fun logEvent(toolRow: ToolRow, source: PyToolActionSource, event: PyToolEventKind) {
     runWithModalProgressBlocking(project, toolRow.tool.presentableName) {
@@ -252,5 +252,5 @@ internal class PyToolManagementController(
     }
   }
 
-  private fun ToolRow.toolIdValue(): String = tool.toolId.value
+  private fun ToolRow.toolIdValue(): String = tool.fusId.value
 }

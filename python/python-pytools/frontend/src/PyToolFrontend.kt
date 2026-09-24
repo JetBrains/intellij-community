@@ -5,12 +5,13 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.python.pytools.common.PyToolId
+import com.intellij.python.pytools.common.FusId
 import com.intellij.python.pytools.common.PyToolConfigurationDto
 import com.intellij.python.pytools.common.PyToolDescriptorDto
 import com.intellij.python.pytools.frontend.ui.PyToolsUiBundle
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
+import kotlin.reflect.KClass
 
 /** Defines the frontend presentation and controls for a Python tool. */
 interface PyToolFrontend {
@@ -18,7 +19,7 @@ interface PyToolFrontend {
   val presentableName: @NlsSafe String
 
   /** The stable identifier shared with the backend tool. */
-  val toolId: PyToolId
+  val fusId: FusId
 
   /** The tool icon shown in settings, status widgets, and notifications. */
   val icon: Icon
@@ -33,10 +34,16 @@ interface PyToolFrontend {
     internal val extensionList: List<PyToolFrontend> get() = EP_NAME.extensionList
 
     /** Finds a frontend tool by its stable identifier. */
-    fun findById(toolId: PyToolId): PyToolFrontend? =
-      extensionList.firstOrNull { it.toolId == toolId }
+    fun findById(toolId: FusId): PyToolFrontend? =
+      extensionList.firstOrNull { it.fusId == toolId }
+
+    fun <T : PyToolFrontend> findByType(type: KClass<T>): T {
+      return EP_NAME.findExtensionOrFail(type.java)
+    }
   }
 }
+
+inline fun <reified T : PyToolFrontend> pyToolFrontend(): T = PyToolFrontend.findByType(T::class)
 
 /**
  * The frontend half of a `ProjectLevelPyTool`: the tools shown on the External Tools page, with the detail

@@ -5,7 +5,7 @@ import com.intellij.codeInsight.actions.onSave.FormatOnSaveOptions
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.python.black.common.PyBlackToolConfigurationDto
-import com.intellij.python.pytools.common.PyToolId
+import com.intellij.python.pytools.common.FusId
 import com.intellij.python.pytools.common.PyToolDescriptorDto
 import com.intellij.python.pytools.frontend.ProjectLevelPyToolFrontend
 import com.intellij.python.black.common.icons.PythonBlackCommonIcons
@@ -15,7 +15,7 @@ import javax.swing.Icon
 internal class BlackPyToolFrontend : ProjectLevelPyToolFrontend<PyBlackToolConfigurationDto> {
   override val presentableName: String = "Black"
   override val description: String get() = message("black.tool.description")
-  override val toolId: PyToolId = BLACK_TOOL_ID
+  override val fusId: FusId = FusId("black")
   override val icon: Icon get() = PythonBlackCommonIcons.Black
   override val configurationClass: Class<PyBlackToolConfigurationDto> = PyBlackToolConfigurationDto::class.java
   override fun createConfigurable(project: Project, descriptor: PyToolDescriptorDto): UnnamedConfigurable {
@@ -32,4 +32,3 @@ internal class BlackPyToolFrontend : ProjectLevelPyToolFrontend<PyBlackToolConfi
   }
 }
 
-internal val BLACK_TOOL_ID: PyToolId = PyToolId("black")

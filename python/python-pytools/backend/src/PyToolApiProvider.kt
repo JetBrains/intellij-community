@@ -9,9 +9,8 @@ import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.project.findProject
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.python.pytools.common.PyToolApi
-import com.intellij.python.pytools.common.PyToolDescriptorDto
 import com.intellij.python.pytools.common.PyToolEventKind
-import com.intellij.python.pytools.common.PyToolId
+import com.intellij.python.pytools.common.FusId
 import com.intellij.python.pytools.common.PyToolLogEventRequest
 import com.intellij.python.pytools.common.PyToolOperationResultDto
 import com.intellij.python.pytools.common.PyToolPathDto
@@ -28,7 +27,6 @@ import com.intellij.python.pytools.common.PyToolStateDto
 import com.intellij.python.pytools.common.PyToolValidationDto
 import com.intellij.python.pytools.common.PyToolsRequest
 import com.intellij.python.pytools.backend.statistics.PyToolUsagesCollector
-import com.intellij.python.requirements.PyPackageVersionComparator
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import fleet.rpc.remoteApiDescriptor
@@ -48,7 +46,7 @@ private object PyToolApiImpl : PyToolApi {
     val project = request.projectId.findProject()
     val eel = project.getEelDescriptor().toEelApi()
     val installed = PyToolProbeCache.getInstance().listing(eel)
-    val executables = request.toolIds.mapNotNull { id -> PyTool.findExecutable(id.value) }
+    val executables = request.fusIds.mapNotNull { id -> PyTool.findExecutable(id.value) }
     // One coroutine per tool: a state resolves a path and, for a path the manager does not know, runs
     // `<path> --version`. In a sequence every tool waits for the ones before it, so the pages showed no
     // version until the slowest tool had answered.
@@ -62,7 +60,7 @@ private object PyToolApiImpl : PyToolApi {
   override suspend fun getPaths(request: PyToolsRequest): List<PyToolPathStateDto> {
     val project = request.projectId.findProject()
     val descriptor = project.getEelDescriptor()
-    val executables = request.toolIds.mapNotNull { id -> PyTool.findExecutable(id.value) }
+    val executables = request.fusIds.mapNotNull { id -> PyTool.findExecutable(id.value) }
     // One coroutine per tool: a cache hit returns at once, and a cold cache detects every tool in parallel.
     return coroutineScope {
       executables.map { executable ->
@@ -70,7 +68,7 @@ private object PyToolApiImpl : PyToolApi {
           val custom = executable.getCustomExecutablePath(descriptor)
           val path = custom ?: PyExecutableCache.getInstance().get(descriptor, executable)
           PyToolPathStateDto(
-            toolId = PyToolId(executable.fusId),
+            fusId = FusId(executable.fusId),
             path = when {
               custom != null -> PyToolPathDto(custom.toString(), PyToolPathKind.CUSTOM)
               path != null -> PyToolPathDto(path.toString(), PyToolPathKind.DETECTED)
@@ -85,7 +83,7 @@ private object PyToolApiImpl : PyToolApi {
   override suspend fun getVersion(request: PyToolRequest): String? {
     val project = request.projectId.findProject()
     val descriptor = project.getEelDescriptor()
-    val executable = PyTool.findExecutable(request.toolId.value) ?: return null
+    val executable = PyTool.findExecutable(request.fusId.value) ?: return null
     val path = executable.getCustomExecutablePath(descriptor)
                ?: PyExecutableCache.getInstance().get(descriptor, executable)
                ?: return null
@@ -182,5 +180,5 @@ private object PyToolApiImpl : PyToolApi {
   }
 
   private fun requireTool(request: PyToolRequest): PyTool =
-    PyTool.findByPackageName(request.toolId.value) ?: error("Unknown Python tool: " + request.toolId.value)
+    PyTool.findByPackageName(request.fusId.value) ?: error("Unknown Python tool: " + request.fusId.value)
 }

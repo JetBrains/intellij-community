@@ -2,14 +2,14 @@
 package com.intellij.python.venv.frontend
 
 import com.intellij.python.pytools.frontend.PyToolFrontend
-import com.intellij.python.pytools.common.PyToolId
+import com.intellij.python.pytools.common.FusId
 import com.intellij.python.venv.common.icons.PythonVenvCommonIcons
 import com.intellij.python.venv.frontend.PyVenvFrontendBundle.message
 import javax.swing.Icon
 
 internal class PipPyToolFrontend : PyToolFrontend {
   override val presentableName: String = "pip"
-  override val toolId: PyToolId = PyToolId("pip")
+  override val fusId: FusId = FusId("pip")
   override val description: String get() = message("py.venv.pip.tool.description")
   override val icon: Icon get() = PythonVenvCommonIcons.VirtualEnv
 }

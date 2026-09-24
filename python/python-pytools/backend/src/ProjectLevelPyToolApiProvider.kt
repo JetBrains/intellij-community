@@ -8,7 +8,7 @@ import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.python.pytools.common.ProjectLevelPyToolApi
 import com.intellij.python.pytools.common.PyToolConfigurationDto
 import com.intellij.python.pytools.common.PyToolEnabledStateDto
-import com.intellij.python.pytools.common.PyToolId
+import com.intellij.python.pytools.common.FusId
 import com.intellij.python.pytools.common.PyToolRequest
 import com.intellij.python.pytools.common.PyToolSetConfigurationRequest
 import com.intellij.python.pytools.common.PyToolSetEnabledRequest
@@ -28,7 +28,7 @@ private object ProjectLevelPyToolApiImpl : ProjectLevelPyToolApi {
   override suspend fun initializeState(projectId: ProjectId) {
     val project = projectId.findProject()
     val entries = ProjectLevelPyTool.extensions
-      .map { PyToolEnabledStateDto(PyToolId(it.fusId), it.migrateLegacyState(project).enabled) }
+      .map { PyToolEnabledStateDto(FusId(it.fusId), it.migrateLegacyState(project).enabled) }
       .toList()
     PyToolsState.getInstance(project).initialize(entries)
   }
@@ -38,7 +38,7 @@ private object ProjectLevelPyToolApiImpl : ProjectLevelPyToolApi {
 
   override suspend fun setEnabled(request: PyToolSetEnabledRequest): PyToolStateDto {
     val project = request.tool.projectId.findProject()
-    val tool = projectLevelTool(request.tool) ?: error("Not a project-level Python tool: " + request.tool.toolId.value)
+    val tool = projectLevelTool(request.tool) ?: error("Not a project-level Python tool: " + request.tool.fusId.value)
     tool.setEnabledOn(project, request.enabled)
     return buildToolState(project, tool)
   }
@@ -56,11 +56,11 @@ private object ProjectLevelPyToolApiImpl : ProjectLevelPyToolApi {
  * The one this request names, or `null` when the id names a tool without per-project state (a package
  * manager) or no tool at all.
  *
- * Matches on [PyExecutable.fusId] — the id the backend puts in every [PyToolId] it sends, and the one
+ * Matches on [PyExecutable.fusId] — the id the backend puts in every [FusId] it sends, and the one
  * [PyTool.findExecutable] resolves the same request by.
  */
 private fun projectLevelTool(request: PyToolRequest): ProjectLevelPyTool<*>? =
-  ProjectLevelPyTool.extensions.firstOrNull { it.fusId == request.toolId.value }
+  ProjectLevelPyTool.extensions.firstOrNull { it.fusId == request.fusId.value }
 
 /**
  * Applies [state] only when it is the DTO type this tool declares.

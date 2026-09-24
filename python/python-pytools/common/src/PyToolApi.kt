@@ -11,13 +11,13 @@ import org.jetbrains.annotations.ApiStatus
 
 @Serializable
 @JvmInline
-value class PyToolId(val value: String)
+value class FusId(val value: String)
 
 @Serializable
-data class PyToolRequest(val projectId: ProjectId, val toolId: PyToolId)
+data class PyToolRequest(val projectId: ProjectId, val fusId: FusId)
 
 @Serializable
-data class PyToolsRequest(val projectId: ProjectId, val toolIds: List<PyToolId>)
+data class PyToolsRequest(val projectId: ProjectId, val fusIds: List<FusId>)
 
 @Serializable
 enum class PyToolActionSource { SETTINGS_TABLE, SETTINGS_DETAIL }
@@ -45,7 +45,7 @@ data class PyToolDescriptorDto(
 
 @Serializable
 data class PyToolStateDto(
-  val toolId: PyToolId,
+  val fusId: FusId,
   val descriptor: PyToolDescriptorDto,
   val enabled: Boolean,
   val path: PyToolPathDto?,
@@ -58,7 +58,7 @@ data class PyToolStateDto(
 
 /** The resolved path of one tool, without the version or the manager data that a full state carries. */
 @Serializable
-data class PyToolPathStateDto(val toolId: PyToolId, val path: PyToolPathDto?)
+data class PyToolPathStateDto(val fusId: FusId, val path: PyToolPathDto?)
 
 @Serializable
 data class PyToolPathRequest(val tool: PyToolRequest, val path: String)

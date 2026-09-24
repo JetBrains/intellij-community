@@ -27,7 +27,7 @@ private class PyLspToolDetailConfigurable(
   private val project: Project,
   private val tool: LspPyToolFrontend,
 ) : BoundConfigurable(tool.presentableName) {
-  private val request = PyToolRequest(project.projectId(), tool.toolId)
+  private val request = PyToolRequest(project.projectId(), tool.fusId)
   private val settings: PyLspToolConfigurationDto by lazy {
     val configuration = runWithModalProgressBlocking(project, PyToolsUiBundle.message("settings.external.tools.apply.progress")) {
       ProjectLevelPyToolApi.getInstance().getConfiguration<PyLspToolConfigurationDto>(request)

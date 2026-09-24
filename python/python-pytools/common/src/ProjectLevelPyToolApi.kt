@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @Serializable
-data class PyToolEnabledStateDto(val toolId: PyToolId, val enabled: Boolean)
+data class PyToolEnabledStateDto(val toolId: FusId, val enabled: Boolean)
 
 @Serializable
 data class PyToolSetEnabledRequest(val tool: PyToolRequest, val enabled: Boolean)
@@ -66,5 +66,5 @@ interface ProjectLevelPyToolApi : RemoteApi<Unit> {
 @ApiStatus.Internal
 suspend inline fun <reified C : PyToolConfigurationDto> ProjectLevelPyToolApi.getConfiguration(request: PyToolRequest): C {
   return getConfiguration(request) as? C
-         ?: error("Unexpected configuration for Python tool: ${request.toolId.value}")
+         ?: error("Unexpected configuration for Python tool: ${request.fusId.value}")
 }

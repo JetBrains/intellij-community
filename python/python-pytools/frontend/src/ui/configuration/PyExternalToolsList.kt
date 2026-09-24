@@ -20,7 +20,7 @@ import com.intellij.python.pytools.frontend.ProjectLevelPyToolFrontend
 import com.intellij.python.pytools.common.PyToolActionSource
 import com.intellij.python.pytools.common.PyToolEventKind
 import com.intellij.python.pytools.common.PyToolEnabledStateDto
-import com.intellij.python.pytools.common.PyToolId
+import com.intellij.python.pytools.common.FusId
 import com.intellij.python.pytools.common.PyToolLogEventRequest
 import com.intellij.python.pytools.frontend.ui.PyToolTypeEnginePreview
 import com.intellij.python.pytools.frontend.ui.PyToolsUiBundle
@@ -73,7 +73,7 @@ internal class PyExternalToolsList(
   private val uv: PyToolManagementController,
 ) : RowHost {
 
-  private val persistedPaths = mutableMapOf<PyToolId, String?>()
+  private val persistedPaths = mutableMapOf<FusId, String?>()
 
   private val enabledStates = PyToolsFrontendState.getInstance(project)
 
@@ -89,7 +89,7 @@ internal class PyExternalToolsList(
     .filterIsInstance<ProjectLevelPyToolFrontend<*>>()
     .sortedBy { it.presentableName.lowercase() }
     .map { tool ->
-      val enabled = enabledStates.isEnabled(tool.toolId)
+      val enabled = enabledStates.isEnabled(tool.fusId)
       ToolRow(tool, RowState(enabled = enabled, customPath = null), persistedEnabled = enabled)
     }
 
@@ -123,7 +123,7 @@ internal class PyExternalToolsList(
     // Live reflection of the staged engine on the tools' toggles.
     preview.stagedEnginePackage.afterChange(engineObserverDisposable) { staged ->
       rows.forEach { row ->
-        val pkg = row.tool.toolId.value
+        val pkg = row.tool.fusId.value
         when {
           // Became the staged engine → turn its toggle on.
           staged == pkg && !row.staged.enabled -> {
@@ -142,7 +142,7 @@ internal class PyExternalToolsList(
     // flip that tool's toggle off here too.
     preview.pendingDisable.afterChange(engineObserverDisposable) { pending ->
       rows.forEach { row ->
-        if (row.tool.toolId.value in pending && row.staged.enabled) {
+        if (row.tool.fusId.value in pending && row.staged.enabled) {
           row.staged = row.staged.copy(enabled = false); refreshRow(row)
         }
       }
@@ -235,11 +235,11 @@ internal class PyExternalToolsList(
 
   private suspend fun loadPath(row: ToolRow) {
     val path = PyToolApi.getInstance().getPaths(
-      PyToolsRequest(project.projectId(), listOf(row.tool.toolId)),
+      PyToolsRequest(project.projectId(), listOf(row.tool.fusId)),
     ).singleOrNull() ?: return
     if (!row.applyBackendPath(path)) return
     // Keep the modified/apply baseline in step with the staged path this just set.
-    persistedPaths[row.tool.toolId] = row.persistedCustomPath
+    persistedPaths[row.tool.fusId] = row.persistedCustomPath
     refreshRow(row)
   }
 
@@ -254,7 +254,7 @@ internal class PyExternalToolsList(
     // A tool that reports no configuration leaves the row uninformed on purpose: the state settles it, and
     // until then the header says nothing rather than claiming the tool has no features selected.
     row.configuration = ProjectLevelPyToolApi.getInstance().getConfiguration(
-      PyToolRequest(project.projectId(), row.tool.toolId),
+      PyToolRequest(project.projectId(), row.tool.fusId),
     ) ?: return
     row.configurationLoaded = true
     refreshRow(row)
@@ -262,7 +262,7 @@ internal class PyExternalToolsList(
 
   private suspend fun loadState(row: ToolRow) {
     val state = PyToolApi.getInstance().getStates(
-      PyToolsRequest(project.projectId(), listOf(row.tool.toolId)),
+      PyToolsRequest(project.projectId(), listOf(row.tool.fusId)),
     ).singleOrNull()
     if (state != null) {
       // Read the baseline before applying the state, which moves it. Staging the type engine's tool on is a
@@ -272,7 +272,7 @@ internal class PyExternalToolsList(
       if (enabledUntouched && !row.staged.enabled && isEngineFor(row.tool)) {
         row.staged = row.staged.copy(enabled = true)
       }
-      persistedPaths[row.tool.toolId] = row.persistedCustomPath
+      persistedPaths[row.tool.fusId] = row.persistedCustomPath
     }
     refreshRow(row)
   }
@@ -283,7 +283,7 @@ internal class PyExternalToolsList(
    */
   private suspend fun probeAllSdks() {
     for (row in rows) {
-      val entries = PyToolApi.getInstance().getSdkStates(PyToolRequest(project.projectId(), row.tool.toolId))
+      val entries = PyToolApi.getInstance().getSdkStates(PyToolRequest(project.projectId(), row.tool.fusId))
       row.sdkAvailability = SdkAvailability(entries)
       refreshRow(row)
     }
@@ -322,7 +322,7 @@ internal class PyExternalToolsList(
         runWithModalProgressBlocking(project, PyToolsUiBundle.message("settings.external.tools.apply.progress")) {
           PyToolApi.getInstance().logEvent(
             PyToolLogEventRequest(
-              PyToolRequest(project.projectId(), row.tool.toolId),
+              PyToolRequest(project.projectId(), row.tool.fusId),
               PyToolActionSource.SETTINGS_TABLE,
               PyToolEventKind.CONFIGURATION_CHANGED,
             ),
@@ -339,11 +339,11 @@ internal class PyExternalToolsList(
       PyToolsUiBundle.message("settings.external.tools.apply.progress"),
     ) {
       PyToolApi.getInstance().setPath(
-        PyToolSetPathRequest(PyToolRequest(project.projectId(), row.tool.toolId), row.staged.customPath),
+        PyToolSetPathRequest(PyToolRequest(project.projectId(), row.tool.fusId), row.staged.customPath),
       )
     }
     row.applyBackendState(backendState)
-    persistedPaths[row.tool.toolId] = row.persistedCustomPath
+    persistedPaths[row.tool.fusId] = row.persistedCustomPath
   }
 
   private fun applyEnabled(row: ToolRow) {
@@ -352,11 +352,11 @@ internal class PyExternalToolsList(
       PyToolsUiBundle.message("settings.external.tools.apply.progress"),
     ) {
       ProjectLevelPyToolApi.getInstance().setEnabled(
-        PyToolSetEnabledRequest(PyToolRequest(project.projectId(), row.tool.toolId), row.staged.enabled),
+        PyToolSetEnabledRequest(PyToolRequest(project.projectId(), row.tool.fusId), row.staged.enabled),
       )
     }
     row.applyBackendState(backendState)
-    enabledStates.apply(PyToolEnabledStateDto(backendState.toolId, backendState.enabled))
+    enabledStates.apply(PyToolEnabledStateDto(backendState.fusId, backendState.enabled))
   }
 
   /** Revert all rows' staged state to the persisted snapshot and reset any open detail configurables. */
@@ -426,7 +426,7 @@ internal class PyExternalToolsList(
   private fun snapshotOf(row: ToolRow): RowState {
     return RowState(
       enabled = row.persistedEnabled,
-      customPath = persistedPaths[row.tool.toolId],
+      customPath = persistedPaths[row.tool.fusId],
     )
   }
 
@@ -447,6 +447,6 @@ internal class PyExternalToolsList(
    */
   private fun isEngineFor(tool: PyTool): Boolean {
     val staged = PyToolTypeEnginePreview.getInstance(project).stagedEnginePackage.get()
-    return if (staged != null) staged == tool.toolId.value else rows.first { it.tool == tool }.selectedAsTypeEngine
+    return if (staged != null) staged == tool.fusId.value else rows.first { it.tool == tool }.selectedAsTypeEngine
   }
 }

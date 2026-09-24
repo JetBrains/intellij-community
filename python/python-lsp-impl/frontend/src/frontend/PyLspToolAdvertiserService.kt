@@ -15,7 +15,7 @@ import com.intellij.platform.project.projectId
 import com.intellij.python.pytools.common.ProjectLevelPyToolApi
 import com.intellij.python.pytools.common.PyToolApi
 import com.intellij.python.pytools.common.PyToolEnabledStateDto
-import com.intellij.python.pytools.common.PyToolId
+import com.intellij.python.pytools.common.FusId
 import com.intellij.python.pytools.common.PyToolRequest
 import com.intellij.python.pytools.common.PyToolSetEnabledRequest
 import com.intellij.python.pytools.frontend.PyToolFrontend
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.ApiStatus
 private const val NOTIFICATION_GROUP_ID = "Python LSP Tools"
 private const val DONT_ASK_PROPERTY_PREFIX = "python.lsp.tool.dont.ask."
 
-private val ADVERTISED_TOOL_IDS = listOf("ruff", "basedpyright", "pyright", "ty").map(::PyToolId)
+private val ADVERTISED_TOOL_IDS = listOf("ruff", "basedpyright", "pyright", "ty").map(::FusId)
 
 private fun lspTools(): List<LspPyToolFrontend> = ADVERTISED_TOOL_IDS
   .mapNotNull(PyToolFrontend::findById)
@@ -56,14 +56,14 @@ class PyLspToolAdvertiserService(private val project: Project, private val cs: C
     val tools = lspTools()
     val api = PyToolApi.getInstance()
     val installedTools = tools.filterTo(mutableSetOf()) { tool ->
-      api.getSdkStates(PyToolRequest(project.projectId(), tool.toolId)).any { it.path != null }
+      api.getSdkStates(PyToolRequest(project.projectId(), tool.fusId)).any { it.path != null }
     }
     val pyToolsState = PyToolsFrontendState.getInstance(project)
 
     val toolsToAdvertise = tools.mapNotNull { tool ->
       val isInstalled = tool in installedTools
       val name = tool.presentableName
-      val isEnabled = pyToolsState.isEnabled(tool.toolId)
+      val isEnabled = pyToolsState.isEnabled(tool.fusId)
       if (isInstalled && (isEnabled || isDontAskSet(tool))) {
         thisLogger().debug("LSP tool '$name': installed=true, enabled=$isEnabled, dontAsk=${isDontAskSet(tool)}")
       }
@@ -129,10 +129,10 @@ class PyLspToolAdvertiserService(private val project: Project, private val cs: C
         // run the tool's lifecycle hook (which starts the LSP server).
         cs.launch {
           val state = ProjectLevelPyToolApi.getInstance().setEnabled(
-            PyToolSetEnabledRequest(PyToolRequest(project.projectId(), tool.toolId), true),
+            PyToolSetEnabledRequest(PyToolRequest(project.projectId(), tool.fusId), true),
           )
           PyToolsFrontendState.getInstance(project).apply(
-            PyToolEnabledStateDto(state.toolId, state.enabled),
+            PyToolEnabledStateDto(state.fusId, state.enabled),
           )
         }
       })
