@@ -108,15 +108,10 @@ internal class UnifiedPluginRowEventHandler(
           selectExclusive(target, requestFocus = true, focusCause = FocusEvent.Cause.TRAVERSAL)
         }
       }
-      else if (event.component === row && event.keyCode == KeyEvent.VK_ENTER) {
-        event.consume()
-        if (row.getSelection() != SelectionType.SELECTION) {
-          selectExclusive(row, requestFocus = false)
-        }
-      }
       else if (event.keyCode == KeyEvent.VK_ENTER || event.keyCode == KeyEvent.VK_SPACE || event.keyCode == DELETE_CODE) {
         event.consume()
-        val selection = if (event.keyCode == KeyEvent.VK_SPACE && row.getSelection() != SelectionType.SELECTION) {
+        val selection = if ((event.keyCode == KeyEvent.VK_ENTER || event.keyCode == KeyEvent.VK_SPACE) &&
+                            row.getSelection() != SelectionType.SELECTION) {
           listOf(row)
         }
         else {

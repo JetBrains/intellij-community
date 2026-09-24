@@ -804,7 +804,7 @@ internal class LegacyPluginRowFactoryTest {
     }
 
   @Test
-  fun `Enter selects plugin without invoking its primary action`(): Unit =
+  fun `Enter invokes the primary action without selecting the plugin`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
       try {
@@ -847,10 +847,10 @@ internal class LegacyPluginRowFactoryTest {
           row.keyListeners.forEach { it.keyPressed(event) }
           assertThat(event.isConsumed).isTrue()
 
-          assertThat(row.getSelection()).isEqualTo(EventHandler.SelectionType.SELECTION)
-          assertThat(row.border).isSameAs(contentBorder)
-          assertThat(selectionChanges).containsExactly(listOf(binding.occurrenceId))
-          assertThat(installRequests).isZero()
+          assertThat(row.getSelection()).isEqualTo(EventHandler.SelectionType.NONE)
+          assertThat(row.border).isNotSameAs(contentBorder)
+          assertThat(selectionChanges).isEmpty()
+          assertThat(installRequests).isEqualTo(1)
         }
       }
       finally {

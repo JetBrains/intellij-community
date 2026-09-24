@@ -14,6 +14,7 @@ import com.intellij.ide.plugins.newui.PluginsGroup
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.Nls
+import javax.swing.JComponent
 
 internal class LegacyPluginRowFactory @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
   private val host: LegacyPluginUiHost,
@@ -117,6 +118,8 @@ internal class LegacyPluginRow(
 
   val preparedUpdate: PluginPreparedUpdateState?
     get() = renderedInput?.preparedUpdate
+
+  override fun focusableComponents(): List<JComponent> = component.getFocusableComponents()
 
   fun renderInput(input: PluginRowInput?) {
     if (input == null || input == renderedInput) return

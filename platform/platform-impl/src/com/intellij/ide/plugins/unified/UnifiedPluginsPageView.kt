@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
@@ -169,6 +170,12 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
       border = CustomLineBorder(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR, JBUI.insetsTop(1))
       minimumSize = Dimension(JBUI.scale(PLUGIN_LIST_MIN_WIDTH), 0)
       add(scrollContainer, BorderLayout.CENTER)
+      if (rowFactory != null) {
+        isFocusTraversalPolicyProvider = true
+        focusTraversalPolicy = object : ComponentsListFocusTraversalPolicy(true) {
+          override fun getOrderedComponents(): List<Component> = focusTraversalOrder()
+        }
+      }
     }
 
     val detailsComponent = detailsPresenter?.component ?: createStaticDetailsComponent()
@@ -347,6 +354,15 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
       reconciler.row(selectedOccurrence)?.let { PluginDetailsSelection(selectedOccurrence, it) }
     }
     presenter.render(mode, selection)
+  }
+
+  internal fun focusTraversalOrder(): List<Component> {
+    val sections = renderedState?.sections.orEmpty().mapNotNull { sectionViews[it.id] }
+    val selectedRow = renderedState?.selectedOccurrence?.let { rowReconciler?.row(it) }
+    val activeRow = selectedRow ?: sections.firstNotNullOfOrNull { section ->
+      section.firstRealRowOccurrence()?.let { rowReconciler?.row(it) }
+    }
+    return sections.flatMap { it.focusTraversalComponents(activeRow) }
   }
 
   private fun createStaticDetailsComponent(): JComponent {
@@ -842,6 +858,8 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
         }
       }
 
+      val focusComponent: JComponent = toggleButton
+
       init {
         layout = BorderLayout()
         isOpaque = false
@@ -1080,6 +1098,28 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
 
     fun realizedItems(): List<PluginItemState> = items.subList(0, realizedItemCount)
 
+    fun firstRealRowOccurrence(): PluginOccurrenceId? = realRowComponents.keys.firstOrNull()
+
+    fun focusTraversalComponents(activeRow: PluginRow?): List<Component> {
+      val result = ArrayList<Component>()
+      val activeOccurrence = realRowComponents.entries.firstOrNull { it.value === activeRow?.component }?.key
+      if (activeOccurrence == null) {
+        if (retryLink.parent != null) result.add(retryLink)
+        return result.filter { it.isFocusable && it.isEnabled && it.isVisible }
+      }
+
+      result.add(fullHeaderButton.focusComponent)
+      if (retryLink.parent != null) result.add(retryLink)
+      val category = categoryGroupsByPluginId[activeOccurrence.pluginId]?.category
+      if (category != null) {
+        categoryHeaderViews[category]?.let { result.add(it.actionLink) }
+        categoryPromotionPanels[category]?.let { addFocusableDescendants(it, result) }
+      }
+      result.add(checkNotNull(activeRow).component)
+      result.addAll(activeRow.focusableComponents())
+      return result.filter { it.isFocusable && it.isEnabled && it.isVisible }
+    }
+
     fun setDividerVisible(visible: Boolean) {
       val desiredBorder = dividerBorder.takeIf { visible }
       if (component.border !== desiredBorder) {
@@ -1089,10 +1129,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
 
     fun setRealRows(bindings: List<PluginRowBinding<PluginRow>>) {
       if (!realRows) return
-      val desiredOccurrences = bindings.mapTo(HashSet(), PluginRowBinding<PluginRow>::occurrenceId)
-      realRowComponents.keys.filter { it !in desiredOccurrences }.forEach { occurrenceId ->
-        realRowComponents.remove(occurrenceId)
-      }
+      realRowComponents.clear()
       val displayedCategories = HashSet<String>()
       val desiredComponents = ArrayList<JComponent>(bindings.size + categoryGroups.size)
       bindings.forEach { binding ->
@@ -1266,7 +1303,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     private val titleLabel = JBLabel().apply {
       font = font.deriveFont(Font.PLAIN)
     }
-    private val actionLink = ActionLink().apply {
+    val actionLink = ActionLink().apply {
       addActionListener { state?.let(onAction) }
     }
     val component: JComponent = JPanel(BorderLayout()).apply {
@@ -1376,6 +1413,12 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
   }
 
   private companion object {
+    fun addFocusableDescendants(component: Component, result: MutableList<Component>) {
+      if (!component.isVisible) return
+      if (component.isFocusable && component.isEnabled) result.add(component)
+      if (component is Container) component.components.forEach { addFocusableDescendants(it, result) }
+    }
+
     const val DETAILS_MIN_WIDTH: Int = 220
     const val ERROR_INSET: Int = 10
     const val ERROR_LEFT_INSET: Int = 16

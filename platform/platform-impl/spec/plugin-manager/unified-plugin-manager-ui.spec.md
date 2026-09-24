@@ -16,6 +16,7 @@ targets:
   - ../../src/com/intellij/ide/plugins/newui/PluginImagesComponent.kt
   - ../../src/com/intellij/ide/plugins/unified/LegacyPluginDetailsPresenter.kt
   - ../../src/com/intellij/ide/plugins/unified/PluginRowReconciler.kt
+  - ../../src/com/intellij/ide/plugins/unified/PluginRowView.kt
   - ../../src/com/intellij/ide/plugins/unified/UnifiedPluginInternalSourceCoordinator.kt
   - ../../src/com/intellij/ide/plugins/unified/UnifiedPluginInventory.kt
   - ../../src/com/intellij/ide/plugins/unified/UnifiedPluginLocalDataProvider.kt
@@ -449,6 +450,13 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
     `expandable section header supports mouse keyboard hover and focus`
   )
 
+- Up and Down must navigate between rendered plugin rows across sections.
+- Tab must visit the active section and category actions, one plugin row, and that row's controls before it leaves the list for details.
+- The last selected row must be the list's row stop. Without a selection, the first rendered row must be that stop.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
+    `Tab order includes one plugin row and its controls`
+  )
+
 - Plugin rows and section headers must show an outline for keyboard focus.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
     `unified rows use stable island selection geometry`
@@ -468,13 +476,13 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
   )
 
 - Activating row content must select the plugin without invoking its primary action.
-- Enter on a focused row must select the plugin without invoking its primary action.
+- Enter on a focused row must invoke its primary action without changing the selection.
 - Space on a focused, eligible installed plugin row must invoke its enablement action when no update or restart is available.
 - Space must use the current selection when it contains the focused plugin. Otherwise, it must use only the focused plugin
   without changing the selection.
 - Row action controls must run their action without activating the row.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
-    `Enter selects plugin without invoking its primary action`;
+    `Enter invokes the primary action without selecting the plugin`;
     `Space dispatches the row action without changing selection`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginRowEventHandlerTest.kt (
