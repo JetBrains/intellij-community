@@ -112,7 +112,16 @@ internal object PluginModelAsyncOperationsExecutor {
     operationLauncher.launch(Dispatchers.IO) {
       val pluginUpdateSourceApplier = PluginUpdateSourceApplier.createApplier(descriptor, modelFacade)
       pluginUpdateSourceApplier.runWithRevertOnException {
-        val customizationModel = customizer?.getInstallButonCustomizationModel(modelFacade, descriptor, operationUi.modalityState)
+        val pluginToInstall = loadModelForAutoInstall(descriptor, customizer)
+        if (pluginToInstall == null) {
+          pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(null)
+          return@runWithRevertOnException
+        }
+        val customizationModel = customizer?.getInstallButonCustomizationModel(
+          modelFacade,
+          pluginToInstall,
+          operationUi.modalityState,
+        )
         withContext(Dispatchers.EDT + operationUi.modalityState.asContextElement()) {
           val customAction = customizationModel?.mainAction
           if (customAction != null) {
@@ -121,13 +130,21 @@ internal object PluginModelAsyncOperationsExecutor {
           }
           val result = modelFacade.installOrUpdatePlugin(
             operationUi,
-            descriptor,
+            pluginToInstall,
             null,
           )
           pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
         }
       }
     }
+  }
+
+  private suspend fun loadModelForAutoInstall(
+    descriptor: PluginUiModel,
+    customizer: PluginManagerCustomizer?,
+  ): PluginUiModel? {
+    if (customizer == null || descriptor.detailsLoaded) return descriptor
+    return UiPluginManager.getInstance().loadPluginDetails(descriptor)
   }
 
   suspend fun performMarketplaceSearch(
