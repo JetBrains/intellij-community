@@ -10,6 +10,7 @@ import com.intellij.platform.searchEverywhere.SeResultAddedEvent
 import com.intellij.platform.searchEverywhere.SeResultEndEvent
 import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
+import com.intellij.platform.searchEverywhere.SeResultSkippedEvent
 import com.intellij.platform.searchEverywhere.frontend.vm.SeSearchContext
 import com.intellij.platform.searchEverywhere.isCommand
 import com.intellij.platform.searchEverywhere.isExactMatch
@@ -94,7 +95,7 @@ fun SeResultList.handleEvent(searchContext: SeSearchContext, event: SeResultEven
         }
       }
     }
-    is SeResultEndEvent -> {} // Do nothing
+    is SeResultEndEvent, is SeResultSkippedEvent -> {} // Do nothing
   }
 }
 

@@ -14,4 +14,8 @@ class SeTransferItem(val itemData: SeItemData) : SeTransferEvent
 
 @Serializable
 @ApiStatus.Internal
+class SeTransferSkippedItem(val providerId: SeProviderId) : SeTransferEvent
+
+@Serializable
+@ApiStatus.Internal
 class SeTransferEnd(val providerId: SeProviderId) : SeTransferEvent

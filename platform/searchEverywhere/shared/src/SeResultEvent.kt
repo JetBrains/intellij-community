@@ -22,6 +22,12 @@ class SeResultAddedEvent(val itemData: SeItemData) : SeResultEvent
 class SeResultReplacedEvent(val uuidsToReplace: List<String>, val newItemData: SeItemData) : SeResultEvent
 
 /**
+ * Event indicating that a search result was skipped.
+ */
+@ApiStatus.Experimental
+class SeResultSkippedEvent(val providerId: SeProviderId) : SeResultEvent
+
+/**
  * Event indicating that the items provider with the specified id has finished.
  */
 @ApiStatus.Experimental

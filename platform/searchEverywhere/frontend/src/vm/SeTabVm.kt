@@ -26,6 +26,7 @@ import com.intellij.platform.searchEverywhere.SeResultAddedEvent
 import com.intellij.platform.searchEverywhere.SeResultEndEvent
 import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
+import com.intellij.platform.searchEverywhere.SeResultSkippedEvent
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
@@ -208,7 +209,9 @@ class SeTabVmImpl(
             if (essential.isEmpty()) {
               if (shouldThrottle.load()) {
                 SeLog.log(SeLog.THROTTLING) { "Will throttle with accumulation (pattern = $searchPattern, searchId = $searchId)" }
-                resultsFlowWithAdaptedPresentations.throttledWithAccumulation(shouldPassItem = { item -> item !is SeResultEndEvent })
+                resultsFlowWithAdaptedPresentations.throttledWithAccumulation(shouldPassItem = {
+                  item -> item !is SeResultEndEvent && item !is SeResultSkippedEvent
+                })
               }
               else {
                 SeLog.log(SeLog.THROTTLING) { "Will not throttle (pattern = $searchPattern, searchId = $searchId)" }
@@ -296,7 +299,7 @@ class SeTabVmImpl(
         })
 
         when (resultEvent) {
-          is SeResultEndEvent -> resultEvent
+          is SeResultEndEvent, is SeResultSkippedEvent -> resultEvent
           is SeResultAddedEvent -> SeResultAddedEvent(newItemData)
           is SeResultReplacedEvent -> SeResultReplacedEvent(resultEvent.uuidsToReplace, newItemData)
         }
@@ -378,7 +381,7 @@ private fun Flow<SeResultEvent>.throttleUntilEssentialsArrive(essentialProviderI
 
   return throttledWithAccumulation(
     resultThrottlingMs = essentialWaitingTimeout,
-    shouldPassItem = { it !is SeResultEndEvent },
+    shouldPassItem = { it !is SeResultEndEvent && it !is SeResultSkippedEvent },
     fastPassThrottlingMs = FAST_PASS_THROTTLE,
     shouldFastPassItem = { it.itemDataOrNull()?.shouldIgnoreThrottling() == true }
   ) { event: SeResultEvent, _: Int ->
@@ -392,7 +395,10 @@ private fun Flow<SeResultEvent>.throttleUntilEssentialsArrive(essentialProviderI
       }
       else -> {
         essentialProvidersCounts[providerId]?.let {
-          SeLog.log(SeLog.THROTTLING) { "Arrived: $providerId ($it)" }
+          SeLog.log(SeLog.THROTTLING) {
+            val skippedText = if (event is SeResultSkippedEvent) "(skipped)" else ""
+            "Arrived$skippedText: $providerId ($it)"
+          }
           essentialProvidersCounts[providerId] = it + 1
         }
       }
@@ -408,13 +414,14 @@ private fun Flow<SeResultEvent>.throttleUntilEssentialsArrive(essentialProviderI
 private fun SeResultEvent.providerId() = when (this) {
   is SeResultAddedEvent -> itemData.providerId
   is SeResultReplacedEvent -> newItemData.providerId
+  is SeResultSkippedEvent -> providerId
   is SeResultEndEvent -> providerId
 }
 
 private fun SeResultEvent.itemDataOrNull(): SeItemData? = when (this) {
   is SeResultAddedEvent -> itemData
   is SeResultReplacedEvent -> newItemData
-  is SeResultEndEvent -> null
+  is SeResultEndEvent, is SeResultSkippedEvent -> null
 }
 
 private fun SeItemData.shouldIgnoreThrottling(): Boolean =

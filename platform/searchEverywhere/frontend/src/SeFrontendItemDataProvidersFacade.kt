@@ -11,6 +11,7 @@ import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.SeTransferEnd
 import com.intellij.platform.searchEverywhere.SeTransferEvent
 import com.intellij.platform.searchEverywhere.SeTransferItem
+import com.intellij.platform.searchEverywhere.SeTransferSkippedItem
 import com.intellij.platform.searchEverywhere.frontend.ui.SePreviewPanelListener
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
@@ -57,6 +58,9 @@ class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
          is SeTransferEnd -> {
            SeLog.log(ITEM_EMIT) { "Frontend provider for ${transferEvent.providerId.value} receives transfer end event" }
          }
+          is SeTransferSkippedItem -> {
+            SeLog.log(ITEM_EMIT) { "Frontend provider for ${transferEvent.providerId.value} receives transfer skipped event" }
+          }
          is SeTransferItem -> {
            val itemData = transferEvent.itemData
            SeLog.log(ITEM_EMIT) { "Frontend provider for ${itemData.providerId.value} receives: ${itemData.uuid} - ${itemData.presentation.text}" }

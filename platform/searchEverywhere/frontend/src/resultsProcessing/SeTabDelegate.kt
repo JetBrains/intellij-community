@@ -24,10 +24,12 @@ import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.SeResultEndEvent
 import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.SeResultSkippedEvent
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.SeTransferEnd
 import com.intellij.platform.searchEverywhere.SeTransferEvent
 import com.intellij.platform.searchEverywhere.SeTransferItem
+import com.intellij.platform.searchEverywhere.SeTransferSkippedItem
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendItemDataProvidersFacade
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendOnlyItemsProviderFactory
@@ -133,6 +135,10 @@ class SeTabDelegate(
               SeLog.log(ITEM_EMIT) { "Tab delegate for ${logLabel} emits: ${checkedItemData.uuid} - ${checkedItemData.presentation.text}" }
               accumulator.add(checkedItemData)
             }
+            ?: SeResultSkippedEvent(transferEvent.itemData.providerId)
+          }
+          is SeTransferSkippedItem -> {
+            SeResultSkippedEvent(transferEvent.providerId)
           }
         }
       }.collect {

@@ -189,6 +189,10 @@
 - <init>(java.util.List,com.intellij.platform.searchEverywhere.SeItemData):V
 - f:getNewItemData():com.intellij.platform.searchEverywhere.SeItemData
 - f:getUuidsToReplace():java.util.List
+*f:com.intellij.platform.searchEverywhere.SeResultSkippedEvent
+- com.intellij.platform.searchEverywhere.SeResultEvent
+- <init>(com.intellij.platform.searchEverywhere.SeProviderId):V
+- f:getProviderId():com.intellij.platform.searchEverywhere.SeProviderId
 *:com.intellij.platform.searchEverywhere.SeSession
 - *sf:Companion:com.intellij.platform.searchEverywhere.SeSession$Companion
 *f:com.intellij.platform.searchEverywhere.SeSession$Companion

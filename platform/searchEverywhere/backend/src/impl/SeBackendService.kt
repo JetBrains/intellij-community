@@ -24,6 +24,7 @@ import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.SeTransferEnd
 import com.intellij.platform.searchEverywhere.SeTransferEvent
 import com.intellij.platform.searchEverywhere.SeTransferItem
+import com.intellij.platform.searchEverywhere.SeTransferSkippedItem
 import com.intellij.platform.searchEverywhere.asRef
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
 import com.intellij.platform.searchEverywhere.impl.SeFindToolWindowManager
@@ -117,8 +118,9 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     return flow {
       itemsFlows.merge().buffer(capacity = 0, onBufferOverflow = BufferOverflow.SUSPEND).mapNotNull { transferEvent ->
         when (transferEvent) {
-          is SeTransferEnd -> transferEvent
+          is SeTransferEnd, is SeTransferSkippedItem -> transferEvent
           is SeTransferItem -> equalityChecker.checkAndUpdateIfNeeded(transferEvent.itemData)?.let { SeTransferItem(it) }
+                               ?: SeTransferSkippedItem(transferEvent.itemData.providerId)
         }
       }.collect { item ->
         requestedCountState.first { it > 0 }

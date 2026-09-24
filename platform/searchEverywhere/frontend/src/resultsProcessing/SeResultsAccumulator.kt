@@ -9,6 +9,7 @@ import com.intellij.platform.searchEverywhere.SeResultAddedEvent
 import com.intellij.platform.searchEverywhere.SeResultEndEvent
 import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
+import com.intellij.platform.searchEverywhere.SeResultSkippedEvent
 import com.intellij.platform.searchEverywhere.providers.topHit.SeTopHitItemsProvider
 import com.intellij.platform.searchEverywhere.toProviderId
 import com.intellij.platform.searchEverywhere.withUuidToReplace
@@ -36,7 +37,7 @@ class SeResultsAccumulator() {
 
           items[event.newItemData.uuid] = event.newItemData
         }
-        is SeResultEndEvent, null -> {}
+        is SeResultEndEvent, is SeResultSkippedEvent, null -> {}
       }
 
       return event
