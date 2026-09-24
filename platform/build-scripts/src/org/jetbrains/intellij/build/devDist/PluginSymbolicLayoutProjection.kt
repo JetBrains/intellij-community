@@ -34,7 +34,7 @@ private fun nativeFingerprint(values: List<String>): String = devDistSignature {
 }
 
 /** The comment a content module descriptor states to go into the main jar of the plugin. */
-private val PACK_CONTENT_INTO_PLUGIN_JAR_MARKER = Regex("""<!--\s+intellij-build:\s+pack-content-into-plugin-jar\s+-->""")
+internal val PACK_CONTENT_INTO_PLUGIN_JAR_MARKER = Regex("""<!--\s+intellij-build:\s+pack-content-into-plugin-jar\s+-->""")
 
 /**
  * Projects one original layout without reading compiled roots or invoking layout callbacks.
@@ -42,6 +42,7 @@ private val PACK_CONTENT_INTO_PLUGIN_JAR_MARKER = Regex("""<!--\s+intellij-build
  * The result cannot select producers until every required preparation has declared its inputs and contributions.
  * [nativePolicy] enables native derivation at each source occurrence. Its absence preserves the existing caller-supplied preparation model.
  * Native bindings require a policy; an absent policy is not evidence that native handling leaves archives untouched.
+ * [cache] holds the answers the projections of one run share. A caller without one gets a fresh cache.
  */
 @ApiStatus.Internal
 fun projectPluginSymbolicLayout(
@@ -52,14 +53,16 @@ fun projectPluginSymbolicLayout(
   preparationFacts: PluginSymbolicPreparationFacts = PluginSymbolicPreparationFacts(),
   variant: PluginSymbolicVariant,
   nativePolicy: PluginSymbolicNativePolicy? = null,
+  cache: PluginSymbolicProjectionCache = PluginSymbolicProjectionCache(project),
 ): PluginSymbolicLayout {
+  require(cache.project === project) { "The projection cache belongs to another project" }
   val original = if (nativePolicy == null) null else {
     SymbolicLayoutProjector(
-      layout, project, catalogue, descriptorFacts, preparationFacts, variant, nativePolicy, collectNativeContext = true,
+      layout, project, catalogue, descriptorFacts, preparationFacts, variant, nativePolicy, cache, collectNativeContext = true,
     ).project()
   }
   return SymbolicLayoutProjector(
-    layout, project, catalogue, descriptorFacts, preparationFacts, variant, nativePolicy,
+    layout, project, catalogue, descriptorFacts, preparationFacts, variant, nativePolicy, cache,
     nativeContexts = original?.let(::nativeAssetContexts).orEmpty(),
   ).project()
 }
@@ -94,6 +97,7 @@ private class SymbolicLayoutProjector(
   private val preparationFacts: PluginSymbolicPreparationFacts,
   private val variant: PluginSymbolicVariant,
   private val nativePolicy: PluginSymbolicNativePolicy?,
+  private val cache: PluginSymbolicProjectionCache,
   private val collectNativeContext: Boolean = false,
   private val nativeContexts: Map<String, String> = emptyMap(),
 ) {
@@ -104,7 +108,7 @@ private class SymbolicLayoutProjector(
 
   /** The container id of a library with one member, by that member. A native effect may read the container in place of the member. */
   private val singleMemberLibraries = catalogue.libraries.filter { it.id != null && it.files.size == 1 }.associate { it.files.single() to requireNotNull(it.id) }
-  private val frontend = FrontendCompatibility(descriptors.frontendRoots, project::findModuleByName)
+  private val frontend = cache.frontend(descriptors.frontendRoots)
   private val assembly = PluginSymbolicJarAssembly()
   private val copiedFiles = HashSet<Pair<String, String>>()
   private val effects = LinkedHashMap<String, PluginSymbolicPreparedEffect>()
@@ -271,7 +275,7 @@ private class SymbolicLayoutProjector(
       gap("module-descriptor:$name", "The content module descriptor is missing")
       return null
     }
-    val packIntoMain = xml != null && PACK_CONTENT_INTO_PLUGIN_JAR_MARKER.containsMatchIn(xml)
+    val packIntoMain = xml != null && cache.packsIntoMainJar(xml)
     if (loading == "embedded") {
       return if (packIntoMain) defaultJar(name) else "$name.jar"
     }
@@ -279,7 +283,7 @@ private class SymbolicLayoutProjector(
     val hasModuleLibraries = name !in layout.getModulesWithExcludedModuleLibraries() &&
                             libraryDependencies(module, withTests = false).any { it.libraryReference.parentReference is JpsModuleReference }
     val separate = !packIntoMain &&
-                   (!hasRootXmlAttribute(requireNotNull(xml), "package") || hasModuleLibraries ||
+                   (!cache.hasPackageAttribute(requireNotNull(xml)) || hasModuleLibraries ||
                     frontend.isSplit(layout.mainModule, name))
     return when {
       separate -> "modules/$name.jar"

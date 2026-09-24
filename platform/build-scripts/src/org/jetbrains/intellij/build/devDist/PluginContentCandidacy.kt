@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.devDist
 
-import com.intellij.openapi.util.JDOMUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
@@ -14,7 +13,6 @@ import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.nio.file.Path
-import kotlin.io.path.readText
 
 /**
  * One hand-off a plugin offers the candidacy fold: the member, where the plugin puts its jar, and what the jar merges.
@@ -407,10 +405,7 @@ class MemberDescriptorFacts(
 @ApiStatus.Internal
 fun memberDescriptor(module: JpsModule): MemberDescriptorFacts? {
   val file = descriptorFiles(module = module, loadPath = module.name + ".xml").firstOrNull() ?: return null
-  val text = file.readText()
-  return MemberDescriptorFacts(
-    hasPackageAttribute = JDOMUtil.load(text).getAttributeValue("package") != null,
-  )
+  return MemberDescriptorFacts(hasPackageAttribute = hasRootXmlAttribute(file, "package"))
 }
 
 /**

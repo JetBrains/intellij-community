@@ -54,10 +54,15 @@ class ModuleSourceFileIndex(private val modules: List<JpsModule>) {
     return null
   }
 
-  /** The modules whose production sources hold [relativePath], in the order of [modules]. Computed once per path. */
+  /**
+   * The modules whose production sources hold [relativePath], in the order of [modules]. Computed once per path.
+   *
+   * A new path lists one directory per source root of every module, so the probes run concurrently.
+   */
   fun findOwners(relativePath: String): List<JpsModule> {
     owners.get(relativePath)?.let { return it }
-    val result = modules.filter { find(module = it, relativePath = relativePath, onlyProductionSources = true) != null }
+    val found = modules.mapConcurrent { find(module = it, relativePath = relativePath, onlyProductionSources = true) != null }
+    val result = modules.filterIndexed { index, _ -> found[index] }
     return owners.putIfAbsent(relativePath, result) ?: result
   }
 

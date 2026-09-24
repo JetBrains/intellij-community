@@ -6,6 +6,7 @@ package org.jetbrains.intellij.build.devDist
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * The frontend module filter, over the JPS model and the root modules a frontend-compatible module must not reach.
@@ -19,12 +20,13 @@ import org.jetbrains.jps.model.module.JpsModule
  */
 @ApiStatus.Internal
 class FrontendCompatibility(
-  private val roots: Set<String>,
+  @JvmField val roots: Set<String>,
   private val findModule: (String) -> JpsModule?,
 ) {
   // Only a final result is cached. A back edge inside one walk is compatible unless another path proves otherwise, and
-  // such a positive result must stay local to that walk.
-  private val cache = HashMap<String, Boolean>()
+  // such a positive result must stay local to that walk. A final result holds for every walk, so concurrent walks share
+  // the cache.
+  private val cache = ConcurrentHashMap<String, Boolean>()
 
   fun isCompatible(moduleName: String): Boolean {
     if (roots.isEmpty()) {

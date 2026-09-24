@@ -19,8 +19,10 @@ import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.jps.model.JpsProject
 import java.util.TreeMap
 import java.util.TreeSet
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * The plugins the split dev distribution of IDEA Ultimate offers on demand without bundling them.
@@ -233,16 +235,20 @@ fun derivePluginJars(
 
   // Each plugin is derived on its own, and the list keeps the population order. Every input the workers read is
   // complete before the first one starts.
+  // One frontend filter per project serves every plugin, because its answers depend on the project alone.
+  val frontends = ConcurrentHashMap<JpsProject, FrontendCompatibility>()
   val plugins = spanBuilder("derive plugin jars").setAttribute("populationSize", population.size.toLong()).use {
     population.toList().mapConcurrent { mainModule ->
       val facts = pluginLayoutFacts(mainModule = mainModule, layouts = layoutsByMainModule.get(mainModule).orEmpty())
+      val project = outputProvider.findRequiredModule(mainModule).project
       val packing = derivePluginPacking(
         mainModule = mainModule,
         facts = facts,
-        project = outputProvider.findRequiredModule(mainModule).project,
+        project = project,
         outputProvider = outputProvider,
         frontendRoots = frontendRoots,
         isPackedElsewhere = { name -> name in platformMembers || layoutMemberOwners.get(name)?.any { it != mainModule } == true },
+        frontend = frontends.computeIfAbsent(project) { FrontendCompatibility(roots = frontendRoots.toSet(), findModule = it::findModuleByName) },
       )
       packing?.let { DerivedPlugin(mainModule = mainModule, facts = facts, packing = it) }
     }.filterNotNull()
