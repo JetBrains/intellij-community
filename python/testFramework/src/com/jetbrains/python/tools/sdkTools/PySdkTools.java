@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.tools.sdkTools;
 
 import com.intellij.execution.ExecutionException;
@@ -21,7 +21,7 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkExtKt;
-import com.jetbrains.python.sdk.PyTargetsIntrospectionFacade;
+import com.jetbrains.python.sdk.targetsFacade.PyTargetsIntrospectionFacade;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
@@ -120,7 +120,7 @@ public final class PySdkTools {
 
     final SdkModificator modificator = sdk.getSdkModificator();
 
-    for (final String path : new PyTargetsIntrospectionFacade(sdk, project).getInterpreterPaths(new EmptyProgressIndicator())) {
+    for (final String path : PyTargetsIntrospectionFacade.create(sdk, project).getInterpreterPaths(new EmptyProgressIndicator())) {
       addTestSdkRoot(modificator, path);
     }
     if (!addSkeletons) {

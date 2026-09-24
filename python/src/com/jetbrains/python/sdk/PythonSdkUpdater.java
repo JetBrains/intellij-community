@@ -1,8 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
-import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
-import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -39,9 +37,11 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.backend.observation.TrackingUtil;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
@@ -56,6 +56,7 @@ import com.jetbrains.python.sdk.headless.PythonActivityKey;
 import com.jetbrains.python.sdk.impl.SdkInternalUtilKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
+import com.jetbrains.python.sdk.targetsFacade.PyTargetsIntrospectionFacade;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -341,16 +342,14 @@ public final class PythonSdkUpdater {
       }
       try {
         PythonInterpreter pythonInterpreter = pythonInterpreter(mySdk, true);
-        PyTargetsIntrospectionFacade targetsFacade = new PyTargetsIntrospectionFacade(mySdk, myProject);
+        PyTargetsIntrospectionFacade targetsFacade = PyTargetsIntrospectionFacade.create(mySdk, myProject);
         String version = targetsFacade.getInterpreterVersion(indicator);
         commitSdkVersionIfChanged(mySdk, version);
         if (targetsFacade.isLocalTarget()) {
           List<String> paths = targetsFacade.getInterpreterPaths(indicator);
           updateSdkPaths(pythonInterpreter, paths);
         }
-        else {
-          targetsFacade.synchronizeRemoteSourcesAndSetupMappings(indicator);
-        }
+        targetsFacade.synchronizeRemoteSourcesAndSetupMappingsIfNeeded(indicator);
         // This step also includes setting mapped interpreter paths
         generateSkeletons(pythonInterpreter, indicator);
         if (myRequestData.withPackagesUpdate) {
@@ -358,7 +357,7 @@ public final class PythonSdkUpdater {
         }
         addBundledPyiStubsToInterpreterPaths(manager);
       }
-      catch (ExecutionException e) {
+      catch (ExecutionException | InvalidSdkException e) {
         LOG.warn("Update for SDK " + mySdk.getName() + " failed", e);
       }
       finally {
@@ -763,14 +762,14 @@ public final class PythonSdkUpdater {
    * <p>
    * Returns all the existing paths except those manually excluded by the user.
    */
-  private static @NotNull List<String> evaluateSysPath(@NotNull Sdk sdk, @NotNull Project project) throws ExecutionException {
+  private static @NotNull List<String> evaluateSysPath(@NotNull Sdk sdk, @NotNull Project project) throws ExecutionException, InvalidSdkException {
     final long startTime = System.currentTimeMillis();
     ProgressManager.progress(PyBundle.message("sdk.updating.interpreter.paths"));
     if (ApplicationManager.getApplication().isUnitTestMode() && PythonSdkType.isMock(sdk)) {
       // Mock sdk in tests can't be executed
       return PythonSdkType.getMockPath(sdk);
     }
-    final List<String> sysPath = new PyTargetsIntrospectionFacade(sdk, project).getInterpreterPaths(new EmptyProgressIndicator());
+    final List<String> sysPath = PyTargetsIntrospectionFacade.create(sdk, project).getInterpreterPaths(new EmptyProgressIndicator());
     LOG.info("Updating sys.path took " + (System.currentTimeMillis() - startTime) + " ms");
     return sysPath;
   }

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run
 
-import com.intellij.execution.target.TargetBasedSdkAdditionalData
 import com.intellij.execution.target.TargetConfigurationWithLocalFsAccess
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType
@@ -29,9 +28,8 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
    */
   val canProbablyRunCodeForeignTypes: List<Class<out TargetEnvironmentType<*>>> get() = emptyList()
 
-  fun getPythonTargetInterpreter(sdk: Sdk, project: Project): HelpersAwareTargetEnvironmentRequest?
 
-  fun getPythonTargetInterpreter(sdkAdditionalData: PyTargetAwareAdditionalData, project: Project?): HelpersAwareTargetEnvironmentRequest? = null
+  fun getPythonTargetInterpreter(sdkAdditionalData: PyTargetAwareAdditionalData, project: Project): HelpersAwareTargetEnvironmentRequest?
 
   fun getTargetType(): TargetEnvironmentType<*>
 
@@ -96,19 +94,33 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
 
   companion object {
     @JvmStatic
-    val EP_NAME: ExtensionPointName<PythonInterpreterTargetEnvironmentFactory> = ExtensionPointName("Pythonid.interpreterTargetEnvironmentFactory")
+    val EP_NAME: ExtensionPointName<PythonInterpreterTargetEnvironmentFactory> =
+      ExtensionPointName("Pythonid.interpreterTargetEnvironmentFactory")
 
+    /**
+     * Use only for a local SDK.
+     */
+    fun createLocalTargetRequest(): HelpersAwareTargetEnvironmentRequest = HelpersAwareLocalTargetEnvironmentRequest()
+
+    /**
+     * Returns a request for [sdk].
+     * For a remote SDK, the plugin for its target must be loaded. If it is not loaded, this function throws an exception.
+     * If the plugin can be unavailable, use the overload with [PyTargetAwareAdditionalData]. It returns `null` in that case.
+     */
     @JvmStatic
     fun findPythonTargetInterpreter(sdk: Sdk, project: Project): HelpersAwareTargetEnvironmentRequest =
-      when (sdk.sdkAdditionalData) {
-        is TargetBasedSdkAdditionalData ->
-          EP_NAME.extensionList.firstNotNullOfOrNull { it.getPythonTargetInterpreter(sdk, project) }
-        else -> null
-      } ?: HelpersAwareLocalTargetEnvironmentRequest()
+      when (val data = sdk.sdkAdditionalData) {
+        is PyTargetAwareAdditionalData -> findPythonTargetInterpreter(data, project)
+                                          ?: error("No plugin loaded for $data")
+        else -> createLocalTargetRequest()
+      }
 
     @JvmStatic
-    fun findPythonTargetInterpreter(sdkAdditionalData: PyTargetAwareAdditionalData, project: Project?): HelpersAwareTargetEnvironmentRequest? =
-          EP_NAME.extensionList.firstNotNullOfOrNull { it.getPythonTargetInterpreter(sdkAdditionalData, project) }
+    fun findPythonTargetInterpreter(
+      sdkAdditionalData: PyTargetAwareAdditionalData,
+      project: Project,
+    ): HelpersAwareTargetEnvironmentRequest? =
+      EP_NAME.extensionList.firstNotNullOfOrNull { it.getPythonTargetInterpreter(sdkAdditionalData, project) }
 
 
     @JvmStatic
@@ -118,7 +130,7 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
 
     @JvmStatic
     fun findPanelExtension(project: Project, configuration: TargetEnvironmentConfiguration): TargetPanelExtension? =
-      EP_NAME.extensionList.mapNotNull { it.getPanelExtension(project, configuration) }.firstOrNull()
+      EP_NAME.extensionList.firstNotNullOfOrNull { it.getPanelExtension(project, configuration) }
 
     fun by(configuration: TargetEnvironmentConfiguration): PythonInterpreterTargetEnvironmentFactory? =
       EP_NAME.extensionList.find { it.isFor(configuration) }
@@ -131,23 +143,23 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
      */
     @JvmStatic
     fun isMutable(configuration: TargetEnvironmentConfiguration): Boolean =
-      EP_NAME.extensionList.mapNotNull { it.isMutable(configuration) }.firstOrNull() ?: false
+      EP_NAME.extensionList.firstNotNullOfOrNull { it.isMutable(configuration) } ?: false
 
     /**
      * Target provides access to its filesystem using VFS (like WSL)
      */
     @JvmStatic
-    fun getTargetWithMappedLocalVfs(targetEnvironmentConfiguration: TargetEnvironmentConfiguration): TargetWithMappedLocalVfs? = EP_NAME.extensionList.asSequence().mapNotNull {
-      it.asTargetWithMappedLocalVfs(targetEnvironmentConfiguration)
-    }.firstOrNull()
+    fun getTargetWithMappedLocalVfs(targetEnvironmentConfiguration: TargetEnvironmentConfiguration): TargetWithMappedLocalVfs? =
+      EP_NAME.extensionList.firstNotNullOfOrNull {
+        it.asTargetWithMappedLocalVfs(targetEnvironmentConfiguration)
+      }
 
     /**
      * Null means this sdk is not target based. In other case value means if user can install package in this SDK
      */
     @JvmStatic
-    fun isPackageManagementSupported(sdk: Sdk): Boolean? = (sdk.sdkAdditionalData as? PyTargetAwareAdditionalData)
-      ?.targetEnvironmentConfiguration
-      ?.let { targetEnvironmentConfiguration ->
+    fun isPackageManagementSupported(sdk: Sdk): Boolean? =
+      (sdk.sdkAdditionalData as? PyTargetAwareAdditionalData)?.targetEnvironmentConfiguration?.let { targetEnvironmentConfiguration ->
         EP_NAME.extensionList.firstNotNullOfOrNull { it.packageManagementSupported(targetEnvironmentConfiguration) }
       }
 
@@ -159,3 +171,10 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
       EP_NAME.extensionList.firstNotNullOfOrNull { it.getTargetModuleResidesOnImpl(module) }
   }
 }
+
+@ApiStatus.Internal
+fun PythonInterpreterTargetEnvironmentFactory.getPythonTargetInterpreter(
+  sdk: Sdk,
+  project: Project,
+): HelpersAwareTargetEnvironmentRequest? =
+  (sdk.sdkAdditionalData as? PyTargetAwareAdditionalData)?.let { getPythonTargetInterpreter(it, project) }
