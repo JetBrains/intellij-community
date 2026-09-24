@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import java.io.File
 
 internal class ScratchFilesUsagesCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("ide.scratch", 1)
+  private val GROUP = EventLogGroup("ide.scratch", 2)
 
   private val COUNT = EventFields.RoundedInt("number_of_files")
   private val TOTAL_SIZE = EventFields.RoundedLong("total_size_in_bytes")

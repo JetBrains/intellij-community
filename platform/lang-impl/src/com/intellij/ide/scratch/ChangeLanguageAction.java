@@ -35,7 +35,7 @@ import static com.intellij.openapi.util.Conditions.not;
  * The scratch plugin registers it for the Scratches root; the SQL dialect switcher extends it for database consoles.
  */
 @ApiStatus.Internal
-public class ChangeLanguageAction extends DumbAwareAction {
+public abstract class ChangeLanguageAction extends DumbAwareAction {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;

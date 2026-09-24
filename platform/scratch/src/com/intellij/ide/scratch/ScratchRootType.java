@@ -5,6 +5,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ public final class ScratchRootType extends RootType {
       return new ScratchFileTypeIcon(baseIcon);
   }
 
+  @ApiStatus.Internal
   @Override
   public @Nullable VirtualFile findFileToReuse(@NotNull VirtualFile dir, @NotNull String fileName) throws IOException {
     // a buffer keeps its number but may have been saved under another extension

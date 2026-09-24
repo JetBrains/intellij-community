@@ -28,7 +28,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.ide.scratch.ScratchFilesUsagesCollector"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.ActionsBundle">
     <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction">
       <override-text place="EditorPopup"/>
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="WelcomeNewEmptyFile"/>
