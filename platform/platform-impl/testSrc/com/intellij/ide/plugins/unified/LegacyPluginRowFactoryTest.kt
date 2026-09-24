@@ -859,7 +859,7 @@ internal class LegacyPluginRowFactoryTest {
     }
 
   @Test
-  fun `Space dispatches the row action without changing selection`(): Unit =
+  fun `Space dispatches the row action and switch arrows navigate rows`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
       try {
@@ -943,6 +943,45 @@ internal class LegacyPluginRowFactoryTest {
           assertThat(row.getSelection()).isEqualTo(EventHandler.SelectionType.SELECTION)
           assertThat(selectionChanges).isEmpty()
           assertThat(actionSelections).containsExactly(listOf(row), listOf(selectedRow, row))
+
+          val previousRowSwitch = componentsOfType(row, OnOffButton::class.java).single()
+          row.updateButtons(plugin, PluginInstallationState(true))
+          val rowSwitch = componentsOfType(row, OnOffButton::class.java).single()
+          val selectedRowSwitch = componentsOfType(selectedRow, OnOffButton::class.java).single()
+          assertThat(rowSwitch).isNotSameAs(previousRowSwitch)
+          val rowSwitchState = rowSwitch.isSelected
+          val selectedRowSwitchState = selectedRowSwitch.isSelected
+          pressSwitchArrow(rowSwitch, KeyEvent.VK_UP)
+
+          assertThat(selectedRow.getSelection()).isEqualTo(EventHandler.SelectionType.SELECTION)
+          assertThat(row.getSelection()).isEqualTo(EventHandler.SelectionType.NONE)
+          assertThat(rowSwitch.isSelected).isEqualTo(rowSwitchState)
+          assertThat(selectionChanges).containsExactly(listOf(bindings.first().occurrenceId))
+          assertThat(actionSelections).containsExactly(listOf(row), listOf(selectedRow, row))
+
+          pressSwitchArrow(selectedRowSwitch, KeyEvent.VK_DOWN)
+
+          assertThat(selectedRow.getSelection()).isEqualTo(EventHandler.SelectionType.NONE)
+          assertThat(row.getSelection()).isEqualTo(EventHandler.SelectionType.SELECTION)
+          assertThat(selectedRowSwitch.isSelected).isEqualTo(selectedRowSwitchState)
+          assertThat(selectionChanges).containsExactly(
+            listOf(bindings.first().occurrenceId),
+            listOf(bindings.last().occurrenceId),
+          )
+          assertThat(actionSelections).containsExactly(listOf(row), listOf(selectedRow, row))
+
+          pressSwitchArrow(rowSwitch, KeyEvent.VK_UP, shiftDown = true)
+
+          assertThat(selectedRow.getSelection()).isEqualTo(EventHandler.SelectionType.SELECTION)
+          assertThat(row.getSelection()).isEqualTo(EventHandler.SelectionType.SELECTION)
+          assertThat(rowSwitch.isSelected).isEqualTo(rowSwitchState)
+          assertThat(selectionChanges.last()).containsExactly(bindings.first().occurrenceId, bindings.last().occurrenceId)
+          assertThat(actionSelections).containsExactly(listOf(row), listOf(selectedRow, row))
+
+          val handlerKeyListener = row.keyListeners.single { it in rowSwitch.keyListeners }
+          reconciler.reconcile(emptyList())
+          factory.rowsRendered(emptyList())
+          assertThat(rowSwitch.keyListeners).doesNotContain(handlerKeyListener)
         }
       }
       finally {
@@ -1704,6 +1743,13 @@ internal class LegacyPluginRowFactoryTest {
   }
 
   private fun verticalCenterTwice(component: Component): Int = component.y * 2 + component.height
+
+  private fun pressSwitchArrow(source: OnOffButton, keyCode: Int, shiftDown: Boolean = false) {
+    val modifiers = if (shiftDown) KeyEvent.SHIFT_DOWN_MASK else 0
+    val event = KeyEvent(source, KeyEvent.KEY_PRESSED, 0, modifiers, keyCode, KeyEvent.CHAR_UNDEFINED)
+    source.keyListeners.forEach { it.keyPressed(event) }
+    assertThat(event.isConsumed).isTrue()
+  }
 
   private fun detailsHeader(root: JComponent): JComponent {
     val content = (root.layout as BorderLayout).getLayoutComponent(BorderLayout.CENTER) as JComponent

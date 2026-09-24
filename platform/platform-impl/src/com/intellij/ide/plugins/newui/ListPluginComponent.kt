@@ -566,6 +566,7 @@ class ListPluginComponent private constructor(
     }, myUseToggleForEnablement)
 
     myLayout.addButtonComponent(myEnableDisableButton!!)
+    myEventHandler?.add(myEnableDisableButton!!)
     myEnableDisableButton!!.isOpaque = false
     myEnableDisableButton!!.isEnabled = myIsDisableAllowed
     myEnableDisableButton!!.accessibleContext.setAccessibleName(IdeBundle.message("plugins.configurable.enable.checkbox.accessible.name"))

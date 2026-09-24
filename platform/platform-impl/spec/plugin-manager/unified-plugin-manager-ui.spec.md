@@ -451,6 +451,10 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
   )
 
 - Up and Down must navigate between rendered plugin rows across sections.
+- Up and Down on a focused enablement switch must change the row selection without toggling the switch.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
+    `Space dispatches the row action and switch arrows navigate rows`
+  )
 - Tab must visit the active section and category actions, one plugin row, and that row's controls before it leaves the list for details.
 - The last selected row must be the list's row stop. Without a selection, the first rendered row must be that stop.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
@@ -483,7 +487,7 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
 - Row action controls must run their action without activating the row.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
     `Enter invokes the primary action without selecting the plugin`;
-    `Space dispatches the row action without changing selection`
+    `Space dispatches the row action and switch arrows navigate rows`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginRowEventHandlerTest.kt (
     `buttons and their children are action controls`;

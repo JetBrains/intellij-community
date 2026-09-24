@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.components.OnOffButton
 import java.awt.Component
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -81,7 +82,9 @@ internal class UnifiedPluginRowEventHandler(
 
   private val keyListener = object : KeyAdapter() {
     override fun keyPressed(event: KeyEvent) {
-      if (isPluginRowActionControl(event.component)) return
+      val navigateFromSwitch = event.component is OnOffButton &&
+                               (event.keyCode == KeyEvent.VK_UP || event.keyCode == KeyEvent.VK_DOWN)
+      if (isPluginRowActionControl(event.component) && !navigateFromSwitch) return
       val row = findRow(event.component) ?: return
       val index = orderedRows.indexOf(row)
       if (index < 0) return
@@ -184,6 +187,12 @@ internal class UnifiedPluginRowEventHandler(
     rowBorders.remove(row)?.let { row.border = it }
     rowFocusBorders.remove(row)
     removeListeners(row)
+    row.components.filterIsInstance<OnOffButton>().forEach { switch ->
+      switch.removeMouseListener(mouseListener)
+      switch.removeMouseMotionListener(mouseListener)
+      switch.removeKeyListener(keyListener)
+      switch.removeFocusListener(focusListener)
+    }
   }
 
   fun renderRows(bindings: List<Pair<PluginOccurrenceId, ListPluginComponent>>) {
@@ -197,13 +206,18 @@ internal class UnifiedPluginRowEventHandler(
 
   override fun add(component: Component) {
     val row = findRow(component)?.takeIf(occurrences::containsKey) ?: return
-    val previousOwner = listenerOwners[component]
-    if (previousOwner != null) {
-      check(previousOwner === row) { "Plugin row listener component changed ownership" }
-      return
+    if (component is OnOffButton) {
+      if (component.keyListeners.any { it === keyListener }) return
     }
-    listenerOwners[component] = row
-    checkNotNull(listenerComponentsByRow[row]) { "Plugin row listener owner is not registered" }.add(component)
+    else {
+      val previousOwner = listenerOwners[component]
+      if (previousOwner != null) {
+        check(previousOwner === row) { "Plugin row listener component changed ownership" }
+        return
+      }
+      listenerOwners[component] = row
+      checkNotNull(listenerComponentsByRow[row]) { "Plugin row listener owner is not registered" }.add(component)
+    }
     component.addMouseListener(mouseListener)
     component.addMouseMotionListener(mouseListener)
     component.addKeyListener(keyListener)
