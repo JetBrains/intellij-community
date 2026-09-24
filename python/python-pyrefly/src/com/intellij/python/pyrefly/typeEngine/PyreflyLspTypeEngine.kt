@@ -3,10 +3,13 @@ package com.intellij.python.pyrefly.typeEngine
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
 import com.intellij.platform.lsp.api.LspClient
+import com.intellij.psi.util.parents
 import com.intellij.python.lsp.core.findLspClientForModule
 import com.intellij.python.lsp.core.type.PyLspTypeEngine
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider
+import com.jetbrains.python.psi.PyFromImportStatement
+import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.types.PyType
 
@@ -26,7 +29,18 @@ internal class PyreflyLspTypeEngine(override val module: Module) : PyLspTypeEngi
    * Pyrefly answers for every element its server sees. The visitor of [PyLspTypeEngine] lists what a
    * plain LSP server answers, and Pyrefly answers more through its own requests.
    */
-  override fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean = isVisibleToServer(pyTypedElement)
+  override fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean {
+    if (!isVisibleToServer(pyTypedElement)) return false
+    // when there is `from x.y`, for `y` pyrefly will return `Module[x]`, so we do it ourselves
+    if (
+      pyTypedElement.parents(false).any { it is PyFromImportStatement }
+      && pyTypedElement is PyQualifiedExpression
+      && pyTypedElement.isQualified
+    ) {
+      return false
+    }
+    return true
+  }
 
   override fun resolveType(pyTypedElement: PyTypedElement, isLibrary: Boolean, isUserInitiated: Boolean): Ref<PyType?>? {
     val realFile = pyTypedElement.containingFile?.originalFile ?: return null
