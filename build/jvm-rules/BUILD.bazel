@@ -7,6 +7,7 @@ load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files", "strip_prefix
 load("@rules_pkg//pkg:pkg.bzl", "pkg_zip")
 load("//:jvm.bzl", "jvm_import", "jvm_provided_library", "kt_javac_options", "kt_kotlinc_options")
 load("//:rules/assert_maven_coordinates_match.bzl", "assert_maven_coordinates_match_jar")
+load("//:rules/impl/transitions.bzl", "scrubbed_host_tool")
 
 jvm_import(
     name = "protobuf_java",
@@ -83,6 +84,14 @@ define_kt_toolchain(
         ":kotlin-stdlib_import",
     ],
     language_version = "2.3",
+)
+
+# Default Kotlin toolchain: `@rules_kotlin//kotlin/internal:default_toolchain` plus multiplex mode, so one worker
+# process serves every `KotlinCompile` action. Each `MODULE.bazel` registers it, and a root-module registration wins
+# over the one from `rules_kotlin`. `--extra_toolchains` overrides it.
+define_kt_toolchain(
+    name = "kotlin_multiplex_toolchain",
+    experimental_multiplex_workers = True,
 )
 
 # --@rules_jvm//:trace
@@ -529,6 +538,12 @@ label_flag(
 label_flag(
     name = "jvm-builder",
     build_setting_default = "//jvm-inc-builder:jvm-inc-builder_deploy.jar",
+    visibility = ["//visibility:public"],
+)
+
+scrubbed_host_tool(
+    name = "jvm-builder-scrubbed_host_tool",
+    tool = "//:jvm-builder",
     visibility = ["//visibility:public"],
 )
 

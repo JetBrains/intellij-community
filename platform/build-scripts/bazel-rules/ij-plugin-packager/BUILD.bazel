@@ -20,7 +20,7 @@ string_list_flag(
         "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
         "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
         # packaging needs far less heap than compilation; the last `-Xmx` wins, so this overrides the default from `get_jvm_flags`
-        "-Xmx4g",
+        "-Xmx512m",
     ]),
     visibility = ["//visibility:public"],
 )

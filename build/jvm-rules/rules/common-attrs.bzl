@@ -14,7 +14,6 @@ load(
     "KotlincExtraOptionsInfo",
     "KotlincOptions",
 )
-load("//:rules/impl/transitions.bzl", "scrubbed_host_platform_transition")
 
 visibility("private")
 
@@ -107,9 +106,9 @@ common_attr = add_dicts(
         "_jvm_builder": attr.label(
             doc = """Worker code to use. Usually this is not needed, but can be used to override the default
             worker to build compiler plugins used in default worker.""",
-            default = "//:jvm-builder",
+            default = "//:jvm-builder-scrubbed_host_tool",
             allow_single_file = True,
-            cfg = scrubbed_host_platform_transition,
+            cfg = "exec",
         ),
         "_jvm_builder_jvm_flags": attr.label(
             doc = """Worker jvm_flags to use. Usually this is not needed, but can be used to override the default

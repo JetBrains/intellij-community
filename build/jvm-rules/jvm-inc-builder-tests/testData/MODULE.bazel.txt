@@ -29,6 +29,8 @@ archive_override(
 # the module is supposed to always be overridden with the local version
 bazel_dep(name = "rules_jvm", version = "")
 
+register_toolchains("@rules_jvm//:kotlin_multiplex_toolchain")
+
 archive_override(
     module_name = "rules_jvm",
     url = "file://ABSOLUTE_RULES_JVM_ARTIFACT_PATH",

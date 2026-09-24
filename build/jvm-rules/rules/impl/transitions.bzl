@@ -21,3 +21,17 @@ scrubbed_host_platform_transition = transition(
     inputs = [],
     outputs = ["//command_line_option:platforms"],
 )
+
+def _scrubbed_host_tool_impl(ctx):
+    return [DefaultInfo(files = depset([ctx.file.tool]))]
+
+scrubbed_host_tool = rule(
+    doc = "Exposes the compiler JAR as tool under the scrubbed host platform. Consumers must use the exec configuration.",
+    implementation = _scrubbed_host_tool_impl,
+    attrs = {
+        "tool": attr.label(
+            allow_single_file = True,
+            cfg = scrubbed_host_platform_transition,
+        ),
+    },
+)

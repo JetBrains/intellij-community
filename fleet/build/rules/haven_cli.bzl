@@ -38,6 +38,7 @@ def run_haven_cli(
             "supports-path-mapping": "1",
         },
         arguments = [
+            "-Xmx1g",
             ctx.file._haven_cli_launcher.path,
             ctx.file._haven_cli.path,
         ] + arguments,

@@ -139,6 +139,8 @@ register_toolchains(
 # toolchain, or they compile `@protobuf//java/core` from source.
 register_toolchains("//:protoc_java_toolchain_toolchain")
 
+register_toolchains("//:kotlin_multiplex_toolchain")
+
 http_file(
     name = "protobuf-java_http",
     downloaded_file_path = "protobuf-java-{}.jar".format(protoc_java_version),

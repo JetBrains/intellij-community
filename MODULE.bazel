@@ -30,6 +30,8 @@ single_version_override(
 # Do not remove: without it @protobuf//java/core compiles from source.
 register_toolchains("@rules_jvm//:protoc_java_toolchain_toolchain")
 
+register_toolchains("@rules_jvm//:kotlin_multiplex_toolchain")
+
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.4")
 
 single_version_override(
