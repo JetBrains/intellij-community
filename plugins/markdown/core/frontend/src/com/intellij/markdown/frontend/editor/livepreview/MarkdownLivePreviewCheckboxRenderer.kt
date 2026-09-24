@@ -16,7 +16,6 @@ import com.intellij.util.ui.LafIconLookup
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewUtils
-import org.intellij.plugins.markdown.editor.livepreview.isLivePreviewEnabled
 import org.intellij.plugins.markdown.editor.livepreview.toTextRange
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Cursor
@@ -112,7 +111,7 @@ internal class MarkdownLivePreviewCheckboxRenderer(private val project: Project,
 
   private fun toggle(checkbox: Checkbox) {
     val inlay = checkbox.inlay
-    if (!inlay.renderer.enabled || !editor.isLivePreviewEnabled()) return
+    if (!inlay.renderer.enabled) return
     writeCommandAction(project).withName(MarkdownBundle.message("markdown.live.preview.toggle.task")).run<Throwable> {
       val region = checkbox.region
       if (!region.isValid || region.endOffset - region.startOffset < 3) return@run

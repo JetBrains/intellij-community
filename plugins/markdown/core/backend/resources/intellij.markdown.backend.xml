@@ -201,8 +201,4 @@
 
       <treeStructureProvider implementation="com.intellij.markdown.backend.projectTree.MarkdownTreeStructureProvider"/>
     </extensions>
-    <applicationListeners>
-      <listener topic="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings$MarkdownLivePreviewSettingListener"
-                class="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewSettingsListener"/>
-    </applicationListeners>
 </idea-plugin>

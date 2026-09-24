@@ -27,7 +27,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
-import org.intellij.plugins.markdown.editor.livepreview.isLivePreviewEnabled
+import org.intellij.plugins.markdown.editor.livepreview.supportsLivePreview
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -113,7 +113,7 @@ class MarkdownLivePreviewReconciler private constructor(
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun reconcileNow() {
     if (updating || editor.isDisposed || disposed || editor.document.isInBulkUpdate) return
-    if (!editor.isLivePreviewEnabled() || presentation == null) {
+    if (!editor.supportsLivePreview() || presentation == null) {
       removeAllOwned()
       return
     }
@@ -228,7 +228,7 @@ class MarkdownLivePreviewReconciler private constructor(
     // While a bulk change runs, the fold tree is not maintained. During event handling the folding model
     // may still be catching up, since it is a document listener itself.
     if (document.isInBulkUpdate || document.isInEventsHandling) return
-    if (!editor.isLivePreviewEnabled()) return
+    if (!editor.supportsLivePreview()) return
     val presentation = currentPresentation() ?: return
     val revealed = findRevealedElements(presentation)
     val newlyRevealed = revealed - revealedElements

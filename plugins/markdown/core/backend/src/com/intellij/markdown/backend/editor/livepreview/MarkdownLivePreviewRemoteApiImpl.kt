@@ -18,14 +18,32 @@ import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecS
 
 private val LIVE_PREVIEW_SPEC_SET_FLOW = Key.create<MutableStateFlow<MarkdownLivePreviewSpecSet?>>("markdown.live.preview.spec.set.flow")
 
+/**
+ * Set when the frontend of an editor asks for live-preview specs.
+ * The key is separate from the shared live-preview flag, so a late request never overwrites a newer frontend state.
+ */
+private val LIVE_PREVIEW_REQUESTED = Key.create<Boolean>("markdown.live.preview.requested")
+
 internal fun Editor.livePreviewSpecSetFlow(): MutableStateFlow<MarkdownLivePreviewSpecSet?> {
   return (this as UserDataHolderEx).getOrCreateUserData(LIVE_PREVIEW_SPEC_SET_FLOW) { MutableStateFlow(null) }
+}
+
+internal fun Editor.isLivePreviewRequested(): Boolean {
+  return getUserData(LIVE_PREVIEW_REQUESTED) == true
 }
 
 private class MarkdownLivePreviewRemoteApiImpl : MarkdownLivePreviewRemoteApi {
   override suspend fun getLivePreviewSpecs(editorId: EditorId): RpcFlow<MarkdownLivePreviewSpecSet?> {
     val specSets = editorId.findEditorOrNull()?.livePreviewSpecSetFlow() ?: return RpcFlow.empty()
     return specSets.dropWhile { it == null }.toRpc()
+  }
+
+  override suspend fun setLivePreviewSupport(editorId: EditorId, enabled: Boolean) {
+    val editor = editorId.findEditorOrNull() ?: return
+    editor.putUserData(LIVE_PREVIEW_REQUESTED, enabled)
+    if (enabled) {
+      editor.publishCurrentLivePreviewSpecs()
+    }
   }
 
   override suspend fun requestLivePreviewImage(editorId: EditorId, destination: String) {

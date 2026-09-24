@@ -297,6 +297,10 @@ class MarkdownPreviewFileEditor(
   private fun attachHtmlPanel() {
     ThreadingAssertions.assertEventDispatchThread()
 
+    if (!MarkdownHtmlPanelProvider.hasAvailableProviders()) {
+      logger.debug("MarkdownPreviewFileEditor: no preview panel provider is available")
+      return
+    }
     logger.info("MarkdownPreviewFileEditor: attachHtmlPanel")
     val settings = MarkdownSettings.getInstance(project)
     val panelProvider = retrievePanelProvider(settings)

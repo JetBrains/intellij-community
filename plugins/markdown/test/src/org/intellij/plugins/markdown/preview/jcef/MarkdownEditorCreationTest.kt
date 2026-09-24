@@ -34,11 +34,11 @@ class MarkdownEditorCreationTest {
 
   @Test
   @RunMethodInEdt
-  fun `editor provider will not accept file without panel providers`() {
+  fun `editor provider accepts file without panel providers`() {
     ExtensionTestUtil.maskExtensions(MarkdownHtmlPanelProvider.EP_NAME, listOf(), disposable)
     val file = LightVirtualFile("some.md", "# Some")
     val provider = MarkdownSplitEditorProvider()
-    assertThat(provider.accept(project, file)).isFalse()
+    assertThat(provider.accept(project, file)).isTrue()
   }
 
   @Test

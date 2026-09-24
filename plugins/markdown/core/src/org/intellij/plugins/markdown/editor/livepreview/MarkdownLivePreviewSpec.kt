@@ -5,31 +5,43 @@ import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.ide.rpc.DocumentPatchVersionAccessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.openapi.util.getOrCreateUserData
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
-import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 import org.jetbrains.annotations.ApiStatus
 
-/**
- * Enables Markdown live preview for an editor. Always enabled for [EditorKind.MAIN_EDITOR].
- */
-private val LIVE_PREVIEW_KEY: Key<Boolean> = Key.create("markdown.live.preview")
+/** Holds the live-preview state of an editor. Live preview is off until [setLivePreviewSupport] turns it on. */
+private val LIVE_PREVIEW_KEY: Key<MutableStateFlow<Boolean>> = Key.create("markdown.live.preview")
+
+private fun Editor.livePreviewState(): MutableStateFlow<Boolean> {
+  return (this as UserDataHolderEx).getOrCreateUserData(LIVE_PREVIEW_KEY) { MutableStateFlow(false) }
+}
 
 @ApiStatus.Experimental
 fun Editor.enableLivePreviewSupport() {
-  putUserData(LIVE_PREVIEW_KEY, true)
+  setLivePreviewSupport(true)
+}
+
+/** Turns Markdown live preview on or off for this editor. */
+@ApiStatus.Experimental
+fun Editor.setLivePreviewSupport(enabled: Boolean) {
+  livePreviewState().value = enabled
 }
 
 @ApiStatus.Experimental
 fun Editor.supportsLivePreview(): Boolean {
-  return getUserData(LIVE_PREVIEW_KEY) ?: (editorKind == EditorKind.MAIN_EDITOR)
+  return getUserData(LIVE_PREVIEW_KEY)?.value == true
 }
 
-fun Editor.isLivePreviewEnabled(): Boolean {
-  return MarkdownApplicationSettings.getInstance().enableLivePreview && supportsLivePreview()
+/** Emits the live-preview state of this editor each time [setLivePreviewSupport] changes it. */
+@ApiStatus.Internal
+fun Editor.livePreviewSupportFlow(): StateFlow<Boolean> {
+  return livePreviewState()
 }
 
 /** A serializable text range. */

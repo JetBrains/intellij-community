@@ -29,7 +29,6 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.util.hasType
-import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 import org.intellij.plugins.markdown.settings.MarkdownCodeFoldingSettings
 import org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil.WhiteSpaces.isNewLine
@@ -66,7 +65,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
             node.textRange,
             null,
             "...",
-            settings.state.collapseLinks && !MarkdownApplicationSettings.getInstance().enableLivePreview && node.textLength > 10,
+            settings.state.collapseLinks && node.textLength > 10,
             emptySet()
           )
           descriptors.add(descriptor)

@@ -15,6 +15,9 @@ import org.jetbrains.annotations.ApiStatus
 interface MarkdownLivePreviewRemoteApi : RemoteApi<Unit> {
   suspend fun getLivePreviewSpecs(editorId: EditorId): RpcFlow<MarkdownLivePreviewSpecSet?>
 
+  /** Tells the backend to compute live-preview specs for the editor, or to stop. */
+  suspend fun setLivePreviewSupport(editorId: EditorId, enabled: Boolean)
+
   suspend fun requestLivePreviewImage(editorId: EditorId, destination: String)
 
   companion object {

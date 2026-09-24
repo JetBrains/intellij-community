@@ -17,16 +17,11 @@ import com.intellij.openapi.components.serviceAsync
 class MarkdownApplicationSettings: SimplePersistentStateComponent<MarkdownApplicationSettings.State>(State()) {
   class State: BaseState() {
     var alignTableCellsVisually: Boolean by property(true)
-    var enableLivePreview: Boolean by property(true)
   }
 
   var alignTableCellsVisually: Boolean
     get() = state.alignTableCellsVisually
     set(value) { state.alignTableCellsVisually = value }
-
-  var enableLivePreview: Boolean
-    get() = state.enableLivePreview
-    set(value) { state.enableLivePreview = value }
 
   override fun noStateLoaded() {
     loadState(State())

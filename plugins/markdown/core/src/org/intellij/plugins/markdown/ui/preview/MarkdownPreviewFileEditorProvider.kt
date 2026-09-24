@@ -21,9 +21,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class MarkdownPreviewFileEditorProvider : WeighedFileEditorProvider(), AsyncFileEditorProvider {
   override fun accept(project: Project, file: VirtualFile): Boolean {
-    if (!MarkdownHtmlPanelProvider.hasAvailableProviders()) {
-      return false
-    }
     if (file.hasMarkdownType()) {
       return true
     }

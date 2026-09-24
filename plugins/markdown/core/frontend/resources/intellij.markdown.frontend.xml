@@ -83,5 +83,11 @@
             use-shortcut-of="Generate">
       <add-to-group group-id="Markdown.EditorContextMenuGroup"/>
     </action>
+
+    <action id="Markdown.Layout.EditorOnly"
+            class="com.intellij.markdown.frontend.actions.MarkdownEditorOnlyLayoutAction"/>
+    <action id="Markdown.Layout.LivePreview"
+            class="com.intellij.markdown.frontend.actions.MarkdownLivePreviewLayoutAction"
+            icon="AllIcons.Actions.Edit"/>
   </actions>
 </idea-plugin>

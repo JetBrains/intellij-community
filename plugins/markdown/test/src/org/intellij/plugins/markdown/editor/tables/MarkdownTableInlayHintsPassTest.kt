@@ -72,13 +72,6 @@ class MarkdownTableInlayHintsPassTest : BasePlatformTestCase() {
   }
 
   fun `test the mounted bar follows live preview folds`() = assertNothingLogged {
-    val settings = MarkdownApplicationSettings.getInstance()
-    val previousLivePreview = settings.enableLivePreview
-    Disposer.register(testRootDisposable) {
-      settings.enableLivePreview = previousLivePreview
-    }
-    settings.enableLivePreview = true
-
     // language=Markdown
     val content = """
       | **aa** | x |
