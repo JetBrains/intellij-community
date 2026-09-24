@@ -17,6 +17,7 @@ import com.intellij.platform.searchEverywhere.SeLegacyItem
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SePreviewInfo
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
+import com.intellij.platform.searchEverywhere.SeTypeFilterKeys
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessorWithExactMatch
@@ -50,7 +51,11 @@ class SeTargetItem(
 }
 
 @Internal
-class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContributorWrapper<Any>, parentDisposable: Disposable): Disposable {
+class SeTargetsProviderDelegate(
+  private val contributorWrapper: SeAsyncContributorWrapper<Any>,
+  parentDisposable: Disposable,
+  private val filterKeys: List<String> = listOf(SeTypeFilterKeys.DEFAULT),
+): Disposable {
   private val scopeProviderDelegate = ScopeChooserActionProviderDelegate.createOrNull(contributorWrapper)
   private val contributor = contributorWrapper.contributor
   private val usagePreviewDisposableList = ConcurrentLinkedQueue<Disposable>()
@@ -68,7 +73,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
         scopeProviderDelegate.applyScope(isEverywhere, false)
       } ?: run {
         val targetsFilter = SeTargetsFilter.from(params.filter)
-        SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributor, targetsFilter.hiddenTypes)
+        SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributor, targetsFilter.hiddenTypes, filterKeys)
         scopeProviderDelegate.applyScope(targetsFilter.selectedScopeId, targetsFilter.isAutoTogglePossible)
       }
     }
@@ -132,8 +137,8 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
     return scopeProviderDelegate?.searchScopesInfo?.getValue()
   }
 
-  fun <T> getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> {
-    return SeTypeVisibilityStateProviderDelegate.getStates<T>(contributor, index)
+  fun <T> getTypeVisibilityStates(key: String): List<SeTypeVisibilityStatePresentation> {
+    return SeTypeVisibilityStateProviderDelegate.getStates<T>(contributor, key, filterKeys)
   }
 
   suspend fun performExtendedAction(item: SeItem): Boolean {

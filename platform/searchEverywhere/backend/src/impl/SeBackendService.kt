@@ -21,6 +21,7 @@ import com.intellij.platform.searchEverywhere.SePreviewInfo
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.SeSession
+import com.intellij.platform.searchEverywhere.SeTabBackendInfoProvider
 import com.intellij.platform.searchEverywhere.SeTransferEnd
 import com.intellij.platform.searchEverywhere.SeTransferEvent
 import com.intellij.platform.searchEverywhere.SeTransferItem
@@ -256,7 +257,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
   }
 
   suspend fun getTypeVisibilityStatesForProviders(
-    index: Int,
+    key: String,
     session: SeSession,
     dataContextId: DataContextId,
     providerIds: List<SeProviderId>,
@@ -264,7 +265,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
   ): List<SeTypeVisibilityStatePresentation> {
     return providerIds.mapNotNull { providerId ->
       val provider = getProvidersHolder(session, dataContextId)?.get(providerId, isAllTab)
-      provider?.getTypeVisibilityStates(index)
+      provider?.getTypeVisibilityStates(key)
     }.flatten()
   }
 
@@ -300,6 +301,8 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
   ): Boolean {
     return getProvidersHolder(session, dataContextId)?.getLegacyContributor(providerId, false)?.isShownInSeparateTab ?: false
   }
+
+  suspend fun isTabAvailable(tabId: String): Boolean = SeTabBackendInfoProvider.isTabAvailable(project, tabId)
 
   suspend fun openInFindToolWindow(
     projectId: ProjectId,

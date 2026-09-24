@@ -6,12 +6,18 @@ import com.intellij.ide.actions.searcheverywhere.FilesTabSEContributor.Companion
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersAction
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.platform.searchEverywhere.SeTypeFilterKeys
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object SeTypeVisibilityStateProviderDelegate {
-  fun <T> getStates(contributor: SearchEverywhereContributor<Any>, index: Int): List<SeTypeVisibilityStatePresentation> {
+  fun <T> getStates(
+    contributor: SearchEverywhereContributor<Any>,
+    key: String = SeTypeFilterKeys.DEFAULT,
+    filterKeys: List<String> = listOf(SeTypeFilterKeys.DEFAULT),
+  ): List<SeTypeVisibilityStatePresentation> {
+    val index = filterKeys.indexOf(key).takeIf { it >= 0 } ?: return emptyList()
     val searchEverywhereFiltersAction: SearchEverywhereFiltersAction<T> = contributor.filterAction(index) ?: return emptyList()
 
     val filter = searchEverywhereFiltersAction.filter
@@ -24,15 +30,19 @@ object SeTypeVisibilityStateProviderDelegate {
     }
   }
 
-  fun <T> applyTypeVisibilityStates(contributor: SearchEverywhereContributor<Any>, hiddenTypes: List<String>?) {
+  fun <T> applyTypeVisibilityStates(
+    contributor: SearchEverywhereContributor<Any>,
+    hiddenTypes: Map<String, List<String>>?,
+    filterKeys: List<String> = listOf(SeTypeFilterKeys.DEFAULT),
+  ) {
     if (hiddenTypes == null) return
     val searchEverywhereFiltersActions: List<SearchEverywhereFiltersAction<T>> = contributor.allFilterActions()
-    val hiddenTypesSet = hiddenTypes.toSet()
 
     if (searchEverywhereFiltersActions.isNotEmpty()) {
-      searchEverywhereFiltersActions.forEach { action ->
+      searchEverywhereFiltersActions.forEachIndexed { index, action ->
         val filter = action.filter
         val elements = filter.allElements
+        val hiddenTypesSet = filterKeys.getOrNull(index)?.let { hiddenTypes[it] }.orEmpty().toSet()
 
         elements.forEach {
           filter.setSelected(it, !hiddenTypesSet.contains(filter.getElementText(it)))
@@ -40,9 +50,10 @@ object SeTypeVisibilityStateProviderDelegate {
       }
     }
     else {
-      contributor.unwrapFilesTabContributorIfPossible()?.let {
-        val hiddenTypes = FileSearchEverywhereContributor.getAllFileTypes().filter { hiddenTypesSet.contains(it.displayName) }
-        it.setHiddenTypes(hiddenTypes)
+      contributor.unwrapFilesTabContributorIfPossible()?.let { filesContributor ->
+        val hiddenTypesSet = filterKeys.firstOrNull()?.let { hiddenTypes[it] }.orEmpty().toSet()
+        val hiddenFileTypes = FileSearchEverywhereContributor.getAllFileTypes().filter { hiddenTypesSet.contains(it.displayName) }
+        filesContributor.setHiddenTypes(hiddenFileTypes)
       }
     }
   }

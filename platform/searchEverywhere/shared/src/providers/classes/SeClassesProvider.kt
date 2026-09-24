@@ -21,6 +21,7 @@ import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SePreviewInfo
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.SeSearchScopesProvider
+import com.intellij.platform.searchEverywhere.SeTypeFilterKeys
 import com.intellij.platform.searchEverywhere.SeTypeVisibilityStateProvider
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetItemsProvider
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
@@ -57,8 +58,8 @@ class SeClassesProvider private constructor(
 
   override suspend fun getSearchScopesInfo(): SearchScopesInfo? = targetProvider.getSearchScopesInfo()
 
-  override suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> =
-    targetProvider.getTypeVisibilityStates(index)
+  override suspend fun getTypeVisibilityStates(key: String): List<SeTypeVisibilityStatePresentation> =
+    targetProvider.getTypeVisibilityStates(key)
 
   override suspend fun getPreviewInfo(item: SeItem, project: Project): SePreviewInfo? =
     targetProvider.getPreviewInfo(item)
@@ -88,11 +89,11 @@ class SeClassesProvider private constructor(
         dataContext = dataContext,
         operationDisposable = null,
         label = "SeClasses",
-        gotoModelProvider = { project, _, hiddenLanguages ->
-          createModel(project, hiddenLanguages)
+        gotoModelProvider = { project, _, hidden ->
+          createModel(project, hidden[SeTypeFilterKeys.DEFAULT].orEmpty())
         },
         typeFilterProvider = {
-          listOf(ClassSearchEverywhereContributor.createLanguageFilter(it))
+          mapOf(SeTypeFilterKeys.DEFAULT to ClassSearchEverywhereContributor.createLanguageFilter(it))
         },
       )
 

@@ -20,6 +20,7 @@ import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SePreviewInfo
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.SeSearchScopesProvider
+import com.intellij.platform.searchEverywhere.SeTypeFilterKeys
 import com.intellij.platform.searchEverywhere.SeTypeVisibilityStateProvider
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetItemsProvider
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
@@ -53,8 +54,8 @@ internal class SeFilesProvider private constructor(
 
   override suspend fun getSearchScopesInfo(): SearchScopesInfo? = targetProvider.getSearchScopesInfo()
 
-  override suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> =
-    targetProvider.getTypeVisibilityStates(index)
+  override suspend fun getTypeVisibilityStates(key: String): List<SeTypeVisibilityStatePresentation> =
+    targetProvider.getTypeVisibilityStates(key)
 
   override suspend fun getPreviewInfo(item: SeItem, project: Project): SePreviewInfo? =
     targetProvider.getPreviewInfo(item)
@@ -83,11 +84,12 @@ internal class SeFilesProvider private constructor(
         dataContext = dataContext,
         operationDisposable = null,
         label = "SeFiles",
-        gotoModelProvider = { project, _, hiddenTypes ->
-          createModel(project, hiddenTypes)
+        // This provider shows one type filter, so it reads the first index alone.
+        gotoModelProvider = { project, _, hidden ->
+          createModel(project, hidden[SeTypeFilterKeys.DEFAULT].orEmpty())
         },
         typeFilterProvider = {
-          listOf(FileSearchEverywhereContributor.createFileTypeFilter(it))
+          mapOf(SeTypeFilterKeys.DEFAULT to FileSearchEverywhereContributor.createFileTypeFilter(it))
         },
         isFileProvider = true,
       )

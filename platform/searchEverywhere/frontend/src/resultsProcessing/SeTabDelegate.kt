@@ -30,6 +30,7 @@ import com.intellij.platform.searchEverywhere.SeTransferEnd
 import com.intellij.platform.searchEverywhere.SeTransferEvent
 import com.intellij.platform.searchEverywhere.SeTransferItem
 import com.intellij.platform.searchEverywhere.SeTransferSkippedItem
+import com.intellij.platform.searchEverywhere.SeTypeFilterKeys
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendItemDataProvidersFacade
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendOnlyItemsProviderFactory
@@ -160,8 +161,8 @@ class SeTabDelegate(
     return providers.getValue().getSearchScopesInfos()
   }
 
-  suspend fun getTypeVisibilityStates(index: Int = 0): List<SeTypeVisibilityStatePresentation> {
-    return providers.getValue().getTypeVisibilityStates(index)
+  suspend fun getTypeVisibilityStates(key: String = SeTypeFilterKeys.DEFAULT): List<SeTypeVisibilityStatePresentation> {
+    return providers.getValue().getTypeVisibilityStates(key)
   }
 
   suspend fun itemSelected(itemData: SeItemData, modifiers: Int, searchText: String): Boolean {
@@ -256,9 +257,10 @@ class SeTabDelegate(
       return localProviders.values.any { it.canBeShownInFindResults() } || frontendProvidersFacade?.canBeShownInFindResults() == true
     }
 
-    suspend fun getTypeVisibilityStates(index: Int = 0): List<SeTypeVisibilityStatePresentation> {
-      return localProviders.values.flatMap { it.getTypeVisibilityStates(index) ?: emptyList() } +
-             (frontendProvidersFacade?.getTypeVisibilityStates(index) ?: emptyList())
+    /** The states of every provider of the tab that names a filter [key], concatenated. */
+    suspend fun getTypeVisibilityStates(key: String = SeTypeFilterKeys.DEFAULT): List<SeTypeVisibilityStatePresentation> {
+      return localProviders.values.flatMap { it.getTypeVisibilityStates(key) ?: emptyList() } +
+             (frontendProvidersFacade?.getTypeVisibilityStates(key) ?: emptyList())
     }
 
     fun getLocalProviderIds(): List<SeProviderId> = localProviders.keys.toList()
@@ -382,6 +384,15 @@ class SeTabDelegate(
       initEvent: AnActionEvent,
       scope: CoroutineScope,
     ): SeTabDelegate = SeTabDelegate(project, session, logLabel, providerIds, initEvent.dataContextId(), scope)
+
+    /**
+     * Whether the backend offers the tab of [tabId].
+     *
+     * A tab that needs the backend model to decide asks this. A tab that still wraps a legacy
+     * contributor asks [shouldShowLegacyContributorInSeparateTab] instead.
+     */
+    suspend fun isTabAvailable(project: Project, tabId: String): Boolean =
+      SeRemoteApi.getInstance().isTabAvailable(project.projectId(), tabId)
 
     suspend fun shouldShowLegacyContributorInSeparateTab(
       project: Project,

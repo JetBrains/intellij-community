@@ -64,8 +64,8 @@ class SeClassesLegacyBasedProvider(private val contributorWrapper: SeAsyncContri
 
   override suspend fun getSearchScopesInfo(): SearchScopesInfo? = targetsProviderDelegate.getSearchScopesInfo()
 
-  override suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> =
-    targetsProviderDelegate.getTypeVisibilityStates<LanguageRef>(index)
+  override suspend fun getTypeVisibilityStates(key: String): List<SeTypeVisibilityStatePresentation> =
+    targetsProviderDelegate.getTypeVisibilityStates<LanguageRef>(key)
 
   override suspend fun performExtendedAction(item: SeItem): Boolean {
     return targetsProviderDelegate.performExtendedAction(item)

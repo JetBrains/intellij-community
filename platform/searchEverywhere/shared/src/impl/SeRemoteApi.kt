@@ -72,6 +72,9 @@ interface SeRemoteApi : RemoteApi<Unit> {
     providerId: SeProviderId,
   ): Boolean
 
+  /** See [com.intellij.platform.searchEverywhere.SeTabBackendInfoProvider.isTabAvailable]. */
+  suspend fun isTabAvailable(projectId: ProjectId, tabId: String): Boolean
+
   suspend fun openInFindToolWindow(
     projectId: ProjectId,
     session: SeSession,
@@ -97,7 +100,7 @@ interface SeRemoteApi : RemoteApi<Unit> {
   ): Map<SeProviderId, SearchScopesInfo>
 
   suspend fun getTypeVisibilityStatesForProviders(
-    index: Int,
+    key: String,
     projectId: ProjectId,
     session: SeSession,
     dataContextId: DataContextId,

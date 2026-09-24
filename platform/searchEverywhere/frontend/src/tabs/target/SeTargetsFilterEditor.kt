@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.scopes.SearchScopeData
 import com.intellij.platform.scopes.SearchScopesInfo
+import com.intellij.platform.searchEverywhere.SeTypeFilterKeys
 import com.intellij.platform.searchEverywhere.frontend.SeTabsCustomizer
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeTypeVisibilityStateHolder
@@ -27,16 +28,22 @@ class SeTargetsFilterEditor(
   typeVisibilityStates: List<SeTypeVisibilityStatePresentation>?,
   private val hasPreviewAction: Boolean,
   persistScopeIfAvailable: Boolean = false,
+  /**
+   * The key of the one type filter this editor shows.
+   *
+   * A provider that shows one filter leaves the default, and so does this editor. An editor for a
+   * provider with several filters names each one instead.
+   */
+  private val typeFilterKey: String = SeTypeFilterKeys.DEFAULT,
 ) : SeFilterEditorBase<SeTargetsFilter>( run {
   val selectedScopeId = SeScopePersistentStorage.create(project, tabId, scopesInfo, persistScopeIfAvailable)?.getScope()?.scopeId
                         ?: scopesInfo?.selectedScopeId
 
   val actualHiddenTypes = if (SeTabsCustomizer.getInstance().isTypeFilterEnabled(tabId)) {
-    hiddenTypes(typeVisibilityStates)
+    mapOf(typeFilterKey to hiddenTypes(typeVisibilityStates).orEmpty())
   }
   else {
-    // can be null, but at SeTargetsFilter.from the missing HIDDEN_TYPES keys results in emptyList. Keep an eye on it if you're touching it.
-    emptyList()
+    emptyMap()
   }
 
   SeTargetsFilter(selectedScopeId,
@@ -47,7 +54,7 @@ class SeTargetsFilterEditor(
   private val isTypeFilterEnabled = SeTabsCustomizer.getInstance().isTypeFilterEnabled(tabId)
 
   private val updateFilterValueWithVisibilityStates = {
-    filterValue = filterValue.cloneWith(hiddenTypes(visibilityStateHolder?.elements))
+    filterValue = filterValue.cloneWith(typeFilterKey, hiddenTypes(visibilityStateHolder?.elements).orEmpty())
   }
 
   private val visibilityStateHolder: SeTypeVisibilityStateHolder? =

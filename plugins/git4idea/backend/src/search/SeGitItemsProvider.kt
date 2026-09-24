@@ -72,8 +72,8 @@ class SeGitItemsProvider(private val contributorWrapper: SeAsyncContributorWrapp
 
   override suspend fun getSearchScopesInfo(): SearchScopesInfo? = null
 
-  override suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> {
-    return SeTypeVisibilityStateProviderDelegate.getStates<LanguageRef>(contributor, index)
+  override suspend fun getTypeVisibilityStates(key: String): List<SeTypeVisibilityStatePresentation> {
+    return SeTypeVisibilityStateProviderDelegate.getStates<LanguageRef>(contributor, key)
   }
 
   override fun dispose() {

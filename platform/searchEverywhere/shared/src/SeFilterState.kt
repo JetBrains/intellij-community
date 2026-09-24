@@ -8,16 +8,22 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 @Serializable
 sealed class SeFilterState {
   abstract fun get(key: String): List<String>?
+
+  /** Every key this state holds. A filter that stores a group of keys needs it to find them again. */
+  abstract val keys: Set<String>
+
   fun getOne(key: String): String? = get(key)?.firstOrNull()
   fun getBoolean(key: String): Boolean? = get(key)?.firstOrNull()?.toBoolean()
 
   @Serializable
   object Empty : SeFilterState() {
     override fun get(key: String): List<String>? = null
+    override val keys: Set<String> get() = emptySet()
   }
 
   @Serializable
   class Data(private val map: Map<String, List<String>>) : SeFilterState() {
     override fun get(key: String): List<String>? = map[key]
+    override val keys: Set<String> get() = map.keys
   }
 }

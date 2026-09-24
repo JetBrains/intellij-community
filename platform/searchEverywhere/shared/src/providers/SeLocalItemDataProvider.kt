@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.providers
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.SearchTopHitProvider
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -267,8 +267,8 @@ class SeLocalItemDataProvider(
     return (provider as? SeSearchScopesProvider)?.getSearchScopesInfo()
   }
 
-  suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation>? =
-    (provider as? SeTypeVisibilityStateProvider)?.getTypeVisibilityStates(index)
+  suspend fun getTypeVisibilityStates(key: String): List<SeTypeVisibilityStatePresentation>? =
+    (provider as? SeTypeVisibilityStateProvider)?.getTypeVisibilityStates(key)
 
   /**
    * Defines if results can be shown in <i>Find</i> toolwindow.

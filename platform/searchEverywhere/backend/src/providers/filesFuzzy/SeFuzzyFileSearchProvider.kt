@@ -15,6 +15,7 @@ import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
+import com.intellij.platform.searchEverywhere.SeTypeFilterKeys
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
 import com.intellij.platform.searchEverywhere.providers.SeScopeByIdFiles
 import com.intellij.platform.searchEverywhere.providers.target.SeScopeById
@@ -88,7 +89,7 @@ class SeFuzzyFileSearchProvider(
 
       targetsFilter.selectedScopeId?.let {
         scopeById.getValue()[it]
-      } to targetsFilter.hiddenTypes
+      } to targetsFilter.hiddenTypes[SeTypeFilterKeys.DEFAULT]
     }
 
     val searchScope = scopeDescriptor?.scope as? GlobalSearchScope ?: GlobalSearchScope.projectScope(project)

@@ -50,6 +50,11 @@
     <extensionPoint name="searchEverywhere.targetItemSelectionProcessor"
                     interface="com.intellij.platform.searchEverywhere.providers.target.selection.SeTargetItemSelectionProcessor"
                     dynamic="true"/>
+
+    <!-- Answers from the backend model, so a thin client sees what a monolith sees. One per tab. -->
+    <extensionPoint name="searchEverywhere.tabBackendInfoProvider"
+                    interface="com.intellij.platform.searchEverywhere.SeTabBackendInfoProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
