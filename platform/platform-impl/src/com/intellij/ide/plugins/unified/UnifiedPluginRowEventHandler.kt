@@ -28,6 +28,7 @@ import javax.swing.border.Border
 internal class UnifiedPluginRowEventHandler(
   private val onSelectionChanged: (List<PluginOccurrenceId>) -> Unit,
   private val revealKeyboardSelection: ((PluginOccurrenceId) -> Unit)? = null,
+  private val onSelectAllRequested: ((PluginOccurrenceId) -> Unit)? = null,
 ) : EventHandler() {
   private val occurrences = IdentityHashMap<ListPluginComponent, PluginOccurrenceId>()
   private val listenerOwners = IdentityHashMap<Component, ListPluginComponent>()
@@ -82,16 +83,24 @@ internal class UnifiedPluginRowEventHandler(
 
   private val keyListener = object : KeyAdapter() {
     override fun keyPressed(event: KeyEvent) {
-      val navigateFromSwitch = event.component is OnOffButton &&
-                               (event.keyCode == KeyEvent.VK_UP || event.keyCode == KeyEvent.VK_DOWN)
-      if (isPluginRowActionControl(event.component) && !navigateFromSwitch) return
+      val selectAllShortcut = event.keyCode == KeyEvent.VK_A && (event.isMetaDown || event.isControlDown)
+      val handleFromSwitch = event.component is OnOffButton &&
+                             (event.keyCode == KeyEvent.VK_UP || event.keyCode == KeyEvent.VK_DOWN || selectAllShortcut)
+      if (isPluginRowActionControl(event.component) && !handleFromSwitch) return
       val row = findRow(event.component) ?: return
       val index = orderedRows.indexOf(row)
       if (index < 0) return
 
-      if (event.keyCode == KeyEvent.VK_A && (event.isMetaDown || event.isControlDown)) {
+      if (selectAllShortcut) {
         event.consume()
-        selectAllCompatible(row)
+        val occurrenceId = occurrences[row] ?: return
+        if (onSelectAllRequested == null) {
+          selectAllCompatible(row)
+        }
+        else {
+          selectionAnchor = row
+          onSelectAllRequested(occurrenceId)
+        }
         return
       }
 

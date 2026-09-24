@@ -903,12 +903,19 @@ internal class LegacyPluginRowFactoryTest {
         )
         val section = PluginSectionState(PluginSectionId.Installed, items = listOf(selectedItem, item))
         val selectionChanges = ArrayList<List<PluginOccurrenceId>>()
+        val selectAllRequests = ArrayList<PluginOccurrenceId>()
         val listModel = ListPluginModel().apply {
           setInstalledPlugins(mapOf(pluginId to plugin, selectedPluginId to selectedPlugin))
           setPluginInstallationState(pluginId, PluginInstallationState(true))
           setPluginInstallationState(selectedPluginId, PluginInstallationState(true))
         }
-        val factory = LegacyPluginRowFactory(host, listModel, LinkListener { _, _ -> }, onSelectionChanged = selectionChanges::add)
+        val factory = LegacyPluginRowFactory(
+          host,
+          listModel,
+          LinkListener { _, _ -> },
+          onSelectionChanged = selectionChanges::add,
+          onSelectAllRequested = selectAllRequests::add,
+        )
         factory.createReconciler { _, _ -> }.use { reconciler ->
           val bindings = reconciler.reconcile(listOf(
             factory.specification(section, selectedItem),
@@ -977,6 +984,11 @@ internal class LegacyPluginRowFactoryTest {
           assertThat(rowSwitch.isSelected).isEqualTo(rowSwitchState)
           assertThat(selectionChanges.last()).containsExactly(bindings.first().occurrenceId, bindings.last().occurrenceId)
           assertThat(actionSelections).containsExactly(listOf(row), listOf(selectedRow, row))
+
+          val selectAllEvent = KeyEvent(rowSwitch, KeyEvent.KEY_PRESSED, 0, KeyEvent.META_DOWN_MASK, KeyEvent.VK_A, 'a')
+          rowSwitch.keyListeners.forEach { it.keyPressed(selectAllEvent) }
+          assertThat(selectAllEvent.isConsumed).isTrue()
+          assertThat(selectAllRequests).containsExactly(bindings.last().occurrenceId)
 
           val handlerKeyListener = row.keyListeners.single { it in rowSwitch.keyListeners }
           reconciler.reconcile(emptyList())

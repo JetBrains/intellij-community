@@ -22,9 +22,10 @@ internal class LegacyPluginRowFactory @RequiresEdt(generateAssertion = false /* 
   private val searchListener: LinkListener<Any>,
   onSelectionChanged: (List<PluginOccurrenceId>) -> Unit,
   onKeyboardNavigation: ((PluginOccurrenceId) -> Unit)? = null,
+  onSelectAllRequested: ((PluginOccurrenceId) -> Unit)? = null,
 ) : PluginRowFactory {
   private val sectionContexts = HashMap<PluginSectionId, SectionContext>()
-  private val eventHandler = UnifiedPluginRowEventHandler(onSelectionChanged, onKeyboardNavigation)
+  private val eventHandler = UnifiedPluginRowEventHandler(onSelectionChanged, onKeyboardNavigation, onSelectAllRequested)
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun specification(section: PluginSectionState, item: PluginItemState): PluginRowSpecification<Any> {

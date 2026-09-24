@@ -400,6 +400,32 @@ internal class UnifiedPluginsPageRealRowsTest {
     }
 
   @Test
+  fun `Select All renders plugins from expanded related sections`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UI) {
+      val factory = RecordingRowFactory()
+      val details = RecordingDetailsPresenter()
+      val installedItems = (1..4).map { item("installed.$it") }
+      val bundledItems = (1..5).map { item("bundled.$it") }
+      val controller = UnifiedPluginsPageController(listOf(
+        section(PluginSectionId.Installed, *installedItems.toTypedArray()),
+        section(PluginSectionId.Bundled, *bundledItems.toTypedArray()),
+      ))
+      val view = createView(factory, details)
+      view.render(controller.state.value)
+      assertThat(factory.activeRows).hasSize(PluginSectionState.COLLAPSED_ITEM_LIMIT * 2)
+
+      val activeOccurrence = PluginOccurrenceId(PluginSectionId.Installed, installedItems.first().pluginId)
+      assertThat(controller.selectAllDisplayed(activeOccurrence)).isTrue()
+      view.render(controller.state.value)
+
+      assertThat(factory.activeRows).hasSize(installedItems.size + bundledItems.size)
+      assertThat(factory.activeRows.values).allMatch(RecordingRow::selected)
+      assertThat(details.selection.map(PluginDetailsSelection::occurrenceId))
+        .containsExactlyElementsOf(controller.state.value.selectedOccurrences)
+      view.close()
+    }
+
+  @Test
   fun `Tab order includes one plugin row and its controls`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val factory = RecordingRowFactory()
     val installedItems = (1..4).map { item("installed.$it") }

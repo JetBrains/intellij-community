@@ -148,6 +148,25 @@ internal class UnifiedPluginsPageController(
     }
   }
 
+  fun selectAllDisplayed(occurrenceId: PluginOccurrenceId): Boolean {
+    synchronized(lock) {
+      val currentSections = mutableState.value.sections
+      val activeSection = currentSections.firstOrNull { it.id == occurrenceId.sectionId } ?: return false
+      if (activeSection.visibleItems.none { it.pluginId == occurrenceId.pluginId }) return false
+
+      val mode = pluginDetailsMode(occurrenceId.sectionId)
+      currentSections.filter { pluginDetailsMode(it.id) == mode && it.canExpand }
+        .forEach { expandSectionForReveal(it.id) }
+      selectedOccurrences = normalizeSelection(visibleSections()
+        .filter { pluginDetailsMode(it.id) == mode }
+        .flatMap { section -> section.displayItems.map { section.occurrenceId(it.pluginId) } })
+      initialSelectionPending = false
+      pendingQuerySelectionRevision = null
+      publish(establishSelection = false)
+      return true
+    }
+  }
+
   fun selectAndRevealOccurrence(occurrenceId: PluginOccurrenceId): Boolean {
     return selectAndRevealOccurrences(listOf(occurrenceId))
   }

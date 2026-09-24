@@ -253,6 +253,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
       searchListener,
       ::selectOccurrences,
       onKeyboardNavigation = { occurrenceId -> view.revealKeyboardSelection(occurrenceId) },
+      onSelectAllRequested = ::selectAllDisplayed,
     )
     val detailsPresenter = LegacyPluginDetailsPresenter(host, searchListener)
     view = UnifiedPluginsPageView(
@@ -692,6 +693,13 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     if (disposed) return
     pendingSelectedPluginIds = emptyList()
     controller.selectOccurrences(occurrenceIds)
+    renderControllerState()
+  }
+
+  private fun selectAllDisplayed(occurrenceId: PluginOccurrenceId) {
+    if (disposed) return
+    if (!controller.selectAllDisplayed(occurrenceId)) return
+    pendingSelectedPluginIds = emptyList()
     renderControllerState()
   }
 

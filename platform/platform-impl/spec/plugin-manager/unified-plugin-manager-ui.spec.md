@@ -455,6 +455,9 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
     `Space dispatches the row action and switch arrows navigate rows`
   )
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
+    `Select All renders plugins from expanded related sections`
+  )
 - Tab must visit the active section and category actions, one plugin row, and that row's controls before it leaves the list for details.
 - The last selected row must be the list's row stop. Without a selection, the first rendered row must be that stop.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
@@ -537,9 +540,18 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
   )
 
 - Shift-selection may cross section headers but must skip plugins from the other selection group.
-- Select All must select all compatible rendered rows.
+- Select All must expand visible sections in the focused plugin's selection group.
+- It must select all displayed plugins in those sections, up to each section's 1,000-plugin limit.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (
+    `Select All expands local sections and selects their displayed plugins`;
+    `Select All expands remote sections but stops at the display limit`;
+    `Select All expands selected custom repositories`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
+    `Space dispatches the row action and switch arrows navigate rows`
+  )
 
-Untested: No focused test verifies Shift-selection or Select All across sections.
+Untested: No focused test verifies Shift-selection across sections.
 
 - The page must show the standard empty status when no section is visible.
 - Accessible result announcements must distinguish loading, completion, and failure.
