@@ -265,14 +265,7 @@ public final class ConfigImportHelper {
 
         if (currentlyDisabledPlugins != null) {
           try {
-            var newDisabledPluginsFile = newConfigDir.resolve(P3SupportKt.processPerProjectSupport().getDisabledPluginsFileName());
-            var newDisabledPlugins = new LinkedHashSet<String>();
-            if (Files.isRegularFile(newDisabledPluginsFile)) {
-              newDisabledPlugins.addAll(Files.readAllLines(newDisabledPluginsFile));
-            }
-            newDisabledPlugins.addAll(currentlyDisabledPlugins);
-            Files.write(newDisabledPluginsFile, newDisabledPlugins);
-            log.info("Disabled plugins file updated with " + newDisabledPlugins.size() + " plugins");
+            amendDisabledPluginsFile(newConfigDir, currentlyDisabledPlugins, log);
           }
           catch (IOException e) {
             log.warn("Couldn't write the disabled plugins file", e);
@@ -411,6 +404,18 @@ public final class ConfigImportHelper {
 
   private static boolean doesVmOptionsFileExist(Path configDir) {
     return Files.isRegularFile(configDir.resolve(VMOptions.getFileName()));
+  }
+
+  private static void amendDisabledPluginsFile(Path newConfigDir, List<String> moreDisabledPlugins, Logger log) throws IOException {
+    var disabledPluginsFile = newConfigDir.resolve(P3SupportKt.processPerProjectSupport().getDisabledPluginsFileName());
+    var disabledPlugins = new LinkedHashSet<String>();
+    if (Files.isRegularFile(disabledPluginsFile)) {
+      disabledPlugins.addAll(Files.readAllLines(disabledPluginsFile));
+    }
+    if (disabledPlugins.addAll(moreDisabledPlugins)) {
+      Files.write(disabledPluginsFile, disabledPlugins);
+      log.info("Disabled plugins file updated with " + disabledPlugins.size() + " plugins");
+    }
   }
 
   private static void restart(List<String> args) {
@@ -993,6 +998,7 @@ public final class ConfigImportHelper {
 
     var pluginsToMigrate = new ArrayList<IdeaPluginDescriptor>();
     var pluginsToDownload = new ArrayList<IdeaPluginDescriptor>();
+    var pluginsToDisable = new ArrayList<PluginId>();
 
     var brokenPluginVersions = fetchBrokenPluginsFromMarketplace(options, newConfigDir);
     if (!collectPluginsToMigrate(oldPluginsDir, options, brokenPluginVersions, pluginsToMigrate, pluginsToDownload)) {
@@ -1020,7 +1026,7 @@ public final class ConfigImportHelper {
     }
 
     if (!isUnitTestMode) {
-      migrateGlobalPlugins(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload, options.log);
+      migrateGlobalPlugins(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload, pluginsToDisable, options.log);
     }
 
     var filter = pendingUpdates.isEmpty() ? Predicates.<IdeaPluginDescriptor>alwaysFalse() : (Predicate<IdeaPluginDescriptor>)descriptor -> {
@@ -1040,6 +1046,10 @@ public final class ConfigImportHelper {
 
       // migrating plugins for which we weren't able to download updates
       migratePlugins(newPluginsDir, pluginsToDownload, log);
+    }
+
+    if (!pluginsToDisable.isEmpty()) {
+      amendDisabledPluginsFile(newConfigDir, ContainerUtil.map(pluginsToDisable, PluginId::getIdString), log);
     }
   }
 
@@ -1145,13 +1155,13 @@ public final class ConfigImportHelper {
 
   private static void migrateGlobalPlugins(
     Path newConfigDir, Path oldConfigDir,
-    List<IdeaPluginDescriptor> toMigrate, List<IdeaPluginDescriptor> toDownload,
+    List<IdeaPluginDescriptor> toMigrate, List<IdeaPluginDescriptor> toDownload, List<PluginId> toDisable,
     Logger log
   ) {
     var currentProductVersion = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
     var previousVersion = parseVersionFromConfig(oldConfigDir);
     var options = new PluginMigrationOptions(
-      previousVersion, currentProductVersion, newConfigDir, oldConfigDir, toMigrate, toDownload, log
+      previousVersion, currentProductVersion, newConfigDir, oldConfigDir, toMigrate, toDownload, toDisable, log
     );
     performMigrations(options);
     var downloadIds = toDownload.stream()

@@ -35,5 +35,9 @@ internal abstract class PluginMigration {
     fun removePluginToDownload(pluginIdString: String) {
       options.pluginsToDownload.removeIf { it.pluginId.idString == pluginIdString }
     }
+
+    fun disablePlugin(pluginIdString: String) {
+      options.pluginsToDisable.add(PluginId.getId(pluginIdString))
+    }
   }
 }
