@@ -54,6 +54,7 @@ class EditorSkeleton(
 
     layout = BorderLayout()
     isOpaque = false
+    minimumSize = JBDimension(0, 0)
     preferredSize = JBDimension(skeletonPanel.preferredWidth, skeletonPanel.preferredHeight)
     add(renderer.component, BorderLayout.CENTER)
   }
