@@ -63,8 +63,8 @@ class DerivedPluginCandidacy(
 /**
  * Where each member's jar of the plugin [mainModule] goes, and which of those jars one packing target may serve.
  *
- * The loading rule comes from the plugin's own `<content>`. The `pack-content-into-plugin-jar` marker and the
- * `package` attribute come from the member's own descriptor. The merged library set comes from the member's
+ * The loading rule comes from the plugin's own `<content>`. The `package` attribute comes from the member's own
+ * descriptor. The merged library set comes from the member's
  * production-scope module libraries. [deriveMemberJarPath] holds the path rule, and [deriveMemberJar] puts the
  * eligibility gate on top of it.
  *
@@ -313,7 +313,7 @@ private val MAVEN_LIBRARIES_MERGED = listOf("maven-artifact", "maven-central-con
 /**
  * [member]'s jar under [mainJarName], or `null` when no resource root holds the member's own descriptor.
  *
- * A member with no readable descriptor has no `packIntoPluginJar` and no `package` attribute to read, so the caller
+ * A member with no readable descriptor has no `package` attribute to read, so the caller
  * vetoes it. [libraries] is a function and not a set, so that the descriptor decides whether the library walk runs.
  */
 private fun readMemberJar(
@@ -393,14 +393,14 @@ fun deriveMemberJar(
 @ApiStatus.Internal
 const val EMBEDDED_LOADING_RULE: String = "embedded"
 
-/** The two facts the jar path reads out of a content module's own descriptor. */
+/** The fact the jar path reads out of a content module's own descriptor. */
 @ApiStatus.Internal
 class MemberDescriptorFacts(
   @JvmField val hasPackageAttribute: Boolean,
 )
 
 /**
- * [module]'s own `<module>.xml`, read for the two facts the jar path depends on, or `null` when no resource root holds it.
+ * [module]'s own `<module>.xml`, read for the fact the jar path depends on, or `null` when no resource root holds it.
  */
 @ApiStatus.Internal
 fun memberDescriptor(module: JpsModule): MemberDescriptorFacts? {

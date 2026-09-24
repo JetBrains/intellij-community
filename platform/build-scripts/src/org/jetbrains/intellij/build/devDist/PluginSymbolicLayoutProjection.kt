@@ -33,9 +33,6 @@ private fun nativeFingerprint(values: List<String>): String = devDistSignature {
   for (value in values) putString(value)
 }
 
-/** The comment a content module descriptor states to go into the main jar of the plugin. */
-internal val PACK_CONTENT_INTO_PLUGIN_JAR_MARKER = Regex("""<!--\s+intellij-build:\s+pack-content-into-plugin-jar\s+-->""")
-
 /**
  * Projects one original layout without reading compiled roots or invoking layout callbacks.
  * The catalogue describes the output provider's selected roots. Descriptor facts describe the prepared descriptor.
@@ -275,16 +272,13 @@ private class SymbolicLayoutProjector(
       gap("module-descriptor:$name", "The content module descriptor is missing")
       return null
     }
-    val packIntoMain = xml != null && cache.packsIntoMainJar(xml)
     if (loading == "embedded") {
-      return if (packIntoMain) defaultJar(name) else "$name.jar"
+      return "$name.jar"
     }
     val module = module(name) ?: return null
     val hasModuleLibraries = name !in layout.getModulesWithExcludedModuleLibraries() &&
                             libraryDependencies(module, withTests = false).any { it.libraryReference.parentReference is JpsModuleReference }
-    val separate = !packIntoMain &&
-                   (!cache.hasPackageAttribute(requireNotNull(xml)) || hasModuleLibraries ||
-                    frontend.isSplit(layout.mainModule, name))
+    val separate = !cache.hasPackageAttribute(requireNotNull(xml)) || hasModuleLibraries || frontend.isSplit(layout.mainModule, name)
     return when {
       separate -> "modules/$name.jar"
       name in customPaths -> null

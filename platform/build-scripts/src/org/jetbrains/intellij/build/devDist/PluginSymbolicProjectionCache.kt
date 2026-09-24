@@ -17,17 +17,11 @@ import java.util.concurrent.ConcurrentHashMap
 @ApiStatus.Internal
 class PluginSymbolicProjectionCache(@JvmField val project: JpsProject) {
   private val frontends = ConcurrentHashMap<Set<String>, FrontendCompatibility>()
-  private val packIntoMainJar = ConcurrentHashMap<String, Boolean>()
   private val packageAttribute = ConcurrentHashMap<String, Boolean>()
 
   /** The frontend filter over the frontend [roots]. */
   fun frontend(roots: Set<String>): FrontendCompatibility {
     return frontends.computeIfAbsent(roots) { FrontendCompatibility(it, project::findModuleByName) }
-  }
-
-  /** Whether the content module descriptor [xml] states the marker that packs the module into the main plugin jar. */
-  fun packsIntoMainJar(xml: String): Boolean {
-    return packIntoMainJar.computeIfAbsent(xml) { PACK_CONTENT_INTO_PLUGIN_JAR_MARKER.containsMatchIn(it) }
   }
 
   /** Whether the root element of the content module descriptor [xml] declares a `package`. */
