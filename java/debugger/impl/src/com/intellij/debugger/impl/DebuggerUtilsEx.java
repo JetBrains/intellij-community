@@ -296,6 +296,15 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return elementsEqual(root1, root2);
   }
 
+  /**
+   * The first breakpoint event of the event set of [suspendContext] that was hit. An event whose requestor voted to resume
+   * shares the set with the step or the event that stopped the thread and is skipped, see {@link SuspendContextImpl#isEventNotHit}.
+   */
+  public static @Nullable Pair<Breakpoint, Event> getHitEventDescriptor(@Nullable SuspendContextImpl suspendContext) {
+    if (suspendContext == null) return null;
+    return ContainerUtil.find(getEventDescriptors(suspendContext), descriptor -> !suspendContext.isEventNotHit(descriptor.getSecond()));
+  }
+
   public static @NotNull List<Pair<Breakpoint, Event>> getEventDescriptors(@Nullable SuspendContextImpl suspendContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (suspendContext != null) {

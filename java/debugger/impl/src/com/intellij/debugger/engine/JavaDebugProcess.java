@@ -180,7 +180,7 @@ public class JavaDebugProcess extends XDebugProcess {
                   return;
                 }
 
-                Pair<Breakpoint, Event> item = ContainerUtil.getFirstItem(DebuggerUtilsEx.getEventDescriptors(newSuspendContext));
+                Pair<Breakpoint, Event> item = DebuggerUtilsEx.getHitEventDescriptor(newSuspendContext);
                 if (item != null) {
                   XBreakpoint xBreakpoint = item.getFirst().getXBreakpoint();
                   Event second = item.getSecond();

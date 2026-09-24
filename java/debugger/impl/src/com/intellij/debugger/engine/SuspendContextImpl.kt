@@ -23,6 +23,7 @@ import com.intellij.xdebugger.frame.XSuspendContext
 import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.ThreadReference
+import com.sun.jdi.event.Event
 import com.sun.jdi.event.EventSet
 import com.sun.jdi.event.LocatableEvent
 import com.sun.jdi.event.MethodExitEvent
@@ -32,6 +33,7 @@ import kotlinx.coroutines.cancel
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Supplier
 import kotlin.concurrent.Volatile
@@ -61,6 +63,29 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
 
   @JvmField
   internal var threadFilterWasPassed = true
+
+  /**
+   * The events of [eventSet] whose requestor voted to resume because it was not hit: a condition or a filter did not pass.
+   * A stop they share with a step or another event is not theirs, so [JavaDebugProcess] does not report their breakpoints
+   * as reached. Kept per event, not per breakpoint: one breakpoint may have several events in a set, such as the entry
+   * and the exit of an emulated method breakpoint on an empty method, and only some of them may be hit.
+   */
+  private val myEventsNotHit: MutableSet<Event> = ConcurrentHashMap.newKeySet()
+
+  @ApiStatus.Internal
+  fun markEventNotHit(event: Event) {
+    myEventsNotHit.add(event)
+  }
+
+  @ApiStatus.Internal
+  fun isEventNotHit(event: Event): Boolean = event in myEventsNotHit
+
+  /** Installs the [eventSet] of [context] into this context, with the events it found not hit. */
+  @ApiStatus.Internal
+  fun takeEventSetOf(context: SuspendContextImpl) {
+    eventSet = context.eventSet
+    myEventsNotHit.addAll(context.myEventsNotHit)
+  }
 
   @get:ApiStatus.Internal
   @set:ApiStatus.Internal

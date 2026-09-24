@@ -2361,7 +2361,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         // When we step in suspend-all mode with the Resume only current thread option,
         // we need to make a placeholder suspend context to hold other threads.
         SuspendContextImpl placeholderSuspendContext = mySuspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 0);
-        placeholderSuspendContext.setEventSet(context.getEventSet());
+        placeholderSuspendContext.takeEventSetOf(context);
 
         if (context.myResumedThreads != null) {
           // Resume all threads in the placeholder suspend context that were resumed before the step

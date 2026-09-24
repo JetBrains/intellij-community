@@ -120,7 +120,7 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
     SuspendManager suspendManager = process.getSuspendManager();
     SuspendContextImpl newSuspendContext = suspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 1);
     // It is an optimization to reduce the synchronous packets number
-    newSuspendContext.setEventSet(suspendContext.getEventSet());
+    newSuspendContext.takeEventSetOf(suspendContext);
     //noinspection DataFlowIssue
     newSuspendContext.setThread(suspendContext.getEventThread().getThreadReference());
     if (processSuspendAll(newSuspendContext, suspendContext, performOnSuspendAll)) {

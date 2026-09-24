@@ -868,6 +868,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
         markForInstrumentationThatBreakpointCheksAreDone(suspendContext, checkIsDoneFn);
 
         if (!requestHit || resumePreferred) {
+          if (!requestHit) {
+            suspendContext.markEventNotHit(event);
+          }
           boolean finalRequestHit = requestHit;
           boolean finalResumePreferred = resumePreferred;
           logSuspendContext(suspendContext, () -> "Resume: requestHit = " + finalRequestHit + ", resumePreferred = " + finalResumePreferred);
