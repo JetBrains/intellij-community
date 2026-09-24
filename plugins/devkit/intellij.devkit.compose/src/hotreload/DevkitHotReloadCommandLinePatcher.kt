@@ -34,10 +34,12 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.util.download.DownloadableFileService
+import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.run.usesJetBrainsRuntime
 import org.jetbrains.idea.devkit.util.PsiUtil.isPluginProject
+import org.jetbrains.jps.util.JpsChecksumUtil
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
@@ -45,13 +47,26 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.Icon
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.pathString
 
 private const val COMPOSE_HOT_RELOAD_AGENT_DEFAULT_VERSION = "1.2.0"
+
+/**
+ * SHA-256 checksum of `hot-reload-agent-[COMPOSE_HOT_RELOAD_AGENT_DEFAULT_VERSION]-standalone.jar` as published on Maven Central.
+ *
+ * The agent is passed to the debugged process as `-javaagent:`, so it runs arbitrary code there before `main()`.
+ * Pinning the exact bytes here is stronger than fetching the checksum from the same host that serves the JAR,
+ * so it must be updated together with [COMPOSE_HOT_RELOAD_AGENT_DEFAULT_VERSION].
+ */
+private const val COMPOSE_HOT_RELOAD_AGENT_DEFAULT_SHA256 = "fc9f50741ecab1df29ba24f788845e5eb441f152c8d24634218869c9a3234554"
+
 private const val COMPOSE_HOT_RELOAD_AGENT_FILE_PREFIX = "agent"
 private const val COMPOSE_HOT_RELOAD_GRADLE_ARG = "--compose-hot-reload"
+
+private val SHA256_HEX = Regex("[0-9a-fA-F]{64}")
 
 private val LOG = logger<DevkitHotReloadCommandLinePatcher>()
 
@@ -67,6 +82,8 @@ private fun getAgentTempPath(): Path {
 
 private val COMPOSE_HOT_RELOAD_AGENT_URL: String
   get() = "https://repo1.maven.org/maven2/org/jetbrains/compose/hot-reload/hot-reload-agent/$COMPOSE_HOT_RELOAD_AGENT_VERSION/hot-reload-agent-$COMPOSE_HOT_RELOAD_AGENT_VERSION-standalone.jar"
+private val COMPOSE_HOT_RELOAD_AGENT_SHA256_URL: String
+  get() = "$COMPOSE_HOT_RELOAD_AGENT_URL.sha256"
 private val COMPOSE_HOT_RELOAD_AGENT_FILE_NAME: String
   get() = "$COMPOSE_HOT_RELOAD_AGENT_FILE_PREFIX-$COMPOSE_HOT_RELOAD_AGENT_VERSION.jar"
 private val agentFilePath: Path
@@ -132,22 +149,91 @@ internal class DevkitHotReloadRunner : GenericDebuggerRunner() {
   @Throws(ExecutionException::class)
   internal fun ensureAgentDownloaded(project: Project) {
     val currentAgentFilePath = agentFilePath
-    if (!currentAgentFilePath.exists()) {
-      LOG.info("Compose Hot Reload agent not found at '$currentAgentFilePath'. Downloading it from '$COMPOSE_HOT_RELOAD_AGENT_URL'...")
 
-      try {
-        downloadAgentFile(project)
+    // the agent is loaded into the debugged process as '-javaagent:', so its content must be verified on every run,
+    // including the cache-reuse path: the temp directory is writable by anything running in this IDE
+    val expectedChecksum = getExpectedAgentChecksum()
+
+    if (currentAgentFilePath.exists()) {
+      val actualChecksum = computeChecksum(currentAgentFilePath)
+      if (actualChecksum.equals(expectedChecksum, ignoreCase = true)) {
+        LOG.debug("Compose Hot Reload agent already downloaded to '$currentAgentFilePath'")
+        return
       }
-      catch (t: Throwable) {
-        throw ExecutionException(DevkitComposeBundle.message("compose.hot.reload.failed.to.download.compose.hot.reload.agent"), t)
-      }
+
+      LOG.warn("Compose Hot Reload agent at '$currentAgentFilePath' has an unexpected SHA-256 checksum " +
+               "(expected '$expectedChecksum', got '$actualChecksum'). Deleting it and downloading a fresh copy...")
+      deleteAgentFile(currentAgentFilePath)
     }
-    else {
-      LOG.debug("Compose Hot Reload agent already downloaded to '$currentAgentFilePath'")
+
+    LOG.info("Downloading Compose Hot Reload agent from '$COMPOSE_HOT_RELOAD_AGENT_URL' to '$currentAgentFilePath'...")
+
+    try {
+      downloadAgentFile(project)
+    }
+    catch (t: Throwable) {
+      throw ExecutionException(DevkitComposeBundle.message("compose.hot.reload.failed.to.download.compose.hot.reload.agent"), t)
+    }
+
+    if (!currentAgentFilePath.exists()) {
+      throw ExecutionException(DevkitComposeBundle.message("compose.hot.reload.failed.to.download.compose.hot.reload.agent"))
+    }
+
+    val actualChecksum = computeChecksum(currentAgentFilePath)
+    if (!actualChecksum.equals(expectedChecksum, ignoreCase = true)) {
+      deleteAgentFile(currentAgentFilePath)
+      throw ExecutionException(
+        DevkitComposeBundle.message("compose.hot.reload.agent.checksum.mismatch", COMPOSE_HOT_RELOAD_AGENT_URL, expectedChecksum, actualChecksum))
     }
   }
 
-  private fun downloadAgentFile(project: Project): Path? {
+  /**
+   * Returns the expected SHA-256 checksum of the agent JAR as a lowercase hex string.
+   *
+   * For the bundled default version the checksum is pinned in the sources; for a version overridden via the registry
+   * the companion `.sha256` file is fetched from Maven Central, which at least protects against a tampered local cache.
+   */
+  @Throws(ExecutionException::class)
+  private fun getExpectedAgentChecksum(): String {
+    if (COMPOSE_HOT_RELOAD_AGENT_VERSION == COMPOSE_HOT_RELOAD_AGENT_DEFAULT_VERSION) {
+      return COMPOSE_HOT_RELOAD_AGENT_DEFAULT_SHA256
+    }
+
+    LOG.info("Fetching Compose Hot Reload agent checksum from '$COMPOSE_HOT_RELOAD_AGENT_SHA256_URL'...")
+    val checksum = try {
+      // Maven Central serves plain hex, but some mirrors use the 'sha256sum' format ('<hash>  <file name>')
+      HttpRequests.request(COMPOSE_HOT_RELOAD_AGENT_SHA256_URL).readString().trim().substringBefore(' ')
+    }
+    catch (t: Throwable) {
+      throw ExecutionException(DevkitComposeBundle.message("compose.hot.reload.failed.to.obtain.agent.checksum"), t)
+    }
+
+    if (!SHA256_HEX.matches(checksum)) {
+      throw ExecutionException(DevkitComposeBundle.message("compose.hot.reload.invalid.agent.checksum", COMPOSE_HOT_RELOAD_AGENT_SHA256_URL))
+    }
+    return checksum
+  }
+
+  @Throws(ExecutionException::class)
+  private fun computeChecksum(path: Path): String {
+    try {
+      return JpsChecksumUtil.getSha256Checksum(path)
+    }
+    catch (t: Throwable) {
+      throw ExecutionException(DevkitComposeBundle.message("compose.hot.reload.failed.to.obtain.agent.checksum"), t)
+    }
+  }
+
+  private fun deleteAgentFile(path: Path) {
+    try {
+      path.deleteIfExists()
+    }
+    catch (t: Throwable) {
+      LOG.warn("Failed to delete Compose Hot Reload agent file '$path'", t)
+    }
+  }
+
+  private fun downloadAgentFile(project: Project) {
     val fileService = DownloadableFileService.getInstance()
     val fileDescription = fileService.createFileDescription(COMPOSE_HOT_RELOAD_AGENT_URL, COMPOSE_HOT_RELOAD_AGENT_FILE_NAME)
     val downloader = fileService.createDownloader(listOf(fileDescription), "Compose Hot Reload Agent")
@@ -156,9 +242,6 @@ internal class DevkitHotReloadRunner : GenericDebuggerRunner() {
     downloader.downloadFilesWithProgress(getAgentTempPath().absolutePathString(), project, null)
 
     cleanOldAgents()
-
-    return getAgentTempPath().resolve(COMPOSE_HOT_RELOAD_AGENT_FILE_NAME)
-      .takeIf { it.exists() }
   }
 
   private fun cleanOldAgents() {
