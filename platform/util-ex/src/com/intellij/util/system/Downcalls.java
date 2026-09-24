@@ -46,6 +46,10 @@ final class Downcalls {
     }
   }
 
+  /**
+   * Write {@code body} as a block, for example {@code () -> { handle.invokeExact(); }}. In an expression body,
+   * {@code invokeExact} gets the call type {@code ()Object}, and a {@code void} handle throws at the call.
+   */
   static void run(@NotNull VoidBody body) {
     try {
       body.run();

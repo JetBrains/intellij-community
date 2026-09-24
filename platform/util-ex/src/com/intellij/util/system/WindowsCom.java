@@ -53,7 +53,9 @@ public final class WindowsCom {
   /** {@code CoUninitialize()}: ends one apartment of {@link #initializeApartment}. */
   @ApiStatus.Internal
   public static void uninitializeApartment() {
-    Downcalls.run(() -> Handles.UNINITIALIZE.invokeExact());
+    Downcalls.run(() -> {
+      Handles.UNINITIALIZE.invokeExact();
+    });
   }
 
   /** Runs {@code action} in an apartment, and ends the apartment afterwards. */
