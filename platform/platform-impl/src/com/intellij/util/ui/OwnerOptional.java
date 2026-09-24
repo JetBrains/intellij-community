@@ -19,10 +19,17 @@ import java.util.function.Function;
 @ApiStatus.Internal
 public final class OwnerOptional {
   public static @Nullable Window findOwner(@Nullable Component parent) {
-    if (parent == null) {
+    if (parent == null || (!(parent instanceof Window) && !parent.isValid())) {
       parent = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
       if (parent == null) {
-        parent = Window.getWindows()[0];
+        Window[] windows = Window.getWindows();
+        // when running tests, the window list may be empty
+        if (windows.length > 0) {
+          parent = windows[0];
+        }
+        else {
+          return null;
+        }
       }
     }
 
