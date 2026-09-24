@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.indexing.IdFilter
+import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
@@ -93,7 +94,7 @@ object FilesScanExecutor {
       true
     }
     val start = System.nanoTime()
-    val result = ScanningExecutor.processOnAllThreadsInReadActionNoRetries(deque, consumer)
+    val result = UnindexedFilesUpdater.processOnAllThreadsInReadActionNoRetries(deque, consumer)
     if (LOG.isDebugEnabled) {
       LOG.debug("${processedCount.get()} files processed (${skippedCount.get()} skipped) in ${TimeoutUtil.getDurationMillis(start)} ms")
     }

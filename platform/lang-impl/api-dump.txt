@@ -5703,9 +5703,6 @@ f:com.intellij.util.indexing.FindSymbolParameters
 - getLocalPatternName():java.lang.String
 - getProject():com.intellij.openapi.project.Project
 - getSearchScope():com.intellij.psi.search.GlobalSearchScope
-f:com.intellij.util.indexing.UnindexedFilesUpdater
-- s:getNumberOfIndexingThreads():I
-- s:isScanningInProgress(com.intellij.openapi.project.Project):Z
 com.intellij.util.indexing.UnindexedFilesUpdaterListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:updateFinished(com.intellij.openapi.project.Project):V

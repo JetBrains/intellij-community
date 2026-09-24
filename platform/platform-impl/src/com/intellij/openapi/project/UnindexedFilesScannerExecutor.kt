@@ -34,6 +34,12 @@ interface UnindexedFilesScannerExecutor {
     @JvmStatic
     fun getInstance(project: Project): UnindexedFilesScannerExecutor = project.service<UnindexedFilesScannerExecutor>()
 
+    @JvmStatic
+    fun isScanningInProgress(project: Project): Boolean {
+      val executor = getInstance(project)
+      return executor.hasQueuedTasks || executor.isRunning.value
+    }
+
     fun <T: MergeableQueueTask<T>> unwrapTask(task: MergingTaskQueue.QueuedTask<T>): T {
       return task.task
     }

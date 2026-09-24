@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.roots.impl
+package com.intellij.util.indexing
 
-import com.intellij.openapi.roots.impl.ScanningExecutor.runOnAllThreads
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.util.indexing.UnindexedFilesUpdater.runOnAllThreads
 
-class ScanningExecutorTest : LightPlatformTestCase() {
+class UnindexedFilesUpdaterTest : LightPlatformTestCase() {
   fun testScanExecutorSupportsRecursiveTasks() {
     val testTask = RecursionTestTask()
     val t = Thread(testTask, "testScanExecutorSupportsRecursiveTasks")

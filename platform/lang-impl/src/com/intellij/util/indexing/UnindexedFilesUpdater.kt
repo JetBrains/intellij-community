@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.roots.impl
+package com.intellij.util.indexing
 
 import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.openapi.application.ApplicationManager
@@ -9,11 +9,15 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.progress.util.ProgressWrapper
+import com.intellij.openapi.roots.impl.ScanningWorkTracker
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.SystemProperties.getBooleanProperty
+import com.intellij.util.SystemProperties.getIntProperty
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.indexing.UnindexedFilesUpdater
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Range
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.Future
 import java.util.concurrent.FutureTask
@@ -22,16 +26,83 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * The general-purpose part of the scanning thread pool: runs a workload on all scanning threads in parallel.
+ * Utilities to size and run the scanning/indexing thread pools.
  *
- * This part has no dependency on the indexing implementation, so it stays in `intellij.platform.lang.impl` and can be
- * used by non-indexing clients (e.g. `FindInProjectTask`, `PushedFilePropertiesUpdaterImpl`). The indexing-specific
- * `FilesScanExecutor.processFilesInScope` delegates here and is free to move to a backend module.
+ * Besides the thread-count policy accessors, this hosts the general-purpose part of the scanning thread pool:
+ * it runs a workload on all scanning threads in parallel. That part has no dependency on the indexing
+ * implementation, so it can be used by non-indexing clients (e.g. `FindInProjectTask`, `PushedFilePropertiesUpdaterImpl`).
  */
 @Internal
-object ScanningExecutor {
-  private val THREAD_COUNT = (UnindexedFilesUpdater.getNumberOfScanningThreads() - 1).coerceAtLeast(1)
+object UnindexedFilesUpdater {
+  private val useConservativeThreadCountPolicy: Boolean = getBooleanProperty("idea.indexing.use.conservative.thread.count.policy", false)
+
+  private const val DEFAULT_MAX_INDEXER_THREADS: Int = 4
+
+  /** Defines number of indexing threads. -1 means autoconfigured value (see getNumberOfIndexingThreads/getMaxNumberOfIndexingThreads for algo). */
+  private val INDEXER_THREAD_COUNT: Int = getIntProperty("caches.indexerThreadsCount", -1)
+
+  /**
+   * Count CPU# with or without hyper-threading:
+   * if true:  assume # cores reported is # physical cores x2, so /2 to get physical cores count
+   * If false (default): use # cores reported as-is, don't try to outsmart CPU developers
+   */
+  private val IS_HT_SMT_ENABLED: Boolean = getBooleanProperty("intellij.system.ht.smt.enabled", false)
+
+  private val THREAD_COUNT: Int = (getNumberOfScanningThreads() - 1).coerceAtLeast(1)
   private val ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Scanning", THREAD_COUNT)
+
+  /**
+   * Returns the best number of threads to be used for indexing at this moment.
+   * It may change during execution of the IDE depending on other activities' load.
+   */
+  @JvmStatic
+  fun getNumberOfIndexingThreads(): Int {
+    var threadCount = INDEXER_THREAD_COUNT
+    if (threadCount <= 0) {
+      val maxThreads = getMaxNumberOfIndexingThreads()
+      threadCount = maxOf(1, minOf(if (useConservativeThreadCountPolicy) DEFAULT_MAX_INDEXER_THREADS else maxThreads, maxThreads))
+    }
+    return threadCount
+  }
+
+  /**
+   * Returns the maximum number of threads to be used for indexing during this execution of the IDE.
+   */
+  @JvmStatic
+  fun getMaxNumberOfIndexingThreads(): Int {
+    // Change of the registry option requires IDE restart.
+    val threadCount = INDEXER_THREAD_COUNT
+    if (threadCount > 0) {
+      return threadCount
+    }
+    return maxOf(1, getAvailablePhysicalCoresNumber() - getCoresToLeaveForOtherActivitiesCount())
+  }
+
+  @JvmStatic
+  fun getAvailablePhysicalCoresNumber(): Int {
+    val availableCores = Runtime.getRuntime().availableProcessors()
+    return if (IS_HT_SMT_ENABLED) availableCores / 2 else availableCores
+  }
+
+  /**
+   * Scanning activity can be scaled well across number of threads, so we're trying to use all available resources to do it faster.
+   */
+  @JvmStatic
+  fun getNumberOfScanningThreads(): @Range(from = 1, to = Int.MAX_VALUE.toLong()) Int {
+    val scanningThreadCount = Registry.intValue("caches.scanningThreadsCount")
+    if (scanningThreadCount > 0) return scanningThreadCount
+    val maxBackgroundThreadCount = getMaxBackgroundThreadCount()
+    return maxOf(maxBackgroundThreadCount, getNumberOfIndexingThreads())
+  }
+
+  private fun getMaxBackgroundThreadCount(): Int {
+    // note that getMaxBackgroundThreadCount is used to calculate the scanning thread count, which is also used for "FindInFiles"
+    return Runtime.getRuntime().availableProcessors() - getCoresToLeaveForOtherActivitiesCount()
+  }
+
+  private fun getCoresToLeaveForOtherActivitiesCount(): Int {
+    return if (ApplicationManager.getApplication().isCommandLine) 0 else 1
+  }
 
   @JvmStatic
   fun runOnAllThreads(runnable: Runnable) {
