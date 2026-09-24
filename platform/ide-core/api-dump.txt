@@ -828,6 +828,10 @@ com.intellij.openapi.options.Configurable$WithEpDependencies
 - a:getDependencies():java.util.Collection
 c:com.intellij.openapi.options.ConfigurableEP
 - com.intellij.openapi.extensions.PluginAware
+- beta:Z
+- newOptions:Z
+- promo:Z
+- promoIcon:java.lang.String
 - p:<init>():V
 - createConfigurable():com.intellij.openapi.options.UnnamedConfigurable
 - getDisplayName():java.lang.String

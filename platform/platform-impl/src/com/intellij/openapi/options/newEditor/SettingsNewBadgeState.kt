@@ -26,11 +26,12 @@ class SettingsNewBadgeState {
     }
 
     // On the other hand, it's entirely possible to have the following:
-    // `CompositeConfigurable<*> -> UnnamedConfigurable -> Configurable : NewOptions`
+    // `CompositeConfigurable<*> -> UnnamedConfigurable -> a declaration with newOptions="true"`
     // And since only the final configurable is marked as opened and that is propagated above,
-    // we need to check ALL the children of a configurable, including the unnamed ones
+    // we need to check the unnamed children here, because they have no node in the settings tree.
+    // A `Configurable.Composite` has a node for every child, so `SettingsTreeView` rolls the badge up over the
+    // nodes instead. Never ask a composite for its children here: that builds every child of a dynamic parent.
     return showNewBadge || when (configurable) {
-      is Configurable.Composite -> configurable.configurables.any(::hasNewOptions)
       is CompositeConfigurable<*> -> configurable.configurables.any(::hasNewOptions)
       else -> false
     }
@@ -50,8 +51,11 @@ class SettingsNewBadgeState {
     return shownAtOpen < MAX_SHOWS
   }
 
+  /**
+   * The declaration states the new option, so the answer costs no class load and no construction.
+   * A configurable component that no extension point declares cannot hold a new option.
+   */
   private fun isNewOptions(configurable: Configurable): Boolean {
-    return configurable is Configurable.NewOptions ||
-           ConfigurableWrapper.cast(Configurable.NewOptions::class.java, configurable) != null
+    return configurable is ConfigurableWrapper && configurable.extensionPoint.newOptions
   }
 }

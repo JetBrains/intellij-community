@@ -1,20 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.promotion
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.options.ConfigurableWithId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FeaturePromoBundle
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
-import javax.swing.Icon
 import javax.swing.JComponent
 import kotlin.reflect.KClass
 
-abstract class ProPromoConfigurable : ConfigurableWithId, Configurable.Promo {
+/**
+ * The lock badge comes from the `promo="true"` attribute of the declaration, so the Settings tree paints it
+ * without a load of this class.
+ */
+abstract class ProPromoConfigurable : ConfigurableWithId {
   override fun isModified(): Boolean = false
   override fun apply() = Unit
-  override fun getPromoIcon(): Icon = AllIcons.Ultimate.Lock
 }
 
 abstract class ProPromoConfigurableProvider(private val clazz: KClass<out Configurable>) : ConfigurableProvider() {

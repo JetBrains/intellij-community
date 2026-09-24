@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.ex.ConfigurableWrapper
@@ -14,8 +15,10 @@ import javax.swing.JComponent
 
 /**
  * The settings tree checks [SettingsNewBadgeState.hasNewOptions] on the EDT for every node it paints.
- * The method must read the [Configurable.NewOptions] marker from the extension point, and it must
- * keep every configurable without that marker uninitialized.
+ * The method must answer from the extension point, and it must construct no configurable.
+ *
+ * A composite is not expanded here. The settings tree holds a node for every child, so it rolls the badge up
+ * over its own nodes. An expansion of a `dynamic` composite would build every child of it on the EDT.
  *
  * The tree here is built from [ConfigurableWrapper] instances over lazy [ConfigurableEP] declarations.
  * Each test configurable records its own initialization in [InitLog].
@@ -36,7 +39,7 @@ internal class ConfigurableWrapperLazyInitTest {
   }
 
   @Test
-  fun `a tree without a new options marker stays uninitialized`() {
+  fun `a tree without a new options attribute stays uninitialized`() {
     val root = wrap(instanceEp("root", PlainConfigurable::class.java, listOf(
       instanceEp("group", PlainConfigurable::class.java, listOf(
         instanceEp("leaf", PlainConfigurable::class.java),
@@ -49,40 +52,50 @@ internal class ConfigurableWrapperLazyInitTest {
   }
 
   @Test
-  fun `a nested new options marker leaves the other nodes uninitialized`() {
-    val root = wrap(instanceEp("root", PlainConfigurable::class.java, listOf(
-      instanceEp("plain group", PlainConfigurable::class.java, listOf(
-        instanceEp("plain leaf", PlainConfigurable::class.java),
-      )),
-      instanceEp("new group", PlainConfigurable::class.java, listOf(
-        instanceEp("new leaf", NewOptionsConfigurable::class.java),
-      )),
-    )))
+  fun `a declared attribute answers with no class at all`() {
+    val ep = instanceEp("new leaf", PlainConfigurable::class.java)
+    ep.newOptions = true
 
-    assertThat(newBadgeState.hasNewOptions(root)).isTrue()
-    // only the marked leaf is initialized, and only because the current implementation casts it
-    assertThat(InitLog.initialized()).containsExactly(NewOptionsConfigurable::class.java)
+    assertThat(newBadgeState.hasNewOptions(wrap(ep))).isTrue()
+    assertThat(InitLog.initialized()).isEmpty()
   }
 
   @Test
-  fun `a provider that declares its configurable type stays uninitialized`() {
-    val root = wrap(instanceEp("root", PlainConfigurable::class.java, listOf(
-      providerEp("provided leaf", TypedProvider::class.java),
-    )))
+  fun `a composite is not expanded to answer the badge`() {
+    val newLeaf = instanceEp("new leaf", PlainConfigurable::class.java)
+    newLeaf.newOptions = true
+    val root = wrap(instanceEp("root", PlainConfigurable::class.java, listOf(newLeaf)))
 
+    // the settings tree rolls the badge up over its nodes, so the composite answers for itself only
     assertThat(newBadgeState.hasNewOptions(root)).isFalse()
     assertThat(InitLog.initialized()).isEmpty()
   }
 
   @Test
-  fun `a provider without a configurable type gets initialized`() {
-    val root = wrap(instanceEp("root", PlainConfigurable::class.java, listOf(
-      providerEp("provided leaf", UntypedProvider::class.java),
-    )))
+  fun `a provider declaration stays uninitialized`() {
+    val root = wrap(providerEp("provided leaf", UntypedProvider::class.java))
 
-    // without the type hint the wrapper must create the configurable to answer the cast
+    // a provider declaration answers from its own attribute, and this one declares none
     assertThat(newBadgeState.hasNewOptions(root)).isFalse()
-    assertThat(InitLog.initialized()).containsExactly(PlainConfigurable::class.java)
+    assertThat(InitLog.initialized()).isEmpty()
+  }
+
+  @Test
+  fun `a declared promo icon answers with no construction`() {
+    val ep = providerEp("promo leaf", UntypedProvider::class.java)
+    ep.promoIcon = "AllIcons.Ultimate.Lock"
+
+    // a provider declaration names no page class, so the attribute is the only answer the settings tree has
+    assertThat(ep.lazyPromoIcon.value).isSameAs(AllIcons.Ultimate.Lock)
+    assertThat(InitLog.initialized()).isEmpty()
+  }
+
+  @Test
+  fun `a declaration without a promo icon answers null`() {
+    val ep = providerEp("plain leaf", UntypedProvider::class.java)
+
+    assertThat(ep.lazyPromoIcon.value).isNull()
+    assertThat(InitLog.initialized()).isEmpty()
   }
 
   @Test
@@ -145,16 +158,8 @@ internal class ConfigurableWrapperLazyInitTest {
 
   private class PlainConfigurable : TrackedConfigurable()
 
-  private class NewOptionsConfigurable : TrackedConfigurable(), Configurable.NewOptions
-
   private class PreferredFocusConfigurable : TrackedConfigurable() {
     override fun getPreferredFocusedComponent(): JComponent = error("The wrapper must not call this method")
-  }
-
-  private class TypedProvider : ConfigurableProvider() {
-    override fun createConfigurable(): Configurable = PlainConfigurable()
-
-    override fun getConfigurableType(): Class<*> = PlainConfigurable::class.java
   }
 
   private class UntypedProvider : ConfigurableProvider() {

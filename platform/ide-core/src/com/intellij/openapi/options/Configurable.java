@@ -184,33 +184,33 @@ public interface Configurable extends UnnamedConfigurable {
 
   /**
    * This marker interface tells the Settings dialog to show a Beta icon for the configurable.
+   *
+   * @deprecated Declare {@code beta="true"} on the extension point instead. The Settings tree reads the attribute
+   * with no class load, so it paints the badge before it builds the page. The tree no longer reads this interface,
+   * so a configurable component that carries it and declares no attribute shows no badge.
    */
+  @Deprecated(forRemoval = true)
   interface Beta {
 
   }
 
   /**
    * This marker interface tells the Settings dialog to show a lock icon for the configurable.
+   *
+   * @deprecated Declare {@code promo="true"} on the extension point instead. The Settings tree reads the attribute
+   * with no class load, and it paints {@code AllIcons.Ultimate.Lock}. Name another icon with the
+   * {@code promoIcon} attribute, for example {@code promoIcon="StudioIcons.Shell.Menu.STUDIO_LABS"}.
+   * The tree no longer reads this interface, so a configurable component that carries it
+   * and declares no attribute shows no badge.
    */
+  @Deprecated(forRemoval = true)
   interface Promo {
     @NotNull Icon getPromoIcon();
   }
 
   /**
-   * This marker interface tells the Settings dialog to show a New icon for the configurable.
-   * Parent sections inherit this marker from child configurables.
-   * <p>
-   * Only named configurables (aka {@link Configurable}) can be marked as {@link NewOptions} since the unnamed
-   * configurables have no stable identity and therefore can't be marked as visited
-   */
-  @ApiStatus.Experimental
-  interface NewOptions extends Configurable {
-
-  }
-
-  /**
-   * Marker interface for leaf configurables that intentionally diverge between {@link NewOptions}
-   * and the New badges rendered in their UI.
+   * Marker interface for leaf configurables that intentionally diverge between the {@code newOptions="true"}
+   * attribute of the extension point and the New badges rendered in their UI.
    */
   @ApiStatus.Internal
   interface NewOptionsMismatchAllowed {

@@ -14,14 +14,16 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeatur
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoPages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
-import javax.swing.Icon
 import javax.swing.JComponent
 import kotlin.reflect.KClass
 
-internal abstract class UltimatePromoConfigurable : ConfigurableWithId, Configurable.Promo {
+/**
+ * The lock badge comes from the `promo="true"` attribute of the declaration, so the Settings tree paints it
+ * without a load of this class.
+ */
+internal abstract class UltimatePromoConfigurable : ConfigurableWithId {
   override fun isModified(): Boolean = false
   override fun apply() = Unit
-  override fun getPromoIcon(): Icon = AllIcons.Ultimate.Lock
 }
 
 internal abstract class UltimateConfigurableProvider(private val clazz: KClass<out Configurable>) : ConfigurableProvider() {

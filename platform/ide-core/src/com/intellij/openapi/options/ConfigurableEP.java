@@ -12,8 +12,10 @@ import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -26,6 +28,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.Icon;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.CancellationException;
@@ -143,6 +146,61 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
    */
   @Attribute("dynamic")
   public boolean dynamic;
+
+  /**
+   * This attribute states that the configurable component is beta, as the {@link Configurable.Beta} interface does.
+   * The settings tree paints the beta badge from this attribute, so it loads no class.
+   * A configurable component of a bundled plugin must declare the attribute, because the tree does not ask its class.
+   */
+  @Attribute("beta")
+  public boolean beta;
+
+  /**
+   * This attribute states that the configurable component advertises a feature of another product,
+   * as the {@link Configurable.Promo} interface does.
+   * The settings tree paints the lock badge from this attribute, so it loads no class.
+   * A configurable component of a bundled plugin must declare the attribute, because the tree does not ask its class.
+   *
+   * @see #promoIcon
+   */
+  @Attribute("promo")
+  public boolean promo;
+
+  /**
+   * This attribute names the badge icon of a promo configurable component, and it states {@link #promo} as well.
+   * Declare it when the badge is not {@code AllIcons.Ultimate.Lock}, which the settings tree paints by default.
+   * Read the icon itself with {@link #lazyPromoIcon}.
+   * <p>
+   * The value is a field reference, for example {@code AllIcons.Ultimate.Lock}, or a path to an icon resource.
+   * The settings tree reads the icon from this attribute, so it loads no class for a badge.
+   */
+  @Attribute("promoIcon")
+  public String promoIcon;
+
+  /**
+   * This attribute states that the configurable component holds a new option.
+   * The settings tree paints the new badge from this attribute, so it loads no class, and it paints the badge
+   * on every parent of the component as well. It is the only way to state a new option.
+   */
+  @Attribute("newOptions")
+  public boolean newOptions;
+
+  /**
+   * Holds the icon that {@link #promoIcon} names, and {@code null} when the declaration names none.
+   * The caller paints {@code AllIcons.Ultimate.Lock} instead.
+   * <p>
+   * The value is memoised, because a field reference such as {@code AllIcons.Ultimate.Lock} is resolved by
+   * reflection and the icon cache of {@link IconLoader} does not hold it. The settings tree asks per row,
+   * per layout pass and per repaint.
+   */
+  @ApiStatus.Internal
+  public final @Transient NullableLazyValue<Icon> lazyPromoIcon = NullableLazyValue.lazyNullable(() -> {
+    if (promoIcon == null) {
+      return null;
+    }
+    ClassLoader classLoader = pluginDescriptor == null ? getClass().getClassLoader() : pluginDescriptor.getClassLoader();
+    return IconLoader.findIcon(promoIcon, classLoader);
+  });
 
   /**
    * This attribute is used to create a hierarchy of settings.
@@ -326,6 +384,15 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
       LOG.error(new PluginException(error, pluginDescriptor == null ? null : pluginDescriptor.getPluginId()));
     }
     return new ObjectProducer();
+  }
+
+  /**
+   * Returns the class name of the configurable component that this declaration names, without a class load.
+   * Returns {@code null} when the declaration names a provider only, because a provider class is not a configurable class.
+   */
+  @ApiStatus.Internal
+  public final @Nullable String getDeclaredConfigurableClassName() {
+    return instanceClass != null ? instanceClass : implementationClass;
   }
 
   public final @Nullable ConfigurableProvider instantiateConfigurableProvider() {

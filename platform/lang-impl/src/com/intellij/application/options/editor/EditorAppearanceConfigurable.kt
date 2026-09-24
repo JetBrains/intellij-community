@@ -67,7 +67,7 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
   ApplicationBundle.message("tab.editor.settings.appearance"),
   "reference.settingsdialog.IDE.editor.appearance",
   "editor.preferences.appearance"
-), Configurable.WithEpDependencies, Configurable.NewOptions {
+), Configurable.WithEpDependencies {
   override fun createPanel(): DialogPanel {
     val model = EditorSettingsExternalizable.getInstance()
     return panel {

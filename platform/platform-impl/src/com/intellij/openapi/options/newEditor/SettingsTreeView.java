@@ -673,7 +673,21 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
     private boolean hasNewOptions() {
       if (myHasNewOptions == null) {
-        myHasNewOptions = myNewBadgeState.hasNewOptions(myConfigurable);
+        boolean result = myNewBadgeState.hasNewOptions(myConfigurable);
+        if (!result) {
+          // Roll the badge up over the tree nodes, which exist already, and never over the configurables,
+          // because that expands a dynamic composite and builds every child of it on the EDT.
+          SimpleNode[] children = getCached();
+          if (children != null) {
+            for (SimpleNode child : children) {
+              if (child instanceof MyNode node && node.hasNewOptions()) {
+                result = true;
+                break;
+              }
+            }
+          }
+        }
+        myHasNewOptions = result;
       }
       return myHasNewOptions;
     }
@@ -783,9 +797,9 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         myAccessibleBadgeText = IdeBundle.message("badge.text.beta");
       }
 
-      Configurable.Promo promo = asPromo(configurable);
-      if (promo != null) {
-        setRightIcon(promo.getPromoIcon());
+      Icon promoIcon = getPromoIcon(configurable);
+      if (promoIcon != null) {
+        setRightIcon(promoIcon);
       }
 
       if (node != null && node.hasNewOptions() && (leaf || !expanded)) {
@@ -916,22 +930,38 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     }
   }
 
-  private static boolean isBeta(Configurable c) {
-    return c instanceof Configurable.Beta ||
-           ConfigurableWrapper.cast(Configurable.Beta.class, c) != null;
+  /**
+   * The declaration is the only source of the badge, so the answer costs no class load and no construction.
+   * A configurable component that carries {@code Configurable.Beta} and declares no attribute shows no badge.
+   */
+  private static boolean isBeta(@Nullable Configurable c) {
+    return c instanceof ConfigurableWrapper wrapper && wrapper.getExtensionPoint().beta;
   }
 
   private static boolean hasCustomizedSettings(@Nullable Configurable configurable) {
+    // Ask a page that exists already. The only implementor is a child that its parent composite built,
+    // so the answer stays the same, and an unbuilt page is never constructed here.
     CustomizedSettingsProvider provider = configurable instanceof CustomizedSettingsProvider c
                                           ? c
-                                          : ConfigurableWrapper.cast(CustomizedSettingsProvider.class, configurable);
+                                          : ConfigurableWrapper.castIfCreated(CustomizedSettingsProvider.class, configurable);
     return provider != null && provider.hasCustomizedSettings();
   }
 
-  private static @Nullable Configurable.Promo asPromo(Configurable c) {
-    if (c instanceof Configurable.Promo) return (Configurable.Promo)c;
-
-    return ConfigurableWrapper.cast(Configurable.Promo.class, c);
+  /**
+   * Returns the promo badge of the configurable, or {@code null} when it advertises nothing.
+   * The declaration is the only source of the badge, so the icon cannot change when the page is built later.
+   * A configurable component that carries {@code Configurable.Promo} and declares no attribute shows no badge.
+   */
+  private static @Nullable Icon getPromoIcon(@Nullable Configurable c) {
+    if (!(c instanceof ConfigurableWrapper wrapper)) {
+      return null;
+    }
+    ConfigurableEP<?> ep = wrapper.getExtensionPoint();
+    Icon declared = ep.lazyPromoIcon.getValue();
+    if (declared != null) {
+      return declared;
+    }
+    return ep.promo ? AllIcons.Ultimate.Lock : null;
   }
 
   private static final class LargeBlueDotIcon implements Icon {
