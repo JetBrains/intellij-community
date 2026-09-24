@@ -33,8 +33,8 @@ internal fun getAllProperties(
   withDefault: Boolean = true,
 ): List<OwnProperty<*, *>> {
   return PropertiesCache[objClass].filter { objProperty ->
-    val isSymbolicId = objProperty.name == symbolicIdFieldName
-    if (!withSymbolicId && objProperty.name == symbolicIdFieldName) return@filter false
+    val isSymbolicId = objProperty.name == symbolicIdPropertyName
+    if (!withSymbolicId && isSymbolicId) return@filter false
     if (!withComputable && !isSymbolicId && objProperty.valueKind is ObjProperty.ValueKind.Computable) return@filter false
     if (!withRefs && objProperty.valueType.isReferenceType()) return@filter false
     if (!withEntitySource && objProperty.name == entitySourceFieldName) return@filter false

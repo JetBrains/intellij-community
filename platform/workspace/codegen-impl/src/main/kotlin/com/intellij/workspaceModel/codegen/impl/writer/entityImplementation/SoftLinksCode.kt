@@ -15,8 +15,8 @@ import com.intellij.workspaceModel.codegen.impl.writer.extensions.unwrapReferenc
 import com.intellij.workspaceModel.codegen.impl.writer.getAllProperties
 import com.intellij.workspaceModel.codegen.impl.writer.getJavaMutableType
 import com.intellij.workspaceModel.codegen.impl.writer.referenceNameToSyntheticSymbolicIdFieldName
-import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdField
-import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdFieldName
+import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdProperty
+import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdPropertyName
 import com.intellij.workspaceModel.codegen.impl.writer.toQualifiedName
 
 internal fun CodeContext.softLinksCode(
@@ -112,7 +112,7 @@ private fun CodeContext.updateLinkCode(relevantProperties: List<OwnProperty<*, *
     }
     for (reference in referencesInSymbolicId) {
       val syntheticName = referenceNameToSyntheticSymbolicIdFieldName(reference.name)
-      val refSymbolicId = unwrapReferenceType(reference.valueType)?.target?.symbolicIdField
+      val refSymbolicId = unwrapReferenceType(reference.valueType)?.target?.symbolicIdProperty
       if (refSymbolicId == null) {
         reportPropertyError("Cannot find symbolic id of the referenced entity", reference)
         return@section
@@ -143,7 +143,7 @@ internal fun ObjClass<*>.hasSoftLinks(): Boolean {
 }
 
 private fun ObjProperty<*, *>.hasSoftLinks(): Boolean {
-  return name != symbolicIdFieldName && valueType.hasSoftLinks()
+  return name != symbolicIdPropertyName && valueType.hasSoftLinks()
 }
 
 private fun ValueType<*>.hasSoftLinks(): Boolean = when (this) {

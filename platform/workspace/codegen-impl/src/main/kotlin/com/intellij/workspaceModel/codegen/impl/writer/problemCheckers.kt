@@ -25,7 +25,7 @@ internal fun GeneratorContext.checkSuperTypes(objClass: ObjClass<*>) {
 internal fun GeneratorContext.checkSymbolicId(objClass: ObjClass<*>) {
   if (!objClass.isEntityWithSymbolicId) return
   if (objClass.openness == ObjClass.Openness.abstract) return
-  if (objClass.fields.none { it.name == symbolicIdFieldName }) {
+  if (objClass.fields.none { it.name == symbolicIdPropertyName }) {
     reportClassError("Class extends '${WorkspaceEntityWithSymbolicId.simpleName}' but " +
                      "doesn't override 'WorkspaceEntityWithSymbolicId.getSymbolicId' property", objClass)
   }

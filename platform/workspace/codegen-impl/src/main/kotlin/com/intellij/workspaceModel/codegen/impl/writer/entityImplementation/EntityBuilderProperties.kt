@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.codegen.impl.writer.entityImplementation
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
-import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.dsl.CodeContext
 import com.intellij.workspaceModel.codegen.impl.dsl.annotation
@@ -27,11 +26,10 @@ import com.intellij.workspaceModel.codegen.impl.writer.getJavaType
 internal fun CodeContext.generateBuilderPropertyCode(
   receiver: ObjClass<*>,
   property: ObjProperty<*, *>,
-  referencesInSymbolicId: Set<OwnProperty<*, *>>?,
   vfuProperties: VfuProperties,
 ) {
   if (property.valueType.isReferenceType()) {
-    builderReferenceProperty(receiver, property, referencesInSymbolicId)
+    builderReferenceProperty(receiver, property)
   }
   else {
     builderProperty(receiver, property.valueType, property, vfuProperties)
@@ -250,9 +248,7 @@ private enum class ReferenceType {
 private fun CodeContext.builderReferenceProperty(
   receiver: ObjClass<*>,
   property: ObjProperty<*, *>,
-  referencesInSymbolicId: Set<OwnProperty<*, *>>?,
 ) {
-  val usedInSymbolicId = referencesInSymbolicId?.contains(property) ?: false
   val connectionName = connectionIdForReference(property)
   val referencedEntityType = unwrapReferenceType(property.valueType) ?: run {
     reportPropertyError("entityReferencePropertyBuilderCode: null referencedEntityType", property)
@@ -294,7 +290,6 @@ private fun CodeContext.builderReferenceProperty(
         section("set(value)") {
           +"changeParent(value, $connectionName)"
           +"changedProperty.add(\"${property.name}\")"
-          if (usedInSymbolicId) +"updateSymbolicId(value, $connectionName)"
         }
       }
       ReferenceType.ParentOfMany -> {
@@ -302,7 +297,6 @@ private fun CodeContext.builderReferenceProperty(
         section("set(value)") {
           +"changeParentOfMany(value, $connectionName)"
           +"changedProperty.add(\"${property.name}\")"
-          if (usedInSymbolicId) +"updateSymbolicId(value, $connectionName)"
         }
       }
       ReferenceType.Children -> {

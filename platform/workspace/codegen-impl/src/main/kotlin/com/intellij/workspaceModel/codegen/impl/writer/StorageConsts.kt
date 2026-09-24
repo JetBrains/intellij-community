@@ -146,5 +146,9 @@ internal object StorageCollection {
   val toMutableWorkspaceList = fqn(packageName, "toMutableWorkspaceList")
 }
 
-internal const val symbolicIdFieldName = "symbolicId"
+internal const val symbolicIdPropertyName = "symbolicId"
 internal const val entitySourceFieldName = "entitySource"
+
+internal object WorkspaceEntityBaseMembers {
+  internal const val calculateSymbolicIdFun = "calculateSymbolicId"
+}
