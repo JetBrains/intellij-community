@@ -50,6 +50,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.configuration.KOTLIN_SCRIPTING_SETTINGS_ID
 import org.jetbrains.kotlin.idea.core.script.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService
+import org.jetbrains.kotlin.idea.core.script.statistics.KotlinScriptingSettingsCollector
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.DefaultListCellRenderer
@@ -60,7 +61,6 @@ import javax.swing.ListSelectionModel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-/** Beyond this the editor scrolls, so a long list never makes the page taller. */
 private const val MAX_VISIBLE_LIST_ROWS: Int = 4
 
 private val reloadDisabledTooltip: HtmlChunk
@@ -87,7 +87,6 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
         selectionMode = ListSelectionModel.SINGLE_SELECTION
         cellRenderer = definitionListRenderer()
         setEmptyState(KotlinBaseScriptingBundle.message("manual.loading.definition.classes.empty"))
-        // `StatusText` puts its text a third of the way down by default, which reads as a wrong margin.
         emptyText.isShowAboveCenter = false
     }
 
@@ -118,12 +117,6 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
         addActionListener { reloadDefinitions() }
     }
 
-    /**
-     * Carries the reason the button is off, because a disabled button may get no mouse event.
-     *
-     * Which component the hover reaches depends on the toolkit, so the button holds the same text
-     * while it is off. See [updateReloadAvailability].
-     */
     private val reloadButtonPanel = Wrapper(reloadButton).apply {
         setToolTipText(reloadDisabledTooltip)
     }
@@ -133,12 +126,9 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
     override fun createComponent(): JComponent {
         val panel = panel {
             customizeSpacingConfiguration(object : IntelliJSpacingConfiguration() {
-                // Each row below states its own gap. A component that adds one of its own would
-                // stack on top of it, because a row gap and a component gap are separate.
                 override val verticalComponentGap: Int = 0
             }) {
                 row {
-                    // The link lives inside the sentence, so it stays at its end however the text wraps.
                     text(KotlinBaseScriptingBundle.message("script.definitions.discovery.explanation")) {
                         BrowserUtil.browse(DISCOVERY_DOCUMENTATION_URL)
                     }.resizableColumn()
@@ -182,13 +172,28 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
     override fun apply() {
         if (!isModified()) return
 
-        stopEditing()
+        tableView.stopEditing()
         val edited = currentSnapshot()
+        reportChanges(edited)
         KotlinScriptingSettings.getInstance(project).update { edited.toSettingsState() }
         appliedSnapshot = edited.detached()
         updateReloadAvailability()
 
         KotlinScriptService.getInstance(project).scheduleReloadOpenScripts()
+    }
+
+    private fun reportChanges(edited: ScriptDefinitionsSnapshot) {
+        val before = appliedSnapshot.definitions.map { it.id }
+        val after = edited.definitions.map { it.id }
+        if (before != after && before.toSet() == after.toSet()) {
+            KotlinScriptingSettingsCollector.logDefinitionsReordered(project)
+        }
+
+        val addedClasses = (edited.definitionClasses - appliedSnapshot.definitionClasses.toSet()).size
+        val addedClasspath = (edited.classpath - appliedSnapshot.classpath.toSet()).size
+        if (addedClasses > 0 || addedClasspath > 0) {
+            KotlinScriptingSettingsCollector.logManualDefinitionsAdded(project, addedClasses, addedClasspath)
+        }
     }
 
     override fun isModified(): Boolean = currentSnapshot() != appliedSnapshot
@@ -197,25 +202,19 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
 
     override fun getId(): String = KOTLIN_SCRIPTING_SETTINGS_ID
 
-    /**
-     * The reload runs in the background, never under a modal progress.
-     */
     private fun reloadDefinitions() {
+        KotlinScriptingSettingsCollector.logDefinitionsReloaded(project)
+
         val modality = ModalityState.stateForComponent(reloadButton)
         KotlinScriptService.getInstance(project).scheduleReloadOpenScripts().invokeOnCompletion { failure ->
             if (failure != null) return@invokeOnCompletion
             ApplicationManager.getApplication().invokeLater({
-                // The balloon comes first. Reading the new list opens a modal progress of its own,
-                // and a balloon shown right after one closes never reaches the screen.
                 showReloadDoneBalloon()
                 showSnapshot(readSnapshot() ?: return@invokeLater)
             }, modality, project.disposed)
         }
     }
 
-    /**
-     * Reports the reload with a balloon, and never with a notification.
-     */
     @Suppress("SplitModeApiUsage")
     private fun showReloadDoneBalloon() {
         JBPopupFactory.getInstance()
@@ -234,10 +233,6 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
             readScriptDefinitionsSnapshot(project)
         }
 
-    /**
-     * Runs [read] off the EDT and returns immutable data. The caller mutates the components.
-     * A failure is reported and the components keep their current content.
-     */
     private fun underModalProgress(
         @NlsContexts.ModalProgressTitle title: String,
         read: suspend () -> ScriptDefinitionsSnapshot,
@@ -255,7 +250,7 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
     }
 
     private fun showSnapshot(snapshot: ScriptDefinitionsSnapshot) {
-        stopEditing()
+        tableView.stopEditing()
 
         tableView.listTableModel.items = snapshot.definitions.map { it.copy() }
         tableView.visibleRowCount = snapshot.definitions.size
@@ -274,12 +269,7 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
         classpathModel.items.toList(),
     )
 
-    /** A row is mutable, so the kept copy must not share it with the table. */
     private fun ScriptDefinitionsSnapshot.detached(): ScriptDefinitionsSnapshot = copy(definitions = definitions.map { it.copy() })
-
-    private fun stopEditing() {
-        tableView.stopEditing()
-    }
 
     private fun installDirtyListeners() {
         tableView.listTableModel.addTableModelListener { updateReloadAvailability() }
@@ -300,9 +290,6 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
         reloadButton.setToolTipText(if (clean) null else reloadDisabledTooltip)
     }
 
-    /**
-     * Keeps the editor as tall as its content, between one and [MAX_VISIBLE_LIST_ROWS] rows.
-     */
     private fun bindCompactHeight(list: JBList<String>, model: CollectionListModel<String>, panel: JComponent) {
         fun refresh() {
             list.visibleRowCount = (model.size + 1).coerceIn(1, MAX_VISIBLE_LIST_ROWS)
@@ -319,12 +306,6 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
         refresh()
     }
 
-    /**
-     * A label with its hint beside it, and the editor below.
-     *
-     * The label keeps the normal font, and [hint] carries the small context help font. A row comment
-     * would take the gaps of the spacing configuration, which serve the whole page.
-     */
     private fun Panel.definitionField(
         @NlsContexts.Label labelText: String,
         @NlsContexts.Label hintText: String,
@@ -337,12 +318,6 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
         row { cell(editor).align(AlignX.FILL) }.customize(UnscaledGapsY(top = 4))
     }
 
-    /**
-     * A plain text row, inset like a row of the definitions table above.
-     *
-     * The list DSL renderer draws a popup row. It insets the selection band and adds its own left
-     * margin, so the entries no longer line up with the table.
-     */
     private fun definitionListRenderer(): DefaultListCellRenderer = object : DefaultListCellRenderer() {
         override fun getListCellRendererComponent(
             list: JList<*>, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean,

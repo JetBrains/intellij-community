@@ -98,7 +98,7 @@
     <problemHighlightFilter implementation="org.jetbrains.kotlin.idea.core.script.highlighting.ScriptProblemHighlightFilter"/>
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.core.script.statistics.KotlinScriptingUsageCollector"/>
-    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.core.script.statistics.KotlinScriptingLifecycleCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.core.script.statistics.KotlinScriptingSettingsCollector"/>
 
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.core.script.highlighting.KotlinScriptHighlightingVisitor"/>
 
