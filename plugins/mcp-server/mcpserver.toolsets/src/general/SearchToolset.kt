@@ -202,8 +202,8 @@ suspend fun searchInFiles(
   val effectiveLimit = normalizeLimit(limit)
   val project = currentCoroutineContext().project
   val projectDir = project.projectDirectory
-  val pathScope = buildPathScope(projectDir, paths)
   val projectDirectories = project.projectDirectories()
+  val pathScope = buildPathScope(projectDir, paths, projectDirectories)
   val directoryFilterPath = resolveDirectoryFilter(project, pathScope)
   val fileFilterText = pathScope?.fileFilter
 
@@ -323,9 +323,9 @@ suspend fun searchFiles(
   val effectiveLimit = normalizeLimit(limit)
   val project = currentCoroutineContext().project
   val projectDir = project.projectDirectory
-  val pathScope = buildPathScope(projectDir, paths)
   val projectDirectories = project.projectDirectories()
-  val normalizedPattern = normalizeGlobPattern(q, projectDir)
+  val pathScope = buildPathScope(projectDir, paths, projectDirectories)
+  val normalizedPattern = normalizeGlobPattern(q, projectDir, projectDirectories)
   val matcher = createPathMatcher(normalizedPattern)
   val fileIndex = project.serviceAsync<ProjectRootManager>().fileIndex
   val results = ArrayList<SearchItem>(minOf(effectiveLimit, 256))
@@ -475,9 +475,9 @@ private data class PathPattern(
  * Builds include/exclude matchers and derive common prefix and file mask.
  */
 @ApiStatus.Internal
-fun buildPathScope(projectDir: Path, paths: List<String>?): PathScope? {
+fun buildPathScope(projectDir: Path, paths: List<String>?, projectDirectories: List<Path>): PathScope? {
   if (paths == null) return null
-  val normalized = paths.mapNotNull { normalizePattern(it, projectDir) }
+  val normalized = paths.mapNotNull { normalizePattern(it, projectDir, projectDirectories) }
   if (normalized.isEmpty()) return null
 
   val includes = normalized.filterNot { it.isExclude }.map { it.pattern }
@@ -532,7 +532,7 @@ private fun extractFileMask(pattern: String): String? {
 /**
  * Normalizes a single include/exclude pattern against the project root.
  */
-private fun normalizePattern(raw: String, projectDir: Path): PathPattern? {
+private fun normalizePattern(raw: String, projectDir: Path, projectDirectories: List<Path>): PathPattern? {
   var value = raw.trim()
   if (value.isEmpty()) return null
 
@@ -542,15 +542,15 @@ private fun normalizePattern(raw: String, projectDir: Path): PathPattern? {
     value = value.drop(1).trim()
     if (value.isEmpty()) mcpFail("Exclude pattern is empty")
   }
-  val normalized = normalizeGlobPattern(value, projectDir, raw)
-  val expanded = expandDirectoryPatternIfNeeded(normalized, projectDir)
+  val normalized = normalizeGlobPattern(value, projectDir, projectDirectories, raw)
+  val expanded = expandDirectoryPatternIfNeeded(normalized, projectDir, projectDirectories)
   return PathPattern(expanded, isExclude)
 }
 
-private fun expandDirectoryPatternIfNeeded(pattern: String, projectDir: Path): String {
+private fun expandDirectoryPatternIfNeeded(pattern: String, projectDir: Path, projectDirectories: List<Path>): String {
   if (indexOfGlobChar(pattern) >= 0) return pattern
   val resolved = projectDir.resolve(pattern).normalize()
-  if (!resolved.startsWith(projectDir)) return pattern
+  if (projectDirectories.none { resolved.startsWith(it) }) return pattern
   return if (resolved.isDirectory()) "$pattern/**" else pattern
 }
 
@@ -558,7 +558,12 @@ private fun expandDirectoryPatternIfNeeded(pattern: String, projectDir: Path): S
  * Normalizes a glob pattern and guards against escaping the project root.
  */
 @ApiStatus.Internal
-fun normalizeGlobPattern(raw: String, projectDir: Path, originalPattern: String = raw): String {
+fun normalizeGlobPattern(
+  raw: String,
+  projectDir: Path,
+  projectDirectories: List<Path>,
+  originalPattern: String = raw,
+): String {
   var value = raw.trim()
   if (value.isEmpty()) {
     mcpFail("Glob pattern is empty")
@@ -577,7 +582,7 @@ fun normalizeGlobPattern(raw: String, projectDir: Path, originalPattern: String 
     value = "**/$value"
   }
 
-  value = normalizePathPattern(value, projectDir)
+  value = normalizePathPattern(value, projectDir, projectDirectories)
   if (value.isEmpty()) {
     mcpFail("Invalid glob pattern: $originalPattern")
   }
@@ -587,7 +592,7 @@ fun normalizeGlobPattern(raw: String, projectDir: Path, originalPattern: String 
 /**
  * Resolves the non-glob prefix to a project-relative path.
  */
-private fun normalizePathPattern(pattern: String, projectDir: Path): String {
+private fun normalizePathPattern(pattern: String, projectDir: Path, projectDirectories: List<Path>): String {
   val globIndex = indexOfGlobChar(pattern)
   val prefix = if (globIndex < 0) pattern else pattern.substring(0, globIndex)
   val prefixTrimmed = prefix.trimEnd('/')
@@ -605,7 +610,7 @@ private fun normalizePathPattern(pattern: String, projectDir: Path): String {
     mcpFail("Invalid path: $prefixTrimmed")
   }
   val absolutePrefix = if (prefixPath.isAbsolute) prefixPath.normalize() else projectDir.resolve(prefixPath).normalize()
-  if (!absolutePrefix.startsWith(projectDir)) {
+  if (projectDirectories.none { absolutePrefix.startsWith(it) }) {
     mcpFail("Specified path '$pattern' points to the location outside of the project directory")
   }
 
