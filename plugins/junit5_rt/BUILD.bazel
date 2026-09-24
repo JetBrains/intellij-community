@@ -1,16 +1,6 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.junit.v5.rt` start
-jvm_provided_library(
-    name = "libraries_junit5-launcher_provided",
-    lib = "//libraries/junit5-launcher",
-)
-
-jvm_provided_library(
-    name = "libraries_junit5_provided",
-    lib = "//libraries/junit5",
-)
-
 jvm_library(
     name = "junit-v5-rt",
     srcs = glob(
@@ -37,8 +27,8 @@ jvm_library(
         # do not sort,
         "//plugins/junit_rt:junit-rt",
         "//java/java-runtime:rt",
-        ":libraries_junit5-launcher_provided",
-        ":libraries_junit5_provided",
+        "@lib//:junit-v5-rt-_j_unit5_launcher-rt-provided",
+        "@lib//:junit-v5-rt-_j_unit5-rt-provided",
     ],
 )
 
@@ -64,10 +54,8 @@ jvm_library(
         ":junit-v5-rt",
         "//plugins/junit_rt:junit-rt_test_lib",
         "//java/java-runtime:rt_test_lib",
-        "//libraries/junit5-launcher",
-        "//libraries/junit5-launcher:junit5-launcher_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "@lib//:junit-v5-rt-_j_unit5_launcher-rt-provided",
+        "@lib//:junit-v5-rt-_j_unit5-rt-provided",
     ],
 )
 ### auto-generated section `build intellij.junit.v5.rt` end

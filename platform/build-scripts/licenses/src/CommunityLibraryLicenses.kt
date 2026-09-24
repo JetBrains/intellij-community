@@ -837,32 +837,23 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     .eplV1("https://junit.org/junit4/license.html")
     .suppliedByPersons("Marc Philipp", "David Saff", "Kevin Cooney", "Stefan Birkner"),
 
-  LibraryLicense("JUnit5", libraryName = "JUnit5", url = "https://junit.org/junit5/")
+  LibraryLicense("JUnit6", libraryName = "JUnit6", url = "https://junit.org/junit5/")
     .eplV2("https://github.com/junit-team/junit5/blob/main/LICENSE.md")
     .suppliedByPersons("Marc Philipp", "David Saff", "Kevin Cooney", "Stefan Birkner"),
 
-  LibraryLicense("JUnit5Jupiter", libraryName = "JUnit5Jupiter", url = "https://junit.org/junit5/")
-    .eplV2("https://github.com/junit-team/junit5/blob/main/LICENSE.md"),
-
-  LibraryLicense("JUnit5Launcher", libraryName = "JUnit5Launcher", url = "https://junit.org/junit5/")
-    .eplV2("https://github.com/junit-team/junit5/blob/main/LICENSE.md"),
-
-  LibraryLicense("JUnit5Params", libraryName = "JUnit5Params", url = "https://junit.org/junit5/")
-    .eplV2("https://github.com/junit-team/junit5/blob/main/LICENSE.md"),
-
-  LibraryLicense("JUnit5Suites", libraryName = "JUnit5Suites", url = "https://junit.org/junit5/")
-    .eplV2("https://github.com/junit-team/junit5/blob/main/LICENSE.md"),
-
-  LibraryLicense("JUnit5Vintage", libraryName = "JUnit5Vintage", url = "https://junit.org/junit5/")
-    .eplV2("https://github.com/junit-team/junit5/blob/main/LICENSE.md"),
-
-  LibraryLicense("JUnit6", libraryName = "JUnit6", url = "https://junit.org/junit5/")
+  LibraryLicense("JUnit6Jupiter", libraryName = "JUnit6Jupiter", url = "https://junit.org/junit5/")
     .eplV2("https://github.com/junit-team/junit5/blob/main/LICENSE.md"),
 
   LibraryLicense("JUnit6Launcher", libraryName = "JUnit6Launcher", url = "https://junit.org/junit5/")
     .eplV2("https://github.com/junit-team/junit5/blob/main/LICENSE.md"),
 
   LibraryLicense("JUnit6Params", libraryName = "JUnit6Params", url = "https://junit.org/junit5/")
+    .eplV2("https://github.com/junit-team/junit5/blob/main/LICENSE.md"),
+
+  LibraryLicense("JUnit6Suites", libraryName = "JUnit6Suites", url = "https://junit.org/junit5/")
+    .eplV2("https://github.com/junit-team/junit5/blob/main/LICENSE.md"),
+
+  LibraryLicense("JUnit6Vintage", libraryName = "JUnit6Vintage", url = "https://junit.org/junit5/")
     .eplV2("https://github.com/junit-team/junit5/blob/main/LICENSE.md"),
 
   LibraryLicense(libraryName = "jzlib", url = "http://www.jcraft.com/jzlib/")

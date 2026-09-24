@@ -8,20 +8,20 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
-      <library name="JUnit5Params" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.junit.jupiter:junit-jupiter-params:5.14.4">
+      <library name="JUnit6Params" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.junit.jupiter:junit-jupiter-params:6.1.3">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.14.4/junit-jupiter-params-5.14.4.jar">
-              <sha256sum>28f2a8dab5b9d259b18fa6b0ba5a6f302cbc70dd875f42032ea9e3afea09a870</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar">
+              <sha256sum>05c51cedba2c06a9770707391e006cee825876937dea580b94a265ce145d4939</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.14.4/junit-jupiter-params-5.14.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.14.4/junit-jupiter-params-5.14.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

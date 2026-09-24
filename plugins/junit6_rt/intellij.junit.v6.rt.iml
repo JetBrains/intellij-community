@@ -7,8 +7,39 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.libraries.junit6" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.libraries.junit6.launcher" scope="PROVIDED" />
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="JUnit6Launcher.rt" type="repository">
+        <properties maven-id="org.junit.platform:junit-platform-launcher:6.0.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/6.0.0/junit-platform-launcher-6.0.0.jar">
+              <sha256sum>5f097b00c6714bb71ecfb5dec62b59bb4c2f789763fafd1ece96c4ef0e6c280f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/6.0.0/junit-platform-engine-6.0.0.jar">
+              <sha256sum>6f81842e9c13e997cac66b44614522f3639419e2388ae2d000c4bc0a6b92d93f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/6.0.0/junit-platform-commons-6.0.0.jar">
+              <sha256sum>86e8faf87f3151a3d545850852a0f2cc55ea8a2434eee9e08f83881c52d55992</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.apiguardian:apiguardian-api" />
+            <dependency maven-id="org.opentest4j:opentest4j" />
+            <dependency maven-id="org.jspecify:jspecify" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/6.0.0/junit-platform-launcher-6.0.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/6.0.0/junit-platform-engine-6.0.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/6.0.0/junit-platform-commons-6.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/6.0.0/junit-platform-launcher-6.0.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/6.0.0/junit-platform-engine-6.0.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/6.0.0/junit-platform-commons-6.0.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
     <orderEntry type="module" module-name="intellij.junit.v5.rt" />
   </component>
 </module>

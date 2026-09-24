@@ -10,7 +10,64 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.junit.rt" exported="" />
     <orderEntry type="module" module-name="intellij.java.rt" exported="" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="PROVIDED" />
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="JUnit5Launcher.rt" type="repository">
+        <properties maven-id="org.junit.platform:junit-platform-launcher:1.14.4">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.14.4/junit-platform-launcher-1.14.4.jar">
+              <sha256sum>768d62f1b2a523713b702db53609c230af62bbd645fc2c07a7d794df4da32228</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.14.4/junit-platform-engine-1.14.4.jar">
+              <sha256sum>3c7f3f84a6747aef0db6bd5fdd2a6c8fe37132e653c939bd67387377af66d91c</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.apiguardian:apiguardian-api" />
+            <dependency maven-id="org.opentest4j:opentest4j" />
+            <dependency maven-id="org.junit.platform:junit-platform-commons" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.14.4/junit-platform-launcher-1.14.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.14.4/junit-platform-engine-1.14.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.14.4/junit-platform-launcher-1.14.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.14.4/junit-platform-engine-1.14.4-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="JUnit5.rt" type="repository">
+        <properties maven-id="org.junit.jupiter:junit-jupiter-api:5.14.4">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.14.4/junit-jupiter-api-5.14.4.jar">
+              <sha256sum>aa1ae085fd92dfdbf85d867e60e59adc599bac183b46fc7e0698198bf426ad3f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar">
+              <sha256sum>48e2df636cab6563ced64dcdff8abb2355627cb236ef0bf37598682ddf742f1b</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.14.4/junit-platform-commons-1.14.4.jar">
+              <sha256sum>55c8a0c069ac1bc4e1f8bbb26b5eae95cbd10e4ff1b23248441ab61a607381e1</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.apiguardian:apiguardian-api" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.14.4/junit-jupiter-api-5.14.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.14.4/junit-platform-commons-1.14.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.14.4/junit-jupiter-api-5.14.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.14.4/junit-platform-commons-1.14.4-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

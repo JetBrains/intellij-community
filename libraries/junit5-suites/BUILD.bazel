@@ -13,10 +13,10 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-junit5-suites-_j_unit5_suites"],
+    exports = ["@lib//:libraries-junit5-suites-_j_unit6_suites"],
     runtime_deps = [
         # do not sort,
-        "@lib//:libraries-junit5-suites-_j_unit5_suites",
+        "@lib//:libraries-junit5-suites-_j_unit6_suites",
         "//libraries/junit5",
         "//libraries/junit5-launcher",
     ],
@@ -32,7 +32,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.junit5.suites",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-junit5-suites-_j_unit5_suites"],
+    exports = ["@lib//:libraries-junit5-suites-_j_unit6_suites"],
     runtime_deps = [
         # do not sort,
         ":junit5-suites",

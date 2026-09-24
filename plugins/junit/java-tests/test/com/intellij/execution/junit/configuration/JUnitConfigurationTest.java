@@ -806,7 +806,7 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
 
   private void createModuleWithJUnit5(VirtualFile moduleContent) {
     createModule(moduleContent, true, "JUnit5",
-                 IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit5", "JUnit5"));
+                 IntelliJProjectConfiguration.getModuleLibrary("intellij.junit.v5.rt", "JUnit5.rt"));
   }
 
   private static void addSourcePath(Module module, String path, boolean testSource) {
