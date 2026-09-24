@@ -10,6 +10,27 @@
       <option name="FONT_TYPE" value="2"/>
     </value>
   </option>
+  <option name="MARKDOWN_CODE_BLOCK">
+    <value>
+      <option name="FOREGROUND" value="A9B7C6"/>
+      <option name="BACKGROUND" value="3C3D3D"/>
+      <option name="FONT_TYPE" value="0"/>
+    </value>
+  </option>
+  <option name="MARKDOWN_CODE_FENCE">
+    <value>
+      <option name="FOREGROUND" value="A9B7C6"/>
+      <option name="BACKGROUND" value="3C3D3D"/>
+      <option name="FONT_TYPE" value="0"/>
+    </value>
+  </option>
+  <option name="MARKDOWN_CODE_SPAN">
+    <value>
+      <option name="FOREGROUND" value="A9B7C6"/>
+      <option name="BACKGROUND" value="3C3D3D"/>
+      <option name="FONT_TYPE" value="0"/>
+    </value>
+  </option>
   <option name="MARKDOWN_HEADER">
     <value>
       <option name="FOREGROUND" value="bbbbbb"/>

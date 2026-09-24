@@ -649,6 +649,27 @@
         <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
+    <option name="MARKDOWN_CODE_BLOCK">
+      <value>
+        <option name="FOREGROUND" value="BCBEC4" />
+        <option name="BACKGROUND" value="303235" />
+        <option name="FONT_TYPE" value="0" />
+      </value>
+    </option>
+    <option name="MARKDOWN_CODE_FENCE">
+      <value>
+        <option name="FOREGROUND" value="BCBEC4" />
+        <option name="BACKGROUND" value="303235" />
+        <option name="FONT_TYPE" value="0" />
+      </value>
+    </option>
+    <option name="MARKDOWN_CODE_SPAN">
+      <value>
+        <option name="FOREGROUND" value="BCBEC4" />
+        <option name="BACKGROUND" value="303235" />
+        <option name="FONT_TYPE" value="0" />
+      </value>
+    </option>
     <option name="MARKDOWN_IMAGE">
       <value />
     </option>

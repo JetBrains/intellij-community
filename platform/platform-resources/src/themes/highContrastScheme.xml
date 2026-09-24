@@ -684,6 +684,27 @@
         <option name="FOREGROUND" value="5ec9ff" />
       </value>
     </option>
+    <option name="MARKDOWN_CODE_BLOCK">
+      <value>
+        <option name="FOREGROUND" value="EBEBEB" />
+        <option name="BACKGROUND" value="262729" />
+        <option name="FONT_TYPE" value="0" />
+      </value>
+    </option>
+    <option name="MARKDOWN_CODE_FENCE">
+      <value>
+        <option name="FOREGROUND" value="EBEBEB" />
+        <option name="BACKGROUND" value="262729" />
+        <option name="FONT_TYPE" value="0" />
+      </value>
+    </option>
+    <option name="MARKDOWN_CODE_SPAN">
+      <value>
+        <option name="FOREGROUND" value="EBEBEB" />
+        <option name="BACKGROUND" value="262729" />
+        <option name="FONT_TYPE" value="0" />
+      </value>
+    </option>
     <option name="MARKED_FOR_REMOVAL_ATTRIBUTES">
       <value>
         <option name="EFFECT_COLOR" value="ff0d25" />
