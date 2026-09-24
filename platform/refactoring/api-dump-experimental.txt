@@ -4,6 +4,21 @@
 - a:getWeight(com.intellij.openapi.vfs.VirtualFile):I
 - a:searchDirectory(com.intellij.openapi.vfs.VirtualFile,com.intellij.find.FindModel,java.util.function.Consumer):V
 - a:searchNames(com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.util.function.Consumer):V
+*:com.intellij.find.DirectorySearchEngine$FileSearchCandidate
+- *sf:Companion:com.intellij.find.DirectorySearchEngine$FileSearchCandidate$Companion
+- *s:fromPath(java.nio.file.Path):com.intellij.find.DirectorySearchEngine$FileSearchCandidate$FromPath
+- *s:fromVirtualFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.find.DirectorySearchEngine$FileSearchCandidate$FromVirtualFile
+- a:getName():java.lang.String
+- a:resolveVirtualFile():com.intellij.openapi.vfs.VirtualFile
+*f:com.intellij.find.DirectorySearchEngine$FileSearchCandidate$Companion
+- f:fromPath(java.nio.file.Path):com.intellij.find.DirectorySearchEngine$FileSearchCandidate$FromPath
+- f:fromVirtualFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.find.DirectorySearchEngine$FileSearchCandidate$FromVirtualFile
+*:com.intellij.find.DirectorySearchEngine$FileSearchCandidate$FromPath
+- com.intellij.find.DirectorySearchEngine$FileSearchCandidate
+- a:getPath():java.nio.file.Path
+*:com.intellij.find.DirectorySearchEngine$FileSearchCandidate$FromVirtualFile
+- com.intellij.find.DirectorySearchEngine$FileSearchCandidate
+- a:getFile():com.intellij.openapi.vfs.VirtualFile
 *:com.intellij.find.FindInProjectSearchEngine
 - a:createSearcher(com.intellij.find.FindModel,com.intellij.openapi.project.Project):com.intellij.find.FindInProjectSearchEngine$FindInProjectSearcher
 *:com.intellij.find.FindInProjectSearchEngine$FindInProjectSearcher

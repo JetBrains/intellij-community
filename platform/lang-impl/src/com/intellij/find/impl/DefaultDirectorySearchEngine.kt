@@ -2,6 +2,7 @@
 package com.intellij.find.impl
 
 import com.intellij.find.DirectorySearchEngine
+import com.intellij.find.DirectorySearchEngine.FileSearchCandidate
 import com.intellij.find.FindModel
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.VirtualFile
@@ -24,7 +25,7 @@ internal class DefaultDirectorySearchEngine : DirectorySearchEngine {
     consumer.accept(directory.children.asList())
   }
 
-  override fun searchNames(directory: VirtualFile, pathPattern: String, consumer: Consumer<VirtualFile>) {
+  override fun searchNames(directory: VirtualFile, pathPattern: String, consumer: Consumer<FileSearchCandidate>) {
     thisLogger().error("This searcher cannot search names at the moment")
   }
 }

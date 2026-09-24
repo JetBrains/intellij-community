@@ -2,14 +2,17 @@
 package com.intellij.find.impl
 
 import com.intellij.find.DirectorySearchEngine
+import com.intellij.find.DirectorySearchEngine.FileSearchCandidate
 import com.intellij.find.FindInProjectSearchEngine
 import com.intellij.find.FindModel
 import com.intellij.find.FindModelExtension
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -21,6 +24,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.nio.file.Files
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
@@ -42,6 +46,31 @@ internal class DirectorySearchEngineTest {
   fun disableOtherSearchers() {
     ExtensionTestUtil.maskExtensions(FindInProjectSearchEngine.EP_NAME, emptyList(), disposable)
     ExtensionTestUtil.maskExtensions(FindModelExtension.EP_NAME, emptyList(), disposable)
+  }
+
+  @Test
+  fun `path candidate resolves without caching the file in VFS`() {
+    val path = Files.createFile(directoryPath.resolve("candidate.txt"))
+    val candidate = FileSearchCandidate.fromPath(path)
+
+    val file = requireNotNull(candidate.resolveVirtualFile())
+
+    assertThat(file).isInstanceOf(CacheAvoidingVirtualFile::class.java)
+    assertThat((file as CacheAvoidingVirtualFile).isCached).isFalse()
+    assertThat(candidate.resolveVirtualFile()).isSameAs(file)
+    assertThat(LocalFileSystem.getInstance().findFileByPathIfCached(path.toString())).isNull()
+  }
+
+  @Test
+  fun `virtual file candidate returns the supplied file while it is valid`(): Unit = timeoutRunBlocking {
+    val root = createFiles("candidate.txt")
+    val file = requireNotNull(root.findChild("candidate.txt"))
+    val candidate = FileSearchCandidate.fromVirtualFile(file)
+
+    assertThat(candidate.resolveVirtualFile()).isSameAs(file)
+
+    edtWriteAction { file.delete(this) }
+    assertThat(candidate.resolveVirtualFile()).isNull()
   }
 
   @Test
@@ -169,7 +198,7 @@ internal class DirectorySearchEngineTest {
         expand(directory, consumer)
       }
 
-      override fun searchNames(directory: VirtualFile, pathPattern: String, consumer: Consumer<VirtualFile>) {
+      override fun searchNames(directory: VirtualFile, pathPattern: String, consumer: Consumer<FileSearchCandidate>) {
         error("Name search is not supported.")
       }
     }

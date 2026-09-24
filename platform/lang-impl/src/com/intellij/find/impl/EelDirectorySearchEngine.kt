@@ -3,6 +3,7 @@ package com.intellij.find.impl
 
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.find.DirectorySearchEngine
+import com.intellij.find.DirectorySearchEngine.FileSearchCandidate
 import com.intellij.find.FindModel
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
@@ -100,7 +101,7 @@ class EelDirectorySearchEngine @VisibleForTesting constructor(private val edges:
     }
   }
 
-  override fun searchNames(directory: VirtualFile, pathPattern: String, consumer: Consumer<VirtualFile>) {
+  override fun searchNames(directory: VirtualFile, pathPattern: String, consumer: Consumer<FileSearchCandidate>) {
     LOG.error("This searcher cannot search names at the moment")
   }
 

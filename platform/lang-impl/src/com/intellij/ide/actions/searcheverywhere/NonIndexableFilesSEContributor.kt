@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.find.DirectorySearchEngine
+import com.intellij.find.DirectorySearchEngine.FileSearchCandidate
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.GotoActionBase
 import com.intellij.ide.actions.GotoFileItemProvider
@@ -20,6 +21,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.PathPrefixTree
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -52,6 +54,7 @@ import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.ListCellRenderer
@@ -200,7 +203,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
 
     // search everywhere has limit of entries it allows contibutor to contribute.
     // We want to send good matches first, and only send others later if didn't find enough
-    val suboptimalMatches = ConcurrentLinkedQueue<VirtualFile>()
+    val suboptimalMatches = ConcurrentLinkedQueue<FileSearchCandidate>()
 
     val hiddenTypes = hiddenTypes.load()
     val filterByType = VirtualFileFilter { file -> FileTypeRef.forFileType(file.fileType) !in hiddenTypes }
@@ -241,8 +244,8 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
           val toplevelProducerJob = launch(Dispatchers.IO.limitedParallelism(MAX_JOBS)) {
             ParallelQueueProcessor.createRunning(
               scope = this@launch, jobsNumber = MAX_JOBS, initialItems = state.roots, workerJobYieldTimeout = 50.milliseconds
-            ) processor@{ handle, item ->
-              fun processResult(file: VirtualFile) {
+            ) { handle, item ->
+              fun processResult(file: FileSearchCandidate) {
                 val pathFromNonIndexableRoot = state.getPathFromRoot(file)
                 if (pathFromNonIndexableRoot == null) {
                   LOG.warn("File $file that was yielded as a file under a non-indexable root didn't match any non-indexable roots; Continue search...")
@@ -277,7 +280,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
               if (!handled) {
                 val shouldProcessSelf = state.processItem(item, handle)
                 if (shouldProcessSelf) {
-                  processResult(item.file)
+                  processResult(FileSearchCandidate.fromVirtualFile(item.file))
                 }
               }
             }
@@ -288,13 +291,12 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
           }
 
           val consumerStopped = !state.collectResults { file, matchingDegree ->
+            if (!filter.accept(file)) return@collectResults true
+
             val psiItem = when {
               file.isDirectory -> psiManager.findDirectory(file)
               else -> psiManager.findFile(file)
             }
-
-            val accepted = filter.accept(file)
-            if (!accepted) return@collectResults true
 
             val itemDescriptor = FoundItemDescriptor<Any>(psiItem, matchingDegree)
             val consumed = consumer.process(itemDescriptor)
@@ -315,12 +317,13 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
               .build()
           }
 
-          for (file in suboptimalMatches) {
+          for (candidate in suboptimalMatches) {
             // binary search instead of linear?
             for (i in otherNameMatchers.indices) {
               val matcher = otherNameMatchers[i]
-              val matchingDegree = matcher.matchingDegree(file.name)
+              val matchingDegree = matcher.matchingDegree(candidate.name)
               if (matchingDegree > 0) {
+                val file = candidate.resolveVirtualFile() ?: break
                 val shouldBreak = readActionUndispatched {
                   // These locks slow the throughput less than the locks in the producerJob iteration
                   // because these are really just file leftovers
@@ -386,15 +389,16 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
 private class SearchJobsState {
   val roots: Collection<TraversalItem>
   private val pathFromRootResolver: PathFromRootResolver
-  private val resultsChannel: Channel<Pair<VirtualFile, Int>> = Channel(Channel.UNLIMITED)
+  private val resultsChannel: Channel<Pair<FileSearchCandidate, Int>> = Channel(Channel.UNLIMITED)
 
   constructor(traversal: ConcurrentFileTraversal) {
     this.roots = traversal.roots
     this.pathFromRootResolver = PathFromRootResolver(roots.map { it.file })
   }
 
-  fun getPathFromRoot(file: VirtualFile): String? {
-    return pathFromRootResolver.getPathFromRoot(file)
+  fun getPathFromRoot(file: FileSearchCandidate): String? = when (file) {
+    is FileSearchCandidate.FromPath -> pathFromRootResolver.getPathFromRoot(file.path)
+    is FileSearchCandidate.FromVirtualFile -> pathFromRootResolver.getPathFromRoot(file.file)
   }
 
   fun processItem(item: TraversalItem, handle: ParallelQueueProcessor<TraversalItem>): Boolean {
@@ -403,12 +407,13 @@ private class SearchJobsState {
     }
   }
 
-  fun emitResult(file: VirtualFile, score: Int) {
+  fun emitResult(file: FileSearchCandidate, score: Int) {
     resultsChannel.trySend(file to score)
   }
 
   suspend fun collectResults(@RequiresReadLock collector: (VirtualFile, Int) -> Boolean): Boolean {
-    for ((file, score) in resultsChannel) {
+    for ((candidate, score) in resultsChannel) {
+      val file = candidate.resolveVirtualFile() ?: continue
       // Sadly, read action :( SE is to blame
       if (!readActionUndispatched { collector(file, score) }) return false
     }
@@ -429,6 +434,22 @@ class PathFromRootResolver(roots: Collection<VirtualFile>) {
     allRoots.addAll(roots)
     outerRoots.addAll(allRoots.getRoots())
   }
+  private val nioRoots = PathPrefixTree.createMap<VirtualFile>().also { nioRoots ->
+    for (root in outerRoots.getRoots()) {
+      root.fileSystem.getNioPath(root)?.let { nioRoots[it] = root }
+    }
+  }
+
+  fun getPathFromRoot(path: Path): String? {
+    val ancestorRoots = nioRoots.getAncestorEntries(path)
+    if (ancestorRoots.isEmpty()) return null
+    if (ancestorRoots.size > 1) {
+      LOG.error("Path $path has multiple outer roots: $ancestorRoots")
+      return null
+    }
+    val (rootPath, root) = ancestorRoots.single()
+    return qualify(root.name, rootPath.relativize(path).joinToString("/"))
+  }
 
   fun getPathFromRoot(file: VirtualFile): String? {
     val ancestorRoots = outerRoots.getAncestors(file)
@@ -439,8 +460,11 @@ class PathFromRootResolver(roots: Collection<VirtualFile>) {
     }
     val root = ancestorRoots.single()
     val relativePath = VfsUtilCore.getRelativePath(file, root, '/') ?: return null
-    return if (relativePath.isEmpty()) root.name else "${root.name}/$relativePath"
+    return qualify(root.name, relativePath)
   }
+
+  private fun qualify(rootName: String, relativePath: String): String =
+    if (relativePath.isEmpty()) rootName else "$rootName/$relativePath"
 }
 
 // Implementation note:

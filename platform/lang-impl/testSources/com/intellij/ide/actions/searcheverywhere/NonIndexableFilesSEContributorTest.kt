@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.find.DirectorySearchEngine
+import com.intellij.find.DirectorySearchEngine.FileSearchCandidate
 import com.intellij.find.FindModel
 import com.intellij.ide.util.gotoByName.FileTypeRef
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
@@ -88,7 +89,7 @@ open class NonIndexableFilesSEContributorTest {
 
   private fun registerNameSearchEngine(
     getWeight: (VirtualFile) -> Int = { if (it.isDirectory) 1 else -1 },
-    searchNames: (VirtualFile, String, Consumer<VirtualFile>) -> Unit,
+    searchNames: (VirtualFile, String, Consumer<FileSearchCandidate>) -> Unit,
   ) {
     val engine = TestDirectorySearchEngine(getWeight, searchNames)
     ExtensionTestUtil.maskExtensions(DirectorySearchEngine.EP_NAME, listOf(engine), disposable)
@@ -105,7 +106,7 @@ open class NonIndexableFilesSEContributorTest {
     var receivedPattern: String? = null
     registerNameSearchEngine { _, pathPattern, consumer ->
       receivedPattern = pathPattern
-      consumer.accept(file)
+      consumer.accept(FileSearchCandidate.fromVirtualFile(file))
     }
 
     val names = searchNonIndexableFiles("sub\\fi*le").map { it.name }
@@ -125,13 +126,28 @@ open class NonIndexableFilesSEContributorTest {
     var receivedPattern: String? = null
     registerNameSearchEngine { _, pathPattern, consumer ->
       receivedPattern = pathPattern
-      consumer.accept(file)
+      consumer.accept(FileSearchCandidate.fromVirtualFile(file))
     }
 
     val names = searchNonIndexableFiles("file.txt:12").map { it.name }
 
     assertThat(receivedPattern).isEqualTo("file.txt")
     assertThat(names).containsExactly("file.txt")
+  }
+
+  @Test
+  fun `name search accepts a path without a cached virtual file`(): Unit = timeoutRunBlocking {
+    val root = baseDir.newVirtualDirectory("root")
+    workspaceModel.update { storage ->
+      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
+    }
+    VfsTestUtil.syncRefresh()
+    val path = Files.createFile(baseDir.rootPath.resolve("root/path-file.txt"))
+    registerNameSearchEngine { _, _, consumer -> consumer.accept(FileSearchCandidate.fromPath(path)) }
+
+    val names = searchNonIndexableFiles("path-file").map { it.name }
+
+    assertThat(names).containsExactly("path-file.txt")
   }
 
   @Test
@@ -145,8 +161,8 @@ open class NonIndexableFilesSEContributorTest {
     var searchCalls = 0
     registerNameSearchEngine { directory, _, consumer ->
       searchCalls++
-      consumer.accept(directory)
-      consumer.accept(file)
+      consumer.accept(FileSearchCandidate.fromVirtualFile(directory))
+      consumer.accept(FileSearchCandidate.fromVirtualFile(file))
     }
 
     val names = searchNonIndexableFiles("root").map { it.name }
@@ -166,7 +182,7 @@ open class NonIndexableFilesSEContributorTest {
       storage.addEntity(IndexingTestEntity(emptyList(), listOf(urlManager.storeAndGet(excluded.url)), NonPersistentEntitySource))
     }
     VfsTestUtil.syncRefresh()
-    registerNameSearchEngine { directory, _, consumer -> consumer.accept(directory) }
+    registerNameSearchEngine { directory, _, consumer -> consumer.accept(FileSearchCandidate.fromVirtualFile(directory)) }
 
     val names = searchNonIndexableFiles("outer/excluded/nested").map { it.name }
 
@@ -227,7 +243,7 @@ open class NonIndexableFilesSEContributorTest {
       }
       if (directory.path == healthyRoot.path) {
         healthyRootSearched.set(true)
-        consumer.accept(healthyFile)
+        consumer.accept(FileSearchCandidate.fromVirtualFile(healthyFile))
       }
     }
 
@@ -248,8 +264,8 @@ open class NonIndexableFilesSEContributorTest {
     }
     VfsTestUtil.syncRefresh()
     registerNameSearchEngine { _, _, consumer ->
-      consumer.accept(first)
-      consumer.accept(second)
+      consumer.accept(FileSearchCandidate.fromVirtualFile(first))
+      consumer.accept(FileSearchCandidate.fromVirtualFile(second))
     }
     val contributor = NonIndexableFilesSEContributor(createEvent(project))
     Disposer.register(disposable, contributor)
@@ -274,7 +290,7 @@ open class NonIndexableFilesSEContributorTest {
       storage.addEntity(IndexingTestEntity(emptyList(), listOf(urlManager.storeAndGet(excluded.url)), NonPersistentEntitySource))
     }
     VfsTestUtil.syncRefresh()
-    registerNameSearchEngine { _, _, consumer -> consumer.accept(hidden) }
+    registerNameSearchEngine { _, _, consumer -> consumer.accept(FileSearchCandidate.fromVirtualFile(hidden)) }
 
     assertThat(searchNonIndexableFiles("hidden-file")).isEmpty()
   }
@@ -552,7 +568,7 @@ open class NonIndexableFilesSEContributorTest {
 
 private class TestDirectorySearchEngine(
   private val weight: (VirtualFile) -> Int,
-  private val nameSearch: (VirtualFile, String, Consumer<VirtualFile>) -> Unit,
+  private val nameSearch: (VirtualFile, String, Consumer<FileSearchCandidate>) -> Unit,
 ) : DirectorySearchEngine {
   override fun canSearch(findModel: FindModel): Boolean = false
 
@@ -566,7 +582,7 @@ private class TestDirectorySearchEngine(
     consumer: Consumer<in Collection<VirtualFile>>,
   ) = error("Content search is not supported")
 
-  override fun searchNames(directory: VirtualFile, pathPattern: String, consumer: Consumer<VirtualFile>) {
+  override fun searchNames(directory: VirtualFile, pathPattern: String, consumer: Consumer<FileSearchCandidate>) {
     nameSearch(directory, pathPattern, consumer)
   }
 }

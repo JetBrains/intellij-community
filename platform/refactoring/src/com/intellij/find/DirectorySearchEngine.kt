@@ -2,9 +2,12 @@
 package com.intellij.find
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import java.util.function.Consumer
+import kotlin.io.path.name
 
 /**
  * Supplies files and directories for content and name searches.
@@ -56,7 +59,7 @@ interface DirectorySearchEngine {
 
   /**
    * Searches [directory] and its descendants for files and directories that may match [pathPattern].
-   * The engine can also send [directory] to [consumer].
+   * The engine can also send a candidate for [directory] to [consumer].
    *
    * [pathPattern] is a fuzzy path pattern without a leading or trailing slash.
    * It uses `/` as a path separator and can contain partial names, `*` wildcards, and spaces.
@@ -67,7 +70,37 @@ interface DirectorySearchEngine {
    * Send every possible match to [consumer]. The caller checks the results and accepts extra candidates.
    * All calls to [consumer] must finish before this method returns.
    */
-  fun searchNames(directory: VirtualFile, pathPattern: String, consumer: Consumer<VirtualFile>)
+  fun searchNames(directory: VirtualFile, pathPattern: String, consumer: Consumer<FileSearchCandidate>)
+
+  /** Holds a file or a path until the caller needs a [VirtualFile]. */
+  sealed interface FileSearchCandidate {
+    val name: String
+
+    /** Returns the file, or `null` if resolution fails. Resolve a path outside a read action. */
+    fun resolveVirtualFile(): VirtualFile?
+
+    /** A candidate supplied as a path. */
+    sealed interface FromPath : FileSearchCandidate {
+      val path: Path
+    }
+
+    /** A candidate supplied as a file. */
+    sealed interface FromVirtualFile : FileSearchCandidate {
+      val file: VirtualFile
+    }
+
+    companion object {
+      /** Stores [path] as an absolute path without resolving it in VFS. The path must use the default file system. */
+      @JvmStatic
+      fun fromPath(path: Path): FromPath {
+        return PathFileSearchCandidate(path)
+      }
+
+      /** Uses a file that the caller already has. */
+      @JvmStatic
+      fun fromVirtualFile(file: VirtualFile): FromVirtualFile = VirtualFileSearchCandidate(file)
+    }
+  }
 
   @ApiStatus.Internal
   companion object {
@@ -92,4 +125,26 @@ interface DirectorySearchEngine {
     @JvmField
     val EP_NAME: ExtensionPointName<DirectorySearchEngine> = ExtensionPointName.create("com.intellij.directorySearchEngine")
   }
+}
+
+private class PathFileSearchCandidate(override val path: Path) : DirectorySearchEngine.FileSearchCandidate.FromPath {
+  private var virtualFile: VirtualFile? = null
+  override val name: String = path.name
+
+  override fun resolveVirtualFile(): VirtualFile? {
+    virtualFile?.takeIf { it.isValid }?.let { return it }
+    return LocalFileSystem.getInstance().findFileByPathWithoutCaching(path.toString())
+      ?.takeIf { it.isValid }
+      .also { virtualFile = it }
+  }
+
+  override fun toString(): String = "FromPath(path=$path)"
+}
+
+private class VirtualFileSearchCandidate(override val file: VirtualFile) : DirectorySearchEngine.FileSearchCandidate.FromVirtualFile {
+  override val name: String get() = file.name
+
+  override fun resolveVirtualFile(): VirtualFile? = file.takeIf { it.isValid }
+
+  override fun toString(): String = "FromVirtualFile(file=$file)"
 }
