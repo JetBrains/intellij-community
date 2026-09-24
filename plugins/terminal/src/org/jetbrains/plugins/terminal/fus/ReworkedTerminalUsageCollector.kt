@@ -122,11 +122,6 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     TOTAL_DURATION_FIELD, DURATION_90_FIELD, THIRD_LARGEST_DURATION_FIELD, OS_VERSION_FIELD,
   )
 
-  private val frontendOutputLatencyEvent = GROUP.registerVarargEvent(
-    "frontend.output.latency",
-    TOTAL_DURATION_FIELD, DURATION_90_FIELD, THIRD_LARGEST_DURATION_FIELD, OS_VERSION_FIELD,
-  )
-
   private val backendTextBufferCollectionLatencyEvent = GROUP.registerVarargEvent(
     "backend.text.buffer.collection.latency",
     TOTAL_DURATION_FIELD, DURATION_90_FIELD, THIRD_LARGEST_DURATION_FIELD, TEXT_LENGTH_90_FIELD, OS_VERSION_FIELD,
@@ -134,11 +129,6 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
 
   private val backendDocumentUpdateLatencyEvent = GROUP.registerVarargEvent(
     "backend.document.update.latency",
-    TOTAL_DURATION_FIELD, DURATION_90_FIELD, THIRD_LARGEST_DURATION_FIELD, TEXT_LENGTH_90_FIELD, OS_VERSION_FIELD,
-  )
-
-  private val frontendDocumentUpdateLatencyEvent = GROUP.registerVarargEvent(
-    "frontend.document.update.latency",
     TOTAL_DURATION_FIELD, DURATION_90_FIELD, THIRD_LARGEST_DURATION_FIELD, TEXT_LENGTH_90_FIELD, OS_VERSION_FIELD,
   )
 
@@ -250,15 +240,6 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     )
   }
 
-  fun logFrontendOutputLatency(totalDuration: Duration, duration90: Duration, thirdLargestDuration: Duration) {
-    frontendOutputLatencyEvent.log(
-      TOTAL_DURATION_FIELD with totalDuration,
-      DURATION_90_FIELD with duration90,
-      THIRD_LARGEST_DURATION_FIELD with thirdLargestDuration,
-      OS_VERSION_FIELD with osVersion,
-    )
-  }
-
   fun logBackendTextBufferCollectionLatency(totalDuration: Duration, duration90: Duration, thirdLargestDuration: Duration, textLength90: Int) {
     backendTextBufferCollectionLatencyEvent.log(
       TOTAL_DURATION_FIELD with totalDuration,
@@ -271,16 +252,6 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
 
   fun logBackendDocumentUpdateLatency(totalDuration: Duration, duration90: Duration, thirdLargestDuration: Duration, textLength90: Int) {
     backendDocumentUpdateLatencyEvent.log(
-      TOTAL_DURATION_FIELD with totalDuration,
-      DURATION_90_FIELD with duration90,
-      THIRD_LARGEST_DURATION_FIELD with thirdLargestDuration,
-      TEXT_LENGTH_90_FIELD with textLength90,
-      OS_VERSION_FIELD with osVersion,
-    )
-  }
-
-  fun logFrontendDocumentUpdateLatency(totalDuration: Duration, duration90: Duration, thirdLargestDuration: Duration, textLength90: Int) {
-    frontendDocumentUpdateLatencyEvent.log(
       TOTAL_DURATION_FIELD with totalDuration,
       DURATION_90_FIELD with duration90,
       THIRD_LARGEST_DURATION_FIELD with thirdLargestDuration,
