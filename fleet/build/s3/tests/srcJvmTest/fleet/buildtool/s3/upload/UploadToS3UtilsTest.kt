@@ -5,7 +5,6 @@ import kotlinx.coroutines.test.runTest
 import org.slf4j.helpers.NOPLogger
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.bufferedReader
 import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
@@ -15,6 +14,7 @@ import kotlin.io.path.createTempFile
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 import kotlin.io.path.readText
+import kotlin.io.path.writeBytes
 import kotlin.io.path.writeText
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -269,6 +269,38 @@ class UploadToS3UtilsTest {
   }
 
   @Test
+  fun validate_existing_when_binary_content_differs_fails(): Unit = runTest {
+    // Given two binaries that are both invalid UTF-8, so a text-based hash cannot tell them apart
+    val bucket = "bucket"
+    val file = Files.createTempFile(tempDir, "file", ".bin").apply { writeBytes(byteArrayOf(0xFF.toByte())) }
+    val meta = S3UploadMetadata(
+      filepath = file,
+      s3Location = "key.bin",
+      shouldBeArchivedToTarZst = false,
+      failUploadIfAlreadyExistingInS3 = true,
+    )
+
+    storageDir.resolve(bucket).resolve(meta.s3Location)
+      .apply { parent.createDirectories() }
+      .writeBytes(byteArrayOf(0xFE.toByte()))
+
+    val client = FakeFleetS3Client(storageDir)
+
+    val ex = assertFailsWith<IllegalStateException> {
+      uploadToS3(
+        filesToUpload = listOf(meta),
+        client = client,
+        bucketName = bucket,
+        temporaryDir = tempDir,
+        dryRun = false,
+        logger = NOPLogger.NOP_LOGGER,
+        uploadSha = false,
+      )
+    }
+    assertTrue(ex.message?.contains("checksum does not match")!!)
+  }
+
+  @Test
   fun dry_run_never_calls_ops_and_logs_warning(): Unit = runTest {
     val bucket = "bucket"
     val file = tempFile("x")
@@ -397,8 +429,7 @@ private class FakeFleetS3Client(
   override suspend fun getObject(bucket: String, key: String, temporaryDir: Path): Path {
     calls += Call.Get(bucket, key, temporaryDir)
     val f = createTempFile(temporaryDir, "fake-s3-", "")
-    storageDir.resolve(bucket).resolve(key).bufferedReader()
-      .use { f.writeText(it.readText()) }
+    storageDir.resolve(bucket).resolve(key).copyTo(f, overwrite = true)
     return f
   }
 

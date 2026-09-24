@@ -2,7 +2,6 @@ package fleet.buildtool.s3.upload
 
 import fleet.buildtool.fs.ReproducibilityMode
 import fleet.buildtool.fs.ReproducibilityMode.Reproducible.PermissionOption.Preserve
-import fleet.buildtool.fs.readBytesForSha256
 import fleet.buildtool.fs.sha256
 import fleet.buildtool.fs.tarZst
 import org.slf4j.Logger
@@ -11,7 +10,6 @@ import kotlin.io.path.Path
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.readBytes
 import kotlin.io.path.writeText
 
 /**
@@ -94,8 +92,8 @@ private suspend fun validateAlreadyExisting(
       "File '$fileFromAws' does not exist after downloading from S3 bucket '$bucketName' under key '${uploadMetadata.s3Location}'"
     }
 
-    val fileToUploadSha256 = sha256(fileToUpload.readBytesForSha256())
-    val fileFromAwsSha256 = sha256(fileFromAws.readBytesForSha256())
+    val fileToUploadSha256 = fileToUpload.sha256()
+    val fileFromAwsSha256 = fileFromAws.sha256()
     fileFromAws.deleteExisting()
     when {
       fileFromAwsSha256 == fileToUploadSha256 ->
@@ -136,7 +134,7 @@ private suspend fun uploadSha256(
 ) {
   val s3LocationPath = Path(uploadMetadata.s3Location)
   val s3Sha256Location = "${s3LocationPath.invariantSeparatorsPathString}.sha256"
-  val sha256 = sha256(fileToUpload.readBytes())
+  val sha256 = fileToUpload.sha256()
   val sha256File = temporaryDir.resolve("${s3LocationPath.fileName}.sha256")
   sha256File.writeText("$sha256 *${s3LocationPath.fileName}")
   client.putObject(bucketName, s3Sha256Location, sha256File)

@@ -6,6 +6,7 @@ import java.nio.file.StandardCopyOption
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteRecursively
+import kotlin.io.path.writeBytes
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -39,6 +40,14 @@ class UtilsTest {
     assertEquals(expectedHash, sha256(resourceAsFile("example-abi-lf.txt").readBytesForSha256()), "LF line ending file must produce correct hash")
     assertEquals(expectedHash, sha256(resourceAsFile("example-abi-crlf.txt").readBytesForSha256()), "CRLF line ending file must produce correct hash")
     assertEquals(expectedHash, sha256(resourceAsFile("example-abi-cr.txt").readBytesForSha256()), "CR line ending file must produce correct hash")
+  }
+
+  @Test
+  fun `path sha256 should hash the raw bytes`() {
+    val file = tempDir.resolve("binary.bin")
+    val bytes = ByteArray(3 * DEFAULT_BUFFER_SIZE + 17) { it.toByte() }
+    file.writeBytes(bytes)
+    assertEquals(sha256(bytes), file.sha256())
   }
 
   private fun resourceAsFile(filename: String): Path {
