@@ -970,7 +970,7 @@ def dev_dist_complex_plugin(
         source_tree_prefixes: Repository-relative source prefix keyed by the source tree artifact ID.
         optional_source_trees: Source tree IDs that may have no files and then materialize as empty directories.
         independent_artifacts: The `content_module_jar` targets whose jar the plugin reuses.
-        tags: Tags for every target of every chain.
+        tags: Tags for every target of every chain. `manual` is added.
         visibility: The visibility of every component. Public by default, because the product's dist is in another
             package. The other targets of a chain keep the package default.
     """
@@ -1033,7 +1033,8 @@ def dev_dist_complex_plugin_variant(
     """Declares the execution chain of one complex plugin variant, every argument stated.
 
     `dev_dist_complex_plugin` derives these arguments; this form is for a test that pins one of them. A chain is four
-    targets: `<name>_graph`, `<name>_catalogue`, `<name>_remainder` and `<name>_component`. The `<name>_remainder` is a
+    `manual` targets: `<name>_graph`, `<name>_catalogue`, `<name>_remainder` and `<name>_component`. Only the consumer
+    of the component states the product, so no target of the chain builds on its own. The `<name>_remainder` is a
     `dev_plugin_remainder_from_plan`. Its Go action executes the operations from the plan file.
     `DEV_DIST_PLUGIN_COMPONENTS` names the component. The macro merges the declarations only. The actions and their
     cache policies stay separate.
@@ -1058,13 +1059,14 @@ def dev_dist_complex_plugin_variant(
         libraries: Library container targets mapped to stable library IDs.
         independent_artifacts: The `content_module_jar` targets whose jar the plugin reuses. Both rules read the jar
             and the module name from `ContentModuleJarInfo`; the module name is the artifact ID of the reused jar.
-        tags: Tags for every target of the chain.
+        tags: Tags for every target of the chain. `manual` is added.
         visibility: The visibility of `<name>_component`. The graph, the catalogue and the remainder keep the package
             default.
     """
     graph = name + "_graph"
     catalogue = name + "_catalogue"
     remainder = name + "_remainder"
+    tags = tags + ["manual"]
     dev_plugin_file_graph(
         name = graph,
         projection = projection,

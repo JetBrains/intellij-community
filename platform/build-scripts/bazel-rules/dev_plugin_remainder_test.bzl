@@ -493,8 +493,9 @@ _remainder_from_plan_test = analysistest.make(
 def _check_chain_shape(chain, component_visibility = ["//visibility:public"]):
     """Fails at load time when the targets of a chain differ from the one chain shape.
 
-    A chain has four targets: the graph, the catalogue, a `dev_plugin_remainder_from_plan` and the component. No chain
-    declares a preparation target. The component states `component_visibility`, public unless the call names another.
+    A chain has four targets: the graph, the catalogue, a `dev_plugin_remainder_from_plan` and the component. Each is
+    `manual`. No chain declares a preparation target. The component states `component_visibility`, public unless the
+    call names another.
     """
     expected = {
         "graph": "dev_plugin_file_graph",
@@ -507,6 +508,8 @@ def _check_chain_shape(chain, component_visibility = ["//visibility:public"]):
         rule = native.existing_rule(chain + "_" + suffix)
         if rule == None or rule["kind"] != kind:
             fail("chain %s declares %s_%s as %s; expected %s" % (chain, chain, suffix, rule["kind"] if rule else None, kind))
+        if "manual" not in rule.get("tags", []):
+            fail("chain %s declares %s_%s without the manual tag" % (chain, chain, suffix))
     if native.existing_rule(chain + "_preparation") != None:
         fail("chain %s declares a preparation target" % chain)
 
@@ -1039,7 +1042,6 @@ def dev_plugin_remainder_test_suite(name):
         execution_version = 1,
         platforms = derived_platforms,
         resource_inputs = {":" + name + "_derived_raw_{platform}": "raw"},
-        tags = ["manual"],
     )
     derived_tests = []
     for platform in derived_platforms:
