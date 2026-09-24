@@ -14,8 +14,8 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.tools.ide.performanceTesting.commands.SdkObject
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
-import org.junit.jupiter.api.assertNotNull
 
 object GradleJvmResolver {
 
@@ -72,9 +72,9 @@ object GradleJvmResolver {
     assertNotNull(sdk, "SDK should be added into the project jdk table")
     Disposer.register(parentDisposable, Disposable {
       WriteAction.computeAndWait(ThrowableComputable {
-        table.removeJdk(sdk)
+        table.removeJdk(sdk!!)
       })
     })
-    return sdk
+    return sdk!!
   }
 }

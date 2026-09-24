@@ -35,7 +35,7 @@ class EnvTestPythonProviderExtension : BeforeAllCallback {
     val rootContext = context.root
     val namespace = ExtensionContext.Namespace.create(EnvTestPythonProviderExtension::class.java)
     
-    rootContext.getStore(namespace).getOrComputeIfAbsent("provider") {
+    rootContext.getStore(namespace).computeIfAbsent("provider") {
       val factory = getOrCreatePyEnvironmentFactory(context)
       val provider = EnvTestPythonProvider(factory)
       val disposable = Disposer.newDisposable("EnvTestPythonProvider")

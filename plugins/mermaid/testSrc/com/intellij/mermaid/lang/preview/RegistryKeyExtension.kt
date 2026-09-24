@@ -12,11 +12,11 @@ internal open class RegistryKeyExtension(
   private val registryValue = Registry.get(key)
   private val previous = registryValue.asBoolean()
 
-  override fun beforeAll(context: ExtensionContext?) {
+  override fun beforeAll(context: ExtensionContext) {
     registryValue.setValue(value)
   }
 
-  override fun afterAll(context: ExtensionContext?) {
+  override fun afterAll(context: ExtensionContext) {
     registryValue.setValue(previous)
   }
 }

@@ -12,9 +12,9 @@ import java.lang.reflect.Method
 @TestOnly
 class UsePMarkerImplementationExtension : InvocationInterceptor {
   override fun interceptTestMethod(
-    invocation: InvocationInterceptor.Invocation<Void>,
+    invocation: InvocationInterceptor.Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
-    extensionContext: ExtensionContext?,
+    extensionContext: ExtensionContext,
   ) {
     val annotation = invocationContext.executable.getAnnotation(UsePMarkerImplementation::class.java)
                      ?: invocationContext.targetClass.getAnnotation(UsePMarkerImplementation::class.java)

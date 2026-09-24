@@ -12,7 +12,7 @@ import org.junit.platform.launcher.TestIdentifier
  */
 open class FreeSpacePrinter : TestExecutionListener {
 
-  override fun executionStarted(testIdentifier: TestIdentifier?) {
+  override fun executionStarted(testIdentifier: TestIdentifier) {
     if (testIdentifier?.isTest != true) {
       return
     }

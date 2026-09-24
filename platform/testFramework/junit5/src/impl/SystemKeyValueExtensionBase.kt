@@ -37,14 +37,14 @@ internal abstract class SystemKeyValueExtensionBase<DATA_HOLDER, ANNO : Annotati
   }
 
   override fun interceptBeforeAllMethod(
-    invocation: InvocationInterceptor.Invocation<Void>,
+    invocation: InvocationInterceptor.Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {
     intercept(invocation, invocationContext)
   }
 
-  override fun <T> interceptTestClassConstructor(
+  override fun <T : Any> interceptTestClassConstructor(
     invocation: InvocationInterceptor.Invocation<T>,
     invocationContext: ReflectiveInvocationContext<Constructor<T>>,
     extensionContext: ExtensionContext,
@@ -53,7 +53,7 @@ internal abstract class SystemKeyValueExtensionBase<DATA_HOLDER, ANNO : Annotati
   }
 
   override fun interceptBeforeEachMethod(
-    invocation: InvocationInterceptor.Invocation<Void>,
+    invocation: InvocationInterceptor.Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {
@@ -61,7 +61,7 @@ internal abstract class SystemKeyValueExtensionBase<DATA_HOLDER, ANNO : Annotati
   }
 
   override fun interceptTestMethod(
-    invocation: InvocationInterceptor.Invocation<Void>,
+    invocation: InvocationInterceptor.Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {
@@ -69,7 +69,7 @@ internal abstract class SystemKeyValueExtensionBase<DATA_HOLDER, ANNO : Annotati
   }
 
   override fun interceptTestTemplateMethod(
-    invocation: InvocationInterceptor.Invocation<Void>,
+    invocation: InvocationInterceptor.Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {
@@ -77,7 +77,7 @@ internal abstract class SystemKeyValueExtensionBase<DATA_HOLDER, ANNO : Annotati
   }
 
   override fun interceptAfterEachMethod(
-    invocation: InvocationInterceptor.Invocation<Void>,
+    invocation: InvocationInterceptor.Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {
@@ -85,7 +85,7 @@ internal abstract class SystemKeyValueExtensionBase<DATA_HOLDER, ANNO : Annotati
   }
 
   override fun interceptAfterAllMethod(
-    invocation: InvocationInterceptor.Invocation<Void>,
+    invocation: InvocationInterceptor.Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {

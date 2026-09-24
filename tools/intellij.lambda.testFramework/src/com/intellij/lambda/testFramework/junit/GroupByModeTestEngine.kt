@@ -256,8 +256,9 @@ class GroupByModeTestEngine : TestEngine {
         freshJupiterDescriptor,
         translatingListener,
         configParams,
-        originalExecutionRequest.outputDirectoryProvider,
-        originalExecutionRequest.store
+        originalExecutionRequest.outputDirectoryCreator,
+        originalExecutionRequest.store,
+        originalExecutionRequest.cancellationToken,
       )
 
       jupiterEngine.execute(executionRequest)

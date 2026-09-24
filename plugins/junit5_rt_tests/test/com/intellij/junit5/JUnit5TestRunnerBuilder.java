@@ -15,6 +15,7 @@ import org.junit.platform.engine.reporting.OutputDirectoryProvider;
 import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.AbstractTestDescriptor;
 import org.junit.platform.engine.support.descriptor.EngineDescriptor;
+import org.junit.platform.engine.support.discovery.DiscoveryIssueReporter;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 
@@ -43,13 +44,8 @@ public class JUnit5TestRunnerBuilder {
     }
 
     @Override
-    public <T> Optional<T> get(String key, Function<String, T> transformer) {
+    public <T> Optional<T> get(String key, Function<? super String, ? extends T> transformer) {
       return ConfigurationParameters.super.get(key, transformer);
-    }
-
-    @Override
-    public int size() {
-      return 0;
     }
 
     @Override
@@ -188,7 +184,7 @@ public class JUnit5TestRunnerBuilder {
   }
 
   public static DefaultJupiterConfiguration createJupiterConfiguration() {
-    return new DefaultJupiterConfiguration(EMPTY_PARAMETER, EMPTY_OUTPUT_DIRECTORY_PROVIDER);
+    return new DefaultJupiterConfiguration(EMPTY_PARAMETER, EMPTY_OUTPUT_DIRECTORY_PROVIDER, DiscoveryIssueReporter.consuming(issue -> {}));
   }
 
   /**

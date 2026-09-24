@@ -116,7 +116,7 @@ private class KotlinPluginUnitTestInvocationContext(
 ) : TestTemplateInvocationContext {
     override fun getDisplayName(invocationIndex: Int): String = "Project resolver"
 
-    override fun getAdditionalExtensions(): List<Extension?> =
+    override fun getAdditionalExtensions(): List<Extension> =
         listOf(
             LightJavaCodeInsightTestFixtureExtension5()
         )
@@ -141,7 +141,7 @@ private class LightJavaCodeInsightTestFixtureExtension5 : BeforeEachCallback, Af
     }
 
     private fun ExtensionContext.getTestCaseWrapper(): LightJavaCodeInsightFixtureTestCaseWrapper {
-        return getStore(namespace).getOrComputeIfAbsent(LightJavaCodeInsightFixtureTestCaseWrapper::class.java.name) {
+        return getStore(namespace).computeIfAbsent(LightJavaCodeInsightFixtureTestCaseWrapper::class.java.name) {
             LightJavaCodeInsightFixtureTestCaseWrapper()
         } as LightJavaCodeInsightFixtureTestCaseWrapper
     }

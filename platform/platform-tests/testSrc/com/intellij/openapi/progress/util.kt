@@ -174,7 +174,7 @@ internal suspend fun <X> childCallable(cs: CoroutineScope, action: () -> X): Cal
   return callable
 }
 
-inline fun <reified T> assertInstanceOf(instance: Any?): T {
+inline fun <reified T : Any> assertInstanceOf(instance: Any?): T {
   return assertInstanceOf(T::class.java, instance)
 }
 

@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
+import org.junit.platform.commons.util.Preconditions
 import java.io.Serializable
 import java.lang.reflect.Method
 
@@ -20,28 +21,28 @@ import java.lang.reflect.Method
 open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
   override fun interceptTestTemplateMethod(
     invocation: InvocationInterceptor.Invocation<Void?>,
-    invocationContext: ReflectiveInvocationContext<Method?>,
-    extensionContext: ExtensionContext?,
+    invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext,
   ) {
     intercept<Void?>(invocation, invocationContext)
   }
 
   override fun interceptTestMethod(
-    invocation: InvocationInterceptor.Invocation<Void?>, invocationContext: ReflectiveInvocationContext<Method?>,
-    extensionContext: ExtensionContext?,
+    invocation: InvocationInterceptor.Invocation<Void?>, invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext,
   ) {
     intercept<Void?>(invocation, invocationContext)
   }
 
   override fun <T> interceptTestFactoryMethod(
-    invocation: InvocationInterceptor.Invocation<T?>, invocationContext: ReflectiveInvocationContext<Method?>,
+    invocation: InvocationInterceptor.Invocation<T>, invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
-  ): T? {
-    return intercept<T?>(invocation, invocationContext)
+  ): T {
+    return Preconditions.notNull(intercept(invocation, invocationContext), "@TestFactory is not supported in split mode by ${javaClass.name}")
   }
 
-  private fun <T> intercept(invocation: InvocationInterceptor.Invocation<T?>, invocationContext: ReflectiveInvocationContext<Method?>): T? {
-    val fullMethodName = "${invocationContext.targetClass.name}.${invocationContext.executable?.name}"
+  private fun <T> intercept(invocation: InvocationInterceptor.Invocation<T>, invocationContext: ReflectiveInvocationContext<Method>): T? {
+    val fullMethodName = "${invocationContext.targetClass.name}.${invocationContext.executable.name}"
 
     logOutput("Executing test method \"$fullMethodName\" inside IDE in mode ${IdeInstance.currentIdeMode} with arguments: ${
       argumentsToString(invocationContext.arguments)
@@ -60,7 +61,7 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
       IdeInstance.ide.runNamedLambda(LambdaRdTestActionParameters(
         reference = InjectedLambda::class.java.canonicalName,
         testClass = invocationContext.targetClass.name ?: "",
-        testMethod = invocationContext.executable?.name ?: "",
+        testMethod = invocationContext.executable.name,
         methodArgumentssBase64 = invocationContext.arguments.map {
           SerializedLambdaHelper().serialize(it as? Serializable
                                              ?: error("Cannot serialize argument: $it of type ${it::class.simpleName}"))

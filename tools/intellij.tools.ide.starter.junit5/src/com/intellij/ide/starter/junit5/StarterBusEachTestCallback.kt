@@ -9,7 +9,7 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 
 class StarterBusEachTestCallback : BeforeEachCallback, AfterEachCallback {
-  override fun beforeEach(context: ExtensionContext?) {
+  override fun beforeEach(context: ExtensionContext) {
     if (isServerRunning.get()) return
     try {
       EventsBus.startServerProcess()
@@ -19,7 +19,7 @@ class StarterBusEachTestCallback : BeforeEachCallback, AfterEachCallback {
     }
   }
 
-  override fun afterEach(context: ExtensionContext?) {
+  override fun afterEach(context: ExtensionContext) {
     if (ConfigurationStorage.afterEachMessageBusCleanup()) {
       EventsBus.unsubscribeAll()
     }

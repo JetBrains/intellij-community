@@ -69,10 +69,10 @@ private class AllFilesInFolderTestCaseProvider : TestTemplateInvocationContextPr
     return true
   }
 
-  override fun provideTestTemplateInvocationContexts(context: ExtensionContext): Stream<TestTemplateInvocationContext?>? {
+  override fun provideTestTemplateInvocationContexts(context: ExtensionContext): Stream<TestTemplateInvocationContext> {
     val testFolderPath = getTestFolderPath(context)
 
-    val folderTest = context.testMethod?.getOrNull()?.getAnnotation(FolderTest::class.java)
+    val folderTest = context.testMethod.getOrNull()?.getAnnotation(FolderTest::class.java)
                      ?: error("there is no ${FolderTest::class.java} annotation, can't get file name pattern")
     val fileNamePattern = folderTest.fileNameFilter.toRegex()
 
@@ -81,7 +81,7 @@ private class AllFilesInFolderTestCaseProvider : TestTemplateInvocationContextPr
       context.setTestCaseFilePath(path)
 
       object : TestTemplateInvocationContext {
-        override fun getDisplayName(invocationIndex: Int): String? {
+        override fun getDisplayName(invocationIndex: Int): String {
           return "[$invocationIndex] ${filePath.fileName}"
         }
       }

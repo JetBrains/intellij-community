@@ -64,13 +64,13 @@ public class IconScaleTest extends BasePlatformTestCase {
     // This thing is designed for JUnit 5, so we call it explicitly.
     // Even though it implements BeforeAllCallback, we call it before every test.
     // This is actually a good thing: this way the tests don't interfere with each other.
-    manageState.beforeAll(null);
+    manageState.saveScale();
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      manageState.afterAll(null);
+      manageState.restoreScale();
     }
     catch (Throwable e) {
       addSuppressedException(e);

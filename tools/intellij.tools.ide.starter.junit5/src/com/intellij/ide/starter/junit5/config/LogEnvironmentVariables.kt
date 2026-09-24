@@ -16,5 +16,5 @@ open class LogEnvironmentVariables : BeforeAllCallback, BeforeEachCallback {
 
   override fun beforeEach(context: ExtensionContext) = configure()
 
-  override fun beforeAll(context: ExtensionContext?) = configure()
+  override fun beforeAll(context: ExtensionContext) = configure()
 }

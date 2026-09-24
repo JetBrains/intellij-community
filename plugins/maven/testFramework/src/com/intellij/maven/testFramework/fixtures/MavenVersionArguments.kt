@@ -65,7 +65,7 @@ object MavenTestVersions {
  * ```
  */
 class MavenVersionArguments : ArgumentsProvider {
-  override fun provideArguments(parameters: ParameterDeclarations?, context: ExtensionContext?): Stream<out Arguments?> {
+  override fun provideArguments(parameters: ParameterDeclarations, context: ExtensionContext): Stream<out Arguments> {
     return MavenTestVersions.versionsToRun().map { Arguments.of(it.first, it.second) }.stream()
   }
 }

@@ -12,13 +12,21 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.rules.ExternalResource
 
 class RestoreScaleExtension : BeforeAllCallback, AfterAllCallback {
-  override fun beforeAll(context: ExtensionContext?) {
+  override fun beforeAll(context: ExtensionContext) {
+    saveScale()
+  }
+
+  fun saveScale() {
     LoadingState.setCurrentState(LoadingState.APP_STARTED)
     IconLoader.activate()
     TestScaleHelper.setState()
   }
 
-  override fun afterAll(context: ExtensionContext?) {
+  override fun afterAll(context: ExtensionContext) {
+    restoreScale()
+  }
+
+  fun restoreScale() {
     IconLoader.deactivate()
     TestScaleHelper.restoreState()
   }
@@ -27,11 +35,11 @@ class RestoreScaleExtension : BeforeAllCallback, AfterAllCallback {
 class DisableSvgCache : BeforeAllCallback, AfterAllCallback {
   private val oldValue = System.getProperty("idea.ui.icons.svg.disk.cache")
 
-  override fun beforeAll(context: ExtensionContext?) {
+  override fun beforeAll(context: ExtensionContext) {
     System.setProperty("idea.ui.icons.svg.disk.cache", "false")
   }
 
-  override fun afterAll(context: ExtensionContext?) {
+  override fun afterAll(context: ExtensionContext) {
     if (oldValue == null) {
       System.clearProperty("idea.ui.icons.svg.disk.cache")
     }

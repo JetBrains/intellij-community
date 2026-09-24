@@ -84,21 +84,21 @@ internal class TestFixtureExtension : BeforeAllCallback,
     }
   }
 
-  override fun <T> interceptTestClassConstructor(
-    invocation: InvocationInterceptor.Invocation<T?>?,
+  override fun <T : Any> interceptTestClassConstructor(
+    invocation: InvocationInterceptor.Invocation<T>,
     invocationContext: ReflectiveInvocationContext<Constructor<T>>,
     extensionContext: ExtensionContext,
-  ): T? {
+  ): T {
     val instance = super.interceptTestClassConstructor(invocation, invocationContext, extensionContext)
     val eelForFixturesProvider = extensionContext.getEelForParametrizedTestProvider()
-    if (eelForFixturesProvider != null && instance != null) {
+    if (eelForFixturesProvider != null) {
       extensionContext.computeIfAbsent(ctorEelsKey) { CtorEels() }[instance] = CtorEel(eelForFixturesProvider.getEel(invocationContext))
     }
     return instance
   }
 
   override fun interceptTestTemplateMethod(
-    invocation: InvocationInterceptor.Invocation<Void>,
+    invocation: InvocationInterceptor.Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {

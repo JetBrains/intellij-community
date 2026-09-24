@@ -216,7 +216,7 @@ private fun generateName(fileName: String): String {
 }
 
 class TemporaryDirectoryExtension : TemporaryDirectory(), BeforeEachCallback, AfterEachCallback {
-  override fun afterEach(context: ExtensionContext?) {
+  override fun afterEach(context: ExtensionContext) {
     after()
   }
 

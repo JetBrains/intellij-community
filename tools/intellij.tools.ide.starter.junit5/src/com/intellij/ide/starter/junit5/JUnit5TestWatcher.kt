@@ -18,12 +18,12 @@ class JUnit5TestWatcher(private val testContextGetter: () -> IDETestContext?) : 
     ?: logError(MISSING_CONTEXT_LOG_MESSAGE)
   }
 
-  override fun testSuccessful(context: ExtensionContext?) {
+  override fun testSuccessful(context: ExtensionContext) {
     callOrLog(testContextGetter(), ::callOnFinishedActions)
     super.testSuccessful(context)
   }
 
-  override fun testFailed(context: ExtensionContext?, cause: Throwable?) {
+  override fun testFailed(context: ExtensionContext, cause: Throwable?) {
     callOrLog(testContextGetter()) {
       watcherActions.onFailureActions.forEach { action -> action(it) }
       callOnFinishedActions(it)

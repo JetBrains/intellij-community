@@ -26,7 +26,7 @@ internal class PythonSdkExtension : ParameterResolver, AfterAllCallback {
   }
 
   override fun resolveParameter(parameterContext: ParameterContext, extensionContext: ExtensionContext): Sdk {
-    return extensionContext.getStore(namespace).getOrComputeIfAbsent(sdkKey, {
+    return extensionContext.getStore(namespace).computeIfAbsent(sdkKey, {
       createSdk(extensionContext)
     }, Sdk::class.java)
   }
@@ -40,6 +40,6 @@ internal class PythonSdkExtension : ParameterResolver, AfterAllCallback {
   }
 
   override fun afterAll(context: ExtensionContext) {
-    context.getStore(namespace)?.remove(sdkKey)
+    context.getStore(namespace).remove(sdkKey)
   }
 }

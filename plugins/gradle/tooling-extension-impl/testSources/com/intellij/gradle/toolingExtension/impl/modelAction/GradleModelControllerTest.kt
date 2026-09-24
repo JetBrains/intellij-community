@@ -22,7 +22,7 @@ import org.gradle.tooling.model.internal.ImmutableDomainObjectSet
 import java.io.File
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -264,7 +264,7 @@ class GradleModelControllerTest(val isResilientSyncEnabled: Boolean) {
       true -> modelRequest.execute(modelConsumer)
       else -> when (isResilientSyncEnabled) {
         true -> modelRequest.execute(modelConsumer)
-        else -> assertThrows<TestModelFetchException> {
+        else -> assertThrows(TestModelFetchException::class.java) {
           modelRequest.execute(modelConsumer)
         }
       }
@@ -320,7 +320,7 @@ class GradleModelControllerTest(val isResilientSyncEnabled: Boolean) {
       true -> modelRequest.execute(modelConsumer)
       else -> when (isResilientSyncEnabled) {
         true -> modelRequest.execute(modelConsumer)
-        else -> assertThrows<UnknownModelException> {
+        else -> assertThrows(UnknownModelException::class.java) {
           modelRequest.execute(modelConsumer)
         }
       }
@@ -376,7 +376,7 @@ class GradleModelControllerTest(val isResilientSyncEnabled: Boolean) {
 
     when (isResilientSyncEnabled) {
       true -> modelRequest.execute(modelConsumer)
-      else -> assertThrows<TestModelFetchException> {
+      else -> assertThrows(TestModelFetchException::class.java) {
         modelRequest.execute(modelConsumer)
       }
     }
@@ -423,7 +423,7 @@ class GradleModelControllerTest(val isResilientSyncEnabled: Boolean) {
 
     when (isResilientSyncEnabled) {
       true -> modelRequest.execute(modelConsumer)
-      else -> assertThrows<TestModelFetchException> {
+      else -> assertThrows(TestModelFetchException::class.java) {
         modelRequest.execute(modelConsumer)
       }
     }

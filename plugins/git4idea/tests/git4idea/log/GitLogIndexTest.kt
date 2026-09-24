@@ -58,7 +58,7 @@ internal class GitLogIndexTest(val testType: String, val useSqlite: Boolean) {
 
   companion object {
     private class TestArgumentsProvider : ArgumentsProvider {
-      override fun provideArguments(parameters: ParameterDeclarations?, context: ExtensionContext?): Stream<Arguments?> = Stream.of(
+      override fun provideArguments(parameters: ParameterDeclarations, context: ExtensionContext): Stream<Arguments> = Stream.of(
         Arguments.of("GitLogSqliteIndexTest", true),
         Arguments.of("GitLogPhmIndexTest", false)
       )

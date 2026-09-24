@@ -13,7 +13,7 @@ internal abstract class AbstractInvocationInterceptor : InvocationInterceptor {
 
   abstract fun <T> intercept(invocation: Invocation<T>, context: ExtensionContext): T
 
-  override fun <T : Any?> interceptTestClassConstructor(invocation: Invocation<T>, invocationContext: ReflectiveInvocationContext<Constructor<T>>, extensionContext: ExtensionContext): T? {
+  override fun <T : Any> interceptTestClassConstructor(invocation: Invocation<T>, invocationContext: ReflectiveInvocationContext<Constructor<T>>, extensionContext: ExtensionContext): T {
     return intercept(invocation, extensionContext)
   }
 
@@ -29,7 +29,7 @@ internal abstract class AbstractInvocationInterceptor : InvocationInterceptor {
     intercept(invocation, extensionContext)
   }
 
-  override fun <T : Any?> interceptTestFactoryMethod(invocation: Invocation<T>, invocationContext: ReflectiveInvocationContext<Method>, extensionContext: ExtensionContext): T? {
+  override fun <T : Any?> interceptTestFactoryMethod(invocation: Invocation<T>, invocationContext: ReflectiveInvocationContext<Method>, extensionContext: ExtensionContext): T {
     return intercept(invocation, extensionContext)
   }
 

@@ -23,7 +23,7 @@ internal class TestLoggerExtension : BeforeTestExecutionCallback, TestWatcher {
     TestLoggerFactory.onTestFinished(true, context.uniqueId)
   }
 
-  override fun testDisabled(context: ExtensionContext, reason: Optional<String>?) {
+  override fun testDisabled(context: ExtensionContext, reason: Optional<String>) {
     TestLoggerFactory.onTestFinished(true, context.uniqueId)
   }
 

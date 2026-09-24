@@ -12,7 +12,7 @@ import java.lang.reflect.Method
 
 class LogTestName : InvocationInterceptor {
   override fun interceptTestTemplateMethod(
-    invocation: InvocationInterceptor.Invocation<Void>,
+    invocation: InvocationInterceptor.Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {
@@ -20,7 +20,7 @@ class LogTestName : InvocationInterceptor {
   }
 
   override fun interceptTestMethod(
-    invocation: InvocationInterceptor.Invocation<Void>,
+    invocation: InvocationInterceptor.Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {
@@ -29,14 +29,14 @@ class LogTestName : InvocationInterceptor {
 
 
   override fun interceptDynamicTest(
-    invocation: InvocationInterceptor.Invocation<Void>,
+    invocation: InvocationInterceptor.Invocation<Void?>,
     invocationContext: DynamicTestInvocationContext,
     extensionContext: ExtensionContext,
   ) {
     runTest(extensionContext, invocation)
   }
 
-  private fun runTest(extensionContext: ExtensionContext, invocation: InvocationInterceptor.Invocation<Void>) {
+  private fun runTest(extensionContext: ExtensionContext, invocation: InvocationInterceptor.Invocation<Void?>) {
     val logger = getLogger(extensionContext)
     val displayName =
       generateSequence(extensionContext) { it.parent.orNull() }

@@ -40,7 +40,7 @@ class TypedStoreKey<T : Any>(private val dataType: Class<T>) {
       getStore(namespace).put(key, data)
 
     fun <T : Any> ExtensionContext.computeIfAbsent(namespace: Namespace, key: TypedStoreKey<T>, create: () -> T): T =
-      getStore(namespace).getOrComputeIfAbsent(key, { create() }, key.dataType)
+      getStore(namespace).computeIfAbsent(key, { create() }, key.dataType)
 
     fun <T : Any> ExtensionContext.remove(namespace: Namespace, key: TypedStoreKey<T>): T? =
       getStore(namespace).remove(key, key.dataType)
@@ -62,7 +62,7 @@ class TypedStoreKey<T : Any>(private val dataType: Class<T>) {
     @ApiStatus.ScheduledForRemoval
     @Deprecated("Use ExtensionContext#computeIfAbsent with TypedStoreKey instead")
     fun <T : Any> Store.computeIfAbsentTyped(key: TypedStoreKey<T>, create: () -> T): T =
-      getOrComputeIfAbsent(key, { create() }, key.dataType)
+      computeIfAbsent(key, { create() }, key.dataType)
   }
 }
 

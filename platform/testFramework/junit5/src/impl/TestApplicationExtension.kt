@@ -44,7 +44,7 @@ class TestApplicationExtension : BeforeAllCallback, AfterEachCallback {
 @TestOnly
 fun ExtensionContext.testApplication(): Result<Unit> {
   val store = root.getStore(ExtensionContext.Namespace.GLOBAL)
-  val resource = store.getOrComputeIfAbsent("application") {
+  val resource = store.computeIfAbsent("application") {
     TestApplicationResource(initTestApplication())
   } as TestApplicationResource
   return resource.initializationResult

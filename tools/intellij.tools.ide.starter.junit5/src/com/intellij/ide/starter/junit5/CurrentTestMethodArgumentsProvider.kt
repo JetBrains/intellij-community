@@ -17,35 +17,35 @@ import java.lang.reflect.Method
 open class CurrentTestMethodArgumentsProvider : InvocationInterceptor {
   override fun interceptTestTemplateMethod(
     invocation: InvocationInterceptor.Invocation<Void?>,
-    invocationContext: ReflectiveInvocationContext<Method?>,
-    extensionContext: ExtensionContext?,
+    invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext,
   ) {
     intercept<Void?>(invocation, invocationContext)
   }
 
   override fun interceptTestMethod(
-    invocation: InvocationInterceptor.Invocation<Void?>, invocationContext: ReflectiveInvocationContext<Method?>,
-    extensionContext: ExtensionContext?,
+    invocation: InvocationInterceptor.Invocation<Void?>, invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext,
   ) {
     intercept<Void?>(invocation, invocationContext)
   }
 
   override fun <T> interceptTestFactoryMethod(
-    invocation: InvocationInterceptor.Invocation<T?>, invocationContext: ReflectiveInvocationContext<Method?>,
-    extensionContext: ExtensionContext?,
-  ): T? {
-    return intercept<T?>(invocation, invocationContext)
+    invocation: InvocationInterceptor.Invocation<T>, invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext,
+  ): T {
+    return intercept(invocation, invocationContext)
   }
 
   override fun interceptBeforeEachMethod(
     invocation: InvocationInterceptor.Invocation<Void?>,
-    invocationContext: ReflectiveInvocationContext<Method?>,
-    extensionContext: ExtensionContext?,
+    invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext,
   ) {
     intercept<Void?>(invocation, invocationContext)
   }
 
-  private fun <T> intercept(invocation: InvocationInterceptor.Invocation<T?>, invocationContext: ReflectiveInvocationContext<Method?>): T? {
+  private fun <T> intercept(invocation: InvocationInterceptor.Invocation<T>, invocationContext: ReflectiveInvocationContext<Method>): T {
     // filter well-known JUnit5 arguments types that don't hold actual test params
     di.direct.instance<CurrentTestMethod>().get()?.arguments = invocationContext.arguments.filterNot { it is TestInfo || it is TestReporter }
 

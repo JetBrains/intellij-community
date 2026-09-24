@@ -7,9 +7,9 @@
 package com.intellij.tests.bazel;
 
 import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
-import org.junit.platform.launcher.listeners.LegacyReportingUtils;
 import org.opentest4j.AssertionFailedError;
 import org.opentest4j.MultipleFailuresError;
 import org.opentest4j.ValueWrapper;
@@ -74,7 +74,7 @@ class TestCaseXmlRenderer {
 
     xml.writeStartElement("testcase");
     xml.writeAttribute("name", escapeIllegalCharacters(name));
-    xml.writeAttribute("classname", LegacyReportingUtils.getClassName(testPlan, id));
+    xml.writeAttribute("classname", getClassName(testPlan, id));
 
     /* @Nullable */ Duration maybeDuration = test.getDuration();
     boolean wasInterrupted = maybeDuration == null;
@@ -107,6 +107,17 @@ class TestCaseXmlRenderer {
     writeTextElement(xml, "system-err", test.getStdErr());
 
     xml.writeEndElement();
+  }
+
+  // same as `org.junit.platform.launcher.listeners.LegacyReportingUtils.getClassName` from JUnit 5
+  static String getClassName(TestPlan testPlan, TestIdentifier testIdentifier) {
+    for (TestIdentifier current = testIdentifier; current != null; current = testPlan.getParent(current).orElse(null)) {
+      ClassSource source = current.getSource().filter(ClassSource.class::isInstance).map(ClassSource.class::cast).orElse(null);
+      if (source != null) {
+        return source.getClassName();
+      }
+    }
+    return testPlan.getParent(testIdentifier).map(TestIdentifier::getLegacyReportingName).orElse("<unrooted>");
   }
 
   private void writeThrowableMessage(XMLStreamWriter xml, TestExecutionResult result)

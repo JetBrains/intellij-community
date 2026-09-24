@@ -70,7 +70,7 @@ class RunOnEnvironmentsExtension : TestTemplateInvocationContextProvider, ClassT
       }.orNull()
 
     private fun getOrCreatePythonEnvironment(context: ExtensionContext, spec: PyEnvironmentSpec<*>): PyEnvironment {
-      return context.getStore(namespace).getOrComputeIfAbsent(envKey, {
+      return context.getStore(namespace).computeIfAbsent(envKey, {
         createPythonEnvironment(context, spec)
       }, PyEnvironment::class.java)
     }

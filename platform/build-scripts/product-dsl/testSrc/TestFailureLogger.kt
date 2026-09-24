@@ -25,7 +25,7 @@ class TestFailureLogger : TestWatcher {
     private var clearedInThisRun = false
   }
 
-  override fun testFailed(context: ExtensionContext, cause: Throwable) {
+  override fun testFailed(context: ExtensionContext, cause: Throwable?) {
     val logDir = System.getenv("TEST_FAILURE_LOG") ?: return
     val logFile = Path.of(logDir).resolve("product-dsl-test-failures.log")
 
@@ -43,10 +43,10 @@ class TestFailureLogger : TestWatcher {
       appendLine("Class: ${context.testClass.map { it.name }.orElse("unknown")}")
       appendLine("Method: ${context.testMethod.map { it.name }.orElse("unknown")}")
       appendLine()
-      appendLine("Message: ${cause.message}")
+      appendLine("Message: ${cause?.message}")
       appendLine()
       appendLine("Stack trace:")
-      appendLine(cause.stackTraceToString())
+      appendLine(cause?.stackTraceToString() ?: "<no cause>")
       appendLine()
       appendLine("=".repeat(60))
       appendLine()

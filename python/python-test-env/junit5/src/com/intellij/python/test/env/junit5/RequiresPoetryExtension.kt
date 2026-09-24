@@ -42,7 +42,7 @@ class RequiresPoetryExtension : BeforeAllCallback, BeforeEachCallback {
   
   private fun configurePoetry(context: ExtensionContext) {
     val store = context.getStore(namespace)
-    val poetryEnv = store.getOrComputeIfAbsent(POETRY_ENV_KEY, {
+    val poetryEnv = store.computeIfAbsent(POETRY_ENV_KEY, {
       createPoetryEnvironment(context)
     }, PyEnvironment::class.java)
     

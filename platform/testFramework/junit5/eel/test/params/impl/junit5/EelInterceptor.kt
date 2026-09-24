@@ -78,7 +78,7 @@ internal class EelInterceptor : InvocationInterceptor, BeforeAllCallback, Before
   }
 
   override fun interceptTestTemplateMethod(
-    invocation: InvocationInterceptor.Invocation<Void>,
+    invocation: InvocationInterceptor.Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {

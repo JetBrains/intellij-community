@@ -14,11 +14,11 @@ import org.gradle.api.Project
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertNull
-import org.junit.jupiter.api.assertThrows
 
 class GradleReflectionUtilTest {
 
@@ -109,11 +109,11 @@ class GradleReflectionUtilTest {
     assertNotNull(getMethod(GetMethodTestObject::class.java, "publicMethodWithFewArguments", String::class.java, Long::class.java))
     assertNotNull(getMethod(GetMethodTestObject::class.java, "parentClassMethod"))
 
-    assertThrows<IllegalStateException> { getMethod(GetMethodTestObject::class.java, "publicMethod2") }
-    assertThrows<IllegalStateException> { getMethod(GetMethodTestObject::class.java, "publicMethodWithFewArguments", String::class.java, Int::class.java) }
-    assertThrows<IllegalStateException> { getMethod(GetMethodTestObject::class.java, "protectedMethod") }
-    assertThrows<IllegalStateException> { getMethod(GetMethodTestObject::class.java, "privateMethod") }
-    assertThrows<IllegalStateException> { getMethod(GetMethodTestObject::class.java, "parentClassPrivateMethod") }
+    assertThrows(IllegalStateException::class.java) { getMethod(GetMethodTestObject::class.java, "publicMethod2") }
+    assertThrows(IllegalStateException::class.java) { getMethod(GetMethodTestObject::class.java, "publicMethodWithFewArguments", String::class.java, Int::class.java) }
+    assertThrows(IllegalStateException::class.java) { getMethod(GetMethodTestObject::class.java, "protectedMethod") }
+    assertThrows(IllegalStateException::class.java) { getMethod(GetMethodTestObject::class.java, "privateMethod") }
+    assertThrows(IllegalStateException::class.java) { getMethod(GetMethodTestObject::class.java, "parentClassPrivateMethod") }
   }
 
   @Test
@@ -138,18 +138,18 @@ class GradleReflectionUtilTest {
   fun testGetValue() {
     val target = GetValueTestObject()
     assertEquals("Solved", getValue(target, "problemSolver", String::class.java))
-    assertThrows<IllegalStateException> { getValue(target, "problemSolver", Int::class.java) }
-    assertThrows<IllegalStateException> { getValue(target, "privateMethod", Int::class.java) }
+    assertThrows(IllegalStateException::class.java) { getValue(target, "problemSolver", Int::class.java) }
+    assertThrows(IllegalStateException::class.java) { getValue(target, "privateMethod", Int::class.java) }
   }
 
   @Test
   fun testGetPrivateValue() {
     val target = GetValueTestObject()
     assertEquals("Solved", getPrivateValue(target, "problemSolver", String::class.java))
-    assertThrows<IllegalStateException> { getPrivateValue(target, "problemSolver", Int::class.java) }
+    assertThrows(IllegalStateException::class.java) { getPrivateValue(target, "problemSolver", Int::class.java) }
 
     assertEquals(42, getPrivateValue(target, "privateMethod", Integer::class.java))
-    assertThrows<IllegalStateException> { getPrivateValue(target, "privateMethod", String::class.java) }
+    assertThrows(IllegalStateException::class.java) { getPrivateValue(target, "privateMethod", String::class.java) }
   }
 
   @Test
@@ -163,7 +163,7 @@ class GradleReflectionUtilTest {
   @Test
   fun testSetPrivateValue() {
     val target = SetValueTestObject()
-    assertThrows<IllegalStateException> { setValue(target, "privateSetter", String::class.java, "Hello") }
+    assertThrows(IllegalStateException::class.java) { setValue(target, "privateSetter", String::class.java, "Hello") }
   }
 
   @Test
@@ -186,6 +186,6 @@ class GradleReflectionUtilTest {
   @Test
   fun testGetGradleClass() {
     assertSame(Project::class.java, getGradleClass("org.gradle.api.Project"))
-    assertThrows<IllegalStateException> { getGradleClass("org.example.something.something.Hello") }
+    assertThrows(IllegalStateException::class.java) { getGradleClass("org.example.something.something.Hello") }
   }
 }

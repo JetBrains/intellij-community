@@ -8,7 +8,7 @@ import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 
 internal class AndroidSdkExtension : AfterEachCallback {
-    override fun afterEach(context: ExtensionContext?) {
+    override fun afterEach(context: ExtensionContext) {
         invokeAndWaitIfNeeded {
             runWriteAction {
                 val sdkTable = ProjectJdkTable.getInstance()

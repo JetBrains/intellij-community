@@ -10,6 +10,8 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.platform.engine.TestSource
 import org.junit.platform.engine.support.descriptor.MethodSource
 import org.junit.platform.launcher.TestIdentifier
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder
+import org.junit.platform.launcher.core.LauncherFactory
 import org.mockito.Mockito.doReturn
 import org.mockito.Mockito.mock
 import java.util.Optional
@@ -55,7 +57,8 @@ class CurrentTestMethodProviderTest {
   fun `starting a test plan opens a new generation`() {
     val before = CurrentTestPlan.generation
 
-    CurrentTestMethodProvider().testPlanExecutionStarted(null)
+    val emptyTestPlan = LauncherFactory.create().discover(LauncherDiscoveryRequestBuilder.request().build())
+    CurrentTestMethodProvider().testPlanExecutionStarted(emptyTestPlan)
 
     CurrentTestPlan.generation shouldBe before + 1
   }

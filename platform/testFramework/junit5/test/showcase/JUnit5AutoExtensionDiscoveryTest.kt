@@ -28,7 +28,7 @@ class JUnit5AutoExtensionDiscoveryTest {
         private set
     }
 
-    override fun beforeAll(context: ExtensionContext?) {
+    override fun beforeAll(context: ExtensionContext) {
       wasLoaded = true
     }
   }

@@ -5,7 +5,7 @@ import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 
 class StarterBusAllTestCallback : AfterAllCallback {
-  override fun afterAll(context: ExtensionContext?) {
+  override fun afterAll(context: ExtensionContext) {
     EventsBus.unsubscribeAll()
   }
 }

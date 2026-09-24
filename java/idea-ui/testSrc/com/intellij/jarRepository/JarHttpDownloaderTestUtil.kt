@@ -32,7 +32,7 @@ object JarHttpDownloaderTestUtil {
     val log: String
       get() = logBuffer.toString()
 
-    override fun beforeEach(context: ExtensionContext?) {
+    override fun beforeEach(context: ExtensionContext) {
       server = embeddedServer(CIO, host = LOCALHOST, port = 0) {
         install(createApplicationPlugin(name = "Log calls") {
           on(ResponseSent) { call ->
@@ -43,7 +43,7 @@ object JarHttpDownloaderTestUtil {
       init(server)
     }
 
-    override fun afterEach(context: ExtensionContext?) {
+    override fun afterEach(context: ExtensionContext) {
       server.stop(0)
     }
   }

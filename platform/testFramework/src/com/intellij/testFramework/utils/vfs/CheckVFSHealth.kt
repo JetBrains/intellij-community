@@ -50,13 +50,13 @@ private constructor(private val checkBeforeEach: Boolean = false,
     }
   }
 
-  override fun beforeAll(context: ExtensionContext?) = if (checkBeforeAll) checkVFS(context!!) else Unit
+  override fun beforeAll(context: ExtensionContext) = if (checkBeforeAll) checkVFS(context!!) else Unit
 
-  override fun afterAll(context: ExtensionContext?) = if (checkAfterAll) checkVFS(context!!) else Unit
+  override fun afterAll(context: ExtensionContext) = if (checkAfterAll) checkVFS(context!!) else Unit
 
-  override fun beforeEach(context: ExtensionContext?) = if (checkBeforeEach) checkVFS(context!!) else Unit
+  override fun beforeEach(context: ExtensionContext) = if (checkBeforeEach) checkVFS(context!!) else Unit
 
-  override fun afterEach(context: ExtensionContext?) = if (checkAfterEach) checkVFS(context!!) else Unit
+  override fun afterEach(context: ExtensionContext) = if (checkAfterEach) checkVFS(context!!) else Unit
 
   @Suppress("TestOnlyProblems")
   companion object {

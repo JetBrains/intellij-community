@@ -49,12 +49,12 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.RegisterExtension
 
 class SuspendIndexingExtension : BeforeAllCallback, AfterAllCallback {
-  override fun beforeAll(context: ExtensionContext?) {
+  override fun beforeAll(context: ExtensionContext) {
     System.setProperty("idea.suspend.indexes.initialization", "true")
     IndexingTestUtil.forceSkipWaiting = true
   }
 
-  override fun afterAll(context: ExtensionContext?) {
+  override fun afterAll(context: ExtensionContext) {
     System.setProperty("idea.suspend.indexes.initialization", "false")
     IndexingTestUtil.forceSkipWaiting = false
   }

@@ -23,7 +23,7 @@ fun getOrCreatePyEnvironmentFactory(context: ExtensionContext): PyEnvironmentFac
   val rootContext = context.root
   val namespace = ExtensionContext.Namespace.create(PythonFactoryExtension::class.java)
   return rootContext.getStore(namespace)
-    .getOrComputeIfAbsent("pyEnvironmentFactory", 
+    .computeIfAbsent("pyEnvironmentFactory", 
       { createPyEnvironmentFactory() }, 
       PyEnvironmentFactory::class.java)
 }

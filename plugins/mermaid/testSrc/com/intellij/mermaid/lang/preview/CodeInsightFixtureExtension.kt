@@ -12,11 +12,11 @@ class CodeInsightFixtureExtension(private val projectName: String): BeforeEachCa
   val fixture: CodeInsightTestFixture
     get() = fixtureInstance!!
 
-  override fun beforeEach(context: ExtensionContext?) {
+  override fun beforeEach(context: ExtensionContext) {
     fixtureInstance = createFixture()
   }
 
-  override fun afterEach(context: ExtensionContext?) {
+  override fun afterEach(context: ExtensionContext) {
     fixtureInstance!!.tearDown()
     fixtureInstance = null
   }

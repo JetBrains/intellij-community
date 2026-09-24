@@ -20,14 +20,14 @@ import kotlin.jvm.optionals.getOrNull
 internal class EdtInterceptorExtension : InvocationInterceptor {
 
   override fun interceptBeforeAllMethod(
-    invocation: Invocation<Void>,
+    invocation: Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {
     intercept(invocation, invocationContext)
   }
 
-  override fun <T> interceptTestClassConstructor(
+  override fun <T : Any> interceptTestClassConstructor(
     invocation: Invocation<T>,
     invocationContext: ReflectiveInvocationContext<Constructor<T>>,
     extensionContext: ExtensionContext,
@@ -36,7 +36,7 @@ internal class EdtInterceptorExtension : InvocationInterceptor {
   }
 
   override fun interceptBeforeEachMethod(
-    invocation: Invocation<Void>,
+    invocation: Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {
@@ -44,7 +44,7 @@ internal class EdtInterceptorExtension : InvocationInterceptor {
   }
 
   override fun interceptTestMethod(
-    invocation: Invocation<Void>,
+    invocation: Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {
@@ -52,7 +52,7 @@ internal class EdtInterceptorExtension : InvocationInterceptor {
   }
 
   override fun interceptTestTemplateMethod(
-    invocation: Invocation<Void>,
+    invocation: Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {
@@ -76,7 +76,7 @@ internal class EdtInterceptorExtension : InvocationInterceptor {
   }
 
   override fun interceptDynamicTest(
-    invocation: Invocation<Void>,
+    invocation: Invocation<Void?>,
     invocationContext: DynamicTestInvocationContext,
     extensionContext: ExtensionContext,
   ) {
@@ -90,7 +90,7 @@ internal class EdtInterceptorExtension : InvocationInterceptor {
   }
 
   override fun interceptAfterEachMethod(
-    invocation: Invocation<Void>,
+    invocation: Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {
@@ -98,7 +98,7 @@ internal class EdtInterceptorExtension : InvocationInterceptor {
   }
 
   override fun interceptAfterAllMethod(
-    invocation: Invocation<Void>,
+    invocation: Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {

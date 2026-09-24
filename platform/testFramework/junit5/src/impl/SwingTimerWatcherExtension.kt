@@ -9,7 +9,7 @@ import org.junit.jupiter.api.extension.ExtensionContext
 @TestOnly
 internal class SwingTimerWatcherExtension : AfterEachCallback {
 
-  override fun afterEach(context: ExtensionContext?) {
+  override fun afterEach(context: ExtensionContext) {
     checkJavaSwingTimersAreDisposed()
   }
 }

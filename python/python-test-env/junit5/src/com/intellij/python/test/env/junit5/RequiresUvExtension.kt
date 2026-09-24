@@ -14,6 +14,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.platform.commons.util.Preconditions
 import org.opentest4j.TestAbortedException
 import java.util.ResourceBundle
 import kotlin.io.path.pathString
@@ -46,8 +47,8 @@ class RequiresUvExtension : BeforeAllCallback, BeforeEachCallback {
   
   private fun configurePoetry(context: ExtensionContext) {
     val store = context.getStore(namespace)
-    val uvEnv = store.getOrComputeIfAbsent(UV_ENV_KEY, {
-      createUvEnvironment(context).unwrap()
+    val uvEnv = store.computeIfAbsent(UV_ENV_KEY, {
+      Preconditions.notNull(createUvEnvironment(context).unwrap<UvPyEnvironment>(), "uv environment is not available")
     }, UvPyEnvironment::class.java)
     
     UvPyTool.getInstance().setCustomExecutablePath(localEel.descriptor, uvEnv.uvExecutable)

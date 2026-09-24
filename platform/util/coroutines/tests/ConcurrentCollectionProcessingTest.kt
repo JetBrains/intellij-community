@@ -176,7 +176,7 @@ class ConcurrentCollectionProcessingTest {
 
   private class ConcurrencyArguments : ArgumentsProvider {
 
-    override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> = sequence {
+    override fun provideArguments(context: ExtensionContext): Stream<out Arguments> = sequence {
       // concurrency == 1 (sequential branch)
       for (workload in arrayOf(0, 1, 10, 100)) {
         for (parallelism in arrayOf(1, 8, 16, 32)) {

@@ -31,7 +31,7 @@ open class CurrentTestMethodProvider : TestExecutionListener, BeforeEachCallback
    * every plan. Without this boundary the second plan reads as an invalid lifecycle transition and fails every test
    * whose id was already seen.
    */
-  override fun testPlanExecutionStarted(testPlan: TestPlan?) {
+  override fun testPlanExecutionStarted(testPlan: TestPlan) {
     CurrentTestPlan.beginNew()
   }
 
@@ -40,7 +40,7 @@ open class CurrentTestMethodProvider : TestExecutionListener, BeforeEachCallback
    * `Launcher.execute`, and the runner's TeamCity listener is one of the latter. Its `testStarted` message has not been
    * printed yet, so metadata reported for this test would still attach to the previous one: only remember the method.
    */
-  override fun executionStarted(testIdentifier: TestIdentifier?) {
+  override fun executionStarted(testIdentifier: TestIdentifier) {
     if (testIdentifier?.isTest != true) {
       return
     }
@@ -66,7 +66,7 @@ open class CurrentTestMethodProvider : TestExecutionListener, BeforeEachCallback
     di.direct.instance<CurrentTestMethod>().publishToListeners()
   }
 
-  override fun executionFinished(testIdentifier: TestIdentifier?, testExecutionResult: TestExecutionResult?) {
+  override fun executionFinished(testIdentifier: TestIdentifier, testExecutionResult: TestExecutionResult) {
     if (testIdentifier?.isTest == true) {
       di.direct.instance<CurrentTestMethod>().set(null)
     }

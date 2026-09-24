@@ -70,7 +70,7 @@ internal class TestUncaughtExceptionHandler : Thread.UncaughtExceptionHandler {
      */
     @TestOnly
     fun getOrInstall(context: ExtensionContext): TestUncaughtExceptionHandler {
-      val installed = context.root.getStore(GLOBAL).getOrComputeIfAbsent(
+      val installed = context.root.getStore(GLOBAL).computeIfAbsent(
         InstalledHandler::class.java,
         { InstalledHandler() },
         InstalledHandler::class.java,

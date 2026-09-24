@@ -10,7 +10,7 @@ open class StarterBusTestPlanListener : TestExecutionListener {
     val isServerRunning = AtomicBoolean(false)
   }
 
-  override fun testPlanExecutionStarted(testPlan: TestPlan?) {
+  override fun testPlanExecutionStarted(testPlan: TestPlan) {
     try {
       EventsBus.startServerProcess()
       isServerRunning.set(true)
@@ -21,7 +21,7 @@ open class StarterBusTestPlanListener : TestExecutionListener {
     super.testPlanExecutionStarted(testPlan)
   }
 
-  override fun testPlanExecutionFinished(testPlan: TestPlan?) {
+  override fun testPlanExecutionFinished(testPlan: TestPlan) {
     try {
       if (isServerRunning.get()) {
         EventsBus.endServerProcess()

@@ -19,7 +19,7 @@ class ShutdownListener : ExecutionCondition {
     }, "Shutdown-indicator"))
   }
 
-  override fun evaluateExecutionCondition(context: ExtensionContext?): ConditionEvaluationResult? {
+  override fun evaluateExecutionCondition(context: ExtensionContext): ConditionEvaluationResult {
     return if (shuttingDown) {
       val message = "Execution of '${context?.displayName}' cannot begin because shutdown is in progress, see AT-2253"
       logOutput(message)

@@ -32,7 +32,7 @@ import kotlin.streams.asStream
 class OverflowSemaphoreTest {
 
   private class PreconditionsArguments : ArgumentsProvider {
-    override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> = sequence {
+    override fun provideArguments(context: ExtensionContext): Stream<out Arguments> = sequence {
       for (overflow in BufferOverflow.values()) {
         for (concurrency in arrayOf(-1, 0)) {
           yield(Arguments.of(overflow, concurrency))
@@ -50,7 +50,7 @@ class OverflowSemaphoreTest {
   }
 
   private class RethrowArguments : ArgumentsProvider {
-    override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> = sequence {
+    override fun provideArguments(context: ExtensionContext): Stream<out Arguments> = sequence {
       for (overflow in BufferOverflow.values()) {
         for (concurrency in arrayOf(1, 2)) {
           yield(Arguments.of(overflow, concurrency))
@@ -75,7 +75,7 @@ class OverflowSemaphoreTest {
   }
 
   private class ConcurrencyArguments : ArgumentsProvider {
-    override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> = sequence {
+    override fun provideArguments(context: ExtensionContext): Stream<out Arguments> = sequence {
       for (overflow in BufferOverflow.values()) {
         for (concurrency in arrayOf(1, 10, 100)) {
           yield(Arguments.of(overflow, concurrency))

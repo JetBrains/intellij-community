@@ -47,7 +47,7 @@ class JUnit5NestedFixtureTest {
   }
 
   private class Params : ArgumentsProvider {
-    override fun provideArguments(parameters: ParameterDeclarations?, context: ExtensionContext?): Stream<out Arguments?>? {
+    override fun provideArguments(parameters: ParameterDeclarations, context: ExtensionContext): Stream<out Arguments> {
       return Stream.of(Arguments.of(1))
     }
   }

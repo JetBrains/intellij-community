@@ -369,7 +369,7 @@ class RpcRestartPrefixConditionTest {
   // Helper methods
   // ============================================================================
 
-  private inline fun <reified T> assertSerializedDescriptor(rpc: RpcRestartPrefixCondition): T {
+  private inline fun <reified T : Any> assertSerializedDescriptor(rpc: RpcRestartPrefixCondition): T {
     assertInstanceOf(RpcRestartPrefixCondition.Serialized::class.java, rpc,
                      "Expected RpcRestartPrefixCondition.Serialized but got ${rpc::class.simpleName}")
     val serialized = rpc as RpcRestartPrefixCondition.Serialized

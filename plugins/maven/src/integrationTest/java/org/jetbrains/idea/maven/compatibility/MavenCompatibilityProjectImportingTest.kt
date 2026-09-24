@@ -51,7 +51,7 @@ private val MAVEN_VERSIONS = listOf(
 )
 
 internal class MavenCompatibilityVersions : ArgumentsProvider {
-  override fun provideArguments(parameters: ParameterDeclarations?, context: ExtensionContext?): Stream<out Arguments?> {
+  override fun provideArguments(parameters: ParameterDeclarations, context: ExtensionContext): Stream<out Arguments> {
     return MAVEN_VERSIONS.flatMap { version ->
       if (version.startsWith("4.")) {
         listOf(

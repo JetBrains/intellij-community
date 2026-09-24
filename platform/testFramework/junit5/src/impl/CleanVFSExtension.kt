@@ -26,13 +26,13 @@ private constructor(private val cleanBeforeEach: Boolean = false,
     }
   }
 
-  override fun beforeAll(context: ExtensionContext?) = if (cleanBeforeAll) cleanVFS(context!!) else Unit
+  override fun beforeAll(context: ExtensionContext) = if (cleanBeforeAll) cleanVFS(context!!) else Unit
 
-  override fun afterAll(context: ExtensionContext?) = if (cleanAfterAll) cleanVFS(context!!) else Unit
+  override fun afterAll(context: ExtensionContext) = if (cleanAfterAll) cleanVFS(context!!) else Unit
 
-  override fun beforeEach(context: ExtensionContext?) = if (cleanBeforeEach) cleanVFS(context!!) else Unit
+  override fun beforeEach(context: ExtensionContext) = if (cleanBeforeEach) cleanVFS(context!!) else Unit
 
-  override fun afterEach(context: ExtensionContext?) = if (cleanAfterEach) cleanVFS(context!!) else Unit
+  override fun afterEach(context: ExtensionContext) = if (cleanAfterEach) cleanVFS(context!!) else Unit
 
   @Suppress("TestOnlyProblems")
   companion object {

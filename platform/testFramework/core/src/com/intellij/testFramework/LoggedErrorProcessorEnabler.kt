@@ -9,7 +9,7 @@ import java.lang.reflect.Method
 
 interface LoggedErrorProcessorEnabler : InvocationInterceptor {
   override fun interceptTestTemplateMethod(
-    invocation: InvocationInterceptor.Invocation<Void>,
+    invocation: InvocationInterceptor.Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {
@@ -17,7 +17,7 @@ interface LoggedErrorProcessorEnabler : InvocationInterceptor {
   }
 
   override fun interceptTestMethod(
-    invocation: InvocationInterceptor.Invocation<Void>,
+    invocation: InvocationInterceptor.Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {
@@ -26,7 +26,7 @@ interface LoggedErrorProcessorEnabler : InvocationInterceptor {
 
 
   override fun interceptDynamicTest(
-    invocation: InvocationInterceptor.Invocation<Void>,
+    invocation: InvocationInterceptor.Invocation<Void?>,
     invocationContext: DynamicTestInvocationContext,
     extensionContext: ExtensionContext,
   ) {

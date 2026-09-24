@@ -5,6 +5,9 @@ import com.intellij.ide.starter.junit5.JUnit5TestWatcher.Companion.MISSING_CONTE
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.api.extension.RegisterExtension
 import org.mockito.Mockito
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
@@ -18,6 +21,15 @@ class JUnit5TestWatcherTest {
   }
 
   private fun mockContext(): IDETestContext = Mockito.mock(IDETestContext::class.java)
+
+  class CurrentContext : BeforeEachCallback {
+    lateinit var current: ExtensionContext
+    override fun beforeEach(context: ExtensionContext) { current = context }
+  }
+
+  @RegisterExtension
+  @JvmField
+  val junitContext = CurrentContext()
 
   private fun captureStderr(block: () -> Unit): String {
     val original = System.err
@@ -40,7 +52,7 @@ class JUnit5TestWatcherTest {
       watcherActions.addOnFinishedAction { invoked.add(it) }
     }
 
-    watcher.testSuccessful(null)
+    watcher.testSuccessful(junitContext.current)
 
     invoked.shouldContainExactly(context)
   }
@@ -54,7 +66,7 @@ class JUnit5TestWatcherTest {
       watcherActions.addOnFinishedAction { calls.add(SECOND_ACTION) }
     }
 
-    watcher.testSuccessful(null)
+    watcher.testSuccessful(junitContext.current)
 
     calls.shouldContainExactly(FIRST_ACTION, SECOND_ACTION)
   }
@@ -66,7 +78,7 @@ class JUnit5TestWatcherTest {
       watcherActions.addOnFinishedAction { invoked = true }
     }
 
-    val stderr = captureStderr { watcher.testSuccessful(null) }
+    val stderr = captureStderr { watcher.testSuccessful(junitContext.current) }
 
     invoked.shouldBe(false)
     stderr.contains(MISSING_CONTEXT_LOG_MESSAGE).shouldBe(true)
@@ -81,7 +93,7 @@ class JUnit5TestWatcherTest {
       watcherActions.addOnFinishedAction { calls.add(FINISHED_ACTION) }
     }
 
-    watcher.testFailed(null, RuntimeException("boom"))
+    watcher.testFailed(junitContext.current, RuntimeException("boom"))
 
     calls.shouldContainExactly(FAILURE_ACTION, FINISHED_ACTION)
   }
@@ -95,7 +107,7 @@ class JUnit5TestWatcherTest {
       watcherActions.addOnFinishedAction { received.add(it) }
     }
 
-    watcher.testFailed(null, null)
+    watcher.testFailed(junitContext.current, null)
 
     received.shouldContainExactly(context, context)
   }
@@ -109,7 +121,7 @@ class JUnit5TestWatcherTest {
       watcherActions.addOnFinishedAction { finishedInvoked = true }
     }
 
-    val stderr = captureStderr { watcher.testFailed(null, RuntimeException("boom")) }
+    val stderr = captureStderr { watcher.testFailed(junitContext.current, RuntimeException("boom")) }
 
     failureInvoked.shouldBe(false)
     finishedInvoked.shouldBe(false)
@@ -126,9 +138,9 @@ class JUnit5TestWatcherTest {
       watcherActions.addOnFinishedAction { received.add(it) }
     }
 
-    watcher.testSuccessful(null)
+    watcher.testSuccessful(junitContext.current)
     current = second
-    watcher.testSuccessful(null)
+    watcher.testSuccessful(junitContext.current)
 
     received.shouldContainExactly(first, second)
   }
