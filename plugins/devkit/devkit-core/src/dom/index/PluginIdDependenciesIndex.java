@@ -183,8 +183,15 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
   }
 
   public static Collection<VirtualFile> findFilesWithXIncludeOf(Project project, String targetFileName) {
-    return FileBasedIndex.getInstance().getContainingFiles(NAME, getXIncludeIndexingKey(targetFileName),
-                                                           GlobalSearchScope.projectScope(project));
+    return findFilesWithXIncludeOf(targetFileName, GlobalSearchScope.projectScope(project));
+  }
+
+  /**
+   * Files in {@code scope} with an {@code xi:include} whose href file name is {@code targetFileName}.
+   * The key is the file name only; callers resolve the href to tell apart same-named descriptors.
+   */
+  public static Collection<VirtualFile> findFilesWithXIncludeOf(String targetFileName, GlobalSearchScope scope) {
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, getXIncludeIndexingKey(targetFileName), scope);
   }
 
   public static Collection<VirtualFile> findDescriptorsWithReferenceInDependenciesTag(GlobalSearchScope scope, String moduleNameOrPluginId) {

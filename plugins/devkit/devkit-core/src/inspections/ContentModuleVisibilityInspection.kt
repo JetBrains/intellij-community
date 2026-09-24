@@ -11,23 +11,19 @@ import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.intellij.psi.PsiReference
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.search.ProjectScope
-import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.parentOfType
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.GenericAttributeValue
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
-import com.intellij.xml.util.XmlUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle.message
 import org.jetbrains.idea.devkit.dom.ContentDescriptor
@@ -302,13 +298,10 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
     if (isActualPluginDescriptor(currentDescriptor, xmlFile)) {
       return listOf(ContentModuleInclusionContext(currentDescriptor, registrationPlace, registrationContent))
     }
-    return ReferencesSearch.search(xmlFile, scope)
-      .filtering { isXiIncluded(it) }
-      .findAll()
-      .flatMapTo(ArrayList()) { reference ->
-        val referencedFile = reference.element.containingFile as? XmlFile ?: return@flatMapTo emptyList()
-        val referencedDescriptor = DescriptorUtil.getIdeaPlugin(referencedFile) ?: return@flatMapTo emptyList()
-        getRootIncludingPlugins(referencedFile, currentDescriptor = referencedDescriptor, registrationPlace, registrationContent, scope, visited)
+    return findXIncludingFiles(xmlFile, scope)
+      .flatMapTo(ArrayList()) { includingFile ->
+        val includingDescriptor = DescriptorUtil.getIdeaPlugin(includingFile) ?: return@flatMapTo emptyList()
+        getRootIncludingPlugins(includingFile, currentDescriptor = includingDescriptor, registrationPlace, registrationContent, scope, visited)
       }
   }
 
@@ -319,11 +312,6 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
   private fun isPluginXmlName(xmlFile: XmlFile): Boolean {
     val fileName = xmlFile.name
     return fileName == "plugin.xml" || fileName in rootPluginNames
-  }
-
-  private fun isXiIncluded(reference: PsiReference): Boolean {
-    val xmlTag = reference.element.parentOfType<XmlTag>() ?: return false
-    return xmlTag.namespace == XmlUtil.XINCLUDE_URI && xmlTag.localName == "include"
   }
 
   private fun getModuleName(xmlFile: XmlFile): String {

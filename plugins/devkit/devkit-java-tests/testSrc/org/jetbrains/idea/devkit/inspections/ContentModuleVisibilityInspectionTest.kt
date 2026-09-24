@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiFile
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.xml.XmlFile
+import com.intellij.psi.xml.XmlTag
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
@@ -19,6 +23,27 @@ abstract class ContentModuleVisibilityInspectionTestBase : JavaCodeInsightFixtur
 }
 
 class ContentModuleVisibilityInspectionTest : ContentModuleVisibilityInspectionTestBase() {
+
+  fun `test include lookup distinguishes paths and updates after edits`() {
+    val first = myFixture.addFileToProject("a/shared.xml", "<idea-plugin/>") as XmlFile
+    val second = myFixture.addFileToProject("b/shared.xml", "<idea-plugin/>") as XmlFile
+    val includer = myFixture.addFileToProject("plugin.xml", """
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <xi:include href="a/shared.xml"/>
+        <xi:include href="unrelated.xml"/>
+      </idea-plugin>
+    """.trimIndent()) as XmlFile
+    val scope = GlobalSearchScope.projectScope(project)
+    assertEquals(listOf(includer), findXIncludingFiles(first, scope).toList())
+    assertEmpty(findXIncludingFiles(second, scope).toList())
+    assertEmpty(findXIncludingFiles(first, GlobalSearchScope.fileScope(first)).toList())
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      includer.rootTag!!.children.filterIsInstance<XmlTag>().first().setAttribute("href", "b/shared.xml")
+    }
+    assertEmpty(findXIncludingFiles(first, scope).toList())
+    assertEquals(listOf(includer), findXIncludingFiles(second, scope).toList())
+  }
 
   fun `test should report private module dependency from internal module`() {
     myFixture.addModuleWithPluginDescriptor(

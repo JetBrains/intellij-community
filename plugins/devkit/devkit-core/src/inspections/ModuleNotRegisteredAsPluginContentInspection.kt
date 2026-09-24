@@ -16,11 +16,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.XmlElementVisitor
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.util.parentOfType
 import com.intellij.psi.xml.XmlFile
-import com.intellij.psi.xml.XmlTag
-import com.intellij.xml.util.XmlUtil
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
 import org.jetbrains.idea.devkit.util.DescriptorUtil
@@ -54,10 +50,7 @@ internal class ModuleNotRegisteredAsPluginContentInspection : LocalInspectionToo
   }
 
   private fun isNotXIncluded(file: XmlFile): Boolean {
-    return !ReferencesSearch.search(file).anyMatch {
-      val xmlTag = it.element.parentOfType<XmlTag>() ?: return@anyMatch false
-      xmlTag.namespace == XmlUtil.XINCLUDE_URI && xmlTag.localName == "include"
-    }
+    return findXIncludingFiles(file, GlobalSearchScope.projectScope(file.project)).none()
   }
 
   private fun fixIfPluginXmlFound(file: XmlFile, moduleName: String): Array<out LocalQuickFix> {
