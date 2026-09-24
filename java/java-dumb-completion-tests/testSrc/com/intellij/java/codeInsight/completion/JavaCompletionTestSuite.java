@@ -6,9 +6,11 @@ import com.intellij.java.codeInsight.completion.ml.JavaCompletionFeaturesTest;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestIndexingModeSupporter;
+import com.intellij.util.PathUtil;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -35,7 +37,12 @@ public class JavaCompletionTestSuite extends TestSuite {
       .withTestGroupsResourcePath(TestCaseLoader.COMMON_TEST_GROUPS_RESOURCE_NAME)
       .withTestGroups(List.of("ULTIMATE_JAVA_TESTS", "COMMUNITY_JAVA_TESTS"))
       .build();
-    myTestCaseLoader.fillTestCases("", TestCaseLoader.getClassRoots());
+
+    Class<MagicConstantCompletionTest> clazz = MagicConstantCompletionTest.class;
+    String modulePath = PathUtil.getJarPathForClass(clazz);
+
+    myTestCaseLoader.fillTestCases("", List.of(Path.of(modulePath)));
+
     List<Class<?>> classes = myTestCaseLoader.getClasses();
     for (Class<?> aClass : classes) {
       if (!aClass.getSimpleName().contains("Completion") && !isJavaPostfixTest(aClass)) continue;

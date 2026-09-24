@@ -34,6 +34,8 @@ jvm_library(
         "//java/java-completion-tests:completion-tests_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.dumb.completion.tests` end
