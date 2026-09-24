@@ -167,6 +167,33 @@ internal class ProjectViewPaneTester internal constructor(
   }
 }
 
+/** Suspends until [paneId] is among the panes the aggregator offers. */
+internal suspend fun FrontendProjectViewPaneAggregator.awaitPane(paneId: ProjectViewPaneId) {
+  getPaneDescriptorsFlow().first { descriptors -> descriptors.any { it.id == paneId } }
+}
+
+/** Suspends until [paneId] is no longer among the panes the aggregator offers. */
+internal suspend fun FrontendProjectViewPaneAggregator.awaitPaneGone(paneId: ProjectViewPaneId) {
+  getPaneDescriptorsFlow().first { descriptors -> descriptors.none { it.id == paneId } }
+}
+
+/**
+ * Asserts the whole tree, with the content root's own line replaced by `<content root>`: a Scope pane names
+ * its content roots after their location (see `ScopeViewTreeModel.RootNode.getNodeName`), which in a test is
+ * a temp directory.
+ *
+ * Only a tree whose content roots sit directly under the root is supported, so a caller that can end up with
+ * the roots grouped under a module node has to turn Show Modules off (see
+ * [ProjectViewChangedFilesScopePaneTest]).
+ */
+internal suspend fun ProjectViewPaneTester.assertTreeWithContentRoot(expected: String) {
+  val dump = dumpTree().lines().joinToString("\n") { line ->
+    val indent = line.takeWhile { it == ' ' } // a single space indent means the content root
+    if (indent == " ") "$indent<content root>" else line
+  }
+  Assertions.assertEquals(expected.trimIndent().trimEnd(), dump)
+}
+
 /**
  * Resolves a repo-relative [relativePath] (e.g. `platform/projectView/tests/testData/foo`) to an
  * absolute path, trying the ultimate root first and then the `community/` sub-root — the standard

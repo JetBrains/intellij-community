@@ -4,8 +4,8 @@ package com.intellij.platform.projectView.tests
 import com.intellij.ide.scopeView.NamedScopeFilter
 import com.intellij.openapi.project.Project
 import com.intellij.packageDependencies.DependencyValidationManager
-import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneAggregator
 import com.intellij.platform.projectView.backend.impl.scope.ScopePaneModel
+import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneAggregator
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.psi.search.scope.ProjectFilesScope
 import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet
@@ -18,9 +18,7 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import kotlinx.coroutines.flow.first
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -87,27 +85,6 @@ internal class ProjectViewScopePaneTest : AbstractProjectViewPaneTest() {
 
     holder.removeAllSets()
     aggregator.awaitPaneGone(paneId)
-  }
-
-  /**
-   * Asserts the whole tree, with the content root's own line replaced by `<content root>`: a Scope pane names
-   * its content roots after their location (see `ScopeViewTreeModel.RootNode.getNodeName`), which in a test is
-   * a temp directory.
-   */
-  private suspend fun ProjectViewPaneTester.assertTreeWithContentRoot(expected: String) {
-    val dump = dumpTree().lines().joinToString("\n") { line ->
-      val indent = line.takeWhile { it == ' ' } // a single space indent means the content root
-      if (indent == " ") "$indent<content root>" else line
-    }
-    assertEquals(expected.trimIndent().trimEnd(), dump)
-  }
-
-  private suspend fun FrontendProjectViewPaneAggregator.awaitPane(paneId: ProjectViewPaneId) {
-    getPaneDescriptorsFlow().first { descriptors -> descriptors.any { it.id == paneId } }
-  }
-
-  private suspend fun FrontendProjectViewPaneAggregator.awaitPaneGone(paneId: ProjectViewPaneId) {
-    getPaneDescriptorsFlow().first { descriptors -> descriptors.none { it.id == paneId } }
   }
 
   /**
