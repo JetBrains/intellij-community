@@ -11,7 +11,6 @@
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.indexing.impl"/>
     <module name="intellij.java.psi"/>
-    <module name="intellij.jsp.spi"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>

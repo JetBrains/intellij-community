@@ -587,10 +587,10 @@
       <separator>
       <separator>
       BuildArtifact
+    UpdateIdeFromSources
     Groovy.CheckResources
       Groovy.CheckResources.Make
       Groovy.CheckResources.Rebuild
-    UpdateIdeFromSources
     PluginDeployActions
       MakeJarAction
       MakeAllJarsAction
@@ -797,10 +797,10 @@
           ShowWslSatisfactionDialog
           OnboardingKotlin
             org.jetbrains.kotlin.onboarding.ShowKotlinOnboardingFeedbackDialogAction
-          BuildProcessSatisfaction
-            org.jetbrains.kotlin.onboarding.gradle.ShowBuildProcessSatisfactionDialogAction
           MavenBuildProcessSatisfaction
             org.jetbrains.kotlin.onboarding.maven.ShowMavenBuildProcessSatisfactionDialogAction
+          BuildProcessSatisfaction
+            org.jetbrains.kotlin.onboarding.gradle.ShowBuildProcessSatisfactionDialogAction
         UiInspectorGroup
           UiInspector
           UiThemeColorPickerAction
@@ -959,9 +959,6 @@
           CreateIncrementalCompilationBackup
           ReactivePostOpenProjectActionsAction
         <separator>
-      tasks.internal
-        show.certificate
-        deadlock.with.certificate.dialog
       Maven.Internal
         Maven.PrintStatistics
         Maven.ResetReadStatistic
@@ -977,6 +974,9 @@
         DevKit.AnalyzePersistentSyntaxTreeOverhead
         AnalyzeUnloadablePlugins
       ShowEditorHighlighterTokens
+      tasks.internal
+        show.certificate
+        deadlock.with.certificate.dialog
     Markdown.Tools
       Markdown.ImportFromDocx
       Markdown.Export
@@ -1003,8 +1003,8 @@
       ShowKotlinBytecode
       ConfigureKotlinInProject
       DecompileKotlinToJava
-    Groovy.Console
     WorkspaceModelGeneration
+    Groovy.Console
   VcsGroups
     Vcs.MainMenu
       Start.Use.Vcs
@@ -1499,8 +1499,8 @@
   ToggleBreakpointEnabled
 [group BuildMenu]
   Java.BuildMenu
-  Groovy.CheckResources
   UpdateIdeFromSources
+  Groovy.CheckResources
   PluginDeployActions
   AntBuildGroup
   RunTargetAction
@@ -1878,14 +1878,14 @@
   Gradle.ImportExternalProject
   XmlGenerateToolsGroup
   OpenInSceneBuilder
+  Maven.AddFileAsMavenProject
+  Maven.GlobalProjectMenu
   Git.Stage.Index.File.Menu
   GitLab.Create.Snippet
   Github.Create.Gist
   Github.PullRequest.Changed.MarkViewed.Toggle
   Mermaid.ExportDiagram
   JsonPathEvaluateAction
-  Maven.AddFileAsMavenProject
-  Maven.GlobalProjectMenu
   ChangeTemplateDataLanguage
   XPathView.EditorPopup
   PackageFile
@@ -2235,10 +2235,10 @@
   org.editorconfig.configmanagement.generate.EditorConfigGenerateLanguagePropertiesAction
   GenerateCopyright
   JavaGenerateGroup2
-  HtmlAddTableColumnBefore
-  HtmlAddTableColumnAfter
   KotlinMavenGenerate
   GenerateExternalization
+  HtmlAddTableColumnBefore
+  HtmlAddTableColumnAfter
   GuiDesigner.GenerateMain
 [group GoToCodeGroup]
   <separator>
@@ -2598,10 +2598,10 @@
   CreateEditorConfigFile
   Markdown.NewFile
   NewXmlDescriptor
-  Groovy.NewScript
-  Gant.NewScript
   DevkitObsoleteNewActions
   DevKit.NewTheme
+  Groovy.NewScript
+  Gant.NewScript
   GuiDesigner.NewActions
 [group NewMicroservices]
 [group NewProjectOrModuleGroup]
@@ -2737,20 +2737,20 @@
   OpenInSceneBuilder
   DissociateResourceBundleAction
   CombinePropertiesFilesAction
+  Maven.AddFileAsMavenProject
+  Maven.GlobalProjectMenu
   Images.SetBackgroundImage
   GitLab.Create.Snippet
   Github.Create.Gist
   Mermaid.ExportDiagram
-  Maven.AddFileAsMavenProject
-  Maven.GlobalProjectMenu
   AddAntBuildFile
   XPathView.XSLT.Associations
   Gradle.ProjectViewDependencyAnalyzer
   PackageFile
-  Images.EditExternally
-  Images.ConvertSvgToPng
   Maven.ProjectViewDependencyAnalyzer
   PluginDeployActions
+  Images.EditExternally
+  Images.ConvertSvgToPng
 [group ProjectViewPopupMenuModifyGroup]
   ProjectViewAnalysisGroup
   ReformatCode
@@ -3124,8 +3124,8 @@
   PyPackagingMenu
   DevKit.Bootstrap
   KotlinToolsGroup
-  Groovy.Console
   WorkspaceModelGeneration
+  Groovy.Console
 [group ToolsMenu.Services]
 [group TopStripeActionGroup]
 [group TouchBar]
