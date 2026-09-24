@@ -44,7 +44,7 @@ fun IdeaFrameUI.terminalToolWindow(action: TerminalToolWindowUi.() -> Unit = {})
   x(TerminalToolWindowUi::class.java) { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byType("org.jetbrains.plugins.terminal.TerminalToolWindowPanel")) }.apply(action)
 
 fun IdeaFrameUI.problemsToolWindow(action: ToolWindowUiComponent.() -> Unit = {}): ToolWindowUiComponent =
-  x(ToolWindowUiComponent::class.java) { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byAccessibleName("Problems View")) }.apply(action)
+  x(ToolWindowUiComponent::class.java) { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byAccessibleName("Problems")) }.apply(action)
 
 fun IdeaFrameUI.usagesToolWindow(action: ToolWindowUiComponent.() -> Unit = {}): ToolWindowUiComponent =
   x(ToolWindowUiComponent::class.java) { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byAccessibleName("Find")) }.apply(action)
