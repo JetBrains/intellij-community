@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
+import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -18,9 +19,11 @@ import com.intellij.codeInsight.multiverse.anyContext
 import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
+import com.intellij.codeInspection.DefaultInspectionToolResultExporter
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.multiverse.LibraryContextImpl
 import com.intellij.multiverse.ModuleContextImpl
@@ -46,6 +49,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryId
@@ -56,7 +60,9 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.createGlobalContextForTool
 import com.intellij.testFramework.enableInspectionTools
 import com.intellij.util.Processors
 import com.intellij.util.ThrowableRunnable
@@ -326,6 +332,39 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
     assertSize(2, contexts)
     assertEquals("module2", contexts[0].getModule()!!.name)
     return contexts
+  }
+
+  fun testBatchInspectionInPreferredContextOnly() {
+    val descriptions = runBatchCommentInspectionInTwoModules()
+    assertEquals("the file must be inspected only in its preferred context: $descriptions", 1, descriptions.size)
+  }
+
+  fun testBatchInspectionInAllContexts() {
+    Registry.get("batch.inspections.inspect.all.code.insight.contexts").setValue(true, testRootDisposable)
+    val descriptions = runBatchCommentInspectionInTwoModules()
+    assertSameElements("the file must be inspected in each of its contexts",
+                       descriptions,
+                       listOf("Comment warning module-context module2", "Comment warning module-context $name"))
+  }
+
+  private fun runBatchCommentInspectionInTwoModules(): List<String> {
+    @Language("JAVA")
+    val text = """
+      // comment
+    """
+    configureByText(JavaFileType.INSTANCE, text)
+
+    val root = module.rootManager.contentRoots[0]
+    PsiTestUtil.addModule(project, ModuleType.EMPTY, "module2", root)
+    val contexts = getContexts()
+    assertEquals("the file must have a context for each module: $contexts", 2, contexts.size)
+
+    val toolWrapper = LocalInspectionToolWrapper(CommentInspection())
+    val scope = AnalysisScope(project)
+    val globalContext = createGlobalContextForTool(scope, project, listOf(toolWrapper))
+    InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
+    val presentation = globalContext.getPresentation(toolWrapper) as DefaultInspectionToolResultExporter
+    return presentation.problemElements.values.map { it.descriptionTemplate }
   }
 
   private fun getAllDocumentHighlights(): List<HighlightInfo> {

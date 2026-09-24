@@ -10,6 +10,9 @@ import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl;
 import com.intellij.codeInsight.daemon.impl.ProblemsViewBridge;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.util.GlobalInspectionScopeKt;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
@@ -489,6 +492,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                                                          @NotNull Map<String, InspectionToolWrapper<?, ?>> map) {
     PsiManager psiManager = PsiManager.getInstance(getProject());
     boolean inspectInjectedPsi = Registry.is("idea.batch.inspections.inspect.injected.psi", true);
+    boolean inspectAllContexts = Registry.is("batch.inspections.inspect.all.code.insight.contexts", false) &&
+                                 CodeInsightContexts.isSharedSourceSupportEnabled(getProject());
 
     return virtualFile -> {
       ProgressManager.checkCanceled();
@@ -497,22 +502,24 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
       Computable<Boolean> inspection = () -> {
         long start = getPathProfile() == null ? 0 : System.currentTimeMillis();
-        PsiFile psiFile = virtualFile.isValid() ? psiManager.findFile(virtualFile) : null;
-        if (psiFile == null) {
+        List<PsiFile> psiFiles = findPsiFilesToInspect(psiManager, virtualFile, inspectAllContexts);
+        if (psiFiles.isEmpty()) {
           return true;
         }
         if (!scope.contains(virtualFile)) {
-          LOG.info(psiFile.getName() + "; scope: " + scope + "; " + virtualFile);
+          LOG.info(psiFiles.getFirst().getName() + "; scope: " + scope + "; " + virtualFile);
           return true;
         }
         boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
-        EnabledInspectionsProvider.ToolWrappers wrappers = getWrappersFromTools(enabledInspectionsProvider, psiFile, includeDoNotShow);
+        EnabledInspectionsProvider.ToolWrappers wrappers = getWrappersFromTools(enabledInspectionsProvider, psiFiles.getFirst(), includeDoNotShow);
         wrappersForThisFile.set(wrappers);
 
-        inspectFile(psiFile, getEffectiveRange(searchScope, psiFile), inspectionManager, map,
-                    wrappers.getGlobalSimpleRegularWrappers(),
-                    wrappers.getLocalRegularWrappers(),
-                    inspectInjectedPsi && scope.isAnalyzeInjectedCode());
+        for (PsiFile psiFile : psiFiles) {
+          inspectFile(psiFile, getEffectiveRange(searchScope, psiFile), inspectionManager, map,
+                      wrappers.getGlobalSimpleRegularWrappers(),
+                      wrappers.getLocalRegularWrappers(),
+                      inspectInjectedPsi && scope.isAnalyzeInjectedCode());
+        }
         if (start != 0) {
           updateProfile(virtualFile, System.currentTimeMillis() - start);
         }
@@ -564,6 +571,21 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
       return true;
     };
+  }
+
+  private static @NotNull List<PsiFile> findPsiFilesToInspect(@NotNull PsiManager psiManager,
+                                                              @NotNull VirtualFile virtualFile,
+                                                              boolean inspectAllContexts) {
+    if (!virtualFile.isValid()) {
+      return List.of();
+    }
+    if (inspectAllContexts) {
+      List<CodeInsightContext> contexts = CodeInsightContextManager.getInstance(psiManager.getProject()).getCodeInsightContexts(virtualFile);
+      if (contexts.size() > 1) {
+        return ContainerUtil.mapNotNull(contexts, context -> psiManager.findFile(virtualFile, context));
+      }
+    }
+    return ContainerUtil.createMaybeSingletonList(psiManager.findFile(virtualFile));
   }
 
   private static void setupCancelOnWriteProgress(@NotNull Disposable disposable, @NotNull ProgressIndicator progressIndicator) {
