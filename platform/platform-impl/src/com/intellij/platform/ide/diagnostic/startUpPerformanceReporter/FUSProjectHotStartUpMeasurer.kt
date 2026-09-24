@@ -250,7 +250,12 @@ object FUSProjectHotStartUpMeasurer {
     }
   }
 
-  fun reportWelcomeScreenShown() {
+  /**
+   * This event just reports that the scenario `single project without Welcome Screen` is violated.
+   * There is no guarantee the Welcome screen is visible to user.
+   * This event shouldn't be used for performance investigations for (non-)modal Welcome Screen.
+   */
+  fun reportWelcomeScreenIsGoingToBeShown() {
     channel.trySend(Event.WelcomeScreenEvent())
   }
 
@@ -260,7 +265,7 @@ object FUSProjectHotStartUpMeasurer {
     when {
       size == 0 -> reportViolation(Violation.NoProjectFound)
       size > 1 -> openingMultipleProjects(true, size, false)
-      openPaths[0] == WelcomeScreenProjectProvider.getWelcomeScreenProjectPath() -> reportWelcomeScreenShown()
+      openPaths[0] == WelcomeScreenProjectProvider.getWelcomeScreenProjectPath() -> reportWelcomeScreenIsGoingToBeShown()
       else -> reportProjectType(ProjectsType.Reopened)
       // light edit files are not reopened
     }
@@ -289,7 +294,7 @@ object FUSProjectHotStartUpMeasurer {
     }
 
     if (projectFile == WelcomeScreenProjectProvider.getWelcomeScreenProjectPath()) {
-      reportWelcomeScreenShown()
+      reportWelcomeScreenIsGoingToBeShown()
     }
 
     val projectId = if (IdeProductMode.isFrontend) {
