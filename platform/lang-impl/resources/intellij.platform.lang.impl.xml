@@ -1954,6 +1954,8 @@
     <applicationService serviceInterface="com.intellij.refactoring.RefactoringUiService" serviceImplementation="com.intellij.refactoring.RefactoringUiServiceImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater"
                     serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl" preload="await"/>
+    <projectService serviceInterface="com.intellij.util.indexing.DumbModeReindexingScheduler"
+                    serviceImplementation="com.intellij.util.indexing.NoopDumbModeReindexingScheduler"/>
     <projectService serviceImplementation="com.intellij.ide.navigationToolbar.rider.RiderMainToolbarRootPaneManager" open="true"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingComponent"/>
     <applicationService serviceInterface="com.intellij.util.gist.GistManager"

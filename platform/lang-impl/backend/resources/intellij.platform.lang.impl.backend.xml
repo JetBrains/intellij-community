@@ -13,6 +13,9 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.util.indexing.DumbModeReindexingScheduler"
+                    serviceImplementation="com.intellij.platform.lang.impl.backend.BackendDumbModeReindexingScheduler"
+                    overrides="true"/>
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.lang.impl.backend.IdeLanguageCustomizationApiProvider"
                                             apiInterfaces="com.intellij.find.impl.IdeLanguageCustomizationApi"/>
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.lang.impl.backend.GotoContributorsAvailabilityApiProvider"

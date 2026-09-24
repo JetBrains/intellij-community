@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
@@ -43,9 +44,8 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
+import com.intellij.util.indexing.DumbModeReindexingScheduler
 import com.intellij.util.indexing.FileBasedIndex
-import com.intellij.util.indexing.FileBasedIndexEx
-import com.intellij.util.indexing.FileBasedIndexProjectHandler
 import com.intellij.util.indexing.FilePropertyPusherEx
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.UnindexedFilesUpdater
@@ -149,8 +149,9 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
         }
       }
     }
+    // Threshold shared with FileBasedIndexProjectHandler via the "ide.dumb.mode.minFilesToStart" registry key.
     val pushingSomethingSynchronously =
-      !syncTasks.isEmpty() && syncTasks.size < FileBasedIndexProjectHandler.ourMinFilesToStartDumbMode
+      !syncTasks.isEmpty() && syncTasks.size < Registry.intValue("ide.dumb.mode.minFilesToStart", 20)
     if (pushingSomethingSynchronously) {
       // push synchronously to avoid entering dumb mode in the middle of a meaningful write action
       // when only a few files are created/moved
@@ -278,7 +279,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
 
   private fun scheduleDumbModeReindexingIfNeeded() {
     signalBulkInvalidationNeeded()
-    FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(myProject)
+    myProject.getService(DumbModeReindexingScheduler::class.java).scheduleReindexingInDumbMode()
   }
 
   override fun filePropertiesChanged(fileOrDir: VirtualFile, acceptFileCondition: Condition<in VirtualFile>) {
