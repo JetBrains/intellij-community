@@ -66,7 +66,7 @@ public fun PopupContainer(
 ) {
     Popup(
         popupPositionProvider = popupPositionProvider,
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = { onDismissRequest() },
         properties = popupProperties,
         cornerSize = style.metrics.cornerSize,
     ) {

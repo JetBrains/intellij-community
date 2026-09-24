@@ -295,7 +295,7 @@ private fun PopupMenuImpl(
 
     Popup(
         popupPositionProvider = popupPositionProvider,
-        onDismissRequest = { onDismissRequest(InputMode.Touch) },
+        onDismissRequest = { inputMode -> onDismissRequest(inputMode) },
         properties = popupProperties,
         onPreviewKeyEvent = { false },
         onKeyEvent = {
@@ -1100,7 +1100,7 @@ internal fun Submenu(
 
     Popup(
         popupPositionProvider = popupPositionProvider,
-        onDismissRequest = { menuController.closeAll(InputMode.Touch, false) },
+        onDismissRequest = { inputMode -> menuController.closeAll(inputMode, false) },
         properties = PopupProperties(focusable = true, consumePointerInputOutside = false),
         onPreviewKeyEvent = { false },
         cornerSize = style.metrics.cornerSize,
