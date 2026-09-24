@@ -230,6 +230,7 @@ fleet/build/bundles
 fleet/build/cli
 fleet/build/codecache
 fleet/build/fs
+fleet/build/fs/tests
 fleet/build/http
 fleet/build/kernel.plugins.processor
 fleet/build/platform
