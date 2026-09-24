@@ -424,14 +424,14 @@ private class SearchJobsState {
 @VisibleForTesting
 class PathFromRootResolver(roots: Collection<VirtualFile>) {
   // "outer" here means that we remove nested roots, and getPathFromRoot will provide the longest possible path
-  private val outerRoots = VirtualFilePrefixTree.createMap<VirtualFile>().also { outerRoots ->
-    val allRoots = VirtualFilePrefixTree.createMap<VirtualFile>()
-    roots.forEach { root -> allRoots.put(root, root) }
-    allRoots.getRootValues().forEach { root -> outerRoots.put(root, root) }
+  private val outerRoots = VirtualFilePrefixTree.createSet().also { outerRoots ->
+    val allRoots = VirtualFilePrefixTree.createSet()
+    allRoots.addAll(roots)
+    outerRoots.addAll(allRoots.getRoots())
   }
 
   fun getPathFromRoot(file: VirtualFile): String? {
-    val ancestorRoots = outerRoots.getAncestorValues(file)
+    val ancestorRoots = outerRoots.getAncestors(file)
     if (ancestorRoots.isEmpty()) return null
     if (ancestorRoots.size > 1) {
       LOG.error("File $file has multiple outer roots: $ancestorRoots")
