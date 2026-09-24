@@ -21,6 +21,7 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.guessCurrentProject
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable
+import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
@@ -94,7 +95,9 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
           Settings.KEY.getData(DataManager.getInstance().getDataContext(result))?.let { settings ->
             settings.find(ErrorsConfigurable::class.java)?.let {
               settings.select(it).doWhenDone {
-                it.selectInspectionGroup(arrayOf(msg("grazie.group.name")))
+                if (settings.getConfigurableWithInitializedUiComponent(InspectionToolsConfigurable.ID, true) != null) {
+                  it.selectInspectionGroup(arrayOf(msg("grazie.group.name")))
+                }
               }
             }
           }
