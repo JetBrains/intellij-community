@@ -943,7 +943,6 @@ platform/platform-impl/rpc
 platform/platform-impl/ui
 platform/platform-impl/ui-inspector
 platform/platform-impl/update-checker
-platform/platform-impl/update-checker/backend
 platform/platform-resources
 platform/platform-resources-application-info
 platform/platform-resources-en
