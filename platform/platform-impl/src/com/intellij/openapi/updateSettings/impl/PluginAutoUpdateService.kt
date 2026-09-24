@@ -107,12 +107,14 @@ class PluginAutoUpdateService(private val coroutineScope: CoroutineScope) {
         if (downloadedList.isNotEmpty()) {
           LOG.debug { "adding downloaded updates to the repository: ${downloadedList.joinToString { it.pluginName }}" }
           withContext(Dispatchers.IO) {
-            PluginAutoUpdateRepository.addUpdates(updatesState.mapValues {
-              PluginAutoUpdateRepository.PluginUpdateInfo(
-                pluginPath = PluginManagerCore.getPlugin(it.key)!!.pluginPath.absolutePathString(),
+            val updates = updatesState.mapNotNull {
+              val plugin = PluginManagerCore.getPlugin(it.key) ?: return@mapNotNull null
+              it.key to PluginAutoUpdateRepository.PluginUpdateInfo(
+                pluginPath = plugin.pluginPath.absolutePathString(),
                 updateFilename = it.value.updatePath.name
               )
-            })
+            }.toMap()
+            PluginAutoUpdateRepository.addUpdates(updates)
           }
           notifyUpdatesDownloaded(downloadedList)
         }
