@@ -6,7 +6,7 @@ import com.intellij.openapi.progress.CoroutinesKt;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtilsCore;
+import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,12 +20,15 @@ public final class ConcurrencyUtils {
   /// This indicator will be either:
   /// - the current [ProgressIndicatorProvider#getGlobalProgressIndicator] if it's already installed, or
   /// - an indicator corresponding to the context [Cancellation#currentJob()] if there's one, or
-  /// - an [EmptyProgressIndicator] otherwise.
+  /// - a new [EmptyProgressIndicator] otherwise.
   public static <T> T runWithIndicatorOrContextCancellation(@NotNull Function<? super @NotNull ProgressIndicator, ? extends T> action) {
     ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    if (progressIndicator == null && Cancellation.currentJob() != null) {
-      return CoroutinesKt.blockingContextToIndicator(() -> action.apply(ProgressIndicatorProvider.getGlobalProgressIndicator()));
+    if (progressIndicator == null) {
+      if (Cancellation.currentJob() != null) {
+        return CoroutinesKt.blockingContextToIndicator(() -> action.apply(ProgressIndicatorProvider.getGlobalProgressIndicator()));
+      }
+      return ProgressManager.getInstance().runProcess(() -> action.apply(ProgressIndicatorProvider.getGlobalProgressIndicator()), new EmptyProgressIndicator());
     }
-    return ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()-> action.apply(ProgressIndicatorProvider.getGlobalProgressIndicator()));
+    return action.apply(progressIndicator);
   }
 }

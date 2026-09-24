@@ -18,6 +18,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.concurrency.ConcurrencyUtils;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.diagnostic.PluginException;
@@ -29,7 +30,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtilsCore;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.TextRange;
@@ -128,7 +128,7 @@ public final class InspectionEngine {
                                                                                                           ProgressIndicator indicator,
                                                                                                           // when returned true -> add to the holder, false -> do not add to the holder
                                                                                                           @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
-    return ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()->
+    return ConcurrencyUtils.runWithIndicatorOrContextCancellation(_->
     inspectEx(toolWrappers, psiFile, restrictRange, priorityRange, isOnTheFly, inspectInjectedPsi, ignoreSuppressedElements, foundDescriptorCallback));
   }
 
@@ -250,7 +250,7 @@ public final class InspectionEngine {
                                                                                                   @NotNull List<? extends PsiElement> elements,
                                                                                                   // when returned true -> add to the holder, false -> do not add to the holder
                                                                                                   @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
-    return ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()->inspectElements(toolWrappers, psiFile, restrictRange, isOnTheFly, ignoreSuppressedElements, elements, calcElementDialectIds(elements),
+    return ConcurrencyUtils.runWithIndicatorOrContextCancellation(_->inspectElements(toolWrappers, psiFile, restrictRange, isOnTheFly, ignoreSuppressedElements, elements, calcElementDialectIds(elements),
                            null, foundDescriptorCallback));
   }
   @ApiStatus.Internal
@@ -467,7 +467,7 @@ public final class InspectionEngine {
       try {
         if (toolWrapper instanceof LocalInspectionToolWrapper local) {
           Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> problemDescriptors =
-            ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()->
+            ConcurrencyUtils.runWithIndicatorOrContextCancellation(_->
             inspectEx(Collections.singletonList(local), psiFile, psiFile.getTextRange(), psiFile.getTextRange(),
                       false, false, true, PairProcessor.alwaysTrue()));
 

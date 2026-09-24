@@ -163,15 +163,3 @@ fun <T> awaitWithCheckCanceled(deferred: Deferred<T>): T {
   assertRunBlockingBackgroundThreadAndNoWriteAction()
   return deferred.asCompletableFuture().awaitWithCheckCanceled()
 }
-
-/** Executes [computable] under the progress. Either the current [ProgressIndicatorProvider.getGlobalProgressIndicator] is used if any, or
- * the new [EmptyProgressIndicator] is created and passed to [ProgressManager.runProcess] otherwise.
-*/
-@ApiStatus.Internal
-fun <T> runUnderEmptyProgressIfNone(computable: Computable<out T>): T {
-  val indicator = ProgressIndicatorProvider.getGlobalProgressIndicator()
-  if (indicator == null) {
-    return ProgressManager.getInstance().runProcess(computable, EmptyProgressIndicator())
-  }
-  return computable.compute()
-}

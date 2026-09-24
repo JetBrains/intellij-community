@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.concurrency.ConcurrencyUtils;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
@@ -14,7 +15,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtilsCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.PossiblyDumbAware;
@@ -110,7 +110,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
         return true;
       }
     };
-    if (!ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(contributors, processor))) {
+    if (!ConcurrencyUtils.runWithIndicatorOrContextCancellation(_->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(contributors, processor))) {
       throw new ProcessCanceledException();
     }
     if (indicator != null) {
@@ -189,7 +189,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
       processContributorForName(contributor, applicable.get(contributor), parameters, canceled, items);
       return true;
     };
-    if (!ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(applicable.keySet()), processor))) {
+    if (!ConcurrencyUtils.runWithIndicatorOrContextCancellation(_->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(applicable.keySet()), processor))) {
       canceled.cancel();
     }
     canceled.checkCanceled(); // if parallel job execution was canceled because of PCE, rethrow it from here

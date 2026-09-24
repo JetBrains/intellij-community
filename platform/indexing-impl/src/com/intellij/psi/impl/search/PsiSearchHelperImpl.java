@@ -323,7 +323,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return processor.toString();
       }
     };
-    return ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(Arrays.asList(scopeElements), localProcessor));
+    return ConcurrencyUtils.runWithIndicatorOrContextCancellation(_->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(Arrays.asList(scopeElements), localProcessor));
   }
 
   private @Nullable("null means we did not find common container files") Set<VirtualFile> intersectionWithContainerNameFiles(@NotNull GlobalSearchScope commonScope,

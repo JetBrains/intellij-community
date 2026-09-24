@@ -3,6 +3,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
+import com.intellij.concurrency.ConcurrencyUtils;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -16,7 +17,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtilsCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -214,11 +214,11 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       }
       return true;
     };
-    if (!ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(filesFirst), vFileProcessor))) {
+    if (!ConcurrencyUtils.runWithIndicatorOrContextCancellation(_->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(filesFirst), vFileProcessor))) {
       return;
     }
     allFiles.removeAll(filesFirst);
-    ProgressIndicatorUtilsCore.runUnderEmptyProgressIfNone(()->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(allFiles), vFileProcessor));
+    ConcurrencyUtils.runWithIndicatorOrContextCancellation(_->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(allFiles), vFileProcessor));
   }
 
   private static @NotNull Map<FunExprOccurrence, Confidence> filterInapplicable(@NotNull List<? extends PsiClass> samClasses,
