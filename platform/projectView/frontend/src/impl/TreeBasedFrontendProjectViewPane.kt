@@ -208,6 +208,9 @@ internal class TreeBasedFrontendProjectViewPane(
 
   override suspend fun manage() {
     coroutineScope {
+      launch(CoroutineName("paneTreeModel management")) {
+        paneTreeModel.manage()
+      }
       launch(CoroutineName("autoscrollToSourceHandler")) {
         autoscrollToSourceHandler.manage()
       }
