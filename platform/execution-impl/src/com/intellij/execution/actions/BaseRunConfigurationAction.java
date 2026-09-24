@@ -68,6 +68,7 @@ package com.intellij.execution.actions;
   private AnAction @NotNull [] getChildren(@NotNull DataContext dataContext, @Nullable String place) {
     if (dataContext.getData(ExecutorAction.getOrderKey()) != null) return EMPTY_ARRAY;
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, place); //!!! to rule???
+    if (!ExecutionSafeMode.isRunAllowed(context)) return EMPTY_ARRAY;
     if (!Registry.is("suggest.all.run.configurations.from.context") && findExisting(context) != null) {
       return EMPTY_ARRAY;
     }
@@ -127,6 +128,7 @@ package com.intellij.execution.actions;
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, e.getPlace());
+    if (!ExecutionSafeMode.isRunAllowed(context)) return;
     RunnerAndConfigurationSettings existing = findExisting(context);
     if (existing == null || dataContext.getData(ExecutorAction.getOrderKey()) != null) {
       List<ConfigurationFromContext> producers = getConfigurationsFromContext(context);
@@ -194,6 +196,11 @@ package com.intellij.execution.actions;
     DataContext dataContext = event.getDataContext();
     ConfigurationContext context = ConfigurationContext.getFromEvent(event);
     Presentation presentation = event.getPresentation();
+    if (!ExecutionSafeMode.isRunAllowed(context)) {
+      presentation.setEnabledAndVisible(false);
+      presentation.setPerformGroup(false);
+      return;
+    }
     RunnerAndConfigurationSettings existing = findExisting(context);
     RunnerAndConfigurationSettings configuration = existing;
     if (configuration == null) {

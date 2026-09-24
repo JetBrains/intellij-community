@@ -301,6 +301,9 @@ public class ExecutorAction extends AnAction implements DumbAware, ActionIdProvi
     if (resetCache) {
       psiFile.putUserData(CURRENT_FILE_RUN_CONFIGS_KEY, null);
     }
+    if (!ExecutionSafeMode.isRunAllowed(psiFile.getProject(), psiFile.getVirtualFile())) {
+      return List.of();
+    }
 
     // Without this cache, an expensive method `ConfigurationContext.getConfigurationsFromContext()` is called too often for 2 reasons:
     // - there are several buttons on the toolbar (Run, Debug, Profile, etc.), each runs ExecutorAction.update() during each action update session

@@ -96,8 +96,13 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> imple
    * not applicable to this run configuration producer.
    */
   public @Nullable ConfigurationFromContext createConfigurationFromContext(@NotNull ConfigurationContext context) {
+    PsiElement psiLocation = context.getPsiLocation();
+    if (!ExecutionSafeMode.isRunAllowed(psiLocation)) {
+      return null;
+    }
+
     final RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
-    Ref<PsiElement> ref = new Ref<>(context.getPsiLocation());
+    Ref<PsiElement> ref = new Ref<>(psiLocation);
     try {
       //noinspection unchecked
       if (!setupConfigurationFromContext((T)settings.getConfiguration(), context, ref)) {
