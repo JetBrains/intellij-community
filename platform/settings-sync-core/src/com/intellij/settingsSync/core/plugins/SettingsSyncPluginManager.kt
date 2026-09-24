@@ -319,7 +319,7 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
   }
 
   private fun findPlugin(idString: String): IdeaPluginDescriptor? {
-    return PluginId.findId(idString)?.let { PluginManagerProxy.getInstance().findPlugin(it) }
+    return PluginManagerProxy.getInstance().findPlugin(PluginId(idString))
   }
 
   private fun checkDependencies(id: PluginId, pluginState: PluginData): Boolean {

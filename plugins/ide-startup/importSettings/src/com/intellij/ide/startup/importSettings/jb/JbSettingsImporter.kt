@@ -463,10 +463,8 @@ internal class JbSettingsImporter(private val configDirPath: Path, private val p
     val updates = MarketplaceRequests.getNearestUpdate(updateablePluginsMap.keys)
     for (update in updates) {
       if (!update.compatible && !update.products.contains(myIdeData.marketplaceCode)) {
-        @Suppress("DEPRECATION")
-        val pluginId = PluginId.findId(update.pluginId) ?: continue
         LOG.info("Plugins ${update.pluginId} is incompatible with ${myIdeData.fullName}. Will not migrate it")
-        updateablePluginsMap.remove(pluginId)
+        updateablePluginsMap.remove(PluginId(update.pluginId))
       }
     }
   }

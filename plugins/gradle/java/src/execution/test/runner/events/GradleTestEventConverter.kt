@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
@@ -62,9 +62,7 @@ internal class GradleTestEventConverter(
   }
 
   private val isEnabledGroovyPlugin: Boolean by lazy {
-    val groovyPluginId = PluginId.findId("org.intellij.groovy")
-    val groovyPlugin = PluginManagerCore.getPluginSet()
-    groovyPluginId != null && groovyPlugin.isPluginEnabled(groovyPluginId)
+    PluginManagerCore.getPluginSet().isPluginEnabled(PluginId("org.intellij.groovy"))
   }
 
   private val isSpockTestMethod: Boolean by lazy {
