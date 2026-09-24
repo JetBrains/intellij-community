@@ -8,6 +8,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.ensureClientStarted
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
+import com.intellij.python.pyrefly.PyreflyExecutableProvider
 import com.intellij.python.pyrefly.PyreflyPyTool
 import com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider
 import com.intellij.python.pyrefly.lsp.pyreflyDescriptor
@@ -46,6 +47,10 @@ class PyreflyLspTypeEngineProvider : PyTypeEngineProvider {
     // An untrusted project starts no server, see `LspClientManagerImpl.ensureStarted`, so the engine
     // would never be ready. The built-in engine answers there.
     if (!TrustedProjects.isProjectTrusted(project)) {
+      return null
+    }
+
+    if (!PyreflyExecutableProvider.executableExists()) {
       return null
     }
 
