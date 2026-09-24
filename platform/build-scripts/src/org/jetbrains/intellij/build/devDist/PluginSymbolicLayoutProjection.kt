@@ -16,6 +16,7 @@ import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.contentModuleJarPath
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.getLibNameBySourceFile
+import org.jetbrains.intellij.build.impl.hasOwnModuleLibraries
 import org.jetbrains.intellij.build.impl.isSeparateLibraryJar
 import org.jetbrains.intellij.build.impl.nameToJarFileName
 import org.jetbrains.intellij.build.impl.removeVersionFromJar
@@ -281,9 +282,10 @@ private class SymbolicLayoutProjector(
       mainJarName = layout.getMainJarName(),
       hasPackageAttribute = { requireNotNull(descriptor).hasPackage },
       packedIntoSeparateJar = {
-        name !in layout.getModulesWithExcludedModuleLibraries() &&
-        libraryDependencies(requireNotNull(module), withTests = false).any { it.libraryReference.parentReference is JpsModuleReference } ||
-        frontend.isSplit(layout.mainModule, name)
+        hasOwnModuleLibraries(
+          productionLibraryDependencies = libraryDependencies(requireNotNull(module), withTests = false),
+          librariesKeptOut = name in layout.getModulesWithExcludedModuleLibraries(),
+        ) || frontend.isSplit(layout.mainModule, name)
       },
       frontendSplit = { frontend.isSplit(layout.mainModule, name) },
     )

@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jps.model.module.JpsLibraryDependency
+import org.jetbrains.jps.model.module.JpsModuleReference
 
 /**
  * The jar of the plugin content module [moduleName], relative to the plugin's `lib/`, or `null` when the layout places
@@ -36,4 +38,16 @@ fun contentModuleJarPath(
     frontendSplit() -> mainJarName.removeSuffix(".jar") + "-frontend.jar"
     else -> mainJarName
   }
+}
+
+/**
+ * Whether a content module brings a module library of its own into its jar, which sends the module to a jar of its own.
+ *
+ * [productionLibraryDependencies] are the production runtime library dependencies of the module. [librariesKeptOut]
+ * holds when the layout keeps the module libraries out of the module's jar, see `doNotCopyModuleLibrariesAutomatically`.
+ * The packer and the dev-distribution derivation both ask this one predicate over the facts each reads itself.
+ */
+@ApiStatus.Internal
+fun hasOwnModuleLibraries(productionLibraryDependencies: List<JpsLibraryDependency>, librariesKeptOut: Boolean): Boolean {
+  return !librariesKeptOut && productionLibraryDependencies.any { it.libraryReference.parentReference is JpsModuleReference }
 }

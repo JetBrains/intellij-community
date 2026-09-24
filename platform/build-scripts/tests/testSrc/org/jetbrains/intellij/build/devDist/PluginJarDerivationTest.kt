@@ -221,7 +221,7 @@ class PluginJarDerivationTest {
 
   @Test
   fun `an embedded member that merges libraries derives the lib root jar`() {
-    val path = derivePath(loadingRule = EMBEDDED_LOADING_RULE, hasPackageAttribute = true, mergesLibraries = true)
+    val path = derivePath(loadingRule = EMBEDDED_LOADING_RULE, hasPackageAttribute = true, hasModuleLibraries = true)
 
     assertThat(path).isEqualTo("$MEMBER.jar")
   }
@@ -231,7 +231,7 @@ class PluginJarDerivationTest {
     // A member with a `package` attribute and no library is co-packed into the main jar.
     assertThat(derivePath(hasPackageAttribute = true)).isEqualTo("demo.jar")
     assertThat(derivePath(hasPackageAttribute = false)).isEqualTo("modules/$MEMBER.jar")
-    assertThat(derivePath(hasPackageAttribute = true, mergesLibraries = true)).isEqualTo("modules/$MEMBER.jar")
+    assertThat(derivePath(hasPackageAttribute = true, hasModuleLibraries = true)).isEqualTo("modules/$MEMBER.jar")
   }
 
   @Test
@@ -273,13 +273,13 @@ class PluginJarDerivationTest {
   private fun derivePath(
     loadingRule: String? = null,
     hasPackageAttribute: Boolean = false,
-    mergesLibraries: Boolean = false,
+    hasModuleLibraries: Boolean = false,
     frontendSplit: Boolean = false,
   ): String = deriveMemberJarPath(
     moduleName = MEMBER,
     loadingRule = loadingRule,
     hasPackageAttribute = hasPackageAttribute,
-    mergesLibraries = mergesLibraries,
+    hasModuleLibraries = hasModuleLibraries,
     mainJarName = "demo.jar",
     frontendSplit = frontendSplit,
   )

@@ -5,7 +5,10 @@ package org.jetbrains.intellij.build.devDist
 
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.getProductionLibraryDependencies
 import org.jetbrains.intellij.build.impl.contentModuleJarPath
+import org.jetbrains.intellij.build.impl.hasOwnModuleLibraries
+import org.jetbrains.intellij.build.impl.isSeparateLibraryJar
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -113,6 +116,7 @@ fun derivePluginContentCandidacy(
       mainJarName = mainJarName,
       libraries = ::librariesOf,
       frontend = frontend,
+      librariesKeptOut = member.name in residue.unmergedMembers,
     )
     if (jar != null || rawName in residue.memberJars) {
       memberLibraries.put(rawName, librariesOf(member).names)
@@ -146,6 +150,7 @@ fun derivePluginContentCandidacy(
       mainJarName = mainJarName,
       libraries = ::librariesOf,
       frontend = frontend,
+      librariesKeptOut = member.name in residue.unmergedMembers,
     )
     // A member of a jar the layout names needs its library set even with no descriptor of its own.
     if (jar != null || name in residue.memberJars) {
@@ -189,8 +194,8 @@ private fun isPackedIntoRenamedJar(member: String, residue: PluginContentResidue
  *
  * [contentModuleJarPath] states the rule, and this function supplies the derivation's facts. Two inputs of the rule are
  * `PluginLayout` state and reach this through the caller: a jar `PluginLayout.withModule(name, jarName)` names wins over
- * this answer in [composeDerivedPluginJars], and the layout's excluded module libraries decide [mergesLibraries] through
- * [mergedLibrariesOf].
+ * this answer in [composeDerivedPluginJars], and the layout's `doNotCopyModuleLibrariesAutomatically` decides
+ * [hasModuleLibraries] through [hasOwnModuleLibraries].
  *
  * An answer for every member, and never `null`, because the derivation states no custom path here.
  */
@@ -199,7 +204,7 @@ fun deriveMemberJarPath(
   moduleName: String,
   loadingRule: String?,
   hasPackageAttribute: Boolean,
-  mergesLibraries: Boolean,
+  hasModuleLibraries: Boolean,
   mainJarName: String,
   /** Whether the member is compatible with the frontend while the plugin's main module is not. */
   frontendSplit: Boolean = false,
@@ -210,7 +215,7 @@ fun deriveMemberJarPath(
     hasCustomPath = false,
     mainJarName = mainJarName,
     hasPackageAttribute = { hasPackageAttribute },
-    packedIntoSeparateJar = { mergesLibraries || frontendSplit },
+    packedIntoSeparateJar = { hasModuleLibraries || frontendSplit },
     frontendSplit = { frontendSplit },
   ))
 }
@@ -284,26 +289,6 @@ private fun separateLibraryJarNames(module: JpsModule): Set<String> {
 }
 
 /**
- * Whether the platform packs a library file as a jar of its own instead of merging it into the module's jar.
- *
- * The derivation owns this copy of the rule, so that the packaging gate compares two producers. An agent is attached
- * by path at runtime, and an `-rt` or `maven-` jar is loaded by an external process, so each stays a standalone file.
- */
-@ApiStatus.Internal
-fun isSeparateLibraryJar(fileName: String): Boolean {
-  return fileName.endsWith("-rt.jar") ||
-         fileName.startsWith("byte-buddy-") ||
-         (fileName.contains("-agent") && AGENT_LIBRARIES_MERGED.none { fileName.contains(it) }) ||
-         (fileName.startsWith("maven-") && MAVEN_LIBRARIES_MERGED.none { fileName.contains(it) })
-}
-
-/** The agent libraries the platform merges all the same. */
-private val AGENT_LIBRARIES_MERGED = listOf("code-agents", "code-prompt-agents")
-
-/** The `maven-` libraries the platform merges all the same. */
-private val MAVEN_LIBRARIES_MERGED = listOf("maven-artifact", "maven-central-configuration", "maven-plugin-xml-parser")
-
-/**
  * [member]'s jar under [mainJarName], or `null` when no resource root holds the member's own descriptor.
  *
  * A member with no readable descriptor has no `package` attribute to read, so the caller
@@ -316,10 +301,12 @@ private fun readMemberJar(
   mainJarName: String,
   libraries: (JpsModule) -> MergedMemberLibraries,
   frontend: FrontendCompatibility,
+  librariesKeptOut: Boolean,
 ): DerivedMemberJar? {
   val descriptor = memberDescriptor(member) ?: return null
   val merged = libraries(member)
   return deriveMemberJar(
+    hasModuleLibraries = hasOwnModuleLibraries(getProductionLibraryDependencies(member), librariesKeptOut),
     moduleName = member.name,
     loadingRule = loadingRule,
     hasPackageAttribute = descriptor.hasPackageAttribute,
@@ -337,8 +324,8 @@ private fun readMemberJar(
  * `lib/modules/<module>.jar`, or `lib/<module>.jar` for a jar that merges no module library.
  *
  * [libraries] is `null` for a member whose module library has no single jar; see [distributionLibraryName]. Such a
- * member gets a path and no offer. The path rule still reads `true` for the merge, because an unnamed library is a
- * module library all the same.
+ * member gets a path and no offer. [hasModuleLibraries] decides the path, as the packer decides it; see
+ * [hasOwnModuleLibraries]. By default it holds when the member merges a library or has one it cannot name.
  */
 @ApiStatus.Internal
 fun deriveMemberJar(
@@ -349,12 +336,13 @@ fun deriveMemberJar(
   isStated: Boolean,
   mainJarName: String,
   frontendSplit: Boolean = false,
+  hasModuleLibraries: Boolean = libraries == null || libraries.isNotEmpty(),
 ): DerivedMemberJar {
   val relativeOutputFile = deriveMemberJarPath(
     moduleName = moduleName,
     loadingRule = loadingRule,
     hasPackageAttribute = hasPackageAttribute,
-    mergesLibraries = libraries == null || libraries.isNotEmpty(),
+    hasModuleLibraries = hasModuleLibraries,
     mainJarName = mainJarName,
     frontendSplit = frontendSplit,
   )
