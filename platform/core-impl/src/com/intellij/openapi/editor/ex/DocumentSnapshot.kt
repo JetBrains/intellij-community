@@ -68,6 +68,9 @@ interface DocumentSnapshot {
   @Contract(pure = true)
   fun withMetadata(metadata: DocumentSnapshot): DocumentSnapshot
 
+  @Contract(pure = true)
+  fun copyWithNewIdentity(): DocumentSnapshot
+
   /**
    * Returns a human-readable dump of the snapshot state, used for diagnostics only
    */

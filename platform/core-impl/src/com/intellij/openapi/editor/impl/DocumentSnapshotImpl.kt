@@ -40,7 +40,7 @@ internal class DocumentSnapshotImpl private constructor(
     return this
   }
 
-  internal fun copyWithNewIdentity(): DocumentSnapshotImpl {
+  override fun copyWithNewIdentity(): DocumentSnapshotImpl {
     return DocumentSnapshotImpl(text, modState, sputniks)
   }
 

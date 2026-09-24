@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl.marker
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentTextPatch
-import com.intellij.openapi.editor.impl.DocumentSnapshotImpl
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
@@ -60,7 +59,7 @@ class SnapshotMarkerStores {
     val stores = aliveStores().filter { it.containsSnapshot(markerSnapshot) || it.containsSnapshot(metadataSnapshot) }
     if (stores.isEmpty()) return metadataSnapshot
 
-    val mergedSnapshot = (metadataSnapshot as DocumentSnapshotImpl).copyWithNewIdentity()
+    val mergedSnapshot = metadataSnapshot.copyWithNewIdentity()
     stores.forEach { it.merge(markerSnapshot, metadataSnapshot, mergedSnapshot) }
     return mergedSnapshot
   }
