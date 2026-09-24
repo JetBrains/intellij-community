@@ -54,7 +54,7 @@ class VcsLogChangesBrowser(
 ) : AsyncChangesBrowserBase(project, false, false), Disposable {
   private val toolbarWrapper: Wrapper
   private val changeSetProvider: DiffRequestChainChangeSetProvider = object : DiffRequestChainChangeSetProvider {
-    override suspend fun loadChanges(): List<Change> = model.changes.toList()
+    override suspend fun loadChanges(): List<Change> = model.changes
   }
 
   init {

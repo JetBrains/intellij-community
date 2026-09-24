@@ -6,5 +6,10 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface DiffRequestChainChangeSetProvider {
+  /**
+   * Loads the full change set.
+   *
+   * The implementation must not mutate a returned list instance.
+   */
   suspend fun loadChanges(): List<Change>
 }
