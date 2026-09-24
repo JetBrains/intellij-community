@@ -409,11 +409,12 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
   }
 
   suspend fun onProjectRootsChanged() {
-    // The current implementation handles the following use case:
+    // The current implementation handles the following use cases:
     // - some file is open in the editor, but it doesn't belong to the project (for example, it is in an excluded folder)
     // - later this file becomes a project file for some reason (for example, its parent folder is unexcluded)
     // In this case, it might be needed to send `didOpen` request for this file (if there's an already running LSP server that wants to handle it),
     // or it might be needed to start an LSP server that wants to handle this file.
+    // And the reverse one: a file that a server has opened becomes excluded, so the server gets `didClose` for it.
 
     // TODO Some running servers might need to update the roots they serve (`didChangeWorkspaceFolders` notification)
     // TODO Some running servers might need to be stopped if they serve roots that don't belong to the project anymore
@@ -423,6 +424,7 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
       val unsavedFiles = FileDocumentManager.getInstance().unsavedDocuments.mapNotNull { FileDocumentManager.getInstance().getFile(it) }
       LspOpenedFilesService.getInstance(project).processOpenedFiles(unsavedFiles + openedFiles)
     }
+    LspOpenedFilesService.getInstance(project).scheduleClosingFilesThatAreNotOfInterest()
   }
 
   override fun dispose(): Unit = lspClients.forEach { stopRunningServer(it) }

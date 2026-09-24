@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.impl.LspClientImpl
@@ -170,7 +171,8 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
   }
 
   /**
-   * @return files that have been opened by this server (with `didOpen` request), but now they are neither opened in the editor nor unsaved
+   * @return files that have been opened by this server (with `didOpen` request), but now they are neither opened in the editor nor unsaved.
+   * Also the files that became excluded from the project, even when they are still open in the editor.
    */
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
@@ -178,8 +180,12 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
     val fileEditorManager = FileEditorManager.getInstance(client.project)
     val fileDocumentManager = FileDocumentManager.getInstance()
 
+    val fileIndex = ProjectFileIndex.getInstance(client.project)
+
     return openedFiles.filter { file ->
       val originFile = BackedVirtualFile.getOriginFileIfBacked(file)
+      // `didOpen` is never sent for an excluded file, so a file that became excluded is closed the same way
+      if (originFile.isInLocalFileSystem && fileIndex.isExcluded(originFile)) return@filter true
       if (fileEditorManager.isFileOpen(originFile)) return@filter false
 
       val cachedDoc = FileDocumentManager.getInstance().getCachedDocument(originFile)

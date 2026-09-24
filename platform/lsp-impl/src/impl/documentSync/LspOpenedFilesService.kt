@@ -130,7 +130,8 @@ internal class LspOpenedFilesService(private val project: Project) {
   }
 
   /**
-   * For every running LSP server, sends `didClose` for files that are no longer open in the editor and are saved.
+   * For every running LSP server, sends `didClose` for files that are no longer open in the editor and are saved,
+   * and for files that became excluded from the project.
    * The work is coalesced across calls, so it's cheap to invoke after any event that might have made some files irrelevant.
    */
   fun scheduleClosingFilesThatAreNotOfInterest() {
