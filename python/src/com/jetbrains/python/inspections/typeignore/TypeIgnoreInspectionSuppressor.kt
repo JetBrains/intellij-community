@@ -7,6 +7,8 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.jetbrains.python.inspections.PyIgnoreCommentUtil
+import com.jetbrains.python.inspections.PySuppressionUtil
+import com.jetbrains.python.inspections.quickfix.PySuppressWithTypeIgnoreFix
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.impl.PyPsiUtils
 
@@ -38,7 +40,9 @@ class TypeIgnoreInspectionSuppressor : InspectionSuppressor {
   }
 
   override fun getSuppressActions(element: PsiElement?, toolId: String): Array<SuppressQuickFix> {
-    return SuppressQuickFix.EMPTY_ARRAY
+    // PyTypeChecker offers a suppress action per granular code, see PyTypeCheckerSuppressableProblemGroup.
+    if (PySuppressionUtil.isCustomManaged(toolId)) return SuppressQuickFix.EMPTY_ARRAY
+    return arrayOf(PySuppressWithTypeIgnoreFix.forInspection(toolId))
   }
 }
 
