@@ -46,6 +46,7 @@ import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
 import com.intellij.util.indexing.DumbModeReindexingScheduler
 import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.indexing.FilePropertyPusherEx
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.UnindexedFilesUpdater
