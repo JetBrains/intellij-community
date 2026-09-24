@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.util.runWithCheckCanceled
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.NonNls
+import org.languagetool.JLanguageTool
 import org.languagetool.Language
 import org.languagetool.language.English
 import org.languagetool.noop.NoopChunker
@@ -128,6 +129,7 @@ enum class Lang(val displayName: String, val className: String, val iso: Languag
     if (_jLanguage != null) return _jLanguage
     synchronized(lock) {
       if (_jLanguage != null) return _jLanguage
+      JLanguageTool.useCustomPasswordAuthenticator(false)
       GrazieDynamic.loadLang(this)?.also {
         if (shouldDisableChunker(it)) {
           it.chunker = NoopChunker()
