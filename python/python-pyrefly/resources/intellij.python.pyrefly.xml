@@ -38,6 +38,8 @@
     <registryKey key="pyrefly.type.engine" defaultValue="false"
                  description="Enforce pyrefly type engine"/>
 
+    <postStartupActivity implementation="com.intellij.python.pyrefly.PyreflyTypeEngineRegistryListener"/>
+
     <python.lsp.typeEngineConfigurable implementation="com.intellij.python.pyrefly.PyreflyPyTypeEngineProvider"/>
     <projectSettings service="com.intellij.python.pyrefly.PyreflyConfiguration"/>
     <python.pytools.pyTool implementation="com.intellij.python.pyrefly.PyreflyPyTool"/>
