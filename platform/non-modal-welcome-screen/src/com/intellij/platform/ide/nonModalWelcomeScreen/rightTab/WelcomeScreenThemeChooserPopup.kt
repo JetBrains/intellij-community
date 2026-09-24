@@ -15,10 +15,9 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenComboBoxKind
@@ -124,14 +123,35 @@ internal class WelcomeScreenThemeChooserPopup(
     builder.setResizable(false)
     builder.setMovable(false)
     builder.setMinSize(Dimension(owner.width, 0))
-    // PopupChooserBuilder wires this as the popup's OK handler, so it runs after the popup has closed.
+    builder.setCloseOnEnter(false)
+
+    var committed = false
+    var finished = false
+    var popupRef: JBPopup? = null
+
     builder.setItemChosenCallback(Runnable {
       val selected = list.selectedValue ?: return@Runnable
+      committed = true
+      debounce.stop()
       model.commit(selected)
       WelcomeScreenTabUsageCollector.logComboBoxValueChanged(WelcomeScreenComboBoxKind.THEME)
+      popupRef?.cancel()
+    })
+
+    builder.setCancelCallback(Computable {
+      if (!finished) {
+        finished = true
+        debounce.stop()
+        if (!committed) {
+          previewer.restore(snapshot)
+        }
+        onDispose?.run()
+      }
+      true
     })
 
     val popup = builder.createPopup()
+    popupRef = popup
     Disposer.register(popup, popupDisposable)
 
     // Both of these need the scroll pane, which the builder creates inside createPopup, hence the order.
@@ -143,18 +163,6 @@ internal class WelcomeScreenThemeChooserPopup(
       // the list at the height of the sample beside it, so the two columns match and the popup stays small.
       scrollPane.preferredSize = Dimension(scrollPane.preferredSize.width, JBUI.scale(PREVIEW_HEIGHT))
     }
-
-    popup.addListener(object : JBPopupListener {
-      override fun onClosed(event: LightweightWindowEvent) {
-        debounce.stop()
-        // isOk means the user chose an item, and the choice is applied by the OK handler above, which
-        // runs after this. A flag of our own would still be unset here and would revert the choice.
-        if (!event.isOk) {
-          previewer.restore(snapshot)
-        }
-        onDispose?.run()
-      }
-    })
 
     return popup
   }
