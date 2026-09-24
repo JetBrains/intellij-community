@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -636,7 +637,9 @@ class TerminalViewImpl(
     // Resolve and cache the PSI file here, not inside the listener below: getPsiFile may require a read lock,
     // which can be acquired at this point but not in afterContentChanged — that listener runs on the
     // strict UI output dispatcher (see TerminalSessionController), where taking a lock is prohibited.
-    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(model.document) as? TerminalOutputPsiFile
+    val psiFile = WriteIntentReadAction.compute {
+      PsiDocumentManager.getInstance(project).getPsiFile(model.document) as? TerminalOutputPsiFile
+    }
     model.addListener(parentDisposable, object : TerminalOutputModelListener {
       override fun afterContentChanged(event: TerminalContentChangeEvent) {
         // Repaint the whole screen to update all changed highlightings.
