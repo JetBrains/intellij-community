@@ -172,9 +172,3 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
   }
 }
 
-@ApiStatus.Internal
-fun PythonInterpreterTargetEnvironmentFactory.getPythonTargetInterpreter(
-  sdk: Sdk,
-  project: Project,
-): HelpersAwareTargetEnvironmentRequest? =
-  (sdk.sdkAdditionalData as? PyTargetAwareAdditionalData)?.let { getPythonTargetInterpreter(it, project) }

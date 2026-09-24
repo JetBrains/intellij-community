@@ -32,7 +32,6 @@ import com.jetbrains.python.run.execute
 import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.remoteSourcesLocalPath
-import com.jetbrains.python.sdk.targetEnvConfiguration
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAddedByUser
 import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsRemovedByUser
@@ -46,7 +45,7 @@ import kotlin.io.path.setPosixFilePermissions
 // Remote target
 internal class PyTargetsIntrospectionFacadeRemote private constructor(
   sdk: Sdk,
-  private val data: PyTargetAwareAdditionalData,
+  private var data: PyTargetAwareAdditionalData,
   project: Project,
   request: HelpersAwareTargetEnvironmentRequest,
   private val configuration: TargetEnvironmentConfiguration,
@@ -97,7 +96,7 @@ internal class PyTargetsIntrospectionFacadeRemote private constructor(
     }
     execution.addParameter(downloadVolume.getTargetDownloadPath())
 
-    val targetWithVfs = sdk.targetEnvConfiguration?.let { PythonInterpreterTargetEnvironmentFactory.getTargetWithMappedLocalVfs(it) }
+    val targetWithVfs = PythonInterpreterTargetEnvironmentFactory.getTargetWithMappedLocalVfs(configuration)
     if (targetWithVfs != null) {
       // If sdk is target that supports local VFS, there is no reason to copy editable packages to remote_sources
       // since their paths should be available locally (to be edited)
@@ -177,7 +176,6 @@ internal class PyTargetsIntrospectionFacadeRemote private constructor(
       }
     }
 
-    //
     commitMappings(pathMappings)
 
     val fs = StandardFileSystems.local()
@@ -225,8 +223,11 @@ internal class PyTargetsIntrospectionFacadeRemote private constructor(
     pathMappings.pathMappings.mapNotNull { fs.findFileByPath(it.localRoot) }.forEach { it.refresh(false, true) }
   }
 
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun commitMappings(pathMappings: PathMappingSettings) {
+    if (data.pathMappings == pathMappings) return // Do not commit the same paths twice
     sdk.sdkModificator.apply {
+      // We are sure that modificator of this SDK is target, this sdk is for targets only
       (sdkAdditionalData as PyTargetAwareAdditionalData).setPathMappings(pathMappings)
       ApplicationManager.getApplication().let {
         it.invokeAndWait {
@@ -234,6 +235,7 @@ internal class PyTargetsIntrospectionFacadeRemote private constructor(
         }
       }
     }
+    data = sdk.sdkAdditionalData as PyTargetAwareAdditionalData
   }
 }
 
