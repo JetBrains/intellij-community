@@ -3,6 +3,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
+import com.intellij.concurrency.ConcurrencyUtils;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
@@ -211,7 +212,8 @@ public final class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClas
       return;
     }
     if (size > 100) {
-      JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(collection), processor);
+      ConcurrencyUtils.runWithIndicatorOrContextCancellation(_ ->
+      JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(collection), processor));
     }
     else {
       ContainerUtil.process(collection, processor);

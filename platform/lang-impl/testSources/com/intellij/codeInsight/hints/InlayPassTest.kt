@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hints.presentation.RecursivelyUpdatingRootPresen
 import com.intellij.codeInsight.hints.presentation.RootInlayPresentation
 import com.intellij.codeInsight.hints.presentation.SpacePresentation
 import com.intellij.codeInsight.multiverse.codeInsightContext
+import com.intellij.concurrency.ConcurrencyUtils
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
@@ -189,10 +190,11 @@ class InlayPassTest : BasePlatformTestCase() {
   }
 
   private fun InlayHintsPass.collectAndApply() {
-    val dumbProgressIndicator = DumbProgressIndicator()
-    doCollectInformation(dumbProgressIndicator)
-    applyInformationToEditor()
-    sharedSink.reset()
+    ConcurrencyUtils.runWithIndicatorOrContextCancellation { indicator ->
+      doCollectInformation(indicator)
+      applyInformationToEditor()
+      sharedSink.reset()
+    }
   }
 
   private val inlayModel
