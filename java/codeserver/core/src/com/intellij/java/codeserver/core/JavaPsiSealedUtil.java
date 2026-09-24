@@ -5,6 +5,7 @@ import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -58,14 +59,17 @@ public final class JavaPsiSealedUtil {
       if (permitsList == null) {
         results = SyntaxTraverser.psiTraverser(psiClass.getContainingFile())
           .filter(PsiClass.class)
-          //local classes and anonymous classes must not extend sealed
-          .filter(cls -> !(cls instanceof PsiAnonymousClass || PsiUtil.isLocalClass(cls)))
+          //local classes and anonymous classes must not extend sealed;
+          //a type parameter is reported as an inheritor of its own bound, but it's not a subclass
+          .filter(cls -> !(cls instanceof PsiAnonymousClass || cls instanceof PsiTypeParameter || PsiUtil.isLocalClass(cls)))
           .filter(cls -> cls.isInheritor(psiClass, false))
           .toList();
       }
       else {
         results = Stream.of(permitsList.getReferencedTypes())
           .map(type -> type.resolve()).filter(Objects::nonNull)
+          //a type parameter in a permits list is erroneous code; it's not a subclass
+          .filter(cls -> !(cls instanceof PsiTypeParameter))
           .collect(Collectors.toCollection(LinkedHashSet::new));
       }
       return CachedValueProvider.Result.create(results, PsiModificationTracker.MODIFICATION_COUNT);

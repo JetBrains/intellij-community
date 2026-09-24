@@ -85,6 +85,10 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   public void testSwitchExhaustivenessWithGenericsIn21Java() {
     doTest();
   }
+
+  public void testSwitchExhaustivenessWithRecursiveGenerics() {
+    doTest();
+  }
   
   public void testSwitchSeveralPatternsUnnamed() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, this::doTest);
