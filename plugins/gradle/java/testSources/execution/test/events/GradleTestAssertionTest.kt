@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.events
 
+import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.util.GRADLE_CLASSPATH_ENHANCEMENT_POSSIBLE
+import com.intellij.gradle.testFramework.util.JUNIT_5_SUPPORTED_VERSIONS
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.util.GRADLE_CLASSPATH_ENHANCEMENT_POSSIBLE
-import org.jetbrains.plugins.gradle.testFramework.util.JUNIT_5_SUPPORTED_VERSIONS
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest

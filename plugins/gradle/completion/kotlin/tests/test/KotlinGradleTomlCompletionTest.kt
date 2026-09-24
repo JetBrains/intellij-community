@@ -2,6 +2,8 @@
 package com.intellij.gradle.completion.kotlin.tests.integration
 
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.LOCAL
 import com.intellij.repository.search.completion.api.DependencyCompletionEvent
@@ -18,8 +20,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.params.ParameterizedTest
 
 private var libraries = "[libraries]\n"

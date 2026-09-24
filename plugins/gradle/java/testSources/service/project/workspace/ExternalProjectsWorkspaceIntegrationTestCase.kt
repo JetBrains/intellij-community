@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.workspace
 
+import com.intellij.gradle.testFramework.fixtures.gradleJvmFixture
+import com.intellij.gradle.testFramework.util.createBuildFile
+import com.intellij.gradle.testFramework.util.createGradleWrapper
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
@@ -18,9 +21,6 @@ import org.jetbrains.plugins.gradle.service.project.workspace.util.MavenPomBuild
 import org.jetbrains.plugins.gradle.service.project.workspace.util.MavenPomBuilder.Companion.mavenPom
 import org.jetbrains.plugins.gradle.service.project.workspace.util.MavenSettingsBuilder
 import org.jetbrains.plugins.gradle.service.project.workspace.util.MavenSettingsBuilder.Companion.mavenSettings
-import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleJvmFixture
-import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.createGradleWrapper
 import org.junit.jupiter.api.BeforeEach
 import java.io.ByteArrayOutputStream
 import java.util.jar.JarOutputStream

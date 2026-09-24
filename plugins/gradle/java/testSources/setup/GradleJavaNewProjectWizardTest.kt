@@ -1,6 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.setup
 
+import com.intellij.gradle.testFramework.projectInfo.settingsFile
+import com.intellij.gradle.testFramework.projectInfo.simpleJavaModuleInfo
+import com.intellij.gradle.testFramework.projectInfo.simpleJavaRootModuleInfo
+import com.intellij.gradle.testFramework.projectInfo.simpleSettingsFile
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
@@ -15,10 +19,6 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.settingsFile
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaModuleInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaRootModuleInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleSettingsFile
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test

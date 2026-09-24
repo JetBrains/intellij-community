@@ -7,6 +7,11 @@ import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildIssueEvent
 import com.intellij.build.events.FileMessageEvent
 import com.intellij.build.events.MessageEvent
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.fixtures.GradleTestFixture
+import com.intellij.gradle.testFramework.fixtures.gradleFixture
+import com.intellij.gradle.testFramework.fixtures.projectFixture
+import com.intellij.gradle.testFramework.util.buildEnvironment
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -32,11 +37,6 @@ import org.jetbrains.plugins.gradle.issue.GradleIssueData
 import org.jetbrains.plugins.gradle.issue.GradleIssueFailure
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionReporter.GradleExecutionFailureReport
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.projectFixture
-import org.jetbrains.plugins.gradle.testFramework.util.buildEnvironment
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

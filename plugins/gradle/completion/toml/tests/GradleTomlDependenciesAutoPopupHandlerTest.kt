@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.completion.toml.tests
 
+import com.intellij.gradle.testFramework.GradleCodeInsightBaseTestCase
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import com.intellij.openapi.Disposable
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.LOCAL
@@ -18,9 +21,6 @@ import com.intellij.util.application
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightBaseTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull

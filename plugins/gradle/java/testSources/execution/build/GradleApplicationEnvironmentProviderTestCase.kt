@@ -1,16 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build
 
 import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
+import com.intellij.gradle.testFramework.util.ExternalSystemExecutionTracer
+import com.intellij.gradle.testFramework.util.withThreadDumpEvery
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.waitForProjectActivity
 import org.assertj.core.api.Assertions
 import org.jetbrains.plugins.gradle.importing.GradleSettingsImportingTestCase
-import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
-import org.jetbrains.plugins.gradle.testFramework.util.withThreadDumpEvery
 import kotlin.time.Duration.Companion.minutes
 
 /**

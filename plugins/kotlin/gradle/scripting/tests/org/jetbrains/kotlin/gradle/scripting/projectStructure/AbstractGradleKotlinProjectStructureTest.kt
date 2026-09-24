@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.projectStructure
 
+import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
+import com.intellij.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
@@ -22,8 +24,6 @@ import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.invariantSeparatorsPathString

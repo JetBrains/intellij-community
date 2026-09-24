@@ -2,6 +2,12 @@
 package com.intellij.gradle.properties.tests.integration
 
 import com.intellij.gradle.properties.GradleVersionQuickFix
+import com.intellij.gradle.testFramework.fixtures.gradleFixture
+import com.intellij.gradle.testFramework.fixtures.gradleProjectRootFixture
+import com.intellij.gradle.testFramework.fixtures.projectFixture
+import com.intellij.gradle.testFramework.projectInfo.gradleProjectInfo
+import com.intellij.gradle.testFramework.projectInfo.simpleJavaRootModuleInfo
+import com.intellij.gradle.testFramework.projectInfo.simpleSettingsFile
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -19,12 +25,6 @@ import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
-import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleProjectRootFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.projectFixture
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaRootModuleInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleSettingsFile
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.Companion.SUPPORTED_GRADLE_VERSIONS
 import org.junit.jupiter.api.Test
 import java.nio.file.Path

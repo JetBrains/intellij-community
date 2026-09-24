@@ -1,14 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.quarantine.dsl
 
+import com.intellij.gradle.testFramework.GradleCodeInsightTestCase
+import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
+import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.util.withBuildFile
+import com.intellij.gradle.testFramework.util.withSettingsFile
 import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROVIDER_PROPERTY
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection

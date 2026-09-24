@@ -1,6 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build
 
+import com.intellij.gradle.testFramework.GradleExecutionTestCase
+import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
 import com.intellij.openapi.util.registry.Registry
@@ -10,8 +12,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.buildScript
 import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase.Companion.assertNodeWithDeprecatedGradleWarning
-import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.junit.jupiter.params.ParameterizedTest
 
 /** Runs [action] with the `gradle.build.toolwindow.single.console` registry flag set to [enabled], restoring the previous value afterwards. */

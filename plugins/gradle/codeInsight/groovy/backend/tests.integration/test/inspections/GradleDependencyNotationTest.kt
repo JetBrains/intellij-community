@@ -2,10 +2,10 @@
 package com.intellij.gradle.codeInsight.groovy.backend.tests.integration.inspections
 
 import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleIncorrectDependencyNotationArgumentInspection
+import com.intellij.gradle.testFramework.GradleCodeInsightTestCase
+import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 

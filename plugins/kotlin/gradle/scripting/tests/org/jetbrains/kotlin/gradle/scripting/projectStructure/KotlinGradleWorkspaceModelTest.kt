@@ -1,6 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.projectStructure
 
+import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.fixtures.application.GradleProjectTestApplication
+import com.intellij.gradle.testFramework.util.KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
+import com.intellij.gradle.testFramework.util.KOTLIN_SUPPORTED_VERSIONS
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsUnordered
@@ -9,10 +13,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.scripting.workspaceModel.GradleScriptDefinitionEntity
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
-import org.jetbrains.plugins.gradle.testFramework.util.KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
-import org.jetbrains.plugins.gradle.testFramework.util.KOTLIN_SUPPORTED_VERSIONS
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass

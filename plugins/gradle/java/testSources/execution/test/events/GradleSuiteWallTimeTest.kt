@@ -10,12 +10,12 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.execution.testframework.sm.runner.events.TestDurationStrategy
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeViewProvider
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.assertInstanceOf
 import org.assertj.core.api.Assertions
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleSuiteWallTimeTest : GradleTestExecutionTestCase() {

@@ -6,14 +6,14 @@ import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerTestImpl
 import com.intellij.gradle.completion.toml.GRADLE_TOML_LIBRARY_COMPLETION_POSITION_KEY
 import com.intellij.gradle.completion.toml.GradleTomlLibraryCompletionPosition
+import com.intellij.gradle.testFramework.GradleCodeInsightTestCase
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedTest

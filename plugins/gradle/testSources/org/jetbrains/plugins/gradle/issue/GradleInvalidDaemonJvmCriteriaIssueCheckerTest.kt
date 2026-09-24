@@ -1,15 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.issue
 
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.fixtures.gradleFixture
+import com.intellij.gradle.testFramework.util.buildEnvironment
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
-import org.jetbrains.plugins.gradle.testFramework.util.buildEnvironment
 
 @TestApplication
 @ParameterizedClass

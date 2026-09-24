@@ -1,25 +1,23 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.multiplatformTests.junit5
 
+import com.intellij.gradle.testFramework.util.createGradleWrapper
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
-import org.jetbrains.plugins.gradle.testFramework.util.createGradleWrapper
-import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
-import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest.Companion.configureByFiles
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest.Companion.createLocalPropertiesFiles
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestProperties
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.CustomGradlePropertiesTestFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsPublishingTestsFeature
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.LibraryKindsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.LinkedProjectPathsTestsFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.NoErrorEventsDuringImportFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.AllFilesAreUnderContentRootChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.DocumentationChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.LibraryKindsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.ReferenceTargetChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.TestTasksChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.ContentRootsChecker
@@ -31,6 +29,8 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runC
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.RunConfigurationsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.sources.LibrarySourcesChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.WorkspaceModelChecker
+import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import java.nio.file.Path
 import kotlin.io.path.createDirectory
 import kotlin.io.path.name

@@ -1,6 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.java.tests.benchmark.importing
 
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.fixtures.gradleFixture
+import com.intellij.gradle.testFramework.fixtures.projectFixture
+import com.intellij.gradle.testFramework.projectModel.mock.GradleTestExternalProject.Companion.externalProjects
+import com.intellij.gradle.testFramework.projectModel.mock.GradleTestIdeaProject.Companion.ideaProject
+import com.intellij.gradle.testFramework.projectModel.mock.GradleTestProjectNode.Companion.projectNode
+import com.intellij.gradle.testFramework.projectModel.mock.GradleTestProjectResolverContext.Companion.projectResolverContext
+import com.intellij.gradle.testFramework.projectModel.moduleNodes
+import com.intellij.gradle.testFramework.projectModel.moduleSdkNode
+import com.intellij.gradle.testFramework.projectModel.projectSdkNode
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
@@ -17,16 +27,6 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtensi
 import org.jetbrains.plugins.gradle.service.project.JavaGradleProjectResolver
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.projectFixture
-import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestExternalProject.Companion.externalProjects
-import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestIdeaProject.Companion.ideaProject
-import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestProjectNode.Companion.projectNode
-import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestProjectResolverContext.Companion.projectResolverContext
-import org.jetbrains.plugins.gradle.testFramework.projectModel.moduleNodes
-import org.jetbrains.plugins.gradle.testFramework.projectModel.moduleSdkNode
-import org.jetbrains.plugins.gradle.testFramework.projectModel.projectSdkNode
 import org.jetbrains.plugins.gradle.util.gradleSettings
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Nested

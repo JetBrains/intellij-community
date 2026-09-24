@@ -2,6 +2,7 @@
 package com.intellij.gradle.completion.kotlin.tests.integration
 
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation
@@ -14,7 +15,6 @@ import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.TestFiles
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil.getAnnotationValue
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil.getTestMetadata
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import java.io.File
 import java.util.regex.Pattern
 import kotlin.test.assertEquals

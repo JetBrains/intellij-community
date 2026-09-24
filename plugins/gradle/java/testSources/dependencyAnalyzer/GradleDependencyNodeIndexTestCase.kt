@@ -1,11 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dependencyAnalyzer
 
+import com.intellij.gradle.testFramework.GradleExecutionTestCase
 import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyScopeNode
 import com.intellij.openapi.project.modules
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
 import org.jetbrains.plugins.gradle.service.project.GradleModuleDataIndex
-import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.util.GradleModuleData
 import org.junit.jupiter.api.Assertions
 

@@ -4,6 +4,11 @@ package com.intellij.gradle.completion.kotlin.tests.integration
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
+import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.annotations.GradleTestSource
+import com.intellij.gradle.testFramework.fixtures.application.GradleProjectTestApplication
+import com.intellij.gradle.testFramework.util.withBuildFile
 import com.intellij.idea.IJIgnore
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -29,16 +34,10 @@ import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
-import kotlin.test.ExperimentalKotlinTestApi
 import kotlin.test.assertTrue
 
 

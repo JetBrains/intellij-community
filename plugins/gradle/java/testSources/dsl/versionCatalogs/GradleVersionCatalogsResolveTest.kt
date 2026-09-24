@@ -1,15 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl.versionCatalogs
 
+import com.intellij.gradle.testFramework.GradleCodeInsightTestCase
+import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.util.withSettingsFile
 import com.intellij.idea.IJIgnore
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.DYNAMICALLY_INCLUDED_SUBPROJECTS_FIXTURE
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.junit.jupiter.api.Assertions.assertEquals

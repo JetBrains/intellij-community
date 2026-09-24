@@ -3,6 +3,8 @@ package com.intellij.gradle.codeInsight.kotlin.backend.tests.integration.inspect
 
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.PriorityAction
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.util.assertThatKotlinDslScriptsModelImportIsSupported
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.runInEdtAndWait
@@ -11,8 +13,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.K2GradleCodeInsightTestCase
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.util.assertThatKotlinDslScriptsModelImportIsSupported
 import org.junit.jupiter.params.ParameterizedTest
 
 class KotlinGradlePropertyMethodCallQuickFixTest : K2GradleCodeInsightTestCase() {

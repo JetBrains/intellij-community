@@ -1,13 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.projectStructure
 
+import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
+import com.intellij.gradle.testFramework.annotations.GradleTestSource
+import com.intellij.gradle.testFramework.util.withBuildFile
+import com.intellij.gradle.testFramework.util.withSettingsFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.params.ParameterizedTest
 
 @TestMetadata("testData/gradleScriptConventionPlugins")

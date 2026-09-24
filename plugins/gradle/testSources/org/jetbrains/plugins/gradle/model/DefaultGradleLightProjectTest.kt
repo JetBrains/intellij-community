@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model
 
+import com.intellij.gradle.testFramework.annotations.GradleTestSource
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildSrcSyncedSeparately
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildTreePathAvailable
 import com.intellij.idea.IJIgnore
@@ -8,7 +9,6 @@ import com.intellij.testFramework.common.mock.NotMockedMemberError
 import org.gradle.tooling.internal.gradle.DefaultProjectIdentifier
 import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest

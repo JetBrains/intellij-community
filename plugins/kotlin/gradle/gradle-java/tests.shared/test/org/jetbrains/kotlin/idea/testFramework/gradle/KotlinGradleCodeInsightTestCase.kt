@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.testFramework.gradle
 
+import com.intellij.gradle.testFramework.GradleCodeInsightTestCase
+import com.intellij.gradle.testFramework.util.assertThatKotlinIsSupported
 import com.intellij.testFramework.RunAll
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase.Companion.KOTLIN_PROJECT
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.util.assertThatKotlinIsSupported
 
 abstract class KotlinGradleCodeInsightTestCase : GradleCodeInsightTestCase() {
 

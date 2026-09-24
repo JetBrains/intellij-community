@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.highlighting
 
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
@@ -13,7 +14,6 @@ import org.jetbrains.kotlin.idea.highlighter.CHECK_SYMBOL_NAMES
 import org.jetbrains.kotlin.idea.highlighter.checkHighlighting
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.parseDirectives
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.junit.jupiter.params.ParameterizedTest
 import java.io.File
 

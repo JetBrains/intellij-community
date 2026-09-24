@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.run.gradle
 
+import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
 import com.intellij.openapi.application.runReadActionBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.run.getConfiguration
 import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertEquals

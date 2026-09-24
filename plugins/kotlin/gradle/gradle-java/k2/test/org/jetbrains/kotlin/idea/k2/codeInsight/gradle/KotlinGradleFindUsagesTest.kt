@@ -1,6 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle
 
+import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
+import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.fixtures.application.GradleProjectTestApplication
+import com.intellij.gradle.testFramework.util.CONFIGURATION_CACHE_SUPPORTED_VERSIONS
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.guessProjectDir
@@ -14,10 +18,6 @@ import org.jetbrains.kotlin.gradle.GRADLE_KMP_KOTLIN_FIXTURE
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
-import org.jetbrains.plugins.gradle.testFramework.util.CONFIGURATION_CACHE_SUPPORTED_VERSIONS
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest

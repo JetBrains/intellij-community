@@ -2,14 +2,14 @@
 package com.intellij.gradle.codeInsight.toml.backend.tests.integration.inspections
 
 import com.intellij.gradle.codeInsight.toml.backend.inspections.UnusedVersionCatalogEntryInspection
+import com.intellij.gradle.testFramework.GradleCodeInsightBaseTestCase
+import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.BASE_VERSION_CATALOG_FIXTURE
 import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.VERSION_CATALOG_COMPOSITE_BUILD_FIXTURE
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightBaseTestCase
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.params.ParameterizedTest
 
 @GradleProjectTestApplication

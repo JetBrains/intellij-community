@@ -1,6 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.completion
 
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.annotations.GradleTestSource
+import com.intellij.gradle.testFramework.fixtures.application.GradleProjectTestApplication
+import com.intellij.gradle.testFramework.util.assertThatGradleIsAtLeast
+import com.intellij.gradle.testFramework.util.assertThatGradleIsOlderThan
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.runReadAction
 import com.intellij.testFramework.TestDataPath
@@ -11,11 +16,6 @@ import org.jetbrains.kotlin.gradle.GRADLE_KMP_KOTLIN_FIXTURE
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
-import org.jetbrains.plugins.gradle.testFramework.util.assertThatGradleIsAtLeast
-import org.jetbrains.plugins.gradle.testFramework.util.assertThatGradleIsOlderThan
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertEquals

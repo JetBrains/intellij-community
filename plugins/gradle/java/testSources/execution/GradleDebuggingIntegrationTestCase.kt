@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution
 
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings
@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.gradle.testFramework.util.ExternalSystemExecutionTracer
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler
@@ -16,7 +17,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
-import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
 import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch

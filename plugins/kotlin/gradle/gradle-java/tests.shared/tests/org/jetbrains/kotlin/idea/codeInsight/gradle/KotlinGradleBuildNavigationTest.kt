@@ -1,6 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
+import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.util.withBuildFile
+import com.intellij.gradle.testFramework.util.withSettingsFile
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleOlderThan
 import com.intellij.lang.documentation.psi.createPsiDocumentationTarget
 import com.intellij.openapi.application.runReadActionBlocking
@@ -11,10 +15,6 @@ import com.intellij.testFramework.utils.vfs.getPsiFile
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
 

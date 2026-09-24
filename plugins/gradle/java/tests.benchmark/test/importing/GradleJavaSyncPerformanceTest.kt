@@ -1,6 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.java.tests.benchmark.importing
 
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.fixtures.gradleFixture
+import com.intellij.gradle.testFramework.fixtures.gradleProjectRootFixture
+import com.intellij.gradle.testFramework.fixtures.projectFixture
+import com.intellij.gradle.testFramework.projectInfo.GradleProjectInfo
+import com.intellij.gradle.testFramework.projectInfo.GradleProjectInfoAssertions.assertProjectStructure
+import com.intellij.gradle.testFramework.projectInfo.buildFile
+import com.intellij.gradle.testFramework.projectInfo.file
+import com.intellij.gradle.testFramework.projectInfo.gradleProjectInfo
+import com.intellij.gradle.testFramework.projectInfo.settingsFile
+import com.intellij.gradle.testFramework.projectInfo.simpleJavaModuleInfo
+import com.intellij.gradle.testFramework.projectInfo.simpleSettingsFile
 import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.junit5.SystemPropertyClassLevel
 import com.intellij.testFramework.junit5.TestApplication
@@ -9,18 +21,6 @@ import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.connection.GradleConnectorService.Companion.USE_PRODUCTION_TTL_FOR_TESTS_KEY
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilderCore
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleProjectRootFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.projectFixture
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfoAssertions.assertProjectStructure
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildFile
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.file
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.settingsFile
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaModuleInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleSettingsFile
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass

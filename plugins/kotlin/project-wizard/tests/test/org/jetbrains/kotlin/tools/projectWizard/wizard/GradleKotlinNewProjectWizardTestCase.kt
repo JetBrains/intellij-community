@@ -1,6 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
+import com.intellij.gradle.testFramework.projectInfo.GradleModuleInfoBuilder
+import com.intellij.gradle.testFramework.projectInfo.GradleProjectInfoBuilder
+import com.intellij.gradle.testFramework.projectInfo.buildFile
+import com.intellij.gradle.testFramework.projectInfo.settingsFile
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -16,10 +20,6 @@ import org.jetbrains.kotlin.tools.projectWizard.gradle.GradleKotlinNewProjectWiz
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
 import org.jetbrains.plugins.gradle.setup.GradleNewProjectWizardTestCase
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleModuleInfoBuilder
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfoBuilder
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildFile
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.settingsFile
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach

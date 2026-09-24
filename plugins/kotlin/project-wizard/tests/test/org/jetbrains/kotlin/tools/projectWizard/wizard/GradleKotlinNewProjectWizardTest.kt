@@ -1,6 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
+import com.intellij.gradle.testFramework.annotations.CsvCrossProductSource
+import com.intellij.gradle.testFramework.projectInfo.buildFile
+import com.intellij.gradle.testFramework.projectInfo.file
+import com.intellij.gradle.testFramework.projectInfo.settingsFile
+import com.intellij.gradle.testFramework.projectInfo.simpleJavaRootModuleInfo
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
 import com.intellij.openapi.Disposable
@@ -23,11 +28,6 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getCurrentProcessJdkHome
 import org.jetbrains.kotlin.tools.projectWizard.gradle.isLessOrEqualToMaxJvmTarget
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.testFramework.annotations.CsvCrossProductSource
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildFile
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.file
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.settingsFile
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaRootModuleInfo
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse

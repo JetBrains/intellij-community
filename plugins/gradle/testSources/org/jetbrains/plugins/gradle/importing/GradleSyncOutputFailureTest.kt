@@ -1,6 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.fixtures.buildViewFixture
+import com.intellij.gradle.testFramework.fixtures.gradleFixture
+import com.intellij.gradle.testFramework.fixtures.projectFixture
+import com.intellij.gradle.testFramework.projectInfo.buildFile
+import com.intellij.gradle.testFramework.projectInfo.gradleProjectInfo
+import com.intellij.gradle.testFramework.projectInfo.initProject
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.registry.Registry
@@ -18,13 +25,6 @@ import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isTaskConfigura
 import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase.Companion.assertNodeWithDeprecatedGradleWarning
 import org.jetbrains.plugins.gradle.importing.syncAction.GradleProjectResolverTestCase.TestProjectResolverExtension
 import org.jetbrains.plugins.gradle.importing.syncAction.registerProjectResolverExtension
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.buildViewFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.projectFixture
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildFile
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.initProject
 import org.jetbrains.plugins.gradle.tooling.builder.FailingTestModelBuilder
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach

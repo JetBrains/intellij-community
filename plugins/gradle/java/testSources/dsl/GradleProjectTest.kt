@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl
 
+import com.intellij.gradle.testFramework.GradleCodeInsightTestCase
+import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.assertInstanceOf
 import groovy.lang.Closure.DELEGATE_FIRST
@@ -10,8 +12,6 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADL
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_FILE_COPY_SPEC
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_PROCESS_EXEC_SPEC
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression

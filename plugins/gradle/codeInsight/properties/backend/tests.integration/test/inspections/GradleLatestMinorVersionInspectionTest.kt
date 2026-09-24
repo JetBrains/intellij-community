@@ -2,15 +2,15 @@
 package com.intellij.gradle.codeInsight.properties.backend.tests.integration.inspections
 
 import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleLatestMinorVersionInspection
+import com.intellij.gradle.testFramework.GradleCodeInsightBaseTestCase
+import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.GradleTestSource
+import com.intellij.gradle.testFramework.fixtures.application.GradleProjectTestApplication
+import com.intellij.gradle.testFramework.util.DEPRECATED_BY_IDEA_VERSIONS
+import com.intellij.gradle.testFramework.util.NON_DEPRECATED_BY_IDEA_VERSIONS
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightBaseTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
-import org.jetbrains.plugins.gradle.testFramework.util.DEPRECATED_BY_IDEA_VERSIONS
-import org.jetbrains.plugins.gradle.testFramework.util.NON_DEPRECATED_BY_IDEA_VERSIONS
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.Companion.BASE_GRADLE_VERSION
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.api.Assertions.assertTrue

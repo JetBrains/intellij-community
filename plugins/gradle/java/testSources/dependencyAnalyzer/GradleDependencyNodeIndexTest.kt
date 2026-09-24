@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dependencyAnalyzer
 
+import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.util.CONFIGURATION_CACHE_SUPPORTED_VERSIONS
+import com.intellij.gradle.testFramework.util.ISOLATED_PROJECTS_SUPPORTED_VERSIONS
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
@@ -13,9 +16,6 @@ import org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyNodeInde
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.buildScript
 import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase.Companion.assertNodeWithDeprecatedGradleWarning
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.util.CONFIGURATION_CACHE_SUPPORTED_VERSIONS
-import org.jetbrains.plugins.gradle.testFramework.util.ISOLATED_PROJECTS_SUPPORTED_VERSIONS
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 

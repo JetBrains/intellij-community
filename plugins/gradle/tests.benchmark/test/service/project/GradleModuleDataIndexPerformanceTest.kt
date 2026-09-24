@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.tests.benchmark.service.project
 
+import com.intellij.gradle.testFramework.projectModel.mock.GradleTestEntityStorage
+import com.intellij.gradle.testFramework.projectModel.mock.GradleTestEntityStorage.Companion.entityStorage
+import com.intellij.gradle.testFramework.projectModel.mock.GradleTestProjectNode.Companion.externalProjectInfo
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.project.modules
@@ -11,9 +14,6 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.jetbrains.plugins.gradle.service.project.GradleModuleDataIndex
-import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestEntityStorage
-import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestEntityStorage.Companion.entityStorage
-import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestProjectNode.Companion.externalProjectInfo
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource

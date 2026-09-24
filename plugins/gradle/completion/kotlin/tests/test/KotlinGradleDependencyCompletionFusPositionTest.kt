@@ -6,6 +6,9 @@ import com.intellij.gradle.completion.GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITI
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerTestImpl
+import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.util.withBuildFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.eel.provider.LocalEelDescriptor
@@ -14,9 +17,6 @@ import com.intellij.testFramework.replaceService
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.K2GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedTest

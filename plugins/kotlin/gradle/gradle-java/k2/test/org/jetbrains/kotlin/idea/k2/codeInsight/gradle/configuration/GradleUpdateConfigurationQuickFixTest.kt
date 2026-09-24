@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.configuration
 
+import com.intellij.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.io.File

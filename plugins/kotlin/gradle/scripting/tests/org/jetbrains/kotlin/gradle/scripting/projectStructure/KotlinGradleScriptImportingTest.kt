@@ -1,6 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.projectStructure
 
+import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.fixtures.GradleTestFixture
+import com.intellij.gradle.testFramework.fixtures.gradleFixture
+import com.intellij.gradle.testFramework.projectInfo.buildScriptName
+import com.intellij.gradle.testFramework.projectInfo.gradleProjectInfo
+import com.intellij.gradle.testFramework.projectInfo.initProject
+import com.intellij.gradle.testFramework.projectInfo.settingsScriptName
+import com.intellij.gradle.testFramework.projectInfo.simpleJavaProjectInfo
+import com.intellij.gradle.testFramework.projectInfo.simpleJavaRootModuleInfo
+import com.intellij.gradle.testFramework.projectInfo.simpleSettingsFile
+import com.intellij.gradle.testFramework.util.KOTLIN_DSL_BASE_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
+import com.intellij.gradle.testFramework.util.KOTLIN_DSL_BASE_SCRIPTS_MODEL_IMPORT_UNSUPPORTED_VERSIONS
+import com.intellij.gradle.testFramework.util.KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil
 import com.intellij.openapi.Disposable
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -21,19 +34,6 @@ import org.jetbrains.plugins.gradle.importing.syncAction.whenSyncPhaseCompleted
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Companion.BASE_SCRIPT_MODEL_PHASE
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Companion.SCRIPT_MODEL_PHASE
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildScriptName
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.initProject
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.settingsScriptName
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaRootModuleInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleSettingsFile
-import org.jetbrains.plugins.gradle.testFramework.util.KOTLIN_DSL_BASE_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
-import org.jetbrains.plugins.gradle.testFramework.util.KOTLIN_DSL_BASE_SCRIPTS_MODEL_IMPORT_UNSUPPORTED_VERSIONS
-import org.jetbrains.plugins.gradle.testFramework.util.KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested

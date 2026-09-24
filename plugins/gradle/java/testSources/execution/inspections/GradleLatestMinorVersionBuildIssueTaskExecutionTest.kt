@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.gradle.execution.inspections
 
 import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleLatestMinorVersionInspection
+import com.intellij.gradle.testFramework.GradleExecutionTestCase
+import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
@@ -16,8 +18,6 @@ import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.buildScript
 import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase.Companion.assertNodeWithDeprecatedGradleWarning
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
-import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 

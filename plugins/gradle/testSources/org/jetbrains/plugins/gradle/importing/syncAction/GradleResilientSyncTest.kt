@@ -1,6 +1,22 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing.syncAction
 
+import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.processors.CsvCrossProductArgumentsProcessor
+import com.intellij.gradle.testFramework.fixtures.gradleFixture
+import com.intellij.gradle.testFramework.projectInfo.GradleModuleInfoBuilder
+import com.intellij.gradle.testFramework.projectInfo.GradleProjectInfo
+import com.intellij.gradle.testFramework.projectInfo.GradleProjectInfoAssertions.assertPartialProjectStructure
+import com.intellij.gradle.testFramework.projectInfo.GradleProjectInfoAssertions.assertProjectStructure
+import com.intellij.gradle.testFramework.projectInfo.GradleProjectInfoAssertions.collectProjectInfo
+import com.intellij.gradle.testFramework.projectInfo.GradleProjectInfoBuilder
+import com.intellij.gradle.testFramework.projectInfo.file
+import com.intellij.gradle.testFramework.projectInfo.gradleProjectInfo
+import com.intellij.gradle.testFramework.projectInfo.initProject
+import com.intellij.gradle.testFramework.projectInfo.simpleJavaModuleInfo
+import com.intellij.gradle.testFramework.projectInfo.simpleJavaRootModuleInfo
+import com.intellij.gradle.testFramework.projectInfo.simpleKotlinDslRootModuleInfo
+import com.intellij.gradle.testFramework.projectInfo.simpleSettingsFile
 import com.intellij.openapi.project.Project
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.assertModuleDependencies
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModuleEntity
@@ -12,22 +28,6 @@ import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.annotations.processors.CsvCrossProductArgumentsProcessor
-import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleModuleInfoBuilder
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfoAssertions.assertPartialProjectStructure
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfoAssertions.assertProjectStructure
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfoAssertions.collectProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfoBuilder
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.file
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.initProject
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaModuleInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaRootModuleInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleKotlinDslRootModuleInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleSettingsFile
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.ParameterizedClass

@@ -1,6 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.fixtures.buildViewFixture
+import com.intellij.gradle.testFramework.fixtures.gradleFixture
+import com.intellij.gradle.testFramework.fixtures.projectFixture
+import com.intellij.gradle.testFramework.projectInfo.buildFile
+import com.intellij.gradle.testFramework.projectInfo.buildScriptName
+import com.intellij.gradle.testFramework.projectInfo.file
+import com.intellij.gradle.testFramework.projectInfo.gradleProjectInfo
+import com.intellij.gradle.testFramework.projectInfo.initProject
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
 import com.intellij.platform.testFramework.assertion.consoleText
@@ -12,15 +21,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase.Companion.assertNodeWithDeprecatedGradleWarning
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.buildViewFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.projectFixture
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildFile
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildScriptName
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.file
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.initProject
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.ParameterizedTest

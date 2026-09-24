@@ -1,7 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.setup
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.gradle.testFramework.GradleTestCase
+import com.intellij.gradle.testFramework.projectInfo.GradleProjectInfo
+import com.intellij.gradle.testFramework.projectInfo.settingsScriptName
 import com.intellij.ide.actions.ImportProjectAction
 import com.intellij.openapi.extensions.forEachExtensionSafeInline
 import com.intellij.openapi.externalSystem.action.AttachExternalProjectAction
@@ -15,9 +18,6 @@ import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObse
 import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualFile
 import org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction
-import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.settingsScriptName
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.idea.maven.utils.MavenUtil as IntellijMavenUtil
 

@@ -2,10 +2,10 @@
 package com.intellij.gradle.codeInsight.groovy.backend.tests.integration.inspections
 
 import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleForeignDelegateInspection
+import com.intellij.gradle.testFramework.GradleCodeInsightTestCase
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
 import com.intellij.openapi.util.RecursionManager
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleForeignDelegateInspectionTest : GradleCodeInsightTestCase() {

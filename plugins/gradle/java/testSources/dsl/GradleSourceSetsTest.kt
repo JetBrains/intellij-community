@@ -1,11 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl
 
+import com.intellij.gradle.testFramework.GradleCodeInsightTestCase
+import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_SOURCE_SET
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_SOURCE_SET_CONTAINER
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.junit.jupiter.api.Assertions.assertEquals

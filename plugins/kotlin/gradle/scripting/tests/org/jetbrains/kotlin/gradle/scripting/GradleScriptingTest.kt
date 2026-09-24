@@ -1,6 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting
 
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.fixtures.gradleFixture
+import com.intellij.gradle.testFramework.util.createSettingsFile
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.observable.operation.core.awaitOperation
@@ -18,9 +21,6 @@ import com.intellij.testFramework.withProjectAsync
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
-import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 import org.junit.jupiter.api.Test

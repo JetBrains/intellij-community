@@ -1,19 +1,19 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build
 
+import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.fixtures.buildViewFixture
+import com.intellij.gradle.testFramework.fixtures.gradleFixture
+import com.intellij.gradle.testFramework.fixtures.gradleProjectRootFixture
+import com.intellij.gradle.testFramework.fixtures.projectFixture
+import com.intellij.gradle.testFramework.projectInfo.simpleJavaProjectInfo
+import com.intellij.gradle.testFramework.util.createBuildFile
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.registryKeyFixture
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase.Companion.assertNodeWithDeprecatedGradleWarning
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.buildViewFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleProjectRootFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.projectFixture
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 

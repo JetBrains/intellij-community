@@ -1,6 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.java.tests.benchmark.dsl.groovy
 
+import com.intellij.gradle.testFramework.GradleCodeInsightTestCase
+import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.util.withBuildFile
+import com.intellij.gradle.testFramework.util.withSettingsFile
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.DocumentEx
@@ -11,11 +16,6 @@ import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.asSafely
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil.disableSlowCompletionElements
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest

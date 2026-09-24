@@ -1,14 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.compiler
 
 import com.intellij.compiler.server.BuildManager
+import com.intellij.gradle.testFramework.GradleTestCase
 import com.intellij.openapi.externalSystem.test.compileModules
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.utils.io.deleteRecursively
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach

@@ -1,9 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build
 
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.ModuleBasedConfiguration
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.gradle.testFramework.GradleProjectTestCase
+import com.intellij.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
@@ -27,8 +29,6 @@ import org.jetbrains.plugins.gradle.connection.GradleConnectorService
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.testFramework.GradleProjectTestCase
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.api.Assertions
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever

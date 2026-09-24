@@ -1,12 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
+import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
+import com.intellij.gradle.testFramework.util.assertThatJunit5IsSupported
+import com.intellij.gradle.testFramework.util.assertThatSpockIsSupported
+import com.intellij.gradle.testFramework.util.withBuildFile
+import com.intellij.gradle.testFramework.util.withSettingsFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJunit5Supported
-import org.jetbrains.plugins.gradle.testFramework.util.assertThatJunit5IsSupported
-import org.jetbrains.plugins.gradle.testFramework.util.assertThatSpockIsSupported
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 
 abstract class GradleTestExecutionTestCase : GradleTestExecutionBaseTestCase() {
 

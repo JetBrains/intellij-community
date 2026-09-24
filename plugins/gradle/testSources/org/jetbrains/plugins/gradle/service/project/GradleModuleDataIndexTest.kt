@@ -1,6 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project
 
+import com.intellij.gradle.testFramework.util.dataNode.GradleSourceSet.Companion.gradleSourceSet
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemModuleDataIndex
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -12,7 +13,6 @@ import com.intellij.util.asDisposable
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.testFramework.util.dataNode.GradleSourceSet.Companion.gradleSourceSet
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.jupiter.api.Test
 

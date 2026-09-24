@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model
 
+import com.intellij.gradle.testFramework.annotations.GradleTestSource
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildSrcAddedInEditableBuilds
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildSrcSyncedSeparately
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildTreePathAvailable
@@ -10,7 +11,6 @@ import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.Companion.BASE_GRADLE_VERSION
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalProjectIdentifier

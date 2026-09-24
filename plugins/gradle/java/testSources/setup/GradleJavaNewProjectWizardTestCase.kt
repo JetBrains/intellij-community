@@ -1,6 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.setup
 
+import com.intellij.gradle.testFramework.projectInfo.GradleModuleInfo
+import com.intellij.gradle.testFramework.projectInfo.GradleProjectInfo
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
@@ -12,8 +14,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.testFramework.withProjectAsync
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleModuleInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfo
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.jupiter.api.Assertions
 

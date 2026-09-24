@@ -2,17 +2,17 @@
 package org.jetbrains.plugins.gradle.quarantine.dsl
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
+import com.intellij.gradle.testFramework.GradleCodeInsightTestCase
+import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.util.assertThatGradleIsAtLeast
+import com.intellij.gradle.testFramework.util.withBuildFile
+import com.intellij.gradle.testFramework.util.withSettingsFile
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.vfs.readText
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.assertInstanceOf
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.util.assertThatGradleIsAtLeast
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GrDeprecatedAPIUsageInspection

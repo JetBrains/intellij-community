@@ -2,6 +2,9 @@
 package com.intellij.gradle.completion.kotlin.tests.integration
 
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.util.withBuildFile
 import com.intellij.openapi.Disposable
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.LOCAL
@@ -23,9 +26,6 @@ import kotlinx.coroutines.flow.flowOf
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.K2GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertNotNull

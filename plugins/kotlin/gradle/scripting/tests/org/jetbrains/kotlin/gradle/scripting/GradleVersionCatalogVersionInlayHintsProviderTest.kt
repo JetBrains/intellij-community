@@ -6,13 +6,13 @@ import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPass
 import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil
 import com.intellij.codeInsight.hints.declarative.impl.views.TextInlayPresentationEntry
 import com.intellij.codeInsight.multiverse.codeInsightContext
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.AbstractGradleCodeInsightTest
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
 

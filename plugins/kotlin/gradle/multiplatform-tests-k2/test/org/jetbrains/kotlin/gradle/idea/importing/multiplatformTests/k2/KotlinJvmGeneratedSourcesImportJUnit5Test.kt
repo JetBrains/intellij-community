@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests.k2
 
+import com.intellij.gradle.testFramework.fixtures.gradleFixture
+import com.intellij.gradle.testFramework.fixtures.projectFixture
 import com.intellij.testFramework.TestDataPath
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.gradle.multiplatformTests.junit5.K2TestApplication
@@ -11,8 +13,6 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.junit5.kotlinTestFeaturesF
 import org.jetbrains.kotlin.gradle.multiplatformTests.junit5.projectRootFixture
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.ContentRootsChecker
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.projectFixture
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.jupiter.api.Test
 

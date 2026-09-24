@@ -2,10 +2,10 @@
 package com.intellij.gradle.codeInsight.groovy.backend.tests.integration.inspections
 
 import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleConfigurationAvoidanceInspection
+import com.intellij.gradle.testFramework.GradleCodeInsightTestCase
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.annotations.GradleTestSource
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleConfigurationAvoidanceInspectionTest : GradleCodeInsightTestCase() {

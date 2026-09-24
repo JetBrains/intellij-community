@@ -3,6 +3,11 @@ package org.jetbrains.kotlin.gradle
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
+import com.intellij.gradle.testFramework.fixtures.application.GradleProjectTestApplication
+import com.intellij.gradle.testFramework.util.assertThatVersionCatalogsAreSupported
+import com.intellij.gradle.testFramework.util.withBuildFile
+import com.intellij.gradle.testFramework.util.withSettingsFile
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
 import com.intellij.testFramework.ExpectedHighlightingData
@@ -13,11 +18,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
-import org.jetbrains.plugins.gradle.testFramework.util.assertThatVersionCatalogsAreSupported
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull

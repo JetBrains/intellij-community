@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.execution.helper
 
+import com.intellij.gradle.testFramework.GradleExecutionTestCase
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
@@ -24,7 +25,6 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.gradle.service.execution.toGroovyStringLiteral
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_KEY
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_PREFIX_KEY
-import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.readLines

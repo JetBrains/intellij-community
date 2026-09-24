@@ -2,6 +2,8 @@
 package com.intellij.gradle.completion.toml.tests
 
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.gradle.testFramework.GradleCodeInsightTestCase
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
@@ -20,8 +22,6 @@ import com.intellij.testFramework.runInEdtAndWait
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 

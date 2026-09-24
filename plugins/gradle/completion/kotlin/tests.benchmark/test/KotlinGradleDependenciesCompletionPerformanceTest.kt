@@ -7,6 +7,11 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.gradle.completion.GradleLocalDependencyCompletionContributor
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerTestImpl
+import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.fixtures.application.GradleProjectTestApplication
+import com.intellij.gradle.testFramework.util.withBuildFile
+import com.intellij.gradle.testFramework.util.withSettingsFile
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.editor.RangeMarker
@@ -22,11 +27,6 @@ import com.intellij.util.asSafely
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.AbstractGradleCodeInsightTest
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.gradle.util.GradleEnvironment
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
