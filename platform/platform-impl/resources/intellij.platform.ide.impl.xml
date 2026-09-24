@@ -102,6 +102,9 @@
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.editorMouseActionsOverrider"
                     interface="com.intellij.openapi.editor.impl.EditorMouseActionsOverrider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.customRepositoryProductModeMetadataProvider"
+                    interface="com.intellij.ide.plugins.newui.CustomRepositoryProductModeMetadataProvider"
+                    dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <ApplicationLoadListener implementation="com.intellij.util.imageio.ImageReaderWriterSpiRegistrar"/>
