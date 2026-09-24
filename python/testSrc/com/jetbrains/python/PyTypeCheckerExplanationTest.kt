@@ -112,6 +112,30 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-87917"])
+  fun `final attribute against a mutable protocol attribute is not writable`() = test("""
+    from typing import Final, Protocol
+    class A(Protocol):
+        a: int
+    class C:
+        a: Final[int] = 1
+    x: A = C()  # WARNING TOOLTIP Attribute a is not writable
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87917"])
+  fun `frozen dataclass field against a mutable protocol attribute is not writable`() = test("""
+    from dataclasses import dataclass
+    from typing import Protocol
+    class A(Protocol):
+        a: int
+    @dataclass(frozen=True)
+    class C:
+        a: int
+    x: A = C(1)  # WARNING TOOLTIP Attribute a is not writable
+    """.trimIndent())
+
+  @Test
   fun `union mismatch lists no matching member`() = test("""
     x: int | str = 1.5  # WARNING TOOLTIP not assignable to any member
     """)

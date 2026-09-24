@@ -24,6 +24,8 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.codeInsight.isFrozenAttribute
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
@@ -658,6 +660,32 @@ object PyTypeUtil {
     if (widened == type) return type
     if (target is PyTargetExpressionImpl && target.getInheritedDeclaredAttributeType(context) != null) return type
     return widened
+  }
+
+  /**
+   * Returns true if no assignment can change [attribute] after its initialization.
+   * A `Final` or `ReadOnly` attribute, an attribute of a frozen dataclass, and a field of a typing `NamedTuple` are read-only.
+   */
+  @ApiStatus.Internal
+  @JvmStatic
+  fun isReadOnlyAttribute(attribute: PyTargetExpression, context: TypeEvalContext): Boolean =
+    PyTypingTypeProvider.isFinal(attribute, context) ||
+    PyTypingTypeProvider.isReadOnly(attribute, context) ||
+    isFrozenAttribute(attribute, context) ||
+    PyNamedTupleTypeProvider.Helper.isNamedTupleField(attribute, context)
+
+  /**
+   * Returns true if an assignment can change [member].
+   * The member must have a setter, and it must not be a read-only attribute.
+   *
+   * @see isReadOnlyAttribute
+   */
+  @ApiStatus.Internal
+  @JvmStatic
+  fun isSettable(member: PyTypeMember, context: TypeEvalContext): Boolean {
+    if (!member.isWritable) return false
+    val element = member.element
+    return element !is PyTargetExpression || !isReadOnlyAttribute(element, context)
   }
 
   private fun getResolvedElementType(element: PyTypedElement, context: TypeEvalContext, anchor: PsiElement?): PyType? {

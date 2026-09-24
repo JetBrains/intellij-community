@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeMember
+import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -258,7 +259,7 @@ class PyProtocolInspection : PyInspection() {
               PyTypeCheckerInspectionProblemRegistrar.breakdownTooltip(enriched, expectedMember.type, actualType, myTypeEvalContext, place)
             }
           }
-          else if (expectedMember.isWritable && !it.isWritable || expectedMember.isDeletable && !it.isDeletable) {
+          else if (PyTypeUtil.isSettable(expectedMember, myTypeEvalContext) && !PyTypeUtil.isSettable(it, myTypeEvalContext) || expectedMember.isDeletable && !it.isDeletable) {
             registerProblem(place, PyPsiBundle.problemMessage("INSP.protocol.element.type.not.writable", elementName, CodifiedParam.ofReference(protocol.pyClass)))
           }
         }

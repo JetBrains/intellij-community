@@ -596,14 +596,16 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestFor(issues = ["PY-92092"])
-    fun `parameterized generic named tuple is invariant in its type parameter`() = test("""
+    @TestFor(issues = ["PY-92092", "PY-87917"])
+    fun `parameterized generic named tuple is covariant in its type parameter`() = test("""
       from typing import NamedTuple
       class Base[T](NamedTuple):
           path: T
       def f(b: Base[int]): ...
-      def g(b: Base[bool]):
-          f(b) # WARNING Expected type 'Base[int]', got 'Base[bool]' instead
+      def g(b: Base[bool]): ...
+      def h(sub: Base[bool], sup: Base[int]):
+          f(sub)
+          g(sup) # WARNING Expected type 'Base[bool]', got 'Base[int]' instead
       """.trimIndent())
 
     @Test
@@ -614,7 +616,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
           foo: T
           bar: str
       inst = Base(42, "foo")
-      # └ TYPE Base[int]
+      # └ TYPE Base[Literal[42]]
       """.trimIndent())
 
     @Test
@@ -638,7 +640,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       class Base[T](NamedTuple):
           foo: T
       inst = Base(42)
-      other: Base[str] = inst # WARNING Expected type 'Base[str]', got 'Base[int]' instead
+      other: Base[str] = inst # WARNING Expected type 'Base[str]', got 'Base[Literal[42]]' instead
       """.trimIndent())
 
     @Test

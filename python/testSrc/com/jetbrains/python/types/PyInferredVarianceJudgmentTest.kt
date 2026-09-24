@@ -192,6 +192,15 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-87917"])
+  fun `Generic named tuple field`() = test("""
+    from typing import NamedTuple
+    class A[T](NamedTuple):
+    #       └ INFERRED_VARIANCE COVARIANT
+        attr: T
+    """.trimIndent())
+
+  @Test
   @TestFor(issues = ["PY-90863"])
   fun `Generic subclass of a frozen dataclass`() = test("""
     from dataclasses import dataclass

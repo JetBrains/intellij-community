@@ -1749,6 +1749,111 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-87917"])
+    fun `named tuple field does not match a mutable attribute`() = test("""
+      from typing import NamedTuple, Protocol
+
+      class B(Protocol):
+          x: int
+
+      class C(NamedTuple):
+          x: int
+
+      b: B = C(1)
+      #      ^^^^ WARNING Expected type 'B', got 'C' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `named tuple field of an annotated value does not match a mutable attribute`() = test("""
+      from typing import NamedTuple, Protocol
+
+      class B(Protocol):
+          x: int
+
+      class C(NamedTuple):
+          x: int
+
+      def f(c: C) -> None:
+          b: B = c
+      #          └ WARNING Expected type 'B', got 'C' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `imported read only attributes do not match a mutable attribute`() {
+      test("""
+        from typing import Protocol
+        from mod import Frozen, Pair
+
+        class B(Protocol):
+            x: int
+
+        def f(frozen: Frozen, pair: Pair) -> None:
+            b1: B = frozen
+        #           ^^^^^^ WARNING Expected type 'B', got 'Frozen' instead
+            b2: B = pair
+        #           ^^^^ WARNING Expected type 'B', got 'Pair' instead
+        """.trimIndent(),
+        "mod.py" to """
+          from dataclasses import dataclass
+          from typing import NamedTuple
+
+          @dataclass(frozen=True)
+          class Frozen:
+              x: int
+
+          class Pair(NamedTuple):
+              x: int
+          """)
+      assertFileNotParsed("mod.py")
+    }
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `final attribute of an explicit protocol subclass is not writable`() = test("""
+      from typing import Final, Protocol
+
+      class Template(Protocol):
+          val: int
+
+      class Concrete(Template):
+          val: Final[int] = 0
+      #   ^^^ WARNING 'val' is writable in protocol 'Template'
+      #   ^^^ WARNING Cannot override non-final attribute 'val' (previously declared in base class 'Template') with a final attribute
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `frozen dataclass field of an explicit protocol subclass is not writable`() = test("""
+      from dataclasses import dataclass
+      from typing import Protocol
+
+      class Template(Protocol):
+          val: int
+
+      @dataclass(frozen=True)
+      class Concrete(Template):
+          val: int = 0
+      #   ^^^ WARNING 'val' is writable in protocol 'Template'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `named tuple field matches a read only property`() = test("""
+      from typing import NamedTuple, Protocol
+
+      class B(Protocol):
+          @property
+          def x(self) -> int: ...
+
+      class C(NamedTuple):
+          x: int
+
+      b: B = C(1)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
     fun `mutable attribute matches a read only property`() = test("""
       from typing import Protocol
 
