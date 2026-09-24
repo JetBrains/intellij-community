@@ -3,6 +3,19 @@ import os
 import sys
 from contextlib import contextmanager
 
+# JetBrains extension (PY-92448): the DAP message reader of the adapter refuses a message whose body is over
+# MAX_BODY_SIZE and its reader thread dies on the refusal, after which no message of the session reaches the
+# client at all -- neither output nor a response to a request. A single write above that size arrives there as
+# one output event, so writes are split before they are sent.
+#
+# The split counts characters while the limit counts bytes, so the size below is derived from the worst case
+# of the encoder rather than guessed: with ensure_ascii, json writes a non-BMP character as a surrogate pair,
+# twelve bytes for one character, and a BMP one as six. The subtracted kilobyte covers the envelope of the
+# event, which measures 130 bytes.
+_DAP_MAX_BODY_SIZE = 0xFFFFFF  # MAX_BODY_SIZE in debugpy/common/messaging.py
+_MAX_JSON_BYTES_PER_CHAR = 12
+MAX_IO_MSG_CHARS = (_DAP_MAX_BODY_SIZE - 1024) // _MAX_JSON_BYTES_PER_CHAR
+
 
 class IORedirector:
     """
@@ -107,9 +120,10 @@ class RedirectToPyDBIoMessages(object):
             if py_db is not None:
                 # Note that the actual message contents will be a xml with utf-8, although
                 # the entry is str on py3 and bytes on py2.
-                cmd = py_db.cmd_factory.make_io_message(s, self._out_ctx)
                 if py_db.writer is not None:
-                    py_db.writer.add_command(cmd)
+                    for start in range(0, len(s), MAX_IO_MSG_CHARS):
+                        cmd = py_db.cmd_factory.make_io_message(s[start : start + MAX_IO_MSG_CHARS], self._out_ctx)
+                        py_db.writer.add_command(cmd)
 
 
 class IOBuf:
