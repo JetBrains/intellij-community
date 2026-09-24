@@ -232,6 +232,7 @@ fleet/build/codecache
 fleet/build/fs
 fleet/build/fs/tests
 fleet/build/http
+fleet/build/http/tests
 fleet/build/kernel.plugins.processor
 fleet/build/platform
 fleet/build/s3
