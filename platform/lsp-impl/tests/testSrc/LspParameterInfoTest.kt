@@ -15,6 +15,7 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoContext
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext
 import kotlinx.coroutines.CoroutineScope
+import org.eclipse.lsp4j.ParameterInformation
 import org.eclipse.lsp4j.SignatureHelp
 import org.eclipse.lsp4j.SignatureHelpOptions
 import org.eclipse.lsp4j.SignatureInformation
@@ -47,13 +48,14 @@ internal class LspParameterInfoTest {
     codeInsightFixture.configureByText("a.txt", "function('a', <caret>1)")
 
     val signatureHelp = SignatureHelp()
-    signatureHelp.signatures = listOf(SignatureInformation("function(param1: String, param2: Int)"))
+    signatureHelp.signatures = listOf(signature("param1: String", "param2: Int"))
     signatureHelp.activeParameter = 1
 
     val updateContext = querySignatureHelp(signatureHelp)
 
     assertEquals(1, updateContext.currentParameter)
-    assertEquals("function(param1: String, param2: Int)", (updateContext.objectsToView[0] as LspParameterInfoContext).signatureHelp.signatures[0].label)
+    assertEquals("function(param1: String, param2: Int)",
+                 (updateContext.objectsToView[0] as LspParameterInfoContext).signatureHelp.signatures[0].label)
   }
 
   @Test
@@ -61,9 +63,7 @@ internal class LspParameterInfoTest {
     codeInsightFixture.configureByText("a.txt", "function('a', 1, true)")
 
     val signatureHelp = SignatureHelp()
-    signatureHelp.signatures = listOf(
-      SignatureInformation("function(param1: String, param2: Int, param3: Boolean)").apply { activeParameter = 2 }
-    )
+    signatureHelp.signatures = listOf(signature("param1: String", "param2: Int", "param3: Boolean", activeParameter = 2))
     signatureHelp.activeSignature = 0
 
     val updateContext = querySignatureHelp(signatureHelp)
@@ -74,6 +74,87 @@ internal class LspParameterInfoTest {
       (updateContext.objectsToView[0] as LspParameterInfoContext).signatureHelp.signatures[0].label,
     )
   }
+
+  @Test
+  fun `inner active parameter takes precedence over outer one`(): Unit = timeoutRunBlocking {
+    codeInsightFixture.configureByText("a.txt", "function(1, <caret>2)")
+
+    val signatureHelp = SignatureHelp()
+    signatureHelp.signatures = listOf(signature("a", "b", activeParameter = 1))
+    signatureHelp.activeParameter = 0
+
+    assertEquals(1, querySignatureHelp(signatureHelp).currentParameter)
+  }
+
+  @Test
+  fun `inner active parameter of the first signature is used if active signature is omitted`(): Unit = timeoutRunBlocking {
+    codeInsightFixture.configureByText("a.txt", "function(1, <caret>2)")
+
+    val signatureHelp = SignatureHelp()
+    signatureHelp.signatures = listOf(signature("a", "b", activeParameter = 1), signature("a", "b", "c", activeParameter = 2))
+
+    assertEquals(1, querySignatureHelp(signatureHelp).currentParameter)
+  }
+
+  @Test
+  fun `out of range active signature defaults to the first one`(): Unit = timeoutRunBlocking {
+    codeInsightFixture.configureByText("a.txt", "function(1, <caret>2)")
+
+    val signatureHelp = SignatureHelp()
+    signatureHelp.signatures = listOf(signature("a", "b", activeParameter = 1), signature("a", "b", "c", activeParameter = 2))
+    signatureHelp.activeSignature = 5
+
+    assertEquals(1, querySignatureHelp(signatureHelp).currentParameter)
+  }
+
+  @Test
+  fun `out of range outer active parameter defaults to 0`(): Unit = timeoutRunBlocking {
+    codeInsightFixture.configureByText("a.txt", "function(1, <caret>2)")
+
+    val signatureHelp = SignatureHelp()
+    signatureHelp.signatures = listOf(signature("a", "b"))
+    signatureHelp.activeParameter = 2
+
+    assertEquals(0, querySignatureHelp(signatureHelp).currentParameter)
+  }
+
+  @Test
+  fun `no active parameter if inner active parameter is out of range`(): Unit = timeoutRunBlocking {
+    codeInsightFixture.configureByText("a.txt", "function(1, <caret>2)")
+
+    val signatureHelp = SignatureHelp()
+    signatureHelp.signatures = listOf(signature("a", "b", activeParameter = 2))
+    signatureHelp.activeParameter = 1
+
+    assertEquals(-1, querySignatureHelp(signatureHelp).currentParameter)
+  }
+
+  @Test
+  fun `no active parameter if both active parameters are null`(): Unit = timeoutRunBlocking {
+    codeInsightFixture.configureByText("a.txt", "function(1, <caret>c = 2)")
+
+    val signatureHelp = SignatureHelp()
+    signatureHelp.signatures = listOf(signature("a", "b"))
+
+    assertEquals(-1, querySignatureHelp(signatureHelp).currentParameter)
+  }
+
+  @Test
+  fun `active parameter is ignored if the signature has no parameters`(): Unit = timeoutRunBlocking {
+    codeInsightFixture.configureByText("a.txt", "function(<caret>)")
+
+    val signatureHelp = SignatureHelp()
+    signatureHelp.signatures = listOf(signature(activeParameter = 0))
+    signatureHelp.activeParameter = 0
+
+    assertEquals(-1, querySignatureHelp(signatureHelp).currentParameter)
+  }
+
+  private fun signature(vararg parameters: String, activeParameter: Int? = null): SignatureInformation =
+    SignatureInformation("function(${parameters.joinToString()})").apply {
+      this.parameters = parameters.map { ParameterInformation(it) }
+      this.activeParameter = activeParameter
+    }
 
   private suspend fun CoroutineScope.querySignatureHelp(mockSignatureHelp: SignatureHelp): MockUpdateParameterInfoContext {
     val serverSession = configureServerSession(project, codeInsightFixture.file.virtualFile)

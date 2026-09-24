@@ -36,6 +36,13 @@
 - f:getPassParentEnvironment():Z
 - f:getVariables():java.util.Map
 - hashCode():I
+*f:com.intellij.platform.lsp.api.SignatureInformationCapabilitiesWithNoActiveParameterSupport
+- org.eclipse.lsp4j.SignatureInformationCapabilities
+- <init>():V
+- equals(java.lang.Object):Z
+- f:getNoActiveParameterSupport():java.lang.Boolean
+- hashCode():I
+- f:setNoActiveParameterSupport(java.lang.Boolean):V
 c:com.intellij.platform.lsp.api.customization.LspCompletionSupport
 - com.intellij.platform.lsp.api.customization.LspCompletionCustomizer
 - *:getCompletionPrefix(com.intellij.codeInsight.completion.CompletionParameters,java.lang.String):java.lang.String

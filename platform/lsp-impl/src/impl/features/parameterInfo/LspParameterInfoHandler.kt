@@ -6,11 +6,11 @@ import com.intellij.lang.parameterInfo.ParameterInfoHandler
 import com.intellij.lang.parameterInfo.ParameterInfoUIContext
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.TextRange
 import com.intellij.platform.lsp.api.customization.LspSignatureHelpDisabled
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.eclipse.lsp4j.SignatureHelp
 import org.eclipse.lsp4j.SignatureInformation
 
@@ -51,8 +51,9 @@ internal class LspParameterInfoHandler : ParameterInfoHandler<PsiElement, LspPar
       context.removeHint()
       return
     }
-    val currentParameter = getCurrentParameterIndex(signatureHelp, context.offset, context.file)
-    context.setCurrentParameter(currentParameter)
+    // `updateUI()` must render the same response that the current parameter index is calculated from
+    storedContext.signatureHelp = signatureHelp
+    context.setCurrentParameter(getActiveParameterIndex(signatureHelp))
   }
 
   override fun updateUI(infoContext: LspParameterInfoContext?, context: ParameterInfoUIContext) {
@@ -61,36 +62,20 @@ internal class LspParameterInfoHandler : ParameterInfoHandler<PsiElement, LspPar
       return
     }
 
-    val signatureHelp = infoContext.signatureHelp
-    val activeSignature = signatureHelp.activeSignature ?: 0
-
-    if (activeSignature >= signatureHelp.signatures.size) {
+    val signature = getActiveSignature(infoContext.signatureHelp)
+    val text = signature?.label
+    if (text.isNullOrEmpty()) {
       context.isUIComponentEnabled = false
       return
     }
 
-    val signature = signatureHelp.signatures[activeSignature]
-    val activeParameter = context.currentParameterIndex
-
-    val text = signature.label
-    if (text.isEmpty()) {
-      context.isUIComponentEnabled = false
-      return
-    }
-
-    val parameterRanges = getParameterRanges(signature)
-
-    val hasHighlight = parameterRanges.size >= 2 &&
-                       activeParameter >= 0 &&
-                       activeParameter * 2 + 1 < parameterRanges.size
-
-    val startIndex = if (hasHighlight) parameterRanges[activeParameter * 2] else -1
-    val endIndex = if (hasHighlight) parameterRanges[activeParameter * 2 + 1] else -1
+    // `currentParameterIndex` is -1 if no parameter is active
+    val highlightRange = getParameterRanges(signature).getOrNull(context.currentParameterIndex)
 
     context.setupUIComponentPresentation(
       text,
-      startIndex,
-      endIndex,
+      highlightRange?.startOffset ?: -1,
+      highlightRange?.endOffset ?: -1,
       false,  // not disabled
       false,  // no strikeout
       false,  // not disabled before highlight
@@ -98,41 +83,59 @@ internal class LspParameterInfoHandler : ParameterInfoHandler<PsiElement, LspPar
     )
   }
 
-  private fun getParameterRanges(signature: SignatureInformation): IntArray {
-    val parameters = signature.parameters ?: return intArrayOf()
-    val ranges = mutableListOf<Int>()
-
-    for (param in parameters) {
-      val label = param.label
-      when {
-        label.isLeft -> {
-          val paramLabel = label.left!!
-          val startIndex = signature.label.indexOf(paramLabel)
-          if (startIndex >= 0) {
-            ranges.add(startIndex)
-            ranges.add(startIndex + paramLabel.length)
-          }
-        }
-        label.isRight -> {
-          val range = label.right!!
-          ranges.add(range.first)
-          ranges.add(range.second)
-        }
-      }
+  private fun getParameterRanges(signature: SignatureInformation): List<TextRange?> {
+    val signatureLabel = signature.label
+    var searchFrom = 0
+    return signature.parameters.orEmpty().map { parameter ->
+      val range = parameter.label.map(
+        { text ->
+          // The spec only requires the string to be a substring of the signature label.
+          // Searching after the previous parameter helps when the same text is found earlier in the label.
+          val start = signatureLabel.indexOf(text, searchFrom).takeIf { it >= 0 } ?: signatureLabel.indexOf(text)
+          if (text.isNotEmpty() && start >= 0) TextRange(start, start + text.length) else null
+        },
+        { offsets ->
+          val start = offsets.first
+          val end = offsets.second
+          if (start in 0..end && end <= signatureLabel.length) TextRange(start, end) else null
+        },
+      )
+      if (range != null) searchFrom = range.endOffset
+      range
     }
-
-    return ranges.toIntArray()
   }
 
-  @Suppress("UNUSED_PARAMETER")
-  private fun getCurrentParameterIndex(signatureHelp: SignatureHelp, offset: Int, file: PsiFile): Int {
-    return signatureHelp.activeParameter
-           ?: signatureHelp.activeSignature?.let { signatureHelp.signatures[it].activeParameter }
-           ?: 0
+  private fun getActiveSignature(signatureHelp: SignatureHelp): SignatureInformation? {
+    val signatures = signatureHelp.signatures
+    return signatures.getOrNull(signatureHelp.activeSignature ?: 0) ?: signatures.firstOrNull()
+  }
+
+  /**
+   * @return the index of the active parameter in the active signature, or -1 if no parameter is active
+   */
+  private fun getActiveParameterIndex(signatureHelp: SignatureHelp): Int {
+    val signature = getActiveSignature(signatureHelp) ?: return -1
+    val parameterCount = signature.parameters?.size ?: 0
+    if (parameterCount == 0) return -1
+
+    // Per spec v3.18, `null` means that no parameter is active, while an omitted `SignatureInformation.activeParameter` falls back
+    // to `SignatureHelp.activeParameter`, and an omitted `SignatureHelp.activeParameter` defaults to 0.
+    // lsp4j deserializes both an omitted value and `null` as `null`, so `null` in `SignatureInformation.activeParameter` falls back
+    // to `SignatureHelp.activeParameter`, and `null` there means that no parameter is active.
+    val signatureActiveParameter = signature.activeParameter
+    if (signatureActiveParameter != null) {
+      // The spec doesn't specify the out-of-range case for `SignatureInformation.activeParameter`
+      return if (signatureActiveParameter in 0..<parameterCount) signatureActiveParameter else -1
+    }
+
+    val index = signatureHelp.activeParameter ?: return -1
+    // Per spec, if `SignatureHelp.activeParameter` lies outside the range of the active signature parameters, it defaults to 0
+    return if (index in 0..<parameterCount) index else 0
   }
 }
 
-internal data class LspParameterInfoContext(
-  val signatureHelp: SignatureHelp,
+internal class LspParameterInfoContext(
+  // The latest response to the `textDocument/signatureHelp` request; updated in `LspParameterInfoHandler.updateParameterInfo`
+  @Volatile var signatureHelp: SignatureHelp,
   val client: LspClientImpl,
 )
