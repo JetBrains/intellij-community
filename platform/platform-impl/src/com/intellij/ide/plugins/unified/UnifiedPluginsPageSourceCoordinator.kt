@@ -650,8 +650,8 @@ private fun filterPluginItems(
       (parser.vendors.isEmpty() || MyPluginModel.isVendor(model, parser.vendors)) &&
       item.matchesCategories(unifiedQuery.categories) &&
       (parser.tags.isEmpty() || item.searchTags.any(parser.tags::contains)) &&
-      (!parser.enabled || input != null && input.enabled && input.errors.isEmpty()) &&
-      (!parser.disabled || input != null && !input.enabled && input.errors.isEmpty()) &&
+      (!parser.enabled || model.isEnabled) &&
+      (!parser.disabled || !model.isEnabled) &&
       (!parser.bundled || model.isBundled || model.isBundledUpdate) &&
       (!parser.updatedBundled || model.isBundledUpdate) &&
       (!parser.userInstalled || !model.isBundled && !model.isBundledUpdate) &&

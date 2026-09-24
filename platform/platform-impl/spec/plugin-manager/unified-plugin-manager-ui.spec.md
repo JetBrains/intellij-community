@@ -222,6 +222,7 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 - An installed filter or update-source constraint must exclude Marketplace, Internal, and custom repository results.
 - A repository filter must show only the selected custom repositories.
 - Text, Vendor, Category, and Tag constraints must apply to each eligible source under that source's rules.
+- Enabled and Disabled filters must use the applied plugin state. Pending session changes and errors must not change their results.
 - A query with installed-status and Repository constraints must leave every filtered source ready and empty.
 - Suggested, Staff Picks, and Internal commands must route only to their applicable sources.
 - The last installed filter in a query must take effect.
@@ -230,6 +231,7 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsQueryTest.kt
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
     `category filter applies to each locally projected source`;
+    `installed state filters use applied state across session changes`;
     `repository filter targets one cached section and keeps local sections unfiltered`;
     `installed and repository constraints leave every filtered source ready and empty`
   )

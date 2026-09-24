@@ -463,7 +463,7 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
       vendor = "JetBrains"
       tags = listOf("Developer Tools")
     }
-    val disabled = plugin("disabled.plugin", "Disabled")
+    val disabled = plugin("disabled.plugin", "Disabled").apply { isEnabled = false }
     val bundled = plugin("bundled.plugin", "Bundled").apply { isBundled = true }
     val outdated = plugin("outdated.plugin", "Outdated")
     val invalid = plugin("invalid.plugin", "Invalid")
@@ -487,7 +487,7 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
       local,
     ).sections.flatMap(PluginSectionState::items).map { it.pluginId.idString }
 
-    assertThat(result("/enabled")).containsExactlyInAnyOrder("enabled.plugin", "bundled.plugin", "outdated.plugin")
+    assertThat(result("/enabled")).containsExactlyInAnyOrder("enabled.plugin", "bundled.plugin", "outdated.plugin", "invalid.plugin")
     assertThat(result("/disabled")).containsExactly("disabled.plugin")
     assertThat(result("/bundled")).containsExactly("bundled.plugin")
     assertThat(result("/userInstalled")).containsExactlyInAnyOrder(
@@ -502,6 +502,37 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
     assertThat(result("/category:Productivity /tag:\"Developer Tools\"")).containsExactly("enabled.plugin")
     assertThat(result("/category:Languages /tag:\"Developer Tools\"")).isEmpty()
     assertThat(result("/tag: \"Developer Tools\"")).containsExactly("enabled.plugin")
+  }
+
+  @Test
+  fun `installed state filters use applied state across session changes`() {
+    val appliedEnabled = plugin("applied.enabled", "Enabled")
+    val appliedDisabled = plugin("applied.disabled", "Disabled").apply { isEnabled = false }
+    val local = localState(
+      listOf(
+        PluginSectionState(
+          PluginSectionId.Installed,
+          items = listOf(
+            localItem(appliedEnabled, enabled = false, errors = listOf(HtmlChunk.text("pending error"))),
+            localItem(appliedDisabled, enabled = true),
+          ),
+        ),
+        PluginSectionState(PluginSectionId.Bundled),
+      )
+    )
+
+    fun result(query: String): List<String> = composeUnifiedPluginsPageSourceState(
+      PluginsQueryState(query, query, scope = PluginsQueryScope.Installed),
+      local,
+    ).sections.single { it.id == PluginSectionId.Installed }.items.map { it.pluginId.idString }
+
+    assertThat(result("/enabled")).containsExactly("applied.enabled")
+    assertThat(result("/disabled")).containsExactly("applied.disabled")
+
+    appliedEnabled.isEnabled = false
+    appliedDisabled.isEnabled = true
+    assertThat(result("/enabled")).containsExactly("applied.disabled")
+    assertThat(result("/disabled")).containsExactly("applied.enabled")
   }
 
   @Test
