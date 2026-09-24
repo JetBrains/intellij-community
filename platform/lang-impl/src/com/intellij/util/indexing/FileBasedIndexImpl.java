@@ -500,6 +500,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     requestReindex(file, true);
   }
 
+  @Override
   @Internal
   public void requestReindex(@NotNull VirtualFile file, boolean forceRebuild) {
     GistManager.getInstance().invalidateData(file);
@@ -2059,6 +2060,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   /** @return true if the file belongs to the specific project's indexable files set */
+  @Override
   public boolean belongsToProjectIndexableFiles(@NotNull VirtualFile file, @NotNull Project project) {
     return ContainerUtil.exists(myIndexableSets, pair -> pair.second.equals(project) && pair.first.isInSet(file));
   }

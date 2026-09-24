@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
+import com.intellij.util.indexing.FileBasedIndexEx;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -33,15 +33,14 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
   @Override
   public @NotNull GlobalSearchScope buildEverythingScope() {
     return new EverythingGlobalScope(myProject) {
-      final FileBasedIndexImpl myFileBasedIndex;
+      final FileBasedIndexEx myFileBasedIndex;
       final WorkspaceFileIndex myWorkspaceFileIndex = WorkspaceFileIndex.getInstance(myProject);
 
       {
         FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-        // handle case of EmptyFileBasedIndex
-        myFileBasedIndex = !(fileBasedIndex instanceof FileBasedIndexImpl)
+        myFileBasedIndex = !(fileBasedIndex instanceof FileBasedIndexEx)
                            ? null
-                           : (FileBasedIndexImpl)fileBasedIndex;
+                           : (FileBasedIndexEx)fileBasedIndex;
       }
 
       /// This method checks if a file belongs to the workspace.

@@ -152,6 +152,16 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
   }
 
   @Override
+  public void requestReindex(@NotNull VirtualFile file, boolean forceRebuild) {
+
+  }
+
+  @Override
+  public boolean belongsToProjectIndexableFiles(@NotNull VirtualFile file, @NotNull Project project) {
+    return false;
+  }
+
+  @Override
   public <K, V> boolean getFilesWithKey(@NotNull ID<K, V> indexId,
                                         @NotNull Set<? extends K> dataKeys,
                                         @NotNull Processor<? super VirtualFile> processor,

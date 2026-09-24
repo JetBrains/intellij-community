@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
@@ -10,7 +11,6 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.checkCanceled
@@ -45,7 +45,7 @@ import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
 import com.intellij.util.indexing.FileBasedIndex
-import com.intellij.util.indexing.FileBasedIndexImpl
+import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.indexing.FileBasedIndexProjectHandler
 import com.intellij.util.indexing.FilePropertyPusherEx
 import com.intellij.util.indexing.IndexingBundle
@@ -367,7 +367,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     val fileId = FileBasedIndex.getFileId(file)
     if (fileId > 0 && IndexingStamp.getNontrivialFileIndexedStates(fileId).isNotEmpty()) {
       val fileBasedIndex = FileBasedIndex.getInstance()
-      if (fileBasedIndex is FileBasedIndexImpl) {
+      if (fileBasedIndex is FileBasedIndexEx) {
         fileBasedIndex.requestReindex(file, false)
       }
     }
