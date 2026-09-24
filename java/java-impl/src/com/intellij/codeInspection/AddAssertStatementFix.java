@@ -7,7 +7,6 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAssertStatement;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
@@ -37,11 +36,7 @@ public class AddAssertStatementFix extends PsiUpdateModCommandQuickFix {
     if (surrounder == null) return;
     CodeBlockSurrounder.SurroundResult result = surrounder.surround();
     expr = result.getExpression();
-    PsiElement anchorElement = result.getAnchor();
-    PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(anchorElement);
-    if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
-      anchorElement = prev;
-    }
+    PsiElement anchorElement = result.getSuppressionAwareAnchor();
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
     @NonNls String text = "assert " + myText + ";";

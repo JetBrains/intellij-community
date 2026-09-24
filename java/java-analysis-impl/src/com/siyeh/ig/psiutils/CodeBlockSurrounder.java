@@ -4,6 +4,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
 import com.intellij.codeInspection.ConditionalBreakInInfiniteLoopInspection;
+import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.java.syntax.parser.JavaKeywords;
@@ -153,6 +154,21 @@ public abstract class CodeBlockSurrounder {
      * @return an anchor statement: it's safe to add new statements before the anchor
      */
     public @NotNull PsiStatement getAnchor() {
+      return myAnchor;
+    }
+
+    /**
+     * Same as {@link #getAnchor()}, except that a preceding inspection suppression comment is returned instead of the anchor itself.
+     * Adding new statements before that comment keeps it adjacent to the statement it suppresses, so the suppression
+     * is not accidentally disabled.
+     *
+     * @return an element before which it's safe to add new statements
+     */
+    public @NotNull PsiElement getSuppressionAwareAnchor() {
+      PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(myAnchor);
+      if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
+        return prev;
+      }
       return myAnchor;
     }
 

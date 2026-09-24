@@ -9,7 +9,6 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethod;
@@ -20,6 +19,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.siyeh.ig.psiutils.CodeBlockSurrounder;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,10 +36,10 @@ public class AddAssertNonNullFromTestFrameworksFix extends PsiUpdateModCommandQu
   }
 
   public enum Variant {
-    JUNIT_3("JUnit 3", "assertNotNull"),
-    JUNIT_4("JUnit 4", "Assert.assertNotNull"),
-    JUNIT_5("JUnit 5", "Assertions.assertNotNull"),
-    TESTNG("TestNG", "Assert.assertNotNull");
+    JUNIT_3("JUnit 3", "assertNotNull", "assertNotNull"),
+    JUNIT_4("JUnit 4", "Assert.assertNotNull", "org.junit.Assert.assertNotNull"),
+    JUNIT_5("JUnit 5", "Assertions.assertNotNull", "org.junit.jupiter.api.Assertions.assertNotNull"),
+    TESTNG("TestNG", "Assert.assertNotNull", "org.testng.Assert.assertNotNull");
 
     /// Used only for presentation purposes.
     public final String name;
@@ -47,9 +47,13 @@ public class AddAssertNonNullFromTestFrameworksFix extends PsiUpdateModCommandQu
     /// Used only for presentation purposes.
     public final String replacement;
 
-    Variant(String name, String replacement) {
+    /// Reference to the assertion method to generate a call to; must be shortened after the generation.
+    public final @NonNls String methodReference;
+
+    Variant(String name, String replacement, @NonNls String methodReference) {
       this.name = name;
       this.replacement = replacement;
+      this.methodReference = methodReference;
     }
   }
 
@@ -73,21 +77,9 @@ public class AddAssertNonNullFromTestFrameworksFix extends PsiUpdateModCommandQu
     if (surrounder == null) return;
     CodeBlockSurrounder.SurroundResult result = surrounder.surround();
     expr = result.getExpression();
-    PsiElement anchorElement = result.getAnchor();
+    PsiElement anchorElement = result.getSuppressionAwareAnchor();
 
-    // If the element before our qualifier is an inspection suppression comment, then we want to
-    // add assertion before this suppression comment so it's not accidentally disabled.
-    PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(anchorElement);
-    if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
-      anchorElement = prev;
-    }
-
-    String text = switch (myVariant) {
-      case JUNIT_3 -> "assertNotNull(" + myText + ")";
-      case JUNIT_4 -> "org.junit.Assert.assertNotNull(" + myText + ")";
-      case JUNIT_5 -> "org.junit.jupiter.api.Assertions.assertNotNull(" + myText + ")";
-      case TESTNG -> "org.testng.Assert.assertNotNull(" + myText + ")";
-    } + ";";
+    @NonNls String text = myVariant.methodReference + "(" + myText + ");";
     PsiStatement assertStatement = JavaPsiFacade.getElementFactory(project).createStatementFromText(text, expr);
     PsiElement added = anchorElement.getParent().addBefore(assertStatement, anchorElement);
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(added);
