@@ -1,13 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
-import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -26,72 +21,32 @@ public abstract class JobLauncher {
     return ApplicationManager.getApplication().getService(JobLauncher.class);
   }
 
-  /**
-   * Schedules concurrent execution of {@code thingProcessor} over each element of {@code things} and waits for completion
-   * with checkCanceled in each thread delegated to the {@code progress} (or the current global progress if null).
-   * Note: When the {@code thingProcessor} throws an exception or returns {@code false}  or the current indicator is canceled,
-   * the method is finished with {@code false} as soon as possible,
-   * which means some workers might still be in flight to completion. On the other hand, when the method returns {@code true},
-   * it's guaranteed that the whole list was processed and all tasks completed.
-   *
-   * @param things                      data to process concurrently
-   * @param progress                    progress indicator
-   * @param thingProcessor              to be invoked concurrently on each element from the collection
-   * @return false if tasks have been canceled,
-   *         or at least one processor returned false,
-   *         or threw an exception,
-   *         or we were unable to start read action in at least one thread
-   * @throws ProcessCanceledException if at least one task has thrown ProcessCanceledException
-   */
-  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
-                                                     @NotNull ProgressIndicator progress,
-                                                     @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
-    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    return invokeConcurrentlyUnderProgress(things, progress, app.isReadAccessAllowed(), app.isInImpatientReader(), thingProcessor);
-  }
-
-  /**
-   * The same as {@link #invokeConcurrentlyUnderProgress(List, ProgressIndicator, Processor)}, but tries to infer {@link ProgressIndicator}
-   * from the caller context. If not called under indicator, {@link EmptyProgressIndicator} is created and used.
-   */
+  /// Schedules concurrent execution of `thingProcessor` over each element of `things` and waits for completion.
+  /// Note: When the `thingProcessor` throws an exception or returns `false`  or the current indicator is canceled,
+  /// the method is finished with `false` as soon as possible,
+  /// which means some workers might still be in flight to completion. On the other hand, when the method returns `true`,
+  /// it's guaranteed that the whole list was processed and all tasks completed.
+  /// Must be called under the [com.intellij.openapi.progress.ProgressIndicator].
+  ///
+  /// @param things                      data to process concurrently
+  /// @param thingProcessor              to be invoked concurrently on each element from the collection
+  /// @return false if tasks have been canceled,
+  ///         or at least one processor returned false,
+  ///         or threw an exception,
+  ///         or we were unable to start read action in at least one thread
+  /// @throws ProcessCanceledException if at least one task has thrown ProcessCanceledException
+  //@RequiresBackgroundThread
   public <T> boolean invokeConcurrentlyUnderContextProgress(@NotNull List<? extends T> things,
                                                             @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
-    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    return ConcurrencyUtils.runWithIndicatorOrContextCancellation(
-      indicator ->
-        invokeConcurrentlyUnderProgress(things, indicator, app.isReadAccessAllowed(), app.isInImpatientReader(), thingProcessor));
+    return processConcurrentlyAsync(things, thingProcessor, ()->{});
   }
 
-  /**
-   * @deprecated use {@link #invokeConcurrentlyUnderProgress(List, ProgressIndicator, Processor)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
-                                                     @NotNull ProgressIndicator progress,
-                                                     boolean failFastOnAcquireReadAction,
-                                                     @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
-    PluginException.reportDeprecatedUsage("invokeConcurrentlyUnderProgress", "do not use");
-    return invokeConcurrentlyUnderProgress(things, progress, ApplicationManager.getApplication().isReadAccessAllowed(),
-                                           failFastOnAcquireReadAction, thingProcessor);
-  }
-
-
-  public abstract <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
-                                                              @NotNull ProgressIndicator progress,
-                                                              boolean runInReadAction,
-                                                              boolean failFastOnAcquireReadAction,
-                                                              @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException;
-
-  /**
-   * Process each element in {@code items} with {@code thingProcessor} under {@code progress} in a background in an async manner,
-   * while running {@code runnable} synchronously.
-   * All processing is finished when the method returns, unless PCE is thrown, in which case there are no guarantees
-   */
-  @ApiStatus.Internal
-  public <T> boolean processConcurrentlyAsync(@NotNull List<? extends T> items,
+  /// Process each element in `things` with `thingProcessor` in a background in an async manner,
+  /// while running `runnable` synchronously.
+  /// All processing is finished when the method returns, unless PCE is thrown, in which case there are no guarantees
+  /// Must be called under the [com.intellij.openapi.progress.ProgressIndicator].
+  //@RequiresBackgroundThread
+  public abstract <T> boolean processConcurrentlyAsync(@NotNull List<? extends T> things,
                                               @NotNull Processor<? super T> thingProcessor,
-                                              @NotNull Runnable runnable) throws ProcessCanceledException {
-    return false;
-  }
+                                              @NotNull Runnable runnable) throws ProcessCanceledException;
 }

@@ -1,7 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -9,7 +10,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
-import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableConsumer;
@@ -34,14 +34,12 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public final class JobLauncherImpl extends JobLauncher {
-  @ApiStatus.Internal
-  public static final int CORES_FORK_THRESHOLD = 1;
+  private static final int CORES_FORK_THRESHOLD = 1;
   private static final Logger LOG = Logger.getInstance(JobLauncher.class);
   private final boolean logAllExceptions = System.getProperty("idea.job.launcher.log.all.exceptions", "false").equals("true");
   private final ForkJoinPool myForkJoinPool;
@@ -63,28 +61,17 @@ public final class JobLauncherImpl extends JobLauncher {
     return indicator;
   }
 
+  //@RequiresBackgroundThread
   @Override
-  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
-                                                     @NotNull ProgressIndicator progress,
-                                                     boolean runInReadAction,
-                                                     boolean failFastOnAcquireReadAction,
-                                                     @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
-    return invokeConcurrentlyUnderProgressAsync(things, progress, runInReadAction, failFastOnAcquireReadAction, thingProcessor, ()->{});
-  }
+  @ApiStatus.Internal
+  public <T> boolean processConcurrentlyAsync(@NotNull List<? extends T> things,
+                                              @NotNull Processor<? super T> thingProcessor,
+                                              @NotNull Runnable runWhileForking) throws ProcessCanceledException {
+    ProgressIndicator progress = assertUnderProgressIndicator();
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
 
-  private static <T> boolean invokeConcurrentlyUnderProgressAsync(@NotNull List<? extends T> things,
-                                                                  ProgressIndicator progress,
-                                                                  boolean runInReadAction,
-                                                                  boolean failFastOnAcquireReadAction,
-                                                                  @NotNull Processor<? super T> thingProcessor,
-                                                                  @NotNull Runnable runWhileForking) {
-    // supply our own indicator even if we haven't given one - to support cancellation
-    // use StandardProgressIndicator by default to avoid assertion in SensitiveProgressWrapper() ctr later
-    ProgressIndicator wrapper = progress == null ? new StandardProgressIndicatorBase() : new SensitiveProgressWrapper(progress);
-
-    Boolean result = processImmediatelyIfTooFew(things, wrapper, runInReadAction, thingProcessor);
+    Boolean result = processImmediatelyIfTooFew(things, app.isWriteAccessAllowed(), thingProcessor, runWhileForking);
     if (result != null) {
-      runWhileForking.run();
       return result;
     }
 
@@ -104,6 +91,9 @@ public final class JobLauncherImpl extends JobLauncher {
     int hi = things.size();
     boolean[] processed = new boolean[things.size()];
     AtomicReference<Throwable> thrown = new AtomicReference<>();
+    boolean runInReadAction = app.isReadAccessAllowed();
+    boolean failFastOnAcquireReadAction = app.isInImpatientReader();
+    ProgressIndicator wrapper = new SensitiveProgressWrapper(progress);
     for (int n=globalCompleters.length-1; n>=0; n--) {
       int lo = n == 0 ? 0 : hi - chunk;
       ApplierCompleter<T> completer =
@@ -159,9 +149,7 @@ public final class JobLauncherImpl extends JobLauncher {
       // We should distinguish between genuine 'progress' cancellation and optimization when
       // task1.processor returns false and the task cancels the indicator then task2 calls checkCancel() and get here.
       // The former requires to re-throw PCE, the latter should just return false.
-      if (progress != null) {
-        progress.checkCanceled();
-      }
+      progress.checkCanceled();
       ProgressManager.checkCanceled();
       Throwable savedException = thrown.get();
       if (savedException != null) {
@@ -215,34 +203,23 @@ public final class JobLauncherImpl extends JobLauncher {
   // if {@code things} are too few to be processed in the real pool, returns TRUE if processed successfully, FALSE if not
   // returns null if things need to be processed in the real pool
   private static <T> Boolean processImmediatelyIfTooFew(@NotNull List<? extends T> things,
-                                                        @NotNull ProgressIndicator progress,
-                                                        boolean runInReadAction,
-                                                        @NotNull Processor<? super T> thingProcessor) {
-    if (things.isEmpty()) return true;
-
-    if (things.size() == 1 ||
+                                                        boolean isWriteAccessAllowed,
+                                                        @NotNull Processor<? super T> thingProcessor,
+                                                        @NotNull Runnable runWhileForking) {
+    if (things.size() <= 1 ||
         JobSchedulerImpl.getJobPoolParallelism() <= CORES_FORK_THRESHOLD ||
-        runInReadAction && ApplicationManager.getApplication().isWriteAccessAllowed()
-      ) {
-      AtomicBoolean result = new AtomicBoolean(true);
-      Runnable runnable = () -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-        //noinspection ForLoopReplaceableByForEach
-        for (int i = 0; i < things.size(); i++) {
-          T thing = things.get(i);
-          if (!thingProcessor.process(thing)) {
-            result.set(false);
-            break;
-          }
+        isWriteAccessAllowed) {
+      runWhileForking.run();
+      boolean result = true;
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0; i < things.size(); i++) {
+        T thing = things.get(i);
+        if (!thingProcessor.process(thing)) {
+          result = false;
+          break;
         }
-      }, progress);
-      if (runInReadAction) {
-        //noinspection UseRunReadActionBlockingShortcut
-        ApplicationManager.getApplication().runReadAction(runnable);
       }
-      else {
-        runnable.run();
-      }
-      return result.get();
+      return result;
     }
     return null;
   }
@@ -428,7 +405,9 @@ public final class JobLauncherImpl extends JobLauncher {
             if (logAllExceptions && !Logger.shouldRethrow(e)) {
               LOG.info("Failed to process " + element + ". Add too failed query.", e);
             }
-            failedToProcess.add(element);
+            if (element != null) {
+              failedToProcess.add(element);
+            }
             throw e;
           }
         }, progress);
@@ -485,14 +464,5 @@ public final class JobLauncherImpl extends JobLauncher {
       ApplierCompleter.rethrowUncheckedRaw(exception);
     }
     return result;
-  }
-
-  @Override
-  @ApiStatus.Internal
-  public <T> boolean processConcurrentlyAsync(@NotNull List<? extends T> items,
-                                              @NotNull Processor<? super T> thingProcessor,
-                                              @NotNull Runnable runnable) throws ProcessCanceledException {
-    ProgressIndicator indicator = assertUnderProgressIndicator();
-    return invokeConcurrentlyUnderProgressAsync(items, indicator, true, true, thingProcessor, runnable);
   }
 }

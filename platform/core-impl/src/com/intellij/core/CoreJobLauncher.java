@@ -2,7 +2,7 @@
 package com.intellij.core;
 
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -16,11 +16,10 @@ import java.util.List;
 @ApiStatus.Internal
 public class CoreJobLauncher extends JobLauncher {
   @Override
-  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
-                                                     @NotNull ProgressIndicator progress,
-                                                     boolean runInReadAction,
-                                                     boolean failFastOnAcquireReadAction,
-                                                     @NotNull Processor<? super T> thingProcessor) {
+  public <T> boolean processConcurrentlyAsync(@NotNull List<? extends T> things,
+                                              @NotNull Processor<? super T> thingProcessor,
+                                              @NotNull Runnable runnable) throws ProcessCanceledException {
+    runnable.run();
     return ContainerUtil.process(things, thingProcessor);
   }
 }
