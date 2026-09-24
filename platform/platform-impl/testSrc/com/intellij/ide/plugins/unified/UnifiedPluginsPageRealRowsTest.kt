@@ -99,6 +99,32 @@ internal class UnifiedPluginsPageRealRowsTest {
   }
 
   @Test
+  fun `section expansion keeps details for retained selection`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val items = (1..5).map { item("plugin.$it") }
+    val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Installed, *items.toTypedArray())))
+    val details = RecordingDetailsPresenter()
+    val view = createView(RecordingRowFactory(), details)
+    val visibleOccurrence = PluginOccurrenceId(PluginSectionId.Installed, items[1].pluginId)
+    controller.selectOccurrence(visibleOccurrence)
+    view.render(controller.state.value)
+    val retainedRow = details.selection.single().row
+
+    controller.setSectionExpanded(PluginSectionId.Installed, true)
+    view.render(controller.state.value)
+    assertThat(details.selection.single().occurrenceId).isEqualTo(visibleOccurrence)
+    assertThat(details.selection.single().row).isSameAs(retainedRow)
+
+    val hiddenOccurrence = PluginOccurrenceId(PluginSectionId.Installed, items.last().pluginId)
+    controller.selectOccurrence(hiddenOccurrence)
+    view.render(controller.state.value)
+    controller.setSectionExpanded(PluginSectionId.Installed, false)
+    view.render(controller.state.value)
+    assertThat(controller.state.value.selectedOccurrences).isEmpty()
+    assertThat(details.selection).isEmpty()
+    view.close()
+  }
+
+  @Test
   fun `unified rows have a four pixel gap`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val factory = RecordingRowFactory()
     val firstItem = item("first.plugin")

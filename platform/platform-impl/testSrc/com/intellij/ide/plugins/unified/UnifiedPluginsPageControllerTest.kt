@@ -197,24 +197,65 @@ internal class UnifiedPluginsPageControllerTest {
   }
 
   @Test
-  fun `section expansion changes clear selection`() {
-    val controller = UnifiedPluginsPageController()
-    controller.updateSection(section(PluginSectionId.Installed, itemCount = 5))
+  fun `manual expansion keeps the selected plugin`() {
+    val installed = section(PluginSectionId.Installed, itemCount = 5)
+    val controller = UnifiedPluginsPageController(listOf(installed))
+    val selected = occurrence(PluginSectionId.Installed, "plugin.2")
+    controller.selectOccurrence(selected)
 
     controller.setSectionExpanded(PluginSectionId.Installed, true)
-    assertThat(controller.state.value.selectedOccurrences).isEmpty()
+    assertThat(controller.state.value.selectedOccurrence).isEqualTo(selected)
 
-    val lastOccurrence = occurrence(PluginSectionId.Installed, "plugin.5")
-    controller.selectOccurrence(lastOccurrence)
-    assertThat(controller.state.value.selectedOccurrence).isEqualTo(lastOccurrence)
+    controller.setSectionExpanded(PluginSectionId.Installed, false)
+    assertThat(controller.state.value.selectedOccurrence).isEqualTo(selected)
+  }
 
+  @Test
+  fun `manual collapse removes hidden selections and keeps visible selections`() {
+    val installed = section(PluginSectionId.Installed, itemCount = 5)
+    val bundled = section(PluginSectionId.Bundled, "bundled.plugin")
+    val controller = UnifiedPluginsPageController(listOf(installed, bundled))
+    val visible = occurrence(PluginSectionId.Installed, "plugin.2")
+    val hidden = occurrence(PluginSectionId.Installed, "plugin.5")
+    val otherSection = occurrence(PluginSectionId.Bundled, "bundled.plugin")
+    controller.setSectionExpanded(PluginSectionId.Installed, true)
+    controller.selectOccurrences(listOf(visible, hidden, otherSection))
+
+    controller.setSectionExpanded(PluginSectionId.Installed, false)
+    assertThat(controller.state.value.selectedOccurrences).containsExactly(visible, otherSection)
+
+    controller.setSectionExpanded(PluginSectionId.Installed, true)
+    controller.selectOccurrence(hidden)
     controller.setSectionExpanded(PluginSectionId.Installed, false)
     assertThat(controller.state.value.selectedOccurrences).isEmpty()
 
-    val firstOccurrence = occurrence(PluginSectionId.Installed, "plugin.1")
-    controller.selectOccurrence(firstOccurrence)
-    controller.setSectionExpanded(PluginSectionId.Installed, false)
-    assertThat(controller.state.value.selectedOccurrence).isEqualTo(firstOccurrence)
+    controller.updateSection(installed)
+    assertThat(controller.state.value.selectedOccurrences).isEmpty()
+  }
+
+  @Test
+  fun `Bundled collapse uses the collapsed row order for selection`() {
+    val firstTool = categoryItem("first.tool", "Tools", enabled = true)
+    val firstLanguage = categoryItem("first.language", "Languages", enabled = true)
+    val secondTool = categoryItem("second.tool", "Tools", enabled = true)
+    val secondLanguage = categoryItem("second.language", "Languages", enabled = true)
+    val controller = UnifiedPluginsPageController(
+      initialSections = listOf(PluginSectionState(
+        PluginSectionId.Bundled,
+        items = listOf(firstTool, firstLanguage, secondTool, secondLanguage),
+      )),
+      collapsedItemLimit = 2,
+    )
+    controller.setSectionExpanded(PluginSectionId.Bundled, true)
+    val selectedTool = occurrence(PluginSectionId.Bundled, "second.tool")
+    val selectedLanguage = occurrence(PluginSectionId.Bundled, "first.language")
+    controller.selectOccurrences(listOf(selectedTool, selectedLanguage))
+
+    controller.setSectionExpanded(PluginSectionId.Bundled, false)
+
+    assertThat(controller.state.value.section(PluginSectionId.Bundled).visibleItems.map(PluginItemState::pluginId))
+      .containsExactly(firstTool.pluginId, firstLanguage.pluginId)
+    assertThat(controller.state.value.selectedOccurrences).containsExactly(selectedLanguage)
   }
 
   @Test

@@ -127,10 +127,9 @@ internal class UnifiedPluginsPageController(
         }
       }
       if (!expansionChanged) return
-      selectedOccurrences = emptyList()
       initialSelectionPending = false
       pendingQuerySelectionRevision = null
-      publish(establishSelection = false)
+      publish(establishSelection = false, collapsedSectionId = sectionId.takeUnless { expanded })
     }
   }
 
@@ -214,7 +213,7 @@ internal class UnifiedPluginsPageController(
     return true
   }
 
-  private fun publish(establishSelection: Boolean) {
+  private fun publish(establishSelection: Boolean, collapsedSectionId: PluginSectionId? = null) {
     val visibleSections = visibleSections().map { section ->
       val expanded = isSectionExpanded(section.id)
       section.copy(
@@ -229,14 +228,14 @@ internal class UnifiedPluginsPageController(
     }
 
     val currentSelection = selectedOccurrences
-    val retainedSelection = currentSelection.filter { containsOccurrence(visibleSections, it) }
+    val retainedSelection = currentSelection.filter { containsOccurrence(visibleSections, it, collapsedSectionId) }
     if (retainedSelection.isNotEmpty()) {
       selectedOccurrences = retainedSelection
       initialSelectionPending = false
       pendingQuerySelectionRevision = null
     }
     else {
-      if (currentSelection.isNotEmpty()) {
+      if (currentSelection.isNotEmpty() && collapsedSectionId == null) {
         initialSelectionPending = true
       }
       selectedOccurrences = emptyList()
@@ -358,9 +357,12 @@ internal class UnifiedPluginsPageController(
   private fun containsOccurrence(
     visibleSections: List<PluginSectionState>,
     occurrenceId: PluginOccurrenceId,
+    visibleOnlyInSection: PluginSectionId? = null,
   ): Boolean {
     return visibleSections.any { section ->
-      section.id == occurrenceId.sectionId && section.displayItems.any { it.pluginId == occurrenceId.pluginId }
+      section.id == occurrenceId.sectionId &&
+      (if (section.id == visibleOnlyInSection) section.visibleItems else section.displayItems)
+        .any { it.pluginId == occurrenceId.pluginId }
     }
   }
 

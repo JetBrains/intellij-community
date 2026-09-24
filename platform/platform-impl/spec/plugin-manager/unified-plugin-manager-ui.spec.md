@@ -389,11 +389,18 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt
 
-- Expansion and collapse must clear row selection and plugin details.
+- Manual expansion must keep selected plugins and their details.
+- Manual collapse must keep selected plugins that remain visible and remove selections it hides.
+- Plugin details must follow the retained selection.
 - A section must keep its expansion state if it temporarily leaves the page during the same session.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (
-    `section expansion changes clear selection`;
+    `manual expansion keeps the selected plugin`;
+    `manual collapse removes hidden selections and keeps visible selections`;
+    `Bundled collapse uses the collapsed row order for selection`;
     `expansion persists while a section is absent`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
+    `section expansion keeps details for retained selection`
   )
 
 - With the default density, a collapsed section must show at most three plugins.
