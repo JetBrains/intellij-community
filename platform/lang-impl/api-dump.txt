@@ -2052,10 +2052,6 @@ c:com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler
 - com.intellij.execution.console.BaseConsoleExecuteActionHandler
 - com.intellij.openapi.util.Condition
 - processLine(java.lang.String):V
-a:com.intellij.execution.dashboard.actions.ExecutorAction
-- com.intellij.openapi.project.DumbAwareAction
-- p:<init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.execution.filters.TextConsoleBuilderImpl
 - com.intellij.execution.filters.TextConsoleBuilder
 - <init>(com.intellij.openapi.project.Project):V

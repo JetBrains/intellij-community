@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -13,7 +13,9 @@ import java.util.List;
  * It depends on RunDashboardActionUtils.
  * RunDashboardActionUtils depend on RunDashboardServiceViewContributor and GroupingNode.
  * This interface abstracts RunDashboardServiceViewContributor and GroupingNode and breaks the last dependency.
+ * @deprecated this interface isn't needed anymore
  */
+@Deprecated
 @Internal
 public interface RunDashboardGroupNode {
 

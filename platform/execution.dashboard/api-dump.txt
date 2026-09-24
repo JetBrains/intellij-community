@@ -17,3 +17,12 @@ com.intellij.execution.dashboard.RunDashboardRunConfigurationNode
 - a:getConfigurationSettings():com.intellij.execution.RunnerAndConfigurationSettings
 - a:getContent():com.intellij.ui.content.Content
 - a:getDescriptor():com.intellij.execution.ui.RunContentDescriptor
+a:com.intellij.execution.dashboard.actions.ExecutorAction
+- com.intellij.openapi.project.DumbAwareAction
+- p:<init>():V
+- p:<init>(java.lang.String,java.lang.String,javax.swing.Icon):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- pa:getExecutor():com.intellij.execution.Executor
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+- pa:update(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
