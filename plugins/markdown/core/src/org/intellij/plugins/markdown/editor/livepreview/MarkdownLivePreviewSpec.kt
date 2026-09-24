@@ -156,19 +156,17 @@ sealed interface MarkdownLivePreviewSpec {
     val source: ImageSource? = null,
   ) : MarkdownLivePreviewSpec
 
-  /** Replaces a list marker with a depth-aware bullet placeholder. */
+  /** Replaces a list marker with a depth-aware bullet placeholder until a caret touches the marker. */
   @Serializable
   data class Bullet(
     override val range: MarkdownLivePreviewRange,
-    val concealRange: MarkdownLivePreviewRange,
     val placeholderText: String,
   ) : MarkdownLivePreviewSpec
 
-  /** Replaces a task marker with a checkbox until a caret touches its first logical line. */
+  /** Replaces a task marker with a checkbox until a caret touches the marker. */
   @Serializable
   data class TaskCheckbox(
     override val range: MarkdownLivePreviewRange,
-    val concealRange: MarkdownLivePreviewRange,
     val checked: Boolean,
   ) : MarkdownLivePreviewSpec
 }

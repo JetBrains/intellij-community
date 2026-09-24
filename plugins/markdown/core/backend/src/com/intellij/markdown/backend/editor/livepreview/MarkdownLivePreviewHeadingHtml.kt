@@ -44,7 +44,7 @@ private val HeadingProviders: Map<IElementType, GeneratingProvider> =
  * Generates the inline HTML of the headings. Only the heading lines are parsed.
  * Raw HTML and math stay literal text. Images are left out, because an inlay below the line paints them.
  */
-internal class HeadingHtmlGenerator {
+internal object HeadingHtmlGenerator {
   private val providers by lazy {
     MarkdownParserManager.FLAVOUR.createHtmlGeneratingProviders(LinkMap(emptyMap()), null) + HeadingProviders
   }

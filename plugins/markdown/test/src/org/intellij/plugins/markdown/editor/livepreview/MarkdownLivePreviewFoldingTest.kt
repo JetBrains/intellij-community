@@ -436,19 +436,28 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEmpty(concealed())
     moveCaretTo(content.length)
     assertEquals(listOf("-"), concealed())
-    moveCaretTo(2)
+    moveCaretTo(1)
     assertEmpty(concealed())
+    moveCaretTo(2)
+    assertEquals("The caret at the start of the item text keeps the marker", listOf("-"), concealed())
   }
 
-  fun testEveryOffsetOnTheFirstListLineRevealsItsMarker() = assertNothingLogged {
-    for (prefix in listOf("  - ", "  - [ ] ", "  1. [x] ")) {
+  fun testOnlyOffsetsOnTheListMarkerRevealIt() = assertNothingLogged {
+    for ((prefix, marker) in listOf("  - " to "-", "  - [ ] " to "- [ ]", "  1. [x] " to "[x]")) {
       val line = "${prefix}item text  "
       val content = "$line\n\ntail"
       configure("$content<caret>")
+      val markerStart = line.indexOf(marker)
       for (offset in 0..line.length) {
         moveCaretTo(offset)
-        assertEmpty("The caret at $offset must reveal $prefix", concealed())
-        assertEmpty(checkboxInlays())
+        if (offset in markerStart..markerStart + marker.length) {
+          assertEmpty("The caret at $offset must reveal $prefix", concealed())
+          assertEmpty(checkboxInlays())
+        }
+        else {
+          assertEquals("The caret at $offset must keep $prefix", listOf(marker), concealed())
+          assertEquals(marker != "-", checkboxInlays().isNotEmpty())
+        }
         moveCaretTo(content.length)
         assertEquals(1, concealed().size)
       }
@@ -461,32 +470,38 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
       configure("$content<caret>")
       moveCaretTo(content.indexOf("continuation"))
       assertEquals(listOf(marker, marker), concealed())
+      moveCaretTo(content.indexOf("  $marker child") + 2)
+      assertEquals(listOf(marker), concealed())
+      assertEquals(0, concealedLivePreviewRegions(myFixture.editor).single().startOffset)
       moveCaretTo(content.indexOf("child") + 2)
-      assertEquals(listOf(marker), concealed())
+      assertEquals(listOf(marker, marker), concealed())
       moveCaretTo(content.indexOf("parent") + 2)
-      assertEquals(listOf(marker), concealed())
+      assertEquals(listOf(marker, marker), concealed())
     }
   }
 
-  fun testSoftWrappedListTextRevealsItsMarker() {
+  fun testSoftWrappedListTextKeepsItsMarkerConcealed() {
     for (marker in listOf("-", "- [ ]")) {
       val content = "$marker a long item that wraps over several visual lines\n\ntail"
       configure("$content<caret>")
       EditorTestUtil.configureSoftWraps(myFixture.editor, 15)
       moveCaretTo(content.indexOf("visual"))
       assertTrue(myFixture.editor.caretModel.visualPosition.line > 0)
-      assertEmpty(concealed())
-      assertEmpty(checkboxInlays())
+      assertEquals(listOf(marker), concealed())
+      assertEquals(marker != "-", checkboxInlays().isNotEmpty())
     }
   }
 
   fun testSelectionAndMultipleCaretsRevealListMarkers() {
     val content = "- first\n- [ ] second\n- third\n\ntail"
     configure("$content<caret>")
-    select(content.indexOf("second"), content.indexOf("second") + 2)
+    val second = content.indexOf("second")
+    select(second, second + 2)
+    assertEquals("A selection in the item text keeps every marker", listOf("-", "- [ ]", "-"), concealed())
+    select(content.indexOf("- [ ]"), second + 2)
     assertEquals(listOf("-", "-"), concealed())
     val editor = myFixture.editor
-    editor.caretModel.addCaret(editor.offsetToVisualPosition(content.indexOf("first")))
+    editor.caretModel.addCaret(editor.offsetToVisualPosition(0))
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     assertEquals(listOf("-"), concealed())
   }
@@ -502,11 +517,11 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
       val widths = checkboxInlays().map { it.widthInPixels }
       assertEquals("Every checkbox must have the same width", 1, widths.distinct().size)
       assertTrue("The checkbox must fit within one line height", widths.first() <= editor.lineHeight)
-      for (word in listOf("first", "second", "third")) {
+      for ((word, marker) in listOf("first" to "- [ ]", "second" to "-\t[x]", "third" to "[X]")) {
         moveCaretTo(content.length)
         val offset = content.indexOf(word)
         val position = editor.offsetToXY(offset)
-        moveCaretTo(offset)
+        moveCaretTo(content.indexOf(marker))
         assertTrue("The compact checkbox must use less space than the source prefix", position.x < editor.offsetToXY(offset).x)
       }
     }
@@ -1471,7 +1486,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals(listOf("- [ ]", "-----"), concealed())
     assertEquals(1, checkboxInlays().size)
 
-    moveCaretTo(content.indexOf("task") + 1)
+    moveCaretTo(content.indexOf("- [ ]"))
     assertEquals(listOf("**", "**", "-----"), concealed())
     assertEmpty(checkboxInlays())
 

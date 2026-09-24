@@ -250,7 +250,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     """.trimMargin()
     val elements = elements(content)
     assertEquals(listOf("-", "*", "+", "-"), concealed(content))
-    assertEquals(content.lines(), revealRanges(content))
+    assertEquals(listOf("-", "*", "+", "-"), revealRanges(content))
     assertEquals(listOf("•", "◦", "▪", "•"), elements.map { (it as MarkdownLivePreviewSpec.Bullet).placeholderText })
   }
 
@@ -265,21 +265,21 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEmpty(elements("1. ordered"))
   }
 
-  fun testTaskCheckboxesConcealTheirPrefixesAndRevealTheirLines() {
+  fun testTaskCheckboxesConcealAndRevealTheirMarkers() {
     val content = "- [ ] todo\n* [x] done\n+ [X] done too\n1. [ ] ordered"
     val tasks = elements(content).filterIsInstance<MarkdownLivePreviewSpec.TaskCheckbox>()
     assertEquals(listOf(false, true, true, false), tasks.map { it.checked })
     assertEquals(listOf("- [ ]", "* [x]", "+ [X]", "[ ]"), concealed(content))
-    assertEquals(content.lines(), revealRanges(content))
+    assertEquals(listOf("- [ ]", "* [x]", "+ [X]", "[ ]"), revealRanges(content))
     assertEquals(listOf("[ ]", "[x]", "[X]", "[ ]"), tasks.map {
-      content.substring(it.concealRange.endOffset - 3, it.concealRange.endOffset)
+      content.substring(it.range.endOffset - 3, it.range.endOffset)
     })
   }
 
   fun testNestedTaskAndQuotedTaskPreserveTheirIndentationAndQuoteMarkers() {
     val content = "- [ ] parent\n  continuation\n  - [x] child\n\n> - [ ] quoted"
     assertEquals(listOf("- [ ]", "- [x]", "> ", "- [ ]"), concealed(content))
-    assertEquals(listOf("- [ ] parent", "  - [x] child", "> - [ ] quoted", "> - [ ] quoted"), revealRanges(content))
+    assertEquals(listOf("- [ ]", "- [x]", "> - [ ] quoted", "- [ ]"), revealRanges(content))
   }
 
   fun testBlockquotesConcealMarkersAndCoverBlankLines() {
@@ -315,19 +315,19 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
   fun testBlockquoteMarkersInsideListItemsAreConcealed() {
     val content = "- > first\n  > second\n  > third"
     assertEquals(listOf("-", "> ", "> ", "> "), concealed(content))
-    assertEquals(listOf("- > first", content), revealRanges(content))
+    assertEquals(listOf("-", content), revealRanges(content))
   }
 
   fun testBlockquoteMarkersInsidePlusListItemsAreConcealed() {
     val content = "+ > first\n  > second\n  > third"
     assertEquals(listOf("+", "> ", "> ", "> "), concealed(content))
-    assertEquals(listOf("+ > first", content), revealRanges(content))
+    assertEquals(listOf("+", content), revealRanges(content))
   }
 
   fun testBlockquoteMarkersInsideAsteriskListItemsAreConcealed() {
     val content = "* > first\n  > second\n  > third"
     assertEquals(listOf("*", "> ", "> ", "> "), concealed(content))
-    assertEquals(listOf("* > first", content), revealRanges(content))
+    assertEquals(listOf("*", content), revealRanges(content))
   }
 
   fun testBlockquoteMarkersInsideOrderedListItemsAreConcealed() {
@@ -425,8 +425,8 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     is MarkdownLivePreviewSpec.HorizontalRule -> listOf(range)
     is MarkdownLivePreviewSpec.Heading -> listOf(range)
     is MarkdownLivePreviewSpec.Image -> listOf(range)
-    is MarkdownLivePreviewSpec.Bullet -> listOf(concealRange)
-    is MarkdownLivePreviewSpec.TaskCheckbox -> listOf(concealRange)
+    is MarkdownLivePreviewSpec.Bullet -> listOf(range)
+    is MarkdownLivePreviewSpec.TaskCheckbox -> listOf(range)
   }
 
   private fun elements(content: String): List<MarkdownLivePreviewSpec> {

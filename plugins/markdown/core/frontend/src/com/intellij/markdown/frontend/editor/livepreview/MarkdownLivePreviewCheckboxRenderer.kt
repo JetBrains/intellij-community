@@ -69,7 +69,7 @@ internal class MarkdownLivePreviewCheckboxRenderer(private val project: Project,
 
   override fun presentation(spec: MarkdownLivePreviewSpec): List<MarkdownLivePreviewFold> {
     return listOf(MarkdownLivePreviewTextFold(
-      (spec as MarkdownLivePreviewSpec.TaskCheckbox).concealRange.toTextRange(),
+      (spec as MarkdownLivePreviewSpec.TaskCheckbox).range.toTextRange(),
       decoration = CheckboxDecoration(),
     ))
   }

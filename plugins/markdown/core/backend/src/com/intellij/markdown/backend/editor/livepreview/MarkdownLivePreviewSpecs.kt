@@ -19,6 +19,7 @@ import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecS
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewUtils
 import org.intellij.plugins.markdown.editor.livepreview.toMarkdownLivePreviewRange
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
+import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
@@ -63,16 +64,12 @@ private const val BULLET_PLACEHOLDERS = "•◦▪"
 @ApiStatus.Internal
 fun computeLivePreviewSpecs(file: PsiFile, editor: Editor): MarkdownLivePreviewSpecSet {
   val blockQuotes by lazy { BlockQuoteSpecBuilder(file.viewProvider.contents, editor.document) }
-  val headings = HeadingHtmlGenerator()
   val elements = SyntaxTraverser.psiTraverser(file)
     .expand { PsiUtilCore.getElementType(it) !in NoDescendTypes }
     .asSequence()
     .mapNotNull {
-      when {
-        PsiUtilCore.getElementType(it) == MarkdownElementTypes.BLOCK_QUOTE -> blockQuotes.create(it.textRange)
-        it is MarkdownHeader -> it.toHeadingSpec(editor, headings)
-        else -> it.toDecorationSpecs(editor)
-      }
+      if (PsiUtilCore.getElementType(it) == MarkdownElementTypes.BLOCK_QUOTE) blockQuotes.create(it.textRange)
+      else it.toDecorationSpecs(editor)
     }
     .sortedWith(compareBy({ it.range.startOffset }, { it.range.endOffset }))
     .toList()
@@ -94,8 +91,9 @@ private fun PsiElement.toDecorationSpecs(editor: Editor): MarkdownLivePreviewSpe
     // flat and keeps them as siblings, so the two forms need different lookups.
     MarkdownElementTypes.AUTOLINK -> toAutolinkSpecs()
     in LeafAutolinkTypes -> toAutolinkSpecs()
-    MarkdownTokenTypes.LIST_BULLET -> toBulletSpec(editor)
-    MarkdownTokenTypes.CHECK_BOX -> toTaskCheckboxSpec(editor)
+    in MarkdownTokenTypeSets.ATX_HEADERS -> (this as? MarkdownHeader)?.toHeadingSpec(editor)
+    MarkdownTokenTypes.LIST_BULLET -> toBulletSpec()
+    MarkdownTokenTypes.CHECK_BOX -> toTaskCheckboxSpec()
     MarkdownTokenTypes.HORIZONTAL_RULE -> toHorizontalRuleSpec()
     MarkdownElementTypes.FRONT_MATTER_HEADER_DELIMITER -> toFrontMatterDelimiterSpec()
     MarkdownTokenTypes.SETEXT_2 -> toSetextCodeSpanUnderlineSpec()
@@ -185,11 +183,12 @@ private fun CharSequence.listMarkerEnd(offset: Int, lineEnd: Int): Int {
 
 private fun PsiElement.isInsideTable(): Boolean = PsiTreeUtil.getParentOfType(this, MarkdownTable::class.java) != null
 
-private fun MarkdownHeader.toHeadingSpec(editor: Editor, headings: HeadingHtmlGenerator): MarkdownLivePreviewSpec.Heading? {
+private fun MarkdownHeader.toHeadingSpec(editor: Editor): MarkdownLivePreviewSpec.Heading? {
   val content = contentElement
   if (parent !is MarkdownFile || content?.isAtxContent != true) return null
   val range = logicalLineRange(editor)
-  return MarkdownLivePreviewSpec.Heading(range.toMarkdownLivePreviewRange(), level, headings.generate(content, range.startOffset))
+  val html = HeadingHtmlGenerator.generate(content, range.startOffset)
+  return MarkdownLivePreviewSpec.Heading(range.toMarkdownLivePreviewRange(), level, html)
 }
 
 private fun PsiElement.toImageSpec(editor: Editor): MarkdownLivePreviewSpec.Image? {
@@ -253,7 +252,7 @@ private fun PsiElement.wholeLineRange(): TextRange? {
   return TextRange(start, end)
 }
 
-private fun PsiElement.toBulletSpec(editor: Editor): MarkdownLivePreviewSpec.Bullet? {
+private fun PsiElement.toBulletSpec(): MarkdownLivePreviewSpec.Bullet? {
   val listItem = parent ?: return null
   if (PsiUtilCore.getElementType(listItem) != MarkdownElementTypes.LIST_ITEM) return null
   if (PsiUtilCore.getElementType(listItem.parent) != MarkdownElementTypes.UNORDERED_LIST ||
@@ -266,8 +265,7 @@ private fun PsiElement.toBulletSpec(editor: Editor): MarkdownLivePreviewSpec.Bul
     .count { PsiUtilCore.getElementType(it) == MarkdownElementTypes.LIST_ITEM }
   val markerStart = textRange.startOffset + markerOffset
   return MarkdownLivePreviewSpec.Bullet(
-    range = logicalLineRange(editor).toMarkdownLivePreviewRange(),
-    concealRange = TextRange(markerStart, markerStart + 1).toMarkdownLivePreviewRange(),
+    range = MarkdownLivePreviewRange(markerStart, markerStart + 1),
     placeholderText = BULLET_PLACEHOLDERS[(depth - 1) % BULLET_PLACEHOLDERS.length].toString(),
   )
 }
@@ -278,7 +276,7 @@ private fun PsiElement.logicalLineRange(editor: Editor): TextRange {
   return TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line))
 }
 
-private fun PsiElement.toTaskCheckboxSpec(editor: Editor): MarkdownLivePreviewSpec.TaskCheckbox? {
+private fun PsiElement.toTaskCheckboxSpec(): MarkdownLivePreviewSpec.TaskCheckbox? {
   val item = parent as? MarkdownListItem ?: return null
   if (item.checkBox != this) return null
   val text = text
@@ -292,8 +290,7 @@ private fun PsiElement.toTaskCheckboxSpec(editor: Editor): MarkdownLivePreviewSp
   }
   else checkboxRange.startOffset
   return MarkdownLivePreviewSpec.TaskCheckbox(
-    range = logicalLineRange(editor).toMarkdownLivePreviewRange(),
-    concealRange = TextRange(concealStart, checkboxRange.endOffset).toMarkdownLivePreviewRange(),
+    range = MarkdownLivePreviewRange(concealStart, checkboxRange.endOffset),
     checked = text[1] != ' ',
   )
 }
