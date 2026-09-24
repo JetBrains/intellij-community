@@ -211,6 +211,14 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
     }
   }
 
+  /// Deletes retired chunk files during startup, before clients can access the database
+  void dropRetiredChunks() throws IOException {
+    synchronized (databaseLock) {
+      ensureNotClosed();
+      databaseChunks.dropRetiredChunks();
+    }
+  }
+
   /// Retires the chunk if it is sealed and contains only retired blocks.
   /// Retirement hides the chunk and its blocks from the database API. The database keeps the chunk resources until close.
   ///

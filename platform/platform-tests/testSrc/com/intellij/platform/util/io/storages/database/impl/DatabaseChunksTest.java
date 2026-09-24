@@ -147,7 +147,7 @@ public class DatabaseChunksTest {
   }
 
   @Test
-  public void openingCompletesInterruptedChunkRetirement(@TempDir Path databaseDirectory) throws Exception {
+  public void openingCompletesInterruptedChunkRetirementBeforeDrop(@TempDir Path databaseDirectory) throws Exception {
     var catalogPath = databaseDirectory.resolve("database.meta");
     var chunkPath = DatabaseChunks.chunkPath(databaseDirectory, 1);
     try (var metadata = DatabaseCatalogOverAppendOnlyLog.open(catalogPath, CHUNK_SIZE);
@@ -164,7 +164,10 @@ public class DatabaseChunksTest {
          var chunks = DatabaseChunks.open(databaseDirectory, metadata)) {
       assertEquals(RETIRED, metadata.chunks().getFirst().state(), "Recovery must complete the catalog transition");
       assertTrue(chunks.chunks().isEmpty(), "A recovered retired chunk must not become accessible");
-      assertFalse(Files.exists(chunkPath), "Recovery must delete the retired chunk file");
+      assertTrue(Files.exists(chunkPath), "Recovery must keep the retired chunk file for startup housekeeping");
+
+      chunks.dropRetiredChunks();
+      assertFalse(Files.exists(chunkPath), "Startup housekeeping must delete the retired chunk file");
     }
   }
 
@@ -237,7 +240,7 @@ public class DatabaseChunksTest {
   }
 
   @Test
-  public void openingDeletesRetiredChunkFiles(@TempDir Path databaseDirectory) throws Exception {
+  public void openingKeepsRetiredChunkFilesUntilDrop(@TempDir Path databaseDirectory) throws Exception {
     try (var metadata = DatabaseCatalogOverAppendOnlyLog.open(databaseDirectory.resolve("database.meta"), CHUNK_SIZE)) {
       var retiredChunkId = metadata.nextChunkId();
       var retiredChunkPath = DatabaseChunks.chunkPath(databaseDirectory, retiredChunkId);
@@ -249,8 +252,10 @@ public class DatabaseChunksTest {
       metadata.flush();
 
       try (var chunks = DatabaseChunks.open(databaseDirectory, metadata)) {
-        assertFalse(Files.exists(retiredChunkPath), "Cleanup must delete a retired chunk file");
+        assertTrue(Files.exists(retiredChunkPath), "Recovery must keep a retired chunk file for startup housekeeping");
         assertTrue(chunks.chunks().isEmpty(), "A retired chunk must not become accessible");
+        chunks.dropRetiredChunks();
+        assertFalse(Files.exists(retiredChunkPath), "Startup housekeeping must delete a retired chunk file");
       }
     }
   }

@@ -40,7 +40,7 @@ class RetireUnusedChunksHousekeeperTest {
   }
 
   @Test
-  fun `housekeeping retires a chunk and keeps its mapping`(@TempDir directory: Path) {
+  fun `housekeeping retires a chunk and startup housekeeping deletes it`(@TempDir directory: Path) {
     val firstChunkPath = DatabaseChunks.chunkPath(directory, 1)
     val secondChunkPath = DatabaseChunks.chunkPath(directory, 2)
     var liveBlockId = 0
@@ -82,10 +82,16 @@ class RetireUnusedChunksHousekeeperTest {
     BlocksDatabaseImpl.open(directory, CHUNK_SIZE, true, false).use { blocksDatabase ->
       val store = blocksDatabase.findStore("store")
       assertEquals(listOf(liveBlockId, evictionBlockId), store?.blocks()?.map { it.id() })
-      assertFalse(Files.exists(firstChunkPath), "Opening must delete the retired chunk file")
+      assertTrue(Files.exists(firstChunkPath), "Opening without drop housekeeping must keep the retired chunk file")
       assertTrue(Files.exists(secondChunkPath), "The live chunk must survive reopening")
     }
 
+    BlocksDatabaseImpl.open(
+      directory, CHUNK_SIZE, true, false, listOf(DropRetiredChunksHousekeeper()),
+    ).use {
+      assertFalse(Files.exists(firstChunkPath), "Startup housekeeping must delete the retired chunk file")
+      assertTrue(Files.exists(secondChunkPath), "Startup housekeeping must keep the live chunk file")
+    }
   }
 
   @Test

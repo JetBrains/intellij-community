@@ -52,7 +52,9 @@ final class DatabaseChunks implements Closeable, Flushable {
   private final ArrayDeque<DatabaseChunk> activeChunks = new ArrayDeque<>();
 
   /// Retired chunks awaiting resource deallocation, by chunkId.
-  /// Retirement hides these chunks from the database API. Their mappings remain valid until the database closes.
+  /// These chunks have `state=RETIRED` and are removed from [#chunksById] -- i.e., the database API does not expose them.
+  /// These chunks could be unmapped & removed ([#dropRetiredChunks()]) only outside normal DB operation, when none of the
+  /// clients could possibly have a reference to their mmapped buffers. This is (currently) possible only on startup/shutdown.
   ///
   /// GuardedBy(lock)
   private final Int2ObjectMap<DatabaseChunk> chunksPendingForRelease = new Int2ObjectOpenHashMap<>();
@@ -227,7 +229,7 @@ final class DatabaseChunks implements Closeable, Flushable {
     synchronized (lock) {
       for (var chunkInfo : databaseCatalog.chunks()) {
         if (chunkInfo.state() == RETIRED) {
-          continue;
+          continue;//do not open (mmap) retired chunks
         }
         var chunkPath = chunkPath(databaseDirectory, chunkInfo.chunkId());
         if (!Files.exists(chunkPath)) {
@@ -290,30 +292,51 @@ final class DatabaseChunks implements Closeable, Flushable {
     LOG.info("Recovered chunk " + chunkInfo.chunkId() + " state " + headerState + ": " + chunk.storagePath());
   }
 
-  /// Removes files that have chunk-like names, but not known as chunks: likely remnants of unfinished previous cleanup(s).
-  void deleteOrphanChunkFiles() throws IOException {
+  /// Removes files that have chunk-like names, but are not registered in the catalog
+  /// (likely remnants of unfinished previous cleanups)
+  private void deleteOrphanChunkFiles() throws IOException {
     synchronized (lock) {
-      var liveChunkIds = new IntOpenHashSet();
-      var retiredChunkIds = new IntOpenHashSet();
+      var registeredChunkIds = new IntOpenHashSet();
       for (var chunkInfo : databaseCatalog.chunks()) {
-        if (chunkInfo.state() == RETIRED) {
-          retiredChunkIds.add(chunkInfo.chunkId());
-        }
-        else {
-          liveChunkIds.add(chunkInfo.chunkId());
-        }
+        registeredChunkIds.add(chunkInfo.chunkId());
       }
 
       try (DirectoryStream<Path> files = Files.newDirectoryStream(databaseDirectory)) {
         for (var file : files) {
           var chunkId = parseChunkId(file.getFileName().toString());
           if (chunkId > 0 &&
-              !liveChunkIds.contains(chunkId) &&
-              !chunksPendingForRelease.containsKey(chunkId) &&
+              !registeredChunkIds.contains(chunkId) &&
               Files.isRegularFile(file)) {
-            Files.delete(file);
-            var reason = retiredChunkIds.contains(chunkId) ? "retired" : "unregistered";
-            LOG.info("Deleted " + reason + " chunk " + chunkId + ": " + file);
+            if (Files.deleteIfExists(file)) {
+              LOG.info("Deleted unregistered chunk " + chunkId + ": " + file);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /// Deletes all retired chunk files;
+  /// Retired chunks that are already opened -- are closed (and unmapped) beforehand.
+  ///
+  /// This method must be called _only_ when there is no chance chunks [#chunksPendingForRelease] could possibly
+  /// be referenced by the clients: since the chunks are unmapped during the method -- all derived memory segments
+  /// become invalid without notification.
+  void dropRetiredChunks() throws IOException {
+    synchronized (lock) {
+      ensureNotClosed();
+      for (var chunkInfo : databaseCatalog.chunks()) {
+        if (chunkInfo.state() == RETIRED) {
+          var chunkId = chunkInfo.chunkId();
+          var mappedChunk = chunksPendingForRelease.get(chunkId);
+          if (mappedChunk != null) {
+            mappedChunk.close();
+            chunksPendingForRelease.remove(chunkId, mappedChunk);
+          }
+
+          var file = chunkPath(databaseDirectory, chunkId);
+          if (Files.deleteIfExists(file)) {
+            LOG.info("Deleted retired chunk " + chunkId + ": " + file);
           }
         }
       }
