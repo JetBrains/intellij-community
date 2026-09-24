@@ -30,6 +30,8 @@ class MarkdownBreadcrumbsProvider : BreadcrumbsProvider {
 
   override fun acceptStickyElement(element: PsiElement): Boolean = false
 
+  override fun isShownByDefault(): Boolean = false
+
   private fun findHeaderBefore(element: PsiElement): MarkdownHeader? =
     PsiTreeUtil.getParentOfType(element, MarkdownHeader::class.java) ?: findPreviousHeader(element)
 

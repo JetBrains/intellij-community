@@ -9,6 +9,7 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.markdown.utils"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
@@ -19,5 +20,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <lang.psiStructureViewFactory language="Markdown"
                                   implementationClass="com.intellij.markdown.projectView.MarkdownStructureViewFactory"/>
+    <navbar implementation="com.intellij.markdown.projectView.MarkdownNavBarModelExtension"/>
   </extensions>
 </idea-plugin>
