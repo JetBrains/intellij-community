@@ -5,6 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.UsageSearchContext
@@ -17,6 +19,7 @@ import com.intellij.util.xml.DomManager
 import com.intellij.util.xml.GenericAttributeValue
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
+import org.jetbrains.idea.devkit.dom.index.ExtensionImplementationIndex
 import org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex
 import java.util.Collections
 import java.util.function.Function
@@ -112,6 +115,50 @@ fun processExtensionDeclarations(
 ) {
   PerformanceAssertions.assertDoesNotAffectHighlighting()
 
+  val indexScope = if (ExtensionImplementationIndex.isClassLike(name)) scope.toGlobalScope(project) else null
+  if (indexScope != null) {
+    processIndexedExtensionDeclarations(name, project, strictMatch, indexScope, callback)
+  }
+  else {
+    processExtensionDeclarationsByWord(name, project, strictMatch, scope, callback)
+  }
+}
+
+private fun SearchScope.toGlobalScope(project: Project): GlobalSearchScope? {
+  return when (this) {
+    is GlobalSearchScope -> this
+    is LocalSearchScope -> GlobalSearchScope.filesScope(project, virtualFiles.asList())
+    else -> null
+  }
+}
+
+/**
+ * Finds class-like names through [ExtensionImplementationIndex], which distinguishes exact matches from outer-class prefixes.
+ */
+private fun processIndexedExtensionDeclarations(
+  name: String,
+  project: Project,
+  strictMatch: Boolean,
+  scope: GlobalSearchScope,
+  callback: (Extension, XmlTag) -> Boolean,
+) {
+  val domManager = DomManager.getDomManager(project)
+  ExtensionImplementationIndex.processExtensions(project, name, scope, strictMatch) { tag ->
+    val extension = domManager.getDomElement(tag) as? Extension ?: return@processExtensions true
+    callback(extension, tag)
+  }
+}
+
+/**
+ * Names that are not class-like, such as inspection IDs: a word search over the candidate files.
+ */
+private fun processExtensionDeclarationsByWord(
+  name: String,
+  project: Project,
+  strictMatch: Boolean,
+  scope: SearchScope,
+  callback: (Extension, XmlTag) -> Boolean,
+) {
   val searchWord = name.substringBeforeLast('$')
   if (searchWord.isEmpty()) return
 
@@ -161,28 +208,29 @@ private class ExtensionByExtensionPointLocator(
   private val pointQualifiedName = extensionPoint.effectiveQualifiedName
 
   private fun processCandidates(processor: (XmlTag) -> Boolean) {
-    val strictMatch: Boolean
-    val searchText: String
-    if (extensionId != null) {
-      // search for exact match of extensionId as there should be 0..1 occurrences (instead of n extensions)
-      searchText = extensionId
-      strictMatch = true
-    }
-    else {
-      // We must search for the last part of EP name, because for instance 'com.intellij.console.folding' extension
-      // may be declared as <extensions defaultExtensionNs="com"><intellij.console.folding ...
-      searchText = StringUtil.substringAfterLast(pointQualifiedName, ".") ?: return
-      strictMatch = false
-    }
-    processExtensionDeclarations(searchText, project, strictMatch) { extension, tag ->
-      val ep = extension.extensionPoint ?: return@processExtensionDeclarations true
-      if (ep.effectiveQualifiedName == pointQualifiedName &&
-          (extensionId == null || extensionId == extensionIdFunction.invoke(extension))) {
+    fun processCandidate(extension: Extension, tag: XmlTag): Boolean {
+      val ep = extension.extensionPoint ?: return true
+      return if (ep.effectiveQualifiedName == pointQualifiedName &&
+                 (extensionId == null || extensionId == extensionIdFunction.invoke(extension))) {
         // stop after the first found candidate if ID is specified
         processor(tag) && extensionId == null
       }
       else {
         true
+      }
+    }
+
+    if (extensionId != null) {
+      processExtensionDeclarations(extensionId, project, callback = ::processCandidate)
+    }
+    else {
+      PerformanceAssertions.assertDoesNotAffectHighlighting()
+      val shortName = StringUtil.getShortName(pointQualifiedName)
+      val scope = PluginRelatedLocatorsUtils.getCandidatesScope(project)
+      val domManager = DomManager.getDomManager(project)
+      ExtensionImplementationIndex.processExtensionsByEpShortName(project, shortName, scope) { tag ->
+        val extension = domManager.getDomElement(tag) as? Extension ?: return@processExtensionsByEpShortName true
+        processCandidate(extension, tag)
       }
     }
   }

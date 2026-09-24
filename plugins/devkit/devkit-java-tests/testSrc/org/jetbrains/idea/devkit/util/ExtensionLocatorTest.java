@@ -7,6 +7,7 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -18,6 +19,8 @@ import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.ExtensionPoints;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensionsByExtensionPoint;
@@ -71,6 +74,93 @@ public class ExtensionLocatorTest extends LightJavaCodeInsightFixtureTestCase {
     verifyLocator(locateExtensionsByPsiClass(myList2PsiClass), 0);
   }
 
+  public void testExtensionPointsWithSameShortName() {
+    var file = myFixture.addFileToProject("META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>my.plugin</id>
+        <extensionPoints>
+          <extensionPoint qualifiedName="first.console.folding"/>
+          <extensionPoint qualifiedName="second.console.folding"/>
+        </extensionPoints>
+        <extensions defaultExtensionNs="first">
+          <console.folding id="first"/>
+        </extensions>
+        <extensions defaultExtensionNs="second.console">
+          <folding id="second"/>
+        </extensions>
+      </idea-plugin>
+      """);
+    var plugin = DescriptorUtil.getIdeaPlugin(assertInstanceOf(file, XmlFile.class));
+    var points = assertOneElement(plugin.getExtensionPoints()).getExtensionPoints();
+    assertSize(2, points);
+    var first = assertOneElement(locateExtensionsByExtensionPoint(points.get(0)));
+    var second = assertOneElement(locateExtensionsByExtensionPoint(points.get(1)));
+    assertEquals("first", first.pointer.getElement().getAttributeValue("id"));
+    assertEquals("second", second.pointer.getElement().getAttributeValue("id"));
+  }
+
+  public void testExtensionPointAcrossFiles() {
+    var file = myFixture.addFileToProject("META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>my.plugin</id>
+        <extensionPoints>
+          <extensionPoint name="myEp" interface="java.lang.Runnable"/>
+        </extensionPoints>
+      </idea-plugin>
+      """);
+    var expectedIds = new HashSet<String>();
+    for (int i = 0; i < 24; i++) {
+      var xml = new StringBuilder("<idea-plugin><id>my.plugin." + i + "</id><depends>my.plugin</depends>");
+      xml.append("<extensions defaultExtensionNs=\"my.plugin\">");
+      for (int j = 0; j < 12; j++) {
+        var id = i + "-" + j;
+        expectedIds.add(id);
+        xml.append("<myEp implementation=\"java.lang.Thread\" id=\"").append(id).append("\"/>");
+      }
+      xml.append("</extensions></idea-plugin>");
+      myFixture.addFileToProject("plugin" + i + ".xml", xml.toString());
+    }
+    var plugin = DescriptorUtil.getIdeaPlugin(assertInstanceOf(file, XmlFile.class));
+    var point = assertOneElement(assertOneElement(plugin.getExtensionPoints()).getExtensionPoints());
+    var candidates = locateExtensionsByExtensionPoint(point);
+    var ids = new HashSet<String>();
+    for (var candidate : candidates) {
+      var tag = candidate.pointer.getElement();
+      assertNotNull(tag);
+      assertTrue(ids.add(tag.getAttributeValue("id")));
+    }
+    assertEquals(expectedIds, ids);
+  }
+
+
+  public void testPackagedNestedClassMatches() {
+    var file = myFixture.addFileToProject("META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>my.plugin</id>
+        <extensionPoints>
+          <extensionPoint name="myEp" interface="java.lang.Runnable"/>
+        </extensionPoints>
+        <extensions defaultExtensionNs="my.plugin">
+          <myEp implementation="myPkg.Outer$Inner"/>
+          <myEp implementation="myPkg.Outer"/>
+        </extensions>
+      </idea-plugin>
+      """);
+    var scope = GlobalSearchScope.fileScope(file);
+    var implementations = new ArrayList<String>();
+    ExtensionLocatorKt.processExtensionDeclarations("myPkg.Outer", getProject(), true, scope, (_, tag) -> {
+      implementations.add(tag.getAttributeValue("implementation"));
+      return true;
+    });
+    assertOrderedEquals(implementations, "myPkg.Outer");
+
+    implementations.clear();
+    ExtensionLocatorKt.processExtensionDeclarations("myPkg.Outer", getProject(), false, scope, (_, tag) -> {
+      implementations.add(tag.getAttributeValue("implementation"));
+      return true;
+    });
+    assertOrderedEquals(implementations, "myPkg.Outer$Inner", "myPkg.Outer");
+  }
 
   private void verifyLocator(List<ExtensionCandidate> candidates, int expectedExtensionCount) {
     assertSize(expectedExtensionCount, candidates);

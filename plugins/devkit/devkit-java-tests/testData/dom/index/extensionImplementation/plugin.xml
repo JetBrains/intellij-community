@@ -1,0 +1,25 @@
+<idea-plugin>
+  <id>com.example.plugin</id>
+  <name>Example</name>
+  <version>1.0</version>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <myEp implementation="myPkg.MyImplementation" os="linux"/>
+    <applicationService serviceInterface="myPkg.MyService" serviceImplementation="myPkg.MyServiceImpl"/>
+    <completion.contributor language="JAVA" implementationClass="myPkg.MyContributor" order="first"/>
+    <myBeanEp id="withTag">
+      <className>myPkg.MyBeanClass</className>
+      <nested>
+        <deepClass>  myPkg.Deep$Nested  </deepClass>
+      </nested>
+    </myBeanEp>
+    <myEp implementation="myPkg.Outer$Inner$Deepest"/>
+    <stacktrace.fold substring="at myPkg.MyClass.foo("/>
+    <dottedEp implementation="myPkg.Outer.DottedInner"/>
+    <myEp implementation="myPkg.MyImplementation"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="my.plugin">
+    <ext value="lowercase.only.value" other="NOTACLASS" version="1.0"/>
+  </extensions>
+</idea-plugin>
