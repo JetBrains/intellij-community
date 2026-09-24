@@ -1,7 +1,6 @@
 import base64
 import os
 import sys
-import traceback
 
 SHOW_DEBUG_INFO = os.getenv('PYCHARM_DEBUG', 'False').lower() in ['true', '1']
 
@@ -97,6 +96,7 @@ try:
     except:
         debug("Cannot initialize Altair backend")
         if SHOW_DEBUG_INFO:
+            import traceback
             traceback.print_exc()
 
     if old_getfilesystemencoding:

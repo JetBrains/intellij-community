@@ -1,6 +1,5 @@
 import os
 import sys
-import traceback
 
 SHOW_DEBUG_INFO = os.getenv('PYCHARM_DEBUG', 'False').lower() in ['true', '1']
 
@@ -52,6 +51,7 @@ try:
 except:
     # fallback in case matplotlib is not loaded correctly
     if SHOW_DEBUG_INFO:
+        import traceback
         traceback.print_exc()
 
     keys = list(sys.modules.keys())

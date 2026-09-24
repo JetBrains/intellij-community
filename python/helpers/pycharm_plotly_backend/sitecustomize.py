@@ -1,7 +1,6 @@
 import base64
 import os
 import sys
-import traceback
 
 SHOW_DEBUG_INFO = os.getenv('PYCHARM_DEBUG', 'False').lower() in ['true', '1']
 
@@ -91,6 +90,7 @@ def init_plotly_render():
                 image_str = base64.b64encode(image_bytes).decode("utf8")
             except:
                 debug("Failed to render image")
+                import traceback
                 debug(traceback.format_exc())
 
             display(DisplayDataObject(html,image_str))
@@ -135,6 +135,7 @@ try:
         # fallback in case plotly is not loaded correctly
         debug("Cannot init plotly backend")
         if SHOW_DEBUG_INFO:
+            import traceback
             traceback.print_exc()
 
     if old_getfilesystemencoding:
