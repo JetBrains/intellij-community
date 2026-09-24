@@ -16,6 +16,7 @@ import com.intellij.execution.configurations.JavaCommandLineState;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunConfigurationWithTargetFile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
@@ -48,7 +49,7 @@ import java.io.File;
 /**
  * @author Eugene Zhuravlev
  */
-public final class JavaScratchConfiguration extends ApplicationConfiguration {
+public final class JavaScratchConfiguration extends ApplicationConfiguration implements RunConfigurationWithTargetFile {
   JavaScratchConfiguration(String name, @NotNull Project project, @NotNull ConfigurationFactory factory) {
     super(name, project, factory);
   }
@@ -174,6 +175,11 @@ public final class JavaScratchConfiguration extends ApplicationConfiguration {
   public @Nullable VirtualFile getScratchVirtualFile() {
     final String url = getScratchFileUrl();
     return url == null ? null : VirtualFileManager.getInstance().findFileByUrl(url);
+  }
+
+  @Override
+  public @Nullable VirtualFile getTargetFile() {
+    return getScratchVirtualFile();
   }
 
   @Override

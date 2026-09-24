@@ -14,6 +14,7 @@ import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.JavaRunConfigurationModule
 import com.intellij.execution.configurations.RefactoringListenerProvider
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.configurations.RunConfigurationWithTargetFile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RuntimeConfigurationWarning
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -57,7 +58,7 @@ class KotlinStandaloneScriptRunConfiguration(
     factory: ConfigurationFactory,
     name: String?
 ) : KotlinRunConfiguration(name, JavaRunConfigurationModule(project, true), factory), CommonJavaRunConfigurationParameters,
-    RefactoringListenerProvider {
+    RefactoringListenerProvider, RunConfigurationWithTargetFile {
 
     /**
      * A path to the script file. Please use with caution!
@@ -156,6 +157,11 @@ class KotlinStandaloneScriptRunConfiguration(
 
     override fun defaultWorkingDirectory(): String? {
         return PathUtil.getParentPath(filePath ?: return null)
+    }
+
+    override fun getTargetFile(): VirtualFile? {
+        val filePath = filePath?.takeIf { it.isNotBlank() } ?: return null
+        return StandardFileSystems.local().findFileByPath(File(filePath).absolutePath)
     }
 
     fun setupFilePath(filePath: String) {

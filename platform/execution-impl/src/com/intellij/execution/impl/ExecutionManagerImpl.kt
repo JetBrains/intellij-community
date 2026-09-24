@@ -20,6 +20,7 @@ import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunProfileStarter
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.actions.ExecutionSafeMode
 import com.intellij.execution.configuration.CompatibilityAwareRunProfile
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunConfiguration.RestartSingletonResult
@@ -800,6 +801,17 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
       val runnerAndConfigurationSettings = environment.runnerAndConfigurationSettings
       val project = environment.project
       val runner = environment.runner
+
+      val untrustedFile = ExecutionSafeMode.findUntrustedTargetFile(project, environment.runProfile)
+      if (untrustedFile != null) {
+        handleProgramRunnerExecutionError(
+          project, environment,
+          ExecutionException(ExecutionBundle.message("run.configuration.untrusted.target.file", untrustedFile.name)),
+          runnerAndConfigurationSettings?.configuration)
+        processNotStarted(environment, null)
+        return@withEnvironmentDataContext
+      }
+
       if (runnerAndConfigurationSettings != null) {
         val targetManager = ExecutionTargetManager.getInstance(project)
         if (!targetManager.doCanRun(runnerAndConfigurationSettings.configuration, environment.executionTarget)) {

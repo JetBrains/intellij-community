@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.LocatableConfigurationBase;
 import com.intellij.execution.configurations.PathVerdict;
 import com.intellij.execution.configurations.RefactoringListenerProvider;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunConfigurationWithTargetFile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
@@ -19,6 +20,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
@@ -37,7 +39,8 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtilRt.notNullize;
 import static com.intellij.sh.ShBundle.message;
 
-public final class ShRunConfiguration extends LocatableConfigurationBase implements RefactoringListenerProvider {
+public final class ShRunConfiguration extends LocatableConfigurationBase
+  implements RefactoringListenerProvider, RunConfigurationWithTargetFile {
   private static final @NonNls String TAG_PREFIX = "INDEPENDENT_";
   private static final @NonNls String SCRIPT_TEXT_TAG = "SCRIPT_TEXT";
   private static final @NonNls String SCRIPT_PATH_TAG = "SCRIPT_PATH";
@@ -226,6 +229,15 @@ public final class ShRunConfiguration extends LocatableConfigurationBase impleme
 
   public void setExecuteInTerminal(boolean executeInTerminal) {
     myExecuteInTerminal = executeInTerminal;
+  }
+
+  /** A configuration that runs the inline script text instead of a file has no file of its own. */
+  @Override
+  public @Nullable VirtualFile getTargetFile() {
+    if (!myExecuteScriptFile || myScriptPath.isBlank()) {
+      return null;
+    }
+    return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(myScriptPath));
   }
 
   public boolean isExecuteScriptFile() {

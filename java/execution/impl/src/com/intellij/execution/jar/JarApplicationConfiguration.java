@@ -14,6 +14,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunConfigurationWithTargetFile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
@@ -34,6 +35,8 @@ import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -50,7 +53,8 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
                                                                                        SearchScopeProvidingRunProfile,
                                                                                        InputRedirectAware,
                                                                                        TargetEnvironmentAwareRunProfile,
-                                                                                       RunProfileWithCompileBeforeLaunchOption {
+                                                                                       RunProfileWithCompileBeforeLaunchOption,
+                                                                                       RunConfigurationWithTargetFile {
   private JarApplicationConfigurationBean myBean = new JarApplicationConfigurationBean();
   private Map<String, String> myEnvs = new LinkedHashMap<>();
   private JavaRunConfigurationModule myConfigurationModule;
@@ -154,6 +158,12 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
 
   public void setJarPath(String jarPath) {
     myBean.JAR_PATH = jarPath;
+  }
+
+  @Override
+  public @Nullable VirtualFile getTargetFile() {
+    String jarPath = getJarPath();
+    return StringUtil.isEmptyOrSpaces(jarPath) ? null : StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(jarPath));
   }
 
   @Override
