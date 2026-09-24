@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.productLayout
 
+import org.jetbrains.intellij.build.productLayout.CommunityModuleSets.ideCommon
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.coreLang
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcBackend
 import org.jetbrains.intellij.build.productLayout.LibraryModuleSets.librariesGrpc
@@ -177,6 +178,7 @@ object CommunityModuleSets {
     module("intellij.platform.debugger.impl.ui")
     module("intellij.platform.debugger")
     module("intellij.platform.debugger.impl")
+    module("intellij.platform.debugger.impl.dashboard")
   }
 
   // endregion
