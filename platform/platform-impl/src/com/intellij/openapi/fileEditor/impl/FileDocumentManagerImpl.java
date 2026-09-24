@@ -932,7 +932,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
             ExternalChangeActionUtil.externalDocumentChangeAction(() -> {
               if (!isBinaryWithoutDecompiler(file)) {
                 setNewText(document, project, file, vFile -> {
-                  boolean tooLarge = FileUtilRt.isTooLarge(vFile.getLength());
+                  boolean tooLarge = isTooLarge(vFile.getLength());
                   return tooLarge ? LoadTextUtil.loadText(vFile, getPreviewCharCount(vFile)) : LoadTextUtil.loadText(vFile);
                 });
               }
@@ -969,7 +969,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     document.setReadOnly(false);
     boolean[] isReloadable = {isReloadable(file, document, project)};
     if (isReloadable[0]) {
-      boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
+      boolean tooLarge = isTooLarge(file.getLength());
       CharSequence reloaded = loader.apply(file);
       ((DocumentEx)document).replaceText(reloaded, file.getModificationStamp());
       setDocumentTooLarge(document, tooLarge);
@@ -1006,7 +1006,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   private static boolean isReloadable(@NotNull VirtualFile file, @NotNull Document document, @Nullable Project project) {
     PsiFile cachedPsiFile = project == null ? null : PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
-    return !(FileUtilRt.isTooLarge(file.getLength()) && file.getFileType().isBinary()) &&
+    return !(isTooLarge(file.getLength()) && file.getFileType().isBinary()) &&
            (cachedPsiFile == null || cachedPsiFile instanceof PsiFileImpl || isBinaryWithDecompiler(file)) &&
            document.getUserData(NOT_RELOADABLE_DOCUMENT_KEY) == null;
   }
@@ -1199,6 +1199,11 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   public void prepareForNextTest() {
     dropAllUnsavedDocuments();
     clearDocumentCache();
+  }
+
+  private static boolean isTooLarge(long fileLengthInBytes) {
+    //noinspection UsagesOfObsoleteApi,deprecation
+    return FileUtilRt.isTooLarge(fileLengthInBytes);
   }
 
   /**

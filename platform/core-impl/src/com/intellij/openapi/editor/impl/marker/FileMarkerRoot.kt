@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference
  * File-backed marker state shared by marker handles and a live document without retaining either the document or its
  * text. A weak reference stored in the [VirtualFile] makes the state discoverable when a document is recreated.
  */
-internal class FileMarkerRoot private constructor(
+class FileMarkerRoot private constructor(
   internal val file: VirtualFile,
   initialRootReference: AtomicReference<PMarkerRoot>,
 ) : MarkerRootUpdater(), DocumentListener {

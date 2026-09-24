@@ -268,7 +268,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   }
 
   @ApiStatus.Internal
-  protected void clearDocumentCache() {
+  public void clearDocumentCache() {
     myDocumentCache.clear();
   }
 
