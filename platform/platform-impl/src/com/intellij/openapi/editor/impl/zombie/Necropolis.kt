@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -79,7 +80,7 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
       return PathManager.getSystemDir().resolve("editor")
     }
 
-    private fun isEnabled(): Boolean = !AppMode.isRemoteDevHost()
+    private fun isEnabled(): Boolean = !AppMode.isRemoteDevHost() && !IdeProductMode.isLight
   }
 
   private val necromancersDeferred: Deferred<List<Necromancer<Zombie>>>
