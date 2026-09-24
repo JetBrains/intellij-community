@@ -1,7 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.configurationStore.ProjectStorePathManager
+import com.intellij.ide.CliResult
+import com.intellij.ide.CommandLineWaitingManager
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.OpenProjectTaskBuilder
 import com.intellij.ide.impl.ProjectUtil
@@ -13,9 +17,10 @@ import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.isClaimedByWelcomeScreenProject
 import com.intellij.ide.TrustedFiles
 import com.intellij.ide.util.PsiNavigationSupport
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
@@ -38,7 +43,11 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
+import com.intellij.platform.ide.navigation.NavigationOptions
+import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
@@ -46,15 +55,21 @@ import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
+import java.util.concurrent.CompletableFuture
 
 private val LOG = logger<PlatformProjectOpenProcessor>()
 private val EP_NAME = ExtensionPointName<DirectoryProjectConfigurator>("com.intellij.directoryProjectConfigurator")
+
+internal val COMMAND_LINE_FILE_WAIT: Key<CommandLineFileWait> = Key.create("command.line.file.wait")
+
+internal class CommandLineFileWait(val file: VirtualFile, val future: CompletableFuture<CliResult>)
 
 @Internal
 val PROJECT_OPENED_BY_PLATFORM_PROCESSOR: Key<Boolean> = Key.create("PROJECT_OPENED_BY_PLATFORM_PROCESSOR")
@@ -464,29 +479,78 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
  * to be released here: this navigation happens after project open has finished and released its own hold, and without the extra hold
  * the empty state would be shown for as long as it takes to get here and then immediately replaced by this file.
  */
-private fun openFileFromCommandLine(project: Project, file: Path, line: Int, column: Int) {
+@Internal
+fun openFileFromCommandLine(project: Project, file: Path, line: Int, column: Int) {
+  val wait = project.getUserData(COMMAND_LINE_FILE_WAIT)
+  project.putUserData(COMMAND_LINE_FILE_WAIT, null)
   StartupManager.getInstance(project).runAfterOpened {
-    ApplicationManager.getApplication().invokeLater(Runnable {
+    project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(
+      Dispatchers.Default + ModalityState.nonModal().asContextElement() + ClientId.coroutineContext(),
+    ) {
+      var navigated = false
       try {
         if (project.isDisposed || !Files.exists(file)) {
-          return@Runnable
+          return@launch
         }
 
-        val virtualFile = ProjectUtilCore.getFileAndRefresh(file) ?: return@Runnable
+        val virtualFile = ProjectUtilCore.getFileAndRefresh(file) ?: return@launch
         TrustedFiles.markExternallyOpened(virtualFile)
-        val navigatable = if (line > 0) {
-          OpenFileDescriptor(project, virtualFile, line - 1, column.coerceAtLeast(0))
-        }
-        else {
-          PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)
-        }
-        navigatable.navigate(true)
+        navigated = navigateToFileFromCommandLine(project, virtualFile, line, column)
       }
       finally {
-        // in a `finally`, so that a file that turned out not to exist releases the hold as well as one that opened
-        endStartupEmptyStatePresentationHold(project)
+        withContext(Dispatchers.EDT) {
+          if (!navigated && wait != null) {
+            releaseCommandLineWaitIfNotOpen(wait)
+          }
+          endStartupEmptyStatePresentationHold(project)
+        }
       }
-    }, ModalityState.nonModal(), project.disposed)
+    }
+  }
+}
+
+/**
+ * @return `false` if the navigation did nothing, eg, because a newer navigation superseded it
+ */
+internal suspend fun navigateToFileFromCommandLine(project: Project, file: VirtualFile, line: Int, column: Int): Boolean {
+  val navigatable = withContext(Dispatchers.EDT) {
+    if (line > 0) {
+      OpenFileDescriptor(project, file, line - 1, column.coerceAtLeast(0))
+    }
+    else {
+      PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)
+    }
+  }
+  val service = NavigationService.getInstance(project)
+  val options = NavigationOptions.requestFocus().recordAsBackHistory(false)
+  if (navigatable.javaClass == OpenFileDescriptor::class.java) {
+    val descriptor = navigatable as OpenFileDescriptor
+    try {
+      return service.navigateRequests(options) {
+        readAction {
+          listOfNotNull(NavigationRequest.sourceNavigationRequest(project, descriptor.file, descriptor.offset))
+        }
+      }
+    }
+    finally {
+      descriptor.dispose()
+    }
+  }
+  else {
+    return service.navigate(navigatable, options)
+  }
+}
+
+/**
+ * Ends [wait] with an error if its file is not open, because no editor can close it then.
+ * An open file keeps the wait: a newer navigation can supersede the command line one after the editor tab appears.
+ */
+internal suspend fun releaseCommandLineWaitIfNotOpen(wait: CommandLineFileWait) {
+  withContext(Dispatchers.EDT) {
+    if (ProjectManagerEx.getOpenProjects().none { FileEditorManager.getInstance(it).isFileOpen(wait.file) }) {
+      val result = CliResult(1, IdeBundle.message("dialog.message.can.not.open.file", wait.file.presentableUrl))
+      CommandLineWaitingManager.getInstance().releaseHookForFile(wait.file, wait.future, result)
+    }
   }
 }
 
