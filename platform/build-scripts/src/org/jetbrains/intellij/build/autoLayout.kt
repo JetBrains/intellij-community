@@ -11,6 +11,7 @@ import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
+import org.jetbrains.intellij.build.impl.contentModuleJarPath
 import org.jetbrains.intellij.build.impl.contentModuleNameToDescriptorFileName
 import org.jetbrains.jps.model.module.JpsModule
 
@@ -162,81 +163,32 @@ private fun computeOutputJarPath(
   pluginCachedDescriptorContainer: ScopedCachedDescriptorContainer,
   descriptorCacheWriter: DescriptorCacheWriter,
 ): String? {
-  if (loadingRule == "embedded") {
-    return computeEmbeddedOutputJarPath(
-      moduleName = moduleName,
-      modulesWithCustomPath = modulesWithCustomPath,
-    )
-  }
-
-  // Case 3: Non-embedded modules → check descriptor for separate jar need
-  val needsSeparateJar = checkNeedsSeparateJar(
+  val module by lazy { context.outputProvider.findRequiredModule(moduleName) }
+  return contentModuleJarPath(
     moduleName = moduleName,
-    pluginLayout = pluginLayout,
-    frontendModuleFilter = frontendModuleFilter,
-    helper = helper,
-    context = context,
-    pluginCachedDescriptorContainer = pluginCachedDescriptorContainer,
-    descriptorCacheWriter = descriptorCacheWriter,
+    loadingRule = loadingRule,
+    hasCustomPath = modulesWithCustomPath.contains(moduleName),
+    mainJarName = pluginLayout.getMainJarName(),
+    hasPackageAttribute = {
+      val descriptorData = requireNotNull(
+        findContentModuleDescriptorData(
+          moduleName = moduleName,
+          module = module,
+          context = context,
+          pluginCachedDescriptorContainer = pluginCachedDescriptorContainer,
+          descriptorCacheWriter = descriptorCacheWriter,
+        )
+      ) {
+        "${contentModuleNameToDescriptorFileName(moduleName)} not found in module $moduleName"
+      }
+      readXmlAsModel(descriptorData).getAttributeValue("package") != null
+    },
+    packedIntoSeparateJar = { helper.isPluginModulePackedIntoSeparateJar(module, pluginLayout, frontendModuleFilter) },
+    frontendSplit = {
+      !frontendModuleFilter.isModuleCompatibleWithFrontend(pluginLayout.mainModule) &&
+      frontendModuleFilter.isModuleCompatibleWithFrontend(moduleName)
+    },
   )
-
-  return when {
-    needsSeparateJar -> "modules/$moduleName.jar"
-    modulesWithCustomPath.contains(moduleName) -> null
-    else -> getDefaultJarName(pluginLayout, moduleName, frontendModuleFilter)
-  }
-}
-
-private fun checkNeedsSeparateJar(
-  moduleName: String,
-  pluginLayout: PluginLayout,
-  frontendModuleFilter: FrontendModuleFilter,
-  helper: JarPackagerDependencyHelper,
-  context: BuildContext,
-  pluginCachedDescriptorContainer: ScopedCachedDescriptorContainer,
-  descriptorCacheWriter: DescriptorCacheWriter,
-): Boolean {
-  val module = context.outputProvider.findRequiredModule(moduleName)
-  val descriptorData = requireNotNull(
-    findContentModuleDescriptorData(
-      moduleName = moduleName,
-      module = module,
-      context = context,
-      pluginCachedDescriptorContainer = pluginCachedDescriptorContainer,
-      descriptorCacheWriter = descriptorCacheWriter,
-    )
-  ) {
-    "${contentModuleNameToDescriptorFileName(moduleName)} not found in module $moduleName"
-  }
-  return needsSeparateJar(
-    descriptorData = descriptorData,
-    module = module,
-    pluginLayout = pluginLayout,
-    frontendModuleFilter = frontendModuleFilter,
-    helper = helper,
-  )
-}
-
-private fun needsSeparateJar(
-  descriptorData: ByteArray,
-  module: JpsModule,
-  pluginLayout: PluginLayout,
-  frontendModuleFilter: FrontendModuleFilter,
-  helper: JarPackagerDependencyHelper,
-): Boolean {
-  val descriptor = readXmlAsModel(descriptorData)
-  return descriptor.getAttributeValue("package") == null ||
-         helper.isPluginModulePackedIntoSeparateJar(module, pluginLayout, frontendModuleFilter)
-}
-
-private fun computeEmbeddedOutputJarPath(
-  moduleName: String,
-  modulesWithCustomPath: Set<String>,
-): String? {
-  return when {
-    modulesWithCustomPath.contains(moduleName) -> null
-    else -> "$moduleName.jar"
-  }
 }
 
 private fun findContentModuleDescriptorData(

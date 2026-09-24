@@ -13,6 +13,7 @@ import org.jetbrains.intellij.build.impl.BUILT_IN_HELP_MODULE_NAME
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
 import org.jetbrains.intellij.build.impl.ModuleItem
+import org.jetbrains.intellij.build.impl.contentModuleJarPath
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.getLibNameBySourceFile
 import org.jetbrains.intellij.build.impl.isSeparateLibraryJar
@@ -272,18 +273,20 @@ private class SymbolicLayoutProjector(
       gap("module-descriptor:$name", "The content module descriptor is missing")
       return null
     }
-    if (loading == "embedded") {
-      return "$name.jar"
-    }
-    val module = module(name) ?: return null
-    val hasModuleLibraries = name !in layout.getModulesWithExcludedModuleLibraries() &&
-                            libraryDependencies(module, withTests = false).any { it.libraryReference.parentReference is JpsModuleReference }
-    val separate = !requireNotNull(descriptor).hasPackage || hasModuleLibraries || frontend.isSplit(layout.mainModule, name)
-    return when {
-      separate -> "modules/$name.jar"
-      name in customPaths -> null
-      else -> defaultJar(name)
-    }
+    val module = if (loading == "embedded") null else module(name) ?: return null
+    return contentModuleJarPath(
+      moduleName = name,
+      loadingRule = loading,
+      hasCustomPath = name in customPaths,
+      mainJarName = layout.getMainJarName(),
+      hasPackageAttribute = { requireNotNull(descriptor).hasPackage },
+      packedIntoSeparateJar = {
+        name !in layout.getModulesWithExcludedModuleLibraries() &&
+        libraryDependencies(requireNotNull(module), withTests = false).any { it.libraryReference.parentReference is JpsModuleReference } ||
+        frontend.isSplit(layout.mainModule, name)
+      },
+      frontendSplit = { frontend.isSplit(layout.mainModule, name) },
+    )
   }
 
   private fun defaultJar(moduleName: String): String {

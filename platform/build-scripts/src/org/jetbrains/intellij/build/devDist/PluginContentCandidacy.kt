@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.devDist
 
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.impl.contentModuleJarPath
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -186,13 +187,12 @@ private fun isPackedIntoRenamedJar(member: String, residue: PluginContentResidue
 /**
  * Where a plugin whose main jar is [mainJarName] puts [moduleName]'s jar, relative to its own `lib/`.
  *
- * The convention alone. The derivation owns this copy of the convention, so that the packaging gate compares two
- * producers. Two inputs of the build's rule are `PluginLayout` state and reach this through the caller: a jar
- * `PluginLayout.withModule(name, jarName)` names wins over this answer in [composeDerivedPluginJars], and the layout's
- * excluded module libraries decide [mergesLibraries] through [mergedLibrariesOf].
+ * [contentModuleJarPath] states the rule, and this function supplies the derivation's facts. Two inputs of the rule are
+ * `PluginLayout` state and reach this through the caller: a jar `PluginLayout.withModule(name, jarName)` names wins over
+ * this answer in [composeDerivedPluginJars], and the layout's excluded module libraries decide [mergesLibraries] through
+ * [mergedLibrariesOf].
  *
- * An answer for every member, and never `null`. A member the convention gives no jar of its own is co-packed into
- * [mainJarName]. [composeDerivedPluginJars] reads that answer the same way.
+ * An answer for every member, and never `null`, because the derivation states no custom path here.
  */
 @ApiStatus.Internal
 fun deriveMemberJarPath(
@@ -201,27 +201,18 @@ fun deriveMemberJarPath(
   hasPackageAttribute: Boolean,
   mergesLibraries: Boolean,
   mainJarName: String,
-  /**
-   * Whether the member is compatible with the frontend while the plugin's main module is not.
-   *
-   * Such a member gets a jar of its own, or the plugin's `<main>-frontend.jar` where the convention co-packs it.
-   */
+  /** Whether the member is compatible with the frontend while the plugin's main module is not. */
   frontendSplit: Boolean = false,
 ): String {
-  // The main jar, renamed for a frontend member of a plugin whose main module is not one.
-  val defaultJarName = if (frontendSplit) mainJarName.removeSuffix(".jar") + "-frontend.jar" else mainJarName
-  if (loadingRule == EMBEDDED_LOADING_RULE) {
-    // The marker sends the member into the plugin's main jar. Every other embedded member gets `lib/<module>.jar`,
-    // whatever libraries that jar merges.
-    return "$moduleName.jar"
-  }
-  // The marker wins outright. Then a descriptor with no `package` attribute cannot be loaded from the plugin jar, and
-  // a module declaring a module library is put in its own jar so that the library travels with it. A frontend member
-  // of a plugin that is not frontend-compatible itself gets its own jar too.
-  if (!hasPackageAttribute || mergesLibraries || frontendSplit) {
-    return "modules/$moduleName.jar"
-  }
-  return defaultJarName
+  return checkNotNull(contentModuleJarPath(
+    moduleName = moduleName,
+    loadingRule = loadingRule,
+    hasCustomPath = false,
+    mainJarName = mainJarName,
+    hasPackageAttribute = { hasPackageAttribute },
+    packedIntoSeparateJar = { mergesLibraries || frontendSplit },
+    frontendSplit = { frontendSplit },
+  ))
 }
 
 /** One member's jar: where the plugin puts it, and the offer a packing target may serve, where there is one. */

@@ -11,11 +11,12 @@ import kotlin.io.path.relativeTo
 import kotlin.io.path.walk
 
 /**
- * The derivation under `org.jetbrains.intellij.build.devDist` owns its copy of the packing convention.
+ * The derivation under `org.jetbrains.intellij.build.devDist` reads its own packing facts.
  *
- * The packaging gate compares two producers: the derivation and the distribution build. A derivation that calls
- * the build's own placement code compares the build against itself, and the gate can then never fail. ADR 0008
- * records this in the rejected alternative "Calling `computeOutputJarPath`", in
+ * The packaging gate compares two producers: the derivation and the distribution build. Both apply one shared rule,
+ * `contentModuleJarPath`, over the facts each side reads itself. A derivation that calls the build's own placement
+ * code reads the build's facts, and the gate can then never fail. ADR 0008 records this in the rejected alternative
+ * "Calling `computeOutputJarPath`" and in its amendment of 2026-09-24, in
  * `build/decisions/0008-the-content-leaf-follows-the-descriptor-leaf.md`.
  *
  * So no source under the derivation directory may name a member of [FORBIDDEN]. The scan reads code only. A
