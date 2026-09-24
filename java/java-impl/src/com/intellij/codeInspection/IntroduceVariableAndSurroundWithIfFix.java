@@ -45,7 +45,7 @@ public final class IntroduceVariableAndSurroundWithIfFix extends PsiUpdateModCom
    * @return a new fix, or null if the expression cannot be extracted into a local variable
    */
   public static @Nullable IntroduceVariableAndSurroundWithIfFix create(@NotNull PsiExpression expression, @NotNull String suffix) {
-    List<String> names = ExtractedVariable.suggestNames(expression);
+    List<String> names = ExtractedVariableInfo.suggestNames(expression);
     if (names.isEmpty()) return null;
     return new IntroduceVariableAndSurroundWithIfFix(expression, suffix, names.getFirst());
   }
@@ -64,7 +64,7 @@ public final class IntroduceVariableAndSurroundWithIfFix extends PsiUpdateModCom
   protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     PsiExpression expression = updater.getWritable(myExpressionPointer.getElement());
     if (expression == null) return;
-    ExtractedVariable extracted = ExtractedVariable.extract(expression);
+    ExtractedVariableInfo extracted = ExtractedVariableInfo.extract(expression);
     if (extracted == null) return;
 
     String condition = extracted.variable().getName() + mySuffix;

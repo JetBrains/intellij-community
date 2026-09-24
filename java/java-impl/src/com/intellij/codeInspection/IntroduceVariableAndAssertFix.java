@@ -70,7 +70,7 @@ public final class IntroduceVariableAndAssertFix extends PsiUpdateModCommandQuic
                                                                 @NonNls @NotNull String assertionPrefix,
                                                                 @NonNls @NotNull String assertionSuffix,
                                                                 @NotNull Function<@NotNull String, @Nls @NotNull String> presentation) {
-    List<String> names = ExtractedVariable.suggestNames(expression);
+    List<String> names = ExtractedVariableInfo.suggestNames(expression);
     if (names.isEmpty()) return null;
     return new IntroduceVariableAndAssertFix(expression, assertionPrefix, assertionSuffix, presentation.apply(names.getFirst()));
   }
@@ -89,7 +89,7 @@ public final class IntroduceVariableAndAssertFix extends PsiUpdateModCommandQuic
   protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     PsiExpression expression = updater.getWritable(myExpressionPointer.getElement());
     if (expression == null) return;
-    ExtractedVariable extracted = ExtractedVariable.extract(expression);
+    ExtractedVariableInfo extracted = ExtractedVariableInfo.extract(expression);
     if (extracted == null) return;
 
     @NonNls String assertionText = myAssertionPrefix + extracted.variable().getName() + myAssertionSuffix + ";";

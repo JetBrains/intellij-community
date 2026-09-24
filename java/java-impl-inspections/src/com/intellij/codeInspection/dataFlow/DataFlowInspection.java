@@ -7,6 +7,7 @@ import com.intellij.codeInspection.AddAssertNonNullFromTestFrameworksFix;
 import com.intellij.codeInspection.AddAssertNonNullFromTestFrameworksFix.Variant;
 import com.intellij.codeInspection.AddAssertStatementFix;
 import com.intellij.codeInspection.IntroduceVariableAndAssertFix;
+import com.intellij.codeInspection.IntroduceVariableAndReplaceWithTernaryFix;
 import com.intellij.codeInspection.IntroduceVariableAndSurroundWithIfFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.RemoveAssignmentFix;
@@ -153,6 +154,23 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   /**
+   * Creates a fix that replaces the dereference of the qualifier with a conditional expression checking it for null.
+   *
+   * @param qualifier  expression the check is about
+   * @param expression expression that dereferences the qualifier
+   * @return a fix that checks the qualifier in-place if it may be checked as is;
+   * otherwise a fix that extracts the qualifier into a local variable first; null if no check could be added
+   * @see #canCheckAsIs(PsiExpression)
+   */
+  private static @Nullable LocalQuickFix createTernaryFix(@NotNull PsiExpression qualifier, @NotNull PsiExpression expression) {
+    if (!ReplaceWithTernaryOperatorFix.isAvailable(qualifier, expression)) return null;
+    if (canCheckAsIs(qualifier)) {
+      return new ReplaceWithTernaryOperatorFix(qualifier);
+    }
+    return IntroduceVariableAndReplaceWithTernaryFix.create(qualifier);
+  }
+
+  /**
    * A generated check mentions the expression one more time, which is only useful if re-evaluating it has no visible
    * effect and the analysis knows that both occurrences produce the same value. Otherwise, the expression should be
    * extracted into a local variable, which is evaluated exactly once and is checked instead of the expression.
@@ -253,11 +271,7 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
         }
 
         ContainerUtil.addIfNotNull(fixes, createSurroundWithIfFix(qualifier, suffix));
-
-        // the ternary keeps the qualifier in the condition, so it may be suggested only if re-evaluating it is harmless
-        if (!SideEffectChecker.mayHaveSideEffects(qualifier) && ReplaceWithTernaryOperatorFix.isAvailable(qualifier, expression)) {
-          fixes.add(new ReplaceWithTernaryOperatorFix(qualifier));
-        }
+        ContainerUtil.addIfNotNull(fixes, createTernaryFix(qualifier, expression));
       }
 
       if (!alwaysNull && PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, qualifier)) {

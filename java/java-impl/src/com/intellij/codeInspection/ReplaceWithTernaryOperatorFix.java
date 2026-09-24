@@ -72,10 +72,10 @@ public class ReplaceWithTernaryOperatorFix extends PsiUpdateModCommandQuickFix {
     }
   }
 
-  private static @NotNull PsiConditionalExpression replaceWithConditionalExpression(@NotNull Project project,
-                                                                                    @NotNull String condition,
-                                                                                    @NotNull PsiExpression expression,
-                                                                                    @NotNull String defaultValue) {
+  static @NotNull PsiConditionalExpression replaceWithConditionalExpression(@NotNull Project project,
+                                                                            @NotNull String condition,
+                                                                            @NotNull PsiExpression expression,
+                                                                            @NotNull String defaultValue) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
     final PsiElement parent = expression.getParent();
@@ -96,7 +96,7 @@ public class ReplaceWithTernaryOperatorFix extends PsiUpdateModCommandQuickFix {
     return !(expression.getParent() instanceof PsiExpressionStatement) && !PsiUtil.isAccessedForWriting(expression);
   }
 
-  private static String suggestDefaultValue(@NotNull PsiExpression expression) {
+  static String suggestDefaultValue(@NotNull PsiExpression expression) {
     PsiType type = expression.getType();
     return PsiTypesUtil.getDefaultValueOfType(type);
   }

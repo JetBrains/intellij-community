@@ -37,11 +37,13 @@ import java.util.List;
  * @param anchor    element the declaration was added before: either the {@link #statement()} itself, or an inspection
  *                  suppression comment that precedes it
  * @param statement statement that uses the variable
+ * @param reference the reference to the variable that took the place of the extracted expression
  */
-record ExtractedVariable(@NotNull PsiLocalVariable variable,
-                         @NotNull List<String> names,
-                         @NotNull PsiElement anchor,
-                         @NotNull PsiStatement statement) {
+record ExtractedVariableInfo(@NotNull PsiLocalVariable variable,
+                             @NotNull List<String> names,
+                             @NotNull PsiElement anchor,
+                             @NotNull PsiStatement statement,
+                             @NotNull PsiExpression reference) {
 
   /**
    * @return the statement that uses the variable, preceded by the inspection suppression comment that must stay attached
@@ -73,7 +75,7 @@ record ExtractedVariable(@NotNull PsiLocalVariable variable,
    * @param expression expression to extract; must belong to a writable file
    * @return the extracted variable, or null if the expression cannot be extracted
    */
-  static @Nullable ExtractedVariable extract(@NotNull PsiExpression expression) {
+  static @Nullable ExtractedVariableInfo extract(@NotNull PsiExpression expression) {
     Project project = expression.getProject();
     CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(expression);
     if (surrounder == null) return null;
@@ -94,10 +96,10 @@ record ExtractedVariable(@NotNull PsiLocalVariable variable,
     while (toReplace.getParent() instanceof PsiParenthesizedExpression parentheses) {
       toReplace = parentheses;
     }
-    toReplace.replace(factory.createExpressionFromText(name, toReplace));
+    PsiExpression reference = (PsiExpression)toReplace.replace(factory.createExpressionFromText(name, toReplace));
 
     PsiLocalVariable variable = ObjectUtils.tryCast(added.getDeclaredElements()[0], PsiLocalVariable.class);
-    return variable == null ? null : new ExtractedVariable(variable, names, anchor, result.getAnchor());
+    return variable == null ? null : new ExtractedVariableInfo(variable, names, anchor, result.getAnchor(), reference);
   }
 
   private static @NotNull List<String> suggestNames(@NotNull PsiExpression expression, @NotNull PsiType type) {
