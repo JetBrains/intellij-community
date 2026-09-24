@@ -51,6 +51,7 @@ dev_dist_plugin(
         "lib/intellij.libraries.ktor.server.content.negotiation.jar": [
             "intellij.libraries.ktor.server.content.negotiation",
             "@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation",
+            "@lib//:libraries-ktor-server-content-negotiation-ktor-server-routing-openapi",
         ],
         "lib/intellij.libraries.ktor.server.sse.jar": [
             "intellij.libraries.ktor.server.sse",

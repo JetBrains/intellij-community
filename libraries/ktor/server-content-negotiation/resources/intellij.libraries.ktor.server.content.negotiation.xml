@@ -7,6 +7,7 @@
 <idea-plugin visibility="private">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.ktor.client"/>
     <module name="intellij.libraries.ktor.server.cio"/>
   </dependencies>
   <!-- endregion -->

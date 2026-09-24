@@ -9,16 +9,16 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="ktor-server-cio-internal" type="repository">
-        <properties maven-id="io.ktor:ktor-server-cio-jvm:3.4.2">
+        <properties maven-id="io.ktor:ktor-server-cio-jvm:3.6.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-server-cio-jvm/3.4.2/ktor-server-cio-jvm-3.4.2.jar">
-              <sha256sum>09abfd3d0d6cae4588c456deeb959ba47fc23b8b9724e2cc1e559547ee8f6f8a</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-server-cio-jvm/3.6.0/ktor-server-cio-jvm-3.6.0.jar">
+              <sha256sum>319e4a03717e39ab9a5be8cb5a7b7d5327627ad3d55ff43270935372d7c13d16</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-server-core-jvm/3.4.2/ktor-server-core-jvm-3.4.2.jar">
-              <sha256sum>dae564fd1c7a5892b231388f669133c04cd5375be2550a63bf7bc7ffb301a6e2</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-server-core-jvm/3.6.0/ktor-server-core-jvm-3.6.0.jar">
+              <sha256sum>2838b5d739cb659947ab11b0b220581ad077da8adf62a0248e30c0cdbb93192e</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/typesafe/config/1.4.5/config-1.4.5.jar">
-              <sha256sum>4a4b0affb22a9572409d3a6bde99ce3f2045c551cadc1ca7fe09690892c526c3</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/typesafe/config/1.4.9/config-1.4.9.jar">
+              <sha256sum>47d13e3196c84f2a8ccd014ae563738c3da5b7406b38e03505ec0601a2f4fc37</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -40,15 +40,15 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-cio-jvm/3.4.2/ktor-server-cio-jvm-3.4.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-core-jvm/3.4.2/ktor-server-core-jvm-3.4.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/typesafe/config/1.4.5/config-1.4.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-cio-jvm/3.6.0/ktor-server-cio-jvm-3.6.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-core-jvm/3.6.0/ktor-server-core-jvm-3.6.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/typesafe/config/1.4.9/config-1.4.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-cio-jvm/3.4.2/ktor-server-cio-jvm-3.4.2-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-core-jvm/3.4.2/ktor-server-core-jvm-3.4.2-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/typesafe/config/1.4.5/config-1.4.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-cio-jvm/3.6.0/ktor-server-cio-jvm-3.6.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-core-jvm/3.6.0/ktor-server-core-jvm-3.6.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/typesafe/config/1.4.9/config-1.4.9-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

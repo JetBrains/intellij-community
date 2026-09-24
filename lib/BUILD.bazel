@@ -2100,197 +2100,197 @@ jvm_import(
 )
 
 copy_file(
-    name = "io.ktor/ktor-client-core-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-client-core-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-client-core-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-client-core-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-client-core-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-client-core-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "fleet-io-ktor-client-core",
-    jar = "@io_ktor-ktor-client-core-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-client-core-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-client-core-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-client-core-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-client-logging-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-client-logging-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-client-logging-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-client-logging-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-client-logging-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-client-logging-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "fleet-io-ktor-client-logging",
-    jar = "@io_ktor-ktor-client-logging-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-client-logging-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-client-logging-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-client-logging-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-client-mock-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-client-mock-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-client-mock-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-client-mock-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-client-mock-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-client-mock-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "fleet-io-ktor-client-mock",
-    jar = "@io_ktor-ktor-client-mock-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-client-mock-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-client-mock-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-client-mock-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-events-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-events-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-events-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-events-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-events-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-events-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "fleet-io-ktor-events",
-    jar = "@io_ktor-ktor-events-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-events-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-events-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-events-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-http-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-http-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-http-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-http-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-http-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-http-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "fleet-io-ktor-http",
-    jar = "@io_ktor-ktor-http-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-http-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-http-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-http-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-http-cio-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-http-cio-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-http-cio-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-http-cio-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-http-cio-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-http-cio-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "fleet-io-ktor-http-cio",
-    jar = "@io_ktor-ktor-http-cio-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-http-cio-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-http-cio-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-http-cio-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-io-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-io-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-io-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-io-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-io-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-io-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "fleet-io-ktor-io",
-    jar = "@io_ktor-ktor-io-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-io-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-io-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-io-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-network-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-network-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-network-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-network-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-network-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-network-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "fleet-io-ktor-network",
-    jar = "@io_ktor-ktor-network-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-network-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-network-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-network-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-serialization-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-serialization-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-serialization-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-serialization-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-serialization-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-serialization-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "fleet-io-ktor-serialization",
-    jar = "@io_ktor-ktor-serialization-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-serialization-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-serialization-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-serialization-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-sse-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-sse-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-sse-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-sse-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-sse-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-sse-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "fleet-io-ktor-sse",
-    jar = "@io_ktor-ktor-sse-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-sse-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-sse-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-sse-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-utils-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-utils-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-utils-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-utils-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-utils-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-utils-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "fleet-io-ktor-utils",
-    jar = "@io_ktor-ktor-utils-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-utils-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-utils-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-utils-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-websocket-serialization-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-websocket-serialization-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-websocket-serialization-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-websocket-serialization-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-websocket-serialization-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-websocket-serialization-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "fleet-io-ktor-websocket-serialization",
-    jar = "@io_ktor-ktor-websocket-serialization-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-websocket-serialization-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-websocket-serialization-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-websocket-serialization-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-websockets-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-websockets-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-websockets-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-websockets-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-websockets-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-websockets-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "fleet-io-ktor-websockets",
-    jar = "@io_ktor-ktor-websockets-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-websockets-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-websockets-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-websockets-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -11715,47 +11715,47 @@ jvm_import(
 )
 
 copy_file(
-    name = "io.ktor/ktor-client-cio-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-client-cio-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-client-cio-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-client-cio-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-client-cio-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-client-cio-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-ktor-client-cio-ktor-client-cio-internal",
-    jar = "@io_ktor-ktor-client-cio-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-client-cio-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-client-cio-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-client-cio-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-client-auth-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-client-auth-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-client-auth-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-client-auth-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-client-auth-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-client-auth-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-ktor-client-ktor-client-auth",
-    jar = "@io_ktor-ktor-client-auth-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-client-auth-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-client-auth-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-client-auth-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-client-content-negotiation-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-client-content-negotiation-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-client-content-negotiation-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-client-content-negotiation-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-client-content-negotiation-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-client-content-negotiation-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-ktor-client-ktor-client-content-negotiation",
-    jar = "@io_ktor-ktor-client-content-negotiation-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-client-content-negotiation-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-client-content-negotiation-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-client-content-negotiation-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -11764,114 +11764,122 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":io_ktor-ktor-client-core-jvm-3_4_2_http_import",
-        ":io_ktor-ktor-http-jvm-3_4_2_http_import",
-        ":io_ktor-ktor-http-cio-jvm-3_4_2_http_import",
-        ":io_ktor-ktor-events-jvm-3_4_2_http_import",
-        ":io_ktor-ktor-websocket-serialization-jvm-3_4_2_http_import",
-        ":io_ktor-ktor-serialization-jvm-3_4_2_http_import",
-        ":io_ktor-ktor-websockets-jvm-3_4_2_http_import",
-        ":io_ktor-ktor-sse-jvm-3_4_2_http_import",
+        ":io_ktor-ktor-client-core-jvm-3_6_0_http_import",
+        ":io_ktor-ktor-http-jvm-3_6_0_http_import",
+        ":io_ktor-ktor-http-cio-jvm-3_6_0_http_import",
+        ":io_ktor-ktor-events-jvm-3_6_0_http_import",
+        ":io_ktor-ktor-websocket-serialization-jvm-3_6_0_http_import",
+        ":io_ktor-ktor-serialization-jvm-3_6_0_http_import",
+        ":io_ktor-ktor-websockets-jvm-3_6_0_http_import",
+        ":io_ktor-ktor-sse-jvm-3_6_0_http_import",
     ],
 )
 
 jvm_import(
-    name = "io_ktor-ktor-client-core-jvm-3_4_2_http_import",
-    jar = "@io_ktor-ktor-client-core-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-client-core-jvm-3_4_2-sources_http//file",
+    name = "io_ktor-ktor-client-core-jvm-3_6_0_http_import",
+    jar = "@io_ktor-ktor-client-core-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-client-core-jvm-3_6_0-sources_http//file",
 )
 
 jvm_import(
-    name = "io_ktor-ktor-http-jvm-3_4_2_http_import",
-    jar = "@io_ktor-ktor-http-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-http-jvm-3_4_2-sources_http//file",
+    name = "io_ktor-ktor-http-jvm-3_6_0_http_import",
+    jar = "@io_ktor-ktor-http-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-http-jvm-3_6_0-sources_http//file",
 )
 
 jvm_import(
-    name = "io_ktor-ktor-http-cio-jvm-3_4_2_http_import",
-    jar = "@io_ktor-ktor-http-cio-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-http-cio-jvm-3_4_2-sources_http//file",
+    name = "io_ktor-ktor-http-cio-jvm-3_6_0_http_import",
+    jar = "@io_ktor-ktor-http-cio-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-http-cio-jvm-3_6_0-sources_http//file",
 )
 
 jvm_import(
-    name = "io_ktor-ktor-events-jvm-3_4_2_http_import",
-    jar = "@io_ktor-ktor-events-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-events-jvm-3_4_2-sources_http//file",
+    name = "io_ktor-ktor-events-jvm-3_6_0_http_import",
+    jar = "@io_ktor-ktor-events-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-events-jvm-3_6_0-sources_http//file",
 )
 
 jvm_import(
-    name = "io_ktor-ktor-websocket-serialization-jvm-3_4_2_http_import",
-    jar = "@io_ktor-ktor-websocket-serialization-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-websocket-serialization-jvm-3_4_2-sources_http//file",
+    name = "io_ktor-ktor-websocket-serialization-jvm-3_6_0_http_import",
+    jar = "@io_ktor-ktor-websocket-serialization-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-websocket-serialization-jvm-3_6_0-sources_http//file",
 )
 
 jvm_import(
-    name = "io_ktor-ktor-serialization-jvm-3_4_2_http_import",
-    jar = "@io_ktor-ktor-serialization-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-serialization-jvm-3_4_2-sources_http//file",
+    name = "io_ktor-ktor-serialization-jvm-3_6_0_http_import",
+    jar = "@io_ktor-ktor-serialization-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-serialization-jvm-3_6_0-sources_http//file",
 )
 
 jvm_import(
-    name = "io_ktor-ktor-websockets-jvm-3_4_2_http_import",
-    jar = "@io_ktor-ktor-websockets-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-websockets-jvm-3_4_2-sources_http//file",
+    name = "io_ktor-ktor-websockets-jvm-3_6_0_http_import",
+    jar = "@io_ktor-ktor-websockets-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-websockets-jvm-3_6_0-sources_http//file",
 )
 
 jvm_import(
-    name = "io_ktor-ktor-sse-jvm-3_4_2_http_import",
-    jar = "@io_ktor-ktor-sse-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-sse-jvm-3_4_2-sources_http//file",
+    name = "io_ktor-ktor-sse-jvm-3_6_0_http_import",
+    jar = "@io_ktor-ktor-sse-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-sse-jvm-3_6_0-sources_http//file",
 )
 
 copy_file(
-    name = "io.ktor/ktor-client-encoding-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-client-encoding-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-client-encoding-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-client-encoding-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-client-encoding-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-client-encoding-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-ktor-client-ktor-client-encoding",
-    jar = "@io_ktor-ktor-client-encoding-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-client-encoding-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-client-encoding-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-client-encoding-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-client-java-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-client-java-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-client-java-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-client-java-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-client-java-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-client-java-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-ktor-client-ktor-client-java",
-    jar = "@io_ktor-ktor-client-java-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-client-java-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-client-java-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-client-java-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-ktor-client-ktor-client-logging",
-    jar = "@io_ktor-ktor-client-logging-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-client-logging-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-client-logging-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-client-logging-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-serialization-kotlinx-json-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-serialization-kotlinx-json-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-serialization-kotlinx-json-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-serialization-kotlinx-json-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-serialization-kotlinx-json-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-serialization-kotlinx-json-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-serialization-kotlinx-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-serialization-kotlinx-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-serialization-kotlinx-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-serialization-kotlinx-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-serialization-kotlinx-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-serialization-kotlinx-jvm-3.6.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.ktor/ktor-openapi-schema-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-openapi-schema-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-openapi-schema-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -11881,34 +11889,41 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":io_ktor-ktor-serialization-kotlinx-json-jvm-3_4_2_http_import",
-        ":io_ktor-ktor-serialization-kotlinx-jvm-3_4_2_http_import",
+        ":io_ktor-ktor-serialization-kotlinx-json-jvm-3_6_0_http_import",
+        ":io_ktor-ktor-serialization-kotlinx-jvm-3_6_0_http_import",
+        ":io_ktor-ktor-openapi-schema-jvm-3_6_0_http_import",
     ],
 )
 
 jvm_import(
-    name = "io_ktor-ktor-serialization-kotlinx-json-jvm-3_4_2_http_import",
-    jar = "@io_ktor-ktor-serialization-kotlinx-json-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-serialization-kotlinx-json-jvm-3_4_2-sources_http//file",
+    name = "io_ktor-ktor-serialization-kotlinx-json-jvm-3_6_0_http_import",
+    jar = "@io_ktor-ktor-serialization-kotlinx-json-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-serialization-kotlinx-json-jvm-3_6_0-sources_http//file",
 )
 
 jvm_import(
-    name = "io_ktor-ktor-serialization-kotlinx-jvm-3_4_2_http_import",
-    jar = "@io_ktor-ktor-serialization-kotlinx-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-serialization-kotlinx-jvm-3_4_2-sources_http//file",
+    name = "io_ktor-ktor-serialization-kotlinx-jvm-3_6_0_http_import",
+    jar = "@io_ktor-ktor-serialization-kotlinx-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-serialization-kotlinx-jvm-3_6_0-sources_http//file",
+)
+
+jvm_import(
+    name = "io_ktor-ktor-openapi-schema-jvm-3_6_0_http_import",
+    jar = "@io_ktor-ktor-openapi-schema-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-openapi-schema-jvm-3_6_0-sources_http//file",
 )
 
 jvm_import(
     name = "libraries-ktor-io-ktor-io",
-    jar = "@io_ktor-ktor-io-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-io-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-io-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-io-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-network-tls-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-network-tls-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-network-tls-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-network-tls-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-network-tls-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-network-tls-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -11918,58 +11933,58 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":io_ktor-ktor-network-tls-jvm-3_4_2_http_import",
-        ":io_ktor-ktor-network-jvm-3_4_2_http_import",
+        ":io_ktor-ktor-network-tls-jvm-3_6_0_http_import",
+        ":io_ktor-ktor-network-jvm-3_6_0_http_import",
     ],
 )
 
 jvm_import(
-    name = "io_ktor-ktor-network-tls-jvm-3_4_2_http_import",
-    jar = "@io_ktor-ktor-network-tls-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-network-tls-jvm-3_4_2-sources_http//file",
+    name = "io_ktor-ktor-network-tls-jvm-3_6_0_http_import",
+    jar = "@io_ktor-ktor-network-tls-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-network-tls-jvm-3_6_0-sources_http//file",
 )
 
 jvm_import(
-    name = "io_ktor-ktor-network-jvm-3_4_2_http_import",
-    jar = "@io_ktor-ktor-network-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-network-jvm-3_4_2-sources_http//file",
+    name = "io_ktor-ktor-network-jvm-3_6_0_http_import",
+    jar = "@io_ktor-ktor-network-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-network-jvm-3_6_0-sources_http//file",
 )
 
 copy_file(
-    name = "io.ktor/ktor-serialization-gson-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-serialization-gson-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-serialization-gson-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-serialization-gson-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-serialization-gson-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-serialization-gson-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-ktor-serialization-gson-ktor-serialization-gson",
-    jar = "@io_ktor-ktor-serialization-gson-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-serialization-gson-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-serialization-gson-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-serialization-gson-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-server-cio-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-server-cio-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-server-cio-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-server-cio-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-server-cio-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-server-cio-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-server-core-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-server-core-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-server-core-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-server-core-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-server-core-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-server-core-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "com.typesafe/config-1.4.5.jar_copy",
-    src = "@com_typesafe-config-1_4_5_http//file",
-    out = "com.typesafe/config-1.4.5.jar",
+    name = "com.typesafe/config-1.4.9.jar_copy",
+    src = "@com_typesafe-config-1_4_9_http//file",
+    out = "com.typesafe/config-1.4.9.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -11979,64 +11994,79 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":io_ktor-ktor-server-cio-jvm-3_4_2_http_import",
-        ":io_ktor-ktor-server-core-jvm-3_4_2_http_import",
-        ":com_typesafe-config-1_4_5_http_import",
+        ":io_ktor-ktor-server-cio-jvm-3_6_0_http_import",
+        ":io_ktor-ktor-server-core-jvm-3_6_0_http_import",
+        ":com_typesafe-config-1_4_9_http_import",
     ],
 )
 
 jvm_import(
-    name = "io_ktor-ktor-server-cio-jvm-3_4_2_http_import",
-    jar = "@io_ktor-ktor-server-cio-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-server-cio-jvm-3_4_2-sources_http//file",
+    name = "io_ktor-ktor-server-cio-jvm-3_6_0_http_import",
+    jar = "@io_ktor-ktor-server-cio-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-server-cio-jvm-3_6_0-sources_http//file",
 )
 
 jvm_import(
-    name = "io_ktor-ktor-server-core-jvm-3_4_2_http_import",
-    jar = "@io_ktor-ktor-server-core-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-server-core-jvm-3_4_2-sources_http//file",
+    name = "io_ktor-ktor-server-core-jvm-3_6_0_http_import",
+    jar = "@io_ktor-ktor-server-core-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-server-core-jvm-3_6_0-sources_http//file",
 )
 
 jvm_import(
-    name = "com_typesafe-config-1_4_5_http_import",
-    jar = "@com_typesafe-config-1_4_5_http//file",
-    source_jar = "@com_typesafe-config-1_4_5-sources_http//file",
+    name = "com_typesafe-config-1_4_9_http_import",
+    jar = "@com_typesafe-config-1_4_9_http//file",
+    source_jar = "@com_typesafe-config-1_4_9-sources_http//file",
 )
 
 copy_file(
-    name = "io.ktor/ktor-server-content-negotiation-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-server-content-negotiation-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-server-content-negotiation-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-server-content-negotiation-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-server-content-negotiation-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-server-content-negotiation-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-ktor-server-content-negotiation-ktor-server-content-negotiation",
-    jar = "@io_ktor-ktor-server-content-negotiation-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-server-content-negotiation-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-server-content-negotiation-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-server-content-negotiation-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.ktor/ktor-server-sse-jvm-3.4.2.jar_copy",
-    src = "@io_ktor-ktor-server-sse-jvm-3_4_2_http//file",
-    out = "io.ktor/ktor-server-sse-jvm-3.4.2.jar",
+    name = "io.ktor/ktor-server-routing-openapi-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-server-routing-openapi-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-server-routing-openapi-jvm-3.6.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-ktor-server-content-negotiation-ktor-server-routing-openapi",
+    jar = "@io_ktor-ktor-server-routing-openapi-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-server-routing-openapi-jvm-3_6_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.ktor/ktor-server-sse-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-server-sse-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-server-sse-jvm-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-ktor-server-sse-ktor-server-sse-jvm",
-    jar = "@io_ktor-ktor-server-sse-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-server-sse-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-server-sse-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-server-sse-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-ktor-utils-ktor-utils",
-    jar = "@io_ktor-ktor-utils-jvm-3_4_2_http//file",
-    source_jar = "@io_ktor-ktor-utils-jvm-3_4_2-sources_http//file",
+    jar = "@io_ktor-ktor-utils-jvm-3_6_0_http//file",
+    source_jar = "@io_ktor-ktor-utils-jvm-3_6_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

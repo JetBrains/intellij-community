@@ -9,13 +9,13 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="ktor-network-tls" type="repository">
-        <properties maven-id="io.ktor:ktor-network-tls-jvm:3.4.2">
+        <properties maven-id="io.ktor:ktor-network-tls-jvm:3.6.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/3.4.2/ktor-network-tls-jvm-3.4.2.jar">
-              <sha256sum>54d6df0308fd8331bfeb0aa4a1ccdb4c788d4948343cc7fa1e08d264e09f40f2</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/3.6.0/ktor-network-tls-jvm-3.6.0.jar">
+              <sha256sum>09ed94b6783aacd3bb7d19ce606230153762bf68d399cbff0474299a00407a41</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/3.4.2/ktor-network-jvm-3.4.2.jar">
-              <sha256sum>2b8c1546780065dfa379bfeb705f2564845be065ae1f69cf14bba1c6083a7610</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/3.6.0/ktor-network-jvm-3.6.0.jar">
+              <sha256sum>746a751146d61865f51d6dd56b18e3e0fa68b36587561ee123ff7ce730d8c590</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -27,13 +27,13 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/3.4.2/ktor-network-tls-jvm-3.4.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/3.4.2/ktor-network-jvm-3.4.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/3.6.0/ktor-network-tls-jvm-3.6.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/3.6.0/ktor-network-jvm-3.6.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/3.4.2/ktor-network-tls-jvm-3.4.2-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/3.4.2/ktor-network-jvm-3.4.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/3.6.0/ktor-network-tls-jvm-3.6.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/3.6.0/ktor-network-jvm-3.6.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

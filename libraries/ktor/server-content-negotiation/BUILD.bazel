@@ -13,11 +13,17 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation",
+        "@lib//:libraries-ktor-server-content-negotiation-ktor-server-routing-openapi",
+    ],
     runtime_deps = [
         # do not sort,
         "@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation",
+        "@lib//:libraries-ktor-server-content-negotiation-ktor-server-routing-openapi",
         "//libraries/ktor/server-cio:libraries-ktor-server-cio",
+        "//libraries/ktor/client",
     ],
 )
 
@@ -31,11 +37,16 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.ktor.server.content.negotiation",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation",
+        "@lib//:libraries-ktor-server-content-negotiation-ktor-server-routing-openapi",
+    ],
     runtime_deps = [
         # do not sort,
         ":libraries-ktor-server-content-negotiation",
         "//libraries/ktor/server-cio:libraries-ktor-server-cio_test_lib",
+        "//libraries/ktor/client:client_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.ktor.server.content.negotiation` end

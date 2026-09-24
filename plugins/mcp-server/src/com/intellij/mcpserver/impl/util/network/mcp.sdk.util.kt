@@ -12,6 +12,7 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.ApplicationCallPipeline
 import io.ktor.server.application.PipelineCall
 import io.ktor.server.application.install
+import io.ktor.server.http.HttpRequestLifecycle
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.request.ApplicationRequest
 import io.ktor.server.request.header
@@ -85,6 +86,9 @@ fun Application.mcpPatched(
 
   install(SSE)
   install(ContentNegotiation) { json(McpJson) }
+  // Since Ktor 3.5 a reset connection no longer cancels the call on its own. An SSE stream whose client is gone must end,
+  // because it holds the session: without the cancellation, the heartbeat keeps buffering into a dead socket.
+  install(HttpRequestLifecycle) { cancelCallOnClose = true }
 
   routing {
     intercept(ApplicationCallPipeline.Plugins) {

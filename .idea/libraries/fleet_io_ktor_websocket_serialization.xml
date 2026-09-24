@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="fleet:io.ktor.websocket.serialization" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-websocket-serialization-jvm:3.4.2">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-websocket-serialization-jvm:3.6.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/3.4.2/ktor-websocket-serialization-jvm-3.4.2.jar">
-          <sha256sum>c5b55d92bd4f65f420b6e220eee93068faeb90e0ee9bd9eb9c878e1f851b60e5</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/3.6.0/ktor-websocket-serialization-jvm-3.6.0.jar">
+          <sha256sum>c87fe370c17868dc8c101947452bf8a8622363cf4d83a342334666bb46fe627b</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/3.4.2/ktor-websocket-serialization-jvm-3.4.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/3.6.0/ktor-websocket-serialization-jvm-3.6.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/3.4.2/ktor-websocket-serialization-jvm-3.4.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/3.6.0/ktor-websocket-serialization-jvm-3.6.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

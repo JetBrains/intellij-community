@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="ktor-io" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-io-jvm:3.4.2">
+        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-io-jvm:3.6.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/3.4.2/ktor-io-jvm-3.4.2.jar">
-              <sha256sum>d8deef4205fb0fc7bf62e1ea9e00b846a1f6ed796bff1f33a506af5a4450ccae</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/3.6.0/ktor-io-jvm-3.6.0.jar">
+              <sha256sum>7426ad1759833460507ee7065f17085410dc7b32081a1daee8c91cf6f40e257c</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/3.4.2/ktor-io-jvm-3.4.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/3.6.0/ktor-io-jvm-3.6.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/3.4.2/ktor-io-jvm-3.4.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/3.6.0/ktor-io-jvm-3.6.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
