@@ -15,7 +15,6 @@ import {
   loadToolPermissions,
   renderAgentPermissionOutputs,
   renderGuideOutputs,
-  renderOpenCodeSkills,
   renderSkills,
   resolveCommunityDir,
   resolveToolsDir,
@@ -50,12 +49,11 @@ function createFixture() {
   const claudeDir = join(rootDir, '.claude', 'skills')
   const junieDir = join(rootDir, '.junie', 'skills')
   const communityClaudeDir = join(rootDir, 'community', '.claude', 'skills')
-  const opencodeDir = join(rootDir, '.opencode', 'skill')
 
   writeSkill(join(communitySourceDir, 'testing'), 'testing', '# Testing\n')
   writeSkill(join(agentsDir, 'platform-deep-dives'), 'platform-deep-dives', '# Platform Deep Dives\n')
 
-  return {rootDir, communitySourceDir, agentsDir, claudeDir, junieDir, communityClaudeDir, opencodeDir}
+  return {rootDir, communitySourceDir, agentsDir, claudeDir, junieDir, communityClaudeDir}
 }
 
 describe('render-guides skills', () => {
@@ -512,81 +510,6 @@ describe('render-guides skills', () => {
 
       const communityIndex = readFileSync(join(communitySourceDir, 'INDEX.md'), 'utf8')
       ok(!communityIndex.includes('OPTIONAL.md'), 'the community index has no catalogue beside it')
-    } finally {
-      rmSync(rootDir, {recursive: true, force: true})
-    }
-  })
-
-  it('emits OpenCode skills from canonical sources and cleans stale dirs', async () => {
-    const {rootDir, communitySourceDir, agentsDir, opencodeDir} = createFixture()
-
-    try {
-      const communityReferenceDir = join(communitySourceDir, 'testing', 'references')
-      mkdirSync(communityReferenceDir, {recursive: true})
-      writeFileSync(join(communityReferenceDir, 'source.md'), '# Community Reference\n', 'utf8')
-
-      const ultimateReferenceDir = join(agentsDir, 'platform-deep-dives', 'references')
-      mkdirSync(ultimateReferenceDir, {recursive: true})
-      writeFileSync(join(ultimateReferenceDir, 'source.md'), '# Ultimate Reference\n', 'utf8')
-
-      const staleOpenCodeDir = join(opencodeDir, 'stale-opencode')
-      writeSkill(staleOpenCodeDir, 'stale-opencode', '# Stale\n')
-
-      await renderOpenCodeSkills({
-        communitySourceDir,
-        agentsDir,
-        opencodeDir,
-        edition: 'ULTIMATE',
-      })
-
-      ok(!existsSync(staleOpenCodeDir), 'stale OpenCode skill dir was not removed')
-
-      const opencodeCommunitySkillPath = join(opencodeDir, 'testing', 'SKILL.md')
-      ok(existsSync(opencodeCommunitySkillPath), 'community OpenCode skill is missing')
-      const opencodeCommunitySkillContent = readFileSync(opencodeCommunitySkillPath, 'utf8')
-      ok(
-        opencodeCommunitySkillContent.includes(generatedSkillMarker),
-        'community OpenCode skill does not point to the source skill',
-      )
-      ok(
-        existsSync(join(opencodeDir, 'testing', 'references', 'source.md')),
-        'community OpenCode skill support file is missing',
-      )
-
-      const opencodeUltimateSkillPath = join(opencodeDir, 'platform-deep-dives', 'SKILL.md')
-      ok(existsSync(opencodeUltimateSkillPath), 'ultimate OpenCode skill is missing')
-      const opencodeUltimateSkillContent = readFileSync(opencodeUltimateSkillPath, 'utf8')
-      ok(
-        opencodeUltimateSkillContent.includes(generatedSkillMarker),
-        'ultimate OpenCode skill does not point to the source skill',
-      )
-      ok(
-        existsSync(join(opencodeDir, 'platform-deep-dives', 'references', 'source.md')),
-        'ultimate OpenCode skill support file is missing',
-      )
-    } finally {
-      rmSync(rootDir, {recursive: true, force: true})
-    }
-  })
-
-  it('in COMMUNITY, skips ultimate-only OpenCode skills', async () => {
-    const {rootDir, communitySourceDir, agentsDir, opencodeDir} = createFixture()
-
-    try {
-      writeSkill(join(opencodeDir, 'platform-deep-dives'), 'platform-deep-dives', '# Stale\n')
-
-      await renderOpenCodeSkills({
-        communitySourceDir,
-        agentsDir,
-        opencodeDir,
-        edition: 'COMMUNITY',
-      })
-
-      ok(existsSync(join(opencodeDir, 'testing', 'SKILL.md')), 'community OpenCode skill is missing')
-      ok(
-        !existsSync(join(opencodeDir, 'platform-deep-dives', 'SKILL.md')),
-        'community render should not emit ultimate-only OpenCode skill',
-      )
     } finally {
       rmSync(rootDir, {recursive: true, force: true})
     }

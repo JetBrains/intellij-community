@@ -6,7 +6,7 @@ This directory (`community/.ai`) contains the templates and documentation source
 bazel run //.ai:render-guides
 ```
 
-The renderer produces guide files (`AGENTS.md`, `.junie/AGENTS.md`), skill stubs, OpenCode config/skills, and the harness tool-permission rules.
+The renderer produces guide files (`AGENTS.md`, `.junie/AGENTS.md`), skill stubs, the OpenCode config, and the harness tool-permission rules.
 
 ## Quick run
 
@@ -31,7 +31,6 @@ AI_GUIDE_EDITION=ULTIMATE  bazel run //.ai:render-guides
 - `community/AGENTS.md` (generated in ultimate workspace)
 - `.junie/AGENTS.md`
 - `opencode.json` (from `.mcp.json`)
-- `.opencode/skill/*` (generated from skill sources)
 - Skill stubs in `.agents/skills/*`, `.claude/skills/*`, `.junie/skills/*`, `community/.claude/skills/*`
 - Tool-permission rules (ultimate only): the `permissions` arrays of `.claude/settings.json` and all of `.codex/rules/default.rules`, both from `tool-permissions.json`
 
@@ -55,7 +54,6 @@ AI_GUIDE_EDITION=ULTIMATE  bazel run //.ai:render-guides
                              +--> community/AGENTS.md (ultimate workspace)
                              +--> .junie/AGENTS.md
                              +--> opencode.json
-                             +--> .opencode/skill/*
                              +--> skill stubs (see next section)
 
       community/.ai/tool-permissions.json
@@ -82,10 +80,12 @@ prefixes, not command strings; see the `$comment` blocks in the source for the m
 
 ## Skill sources and stub generation
 
-The renderer has two skill sources for all generated skill outputs, including `.opencode/skill/*`:
+The renderer has two skill sources for all generated skill outputs:
 
 1. Community source skills: `community/.agents/skills/*/SKILL.md`
 2. Ultimate-only source skills: manual (non-generated) `.agents/skills/*/SKILL.md`
+
+OpenCode and Codex read `.agents/skills/` directly, so the renderer writes no OpenCode skill tree.
 
 Generated stubs are recognized by marker:
 
@@ -128,12 +128,6 @@ PASS 2 (ultimate-only manual skills)
 .agents/skills/<name>/SKILL.md   [manual, non-generated]
     |--> .claude/skills/<name>/SKILL.md   [ULTIMATE only]
     '--> .junie/skills/<name>/SKILL.md    [ULTIMATE only]
-
-OpenCode skills
----------------
-community/.agents/skills/<name>/SKILL.md  [COMMUNITY + ULTIMATE]
-.agents/skills/<name>/SKILL.md            [ULTIMATE only]
-   '--> .opencode/skill/<name>/SKILL.md
 
 Cleanup
 -------

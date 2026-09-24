@@ -404,7 +404,6 @@ const toolPermissionsPath = join(templatesDir, "tool-permissions.json");
 const claudeSettingsOutput = ".claude/settings.json";
 const codexRulesOutput = ".codex/rules/default.rules";
 const opencodeConfigPath = join(repoRoot, "opencode.json");
-const opencodeSkillsDir = join(repoRoot, ".opencode", "skill");
 const communitySkillsSourceDir = join(repoRoot, "community", ".agents", "skills");
 const agentsSkillsDir = join(repoRoot, ".agents", "skills");
 const claudeSkillsDir = join(repoRoot, ".claude", "skills");
@@ -676,39 +675,6 @@ async function pruneStaleCopies(targetDir, keepNames) {
       continue;
     }
     await rm(join(targetDir, entry.name), {recursive: true, force: true});
-  }
-}
-
-export async function renderOpenCodeSkills(options = {}) {
-  const {
-    communitySourceDir = communitySkillsSourceDir,
-    agentsDir = agentsSkillsDir,
-    opencodeDir = opencodeSkillsDir,
-    edition,
-  } = options;
-  const normalizedEdition = edition === undefined ? await detectEdition() : normalizeEdition(edition);
-  const {communitySkills, ultimateOnlySkills} = await collectCanonicalSkillSources(
-    communitySourceDir,
-    agentsDir,
-    normalizedEdition,
-  );
-  const skillSources = normalizedEdition === "ULTIMATE"
-    ? new Map([...communitySkills, ...ultimateOnlySkills])
-    : communitySkills;
-  const expectedSkillNames = new Set(skillSources.keys());
-
-  await mkdir(opencodeDir, {recursive: true});
-  const targetEntries = await readdir(opencodeDir, {withFileTypes: true});
-  for (const entry of targetEntries) {
-    if (!entry.isDirectory() || expectedSkillNames.has(entry.name)) {
-      continue;
-    }
-    await rm(join(opencodeDir, entry.name), {recursive: true, force: true});
-  }
-
-  for (const [dirName, {skillPath, content}] of skillSources) {
-    await rm(join(opencodeDir, dirName), {recursive: true, force: true});
-    await writeSkillStub(opencodeDir, dirName, content, skillPath);
   }
 }
 
@@ -1176,7 +1142,6 @@ export async function main() {
   }
 
   await renderOpenCodeConfig();
-  await renderOpenCodeSkills();
   reportSkillDescriptionBudget(await renderSkills({edition: renderContext.defaultEdition}));
 }
 
