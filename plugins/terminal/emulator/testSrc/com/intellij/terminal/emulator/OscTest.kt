@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 
 /**
  * Operating System Command (OSC) sequences the engine itself handles: the window title (OSC 0/2), the
- * default fg/bg color set + reset (OSC 11/111) and the (unsupported) color query, and OSC 8 hyperlinks.
+ * default fg/bg color set + reset (OSC 11/111) and the color query (OSC 10/11 `?`), and OSC 8 hyperlinks.
  *
  * The JetBrains custom command channel (OSC 1341) is sniffed out of the raw [TerminalEmulator.write]
  * stream instead of being handled by the engine; it is covered by
@@ -55,6 +55,36 @@ class OscTest {
     session.write(osc("10;?"))        // query foreground
     session.write(osc("11;?"))        // query background
     session.assertResponses(osc("10;rgb:1010/0f0f/0e0e"), osc("11;rgb:0101/0202/0303"))
+  }
+
+  /** With no program override, the getters and the color query report the embedder default colors. */
+  @Test
+  fun oscQueryColorsReportsEmbedderDefaults() = session(10, 10) { session ->
+    session.setDefaultForegroundColor(TerminalColor.Rgb(0x10, 0x0F, 0x0E))
+    session.setDefaultBackgroundColor(TerminalColor.Rgb(0x01, 0x02, 0x03))
+    assertThat(session.foregroundColor).isEqualTo(TerminalColor.Rgb(0x10, 0x0F, 0x0E))
+    assertThat(session.backgroundColor).isEqualTo(TerminalColor.Rgb(0x01, 0x02, 0x03))
+
+    // ST-terminated queries, as Codex sends them: the reply uses the terminator of the query.
+    session.write(osc("10;?", OscTerminator.ST) + osc("11;?", OscTerminator.ST))
+    session.assertResponses(osc("10;rgb:1010/0f0f/0e0e", OscTerminator.ST), osc("11;rgb:0101/0202/0303", OscTerminator.ST))
+  }
+
+  /**
+   * A program override has priority over the embedder default, also over a default set after the override.
+   * After the program resets the override (OSC 111), the query reports the latest embedder default.
+   */
+  @Test
+  fun programOverrideHasPriorityOverEmbedderDefault() = session(10, 10) { session ->
+    session.setDefaultBackgroundColor(TerminalColor.Rgb(0x01, 0x02, 0x03))
+    session.write(osc("11;#aabbcc"))
+    session.setDefaultBackgroundColor(TerminalColor.Rgb(0x04, 0x05, 0x06))
+    session.write(osc("11;?"))
+
+    session.write(osc("111"))
+    session.write(osc("11;?"))
+
+    session.assertResponses(osc("11;rgb:aaaa/bbbb/cccc"), osc("11;rgb:0404/0505/0606"))
   }
 
   /**

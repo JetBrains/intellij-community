@@ -81,5 +81,8 @@ internal fun csi(body: String): String = Char(27) + "[" + body
 /** BEL (0x07), which the session reports as a `TerminalBeepEvent`. */
 internal val BELL: String = Char(7).toString()
 
+/** Wraps [body] in an OSC (Operating System Command, `ESC ]`) sequence terminated by [BELL]. */
+internal fun osc(body: String): String = Char(27) + "]" + body + BELL
+
 /** How long to wait for something that is expected to arrive before failing the test. */
 internal const val AWAIT_TIMEOUT_MS: Long = 10_000

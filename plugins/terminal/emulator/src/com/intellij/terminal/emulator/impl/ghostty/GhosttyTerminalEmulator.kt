@@ -454,6 +454,14 @@ internal class GhosttyTerminalEmulator(
   override val backgroundColor: TerminalColor.Rgb?
     get() = terminalGetRgb(GhosttyTerminalData.COLOR_BACKGROUND)
 
+  override fun setDefaultForegroundColor(color: TerminalColor.Rgb) {
+    terminalSetRgb(GhosttyTerminalOption.COLOR_FOREGROUND, color)
+  }
+
+  override fun setDefaultBackgroundColor(color: TerminalColor.Rgb) {
+    terminalSetRgb(GhosttyTerminalOption.COLOR_BACKGROUND, color)
+  }
+
   override fun paletteColor(index: Int): TerminalColor.Rgb {
     require(index in 0..255) { "palette index must be in 0..255, was $index" }
     ensureOpen()
@@ -1289,6 +1297,22 @@ internal class GhosttyTerminalEmulator(
       scratchOut.get(C_BYTE, 1L).toInt() and 0xFF,
       scratchOut.get(C_BYTE, 2L).toInt() and 0xFF,
     )
+  }
+
+  /** Set a color option (`GhosttyColorRgb` = 3 packed u8). */
+  private fun terminalSetRgb(option: GhosttyTerminalOption, color: TerminalColor.Rgb) {
+    ensureOpen()
+    try {
+      scratchOut.set(C_BYTE, 0L, color.red.toByte())
+      scratchOut.set(C_BYTE, 1L, color.green.toByte())
+      scratchOut.set(C_BYTE, 2L, color.blue.toByte())
+      val r = LibGhosttyVt.terminalSet(terminal, option.code, scratchOut)
+      if (r != GhosttyResult.SUCCESS) {
+        throw IllegalStateException("ghostty_terminal_set($option) returned $r")
+      }
+    } catch (t: Throwable) {
+      throw RuntimeException("ghostty_terminal_set($option) failed", t)
+    }
   }
 
   private fun ensureOpen() {

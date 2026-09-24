@@ -112,6 +112,15 @@ interface TerminalEmulator : AutoCloseable {
   val backgroundColor: TerminalColor.Rgb?
 
   /**
+   * Sets the embedder default foreground color. [foregroundColor] and the reply to `OSC 10 ; ?` report it.
+   * A program override (`OSC 10`) has priority until the program resets it (`OSC 110`).
+   */
+  fun setDefaultForegroundColor(color: TerminalColor.Rgb)
+
+  /** Same semantics as [setDefaultForegroundColor], for [backgroundColor] and `OSC 11`. */
+  fun setDefaultBackgroundColor(color: TerminalColor.Rgb)
+
+  /**
    * The current RGB of palette slot [index] (`0..255`), reflecting any program `OSC 4` overrides (and
    * `OSC 104` resets). Slots `0..15` are the ANSI colors; `16..255` the xterm cube + grayscale ramp.
    *
