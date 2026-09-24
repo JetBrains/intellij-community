@@ -133,6 +133,13 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @ApiStatus.Internal
   public abstract void requestReindex(@NotNull VirtualFile file, boolean forceRebuild);
 
+  /**
+   * @return the list of indexes already applied to the file with the given {@code inputId}, i.e. its
+   * non-trivial recorded indexed state. An empty list means the file was never indexed by anything.
+   */
+  @ApiStatus.Internal
+  public abstract @NotNull List<ID<?, ?>> getAppliedIndexes(int inputId);
+
   /** @return true if the file belongs to the specific project's indexable files set */
   @ApiStatus.Internal
   public abstract boolean belongsToProjectIndexableFiles(@NotNull VirtualFile file, @NotNull Project project);

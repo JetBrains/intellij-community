@@ -1667,7 +1667,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         ProgressManager.checkCanceled();
         FileContentImpl fileContent = null;
 
-        Set<ID<?, ?>> currentIndexedStates = getAppliedIndexes(inputId);
+        Set<ID<?, ?>> currentIndexedStates = new HashSet<>(getAppliedIndexes(inputId));
         List<ID<?, ?>> requiredIndexes = getRequiredIndexes(indexedFile);
         for (ID<?, ?> indexId : requiredIndexes) {
           currentIndexedStates.remove(indexId);
@@ -1743,9 +1743,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     );
   }
 
-  @NotNull
-  Set<ID<?, ?>> getAppliedIndexes(int inputId) {
-    return new HashSet<>(IndexingStamp.getNontrivialFileIndexedStates(inputId));
+  @Override
+  public @NotNull List<ID<?, ?>> getAppliedIndexes(int inputId) {
+    return IndexingStamp.getNontrivialFileIndexedStates(inputId);
   }
 
   @NotNull

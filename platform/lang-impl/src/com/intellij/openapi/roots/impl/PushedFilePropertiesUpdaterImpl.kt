@@ -49,7 +49,6 @@ import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.indexing.FileBasedIndexProjectHandler
 import com.intellij.util.indexing.FilePropertyPusherEx
 import com.intellij.util.indexing.IndexingBundle
-import com.intellij.util.indexing.IndexingStamp
 import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushedDiagnostic.addEvent
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushingStatistics
@@ -364,10 +363,10 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     // value - requesting reindex here would be redundant. It's only needed for a file that was
     // already indexed before, since a pushed property change alone doesn't affect any content
     // stamp that the normal check would notice.
-    val fileId = FileBasedIndex.getFileId(file)
-    if (fileId > 0 && IndexingStamp.getNontrivialFileIndexedStates(fileId).isNotEmpty()) {
-      val fileBasedIndex = FileBasedIndex.getInstance()
-      if (fileBasedIndex is FileBasedIndexEx) {
+    val fileBasedIndex = FileBasedIndex.getInstance()
+    if (fileBasedIndex is FileBasedIndexEx) {
+      val fileId = FileBasedIndex.getFileId(file)
+      if (fileId > 0 && fileBasedIndex.getAppliedIndexes(fileId).isNotEmpty()) {
         fileBasedIndex.requestReindex(file, false)
       }
     }

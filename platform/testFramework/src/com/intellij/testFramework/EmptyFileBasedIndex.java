@@ -157,6 +157,11 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
   }
 
   @Override
+  public @NotNull List<ID<?, ?>> getAppliedIndexes(int inputId) {
+    return Collections.emptyList();
+  }
+
+  @Override
   public boolean belongsToProjectIndexableFiles(@NotNull VirtualFile file, @NotNull Project project) {
     return false;
   }

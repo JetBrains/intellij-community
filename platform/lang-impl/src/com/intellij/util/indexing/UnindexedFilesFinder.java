@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -257,7 +258,7 @@ final class UnindexedFilesFinder {
           shouldCheckContentIndexes = false;
         }
         boolean fileTypeIndexAlreadyUpToData = fileTypeIndexState != null && fileTypeIndexState.isUpToDate();
-        Set<ID<?, ?>> appliedIndexes = myFileBasedIndex.getAppliedIndexes(inputId);
+        Set<ID<?, ?>> appliedIndexes = new HashSet<>(myFileBasedIndex.getAppliedIndexes(inputId));
         List<ID<?, ?>> requiredIndexes = myFileBasedIndex.getRequiredIndexes(indexedFile);
 
         // TODO - this non-cancelable section is just a precaution, it should be removed once we are sure
