@@ -38,9 +38,9 @@ internal class ScopePaneProvider : ProjectViewPaneProvider {
       // Only the fact that something changed matters, not how many times, hence the conflating channel.
       val scopeChanges = Channel<Unit>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
       val listener = NamedScopesHolder.ScopeListener { scopeChanges.trySend(Unit) }
-      // TODO ChangeList scope contents may lag behind: com.intellij.vcs.changes.ChangeListScopeViewUpdater
-      //  refreshes the legacy pane directly on changeListsChanged() without firing the scope listeners, so a
-      //  file moving between changelists isn't seen here. To be fixed together with ScopeViewTreeModel itself.
+      // Only the set of scopes is watched here. The contents of a scope that answers differently over time,
+      // such as a changelist one, are refreshed by ScopeViewTreeModel instead, which invalidates its filter
+      // whenever the file statuses change.
       for (holder in holders) {
         holder.addScopeListener(listener, asDisposable())
       }
