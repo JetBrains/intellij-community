@@ -20,8 +20,7 @@ internal data class IntelliJPlatformGradleData(
 ) : Serializable {
   companion object {
     @JvmField
-    val KEY: Key<IntelliJPlatformGradleData> =
-      Key.create(IntelliJPlatformGradleData::class.java, ProjectKeys.MODULE.processingWeight + 1)
+    val KEY = Key.create(IntelliJPlatformGradleData::class.java, ProjectKeys.MODULE.processingWeight + 1)
   }
 }
 
@@ -53,65 +52,38 @@ internal fun IntelliJPlatformGradleData.hasUsableData(): Boolean =
   productReleases.isNotEmpty() || bundledPlugins.isNotEmpty() || bundledModules.isNotEmpty() || dependencyHelperProductCodes.isNotEmpty() || currentPluginVersion != "0.0.0"
 
 /** Reads `product-code<TAB>version<TAB>channel` records written by the Gradle task. */
-internal fun String?.readProductReleases(): Map<String, List<IntelliJPlatformProductRelease>> {
-  val file = this?.let { Path.of(it) }?.takeIf { it.isRegularFile() } ?: return emptyMap()
-
-  return runCatching {
-    file.readLines()
-      .mapNotNull(::parseProductRelease)
-      .groupBy(
-        keySelector = { it.first },
-        valueTransform = { it.second },
-      )
-  }.getOrDefault(emptyMap())
-}
-
-private fun parseProductRelease(value: String): Pair<String, IntelliJPlatformProductRelease>? {
-  val fields = value.split('\t')
-  if (fields.size != 3 || fields.any(String::isBlank)) return null
-
-  return fields[0] to IntelliJPlatformProductRelease(
-    version = fields[1],
-    channel = fields[2],
+internal fun String?.readProductReleases(): Map<String, List<IntelliJPlatformProductRelease>> =
+  readTsv {
+    parseTsvTriple(it) { productCode, version, channel ->
+      productCode to IntelliJPlatformProductRelease(version = version, channel = channel)
+    }
+  }.groupBy(
+    keySelector = { it.first },
+    valueTransform = { it.second },
   )
-}
 
 /** Reads `plugin-id<TAB>plugin-name` records written by the Gradle task. */
-internal fun String?.readBundledPlugins(): List<IntelliJPlatformBundledPlugin> {
-  val file = this?.let { Path.of(it) }?.takeIf { it.isRegularFile() } ?: return emptyList()
-
-  return runCatching {
-    file.readLines().mapNotNull(::parseBundledPlugin)
-  }.getOrDefault(emptyList())
-}
-
-private fun parseBundledPlugin(value: String): IntelliJPlatformBundledPlugin? {
-  val fields = value.split('\t')
-  val id = fields.firstOrNull()?.trim() ?: return null
-  if (id.isEmpty()) return null
-
-  return IntelliJPlatformBundledPlugin(
-    id = id,
-    name = fields.getOrElse(1) { "" }.trim(),
-  )
-}
+internal fun String?.readBundledPlugins(): List<IntelliJPlatformBundledPlugin> =
+  readTsv { parseTsvPair(it, ::IntelliJPlatformBundledPlugin) }
 
 /** Reads `module-id<TAB>module-name` records written by the Gradle task. */
-internal fun String?.readBundledModules(): List<IntelliJPlatformBundledModule> {
+internal fun String?.readBundledModules(): List<IntelliJPlatformBundledModule> =
+  readTsv { parseTsvPair(it, ::IntelliJPlatformBundledModule) }
+
+private inline fun <T> String?.readTsv(transform: (List<String>) -> T?): List<T> {
   val file = this?.let { Path.of(it) }?.takeIf { it.isRegularFile() } ?: return emptyList()
 
   return runCatching {
-    file.readLines().mapNotNull(::parseBundledModule)
+    file.readLines().mapNotNull { line -> transform(line.split('\t')) }
   }.getOrDefault(emptyList())
 }
 
-private fun parseBundledModule(value: String): IntelliJPlatformBundledModule? {
-  val fields = value.split('\t')
-  val id = fields.firstOrNull()?.trim() ?: return null
-  if (id.isEmpty()) return null
+private inline fun <T> parseTsvPair(fields: List<String>, create: (first: String, second: String) -> T): T? {
+  val first = fields.firstOrNull()?.trim()?.takeIf(String::isNotEmpty) ?: return null
+  return create(first, fields.getOrElse(1) { "" }.trim())
+}
 
-  return IntelliJPlatformBundledModule(
-    id = id,
-    name = fields.getOrElse(1) { "" }.trim(),
-  )
+private inline fun <T> parseTsvTriple(fields: List<String>, create: (first: String, second: String, third: String) -> T): T? {
+  if (fields.size != 3 || fields.any(String::isBlank)) return null
+  return create(fields[0], fields[1], fields[2])
 }
