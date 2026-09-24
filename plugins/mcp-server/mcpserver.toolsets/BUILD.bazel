@@ -55,6 +55,7 @@ jvm_library(
         "//platform/execution",
         "//platform/platform-impl:ide-impl",
         "//platform/util/coroutines",
+        "//platform/util/diff",
     ],
 )
 
@@ -100,6 +101,7 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/util/diff:diff_test_lib",
     ],
 )
 ### auto-generated section `build intellij.mcpserver.toolsets` end

@@ -2,18 +2,24 @@
 
 package com.intellij.mcpserver.toolsets
 
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.application.options.CodeStyle
+import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.actions.OptimizeImportsProcessor
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.FormattingToolset
+import com.intellij.mcpserver.util.awaitExternalChangesAndIndexing
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -22,6 +28,7 @@ import org.editorconfig.Utils
 import org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
+import kotlin.io.path.createParentDirectories
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
@@ -37,6 +44,154 @@ class FormattingToolsetTest : GeneralMcpToolsetTestBase() {
       },
       "ok"
     )
+  }
+
+  @Test
+  fun reformat_file_keeps_external_disk_edit(): Unit = runBlocking(Dispatchers.Default) {
+    val targetPath = project.projectDirectory.resolve("src/StaleTarget.java")
+    targetPath.writeText("public class StaleTarget {\nint a;\n}\n")
+    val targetVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(targetPath)
+                            ?: error("Cannot refresh $targetPath")
+    val cachedDocument = readAction { FileDocumentManager.getInstance().getDocument(targetVirtualFile) }
+                         ?: error("Cannot load document for $targetPath")
+
+    targetPath.writeText("public class StaleTarget {\nint a;\nvoid externalEditMarker() {\n}\n}\n")
+
+    testMcpTool(FormattingToolset::reformat_file.name, filesInput("src/StaleTarget.java")) { result ->
+      // The diff starts from the agent's edit, so it never shows that edit as an added line.
+      assertThat(result.textContent.text)
+        .contains("-void externalEditMarker() {", "+    void externalEditMarker() {")
+    }
+
+    assertThat(targetPath.readText().trimEnd()).isEqualTo(
+      """
+      public class StaleTarget {
+          int a;
+
+          void externalEditMarker() {
+          }
+      }
+      """.trimIndent()
+    )
+    assertThat(cachedDocument.text).isEqualTo(targetPath.readText())
+  }
+
+  @Test
+  fun reformat_file_returns_diff_of_formatter_changes(): Unit = runBlocking(Dispatchers.Default) {
+    writeProjectFile("src/DiffTarget.java", "public class DiffTarget {\nint a;\n}\n")
+
+    testMcpTool(FormattingToolset::reformat_file.name, filesInput("src/DiffTarget.java")) { result ->
+      assertThat(result.textContent.text).isEqualTo(
+        """
+        --- a/src/DiffTarget.java
+        +++ b/src/DiffTarget.java
+        @@ -1,3 +1,3 @@
+         public class DiffTarget {
+        -int a;
+        +    int a;
+         }
+        """.trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun reformat_file_returns_ok_when_nothing_changes(): Unit = runBlocking(Dispatchers.Default) {
+    writeProjectFile("src/FormattedTarget.java", "public class FormattedTarget {\n    int a;\n}\n")
+
+    testMcpTool(FormattingToolset::reformat_file.name, filesInput("src/FormattedTarget.java"), "ok")
+  }
+
+  @Test
+  fun optimize_imports_removes_unused_import(): Unit = runBlocking(Dispatchers.Default) {
+    writeProjectFile("src/one/Helper.java", "package one;\n\npublic class Helper {\n}\n")
+    writeProjectFile("src/UnusedImport.java", "import one.Helper;\n\npublic class UnusedImport {\n}\n")
+
+    testMcpTool(FormattingToolset::optimize_imports.name, filesInput("src/UnusedImport.java")) { result ->
+      assertThat(result.textContent.text).contains("-import one.Helper;")
+    }
+    assertThat(project.projectDirectory.resolve("src/UnusedImport.java").readText()).doesNotContain("import")
+  }
+
+  @Test
+  fun optimize_imports_returns_ok_when_nothing_changes(): Unit = runBlocking(Dispatchers.Default) {
+    writeProjectFile("src/one/Helper.java", "package one;\n\npublic class Helper {\n}\n")
+    writeProjectFile("src/UsedImport.java", "import one.Helper;\n\npublic class UsedImport {\n    Helper helper;\n}\n")
+
+    testMcpTool(FormattingToolset::optimize_imports.name, filesInput("src/UsedImport.java"), "ok")
+  }
+
+  @Test
+  fun optimize_imports_never_adds_missing_import(): Unit = runBlocking(Dispatchers.Default) {
+    writeProjectFile("src/one/Helper.java", "package one;\n\npublic class Helper {\n}\n")
+    val missingImport = "public class MissingImport {\n    Helper helper;\n}\n"
+    writeProjectFile("src/MissingImport.java", missingImport)
+    writeProjectFile("src/SecondMissingImport.java", missingImport.replace("MissingImport", "SecondMissingImport"))
+    withAddUnambiguousImportsOnTheFly {
+      testMcpTool(FormattingToolset::optimize_imports.name, filesInput("src/MissingImport.java", "src/SecondMissingImport.java"), "ok")
+    }
+  }
+
+  @Test
+  fun optimize_imports_processor_adds_missing_import_by_default(): Unit = runBlocking(Dispatchers.Default) {
+    writeProjectFile("src/one/Helper.java", "package one;\n\npublic class Helper {\n}\n")
+    val missingImport = "public class MissingImport {\n    Helper helper;\n}\n"
+    writeProjectFile("src/MissingImport.java", missingImport)
+    writeProjectFile("src/SecondMissingImport.java", missingImport.replace("MissingImport", "SecondMissingImport"))
+    val targetPath = project.projectDirectory.resolve("src/MissingImport.java")
+    val paths = listOf(targetPath, project.projectDirectory.resolve("src/SecondMissingImport.java"))
+    val virtualFiles = paths.map { VirtualFileManager.getInstance().refreshAndFindFileByNioPath(it) ?: error("Cannot refresh $it") }
+    // The same wait as in the tool: in dumb mode the processor does nothing, and the new files start indexing.
+    awaitExternalChangesAndIndexing(project)
+
+    withAddUnambiguousImportsOnTheFly {
+      val psiFiles = readAction { virtualFiles.map { PsiManager.getInstance(project).findFile(it) ?: error("Cannot find PSI for $it") } }
+      withContext(Dispatchers.EDT) {
+        OptimizeImportsProcessor(project, psiFiles.toTypedArray(), "Optimize Imports", null).run()
+      }
+    }
+
+    val documentText = readAction { FileDocumentManager.getInstance().getDocument(virtualFiles.first())?.text }
+    assertThat(documentText).contains("import one.Helper;")
+  }
+
+  @Test
+  fun reformat_file_optimizes_imports_on_request(): Unit = runBlocking(Dispatchers.Default) {
+    writeProjectFile("src/one/Helper.java", "package one;\n\npublic class Helper {\n}\n")
+    writeProjectFile("src/Combined.java", "import one.Helper;\n\npublic class Combined {\nint a;\n}\n")
+
+    testMcpTool(
+      FormattingToolset::reformat_file.name,
+      buildJsonObject {
+        put("files", buildJsonArray { add(JsonPrimitive("src/Combined.java")) })
+        put("optimizeImports", JsonPrimitive(true))
+      }
+    ) { result ->
+      assertThat(result.textContent.text).contains("-import one.Helper;", "-int a;", "+    int a;")
+    }
+  }
+
+  private suspend fun withAddUnambiguousImportsOnTheFly(block: suspend () -> Unit) {
+    val settings = CodeInsightSettings.getInstance()
+    val oldAddImports = settings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
+    settings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true
+    try {
+      block()
+    }
+    finally {
+      settings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = oldAddImports
+    }
+  }
+
+  private fun writeProjectFile(relativePath: String, text: String) {
+    val path = project.projectDirectory.resolve(relativePath)
+    path.createParentDirectories()
+    path.writeText(text)
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)
+  }
+
+  private fun filesInput(vararg paths: String) = buildJsonObject {
+    put("files", buildJsonArray { paths.forEach { add(JsonPrimitive(it)) } })
   }
 
   @Test
@@ -82,16 +237,9 @@ class FormattingToolsetTest : GeneralMcpToolsetTestBase() {
         assertThat(editorConfigProperties).containsEntry("indent_size", "2")
         assertThat(CodeStyle.getIndentOptions(targetPsiFile).INDENT_SIZE).isEqualTo(2)
 
-        testMcpTool(
-          FormattingToolset::reformat_file.name,
-          buildJsonObject {
-            put("files", buildJsonArray {
-              add(JsonPrimitive("src/ReformatTarget.kt"))
-              add(JsonPrimitive("src/ReformatSecondTarget.kt"))
-            })
-          },
-          "ok"
-        )
+        testMcpTool(FormattingToolset::reformat_file.name, filesInput("src/ReformatTarget.kt", "src/ReformatSecondTarget.kt")) { result ->
+          assertThat(result.textContent.text).contains("+++ b/src/ReformatTarget.kt", "+++ b/src/ReformatSecondTarget.kt")
+        }
 
         assertThat(targetPath.readText().trimEnd()).isEqualTo(
           """

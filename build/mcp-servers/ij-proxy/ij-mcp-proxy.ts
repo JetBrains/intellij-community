@@ -30,12 +30,7 @@ import {
 import {BLOCKED_TOOL_NAMES, getReplacedToolNames} from './proxy-tools/registry'
 import {createProxyTooling} from './proxy-tools/tooling'
 import {normalizeReformatFileArgs} from './proxy-tools/handlers/reformat-file'
-import {
-  extractItems,
-  extractStructuredContent,
-  extractTextFromResult,
-  normalizeProjectRelativePath
-} from './proxy-tools/shared'
+import {extractItems, extractStructuredContent, extractTextFromResult, normalizeProjectRelativePath} from './proxy-tools/shared'
 import type {SearchItem, ToolArgs, ToolSpecLike} from './proxy-tools/types'
 import {detectContainerSession} from './container-session'
 
@@ -828,14 +823,17 @@ async function callSplitMergedReformatFile(args: ToolArgs): Promise<ToolOutput> 
   }
 
   const results = await Promise.allSettled(calls)
+  const diffs: string[] = []
   for (const result of results) {
     if (result.status === 'rejected') {
       const message = result.reason instanceof Error ? result.reason.message : String(result.reason)
       return makeToolError(message)
     }
+    if (result.value !== 'ok') diffs.push(result.value)
   }
 
-  return makeToolOutput('ok')
+  // Each IDE answers with a diff of its own files, or "ok" when nothing changed.
+  return makeToolOutput(diffs.length === 0 ? 'ok' : diffs.join('\n'))
 }
 
 async function callReformatFileForSide(side: 'idea' | 'rider', args: ToolArgs): Promise<string> {

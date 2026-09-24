@@ -48,13 +48,16 @@ import static com.intellij.codeInsight.actions.OptimizeImportsProcessor.Notifica
 
 public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   private final List<NotificationInfo> myOptimizerNotifications = new SmartList<>();
+  private final boolean myAddUnambiguousImports;
 
   public OptimizeImportsProcessor(@NotNull Project project) {
     super(project, getCommandName(), getProgressText(), false);
+    myAddUnambiguousImports = true;
   }
 
   public OptimizeImportsProcessor(@NotNull Project project, @NotNull Module module) {
     super(project, module, getCommandName(), getProgressText(), false);
+    myAddUnambiguousImports = true;
   }
 
   public OptimizeImportsProcessor(@NotNull Project project,
@@ -62,10 +65,12 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
                                   boolean includeSubdirs,
                                   boolean processOnlyVcsChangedFiles) {
     super(project, directory, includeSubdirs, getProgressText(), getCommandName(), processOnlyVcsChangedFiles);
+    myAddUnambiguousImports = true;
   }
 
   public OptimizeImportsProcessor(@NotNull Project project, @NotNull PsiFile file) {
     super(project, file, getProgressText(), getCommandName(), false);
+    myAddUnambiguousImports = true;
   }
 
   public OptimizeImportsProcessor(@NotNull Project project, PsiFile @NotNull [] files, @Nullable Runnable postRunnable) {
@@ -76,11 +81,26 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
                                   PsiFile @NotNull [] files,
                                   @NotNull @NlsContexts.Command String commandName,
                                   @Nullable Runnable postRunnable) {
+    this(project, files, commandName, postRunnable, true);
+  }
+
+  /**
+   * @param addUnambiguousImports whether to also add the unambiguous missing imports when the user enables it in the settings.
+   *                              Pass {@code false} to only remove unused imports and order the rest, whatever the settings are.
+   */
+  @ApiStatus.Internal
+  public OptimizeImportsProcessor(@NotNull Project project,
+                                  PsiFile @NotNull [] files,
+                                  @NotNull @NlsContexts.Command String commandName,
+                                  @Nullable Runnable postRunnable,
+                                  boolean addUnambiguousImports) {
     super(project, files, getProgressText(), commandName, postRunnable, false);
+    myAddUnambiguousImports = addUnambiguousImports;
   }
 
   public OptimizeImportsProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor) {
     super(previousProcessor, getCommandName(), getProgressText());
+    myAddUnambiguousImports = true;
   }
 
   @Override
@@ -174,7 +194,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
         return emptyTask();
       }
 
-      List<BooleanSupplier> hints = ApplicationManager.getApplication().isDispatchThread()
+      List<BooleanSupplier> hints = !myAddUnambiguousImports || ApplicationManager.getApplication().isDispatchThread()
                                     ? Collections.emptyList()
                                     : collectAutoImports(psiFile);
 

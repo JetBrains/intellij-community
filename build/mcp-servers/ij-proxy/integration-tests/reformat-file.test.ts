@@ -36,6 +36,25 @@ describe('ij MCP proxy reformat_file', {timeout: SUITE_TIMEOUT_MS}, () => {
     ])
   })
 
+  it('passes the diff of native reformat_file through', async () => {
+    const diff = '--- a/src/Main.kt\n+++ b/src/Main.kt\n@@ -1 +1 @@\n-fun main(){}\n+fun main() {}'
+
+    await withProxy({
+      tools: [nativeReformatTool],
+      onToolCall() {
+        return {text: diff}
+      }
+    }, async ({proxyClient}) => {
+      await proxyClient.send('tools/list')
+      const response = await proxyClient.send('tools/call', {
+        name: 'reformat_file',
+        arguments: {files: ['src/Main.kt']}
+      })
+
+      strictEqual(response.result.content[0].text, diff)
+    })
+  })
+
   it('passes files through to native reformat_file', async () => {
     const calls: Array<{files: unknown}> = []
 
