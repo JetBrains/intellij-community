@@ -8,6 +8,8 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtension
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -20,6 +22,8 @@ private const val LATE_DEPENDENCY_FILE = "late-registered-tool.toml"
  * left the class permanently unusable, and a configurator registered afterwards never showed up in the answer.
  */
 @TestApplication
+@Subsystems.Interpreters
+@Layers.Functional
 internal class PyRelevantNonPythonFilesTest {
   private val testDisposable by disposableFixture()
 

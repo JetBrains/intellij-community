@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.openapi.application.ApplicationManager
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonPluginDisposable
@@ -82,8 +83,16 @@ internal class PySdkConfiguratorsCache(private val project: Project, private val
       // Break the strong reference chain from a cached value to a disposed module: the options hold
       // creator closures that capture the Module (and WillInstallTool holds a pathPersister that does
       // too), which would otherwise keep a closed project alive until the TTL ran out.
+      //
+      // Registering is also how a disposed module is recognized, in one step that cannot race: the automatic
+      // configuration walks every module on a scope of its own and a project can close under it, so a caller can
+      // arrive with a module that has just gone. Such a module is not probed — that would run every configurator's
+      // tool for something that no longer exists — and the refusal is the cancellation the rest of that walk already
+      // handles, rather than the IncorrectOperationException plain `register` raises (PY-91964).
       @Suppress("IncorrectParentDisposable")
-      Disposer.register(key) { invalidate(key) }
+      if (!Disposer.tryRegister(key) { invalidate(key) }) {
+        throw AlreadyDisposedException("Module $key is disposed, its configurators are not probed")
+      }
       scope.future { probe(key) }
     }.await()
 

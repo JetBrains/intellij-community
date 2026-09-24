@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit
 
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.TestApplication
@@ -14,6 +16,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtension
+import com.intellij.serviceContainer.AlreadyDisposedException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -22,6 +25,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.atomic.AtomicInteger
 
 
@@ -104,6 +108,23 @@ internal class PySdkConfiguratorsCacheTest {
     repeat(3) { PyProjectSdkConfigurationExtension.findAllSortedForModule(module) }
 
     assertEquals(3, calls.get(), "findAllSortedForModule must stay uncached")
+  }
+
+  /**
+   * A module can be disposed while a caller is on its way here: the automatic configuration walks every module of the
+   * project on a scope of its own, and a project can close under it. Such a module must not be probed — that would run
+   * every configurator's tool for something that is gone — and the refusal must be the cancellation the rest of that
+   * walk already handles, not the IncorrectOperationException that used to fail it (PY-91964).
+   */
+  @Test
+  fun testDisposedModuleIsNotProbed(): Unit = runBlocking {
+    val doomed = module
+    WriteAction.runAndWait<RuntimeException> { ModuleManager.getInstance(doomed.project).disposeModule(doomed) }
+
+    assertThrows<AlreadyDisposedException> {
+      runBlocking { PyProjectSdkConfigurationExtension.findAllSortedForModuleCached(doomed) }
+    }
+    assertEquals(0, calls.get(), "a disposed module must not be probed")
   }
 
   @Test
