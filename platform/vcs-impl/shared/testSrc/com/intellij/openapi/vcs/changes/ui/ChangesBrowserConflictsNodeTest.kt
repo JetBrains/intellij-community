@@ -92,7 +92,7 @@ internal class ChangesBrowserConflictsNodeTest : ChangesViewTestBase() {
     assertEquals(listOf(fixture.files[1]), action.lastContext?.selectionHintFiles)
   }
 
-  fun `test selecting conflicts root omits launch hint`() {
+  fun `test selecting conflicts root contributes every conflict file as launch hint`() {
     val fixture = createConflictsNode("first.txt", "second.txt")
     val action = TestAction(templateText = "Resolve with Agent") { e ->
       e.presentation.isEnabledAndVisible = true
@@ -101,7 +101,19 @@ internal class ChangesBrowserConflictsNodeTest : ChangesViewTestBase() {
 
     render(fixture, fixture.node)
 
-    assertEquals(emptyList<VirtualFile>(), action.lastContext?.selectionHintFiles)
+    assertEquals(fixture.files, action.lastContext?.selectionHintFiles)
+  }
+
+  fun `test selecting conflicts root beside one file still contributes every conflict file`() {
+    val fixture = createConflictsNode("first.txt", "second.txt")
+    val action = TestAction(templateText = "Resolve with Agent") { e ->
+      e.presentation.isEnabledAndVisible = true
+    }
+    maskProviders(TestProvider(action = action))
+
+    render(fixture, fixture.fileNodes[0], fixture.node)
+
+    assertEquals(fixture.files, action.lastContext?.selectionHintFiles)
   }
 
   private fun createConflictsNode(vararg fileNames: String): ConflictsNodeFixture {

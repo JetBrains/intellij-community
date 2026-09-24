@@ -97,9 +97,12 @@ class ChangesBrowserConflictsNode(val project: Project)
     val selectedNodes = tree.selectionPaths
                         ?.mapNotNull { path -> path.lastPathComponent as? ChangesBrowserNode<*> }
                         .orEmpty()
+    // The node itself stands for every conflict under it. A click on a link of this row selects the row before the link
+    // runs, so a user who clicks the link has always selected this node, whatever was selected before the press.
+    if (selectedNodes.any { node -> node === this }) return collectConflictFiles(this)
     val files = LinkedHashSet<VirtualFile>()
     selectedNodes
-      .filter { node -> node !== this && node.isUnderTag(CONFLICTS_NODE_TAG) }
+      .filter { node -> node.isUnderTag(CONFLICTS_NODE_TAG) }
       .forEach { node -> files.addAll(collectConflictFiles(node)) }
     return files.toList()
   }
