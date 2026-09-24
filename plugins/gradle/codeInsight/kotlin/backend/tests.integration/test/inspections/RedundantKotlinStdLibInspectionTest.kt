@@ -88,6 +88,22 @@ class RedundantKotlinStdLibInspectionTest : K2GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+  fun testKotlinWithVersionInFirstArgMethod(gradleVersion: GradleVersion) {
+    runTest(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
+      testHighlighting(
+        """
+        plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+        dependencies { 
+            <warning>api(kotlin("stdlib:2.2.0"))</warning>
+        }
+        """.trimIndent()
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
   fun testKotlinMethodNoVersion(gradleVersion: GradleVersion) {
     runTest(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
       testHighlighting(

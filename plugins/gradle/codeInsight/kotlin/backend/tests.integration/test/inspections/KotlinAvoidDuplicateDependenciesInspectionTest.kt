@@ -604,6 +604,22 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
   @ParameterizedTest
   @AllGradleVersionsSource
   @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+  fun testEquivalentKotlinArgWithVersionInFirstArg(gradleVersion: GradleVersion) {
+    runTest(gradleVersion, withVersionCatalogs = false) {
+      testHighlighting(
+        """
+        dependencies {
+            <weak_warning>api(kotlin("stdlib", "2.2.0"))</weak_warning>
+            <weak_warning>api(kotlin("stdlib:2.2.0"))</weak_warning>
+        }
+        """.trimIndent()
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
   fun testEquivalentKotlinArgWithNamedArguments(gradleVersion: GradleVersion) {
     runTest(gradleVersion, withVersionCatalogs = false) {
       testHighlighting(
