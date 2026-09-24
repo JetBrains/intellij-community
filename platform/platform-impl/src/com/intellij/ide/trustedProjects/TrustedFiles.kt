@@ -30,17 +30,22 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicLong
 
 /**
- * Per-file trust: whether [a file][VirtualFile] opened in a project may use the full IDE functionality,
- * or has to stay in the safe mode (plain text editor, no inspections, no external tools).
+ * Determines whether [a file][VirtualFile] opened in a project may use the full IDE functionality
+ * or has to stay in safe mode.
  *
- * Only a file the user opened from an external source is a safe-mode candidate
- * (see [markExternallyOpened]). Such a file is untrusted until it lies inside the project's own roots
- * (the project itself is guarded by the project-level trust check, see [TrustedProjects]) or under
- * an explicitly trusted location (see [TrustedProjects.isProjectTrusted] by path). The user can trust
- * the file location from the editor banner (`UntrustedFileNotificationProvider`).
+ * For local files, an explicitly trusted location has the highest priority: a file under such
+ * a location is trusted regardless of the trust state of the project it belongs to.
  *
- * A file the IDE opens on its own (a scratch, a console, the custom VM options file, a library source)
- * is never marked, so it stays trusted.
+ * Otherwise, a file inside the project's roots follows the project trust state
+ * (see [com.intellij.ide.trustedProjects.TrustedProjects]).
+ *
+ * A file outside the project's roots is subject to safe mode only when it was opened from an external
+ * source (see [markExternallyOpened]). Such a file remains untrusted until its location is explicitly
+ * trusted. Files opened by the IDE itself outside the project roots, such as scratches, consoles,
+ * or the custom VM options file, remain trusted.
+ *
+ * The user can explicitly trust a file location from the editor banner
+ * (`UntrustedFileNotificationProvider`).
  */
 @ApiStatus.Experimental
 object TrustedFiles {
@@ -49,6 +54,9 @@ object TrustedFiles {
 
   /**
    * Returns `true` when [file] opened in [project] may use the full IDE functionality.
+   *
+   * The result takes into account explicit trust of the file location, the trust state of the
+   * containing project, and whether a file outside the project was opened from an external source.
    *
    * Functionality that can execute code from the file or pass it to external tools must not run
    * when this method returns `false`.
@@ -69,12 +77,15 @@ object TrustedFiles {
   }
 
   /**
-   * Returns `true` when per-file trust governs [file] in [project]: the file is an externally
-   * opened local file outside the project's roots (see [markExternallyOpened]).
+   * Returns `true` when [file] is an externally opened local file outside the roots of [project]
+   * and therefore is a safe-mode candidate on its own (see [markExternallyOpened]).
    *
-   * The result does not depend on the trust state of the file location. When the safe mode
-   * is off, or the trust check is disabled, the project-level trust governs every file,
-   * so the method returns `false`.
+   * The result does not depend on the current trust state of the file location: explicitly trusting
+   * the location changes the file's trust verdict, but does not change whether the file is classified
+   * as an externally opened file outside the project.
+   *
+   * When safe mode is disabled, trust checks are disabled, or the project does not participate in
+   * this trust model, the method returns `false`.
    */
   @ApiStatus.Internal
   @JvmStatic
@@ -96,12 +107,16 @@ object TrustedFiles {
 
   /**
    * Marks [file] as opened from an external source: the system file manager, the command line,
-   * a protocol URI, or drag and drop. Only a marked file is a safe-mode candidate.
+   * a protocol URI, or drag and drop.
+   *
+   * The mark affects files outside project roots: such a file is kept in safe mode until its
+   * location is explicitly trusted. For files inside project roots, the mark does not affect
+   * the trust verdict; they follow the project trust unless their location is explicitly trusted.
    *
    * Call this method before the editor opens: editor provider selection reads the trust state.
-   * The mark is stored at the application level, so the file stays a safe-mode candidate after
-   * a restart and after a reopen from Recent Files. The mark works independently of
-   * [SAFE_MODE_REGISTRY_KEY], so the state is correct when the registry value changes later.
+   * The mark is stored at the application level, so it survives IDE restart and reopening the file
+   * from Recent Files. The mark works independently of [SAFE_MODE_REGISTRY_KEY], so the state remains
+   * available if the registry value changes later.
    */
   @ApiStatus.Internal
   @JvmStatic
@@ -209,15 +224,26 @@ internal class TrustedFilesCache(private val project: Project, private val scope
   }
 
   private fun computeTrusted(nioPath: Path): Boolean {
-    // only a file opened from an external source is a safe-mode candidate;
-    // an IDE-internal file (a scratch, a console, the custom VM options file) stays trusted
+    // Explicitly trusted locations override the project trust state.
+    if (TrustedProjects.getProjectTrustedState(nioPath) == ThreeState.YES) {
+      return true
+    }
+
+    val roots = TrustedProjectsLocator.locateProject(project).projectRoots
+    val isInsideProject = roots.any { nioPath.startsWith(it) }
+
+    // Files inside the project follow the project trust unless explicitly trusted above.
+    if (isInsideProject) {
+      return TrustedProjects.isProjectTrusted(project)
+    }
+
+    // IDE-internal files outside the project are not subject to per-file safe mode.
     if (!ExternallyOpenedFiles.getInstance().isMarked(nioPath)) {
       return true
     }
-    val roots = TrustedProjectsLocator.locateProject(project).projectRoots
-    return roots.any { nioPath.startsWith(it) } ||
-           // UNSURE is not enough: a marked outside file is untrusted until its location is explicitly trusted
-           TrustedProjects.getProjectTrustedState(nioPath) == ThreeState.YES
+
+    // An externally opened file outside the project stays untrusted until its location is trusted.
+    return false
   }
 
   /** Recomputes every cached verdict and reopens the editors of files that became trusted. */

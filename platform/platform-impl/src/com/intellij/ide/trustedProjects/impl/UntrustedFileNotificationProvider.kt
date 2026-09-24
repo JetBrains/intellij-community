@@ -24,7 +24,7 @@ import javax.swing.JComponent
  */
 internal class UntrustedFileNotificationProvider : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
-    if (TrustedFiles.isTrusted(file, project)) return null
+    if (TrustedFiles.isTrusted(file, project) || !TrustedFiles.isTrustDecidedByFile(file, project)) return null
     val filePath = file.fileSystem.getNioPath(file) ?: return null
 
     return Function { fileEditor ->

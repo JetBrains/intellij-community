@@ -9,6 +9,7 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.SystemProperty
@@ -144,6 +145,68 @@ class TrustedFilesTest {
   }
 
   @Test
+  fun `a file inside a trusted project is trusted regardless of the external mark`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      Registry.get(TrustedFiles.SAFE_MODE_REGISTRY_KEY).setValue(true, asDisposable())
+      val project = projectFixture.get()
+      val projectPath = Path.of(project.basePath!!)
+      TrustedProjects.setProjectTrusted(projectPath, true)
+
+      val insidePath = projectPath.resolve("inside-trusted.txt")
+      Files.writeString(insidePath, "text")
+      val file = requireNotNull(writeIntentReadAction {
+        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(insidePath)
+      })
+
+      assertTrue(TrustedFiles.isTrusted(file, project))
+      TrustedFiles.markExternallyOpened(file)
+      assertTrue(TrustedFiles.isTrusted(file, project))
+    }
+
+  @Test
+  fun `a file inside an untrusted project is untrusted regardless of the external mark`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      Registry.get(TrustedFiles.SAFE_MODE_REGISTRY_KEY).setValue(true, asDisposable())
+      val project = projectFixture.get()
+      val projectPath = Path.of(project.basePath!!)
+      TrustedProjects.setProjectTrusted(projectPath, false)
+
+      val unmarkedPath = projectPath.resolve("inside-unmarked.txt")
+      Files.writeString(unmarkedPath, "text")
+      val unmarked = requireNotNull(writeIntentReadAction {
+        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(unmarkedPath)
+      })
+      assertFalse(TrustedFiles.isTrusted(unmarked, project))
+
+      val markedPath = projectPath.resolve("inside-marked.txt")
+      Files.writeString(markedPath, "text")
+      val marked = requireNotNull(writeIntentReadAction {
+        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(markedPath)
+      })
+      TrustedFiles.markExternallyOpened(marked)
+      assertFalse(TrustedFiles.isTrusted(marked, project))
+    }
+
+  @Test
+  fun `an explicitly trusted file inside an untrusted project is trusted`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      Registry.get(TrustedFiles.SAFE_MODE_REGISTRY_KEY).setValue(true, asDisposable())
+      val project = projectFixture.get()
+      val projectPath = Path.of(project.basePath!!)
+      TrustedProjects.setProjectTrusted(projectPath, false)
+
+      val insidePath = projectPath.resolve("explicitly-trusted.txt")
+      Files.writeString(insidePath, "text")
+      val file = requireNotNull(writeIntentReadAction {
+        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(insidePath)
+      })
+
+      assertFalse(TrustedFiles.isTrusted(file, project))
+      TrustedProjects.setProjectTrusted(insidePath, true)
+      assertTrue(TrustedFiles.isTrusted(file, project))
+    }
+
+  @Test
   fun `marked outside files are untrusted until their location is trusted`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       Registry.get(TrustedFiles.SAFE_MODE_REGISTRY_KEY).setValue(true, asDisposable())
@@ -159,16 +222,6 @@ class TrustedFilesTest {
       val sibling = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(siblingFile))
       TrustedFiles.markExternallyOpened(file)
       TrustedFiles.markExternallyOpened(sibling)
-
-      // a file inside the project's own roots is trusted even when it is marked
-      val insidePath = Path.of(project.basePath!!).resolve("inside.txt")
-      Files.writeString(insidePath, "text")
-      // refreshing under an open project's root fires VFS events synchronously and needs the write-intent lock
-      val inside = requireNotNull(writeIntentReadAction {
-        VirtualFileManager.getInstance().refreshAndFindFileByNioPath(insidePath)
-      })
-      TrustedFiles.markExternallyOpened(inside)
-      assertTrue(TrustedFiles.isTrusted(inside, project))
 
       assertFalse(TrustedFiles.isTrusted(file, project))
       assertFalse(TrustedFiles.isTrusted(sibling, project))
@@ -213,11 +266,8 @@ class TrustedFilesTest {
     val outsideFile = tempPath.resolve("stale.txt")
     Files.writeString(outsideFile, "text")
     val file = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(outsideFile))
-    TrustedFiles.markExternallyOpened(file)
-    TrustedProjects.setProjectTrusted(outsideFile, true)
 
-    // while armed, the locator holds the trust check open and then reports the file inside the project roots,
-    // so the held check computes a trusted verdict after the test has revoked the trust
+    // while armed, the locator holds the trust check open while another thread invalidates the cache
     val armed = AtomicBoolean()
     val entered = CountDownLatch(1)
     val proceed = CountDownLatch(1)
@@ -228,7 +278,7 @@ class TrustedFilesTest {
         }
         entered.countDown()
         proceed.await()
-        return listOf(tempPath)
+        return emptyList()
       }
 
       override fun getProjectRoots(projectRoot: Path, project: Project?): List<Path> = emptyList()
@@ -239,14 +289,13 @@ class TrustedFilesTest {
     withContext(Dispatchers.IO) { entered.await() }
     armed.set(false)
 
-    val trustedPaths = TrustedPaths.getInstance()
-    trustedPaths.setExplicitlyTrustedPaths(trustedPaths.getExplicitlyTrustedPaths() - outsideFile.toString())
-    val locatedFile = TrustedProjectsLocator.locateProject(outsideFile, project = null)
-    application.messageBus.syncPublisher(TrustedProjectsListener.TOPIC).onProjectUntrusted(locatedFile)
+    val locatedProject = TrustedProjectsLocator.locateProject(project)
+    application.messageBus.syncPublisher(TrustedProjectsListener.TOPIC).onProjectUntrusted(locatedProject)
 
-    // the check started before the revocation may still answer with the old verdict, but must not cache it
+    // the check started before the invalidation may still answer with the old verdict, but must not cache it
     proceed.countDown()
     assertTrue(staleCheck.await())
+    ExternallyOpenedFiles.getInstance().mark(outsideFile)
     assertFalse(TrustedFiles.isTrusted(file, project))
   }
 
