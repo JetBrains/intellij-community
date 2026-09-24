@@ -10,6 +10,7 @@ import com.intellij.mcpserver.McpToolFilterProvider
 import com.intellij.mcpserver.McpToolInvocationMode
 import com.intellij.mcpserver.McpToolSchema
 import com.intellij.mcpserver.frontend.settings.McpToolFilterConfigurable
+import com.intellij.mcpserver.frontend.settings.McpToolFilterPanel
 import com.intellij.mcpserver.frontend.settings.buildDescriptionRenderModel
 import com.intellij.mcpserver.frontend.settings.userConfigurableTools
 import com.intellij.mcpserver.impl.McpServerService
@@ -27,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import org.assertj.core.api.Assertions.assertThat
@@ -56,6 +58,32 @@ class McpToolFilterConfigurableTest {
     }
     finally {
       configurable.disposeUIResources()
+    }
+  }
+
+  /**
+   * IJPL-256380: the configurable used to build its Swing components in the constructor, which deadlocked on the AWT
+   * tree lock because configurables are instantiated on a background thread.
+   */
+  @Test
+  fun `configurable creates no UI until createComponent is called`(): Unit = runBlocking(Dispatchers.Default) {
+    val configurable = McpToolFilterConfigurable()
+
+    try {
+      assertThat(configurable.panel).isNull()
+      assertThat(configurable.displayName).isNotEmpty()
+      assertThat(configurable.isModified()).isFalse()
+
+      withContext(Dispatchers.EDT) {
+        configurable.createComponent()
+      }
+
+      assertThat(configurable.panel).isNotNull()
+    }
+    finally {
+      withContext(Dispatchers.EDT) {
+        configurable.disposeUIResources()
+      }
     }
   }
 
@@ -224,12 +252,13 @@ class McpToolFilterConfigurableTest {
   }
 
   @Test
-  fun `category on demand state ignores disabled tools`() {
+  fun `category on demand state ignores disabled tools`(): Unit = runBlocking(Dispatchers.EDT) {
     val configurable = McpToolFilterConfigurable()
     val enabledTool = testTool(name = "duplicate_name", fullyQualifiedName = "test.enabled")
     val disabledTool = testTool(name = "duplicate_name", fullyQualifiedName = "test.disabled")
 
     try {
+      configurable.createComponent()
       editableToolStates(configurable)[enabledTool.descriptor.fullyQualifiedName] = ToolState(enabled = true, routerOnly = true)
       editableToolStates(configurable)[disabledTool.descriptor.fullyQualifiedName] = ToolState(enabled = false, routerOnly = false)
 
@@ -291,18 +320,22 @@ class McpToolFilterConfigurableTest {
       .allSatisfy { row -> assertThat(row.length).isLessThanOrEqualTo(6) }
   }
 
+  private fun uiPanel(configurable: McpToolFilterConfigurable): McpToolFilterPanel {
+    return requireNotNull(configurable.panel) { "createComponent() must be called before accessing the UI state" }
+  }
+
   @Suppress("UNCHECKED_CAST")
   private fun editableToolStates(configurable: McpToolFilterConfigurable): MutableMap<String, ToolState> {
-    val field = McpToolFilterConfigurable::class.java.getDeclaredField("allToolStates")
+    val field = McpToolFilterPanel::class.java.getDeclaredField("allToolStates")
     field.isAccessible = true
-    return field.get(configurable) as MutableMap<String, ToolState>
+    return field.get(uiPanel(configurable)) as MutableMap<String, ToolState>
   }
 
   @Suppress("UNCHECKED_CAST")
   private fun toolEnabledCheckBox(configurable: McpToolFilterConfigurable, toolName: String): JBCheckBox {
-    val field = McpToolFilterConfigurable::class.java.getDeclaredField("toolRowViews")
+    val field = McpToolFilterPanel::class.java.getDeclaredField("toolRowViews")
     field.isAccessible = true
-    val toolRowViews = field.get(configurable) as Map<String, Any>
+    val toolRowViews = field.get(uiPanel(configurable)) as Map<String, Any>
     val toolRowView = toolRowViews.getValue(toolName)
     val enabledCheckBoxField = toolRowView.javaClass.getDeclaredField("enabledCheckBox")
     enabledCheckBoxField.isAccessible = true
@@ -310,16 +343,16 @@ class McpToolFilterConfigurableTest {
   }
 
   private fun calculateCategoryRouterOnlyState(configurable: McpToolFilterConfigurable, tools: List<McpTool>): ThreeStateCheckBox.State {
-    val method = McpToolFilterConfigurable::class.java.getDeclaredMethod("calculateCategoryRouterOnlyState", List::class.java)
+    val method = McpToolFilterPanel::class.java.getDeclaredMethod("calculateCategoryRouterOnlyState", List::class.java)
     method.isAccessible = true
-    return method.invoke(configurable, tools) as ThreeStateCheckBox.State
+    return method.invoke(uiPanel(configurable), tools) as ThreeStateCheckBox.State
   }
 
   @Suppress("UNCHECKED_CAST")
   private fun configurableTools(configurable: McpToolFilterConfigurable): List<McpTool> {
-    val field = McpToolFilterConfigurable::class.java.getDeclaredField("allTools")
+    val field = McpToolFilterPanel::class.java.getDeclaredField("allTools")
     field.isAccessible = true
-    return field.get(configurable) as List<McpTool>
+    return field.get(uiPanel(configurable)) as List<McpTool>
   }
 
   private fun testTool(name: String, fullyQualifiedName: String, userConfigurable: Boolean = true): McpTool {
