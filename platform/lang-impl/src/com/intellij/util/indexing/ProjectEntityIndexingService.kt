@@ -4,16 +4,16 @@ package com.intellij.util.indexing
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.roots.impl.ModuleRootEventImpl
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.wm.ex.isIndexingActivitiesSuppressedSync
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.SmartList
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark
@@ -22,9 +22,8 @@ import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
-import com.intellij.util.indexing.roots.processModuleRoot
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.util.indexing.roots.processLibrary
+import com.intellij.util.indexing.roots.processModuleRoot
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexChangedEvent
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexListener
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
@@ -44,13 +43,14 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-@Service(Service.Level.PROJECT)
 class ProjectEntityIndexingService(
   private val project: Project,
   private val scope: CoroutineScope,
-) : WorkspaceFileIndexListener {
+) : WorkspaceFileIndexListener, ModuleRootListener {
 
-  private val tracker = CustomEntitiesCausingReindexTracker()
+  override fun rootsChanged(event: ModuleRootEvent) {
+    indexChanges((event as ModuleRootEventImpl).infos)
+  }
 
   fun indexChanges(changes: List<RootsChangeRescanningInfo>) {
     if (FileBasedIndex.getInstance() !is FileBasedIndexImpl) return
@@ -245,17 +245,9 @@ class ProjectEntityIndexingService(
     }
   }
 
-  fun shouldCauseRescan(oldEntity: WorkspaceEntity?, newEntity: WorkspaceEntity?): Boolean {
-    return tracker.shouldRescan(oldEntity, newEntity, project)
-  }
-
   companion object {
     private val LOG = Logger.getInstance(ProjectEntityIndexingService::class.java)
     private val ROOT_CHANGES_LOGGER = RootChangesLogger()
-
-    fun getInstance(project: Project): ProjectEntityIndexingService {
-      return project.service()
-    }
 
     private fun logRootChanges(project: Project, isFullReindex: Boolean) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {

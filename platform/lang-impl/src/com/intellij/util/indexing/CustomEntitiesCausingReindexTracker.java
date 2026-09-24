@@ -19,6 +19,7 @@ import com.intellij.workspaceModel.core.fileIndex.DependencyDescription;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,10 +28,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-final class CustomEntitiesCausingReindexTracker {
+@ApiStatus.Internal
+public final class CustomEntitiesCausingReindexTracker {
   private Set<Class<? extends WorkspaceEntity>> customEntitiesToRescan;
 
-  CustomEntitiesCausingReindexTracker() {
+  public CustomEntitiesCausingReindexTracker() {
     //noinspection deprecation
     WorkspaceFileIndexImpl.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override public void extensionAdded(WorkspaceFileIndexContributor<?> extension, @NotNull PluginDescriptor pluginDescriptor) { reinit(); }
@@ -76,7 +78,7 @@ final class CustomEntitiesCausingReindexTracker {
   /**
    * If we have a custom logic for entity on reindexing, it should be mentioned in {@link #isEntityReindexingCustomised} method
    */
-  boolean shouldRescan(@Nullable WorkspaceEntity oldEntity, @Nullable WorkspaceEntity newEntity, @NotNull Project project) {
+  public boolean shouldRescan(@Nullable WorkspaceEntity oldEntity, @Nullable WorkspaceEntity newEntity, @NotNull Project project) {
     if (oldEntity == null && newEntity == null) throw new RuntimeException("Either old or new entity should not be null");
 
     // `ModuleEntity` should throw "rootChanged" only on change of dependencies.

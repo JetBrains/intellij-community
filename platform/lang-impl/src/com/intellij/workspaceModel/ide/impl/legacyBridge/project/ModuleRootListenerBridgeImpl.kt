@@ -8,13 +8,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
+import com.intellij.util.indexing.CustomEntitiesCausingReindexTracker
 import com.intellij.util.indexing.EntityIndexingServiceEx
-import com.intellij.util.indexing.ProjectEntityIndexingService
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleRootListenerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
 
 internal object ModuleRootListenerBridgeImpl : ModuleRootListenerBridge {
-
+  private val tracker = CustomEntitiesCausingReindexTracker()
   private val LOG = logger<ModuleRootListenerBridgeImpl>()
 
   override fun fireBeforeRootsChanged(project: Project, event: VersionedStorageChange) {
@@ -71,9 +71,8 @@ internal object ModuleRootListenerBridgeImpl : ModuleRootListenerBridge {
   }
 
   private fun shouldFireRootsChanged(events: VersionedStorageChange, project: Project): Boolean {
-    val indexingService = ProjectEntityIndexingService.getInstance(project)
     return (events as VersionedStorageChangeInternal).getAllChanges().any {
-      indexingService.shouldCauseRescan(it.oldEntity, it.newEntity)
+      tracker.shouldRescan(it.oldEntity, it.newEntity, project)
     }
   }
 }
