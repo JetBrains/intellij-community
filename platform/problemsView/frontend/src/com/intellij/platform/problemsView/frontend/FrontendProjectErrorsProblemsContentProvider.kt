@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.problemsView.frontend
 
+import com.intellij.analysis.problemsView.toolWindow.ProblemsViewBundle
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewState
 import com.intellij.analysis.problemsView.toolWindow.splitApi.isSplitProblemsViewKeyEnabled
 import com.intellij.openapi.diagnostic.thisLogger
@@ -20,6 +21,6 @@ internal class FrontendProjectErrorsProblemsContentProvider : FrontendProblemsVi
   }
 
   override fun matchesTabName(tabName: String): Boolean {
-    return tabName.contains("Project Errors")
+    return tabName.contains(ProblemsViewBundle.message("problems.view.project"))
   }
 }
