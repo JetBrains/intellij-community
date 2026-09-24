@@ -117,11 +117,6 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     Version.parseVersion(OS.CURRENT.version())?.toCompactString() ?: "unknown"
   }
 
-  private val backendTypingLatencyEvent = GROUP.registerVarargEvent(
-    "backend.typing.latency",
-    TOTAL_DURATION_FIELD, DURATION_90_FIELD, SECOND_LARGEST_DURATION_FIELD, OS_VERSION_FIELD,
-  )
-
   private val backendOutputLatencyEvent = GROUP.registerVarargEvent(
     "backend.output.latency",
     TOTAL_DURATION_FIELD, DURATION_90_FIELD, THIRD_LARGEST_DURATION_FIELD, OS_VERSION_FIELD,
@@ -244,15 +239,6 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   @JvmStatic
   fun logSessionRestored(project: Project, tabCount: Int) {
     sessionRestoredEvent.log(project, tabCount)
-  }
-
-  fun logBackendTypingLatency(totalDuration: Duration, duration90: Duration, secondLargestDuration: Duration) {
-    backendTypingLatencyEvent.log(
-      TOTAL_DURATION_FIELD with totalDuration,
-      DURATION_90_FIELD with duration90,
-      SECOND_LARGEST_DURATION_FIELD with secondLargestDuration,
-      OS_VERSION_FIELD with osVersion,
-    )
   }
 
   fun logBackendOutputLatency(totalDuration: Duration, duration90: Duration, thirdLargestDuration: Duration) {

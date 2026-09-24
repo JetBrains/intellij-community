@@ -18,7 +18,6 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.util.closeConnectorAndStopEmulation
 import java.util.concurrent.CancellationException
-import kotlin.time.TimeSource
 
 internal fun createTerminalInputChannel(
   services: JediTermServices,
@@ -61,14 +60,7 @@ private suspend fun handleInputEvent(event: TerminalInputEvent, services: JediTe
 
   when (event) {
     is TerminalWriteBytesEvent -> {
-      val eventTime = TimeSource.Monotonic.markNow()
-
-      if (isTypingBytes(event.bytes)) {
-        terminalStarter.sendTypedBytes(event.bytes, eventTime)
-      }
-      else {
-        terminalStarter.sendBytes(event.bytes, false)
-      }
+      terminalStarter.sendBytes(event.bytes, false)
     }
     is TerminalResizeEvent -> {
       val termSize = TermSize(event.newSize.columns, event.newSize.rows)
