@@ -287,7 +287,6 @@ a:com.intellij.execution.impl.DefaultExecutorGroup
 - com.intellij.execution.executors.ExecutorGroup
 - <init>():V
 c:com.intellij.execution.impl.DefaultNewRunConfigurationTreePopupFactory
-- com.intellij.execution.impl.NewRunConfigurationTreePopupFactory
 - <init>():V
 pf:com.intellij.execution.impl.DefaultNewRunConfigurationTreePopupFactory$GroupDescriptor
 - com.intellij.ide.util.treeView.NodeDescriptor
@@ -601,6 +600,42 @@ f:com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 - getOptions():com.intellij.execution.ui.layout.LayoutViewOptions
 f:com.intellij.execution.ui.layout.impl.ViewImpl
 - com.intellij.execution.ui.layout.View
+c:com.intellij.execution.util.EnvVariablesTable
+- com.intellij.execution.util.ListTableWithButtons
+- sf:Companion:com.intellij.execution.util.EnvVariablesTable$Companion
+- <init>():V
+- p:canDeleteElement(com.intellij.execution.util.EnvironmentVariable):Z
+- p:cloneElement(com.intellij.execution.util.EnvironmentVariable):com.intellij.execution.util.EnvironmentVariable
+- p:createElement():com.intellij.execution.util.EnvironmentVariable
+- p:createExtraToolbarActions():com.intellij.openapi.actionSystem.AnAction[]
+- p:createListModel():com.intellij.util.ui.ListTableModel
+- f:editVariableName(com.intellij.execution.util.EnvironmentVariable):V
+- getComponent():javax.swing.JComponent
+- f:getEnvironmentVariables():java.util.List
+- p:getSelection():java.util.List
+- p:isEmpty(com.intellij.execution.util.EnvironmentVariable):Z
+- sf:parseEnvsFromText(java.lang.String):java.util.Map
+- p:setModified():V
+- f:setPasteActionEnabled(Z):V
+- setValues(java.util.List):V
+f:com.intellij.execution.util.EnvVariablesTable$Companion
+- f:parseEnvsFromText(java.lang.String):java.util.Map
+pc:com.intellij.execution.util.EnvVariablesTable$NameColumnInfo
+- com.intellij.execution.util.ListTableWithButtons$ElementsColumnInfoBase
+- <init>(com.intellij.execution.util.EnvVariablesTable):V
+- p:getDescription(com.intellij.execution.util.EnvironmentVariable):java.lang.String
+- getEditor(com.intellij.execution.util.EnvironmentVariable):javax.swing.table.TableCellEditor
+- isCellEditable(com.intellij.execution.util.EnvironmentVariable):Z
+- setValue(com.intellij.execution.util.EnvironmentVariable,java.lang.String):V
+- valueOf(com.intellij.execution.util.EnvironmentVariable):java.lang.String
+pc:com.intellij.execution.util.EnvVariablesTable$ValueColumnInfo
+- com.intellij.execution.util.ListTableWithButtons$ElementsColumnInfoBase
+- <init>(com.intellij.execution.util.EnvVariablesTable):V
+- p:getDescription(com.intellij.execution.util.EnvironmentVariable):java.lang.String
+- getEditor(com.intellij.execution.util.EnvironmentVariable):javax.swing.table.TableCellEditor
+- isCellEditable(com.intellij.execution.util.EnvironmentVariable):Z
+- setValue(com.intellij.execution.util.EnvironmentVariable,java.lang.String):V
+- valueOf(com.intellij.execution.util.EnvironmentVariable):java.lang.String
 c:com.intellij.execution.util.ProgramParametersConfigurator
 - <init>():V
 - s:expandMacros(java.lang.String):java.lang.String

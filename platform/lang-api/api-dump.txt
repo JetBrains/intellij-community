@@ -697,8 +697,6 @@ c:com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel
 com.intellij.codeInspection.ui.StringValidatorWithSwingSelector
 - com.intellij.codeInspection.options.StringValidator
 - a:select(com.intellij.openapi.project.Project):java.lang.String
-a:com.intellij.execution.ExecutionTargetProvider
-- <init>():V
 c:com.intellij.execution.filters.CompositeFilter
 - com.intellij.execution.filters.Filter
 - com.intellij.execution.filters.FilterMixin
@@ -759,8 +757,6 @@ c:com.intellij.execution.filters.RegexpFilter
 - com.intellij.execution.filters.Filter
 - com.intellij.openapi.project.DumbAware
 - getPattern():java.util.regex.Pattern
-com.intellij.execution.impl.CheckableRunConfigurationEditor
-- a:checkEditorData(java.lang.Object):V
 com.intellij.execution.services.ServiceEventListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:handle(com.intellij.execution.services.ServiceEventListener$ServiceEvent):V
@@ -832,24 +828,6 @@ f:com.intellij.execution.util.EnvVariables
 - sf:parseFromText(java.lang.String):com.intellij.execution.util.EnvVariables
 f:com.intellij.execution.util.EnvVariables$Companion
 - f:parseFromText(java.lang.String):com.intellij.execution.util.EnvVariables
-c:com.intellij.execution.util.EnvVariablesTable
-- com.intellij.execution.util.ListTableWithButtons
-- sf:Companion:com.intellij.execution.util.EnvVariablesTable$Companion
-- <init>():V
-- f:editVariableName(com.intellij.execution.util.EnvironmentVariable):V
-- getComponent():javax.swing.JComponent
-- f:getEnvironmentVariables():java.util.List
-- sf:parseEnvsFromText(java.lang.String):java.util.Map
-- f:setPasteActionEnabled(Z):V
-- setValues(java.util.List):V
-f:com.intellij.execution.util.EnvVariablesTable$Companion
-- f:parseEnvsFromText(java.lang.String):java.util.Map
-pc:com.intellij.execution.util.EnvVariablesTable$NameColumnInfo
-- com.intellij.execution.util.ListTableWithButtons$ElementsColumnInfoBase
-- <init>(com.intellij.execution.util.EnvVariablesTable):V
-pc:com.intellij.execution.util.EnvVariablesTable$ValueColumnInfo
-- com.intellij.execution.util.ListTableWithButtons$ElementsColumnInfoBase
-- <init>(com.intellij.execution.util.EnvVariablesTable):V
 c:com.intellij.execution.util.EnvironmentVariable
 - com.intellij.openapi.util.JDOMExternalizable
 - java.lang.Cloneable

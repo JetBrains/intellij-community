@@ -123,6 +123,10 @@ a:com.intellij.execution.ExecutionTargetManager
 - a:getTargetsFor(com.intellij.execution.configurations.RunConfiguration):java.util.List
 - a:setActiveTarget(com.intellij.execution.ExecutionTarget):V
 - a:update():V
+a:com.intellij.execution.ExecutionTargetProvider
+- sf:EXTENSION_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- a:getTargets(com.intellij.openapi.project.Project,com.intellij.execution.configurations.RunConfiguration):java.util.List
 a:com.intellij.execution.Executor
 - <init>():V
 - a:getActionName():java.lang.String
@@ -720,6 +724,8 @@ a:com.intellij.execution.filters.TextConsoleBuilder
 a:com.intellij.execution.filters.TextConsoleBuilderFactory
 - a:createBuilder(com.intellij.openapi.project.Project):com.intellij.execution.filters.TextConsoleBuilder
 - s:getInstance():com.intellij.execution.filters.TextConsoleBuilderFactory
+com.intellij.execution.impl.CheckableRunConfigurationEditor
+- a:checkEditorData(java.lang.Object):V
 a:com.intellij.execution.junit.RuntimeConfigurationProducer
 - com.intellij.openapi.project.PossiblyDumbAware
 - java.lang.Cloneable

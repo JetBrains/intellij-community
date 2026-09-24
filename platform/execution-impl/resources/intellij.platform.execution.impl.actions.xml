@@ -70,6 +70,8 @@
       <keyboard-shortcut first-keystroke="control F10" keymap="$default"/>
     </action>
     <action id="PauseOutput" class="com.intellij.execution.actions.PauseOutputAction"/>
+    <action id="Runner.FocusOnStartup" class="com.intellij.execution.ui.actions.FocusOnStartAction"/>
+
     <group id="RunToolbarMoreActionGroup" class="com.intellij.execution.runToolbar.RunToolbarMoreActionGroup" overrides="true" keep-content="true"/>
     <group id="RunToolbarMainMoreActionGroup" class="com.intellij.execution.runToolbar.RunToolbarMoreActionGroup" overrides="true" keep-content="true"/>
     <group id="RunContextGroupMore" class="com.intellij.ide.actions.SmartPopupActionGroup" overrides="true" keep-content="true"/>

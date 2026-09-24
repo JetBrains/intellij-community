@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util
 
 import com.intellij.execution.ExecutionBundle
@@ -51,6 +51,14 @@ open class EnvVariablesTable : ListTableWithButtons<EnvironmentVariable>() {
 
   override fun createListModel(): ListTableModel<EnvironmentVariable>? {
     return ListTableModel<EnvironmentVariable>(this.NameColumnInfo(), this.ValueColumnInfo())
+  }
+
+  override fun setModified() {
+    super.setModified()
+  }
+
+  override fun getSelection(): List<EnvironmentVariable> {
+    return super.getSelection()
   }
 
   fun editVariableName(environmentVariable: EnvironmentVariable) {
@@ -201,7 +209,7 @@ open class EnvVariablesTable : ListTableWithButtons<EnvironmentVariable>() {
       for (environmentVariable in variables) {
         if (isEmpty(environmentVariable)) continue
         if (!sb.isEmpty()) sb.append(';')
-        sb.append(StringUtil.escapeChars(environmentVariable!!.getName(), '=', ';', '\n')).append('=')
+        sb.append(StringUtil.escapeChars(environmentVariable.getName(), '=', ';', '\n')).append('=')
           .append(StringUtil.escapeChars(environmentVariable.getValue(), '=', ';', '\n'))
       }
       CopyPasteManager.getInstance().setContents(StringSelection(sb.toString()))

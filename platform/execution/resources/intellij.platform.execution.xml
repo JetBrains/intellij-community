@@ -42,6 +42,7 @@
     <extensionPoint qualifiedName="com.intellij.runConfigurationProducerSuppressor" interface="com.intellij.execution.RunConfigurationProducerSuppressor" dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.executionTargetType"
                     interface="com.intellij.execution.target.TargetEnvironmentType" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.executionTargetProvider" interface="com.intellij.execution.ExecutionTargetProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.executionTargetLanguageRuntimeType"
                     interface="com.intellij.execution.target.LanguageRuntimeType" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.analyzeStacktraceFilter" interface="com.intellij.execution.filters.Filter" area="IDEA_PROJECT" dynamic="true"/>
