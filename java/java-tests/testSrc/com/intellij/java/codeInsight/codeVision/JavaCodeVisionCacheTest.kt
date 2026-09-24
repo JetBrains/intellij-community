@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.JavaCodeInsightTestCase
 import com.intellij.codeInsight.daemon.impl.UsageCounterConfiguration
 import com.intellij.codeInsight.daemon.impl.UsagesCountManager
+import com.intellij.concurrency.ConcurrencyUtils
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDocumentManager
@@ -87,11 +88,11 @@ class JavaCodeVisionCacheTest : JavaCodeInsightTestCase() {
     require(externalComputations.get() == 0)
     configureAndOpenLocalFile()
     val testMember = findTestMember()
-    usagesCountManager.countMemberUsages(testMember.containingFile, testMember)
+    countUsages(testMember, usagesCountManager)
     require(localComputations.get() == 1)
     require(externalComputations.get() == 1)
     typeAndCommit("test();")
-    usagesCountManager.countMemberUsages(testMember.containingFile, testMember)
+    countUsages(testMember, usagesCountManager)
     require(localComputations.get() == 2)
     require(externalComputations.get() == 1)
   }
@@ -115,8 +116,10 @@ class JavaCodeVisionCacheTest : JavaCodeInsightTestCase() {
     return member
   }
 
-  private fun countUsages(member: PsiMember): Int {
-    return UsagesCountManager.getInstance(project).countMemberUsages(member.containingFile, member)
+  private fun countUsages(member: PsiMember, manager: UsagesCountManager = UsagesCountManager.getInstance(project)): Int {
+    return ConcurrencyUtils.runWithIndicatorOrContextCancellation {
+      manager.countMemberUsages(member.containingFile, member)
+    }
   }
 
   private fun typeAndCommit(s: String) {
