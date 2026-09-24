@@ -27,7 +27,16 @@ import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-internal val RELEVANT_NON_PYTHON_FILES: Map<String, (Module) -> Boolean> =
+/**
+ * Non-Python files that may still warrant the "no interpreter" notification, each with the check that decides whether
+ * this module is one where it applies.
+ *
+ * Computed per call rather than kept in a property: reading [PyProjectSdkConfigurationExtension.potentialDependencyFiles]
+ * instantiates the extensions, which honours cancellation, and the callers run inside a cancellable read action. From a
+ * static initializer that cancellation would surface as an `ExceptionInInitializerError` and leave the class unusable for
+ * the rest of the session. Recomputing also keeps the set honest when a plugin is loaded or unloaded.
+ */
+internal fun relevantNonPythonFiles(): Map<String, (Module) -> Boolean> =
   mutableMapOf("README.md" to ::moduleContainsPythonFiles) +
   PyProjectSdkConfigurationExtension.potentialDependencyFiles.associateWith { { true } }
 
@@ -40,7 +49,7 @@ class PyInterpreterNotificationProvider : EditorNotificationProvider, DumbAware 
 
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     val psiFile = PsiManager.getInstance(project).findFile(file) ?: return null
-    val nonPythonRelevantCheck = RELEVANT_NON_PYTHON_FILES[file.name]
+    val nonPythonRelevantCheck = relevantNonPythonFiles()[file.name]
     if (psiFile is PyFile && isFileIgnored(psiFile)) return null
     if (psiFile !is PyFile && nonPythonRelevantCheck == null) return null
 

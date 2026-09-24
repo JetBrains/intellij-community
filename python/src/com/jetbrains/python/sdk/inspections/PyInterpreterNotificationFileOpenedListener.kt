@@ -21,7 +21,7 @@ import com.intellij.ui.EditorNotifications
  */
 internal class PyInterpreterNotificationFileOpenedListener : FileEditorManagerListener {
   override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-    if (file.name !in RELEVANT_NON_PYTHON_FILES) return
+    if (file.name !in relevantNonPythonFiles()) return
     DumbService.getInstance(source.project).runWhenSmart {
       EditorNotifications.getInstance(source.project).updateNotifications(file)
     }
