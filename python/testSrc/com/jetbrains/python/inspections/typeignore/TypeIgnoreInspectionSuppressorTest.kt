@@ -313,6 +313,21 @@ class TypeIgnoreInspectionSuppressorTest : PyTestCase() {
     """)
   }
 
+  @TestFor(issues = ["PY-92114"])
+  fun testUnknownNamespacedCodeSuppressesNothing() {
+    doTestByText("""
+      print(2 + <warning descr="Expected type 'int', got 'Literal[\"foo\"]' instead">'foo'</warning>)  # type: ignore[pycharm:amongus]
+    """)
+  }
+
+  /** A `Py` id that no loaded inspection owns targets only that id. It is not a blanket suppression. */
+  @TestFor(issues = ["PY-92114"])
+  fun testNamespacedPyIdOfNoLoadedInspectionSuppressesNothingElse() {
+    doTestByText("""
+      print(2 + <warning descr="Expected type 'int', got 'Literal[\"foo\"]' instead">'foo'</warning>)  # type: ignore[pycharm:PyNotLoadedInspection]
+    """)
+  }
+
   // PY-90627: the `# pycharm: ignore[...]` directive.
 
   @TestFor(issues = ["PY-90627", "PY-90787"])

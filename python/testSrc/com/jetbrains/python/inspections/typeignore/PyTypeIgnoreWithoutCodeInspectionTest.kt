@@ -80,6 +80,13 @@ class PyTypeIgnoreWithoutCodeInspectionTest : PyCodeInsightTestCase() {
     x = 1  # type: ignore[unresolved-references]
     """)
 
+  /** PyUnknownIgnoreCodeInspection reports an unknown PyCharm code, so this inspection stays silent. */
+  @Test
+  @TestFor(issues = ["PY-92114"])
+  fun `unknown pycharm code not flagged`() = test("""
+    x = 1  # type: ignore[pycharm:amongus]
+    """)
+
   @Test
   @TestFor(issues = ["PY-90627"])
   fun `bare pycharm ignore flagged`() = test("""

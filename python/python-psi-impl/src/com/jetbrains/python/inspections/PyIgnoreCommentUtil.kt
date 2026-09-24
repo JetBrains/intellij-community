@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -39,23 +40,47 @@ object PyIgnoreCommentUtil {
    */
   data class CodeRef(val name: String, val pycharmNamespaced: Boolean)
 
+  /** A raw code of an ignore comment and its range in the comment text. */
+  data class CodeOccurrence(val rawCode: String, val range: TextRange)
+
+  /**
+   * The codes of an ignore comment in source order. [bracketContent] is the range between the brackets in the
+   * comment text. It is `null` when the comment has no brackets.
+   */
+  data class IgnoreCodes(val directive: Directive, val occurrences: List<CodeOccurrence>, val bracketContent: TextRange?)
+
   /** Parses [comment] as one of the two directives, or returns `null` if it is neither. */
   fun parse(comment: PsiComment): ParsedIgnore? {
-    val text = comment.text ?: return null
-    parseWith(text, PyTypingTypeProvider.TYPE_IGNORE_PATTERN, Directive.TYPE)?.let { return it }
-    return parseWith(text, PYCHARM_IGNORE_PATTERN, Directive.PYCHARM)
+    val codes = parseCodes(comment) ?: return null
+    return ParsedIgnore(codes.directive, codes.occurrences.mapTo(LinkedHashSet()) { it.rawCode })
   }
 
-  private fun parseWith(text: String, pattern: Pattern, directive: Directive): ParsedIgnore? {
+  /** Parses [comment] like [parse], and keeps the range of each code. */
+  fun parseCodes(comment: PsiComment): IgnoreCodes? {
+    val text = comment.text ?: return null
+    return parseCodesWith(text, PyTypingTypeProvider.TYPE_IGNORE_PATTERN, Directive.TYPE)
+           ?: parseCodesWith(text, PYCHARM_IGNORE_PATTERN, Directive.PYCHARM)
+  }
+
+  private fun parseCodesWith(text: String, pattern: Pattern, directive: Directive): IgnoreCodes? {
     val matcher = pattern.matcher(text)
     if (!matcher.matches()) return null
-    val bracketGroup = matcher.group(1) ?: return ParsedIgnore(directive, emptySet())
-    val codes = LinkedHashSet<String>()  // preserve source order for deterministic merges
-    for (part in bracketGroup.substring(1, bracketGroup.length - 1).split(',')) {
+    if (matcher.group(1) == null) return IgnoreCodes(directive, emptyList(), null)
+    val bracketContent = TextRange(matcher.start(1) + 1, matcher.end(1) - 1)
+    val occurrences = ArrayList<CodeOccurrence>()
+    var partStart = bracketContent.startOffset
+    while (partStart <= bracketContent.endOffset) {
+      val comma = text.indexOf(',', partStart)
+      val partEnd = if (comma < 0 || comma > bracketContent.endOffset) bracketContent.endOffset else comma
+      val part = text.substring(partStart, partEnd)
       val code = part.trim()
-      if (code.isNotEmpty()) codes.add(code)
+      if (code.isNotEmpty()) {
+        val codeStart = partStart + part.indexOf(code)
+        occurrences.add(CodeOccurrence(code, TextRange(codeStart, codeStart + code.length)))
+      }
+      partStart = partEnd + 1
     }
-    return ParsedIgnore(directive, codes)
+    return IgnoreCodes(directive, occurrences, bracketContent)
   }
 
   /**

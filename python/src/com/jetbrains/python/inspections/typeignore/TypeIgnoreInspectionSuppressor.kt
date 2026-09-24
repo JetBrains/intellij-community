@@ -21,6 +21,8 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
  *    `pycharm:` prefix. It suppresses the whole inspection.
  *  - a granular type-checker code (`unsupported-operator`). [com.jetbrains.python.inspections.PyTypeCheckerProblemReporter]
  *    applies it. Here it only counts as a known code.
+ *  - a PyCharm code that names nothing, such as `pycharm:amongus`. It suppresses nothing.
+ *    [PyUnknownIgnoreCodeInspection] reports it.
  *  - a foreign code, such as mypy's `attr-defined`. It is not a known code.
  *
  * A comment that names no PyCharm code suppresses every inspection on the line. The one exception is
@@ -53,7 +55,7 @@ private fun suppresses(comment: PsiComment, toolId: String): Boolean {
     when (val resolution = PyIgnoreCodeResolver.resolve(ref)) {
       is PyIgnoreCodeResolver.Resolution.Inspection -> if (resolution.suppressId == toolId) return true
       PyIgnoreCodeResolver.Resolution.Foreign -> continue
-      PyIgnoreCodeResolver.Resolution.Granular -> Unit
+      PyIgnoreCodeResolver.Resolution.Granular, PyIgnoreCodeResolver.Resolution.Unknown -> Unit
     }
     namesPyCharmCode = true
   }

@@ -521,6 +521,11 @@
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.type.hinting"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="com.jetbrains.python.inspections.typeignore.PyTypeIgnoreWithoutCodeInspection"/>
+    <localInspection language="Python" shortName="PyUnknownIgnoreCodeInspection" suppressId="PyUnknownIgnoreCode"
+                     bundle="messages.PyPsiBundle" key="INSP.NAME.unknown.ignore.code"
+                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.type.hinting"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.typeignore.PyUnknownIgnoreCodeInspection"/>
     <localInspection language="Python" shortName="PyRelativeImportInspection" suppressId="PyPackages"
                      bundle="messages.PyPsiBundle" key="INSP.NAME.relative.import"
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.general"

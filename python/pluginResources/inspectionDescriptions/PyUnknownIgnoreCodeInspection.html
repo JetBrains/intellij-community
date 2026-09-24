@@ -1,0 +1,13 @@
+<html>
+<body>
+<p>Reports a PyCharm code in a <code># type: ignore</code> or <code># pycharm: ignore</code> comment that names no
+  inspection.</p>
+<p>A PyCharm code has the <code>pycharm:</code> namespace, as in <code># type: ignore[pycharm:unsupported-operatr]</code>,
+  or it stands in a <code># pycharm: ignore</code> comment. A code that names no inspection suppresses nothing.</p>
+<p>A bare code in <code># type: ignore</code>, such as mypy's <code>attr-defined</code>, is not reported, because
+  other type checkers use their own codes there. A name that starts with <code>Py</code> and a capital letter is
+  not reported either, because it can name an inspection of another edition or of a disabled plugin.</p>
+<p>The quick fix removes the unknown code. The fix is not available when only codes of other type checkers
+  stay, because such a comment suppresses every inspection on its line.</p>
+</body>
+</html>

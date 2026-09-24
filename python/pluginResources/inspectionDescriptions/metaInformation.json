@@ -63,6 +63,10 @@
     {
       "id": "PyTypeIgnoreWithoutCodeInspection",
       "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyUnknownIgnoreCodeInspection",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }
