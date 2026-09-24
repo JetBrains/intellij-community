@@ -94,7 +94,7 @@ private class SymbolicLayoutProjector(
   private val preparationFacts: PluginSymbolicPreparationFacts,
   private val variant: PluginSymbolicVariant,
   private val nativePolicy: PluginSymbolicNativePolicy?,
-  private val cache: PluginSymbolicProjectionCache,
+  cache: PluginSymbolicProjectionCache,
   private val collectNativeContext: Boolean = false,
   private val nativeContexts: Map<String, String> = emptyMap(),
 ) {
@@ -263,12 +263,12 @@ private class SymbolicLayoutProjector(
 
   private fun contentDestination(name: String, loading: String?, customPaths: Set<String>): String? {
     if (loading == "embedded" && name in customPaths) return null
-    if (!descriptors.moduleXml.containsKey(name)) {
-      gap("module-descriptor:$name", "Declare the descriptor text or its known absence")
+    if (!descriptors.moduleDescriptors.containsKey(name)) {
+      gap("module-descriptor:$name", "Declare the descriptor fact or its known absence")
       return null
     }
-    val xml = descriptors.moduleXml.get(name)
-    if (xml == null && loading != "embedded") {
+    val descriptor = descriptors.moduleDescriptors.get(name)
+    if (descriptor == null && loading != "embedded") {
       gap("module-descriptor:$name", "The content module descriptor is missing")
       return null
     }
@@ -278,7 +278,7 @@ private class SymbolicLayoutProjector(
     val module = module(name) ?: return null
     val hasModuleLibraries = name !in layout.getModulesWithExcludedModuleLibraries() &&
                             libraryDependencies(module, withTests = false).any { it.libraryReference.parentReference is JpsModuleReference }
-    val separate = !cache.hasPackageAttribute(requireNotNull(xml)) || hasModuleLibraries || frontend.isSplit(layout.mainModule, name)
+    val separate = !requireNotNull(descriptor).hasPackage || hasModuleLibraries || frontend.isSplit(layout.mainModule, name)
     return when {
       separate -> "modules/$name.jar"
       name in customPaths -> null
@@ -346,10 +346,10 @@ private class SymbolicLayoutProjector(
     }
     assembly.addOriginalModule(destination, moduleSources, testOutput = module.name in catalogue.testModules, descriptorModule = module.name == layout.mainModule)
     if (variant.searchableOptions && module.name != BUILT_IN_HELP_MODULE_NAME) {
-      if (module.name != layout.mainModule && !descriptors.moduleXml.containsKey(module.name)) {
-        gap("searchable-options-descriptor:${module.name}", "Declare the layout module's descriptor text or its known absence")
+      if (module.name != layout.mainModule && !descriptors.moduleDescriptors.containsKey(module.name)) {
+        gap("searchable-options-descriptor:${module.name}", "Declare the layout module's descriptor fact or its known absence")
       }
-      else if (module.name == layout.mainModule || descriptors.moduleXml.get(module.name) != null) {
+      else if (module.name == layout.mainModule || descriptors.moduleDescriptors.get(module.name) != null) {
         val prepared = effect("searchable-options:${module.name}", "Declare the searchable-option inputs and ordered sources")
         assembly.addSources(destination, prepared?.sources.orEmpty())
       }

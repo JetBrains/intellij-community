@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.devDist
 
+import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
@@ -12,6 +13,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
+import java.nio.file.Files
 import java.nio.file.Path
 
 /**
@@ -405,7 +407,7 @@ class MemberDescriptorFacts(
 @ApiStatus.Internal
 fun memberDescriptor(module: JpsModule): MemberDescriptorFacts? {
   val file = descriptorFiles(module = module, loadPath = module.name + ".xml").firstOrNull() ?: return null
-  return MemberDescriptorFacts(hasPackageAttribute = hasRootXmlAttribute(file, "package"))
+  return MemberDescriptorFacts(hasPackageAttribute = parseContentAndXIncludes(Files.readAllBytes(file), file.toString()).hasPackage)
 }
 
 /**

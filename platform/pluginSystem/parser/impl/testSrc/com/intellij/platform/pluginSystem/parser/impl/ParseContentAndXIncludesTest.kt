@@ -2,6 +2,7 @@
 package com.intellij.platform.pluginSystem.parser.impl
 
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -32,5 +33,21 @@ internal class ParseContentAndXIncludesTest {
     val parseResult = parseContentAndXIncludes(input.toByteArray(), null)
     assertThat(parseResult.pluginId).isNull()
     assertThat(parseResult.contentModules).isEmpty()
+    assertThat(parseResult.hasPackage).isFalse()
+  }
+
+  @Test
+  fun `the root package attribute is read with the visibility`() {
+    val input = """<idea-plugin visibility="public" package="com.example"><content/></idea-plugin>"""
+    val parseResult = parseContentAndXIncludes(input.toByteArray(), null)
+    assertThat(parseResult.hasPackage).isTrue()
+    assertThat(parseResult.moduleVisibility).isEqualTo(ModuleVisibilityValue.PUBLIC)
+  }
+
+  @Test
+  fun `a package attribute below the root is not the root package`() {
+    val input = """<idea-plugin><content><module name="a" package="com.example"/></content></idea-plugin>"""
+    val parseResult = parseContentAndXIncludes(input.toByteArray(), null)
+    assertThat(parseResult.hasPackage).isFalse()
   }
 }

@@ -39,18 +39,22 @@ data class PluginSymbolicArtifactCatalogue(
 
 /**
  * Descriptor text must reflect the selected variant, resolved includes, and descriptor preparation.
- * A null value in [moduleXml] states that the descriptor is absent. An omitted key states that the fact is unknown.
+ * A null value in [moduleDescriptors] states that the descriptor is absent. An omitted key states that the fact is unknown.
  */
 @ApiStatus.Internal
 data class PluginSymbolicDescriptorFacts(
   @JvmField val pluginXml: String?,
   @JvmField val pluginXmlInput: String,
-  @JvmField val moduleXml: Map<String, String?>,
+  @JvmField val moduleDescriptors: Map<String, PluginSymbolicModuleDescriptor?>,
   @JvmField val frontendRoots: Set<String> = emptySet(),
   @JvmField val packedElsewhere: Set<String> = emptySet(),
   /** The input already contains all descriptor callbacks and version patches. */
   @JvmField val isPluginXmlFinal: Boolean = false,
 )
+
+/** The fact the projection reads out of one content module descriptor: whether its root declares a `package`. */
+@ApiStatus.Internal
+data class PluginSymbolicModuleDescriptor(@JvmField val hasPackage: Boolean)
 
 /** One development distribution. A null [distribution] projects the common part only. */
 @ApiStatus.Internal

@@ -1045,6 +1045,8 @@ class ContentParseResult(
   @JvmField val xIncludePaths: List<String>,
   /** Visibility of this content module descriptor root. Defaults to private when the attribute is absent. */
   @JvmField val moduleVisibility: ModuleVisibilityValue = ModuleVisibilityValue.PRIVATE,
+  /** Whether the descriptor root declares a `package` attribute. */
+  @JvmField val hasPackage: Boolean = false,
   /** Module dependencies from <dependencies><module name="..."/> elements */
   @JvmField val moduleDependencies: List<String> = emptyList(),
   /** Plugin dependencies from <dependencies><plugin id="..."/> elements */
@@ -1095,10 +1097,11 @@ private fun parseElementForContentAndIncludes(reader: XMLStreamReader2): Content
   val xIncludePaths = ArrayList<String>()
   val contentModules = ArrayList<ContentModuleElement>()
   var moduleVisibility = ModuleVisibilityValue.PRIVATE
+  var hasPackage = false
   for (i in 0 until reader.attributeCount) {
-    if (reader.getAttributeLocalName(i) == PluginXmlConst.CONTENT_MODULE_VISIBILITY_ATTR) {
-      moduleVisibility = readModuleVisibility(reader.getAttributeValue(i), reader)
-      break
+    when (reader.getAttributeLocalName(i)) {
+      PluginXmlConst.CONTENT_MODULE_VISIBILITY_ATTR -> moduleVisibility = readModuleVisibility(reader.getAttributeValue(i), reader)
+      PluginXmlConst.PLUGIN_PACKAGE_ATTR -> hasPackage = true
     }
   }
   val moduleDependencies = ArrayList<String>()
@@ -1180,6 +1183,7 @@ private fun parseElementForContentAndIncludes(reader: XMLStreamReader2): Content
     contentModules = contentModules,
     xIncludePaths = xIncludePaths,
     moduleVisibility = moduleVisibility,
+    hasPackage = hasPackage,
     moduleDependencies = moduleDependencies,
     pluginDependencies = pluginDependencies,
     pluginAliases = pluginAliases,
