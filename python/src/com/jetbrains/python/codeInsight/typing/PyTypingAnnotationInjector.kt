@@ -239,7 +239,8 @@ private fun registerCommentInjection(
   val annotationText = PyTypingTypeProvider.getTypeCommentValue(text)
   if (annotationText != null) {
     val language: Language?
-    if (PyTypingTypeProvider.TYPE_IGNORE_PATTERN.matcher(text).matches()) {
+    if (PyTypingTypeProvider.TYPE_IGNORE_PATTERN.matcher(text).matches() ||
+        PyTypingTypeProvider.TYPE_IGNORE_UNCLOSED_PATTERN.matcher(text).matches()) {
       language = null
     }
     else if (host.isFunctionTypeComment()) {

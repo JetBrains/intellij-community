@@ -6,8 +6,8 @@ import com.jetbrains.python.inspections.PyTypeCheckerSuppressionCode
 
 /**
  * Semantic resolution of the codes listed in a `# type: ignore` / `# pycharm: ignore` comment: which PyCharm
- * inspection (if any) a code names. Shared by [TypeIgnoreInspectionSuppressor], [PyTypeIgnoreWithoutCodeInspection]
- * and [PyUnknownIgnoreCodeInspection].
+ * inspection (if any) a code names. Shared by [TypeIgnoreInspectionSuppressor], [PyTypeIgnoreWithoutCodeInspection],
+ * [PyUnknownIgnoreCodeInspection] and [PyIgnoreCodeCompletionContributor].
  */
 internal object PyIgnoreCodeResolver {
   private val GRANULAR_TYPE_CHECKER_CODES: Set<String> = PyTypeCheckerSuppressionCode.entries.mapTo(HashSet()) { it.id }

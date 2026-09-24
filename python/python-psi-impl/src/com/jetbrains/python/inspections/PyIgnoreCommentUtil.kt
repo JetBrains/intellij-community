@@ -29,6 +29,14 @@ object PyIgnoreCommentUtil {
   @JvmField
   val PYCHARM_IGNORE_PATTERN: Pattern = Pattern.compile("#\\s*pycharm:\\s*ignore\\s*(\\[[^]#]*])?($|(\\s.*))", Pattern.CASE_INSENSITIVE)
 
+  /**
+   * An ignore comment of either directive whose code list is still open, as in `# type: ignore[attr-defined, un`.
+   * group(1) = the directive keyword, group(2) = the codes after the bracket. Completion matches it against the
+   * comment text before the caret.
+   */
+  @JvmField
+  val UNCLOSED_CODES_PATTERN: Pattern = Pattern.compile("#\\s*(type|pycharm):\\s*ignore\\s*\\[([^]#]*)", Pattern.CASE_INSENSITIVE)
+
   enum class Directive { TYPE, PYCHARM }
 
   /** A parsed ignore comment. [rawCodes] is empty for a bare comment or empty brackets. */

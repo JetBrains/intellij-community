@@ -825,6 +825,9 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
     val TYPE_IGNORE_PATTERN: Pattern = Pattern.compile("#\\s*type:\\s*ignore\\s*(\\[[^]#]*])?($|(\\s.*))", Pattern.CASE_INSENSITIVE)
 
+    /** A `# type: ignore` comment whose code list is still open, as in `# type: ignore[attr-defined, un`. */
+    val TYPE_IGNORE_UNCLOSED_PATTERN: Pattern = Pattern.compile("#\\s*type:\\s*ignore\\s*\\[[^]#]*", Pattern.CASE_INSENSITIVE)
+
     const val ASSERT_TYPE: String = "typing.assert_type"
     const val REVEAL_TYPE: String = "typing.reveal_type"
     const val REVEAL_TYPE_EXT: String = "typing_extensions.reveal_type"
