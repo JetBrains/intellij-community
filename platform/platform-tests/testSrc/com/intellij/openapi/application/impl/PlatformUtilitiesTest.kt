@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.concurrency.ConcurrencyUtils
 import com.intellij.concurrency.JobLauncher
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
@@ -738,19 +739,22 @@ class PlatformUtilitiesTest {
     val j1 = Job(coroutineContext.job)
     val j2 = Job(coroutineContext.job)
     val job = launch(Dispatchers.Default) {
-      JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(listOf(1, 2), { num ->
-        if (num == 1) {
-          j1.complete()
-          j2.asCompletableFuture().join()
+      ConcurrencyUtils.runWithIndicatorOrContextCancellation {
+        JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(listOf(1, 2)) { num ->
+          if (num == 1) {
+            j1.complete()
+            j2.asCompletableFuture().join()
+          }
+          if (num == 2) {
+            j2.asCompletableFuture().join()
+            // checkCanceled might not throw here,
+            // as cancellation machinery on another thread can work in parallel to the processing of this element.
+            // but the indicator should be canceled here anyway, so we assert exactly that:
+            assertThat { ProgressManager.getGlobalProgressIndicator().isCanceled }
+          }
+          true
         }
-        if (num == 2) {
-          j2.asCompletableFuture().join()
-          // checkCanceled might not throw here,
-          // as cancellation machinery on another thread can work in parallel to the processing of this element.
-          // but the indicator should be canceled here anyway, so we assert exactly thatc          assertThat { ProgressManager.getGlobalProgressIndicator().isCanceled }
-        }
-        true
-      })
+      }
     }
     j1.join()
     job.cancel()
