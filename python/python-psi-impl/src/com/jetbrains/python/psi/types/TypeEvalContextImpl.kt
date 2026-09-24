@@ -267,26 +267,24 @@ open class TypeEvalContextImpl internal constructor(
     }
 
     return RecursionManager.doPreventingRecursion(element to this, false) {
-      val engine = getTypeEngine(element)
-      val type = if (engine != null && engine.isSupportedForResolve(element)) {
-        if (engine.isReady) {
-          PyTypeEvaluationAggregatesCollector.recordHybridTypeEngineTime(engine) {
-            val isUserInitiated = constraints.myAllowStubToAST && constraints.myAllowDataFlow
-            // An engine gives no answer for an element it cannot see, for example one in an unopened file.
-            // That means an unknown type, the same as the null it used to give.
-            engine.resolveType(element, this is LibraryTypeEvalContext, isUserInitiated)?.get() ?: PyAnyType.unknown
-          }
-        }
-        else if (!engine.allowsBuiltInTypeEngineFallbackWhenUnavailable) {
-          // The engine answers after its server starts, and the start drops this context. Do not cache the gap.
-          return@doPreventingRecursion PyAnyType.unknown
-        }
-        else {
-          evaluateWithBuiltInEngine(element)
+      val engine = getTypeEngine(element)?.takeIf { it.isSupportedForResolve(element) }
+      val type = if (engine == null) {
+        evaluateWithBuiltInEngine(element)
+      }
+      else if (engine.isReady) {
+        PyTypeEvaluationAggregatesCollector.recordHybridTypeEngineTime(engine) {
+          val isUserInitiated = constraints.myAllowStubToAST && constraints.myAllowDataFlow
+          val resolvedType = engine.resolveType(element, this is LibraryTypeEvalContext, isUserInitiated)
+          // resolvedType is null when the engine could not evaluate at all, in contrast to Ref(null) which means the type is legitimately null
+          if (resolvedType == null) evaluateWithBuiltInEngine(element) else resolvedType.get()
         }
       }
-      else {
+      else if (engine.allowsBuiltInTypeEngineFallbackWhenUnavailable) {
         evaluateWithBuiltInEngine(element)
+      }
+      else {
+        // The engine answers after its server starts, and the start drops this context. Do not cache the gap.
+        return@doPreventingRecursion PyAnyType.unknown
       }
 
       assertValid(type, element)
