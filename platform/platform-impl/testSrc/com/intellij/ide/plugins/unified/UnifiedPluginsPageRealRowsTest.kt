@@ -684,6 +684,28 @@ internal class UnifiedPluginsPageRealRowsTest {
   }
 
   @Test
+  fun `keyboard navigation reveals a row below the sticky header`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val factory = RecordingRowFactory()
+    val items = (1..20).map { item("plugin.$it") }
+    val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Installed, *items.toTypedArray())))
+    controller.setSectionExpanded(PluginSectionId.Installed, true)
+    val view = createView(factory)
+    view.render(controller.state.value)
+    prepareForScrolling(view)
+
+    val scrollPane = componentsOfType(view.component, JBScrollPane::class.java).single()
+    val firstRow = factory.row(PluginSectionId.Installed, items.first()).component
+    val bounds = SwingUtilities.convertRectangle(firstRow, Rectangle(firstRow.size), scrollPane.viewport.view)
+    scrollPane.viewport.viewPosition = Point(0, bounds.y - JBUI.scale(20))
+    assertThat(bounds.y - scrollPane.viewport.viewPosition.y).isLessThan(JBUI.scale(40))
+
+    view.revealKeyboardSelection(PluginOccurrenceId(PluginSectionId.Installed, items.first().pluginId))
+
+    assertRowVisibleBelowStickyHeader(scrollPane, firstRow)
+    view.close()
+  }
+
+  @Test
   fun `filtered one-row sections do not shrink real rows below preferred height`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val factory = RecordingRowFactory()
     val firstItem = item("first.plugin")

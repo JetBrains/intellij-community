@@ -247,7 +247,13 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
       }
       applyQueryIntent(query, requestFocus = true)
     }
-    val rowFactory = LegacyPluginRowFactory(host, listModel, searchListener, ::selectOccurrences)
+    val rowFactory = LegacyPluginRowFactory(
+      host,
+      listModel,
+      searchListener,
+      ::selectOccurrences,
+      onKeyboardNavigation = { occurrenceId -> view.revealKeyboardSelection(occurrenceId) },
+    )
     val detailsPresenter = LegacyPluginDetailsPresenter(host, searchListener)
     view = UnifiedPluginsPageView(
       onSearchChanged = { query -> applyQueryIntent(query, requestFocus = false) },

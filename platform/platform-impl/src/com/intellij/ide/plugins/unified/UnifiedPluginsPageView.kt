@@ -456,6 +456,11 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     updateStickyHeader()
   }
 
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun revealKeyboardSelection(occurrenceId: PluginOccurrenceId) {
+    if (revealOccurrence(occurrenceId)) updateStickyHeader()
+  }
+
   private fun revealOccurrence(occurrenceId: PluginOccurrenceId): Boolean {
     val bounds = sectionViews[occurrenceId.sectionId]?.occurrenceBounds(occurrenceId, sectionsPanel) ?: return false
     val viewport = scrollPane.viewport

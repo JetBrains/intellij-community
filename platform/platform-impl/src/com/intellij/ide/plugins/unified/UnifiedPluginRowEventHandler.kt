@@ -26,6 +26,7 @@ import javax.swing.border.Border
 
 internal class UnifiedPluginRowEventHandler(
   private val onSelectionChanged: (List<PluginOccurrenceId>) -> Unit,
+  private val revealKeyboardSelection: ((PluginOccurrenceId) -> Unit)? = null,
 ) : EventHandler() {
   private val occurrences = IdentityHashMap<ListPluginComponent, PluginOccurrenceId>()
   private val listenerOwners = IdentityHashMap<Component, ListPluginComponent>()
@@ -266,9 +267,15 @@ internal class UnifiedPluginRowEventHandler(
       updateFocusPresentation(row)
     }
     focusRow?.takeIf { it in selectedSet }?.let { row ->
-      val parent = row.parent as? JComponent
-      if (parent != null && !parent.visibleRect.contains(row.bounds)) {
-        parent.scrollRectToVisible(row.bounds)
+      val occurrenceId = occurrences[row]
+      if (focusCause == FocusEvent.Cause.TRAVERSAL && occurrenceId != null && revealKeyboardSelection != null) {
+        revealKeyboardSelection(occurrenceId)
+      }
+      else {
+        val parent = row.parent as? JComponent
+        if (parent != null && !parent.visibleRect.contains(row.bounds)) {
+          parent.scrollRectToVisible(row.bounds)
+        }
       }
       SwingUtilities.invokeLater { row.requestFocus(focusCause) }
     }

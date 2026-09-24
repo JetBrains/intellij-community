@@ -962,11 +962,13 @@ internal class LegacyPluginRowFactoryTest {
         }
         val section = PluginSectionState(PluginSectionId.Installed, items = items)
         val selectionChanges = ArrayList<List<PluginOccurrenceId>>()
+        val keyboardReveals = ArrayList<PluginOccurrenceId>()
         val factory = LegacyPluginRowFactory(
           host,
           ListPluginModel(),
           LinkListener { _, _ -> },
           onSelectionChanged = selectionChanges::add,
+          onKeyboardNavigation = keyboardReveals::add,
         )
         factory.createReconciler { _, _ -> }.use { reconciler ->
           val bindings = reconciler.reconcile(items.map { factory.specification(section, it) })
@@ -988,6 +990,12 @@ internal class LegacyPluginRowFactoryTest {
           assertThat(firstRow.border).isSameAs(firstContentBorder)
           assertThat(secondRow.getSelection()).isEqualTo(EventHandler.SelectionType.SELECTION)
           assertThat(selectionChanges.last()).containsExactly(bindings.last().occurrenceId)
+          assertThat(keyboardReveals).containsExactly(bindings.last().occurrenceId)
+
+          val upEvent = KeyEvent(secondRow, KeyEvent.KEY_PRESSED, 0, 0, KeyEvent.VK_UP, KeyEvent.CHAR_UNDEFINED)
+          secondRow.keyListeners.forEach { it.keyPressed(upEvent) }
+          assertThat(upEvent.isConsumed).isTrue()
+          assertThat(keyboardReveals).containsExactly(bindings.last().occurrenceId, bindings.first().occurrenceId)
         }
       }
       finally {

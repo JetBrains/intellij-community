@@ -527,6 +527,11 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
     `new query moves its selected anchor below the sticky header`
   )
 
+- Keyboard navigation must reveal the focused row below the sticky header.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
+    `keyboard navigation reveals a row below the sticky header`
+  )
+
 - Shift-selection may cross section headers but must skip plugins from the other selection group.
 - Select All must select all compatible rendered rows.
 
