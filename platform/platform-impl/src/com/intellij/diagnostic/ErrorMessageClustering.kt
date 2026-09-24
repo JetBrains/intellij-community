@@ -70,7 +70,9 @@ object ErrorMessageClusteringSettings {
 }
 
 internal inline fun <reified T : Throwable> Throwable.isBackendInstance(): Boolean {
-  return this is RemoteSerializedThrowable && classFqn == T::class.qualifiedName
+  if (this !is RemoteSerializedThrowable) return false
+  // a serialized FQN is a JVM binary name (`Outer$Nested`), unlike `qualifiedName`, which separates nested classes with a dot
+  return classFqn == T::class.java.name || classFqn == T::class.qualifiedName
 }
 
 internal inline fun <reified T : Throwable> Throwable.isInstance() = this is T || isBackendInstance<T>()

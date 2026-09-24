@@ -138,6 +138,12 @@ object ExceptionAutoReportUtil {
     val throwable = message.throwable
     if (throwable is JBRCrash) return null
 
+    // a marker of stopped error monitoring, not an actual error; it is handled by the message pool clients themselves
+    if (throwable.isInstance<MessagePool.TooManyErrorsException>()) {
+      thisLogger().debug("Ignoring it as an error monitoring marker: ${getThrowableFqn(throwable)}")
+      return null
+    }
+
     // if level is ALL or NONE, then we report exceptions based on regular rules
     val level = getForcedAutoReportLevel()
     if (level == ForcedReportLevel.FREEZES && !isFreeze(throwable)) {
