@@ -28,6 +28,7 @@ dev_dist_plugin(
         "lib/intellij.libraries.ivy.jar": [
             "intellij.libraries.ivy",
             "@lib//:libraries-ivy-ivy",
+            "@lib//:libraries-ivy-jsch-agent-proxy-connector-factory",
         ],
         "lib/groovy-scripting.jar": ["intellij.groovy.scripting"],
     },

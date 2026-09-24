@@ -7,6 +7,7 @@
 <idea-plugin visibility="private">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.jna"/>
     <module name="intellij.libraries.jsch.agent.proxy"/>
   </dependencies>
   <!-- endregion -->

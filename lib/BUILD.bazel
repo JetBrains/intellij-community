@@ -9267,6 +9267,74 @@ jvm_import(
 )
 
 copy_file(
+    name = "com.jcraft/jsch.agentproxy.connector-factory-0.0.9.jar_copy",
+    src = "@com_jcraft-jsch_agentproxy_connector-factory-0_0_9_http//file",
+    out = "com.jcraft/jsch.agentproxy.connector-factory-0.0.9.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.jcraft/jsch.agentproxy.usocket-jna-0.0.9.jar_copy",
+    src = "@com_jcraft-jsch_agentproxy_usocket-jna-0_0_9_http//file",
+    out = "com.jcraft/jsch.agentproxy.usocket-jna-0.0.9.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.jcraft/jsch.agentproxy.usocket-nc-0.0.9.jar_copy",
+    src = "@com_jcraft-jsch_agentproxy_usocket-nc-0_0_9_http//file",
+    out = "com.jcraft/jsch.agentproxy.usocket-nc-0.0.9.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.jcraft/jsch.agentproxy.pageant-0.0.9.jar_copy",
+    src = "@com_jcraft-jsch_agentproxy_pageant-0_0_9_http//file",
+    out = "com.jcraft/jsch.agentproxy.pageant-0.0.9.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-ivy-jsch-agent-proxy-connector-factory",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":com_jcraft-jsch_agentproxy_connector-factory-0_0_9_http_import",
+        ":com_jcraft-jsch_agentproxy_usocket-jna-0_0_9_http_import",
+        ":com_jcraft-jsch_agentproxy_usocket-nc-0_0_9_http_import",
+        ":com_jcraft-jsch_agentproxy_pageant-0_0_9_http_import",
+    ],
+)
+
+jvm_import(
+    name = "com_jcraft-jsch_agentproxy_connector-factory-0_0_9_http_import",
+    jar = "@com_jcraft-jsch_agentproxy_connector-factory-0_0_9_http//file",
+    source_jar = "@com_jcraft-jsch_agentproxy_connector-factory-0_0_9-sources_http//file",
+)
+
+jvm_import(
+    name = "com_jcraft-jsch_agentproxy_usocket-jna-0_0_9_http_import",
+    jar = "@com_jcraft-jsch_agentproxy_usocket-jna-0_0_9_http//file",
+    source_jar = "@com_jcraft-jsch_agentproxy_usocket-jna-0_0_9-sources_http//file",
+)
+
+jvm_import(
+    name = "com_jcraft-jsch_agentproxy_usocket-nc-0_0_9_http_import",
+    jar = "@com_jcraft-jsch_agentproxy_usocket-nc-0_0_9_http//file",
+    source_jar = "@com_jcraft-jsch_agentproxy_usocket-nc-0_0_9-sources_http//file",
+)
+
+jvm_import(
+    name = "com_jcraft-jsch_agentproxy_pageant-0_0_9_http_import",
+    jar = "@com_jcraft-jsch_agentproxy_pageant-0_0_9_http//file",
+    source_jar = "@com_jcraft-jsch_agentproxy_pageant-0_0_9-sources_http//file",
+)
+
+copy_file(
     name = "com.fasterxml.jackson.core/jackson-annotations-2.22.jar_copy",
     src = "@com_fasterxml_jackson_core-jackson-annotations-2_22_http//file",
     out = "com.fasterxml.jackson.core/jackson-annotations-2.22.jar",
@@ -10002,9 +10070,9 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.jcraft/jsch.agentproxy.connector-factory-0.0.9.jar_copy",
-    src = "@com_jcraft-jsch_agentproxy_connector-factory-0_0_9_http//file",
-    out = "com.jcraft/jsch.agentproxy.connector-factory-0.0.9.jar",
+    name = "com.jcraft/jsch.agentproxy.sshagent-0.0.9.jar_copy",
+    src = "@com_jcraft-jsch_agentproxy_sshagent-0_0_9_http//file",
+    out = "com.jcraft/jsch.agentproxy.sshagent-0.0.9.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -10017,74 +10085,14 @@ copy_file(
     visibility = ["//visibility:public"],
 )
 
-copy_file(
-    name = "com.jcraft/jsch.agentproxy.usocket-jna-0.0.9.jar_copy",
-    src = "@com_jcraft-jsch_agentproxy_usocket-jna-0_0_9_http//file",
-    out = "com.jcraft/jsch.agentproxy.usocket-jna-0.0.9.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.jcraft/jsch.agentproxy.usocket-nc-0.0.9.jar_copy",
-    src = "@com_jcraft-jsch_agentproxy_usocket-nc-0_0_9_http//file",
-    out = "com.jcraft/jsch.agentproxy.usocket-nc-0.0.9.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.jcraft/jsch.agentproxy.sshagent-0.0.9.jar_copy",
-    src = "@com_jcraft-jsch_agentproxy_sshagent-0_0_9_http//file",
-    out = "com.jcraft/jsch.agentproxy.sshagent-0.0.9.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.jcraft/jsch.agentproxy.pageant-0.0.9.jar_copy",
-    src = "@com_jcraft-jsch_agentproxy_pageant-0_0_9_http//file",
-    out = "com.jcraft/jsch.agentproxy.pageant-0.0.9.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
 java_library(
     name = "libraries-jsch-agent-proxy-jsch-agent-proxy",
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":com_jcraft-jsch_agentproxy_connector-factory-0_0_9_http_import",
-        ":com_jcraft-jsch_agentproxy_core-0_0_9_http_import",
-        ":com_jcraft-jsch_agentproxy_usocket-jna-0_0_9_http_import",
-        ":com_jcraft-jsch_agentproxy_usocket-nc-0_0_9_http_import",
         ":com_jcraft-jsch_agentproxy_sshagent-0_0_9_http_import",
-        ":com_jcraft-jsch_agentproxy_pageant-0_0_9_http_import",
+        ":com_jcraft-jsch_agentproxy_core-0_0_9_http_import",
     ],
-)
-
-jvm_import(
-    name = "com_jcraft-jsch_agentproxy_connector-factory-0_0_9_http_import",
-    jar = "@com_jcraft-jsch_agentproxy_connector-factory-0_0_9_http//file",
-    source_jar = "@com_jcraft-jsch_agentproxy_connector-factory-0_0_9-sources_http//file",
-)
-
-jvm_import(
-    name = "com_jcraft-jsch_agentproxy_core-0_0_9_http_import",
-    jar = "@com_jcraft-jsch_agentproxy_core-0_0_9_http//file",
-    source_jar = "@com_jcraft-jsch_agentproxy_core-0_0_9-sources_http//file",
-)
-
-jvm_import(
-    name = "com_jcraft-jsch_agentproxy_usocket-jna-0_0_9_http_import",
-    jar = "@com_jcraft-jsch_agentproxy_usocket-jna-0_0_9_http//file",
-    source_jar = "@com_jcraft-jsch_agentproxy_usocket-jna-0_0_9-sources_http//file",
-)
-
-jvm_import(
-    name = "com_jcraft-jsch_agentproxy_usocket-nc-0_0_9_http_import",
-    jar = "@com_jcraft-jsch_agentproxy_usocket-nc-0_0_9_http//file",
-    source_jar = "@com_jcraft-jsch_agentproxy_usocket-nc-0_0_9-sources_http//file",
 )
 
 jvm_import(
@@ -10094,9 +10102,9 @@ jvm_import(
 )
 
 jvm_import(
-    name = "com_jcraft-jsch_agentproxy_pageant-0_0_9_http_import",
-    jar = "@com_jcraft-jsch_agentproxy_pageant-0_0_9_http//file",
-    source_jar = "@com_jcraft-jsch_agentproxy_pageant-0_0_9-sources_http//file",
+    name = "com_jcraft-jsch_agentproxy_core-0_0_9_http_import",
+    jar = "@com_jcraft-jsch_agentproxy_core-0_0_9_http//file",
+    source_jar = "@com_jcraft-jsch_agentproxy_core-0_0_9-sources_http//file",
 )
 
 copy_file(

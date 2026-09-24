@@ -9,17 +9,27 @@ ij_plugin_module(
         allow_empty = True,
     ),
     module_name = "intellij.libraries.ivy",
-    packed_deps = ["@lib//:libraries-ivy-ivy"],
+    packed_deps = [
+        # do not sort,
+        "@lib//:libraries-ivy-ivy",
+        "@lib//:libraries-ivy-jsch-agent-proxy-connector-factory",
+    ],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-ivy-ivy"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-ivy-ivy",
+        "@lib//:libraries-ivy-jsch-agent-proxy-connector-factory",
+    ],
     runtime_deps = [
         # do not sort,
         "@lib//:libraries-ivy-ivy",
+        "@lib//:libraries-ivy-jsch-agent-proxy-connector-factory",
         "//libraries/jsch-agent-proxy",
+        "//libraries/jna",
     ],
 )
 
@@ -33,11 +43,16 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.ivy",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-ivy-ivy"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-ivy-ivy",
+        "@lib//:libraries-ivy-jsch-agent-proxy-connector-factory",
+    ],
     runtime_deps = [
         # do not sort,
         ":ivy",
         "//libraries/jsch-agent-proxy:jsch-agent-proxy_test_lib",
+        "//libraries/jna:jna_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.ivy` end

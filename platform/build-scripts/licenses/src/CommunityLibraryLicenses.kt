@@ -794,6 +794,8 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     .apache("https://github.com/JetBrains/jps-javac-extension/blob/master/LICENSE.txt"),
 
   LibraryLicense(libraryName = "jsch-agent-proxy", url = "https://github.com/ymnk/jsch-agent-proxy")
+    // used in the intellij.libraries.ivy module
+    .additionalLibraryNames("jsch-agent-proxy-connector-factory")
     .newBsd("https://github.com/ymnk/jsch-agent-proxy/blob/master/LICENSE.txt")
     .suppliedByPersons("Atsuhiko Yamanaka"),
 

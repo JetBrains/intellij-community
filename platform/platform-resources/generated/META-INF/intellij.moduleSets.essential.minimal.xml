@@ -296,7 +296,7 @@
     <module name="intellij.platform.ide.codeinsight.inline" loading="embedded"/>
     <module name="intellij.platform.pasta" loading="embedded"/>
     <module name="intellij.platform.diagnostic.startUpPerformanceReporter" loading="embedded"/>
-    <module name="intellij.platform.ide.util.io.native" loading="required"/>
+    <module name="intellij.platform.ide.util.io.native"/>
     <module name="intellij.platform.ide.osCertificates" loading="required"/>
     <module name="intellij.platform.ide.pluginSignatureVerifier"/>
     <module name="intellij.libraries.zip.signer"/>
