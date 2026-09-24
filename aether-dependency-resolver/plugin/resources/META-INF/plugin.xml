@@ -9,18 +9,15 @@
     Other plugins rely on this functionality, for example, the Database Tools and SQL plugin uses it to download database drivers.
   ]]></description>
 
+  <!-- The historical id of the "JetBrains Repository Search" plugin, kept so that third-party plugins depending on it still load -->
+  <module value="org.jetbrains.idea.reposearch"/>
+
   <content namespace="jetbrains">
     <module name="intellij.java.aetherDependencyResolver" loading="required"/>
     <module name="intellij.libraries.maven.resolver.provider" loading="embedded"/>
     <module name="intellij.libraries.maven.resolver.transport" loading="embedded"/>
     <module name="intellij.libraries.plexus.utils" loading="embedded"/>
-    <module name="intellij.repository.search.common"/>
     <module name="intellij.repository.search.completion"/>
     <module name="intellij.repository.search.ultimate"/>
-  </content>
-
-  <content>
-    <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
-    <module name="intellij.libraries.package.search.api.client"/>
   </content>
 </idea-plugin>

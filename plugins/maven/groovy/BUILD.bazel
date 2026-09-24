@@ -183,8 +183,6 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//xml/xml-psi-api:psi",
         "//xml/xml-psi-api:psi_test_lib",
-        "//plugins/repository-search/common",
-        "//plugins/repository-search/common:common_test_lib",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
         "//jps/model-api:model",

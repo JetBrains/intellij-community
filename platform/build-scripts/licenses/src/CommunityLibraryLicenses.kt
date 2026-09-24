@@ -1179,10 +1179,6 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
   LibraryLicense("OverlayScrollbars", version = "2.1.1", attachedTo = "intellij.idea.community.main", url = "https://kingsora.github.io/OverlayScrollbars")
     .mit("https://github.com/KingSora/OverlayScrollbars/blob/master/LICENSE"),
 
-  LibraryLicense("Package Search API-Client", libraryName = "package-search-api-client", url = "https://github.com/JetBrains/package-search-api-models")
-    .apache("https://github.com/JetBrains/package-search-api-models/blob/master/LICENSE")
-    .suppliedByOrganizations("JetBrains Team"),
-
   LibraryLicense("pip", version = "24.3.1", attachedTo = "intellij.python", url = "https://pip.pypa.io/")
     .mit("https://github.com/pypa/pip/blob/main/LICENSE.txt"),
 

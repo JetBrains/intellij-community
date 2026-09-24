@@ -79,7 +79,6 @@
     <orderEntry type="module" module-name="intellij.xml.psi.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.ui.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.repository.search.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.repository.search.completion" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.completion" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.delegation.junit" scope="TEST" />

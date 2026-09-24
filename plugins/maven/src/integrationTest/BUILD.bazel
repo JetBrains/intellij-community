@@ -182,8 +182,6 @@ jvm_library(
         "//xml/xml-ui-common:ui-common_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
-        "//plugins/repository-search/common",
-        "//plugins/repository-search/common:common_test_lib",
         "//plugins/repository-search/completion",
         "//plugins/repository-search/completion:completion_test_lib",
         "//plugins/maven/completion",

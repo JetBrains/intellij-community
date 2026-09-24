@@ -9,10 +9,7 @@ dev_dist_plugin(
         "intellij.libraries.maven.resolver.provider",
         "intellij.libraries.maven.resolver.transport",
         "intellij.libraries.plexus.utils",
-        "intellij.repository.search.common",
         "intellij.repository.search.completion",
-        "intellij.libraries.kotlinx.document.store.mvstore",
-        "intellij.libraries.package.search.api.client",
     ],
     main_module = "intellij.java.aetherDependencyResolver.plugin",
 )

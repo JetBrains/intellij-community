@@ -61,7 +61,6 @@
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.java.testFramework.backend" />
-    <orderEntry type="module" module-name="intellij.repository.search.common" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="PROVIDED" />

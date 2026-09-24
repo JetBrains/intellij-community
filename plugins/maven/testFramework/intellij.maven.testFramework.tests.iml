@@ -58,7 +58,6 @@
     <orderEntry type="module" module-name="intellij.xml.analysis.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework.backend" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.repository.search.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
   </component>

@@ -23,5 +23,10 @@
 
     <registryKey key="dependency.completion.local.results.delay.ms" defaultValue="3000"
                  description="Max wait time for server dependency completion results before local results are shown (ms)"/>
+
+    <registryKey key="org.jetbrains.idea.reposearch.log.debug"
+                 defaultValue="false"
+                 description="Emit in-depth debug logging (warning: very spammy, only useful for debugging data flow issues). Make sure you have this line in Help | Diagnostic Tools | Debug Log Settings: '#org.jetbrains.idea.reposearch:trace'."
+                 restartRequired="false"/>
   </extensions>
 </idea-plugin>

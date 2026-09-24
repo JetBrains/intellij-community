@@ -1308,7 +1308,6 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/opentest4j/intellij.libraries.opentest4j.iml" filepath="$PROJECT_DIR$/libraries/opentest4j/intellij.libraries.opentest4j.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/oro-matcher/intellij.libraries.oro.matcher.iml" filepath="$PROJECT_DIR$/libraries/oro-matcher/intellij.libraries.oro.matcher.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/oshi-core/intellij.libraries.oshi.core.iml" filepath="$PROJECT_DIR$/libraries/oshi-core/intellij.libraries.oshi.core.iml" />
-      <module fileurl="file://$PROJECT_DIR$/libraries/package-search-api-client/intellij.libraries.package.search.api.client.iml" filepath="$PROJECT_DIR$/libraries/package-search-api-client/intellij.libraries.package.search.api.client.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/plexus-utils/intellij.libraries.plexus.utils.iml" filepath="$PROJECT_DIR$/libraries/plexus-utils/intellij.libraries.plexus.utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/protobuf/intellij.libraries.protobuf.iml" filepath="$PROJECT_DIR$/libraries/protobuf/intellij.libraries.protobuf.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/protobuf-java-util/intellij.libraries.protobuf.java.util.iml" filepath="$PROJECT_DIR$/libraries/protobuf-java-util/intellij.libraries.protobuf.java.util.iml" />
@@ -2189,7 +2188,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/remote-control/intellij.remoteControl.tests.iml" filepath="$PROJECT_DIR$/plugins/remote-control/intellij.remoteControl.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remoteDev-util/intellij.remoteDev.util.iml" filepath="$PROJECT_DIR$/platform/remoteDev-util/intellij.remoteDev.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remoteDev-util/intellij.remoteDev.util.tests.iml" filepath="$PROJECT_DIR$/platform/remoteDev-util/intellij.remoteDev.util.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/repository-search/common/intellij.repository.search.common.iml" filepath="$PROJECT_DIR$/plugins/repository-search/common/intellij.repository.search.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/repository-search/completion/intellij.repository.search.completion.iml" filepath="$PROJECT_DIR$/plugins/repository-search/completion/intellij.repository.search.completion.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/repository-search/completion/intellij.repository.search.completion.tests.iml" filepath="$PROJECT_DIR$/plugins/repository-search/completion/intellij.repository.search.completion.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/restructuredtext/intellij.restructuredtext.iml" filepath="$PROJECT_DIR$/plugins/restructuredtext/intellij.restructuredtext.iml" />
