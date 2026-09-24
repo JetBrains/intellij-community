@@ -23,7 +23,6 @@ import com.intellij.terminal.frontend.view.activeOutputModel
 import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionService
 import com.intellij.terminal.frontend.view.completion.TerminalLookupPrefixUpdater
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
-import com.intellij.terminal.frontend.view.impl.TimedKeyEvent
 import com.intellij.terminal.tests.block.util.TestCommandSpecsProvider
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.text
 import com.intellij.testFramework.ExtensionTestUtil
@@ -59,7 +58,6 @@ import java.awt.event.KeyEvent.VK_UNDEFINED
 import kotlin.coroutines.resume
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.TimeSource
 
 internal class TerminalCompletionFixture(
   private val project: Project,
@@ -111,11 +109,11 @@ internal class TerminalCompletionFixture(
     // Otherwise, the next key typed event might be ignored.
     val fakeKeyPressEvent = KeyEvent(view.outputEditor.component, KeyEvent.KEY_PRESSED, 0, 0,
                                      0, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_STANDARD)
-    view.outputEditorKeyEventsHandler.keyPressed(TimedKeyEvent(fakeKeyPressEvent, TimeSource.Monotonic.markNow()))
+    view.outputEditorKeyEventsHandler.keyPressed(fakeKeyPressEvent)
 
     val keyTypedEvent = KeyEvent(view.outputEditor.component, KeyEvent.KEY_TYPED, 0, 0,
                                  VK_UNDEFINED, keyChar, KeyEvent.KEY_LOCATION_UNKNOWN)
-    view.outputEditorKeyEventsHandler.keyTyped(TimedKeyEvent(keyTypedEvent, TimeSource.Monotonic.markNow()))
+    view.outputEditorKeyEventsHandler.keyTyped(keyTypedEvent)
   }
 
   suspend fun callCompletionPopup(waitForPopup: Boolean = true) {
@@ -287,7 +285,7 @@ internal class TerminalCompletionFixture(
       KeyEvent.CHAR_UNDEFINED,
       KeyEvent.KEY_LOCATION_STANDARD
     )
-    view.outputEditorKeyEventsHandler.keyPressed(TimedKeyEvent(keyPressEvent, TimeSource.Monotonic.markNow()))
+    view.outputEditorKeyEventsHandler.keyPressed(keyPressEvent)
   }
 
   private fun runActionById(actionId: String) {

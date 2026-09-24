@@ -44,7 +44,7 @@ open class TerminalKeyEventsHandlerImpl(
   coroutineScope: CoroutineScope,
 ) : TerminalKeyEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
-  private val bufferedEvents: ArrayDeque<TimedKeyEvent> = ArrayDeque()
+  private val bufferedEvents: ArrayDeque<KeyEvent> = ArrayDeque()
   private var readySession: TerminalSession? = null
   private val sessionInitializationJob: Job?
 
@@ -63,18 +63,18 @@ open class TerminalKeyEventsHandlerImpl(
     }
   }
 
-  override fun keyTyped(e: TimedKeyEvent) {
-    LOG.trace { "Key typed event received: ${e.original}" }
+  override fun keyTyped(e: KeyEvent) {
+    LOG.trace { "Key typed event received: ${e}" }
 
     if (ignoreNextKeyTypedEvent) {
-      e.original.consume()
-      LOG.trace { "Key event ignored: ${e.original}" }
+      e.consume()
+      LOG.trace { "Key event ignored: ${e}" }
       return
     }
-    val event = TerminalKeyEventImpl(e.original, outputModel.cursorOffset)
+    val event = TerminalKeyEventImpl(e, outputModel.cursorOffset)
     if (beforeKeyEvent(event)) {
-      e.original.consume()
-      LOG.trace { "Key event intercepted: ${e.original}" }
+      e.consume()
+      LOG.trace { "Key event intercepted: $e" }
       afterKeyEvent(event)
       return
     }
@@ -82,14 +82,14 @@ open class TerminalKeyEventsHandlerImpl(
       val session = readySession
       if (session == null) {
         bufferedEvents.addLast(e)
-        e.original.consume()
-        LOG.trace { "Key event consumed and buffered until session is ready: ${e.original}" }
+        e.consume()
+        LOG.trace { "Key event consumed and buffered until session is ready: $e" }
       }
-      else if (processKeyEventResult(processKeyEvent(e.original, session), e)) {
+      else if (processKeyEventResult(processKeyEvent(e, session), e)) {
         editor.selectionModel.removeSelection(true)
         syncEditorCaretWithModel(editor, outputModel)
-        e.original.consume()
-        LOG.trace { "Key event consumed: ${e.original}" }
+        e.consume()
+        LOG.trace { "Key event consumed: ${e}" }
       }
       afterKeyEvent(event)
     }
@@ -98,15 +98,15 @@ open class TerminalKeyEventsHandlerImpl(
     }
   }
 
-  override fun keyPressed(e: TimedKeyEvent) {
-    LOG.trace { "Key pressed event received: ${e.original}" }
+  override fun keyPressed(e: KeyEvent) {
+    LOG.trace { "Key pressed event received: ${e}" }
 
     ignoreNextKeyTypedEvent = false
-    val event = TerminalKeyEventImpl(e.original, outputModel.cursorOffset)
+    val event = TerminalKeyEventImpl(e, outputModel.cursorOffset)
     if (beforeKeyEvent(event)) {
-      e.original.consume()
+      e.consume()
       ignoreNextKeyTypedEvent = true
-      LOG.trace { "Key event intercepted: ${e.original}" }
+      LOG.trace { "Key event intercepted: ${e}" }
       afterKeyEvent(event)
       return
     }
@@ -114,15 +114,15 @@ open class TerminalKeyEventsHandlerImpl(
       val session = readySession
       if (session == null) {
         bufferedEvents.addLast(e)
-        e.original.consume()
-        LOG.trace { "Key event consumed and buffered until session is ready: ${e.original}" }
+        e.consume()
+        LOG.trace { "Key event consumed and buffered until session is ready: ${e}" }
       }
-      else if (processKeyEventResult(processKeyEvent(e.original, session), e)) {
+      else if (processKeyEventResult(processKeyEvent(e, session), e)) {
         editor.selectionModel.removeSelection(true)
         syncEditorCaretWithModel(editor, outputModel)
-        e.original.consume()
+        e.consume()
         ignoreNextKeyTypedEvent = true
-        LOG.trace { "Key event consumed: ${e.original}" }
+        LOG.trace { "Key event consumed: ${e}" }
       }
       afterKeyEvent(event)
     }
@@ -135,12 +135,12 @@ open class TerminalKeyEventsHandlerImpl(
     while (bufferedEvents.isNotEmpty()) {
       val bufferedEvent = bufferedEvents.removeFirst()
       try {
-        if (bufferedEvent.original.id == KeyEvent.KEY_TYPED && ignoreNextKeyTypedEvent) {
+        if (bufferedEvent.id == KeyEvent.KEY_TYPED && ignoreNextKeyTypedEvent) {
           ignoreNextKeyTypedEvent = false
           continue
         }
-        val result = processKeyEventResult(processKeyEvent(bufferedEvent.original, readySession), bufferedEvent)
-        if(result && bufferedEvent.original.id == KeyEvent.KEY_PRESSED) {
+        val result = processKeyEventResult(processKeyEvent(bufferedEvent, readySession), bufferedEvent)
+        if (result && bufferedEvent.id == KeyEvent.KEY_PRESSED) {
           ignoreNextKeyTypedEvent = true
         }
         else ignoreNextKeyTypedEvent = false
@@ -161,17 +161,14 @@ open class TerminalKeyEventsHandlerImpl(
     }
   }
 
-  private fun processKeyEventResult(result: KeyEventProcessingResultDto, e: TimedKeyEvent): Boolean {
+  private fun processKeyEventResult(result: KeyEventProcessingResultDto, e: KeyEvent): Boolean {
     when (result) {
       KeyEventProcessingResultDto.Unhandled -> return false
       is KeyEventProcessingResultDto.StringResult -> {
-        when (e.original.id) {
-          KeyEvent.KEY_PRESSED -> terminalInput.sendString(result.string)
-          KeyEvent.KEY_TYPED -> {
-            typeAhead?.type(result.string)
-            terminalInput.sendTrackedString(result.string, eventTime = e.initTime)
-          }
+        if (e.id == KeyEvent.KEY_TYPED) {
+          typeAhead?.type(result.string)
         }
+        terminalInput.sendString(result.string)
       }
       is KeyEventProcessingResultDto.BytesResult -> {
         terminalInput.sendBytes(result.bytes)
@@ -182,12 +179,12 @@ open class TerminalKeyEventsHandlerImpl(
       scrollingModel?.scrollToCursor(force = true)
     }
 
-    if (e.original.id == KeyEvent.KEY_PRESSED
-        && isNoModifiers(e.original)
-        && e.original.keyCode == KeyEvent.VK_BACK_SPACE) {
+    if (e.id == KeyEvent.KEY_PRESSED
+        && isNoModifiers(e)
+        && e.keyCode == KeyEvent.VK_BACK_SPACE) {
       typeAhead?.backspace()
     }
-    if (e.original.id == KeyEvent.KEY_PRESSED && e.original.keyCode == KeyEvent.VK_ENTER) {
+    if (e.id == KeyEvent.KEY_PRESSED && e.keyCode == KeyEvent.VK_ENTER) {
       typeAhead?.type("\n")
       TerminalUsageLocalStorage.getInstance().recordEnterKeyPressed()
     }

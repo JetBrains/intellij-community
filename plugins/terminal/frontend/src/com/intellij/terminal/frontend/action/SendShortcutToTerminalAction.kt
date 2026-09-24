@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.frontend.view.impl.TerminalKeyEventsHandler
-import com.intellij.terminal.frontend.view.impl.TimedKeyEvent
 import com.intellij.terminal.frontend.view.impl.handleKeyEvent
 import org.jetbrains.plugins.terminal.TerminalBundle
 import java.awt.event.KeyEvent
@@ -87,7 +86,7 @@ internal class SendShortcutToTerminalAction(
   override fun actionPerformed(e: AnActionEvent) {
     val event = e.inputEvent as? KeyEvent ?: return
     LOG.trace { "All actions bound to this shortcut are disabled, sending key event to terminal: $event" }
-    handler.handleKeyEvent(TimedKeyEvent(event))
+    handler.handleKeyEvent(event)
   }
 
   companion object {

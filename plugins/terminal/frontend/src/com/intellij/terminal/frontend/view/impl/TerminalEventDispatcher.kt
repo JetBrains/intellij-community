@@ -81,35 +81,33 @@ private class TerminalEventDispatcher(
 
   override fun dispatch(e: AWTEvent): Boolean {
     if (e is KeyEvent) {
-      val timedEvent = TimedKeyEvent(e)
-      dispatchKeyEvent(timedEvent)
+      dispatchKeyEvent(e)
     }
     return false
   }
 
-  private fun dispatchKeyEvent(e: TimedKeyEvent) {
-    LOG.trace { "Key event received: ${e.original}" }
+  private fun dispatchKeyEvent(e: KeyEvent) {
+    LOG.trace { "Key event received: ${e}" }
 
     // Special handling for Escape shortcut - show notification about behavior change.
     // Should be checked before the action system.
-    val keyEvent = e.original
-    if (keyEvent.id == KeyEvent.KEY_PRESSED && keyEvent.keyCode == KeyEvent.VK_ESCAPE && keyEvent.modifiersEx == 0) {
+    if (e.id == KeyEvent.KEY_PRESSED && e.keyCode == KeyEvent.VK_ESCAPE && e.modifiersEx == 0) {
       TerminalEscapeBehaviorChangeNotification.showNotificationIfNeeded(editor.project!!)
     }
 
-    if (TerminalCmdKShortcutDialog.handleIfNeeded(editor.project, editor.contentComponent, keyEvent)) {
-      keyEvent.consume()
+    if (TerminalCmdKShortcutDialog.handleIfNeeded(editor.project, editor.contentComponent, e)) {
+      e.consume()
       ignoreNextKeyTypedEvent = true
       return
     }
 
-    if (isAllowedActionShortcut(e.original)) {
+    if (isAllowedActionShortcut(e)) {
       // KeyEvent will be handled by action system, so we need to remember that the next KeyTyped event is not needed
       ignoreNextKeyTypedEvent = true
-      LOG.trace { "Key event skipped (there is an action for it): ${e.original}" }
+      LOG.trace { "Key event skipped (there is an action for it): ${e}" }
     }
     else {
-      if (e.original.id != KeyEvent.KEY_TYPED || !ignoreNextKeyTypedEvent) {
+      if (e.id != KeyEvent.KEY_TYPED || !ignoreNextKeyTypedEvent) {
         ignoreNextKeyTypedEvent = false
         eventsHandler.handleKeyEvent(e)
       }
@@ -119,7 +117,7 @@ private class TerminalEventDispatcher(
         // keyboard the following key released event cleared this anyway; a synthetic stream of key typed
         // events alone (the remote driver's input-events robot) used to be swallowed whole.
         ignoreNextKeyTypedEvent = false
-        LOG.trace { "Key event skipped (key typed ignored): ${e.original}" }
+        LOG.trace { "Key event skipped (key typed ignored): ${e}" }
       }
     }
   }
@@ -303,7 +301,7 @@ private class TerminalKeyListener(
 
   private fun handleEvent(e: KeyEvent) {
     if (settings.overrideIdeShortcuts()) return // handled by the dispatcher
-    eventsHandler.handleKeyEvent(TimedKeyEvent(e))
+    eventsHandler.handleKeyEvent(e)
     e.consume()
   }
 }

@@ -5,15 +5,15 @@ import java.awt.event.KeyEvent
 
 @ApiStatus.Internal
 interface TerminalKeyEventsHandler {
-  fun keyTyped(e: TimedKeyEvent) {}
-  fun keyPressed(e: TimedKeyEvent) {}
+  fun keyTyped(e: KeyEvent) {}
+  fun keyPressed(e: KeyEvent) {}
 }
 
-internal fun TerminalKeyEventsHandler.handleKeyEvent(e: TimedKeyEvent) {
-  if (e.original.id == KeyEvent.KEY_TYPED) {
+internal fun TerminalKeyEventsHandler.handleKeyEvent(e: KeyEvent) {
+  if (e.id == KeyEvent.KEY_TYPED) {
     keyTyped(e)
   }
-  else if (e.original.id == KeyEvent.KEY_PRESSED) {
+  else if (e.id == KeyEvent.KEY_PRESSED) {
     keyPressed(e)
   }
 }
