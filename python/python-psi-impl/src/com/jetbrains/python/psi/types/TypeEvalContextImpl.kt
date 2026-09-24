@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.types
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JdkOrderEntry
@@ -28,6 +29,7 @@ import com.jetbrains.python.psi.types.engine.PyTypeEngine
 import com.jetbrains.python.psi.types.engine.PyTypeEngineProvider
 import com.jetbrains.python.pyi.PyiLanguageDialect
 import org.jetbrains.annotations.ApiStatus
+import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import kotlin.concurrent.Volatile
@@ -46,28 +48,34 @@ open class TypeEvalContextImpl internal constructor(
 
   private val myProcessingContext = ThreadLocal.withInitial { ProcessingContext() }
 
+  private val myModuleTypeEngines: MutableMap<Module, Optional<PyTypeEngine>> = ConcurrentHashMap()
+
   @ApiStatus.Internal
   val typeEngine: PyTypeEngine? = constraints.myOrigin?.let {
     if (isNotebookExternalTypeEngineDisabled(it)) {
       return@let null
     }
-    findTypeEngine(it.originalFile)
+    getOrCreateTypeEngine(it.originalFile)
   }
 
   private fun getTypeEngine(element: PyTypedElement): PyTypeEngine? {
-    if (constraints.myOrigin != null) {
-      return typeEngine
-    }
-
     val containingFile = element.containingFile ?: return null
     if (isNotebookExternalTypeEngineDisabled(containingFile)) {
       return null
     }
-    containingFile.getUserData(ModuleUtilCore.KEY_MODULE)?.let {
-      return PyTypeEngineProvider.createTypeEngine(it)
-    }
-    return findTypeEngine(containingFile.originalFile)
+    return getOrCreateTypeEngine(containingFile)
   }
+
+  private fun getOrCreateTypeEngine(file: PsiFile): PyTypeEngine? {
+    val module = file.getUserData(ModuleUtilCore.KEY_MODULE) ?: ModuleUtilCore.findModuleForFile(file.originalFile)
+    if (module != null) {
+      return moduleTypeEngine(module)
+    }
+    return findTypeEngineWithoutModule(file.originalFile)
+  }
+
+  private fun moduleTypeEngine(module: Module): PyTypeEngine? =
+    myModuleTypeEngines.computeIfAbsent(module) { Optional.ofNullable(PyTypeEngineProvider.createTypeEngine(it)) }.orElse(null)
 
   protected val myEvaluated: MutableMap<PyTypedElement?, PyType?> = getConcurrentMapForCachingTypes()
   protected val myEvaluatedReturn: MutableMap<PyCallable?, PyType?> = getConcurrentMapForCachingTypes()
@@ -112,19 +120,14 @@ open class TypeEvalContextImpl internal constructor(
            !Registry.`is`("python.lsp.type.engine.notebooks", false)
   }
 
-  private fun findTypeEngine(origin: PsiFile): PyTypeEngine? {
-    val module = ModuleUtilCore.findModuleForFile(origin)
-    if (module != null) {
-      return PyTypeEngineProvider.createTypeEngine(module)
-    }
-
+  private fun findTypeEngineWithoutModule(origin: PsiFile): PyTypeEngine? {
     val virtualFile = origin.virtualFile ?: return null
     return ProjectFileIndex.getInstance(origin.project).getOrderEntriesForFile(virtualFile)
       .asSequence()
       .filterIsInstance<JdkOrderEntry>()
       .map { it.ownerModule }
       .distinct()
-      .firstNotNullOfOrNull(PyTypeEngineProvider::createTypeEngine)
+      .firstNotNullOfOrNull(::moduleTypeEngine)
   }
 
   @ApiStatus.Internal
