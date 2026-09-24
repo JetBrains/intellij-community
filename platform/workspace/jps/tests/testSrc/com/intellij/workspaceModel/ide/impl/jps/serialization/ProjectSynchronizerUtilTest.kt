@@ -11,6 +11,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -37,6 +38,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.project.stateStore
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.OpenProjectTaskBuilder
@@ -45,11 +47,14 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.useProject
 import com.intellij.testFramework.utils.io.createFile
+import com.intellij.util.PlatformUtils
 import com.intellij.util.io.delete
+import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 import com.intellij.workspaceModel.ide.ProjectSynchronizerUtil
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelRegistry
+import com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
@@ -60,6 +65,7 @@ import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
@@ -143,6 +149,38 @@ class ProjectSynchronizerUtilTest {
 
     assertTrue((WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache)
     checkSerializersConsistency(project)
+  }
+
+  @Test
+  fun `project with cache but without serialized modules is loaded from files and saves new modules`() {
+    val projectData = copyAndLoadProject(sampleDirBasedProjectFile, virtualFileManager)
+    val storageWithoutModules = MutableEntityStorage.from(projectData.storage).also { builder ->
+      builder.entities<ModuleEntity>().toList().forEach { builder.removeEntity(it) }
+    }.toSnapshot()
+    saveToCache(projectData.copy(storage = storageWithoutModules))
+    projectData.projectDir.resolve(".idea/modules.xml").delete()
+    projectData.projectDir.walkTopDown().filter { it.extension == "iml" }.forEach { it.delete() }
+
+    // IntelliJ IDEA is excluded from this code path (see JpsProjectModelSynchronizer.hasNoSerializedJpsModules), so open the project as another IDE
+    PlatformTestUtil.withSystemProperty<Exception>(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.PYCHARM_CE_PREFIX) {
+      runBlocking {
+        val project = loadProject(projectData.projectDir)
+        val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
+        assertFalse(workspaceModel.loadedFromCache)
+        assertTrue((JpsProjectLoadingManager.getInstance(project) as JpsProjectLoadingManagerImpl).isProjectLoaded())
+        assertTrue(workspaceModel.currentSnapshot.entities<LibraryEntity>().any { it.name == "junit" })
+
+        val moduleFile = projectData.projectDir.resolve("recreated.iml")
+        withContext(Dispatchers.EDT) {
+          ApplicationManager.getApplication().runWriteAction {
+            ModuleManager.getInstance(project).newModule(moduleFile.path, ModuleType.EMPTY.id)
+          }
+        }
+        project.stateStore.save()
+        assertTrue(moduleFile.exists())
+        assertTrue(projectData.projectDir.resolve(".idea/modules.xml").readText().contains("recreated.iml"))
+      }
+    }
   }
 
   @Test
