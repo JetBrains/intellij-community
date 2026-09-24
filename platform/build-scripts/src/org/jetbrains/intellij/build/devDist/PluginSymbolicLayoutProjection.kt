@@ -17,8 +17,10 @@ import org.jetbrains.intellij.build.impl.contentModuleJarPath
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.getLibNameBySourceFile
 import org.jetbrains.intellij.build.impl.hasOwnModuleLibraries
+import org.jetbrains.intellij.build.impl.isAutoLayoutChild
 import org.jetbrains.intellij.build.impl.isSeparateLibraryJar
 import org.jetbrains.intellij.build.impl.nameToJarFileName
+import org.jetbrains.intellij.build.impl.pluginDefaultJarName
 import org.jetbrains.intellij.build.impl.removeVersionFromJar
 import org.jetbrains.intellij.build.productLayout.util.getProductionModuleDependencies
 import org.jetbrains.intellij.build.productLayout.util.isProductionRuntimeDependency
@@ -252,10 +254,9 @@ private class SymbolicLayoutProjector(
     }
     if (layout.auto) {
       val mainModule = module(layout.mainModule)
-      val prefix = "${layout.mainModule.removeSuffix(".plugin")}."
       for (dependency in mainModule?.getProductionModuleDependencies(withTests = false).orEmpty()) {
         val name = dependency.moduleReference.moduleName
-        if (name.startsWith(prefix) && added.add(name) && name !in descriptors.packedElsewhere) {
+        if (isAutoLayoutChild(mainModule = layout.mainModule, moduleName = name) && added.add(name) && name !in descriptors.packedElsewhere) {
           result.add(ModuleItem(name, defaultJar(name), reason = null))
         }
       }
@@ -292,12 +293,7 @@ private class SymbolicLayoutProjector(
   }
 
   private fun defaultJar(moduleName: String): String {
-    return if (frontend.isSplit(layout.mainModule, moduleName)) {
-      layout.getMainJarName().removeSuffix(".jar") + "-frontend.jar"
-    }
-    else {
-      layout.getMainJarName()
-    }
+    return pluginDefaultJarName(layout.getMainJarName(), frontend.isSplit(layout.mainModule, moduleName))
   }
 
   private fun addModule(item: ModuleItem) {

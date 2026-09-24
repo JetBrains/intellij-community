@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.devDist
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.impl.pluginDefaultJarName
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 
@@ -211,7 +212,7 @@ private fun coPackedMembers(memberJars: Map<String, Set<String>>, closureMembers
  * frontend jar is a [PluginContentResidue.memberJars] row.
  */
 private fun autoLayoutResidue(mainModule: String, mainJarName: String, children: List<String>, frontend: FrontendCompatibility): PluginContentResidue {
-  val frontendJarName = mainJarName.removeSuffix(".jar") + "-frontend.jar"
+  val frontendJarName = pluginDefaultJarName(mainJarName, frontendSplit = true)
   val memberJars = LinkedHashMap<String, Set<String>>()
   for (child in children) {
     if (frontend.isSplit(mainModule = mainModule, member = child)) {

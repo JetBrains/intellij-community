@@ -35,9 +35,27 @@ fun contentModuleJarPath(
   return when {
     !hasPackageAttribute() || packedIntoSeparateJar() -> "modules/$moduleName.jar"
     hasCustomPath -> null
-    frontendSplit() -> mainJarName.removeSuffix(".jar") + "-frontend.jar"
-    else -> mainJarName
+    else -> pluginDefaultJarName(mainJarName, frontendSplit())
   }
+}
+
+/**
+ * The jar a plugin co-packs a module into: [mainJarName], or `<main>-frontend.jar` for a frontend member of a plugin
+ * whose main module is not frontend-compatible, see [frontendSplit].
+ */
+@ApiStatus.Internal
+fun pluginDefaultJarName(mainJarName: String, frontendSplit: Boolean): String {
+  return if (frontendSplit) mainJarName.removeSuffix(".jar") + "-frontend.jar" else mainJarName
+}
+
+/**
+ * Whether the direct dependency [moduleName] of an `auto` plugin layout is a child the layout packs: its name extends
+ * the name of [mainModule] without the `.plugin` suffix. A caller still drops a child the platform or another plugin
+ * layout packs, over the facts it reads itself.
+ */
+@ApiStatus.Internal
+fun isAutoLayoutChild(mainModule: String, moduleName: String): Boolean {
+  return moduleName.startsWith(mainModule.removeSuffix(".plugin") + ".")
 }
 
 /**

@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.devDist
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.impl.isAutoLayoutChild
 import org.jetbrains.intellij.build.productLayout.util.getProductionModuleDependencies
 import org.jetbrains.jps.model.module.JpsModule
 import java.util.TreeSet
@@ -14,18 +15,17 @@ import java.util.TreeSet
  * packs, which [isPackedElsewhere] answers. Each child goes into the main jar, or into the `-frontend.jar` of a
  * plugin whose main module is not frontend-compatible while the child is.
  *
- * The derivation owns this copy of the rule, so that the packaging gate compares two producers. The build side
- * spells it in `inferredAutoLayoutChildren`, and the gate keeps the two in step.
+ * [isAutoLayoutChild] states which dependency is a child, and the build side asks it in `inferredAutoLayoutChildren`
+ * too. The derivation reads the rest itself: the dependencies, and what [isPackedElsewhere] answers.
  *
  * Sorted, the order the table states a layout member in.
  */
 @ApiStatus.Internal
 fun autoLayoutChildren(module: JpsModule, isPackedElsewhere: (String) -> Boolean): List<String> {
-  val childPrefix = module.name.removeSuffix(".plugin") + "."
   val result = TreeSet<String>()
   for (dependency in module.getProductionModuleDependencies()) {
     val name = dependency.moduleReference.moduleName
-    if (name.startsWith(childPrefix) && !isPackedElsewhere(name)) {
+    if (isAutoLayoutChild(mainModule = module.name, moduleName = name) && !isPackedElsewhere(name)) {
       result.add(name)
     }
   }

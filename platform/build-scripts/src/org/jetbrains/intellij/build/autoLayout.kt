@@ -13,6 +13,8 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
 import org.jetbrains.intellij.build.impl.contentModuleJarPath
 import org.jetbrains.intellij.build.impl.contentModuleNameToDescriptorFileName
+import org.jetbrains.intellij.build.impl.isAutoLayoutChild
+import org.jetbrains.intellij.build.impl.pluginDefaultJarName
 import org.jetbrains.jps.model.module.JpsModule
 
 internal fun inferModuleSources(
@@ -62,10 +64,9 @@ fun inferredAutoLayoutChildren(
   pluginLayouts: Collection<PluginLayout>,
 ): List<String> {
   // for now, check only direct dependencies of the main plugin module
-  val childPrefix = "${layout.mainModule.removeSuffix(".plugin")}."
   val result = ArrayList<String>()
   for (name in directDependencies) {
-    if (!name.startsWith(childPrefix)) {
+    if (!isAutoLayoutChild(mainModule = layout.mainModule, moduleName = name)) {
       continue
     }
 
@@ -215,12 +216,9 @@ private fun findContentModuleDescriptorData(
 }
 
 private fun getDefaultJarName(layout: PluginLayout, moduleName: String, frontendModuleFilter: FrontendModuleFilter): String {
-  if (frontendModuleFilter.isModuleCompatibleWithFrontend(layout.mainModule) || !frontendModuleFilter.isModuleCompatibleWithFrontend(moduleName)) {
-    return layout.getMainJarName()
-  }
-  else {
-    return layout.getMainJarName().removeSuffix(".jar") + "-frontend.jar"
-  }
+  val frontendSplit = !frontendModuleFilter.isModuleCompatibleWithFrontend(layout.mainModule) &&
+                      frontendModuleFilter.isModuleCompatibleWithFrontend(moduleName)
+  return pluginDefaultJarName(layout.getMainJarName(), frontendSplit)
 }
 
 private fun isIncludedIntoAnotherPlugin(
