@@ -2,6 +2,7 @@
 package com.intellij.platform.util.io.storages.database.impl;
 
 import com.intellij.platform.util.io.storages.UnsupportedFormatException;
+import com.intellij.platform.util.io.storages.database.spi.housekeeping.OnStartupHousekeeper;
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabase;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
 import com.intellij.platform.util.io.storages.database.spi.StoreMetadata;
@@ -48,17 +49,32 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
                                                  int chunkSize,
                                                  boolean fsyncOnFlush,
                                                  boolean fsyncOnClose) throws IOException {
+    return open(databaseDirectory, chunkSize, fsyncOnFlush, fsyncOnClose, List.of());
+  }
+
+  public static @NotNull BlocksDatabaseImpl open(@NotNull Path databaseDirectory,
+                                                 int chunkSize,
+                                                 boolean fsyncOnFlush,
+                                                 boolean fsyncOnClose,
+                                                 @NotNull List<? extends OnStartupHousekeeper> startupHousekeepers) throws IOException {
     var databaseCatalog = DatabaseCatalogOverAppendOnlyLog.open(
       databaseDirectory.resolve(DATABASE_META_FILE_NAME),
       chunkSize,
       fsyncOnFlush
     );
-    return IOUtil.wrapSafely(databaseCatalog, catalog -> {
+    var database = IOUtil.wrapSafely(databaseCatalog, catalog -> {
       var databaseChunks = DatabaseChunks.open(databaseDirectory, catalog, fsyncOnFlush);
       return IOUtil.wrapSafely(databaseChunks, chunks -> {
         var databaseBlocks = DatabaseBlocks.open(catalog, chunks);
         return new BlocksDatabaseImpl(catalog, chunks, databaseBlocks, fsyncOnClose);
       });
+    });
+
+    return IOUtil.wrapSafely(database, openedDatabase -> {
+      for (var startupHousekeeper : startupHousekeepers) {
+        startupHousekeeper.runHousekeeping(openedDatabase);
+      }
+      return openedDatabase;
     });
   }
 
