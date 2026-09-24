@@ -61,14 +61,7 @@ private class PrefetchDataElementImpl(private val data: Map<EelPath, Map<String,
 
   // --- Cache access ---
 
-  override fun getChildren(path: EelPath): Map<String, EelFileInfo>? = data[path]
-
-  override fun lookupStat(path: EelPath): StatLookup {
-    val parent = path.parent ?: return StatLookup.Miss
-    val children = data[parent] ?: return StatLookup.Miss
-    val info = children[path.fileName]
-    return if (info != null) StatLookup.Hit(info) else StatLookup.Absent
-  }
+  override fun cachedChildren(path: EelPath): Map<String, EelFileInfo>? = data[path]
 
   override val size: Int get() = data.size
 }
