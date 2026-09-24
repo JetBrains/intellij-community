@@ -13,6 +13,7 @@ import com.intellij.ide.plugins.newui.InstallButton
 import com.intellij.ide.plugins.newui.LegacyPluginUiHost
 import com.intellij.ide.plugins.newui.LinkComponent
 import com.intellij.ide.plugins.newui.ListPluginComponent
+import com.intellij.ide.plugins.newui.NoOpPluginsViewCustomizer
 import com.intellij.ide.plugins.newui.PluginDetailsPageComponent
 import com.intellij.ide.plugins.newui.PluginDetailsPageLayout
 import com.intellij.ide.plugins.newui.PluginInstallationCustomization
@@ -23,10 +24,12 @@ import com.intellij.ide.plugins.newui.PluginProgressState
 import com.intellij.ide.plugins.newui.PluginRowInput
 import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.ide.plugins.newui.PluginStatus
+import com.intellij.ide.plugins.newui.PluginsViewCustomizer
 import com.intellij.ide.plugins.newui.SearchQueryParser
 import com.intellij.ide.plugins.newui.TagComponent
 import com.intellij.ide.plugins.newui.Tags
 import com.intellij.ide.plugins.newui.UpdateButton
+import com.intellij.ide.plugins.newui.pluginsViewCustomizerEP
 import com.intellij.ide.plugins.newui.buttons.InstallOptionButton
 import com.intellij.ide.plugins.newui.buttons.OptionButton
 import com.intellij.ide.ui.LafManager
@@ -801,7 +804,7 @@ internal class LegacyPluginRowFactoryTest {
     }
 
   @Test
-  fun `card activation selects plugin without invoking its primary action`(): Unit =
+  fun `Enter selects plugin without invoking its primary action`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
       try {
@@ -840,16 +843,106 @@ internal class LegacyPluginRowFactoryTest {
           row.focusListeners.forEach { it.focusGained(traversalFocusEvent) }
           assertThat(row.border).isNotSameAs(contentBorder)
 
-          for (keyCode in listOf(KeyEvent.VK_ENTER, KeyEvent.VK_SPACE)) {
-            val event = KeyEvent(row, KeyEvent.KEY_PRESSED, 0, 0, keyCode, KeyEvent.CHAR_UNDEFINED)
-            row.keyListeners.forEach { it.keyPressed(event) }
-            assertThat(event.isConsumed).isTrue()
-          }
+          val event = KeyEvent(row, KeyEvent.KEY_PRESSED, 0, 0, KeyEvent.VK_ENTER, KeyEvent.CHAR_UNDEFINED)
+          row.keyListeners.forEach { it.keyPressed(event) }
+          assertThat(event.isConsumed).isTrue()
 
           assertThat(row.getSelection()).isEqualTo(EventHandler.SelectionType.SELECTION)
           assertThat(row.border).isSameAs(contentBorder)
           assertThat(selectionChanges).containsExactly(listOf(binding.occurrenceId))
           assertThat(installRequests).isZero()
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
+    }
+
+  @Test
+  fun `Space dispatches the row action without changing selection`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
+      try {
+        val pluginId = PluginId.getId("space.toggle.plugin")
+        val plugin = PluginNodeModelBuilderFactory.createBuilder(pluginId).setName("Space Toggle Plugin").build()
+        val selectedPluginId = PluginId.getId("selected.plugin")
+        val selectedPlugin = PluginNodeModelBuilderFactory.createBuilder(selectedPluginId).setName("Selected Plugin").build()
+        val actionSelections = ArrayList<List<ListPluginComponent>>()
+        val rowCustomizer = object : PluginsViewCustomizer.ListPluginComponentCustomizer by
+                               NoOpPluginsViewCustomizer.NoOpListPluginComponentCustomizer {
+          override fun processHandleKeyAction(
+            listPluginComponent: ListPluginComponent,
+            event: KeyEvent,
+            selection: List<ListPluginComponent>,
+          ) {
+            actionSelections.add(selection)
+          }
+        }
+        val customizer = object : PluginsViewCustomizer by NoOpPluginsViewCustomizer {
+          override fun getListPluginComponentCustomizer() = rowCustomizer
+        }
+        ExtensionTestUtil.maskExtensions(pluginsViewCustomizerEP, listOf(customizer), disposable)
+        val item = PluginItemState(
+          pluginId,
+          plugin.name,
+          modelHandle = PluginItemModelHandle(plugin),
+          rowInput = PluginRowInput(
+            installedPlugin = plugin,
+            installationState = PluginInstallationState(true),
+            errors = emptyList(),
+            updateDescriptor = null,
+            enabled = true,
+            restrictedByProduct = false,
+          ),
+        )
+        val selectedItem = item.copy(
+          pluginId = selectedPluginId,
+          name = selectedPlugin.name,
+          modelHandle = PluginItemModelHandle(selectedPlugin),
+          rowInput = checkNotNull(item.rowInput).copy(installedPlugin = selectedPlugin),
+        )
+        val section = PluginSectionState(PluginSectionId.Installed, items = listOf(selectedItem, item))
+        val selectionChanges = ArrayList<List<PluginOccurrenceId>>()
+        val listModel = ListPluginModel().apply {
+          setInstalledPlugins(mapOf(pluginId to plugin, selectedPluginId to selectedPlugin))
+          setPluginInstallationState(pluginId, PluginInstallationState(true))
+          setPluginInstallationState(selectedPluginId, PluginInstallationState(true))
+        }
+        val factory = LegacyPluginRowFactory(host, listModel, LinkListener { _, _ -> }, onSelectionChanged = selectionChanges::add)
+        factory.createReconciler { _, _ -> }.use { reconciler ->
+          val bindings = reconciler.reconcile(listOf(
+            factory.specification(section, selectedItem),
+            factory.specification(section, item),
+          ))
+          val selectedRow = (bindings.first().row as LegacyPluginRow).component
+          val row = (bindings.last().row as LegacyPluginRow).component
+          JPanel().apply {
+            add(selectedRow)
+            add(row)
+          }
+          factory.rowsRendered(bindings)
+          bindings.first().row.renderSelection(true)
+          assertThat(row.myUpdateButton).isNull()
+          assertThat(componentsOfType(row, OnOffButton::class.java)).hasSize(1)
+
+          val event = KeyEvent(row, KeyEvent.KEY_PRESSED, 0, 0, KeyEvent.VK_SPACE, ' ')
+          row.keyListeners.forEach { it.keyPressed(event) }
+
+          assertThat(event.isConsumed).isTrue()
+          assertThat(row.getSelection()).isEqualTo(EventHandler.SelectionType.NONE)
+          assertThat(selectedRow.getSelection()).isEqualTo(EventHandler.SelectionType.SELECTION)
+          assertThat(selectionChanges).isEmpty()
+          assertThat(actionSelections).containsExactly(listOf(row))
+
+          bindings.last().row.renderSelection(true)
+          val multiSelectionEvent = KeyEvent(row, KeyEvent.KEY_PRESSED, 0, 0, KeyEvent.VK_SPACE, ' ')
+          row.keyListeners.forEach { it.keyPressed(multiSelectionEvent) }
+
+          assertThat(multiSelectionEvent.isConsumed).isTrue()
+          assertThat(selectedRow.getSelection()).isEqualTo(EventHandler.SelectionType.SELECTION)
+          assertThat(row.getSelection()).isEqualTo(EventHandler.SelectionType.SELECTION)
+          assertThat(selectionChanges).isEmpty()
+          assertThat(actionSelections).containsExactly(listOf(row), listOf(selectedRow, row))
         }
       }
       finally {

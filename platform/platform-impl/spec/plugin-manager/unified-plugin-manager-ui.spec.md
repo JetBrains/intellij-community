@@ -468,10 +468,14 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
   )
 
 - Activating row content must select the plugin without invoking its primary action.
-- Enter and Space on a focused row must select the plugin without invoking its primary action.
+- Enter on a focused row must select the plugin without invoking its primary action.
+- Space on a focused, eligible installed plugin row must invoke its enablement action when no update or restart is available.
+- Space must use the current selection when it contains the focused plugin. Otherwise, it must use only the focused plugin
+  without changing the selection.
 - Row action controls must run their action without activating the row.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
-    `card activation selects plugin without invoking its primary action`
+    `Enter selects plugin without invoking its primary action`;
+    `Space dispatches the row action without changing selection`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginRowEventHandlerTest.kt (
     `buttons and their children are action controls`;

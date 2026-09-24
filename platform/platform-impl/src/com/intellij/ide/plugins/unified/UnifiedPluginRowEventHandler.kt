@@ -108,7 +108,7 @@ internal class UnifiedPluginRowEventHandler(
           selectExclusive(target, requestFocus = true, focusCause = FocusEvent.Cause.TRAVERSAL)
         }
       }
-      else if (event.component === row && (event.keyCode == KeyEvent.VK_ENTER || event.keyCode == KeyEvent.VK_SPACE)) {
+      else if (event.component === row && event.keyCode == KeyEvent.VK_ENTER) {
         event.consume()
         if (row.getSelection() != SelectionType.SELECTION) {
           selectExclusive(row, requestFocus = false)
@@ -116,7 +116,12 @@ internal class UnifiedPluginRowEventHandler(
       }
       else if (event.keyCode == KeyEvent.VK_ENTER || event.keyCode == KeyEvent.VK_SPACE || event.keyCode == DELETE_CODE) {
         event.consume()
-        val selection = selectedRows().ifEmpty { listOf(row) }
+        val selection = if (event.keyCode == KeyEvent.VK_SPACE && row.getSelection() != SelectionType.SELECTION) {
+          listOf(row)
+        }
+        else {
+          selectedRows().ifEmpty { listOf(row) }
+        }
         row.handleKeyAction(event, selection)
         try {
           getListPluginComponentCustomizer().processHandleKeyAction(row, event, selection)
