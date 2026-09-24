@@ -27,9 +27,9 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -128,8 +128,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
 
   /** Run actions execute code from the file, so their gutter markers must not appear in the safe mode. */
   private static boolean isUntrustedFile(@NotNull PsiElement element) {
-    PsiFile file = element.getContainingFile();
-    VirtualFile virtualFile = file == null ? null : file.getVirtualFile();
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
     return virtualFile != null && !TrustedFiles.isTrusted(virtualFile, element.getProject());
   }
 
