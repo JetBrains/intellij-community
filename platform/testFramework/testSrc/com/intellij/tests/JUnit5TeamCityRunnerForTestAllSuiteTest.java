@@ -78,10 +78,10 @@ class JUnit5TeamCityRunnerForTestAllSuiteTest {
     String scenario = ParameterizedClassScenario.class.getName();
 
     assertThat(execute(ParameterizedClassScenario.class).testNames).containsExactlyInAnyOrder(
-      scenario + ".first()[alpha]",
-      scenario + ".first()[beta]",
-      scenario + ".second()[alpha]",
-      scenario + ".second()[beta]"
+      scenario + ".first()[\"alpha\"]",
+      scenario + ".first()[\"beta\"]",
+      scenario + ".second()[\"alpha\"]",
+      scenario + ".second()[\"beta\"]"
     );
   }
 
@@ -91,11 +91,11 @@ class JUnit5TeamCityRunnerForTestAllSuiteTest {
     Names names = execute(ParameterizedClassWithNestedScenario.class);
 
     assertThat(names.testNames).containsExactlyInAnyOrder(
-      inner + ".inner()[alpha]",
-      inner + ".inner()[beta]"
+      inner + ".inner()[\"alpha\"]",
+      inner + ".inner()[\"beta\"]"
     );
     // the @Nested container itself is qualified too, otherwise the two suites would collide
-    assertThat(names.allNames).contains(inner + "[alpha].Inner", inner + "[beta].Inner");
+    assertThat(names.allNames).contains(inner + "[\"alpha\"].Inner", inner + "[\"beta\"].Inner");
   }
 
   @Test
@@ -105,8 +105,8 @@ class JUnit5TeamCityRunnerForTestAllSuiteTest {
 
     assertThat(execute(NestedParameterizedClassOwnerScenario.class).testNames).containsExactlyInAnyOrder(
       owner + ".outer()",  // no qualifier leaks onto a sibling that is not parameterized
-      inner + ".inner()[alpha]",
-      inner + ".inner()[beta]"
+      inner + ".inner()[\"alpha\"]",
+      inner + ".inner()[\"beta\"]"
     );
   }
 
@@ -115,8 +115,8 @@ class JUnit5TeamCityRunnerForTestAllSuiteTest {
     String scenario = ParameterizedClassWithParameterizedTestScenario.class.getName();
 
     assertThat(execute(ParameterizedClassWithParameterizedTestScenario.class).testNames).containsExactlyInAnyOrder(
-      scenario + ".t[alpha][1]",  // root to leaf: the class invocation first, then the method parameters
-      scenario + ".t[alpha][2]"
+      scenario + ".t[\"alpha\"][1]",  // root to leaf: the class invocation first, then the method parameters
+      scenario + ".t[\"alpha\"][2]"
     );
   }
 
@@ -125,8 +125,8 @@ class JUnit5TeamCityRunnerForTestAllSuiteTest {
     String inner = NestedClassTemplatesScenario.Inner.class.getName();
 
     assertThat(execute(NestedClassTemplatesScenario.class).testNames).containsExactlyInAnyOrder(
-      inner + ".t()[alpha][one]",
-      inner + ".t()[alpha][two]"
+      inner + ".t()[\"alpha\"][\"one\"]",
+      inner + ".t()[\"alpha\"][\"two\"]"
     );
   }
 
@@ -136,8 +136,8 @@ class JUnit5TeamCityRunnerForTestAllSuiteTest {
     assertThat(execute(PlainScenario.class).testNames)
       .containsExactly(PlainScenario.class.getName() + ".t()");
     assertThat(execute(ParameterizedTestScenario.class).testNames).containsExactlyInAnyOrder(
-      ParameterizedTestScenario.class.getName() + ".t[a]",
-      ParameterizedTestScenario.class.getName() + ".t[b]"
+      ParameterizedTestScenario.class.getName() + ".t[\"a\"]",
+      ParameterizedTestScenario.class.getName() + ".t[\"b\"]"
     );
   }
 
