@@ -7,7 +7,7 @@ import com.intellij.find.findUsages.FindUsagesHandlerBase;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.ide.actions.WelcomeFilesRootType;
+import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -50,7 +50,7 @@ public final class RefactoringUiServiceImpl extends RefactoringUiService {
 
   @Override
   public boolean shouldShowNonProjectRenameWarning(@NotNull Project project, @NotNull VirtualFile file) {
-    return !WelcomeFilesRootType.Util.INSTANCE.isWelcomeFile(project, file);
+    return !WelcomeUtils.INSTANCE.isWelcomeProject(project);
   }
 
   @Override
