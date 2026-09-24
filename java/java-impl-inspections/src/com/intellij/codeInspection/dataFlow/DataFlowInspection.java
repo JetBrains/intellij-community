@@ -7,6 +7,7 @@ import com.intellij.codeInspection.AddAssertNonNullFromTestFrameworksFix;
 import com.intellij.codeInspection.AddAssertNonNullFromTestFrameworksFix.Variant;
 import com.intellij.codeInspection.AddAssertStatementFix;
 import com.intellij.codeInspection.IntroduceVariableAndAssertFix;
+import com.intellij.codeInspection.IntroduceVariableAndSurroundWithIfFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.RemoveAssignmentFix;
 import com.intellij.codeInspection.ReplaceComputeWithComputeIfPresentFix;
@@ -108,14 +109,12 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
    * @param operand    expression the assertion is about
    * @param suffix     text to append to the operand to get the assertion condition (e.g., {@code " != null"})
    * @param precedence precedence the operand text should be parenthesized for
-   * @return a fix that adds the assertion in-place if the operand is tracked by the dataflow analysis;
-   * otherwise a fix that extracts the operand into a local variable first (asserting an untracked expression in-place
-   * would leave the warning in place); null if no assertion could be added
+   * @return a fix that adds the assertion in-place if the operand may be checked as is;
+   * otherwise a fix that extracts the operand into a local variable first; null if no assertion could be added
+   * @see #canCheckAsIs(PsiExpression)
    */
   private static @Nullable LocalQuickFix createAssertFix(@NotNull PsiExpression operand, @NotNull String suffix, int precedence) {
-    // the in-place assertion mentions the operand one more time, so it may be added only if re-evaluating it is harmless;
-    // extracting the operand into a variable, on the contrary, keeps evaluating it exactly once
-    if (isTrackedByDfa(operand) && !SideEffectChecker.mayHaveSideEffects(operand)) {
+    if (canCheckAsIs(operand)) {
       return new AddAssertStatementFix(ParenthesesUtils.getText(operand, precedence) + suffix);
     }
     return IntroduceVariableAndAssertFix.create(operand, suffix);
@@ -126,15 +125,42 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
    *
    * @param qualifier expression the assertion is about
    * @param variant   test framework to take the assertion method from
-   * @return a fix that adds the assertion call in-place if the qualifier is tracked by the dataflow analysis;
+   * @return a fix that adds the assertion call in-place if the qualifier may be checked as is;
    * otherwise a fix that extracts the qualifier into a local variable first; null if no assertion could be added
-   * @see #createAssertFix(PsiExpression, String, int)
+   * @see #canCheckAsIs(PsiExpression)
    */
   private static @Nullable LocalQuickFix createTestFrameworkAssertFix(@NotNull PsiExpression qualifier, @NotNull Variant variant) {
-    if (isTrackedByDfa(qualifier) && !SideEffectChecker.mayHaveSideEffects(qualifier)) {
+    if (canCheckAsIs(qualifier)) {
       return new AddAssertNonNullFromTestFrameworksFix(qualifier, variant);
     }
     return IntroduceVariableAndAssertFix.create(qualifier, variant);
+  }
+
+  /**
+   * Creates a fix that surrounds the statement with an {@code if} that checks {@code operand + suffix}.
+   *
+   * @param operand expression the check is about
+   * @param suffix  text to append to the operand to get the condition (e.g., {@code " != null"})
+   * @return a fix that checks the operand in-place if it may be checked as is;
+   * otherwise a fix that extracts the operand into a local variable first; null if no check could be added
+   * @see #canCheckAsIs(PsiExpression)
+   */
+  private static @Nullable LocalQuickFix createSurroundWithIfFix(@NotNull PsiExpression operand, @NotNull String suffix) {
+    if (canCheckAsIs(operand)) {
+      return SurroundWithIfFix.isAvailable(operand) ? new SurroundWithIfFix(operand, suffix) : null;
+    }
+    return IntroduceVariableAndSurroundWithIfFix.create(operand, suffix);
+  }
+
+  /**
+   * A generated check mentions the expression one more time, which is only useful if re-evaluating it has no visible
+   * effect and the analysis knows that both occurrences produce the same value. Otherwise, the expression should be
+   * extracted into a local variable, which is evaluated exactly once and is checked instead of the expression.
+   *
+   * @return true if the expression may be checked in-place
+   */
+  private static boolean canCheckAsIs(@NotNull PsiExpression expression) {
+    return !SideEffectChecker.mayHaveSideEffects(expression) && isTrackedByDfa(expression);
   }
 
   /**
@@ -180,9 +206,7 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
       if (!alwaysFails && CodeBlockSurrounder.canSurround(castExpression)) {
         String suffix = " instanceof " + typeElement.getText();
         ContainerUtil.addIfNotNull(fixes, createAssertFix(operand, suffix, PsiPrecedenceUtil.RELATIONAL_PRECEDENCE));
-        if (!SideEffectChecker.mayHaveSideEffects(operand) && SurroundWithIfFix.isAvailable(operand)) {
-          fixes.add(new SurroundWithIfFix(operand, suffix));
-        }
+        ContainerUtil.addIfNotNull(fixes, createSurroundWithIfFix(operand, suffix));
       }
       if (realType != null) {
         PsiType operandType = operand.getType();
@@ -219,9 +243,6 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
       }
       else if (!alwaysNull) {
         String suffix = " != null";
-        // all the fixes below except the assertion mention the qualifier one more time, so they may be suggested
-        // only if re-evaluating it is harmless
-        boolean mayHaveSideEffects = SideEffectChecker.mayHaveSideEffects(qualifier);
 
         Variant testFrameworkFixVariant = AddAssertNonNullFromTestFrameworksFix.isAvailable(expression);
         if (testFrameworkFixVariant != null) {
@@ -231,14 +252,11 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
           ContainerUtil.addIfNotNull(fixes, createAssertFix(qualifier, suffix, ParenthesesUtils.EQUALITY_PRECEDENCE));
         }
 
-        if (!mayHaveSideEffects) {
-          if (SurroundWithIfFix.isAvailable(qualifier)) {
-            fixes.add(new SurroundWithIfFix(qualifier, suffix));
-          }
+        ContainerUtil.addIfNotNull(fixes, createSurroundWithIfFix(qualifier, suffix));
 
-          if (ReplaceWithTernaryOperatorFix.isAvailable(qualifier, expression)) {
-            fixes.add(new ReplaceWithTernaryOperatorFix(qualifier));
-          }
+        // the ternary keeps the qualifier in the condition, so it may be suggested only if re-evaluating it is harmless
+        if (!SideEffectChecker.mayHaveSideEffects(qualifier) && ReplaceWithTernaryOperatorFix.isAvailable(qualifier, expression)) {
+          fixes.add(new ReplaceWithTernaryOperatorFix(qualifier));
         }
       }
 

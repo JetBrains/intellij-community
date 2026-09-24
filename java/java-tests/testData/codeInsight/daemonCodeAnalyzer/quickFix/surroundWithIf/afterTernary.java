@@ -1,10 +1,11 @@
-// "Surround with 'if ((b ? foo(1) : foo(2)) != null)'" "true-preview"
+// "Introduce variable and surround with 'if (s != null)'" "true-preview"
 class A {
     void bar(String s) {}
 
     void foo(boolean b){
-        if ((b ? foo(1) : foo(2)) != null) {
-            bar(b ? foo(1) : foo(2));
+        String s = b ? foo(1) : foo(2);
+        if (s != null) {
+            bar(s);
         }
     }
 

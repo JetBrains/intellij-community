@@ -1,4 +1,4 @@
-// "Introduce variable and surround with 'if (s != null)'" "true-preview"
+// "Surround with 'if ((b ? foo(1) : foo(2)) != null)'" "false"
 class A {
     void bar(String s) {}
 
