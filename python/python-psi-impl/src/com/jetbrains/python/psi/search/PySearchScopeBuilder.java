@@ -57,8 +57,8 @@ public final class PySearchScopeBuilder {
   /**
    * Creates a new builder for the given Python SDK.
    */
-  public static @NotNull PySearchScopeBuilder forPythonSdk(@NotNull Project project, @NotNull Sdk sdk) {
-    return new PySearchScopeBuilder(project, null, sdk);
+  public static @NotNull PySearchScopeBuilder forPythonSdkOf(@NotNull Project project) {
+    return new PySearchScopeBuilder(project, null);
   }
 
   /**
@@ -67,13 +67,15 @@ public final class PySearchScopeBuilder {
    * The element's own module answers first, then {@link MainPythonSdkKt#mainPythonSdk}.
    */
   public static @NotNull PySearchScopeBuilder forPythonSdkOf(@NotNull PsiElement element) {
-    return new PySearchScopeBuilder(element.getProject(), ModuleUtilCore.findModuleForPsiElement(element), findPythonSdkForElement(element));
+    return new PySearchScopeBuilder(element.getProject(), ModuleUtilCore.findModuleForPsiElement(element));
   }
 
-  private PySearchScopeBuilder(@NotNull Project project, @Nullable Module module, @Nullable Sdk sdk) {
+  private PySearchScopeBuilder(@NotNull Project project, @Nullable Module module) {
+    assert module == null || project.equals(module.getProject());
+
     myProject = project;
     myModule = module;
-    mySdk = sdk;
+    mySdk = findModuleOrProjectPythonSdk(project, module);
   }
 
   /**
@@ -148,9 +150,7 @@ public final class PySearchScopeBuilder {
     return GlobalSearchScope.EMPTY_SCOPE;
   }
 
-  private static @Nullable Sdk findPythonSdkForElement(@NotNull PsiElement element) {
-    Project project = element.getProject();
-    Module module = ModuleUtilCore.findModuleForPsiElement(element);
+  private static @Nullable Sdk findModuleOrProjectPythonSdk(@NotNull Project project, @Nullable Module module) {
     if (module != null) {
       Sdk sdk = PythonSdkUtil.findPythonSdk(module);
       if (sdk != null) {
