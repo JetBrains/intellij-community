@@ -4,7 +4,6 @@ package com.intellij.openapi.options
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
@@ -14,10 +13,10 @@ import com.intellij.openapi.updateSettings.impl.PluginUpdateHandler
 import com.intellij.openapi.updateSettings.impl.PluginUpdateProgressSink
 import com.intellij.openapi.updateSettings.impl.PluginUpdateHandlerProvider
 import com.intellij.openapi.updateSettings.impl.PluginUpdatesModel
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
-import com.intellij.testFramework.registerOrReplaceServiceInstance
 import com.intellij.ui.components.Badge
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
@@ -34,11 +33,7 @@ import kotlin.test.assertTrue
 internal class ConfigurableNewOptionsTest {
   @BeforeEach
   fun registerNoopPluginUpdateHandler(@TestDisposable disposable: Disposable) {
-    ApplicationManager.getApplication().registerOrReplaceServiceInstance(
-      PluginUpdateHandlerProvider::class.java,
-      NoopPluginUpdateHandlerProvider,
-      disposable,
-    )
+    ExtensionTestUtil.maskExtensions(PluginUpdateHandlerProvider.EP_NAME, listOf(NoopPluginUpdateHandlerProvider), disposable)
   }
 
   @AfterEach

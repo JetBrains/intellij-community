@@ -408,6 +408,9 @@
     <extensionPoint qualifiedName="com.intellij.uiPluginManagerController"
                     interface="com.intellij.ide.plugins.newui.UiPluginManagerController"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.pluginUpdateHandlerProvider"
+                    interface="com.intellij.openapi.updateSettings.impl.PluginUpdateHandlerProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.pluginUpdatesProvider"
                     interface="com.intellij.ide.plugins.newui.PluginUpdatesProvider"
                     dynamic="true"/>

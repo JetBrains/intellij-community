@@ -10,8 +10,4 @@
     <module name="intellij.platform.rpc.backend"/>
   </dependencies>
   <!-- endregion -->
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.PluginUpdateHandlerProvider"
-                        serviceImplementation="com.intellij.platform.ide.updateChecker.backend.DefaultPluginUpdateHandlerProvider"/>
-  </extensions>
 </idea-plugin>

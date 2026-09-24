@@ -46,6 +46,7 @@
     </group>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
+    <pluginUpdateHandlerProvider implementation="com.intellij.openapi.updateSettings.impl.DefaultPluginUpdateHandlerProvider"/>
     <appStarter id="update" implementation="com.intellij.ide.plugins.UpdatePluginsApp" bundle="messages.IdeBundle" key="update.plugins.help"/>
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade"
                         serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerFacadeImpl"/>
