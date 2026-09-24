@@ -1,0 +1,116 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.codeInsight.template.postfix.templates;
+
+import com.intellij.testFramework.NeedsIndex;
+import org.jetbrains.annotations.NotNull;
+
+public class NewExpressionPostfixTemplateTest extends PostfixTemplateTestCase {
+
+  @NotNull
+  @Override
+  protected String getSuffix() {
+    return "new";
+  }
+
+  public void testNew01() {
+    doTest();
+  }
+
+  public void testNew04() {
+    doTest();
+  }
+
+  public void testNew05() {
+    doTest();
+  }
+
+  public void testNew06() {
+    doTest();
+  }
+
+  public void testNew07() {
+    doTest();
+  }
+
+  public void testNew08() {
+    doTest();
+  }
+
+  public void testNewOnAssignExpression() {
+    doTest();
+  }
+
+  public void testNewInsideExpression() {
+    doTest();
+  }
+
+  public void testNewWithCall() {
+    doTest();
+  }
+
+  public void testNotClassCall() {
+    doTest();
+  }
+
+  public void testNotClassCallWithClass() {
+    doTest();
+  }
+
+  public void testNewUnresolved() {
+    doTest();
+  }
+
+  public void testNewAfterNew() {
+    doTest();
+  }
+
+  public void testNewInsideVarargCall() {
+    doTest();
+  }
+
+  public void testNewInsideVarargCall2() {
+    doTest();
+  }
+
+  @NeedsIndex.Full
+  public void testNewNestedClass() {
+    doTest();
+  }
+
+  public void testNewNestedClass2() {
+    doTest();
+  }
+
+  public void testNewFQN() {
+    doTest();
+  }
+
+  public void testNewFQNConflict() {
+    doTest();
+  }
+
+  public void testNewFQNImport() {
+    doTest();
+  }
+
+  public void testNewInaccessible() {
+    myFixture.addClass("class Test {private Test() {}}");
+    doTest();
+  }
+  
+  @NeedsIndex.ForStandardLibrary
+  public void testNewNonImported() {
+    doTest();
+  }
+  
+  public void testNewNonExisting() {
+    doTest();
+  }
+
+  public static class ModNewExpressionPostfixTemplateTest extends NewExpressionPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
+}
