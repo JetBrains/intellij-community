@@ -62,6 +62,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.Component;
 import java.io.IOException;
@@ -393,14 +394,7 @@ public final class PythonSdkUpdater {
         .toList();
 
       LOG.info("Bundled .pyi stub roots for SDK " + packageManager.getSdk() + ":" + bundledStubRoots);
-      changeSdkModificator(packageManager.getSdk(), effectiveModificator -> {
-        VirtualFile[] currentRoots = effectiveModificator.getRoots(OrderRootType.CLASSES);
-        effectiveModificator.removeAllRoots();
-        for (VirtualFile sdkPath : ContainerUtil.concat(List.of(currentRoots), bundledStubRoots)) {
-          effectiveModificator.addRoot(PythonSdkType.getSdkRootVirtualFile(sdkPath), OrderRootType.CLASSES);
-        }
-        return true;
-      });
+      commitBundledStubRootsIfChanged(packageManager.getSdk(), bundledStubRoots);
     }
 
     private @NotNull Disposable getIndicatorDisposable(@NotNull ProgressIndicator indicator) {
@@ -782,16 +776,57 @@ public final class PythonSdkUpdater {
   private static void commitSdkPathsIfChanged(@NotNull Sdk sdk,
                                               final @NotNull List<VirtualFile> sdkPaths,
                                               boolean forceCommit) {
-    final List<VirtualFile> currentSdkPaths = Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
-    if (forceCommit || !Sets.newHashSet(sdkPaths).equals(Sets.newHashSet(currentSdkPaths))) {
-      changeSdkModificator(sdk, effectiveModificator -> {
-        effectiveModificator.removeAllRoots();
-        for (VirtualFile sdkPath : sdkPaths) {
-          effectiveModificator.addRoot(PythonSdkType.getSdkRootVirtualFile(sdkPath), OrderRootType.CLASSES);
-        }
-        return true;
-      });
+    changeSdkModificator(sdk, effectiveModificator -> {
+      final List<VirtualFile> currentRoots = Arrays.asList(effectiveModificator.getRoots(OrderRootType.CLASSES));
+      // The bundled stub roots are not on sys.path, so these paths never contain them, and commitBundledStubRootsIfChanged
+      // decides about them later in the same update. Dropping them here made every update commit the roots twice: once
+      // without the stub roots and once with them again, and each commit rescans all roots of the SDK.
+      final List<VirtualFile> newRoots = new ArrayList<>(ContainerUtil.map(sdkPaths, PythonSdkType::getSdkRootVirtualFile));
+      newRoots.addAll(ContainerUtil.filter(currentRoots, root -> isBundledStubRoot(root) && !newRoots.contains(root)));
+      return setClassesRootsIfChanged(effectiveModificator, currentRoots, newRoots, forceCommit);
+    });
+  }
+
+  /**
+   * Makes the bundled stub roots of the SDK exactly {@code bundledStubRoots} and keeps all its other roots. It is the only
+   * place that removes the stub root of a package which is no longer installed, because {@link #commitSdkPathsIfChanged}
+   * keeps the stub roots.
+   * <p>
+   * Commits only a change: an update that computes the same roots again must not commit, because each commit rescans all
+   * roots of the SDK, and a commit publishes the SDK in two steps that a concurrent reader can observe halfway through.
+   */
+  private static void commitBundledStubRootsIfChanged(@NotNull Sdk sdk, @NotNull List<VirtualFile> bundledStubRoots) {
+    changeSdkModificator(sdk, effectiveModificator -> {
+      final List<VirtualFile> currentRoots = Arrays.asList(effectiveModificator.getRoots(OrderRootType.CLASSES));
+      final List<VirtualFile> newRoots = new ArrayList<>(ContainerUtil.filter(currentRoots, root -> !isBundledStubRoot(root)));
+      for (VirtualFile stubRoot : ContainerUtil.map(bundledStubRoots, PythonSdkType::getSdkRootVirtualFile)) {
+        if (!newRoots.contains(stubRoot)) newRoots.add(stubRoot);
+      }
+      return setClassesRootsIfChanged(effectiveModificator, currentRoots, newRoots, false);
+    });
+  }
+
+  /**
+   * A root that {@link #commitBundledStubRootsIfChanged} manages: the directory of one stub package of the bundled Typeshed
+   * or of the bundled stubs.
+   */
+  private static boolean isBundledStubRoot(@NotNull VirtualFile root) {
+    final VirtualFile parent = root.getParent();
+    return parent != null && (parent.equals(PyTypeShed.INSTANCE.getThirdPartyStubRoot()) || parent.equals(PyBundledStubs.INSTANCE.getRoot()));
+  }
+
+  private static boolean setClassesRootsIfChanged(@NotNull SdkModificator modificator,
+                                                  @NotNull List<VirtualFile> currentRoots,
+                                                  @NotNull List<VirtualFile> newRoots,
+                                                  boolean forceCommit) {
+    if (!forceCommit && Sets.newHashSet(newRoots).equals(Sets.newHashSet(currentRoots))) {
+      return false;
     }
+    modificator.removeAllRoots();
+    for (VirtualFile root : newRoots) {
+      modificator.addRoot(root, OrderRootType.CLASSES);
+    }
+    return true;
   }
 
   /**
