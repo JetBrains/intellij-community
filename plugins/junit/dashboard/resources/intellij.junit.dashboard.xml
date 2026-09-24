@@ -1,0 +1,22 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="JUnit"/>
+    <module name="intellij.java.execution"/>
+    <module name="intellij.java.execution.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.dashboard"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.testRunner"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <runDashboardCustomizer implementation="com.intellij.junit.dashboard.JUnitRunDashboardCustomizer" order="before commonJavaCustomizer"/>
+  </extensions>
+</idea-plugin>

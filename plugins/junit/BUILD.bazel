@@ -7,6 +7,7 @@ dev_dist_plugin(
         # do not sort,
         "intellij.junit.properties",
         "intellij.junit.vcs",
+        "intellij.junit.dashboard",
         "intellij.libraries.hamcrest",
         "intellij.libraries.junit4",
         "intellij.junit.rt",
@@ -15,6 +16,7 @@ dev_dist_plugin(
     ],
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_modules = [
+        "intellij.junit.dashboard",
         "intellij.junit.properties",
         "intellij.junit.vcs",
         "intellij.libraries.hamcrest",

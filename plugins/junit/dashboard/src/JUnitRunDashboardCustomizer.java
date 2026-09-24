@@ -1,9 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.junit;
+package com.intellij.junit.dashboard;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.RunDashboardCustomizer;
+import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;

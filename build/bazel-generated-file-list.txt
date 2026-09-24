@@ -1384,6 +1384,7 @@ plugins/jshell/frontend
 plugins/jshell/protocol
 plugins/jsonpath
 plugins/junit
+plugins/junit/dashboard
 plugins/junit/groovy-tests
 plugins/junit/java-tests
 plugins/junit/kotlin-tests-k2
