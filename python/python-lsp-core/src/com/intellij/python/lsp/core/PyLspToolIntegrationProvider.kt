@@ -547,6 +547,56 @@ abstract class PyLspToolDescriptor(
    */
   open suspend fun projectChangedAround(client: LspClient) {}
 
+  /**
+   * Whether this tool is told about the directories the user marked as source roots. A tool that opts
+   * in puts [sourceRoots] into its own settings, under whatever key it reads, and refreshes them in
+   * [projectChangedAround].
+   */
+  open val usesSourceRoots: Boolean get() = false
+
+  /**
+   * The counterpart of [usesSourceRoots] for [excludedRoots]. The IDE never hands an excluded file to
+   * a language server anyway. What a tool gains by opting in is that the server's own project scan
+   * skips those directories.
+   */
+  open val usesExcludedRoots: Boolean get() = false
+
+  /** The last computed [sourceRoots] and [excludedRoots]. Only [refreshModuleRoots] writes it. */
+  @Volatile
+  private var cachedModuleRoots: ModuleRoots = ModuleRoots()
+
+  /**
+   * The source roots of the live served modules, as absolute paths, as last computed.
+   *
+   * This takes no lock and computes nothing, for the reason [projectExcludes] gives. Compute the
+   * value with [refreshModuleRoots] on another thread first.
+   */
+  fun sourceRoots(): List<String> = cachedModuleRoots.sourceRoots
+
+  /** The excluded roots of the live served modules, as absolute paths, as last computed; see [sourceRoots]. */
+  fun excludedRoots(): List<String> = cachedModuleRoots.excludedRoots
+
+  /** Computes [sourceRoots] and [excludedRoots] again, and answers whether they changed. */
+  @RequiresReadLock
+  fun refreshModuleRoots(): Boolean {
+    if (!usesSourceRoots && !usesExcludedRoots) return false
+    val managers = liveServedModules.map { ModuleRootManager.getInstance(it) }
+    val fresh = ModuleRoots(
+      sourceRoots = if (usesSourceRoots) managers.flatMap { it.sourceRoots.mapNotNull(::absolutePathOf) }.distinct() else emptyList(),
+      excludedRoots = if (usesExcludedRoots) managers.flatMap { it.excludeRoots.mapNotNull(::absolutePathOf) }.distinct() else emptyList(),
+    )
+    if (fresh == cachedModuleRoots) return false
+    cachedModuleRoots = fresh
+    return true
+  }
+
+  private fun absolutePathOf(file: VirtualFile): String? = file.fileSystem.getNioPath(file)?.toString()
+
+  private data class ModuleRoots(
+    val sourceRoots: List<String> = emptyList(),
+    val excludedRoots: List<String> = emptyList(),
+  )
+
   abstract val toolConfig: PyLspToolSettings
 
   open val executableName: String get() = pyTool.packageName.name

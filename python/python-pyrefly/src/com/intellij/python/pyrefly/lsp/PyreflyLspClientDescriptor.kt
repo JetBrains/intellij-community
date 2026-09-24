@@ -79,12 +79,19 @@ class PyreflyLspClientDescriptor(
   override fun lspArguments(): List<String> =
     listOf(if (Registry.`is`("pyrefly.type.engine.tsp")) "tsp" else "lsp")
 
+  override val usesSourceRoots: Boolean = true
+
+  override val usesExcludedRoots: Boolean = true
+
   override fun createInitializationOptions(): Map<String, Any>? {
     val homePath = module.pythonSdk?.homePath ?: return null
     // The platform builds these options on its connect pool thread, which holds no lock, so the
     // excludes are read here. The `workspace/configuration` replies only reuse them, because they
     // run on the LSP listener thread, see [projectExcludes].
-    runReadActionBlocking { refreshProjectExcludes() }
+    runReadActionBlocking {
+      refreshProjectExcludes()
+      refreshModuleRoots()
+    }
     return buildMap {
       put("pythonPath", homePath)
       put("pyrefly", buildPyreflyClientSettings())
@@ -103,7 +110,19 @@ class PyreflyLspClientDescriptor(
    * and the upstream `remove_*_clears_and_flags_modified` tests for the exact contract.
    */
   private fun buildPyreflyClientSettings(): Map<String, Any> = buildMap {
-    put("displayTypeErrors", "force-on")
+    // the default value for "typeCheckingMode" is "auto", which will often disable all error messages
+    // to keep behaviour close to pycharm, we set it to "default" instead of the default
+    put("typeCheckingMode", "default")
+    // Pyrefly keeps `extraPaths` as `search_path_from_args` and consults it before its own heuristics,
+    // which is the priority "Sources Root" has in the IDE. Content roots are deliberately left out:
+    // Pyrefly already derives them from the workspace folders, and repeating them here would lift
+    // them above typeshed in import resolution.
+    put("extraPaths", sourceRoots())
+    // The directories the user excluded, plus the modules nested in a folder of this server that it
+    // does not serve. Pyrefly would otherwise analyse such a module with the interpreter of the outer
+    // folder. Pyrefly reads this key from 1.3.0-dev.1, and an older one ignores it. See
+    // [excludedRoots] and [projectExcludes].
+    put("extraProjectExcludes", (excludedRoots() + projectExcludes()).distinct())
     // Point Pyrefly at PyCharm's bundled typeshed so stdlib (and any third-party
     // packages typeshed knows about) is resolved from a directory PyCharm already
     // indexes. Without this, Pyrefly responds with URIs inside its own
@@ -121,10 +140,6 @@ class PyreflyLspClientDescriptor(
     // flag set, Pyrefly instead reports `MissingStubs` / `NotFound`, and the IDE
     // surfaces a regular diagnostic the user can act on (install <pkg>-stubs).
     put("disableBundledThirdPartyStubs", true)
-    // A module nested in a folder of this server, and not served by it, would be analysed here as
-    // well, with the interpreter of the outer folder. Pyrefly reads this key from 1.3.0-dev.1, and an
-    // older one ignores it. See [projectExcludes].
-    put("extraProjectExcludes", projectExcludes())
   }
 
   private fun buildPyreflyAnalysisSettings(): Map<String, Any> = mapOf("completeFunctionParens" to true)
@@ -147,14 +162,19 @@ class PyreflyLspClientDescriptor(
   }
 
   /**
-   * Computes the [projectExcludes] again, and tells pyrefly only when they changed. Pyrefly then asks
-   * for `workspace/configuration` again for each folder, and the replies carry the new excludes. It
-   * does not read the payload of the notification.
+   * Computes the [projectExcludes] and the [sourceRoots] again, and tells pyrefly only when they
+   * changed. Pyrefly then asks for `workspace/configuration` again for each folder, and the replies
+   * carry the new values. It does not read the payload of the notification.
    */
   override suspend fun projectChangedAround(client: LspClient) {
-    if (!readAction { refreshProjectExcludes() }) return
+    // `or`, not `||`: both have to run, whichever one reports a change.
+    if (!readAction { refreshProjectExcludes() or refreshModuleRoots() }) return
     if (client.state != LspServerState.Running) return
     client.sendNotification { it.workspaceService.didChangeConfiguration(DidChangeConfigurationParams(emptyMap<String, Any>())) }
+    // Everything the server already answered came from the old search path and stays cached until the
+    // file changes, so ask for all of it again now that the push is on its way.
+    client.invalidateServerResults()
+    PyLspServerModificationTracker.getInstance(project).incModificationCount()
   }
 
   override fun startServerProcess(): BaseProcessHandler<*> {
