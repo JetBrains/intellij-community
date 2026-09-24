@@ -32,7 +32,7 @@ public class OriginalElementPostfixTemplateTest extends PostfixTemplateTestCase 
     super.setUp();
 
     JavaPostfixTemplateProvider provider = PROVIDER.getValue();
-    myOriginalTemplates = provider.getTemplates();
+    myOriginalTemplates = PostfixTemplateStorage.getInstance().getTemplates(provider);
     // Register a custom condition which returns true if it can get an original element of the next method.
     // This emulates conditions in some languages e.g. in go where resolve involves getOriginalElement() calls.
     PostfixTemplate template = new JavaEditablePostfixTemplate(
