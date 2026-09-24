@@ -5,29 +5,37 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.plugins.PluginManagerConfigurable
-import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.PopupStep
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
+import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenComboBoxKind
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider.WelcomeContent
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.KeymapModel
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.StartupSwitchModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.ThemeModel
 import com.intellij.ui.components.DisclosureButton
 import com.intellij.ui.components.labels.LinkLabel
@@ -59,14 +67,15 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.ComboBoxModel
+import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.SwingConstants
-import javax.swing.event.ListDataListener
+import javax.swing.border.Border
+import javax.swing.border.CompoundBorder
 import kotlin.math.max
 
 internal class WelcomeScreenRightTabImpl(
@@ -169,11 +178,6 @@ internal class WelcomeScreenRightTabImpl(
     }
 
     createFooter()
-
-    val busConnection = ApplicationManager.getApplication().messageBus.connect(project)
-    busConnection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
-      updateLafIconCallback()
-    })
 
     component.dropTarget = DropTarget(component, object : DropTargetAdapter() {
       override fun drop(e: DropTargetDropEvent) {
@@ -420,71 +424,22 @@ internal class WelcomeScreenRightTabImpl(
     }
   }
 
-  private lateinit var updateLafIconCallback: () -> Unit
-
   private fun createFooter() {
-    val panel = JPanel(GridLayout())
-    panel.isOpaque = false
-    component.add(panel)
-
-    val gridBuilder = RowsGridBuilder(panel)
-
-    createFooterButtons(gridBuilder)
-  }
-
-  private fun createFooterButtons(gridBuilder: RowsGridBuilder) {
-    val buttons = createFooterModels()
-
     val coroutineScope = contentProvider.coroutineScope
+    val models = createFooterModels()
+    val actions = models.mapIndexed { index, model ->
+      val addBorder = index < models.size - 1
+      when (model) {
+        is ComboBoxInfoPanelModel -> ComboBoxInfoPanelAction(model, addBorder)
 
-    for (row in buttons.chunked(contentProvider.buttonsPerRow)) {
-      for (model in row) {
-        when (model) {
-          is ComboBoxInfoPanelModel -> {
-            val cellPanel = JPanel(HorizontalLayout(8))
-            cellPanel.isOpaque = false
-            val label = JLabel(model.itemPrefix, model.icon, SwingConstants.LEADING)
-            cellPanel.add(label)
-
-            val comboBoxModel = model.model
-
-            if (comboBoxModel is ThemeModel) {
-              updateLafIconCallback = {
-                label.icon = ThemeModel.getIcon()
-              }
-            }
-
-            val combo = ComboBox(ComboModel(model, comboBoxModel))
-            combo.isOpaque = false
-
-            comboBoxModel.externalUpdateListener(project).invoke { index ->
-              model.callIfNeeded {
-                combo.selectedIndex = index
-              }
-            }
-
-            cellPanel.add(combo)
-
-            gridBuilder.cell(cellPanel.also { it.border = JBUI.Borders.empty(0, 0, 16, 16) })
-          }
-          is ButtonInfoPanelModel -> {
-            val presentation = Presentation()
-            presentation.icon = model.icon
-            presentation.text = model.itemPrefix
-
-            val action = object : DumbAwareAction() {
-              override fun actionPerformed(e: AnActionEvent) {
-                model.onClick(project, coroutineScope)
-              }
-            }
-
-            val button = ActionButtonWithText(action, presentation, "", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
-            gridBuilder.cell(Wrapper(button).also { it.border = JBUI.Borders.empty(0, 0, 16, 16) })
-          }
-        }
+        is ButtonInfoPanelModel -> ButtonInfoPanelAction(model, project, coroutineScope, addBorder)
       }
-      gridBuilder.row()
     }
+    val toolbar = ActionManager.getInstance().createActionToolbar("WelcomeScreenRightTabFooter", DefaultActionGroup(actions), true)
+    toolbar.targetComponent = component
+    toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
+    toolbar.component.isOpaque = false
+    component.add(toolbar.component)
   }
 
   private fun createFooterModels(): List<InfoPanelModel> {
@@ -508,10 +463,6 @@ private fun getStatisticLogger(comboBoxInfoPanelModel: ComboBoxInfoPanelModel): 
     is KeymapModel -> { _, _ ->
       WelcomeScreenTabUsageCollector.logComboBoxValueChanged(WelcomeScreenComboBoxKind.KEYMAP)
     }
-    is StartupSwitchModel -> { _, index ->
-      WelcomeScreenTabUsageCollector.logComboBoxValueChanged(WelcomeScreenComboBoxKind.STARTUP)
-      WelcomeScreenTabUsageCollector.logStartupOptionChanged(comboBoxInfoPanelModel.model.items[index])
-    }
     else -> null
   }
 }
@@ -526,76 +477,98 @@ private class ComboBoxInfoPanelModel(
   val itemPrefixKey: String,
   val model: WelcomeScreenRightTabComboBoxModel<out Any>,
 ) : InfoPanelModel {
-  private var ignoreEvent = false
-
   val afterOnSelectedItemChanged: ((newSelection: String, index: Int) -> Unit)? = getStatisticLogger(this)
 
   override val itemPrefix: @NlsSafe String
     get() = NonModalWelcomeScreenBundle.message(itemPrefixKey)
-
-  fun callIfNeeded(call: () -> Unit) {
-    if (ignoreEvent) {
-      return
-    }
-    try {
-      ignoreEvent = true
-      call()
-    }
-    finally {
-      ignoreEvent = false
-    }
-  }
 }
 
 private class ButtonInfoPanelModel(private val model: WelcomeRightTabContentProvider.InfoButtonModel) : InfoPanelModel {
   override val icon: Icon
     get() = model.icon
-  override val itemPrefix: String
+  override val itemPrefix: @NlsSafe String
     get() = model.text
   val onClick: (Project, CoroutineScope) -> Unit = model.onClick
 }
 
-private class ComboModel(
+private class ComboBoxInfoPanelAction(
   private val comboModel: ComboBoxInfoPanelModel,
-  private val model: WelcomeScreenRightTabComboBoxModel<out Any>,
-) : ComboBoxModel<String> {
-  override fun setSelectedItem(item: Any?) {
-    if (item is String) {
-      val index = model.itemNames().indexOf(item)
-      if (index != -1) {
-        comboModel.callIfNeeded {
-          model.setByIndex(index, item)
-          comboModel.afterOnSelectedItemChanged?.invoke(item, index)
+  private val addBorder: Boolean,
+) : ExpandableComboAction(), DumbAware {
+
+  private val model = comboModel.model
+
+  init {
+    templatePresentation.text = comboModel.itemPrefix
+    templatePresentation.icon = comboModel.icon
+  }
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    val component = super.createCustomComponent(presentation, place)
+    if (addBorder) {
+      component.border = JBUI.Borders.emptyRight(16)
+    }
+    return component
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  override fun update(e: AnActionEvent) {
+    val selectedItem = model.itemNames().getOrNull(model.currentItemIndex()) ?: ""
+    e.presentation.setText(comboModel.itemPrefix + selectedItem, false)
+    e.presentation.icon = if (model is ThemeModel) ThemeModel.getIcon() else comboModel.icon
+  }
+
+  @Suppress("SplitModeApiUsage")
+  override fun createPopup(event: AnActionEvent): JBPopup {
+    val step = object : BaseListPopupStep<String>(null, model.itemNames()) {
+      override fun isSpeedSearchEnabled(): Boolean = true
+
+      override fun onChosen(selectedValue: String, finalChoice: Boolean): PopupStep<*>? {
+        return doFinalStep {
+          val index = model.itemNames().indexOf(selectedValue)
+          if (index != -1 && index != model.currentItemIndex()) {
+            model.setByIndex(index, selectedValue)
+            comboModel.afterOnSelectedItemChanged?.invoke(selectedValue, index)
+          }
+        }
+      }
+    }
+    step.defaultOptionIndex = model.currentItemIndex()
+    return JBPopupFactory.getInstance().createListPopup(step)
+  }
+}
+
+private class ButtonInfoPanelAction(
+  private val model: ButtonInfoPanelModel,
+  private val project: Project,
+  private val coroutineScope: CoroutineScope,
+  private val addBorder: Boolean,
+) : DumbAwareAction(Supplier { model.itemPrefix }, model.icon), CustomComponentAction {
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    return object : ActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+      override fun iconTextSpace(): Int {
+        return JBUI.scale(4)
+      }
+
+      override fun setBorder(border: Border?) {
+        if (addBorder) {
+          if (border == null) {
+            super.setBorder(JBUI.Borders.emptyRight(16))
+          }
+          else {
+            super.setBorder(CompoundBorder(JBUI.Borders.emptyRight(16 - JBUI.unscale(border.getBorderInsets(this).right)), border))
+          }
+        }
+        else {
+          super.setBorder(border)
         }
       }
     }
   }
 
-  override fun getSelectedItem(): String? {
-    val index = model.currentItemIndex()
-    if (index == -1) {
-      return null
-    }
-    return getElementAt(index)
+  override fun actionPerformed(e: AnActionEvent) {
+    model.onClick(project, coroutineScope)
   }
-
-  override fun getSize(): Int {
-    return model.items.size
-  }
-
-  override fun getElementAt(index: Int): String {
-    return model.itemNames()[index]
-  }
-
-  override fun addListDataListener(listener: ListDataListener) {
-  }
-
-  override fun removeListDataListener(listener: ListDataListener) {
-  }
-}
-
-private fun JLabel.centered(): JLabel {
-  horizontalAlignment = JLabel.CENTER
-  verticalAlignment = JLabel.CENTER
-  return this
 }
