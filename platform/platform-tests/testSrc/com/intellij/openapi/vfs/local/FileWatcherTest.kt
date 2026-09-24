@@ -25,9 +25,7 @@ import com.intellij.openapi.vfs.local.FileWatcherTestUtil.SHORT_PROCESS_DELAY
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.refresh
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.shutdown
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.startup
-import com.intellij.openapi.vfs.local.FileWatcherTestUtil.unwatch
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.wait
-import com.intellij.openapi.vfs.local.FileWatcherTestUtil.watch
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.RunAll
@@ -136,7 +134,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Test fun testFileRoot() {
     val files = arrayOf(tempDir.newFileNio("test1.txt"), tempDir.newFileNio("test2.txt"))
     files.forEach { refresh(it) }
-    files.forEach { watch(it, false) }
+    files.forEach { watch(it, recursive = false) }
 
     assertEvents({ files.forEach { it.writeText("new content") } }, files.associateWith { 'U' })
     assertEvents({ files.forEach { it.deleteExisting() } }, files.associateWith { 'D' })
@@ -146,7 +144,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Test fun testFileRootRecursive() {
     val files = arrayOf(tempDir.newFileNio("test1.txt"), tempDir.newFileNio("test2.txt"))
     files.forEach { refresh(it) }
-    files.forEach { watch(it, true) }
+    files.forEach { watch(it, recursive = true) }
 
     assertEvents({ files.forEach { it.writeText("new content") } }, files.associateWith { 'U' })
     assertEvents({ files.forEach { it.deleteExisting() } }, files.associateWith { 'D' })
@@ -186,7 +184,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val unwatchedFile = tempDir.newFileNio("top/sub/test.txt")
     refresh(top)
 
-    watch(top, false)
+    watch(top, recursive = false)
     assertEvents({ watchedFile.writeText("new content") }, mapOf(watchedFile to 'U'))
     assertEvents({ unwatchedFile.writeText("new content") }, mapOf(), SHORT_PROCESS_DELAY)
   }
@@ -199,12 +197,35 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val watchedFile2 = tempDir.newFileNio("top/sub2/sub/test.txt")
     refresh(top)
 
-    watch(top, false)
-    watch(sub, true)
+    watch(top, recursive = false)
+    watch(sub, recursive = true)
     assertEvents(
       { arrayOf(watchedFile1, watchedFile2, unwatchedFile).forEach { it.writeText("new content") } },
       mapOf(watchedFile1 to 'U', watchedFile2 to 'U')
     )
+  }
+
+  @Test fun testDirectoryScopeSwitching() {
+    val top = tempDir.newDirectoryPath("top")
+    val topFile = tempDir.newFileNio("top/test.txt")
+    val subFile = tempDir.newFileNio("top/sub/test.txt")
+    val files = arrayOf(topFile, subFile)
+    refresh(top)
+
+    val flatRequest = watch(top, recursive = false)
+    assertEvents({ files.forEach { it.writeText(".") } }, mapOf(topFile to 'U'))
+
+    val recursiveRequest = watch(top, recursive = true)
+    assertEvents({ files.forEach { it.writeText("..") } }, mapOf(topFile to 'U', subFile to 'U'))
+
+    unwatch(recursiveRequest)
+    assertEvents({ files.forEach { it.writeText("...") } }, mapOf(topFile to 'U'))
+
+    watch(top, recursive = true)
+    assertEvents({ files.forEach { it.writeText("....") } }, mapOf(topFile to 'U', subFile to 'U'))
+
+    unwatch(flatRequest)
+    assertEvents({ files.forEach { it.writeText(".....") } }, mapOf(topFile to 'U', subFile to 'U'))
   }
 
   @Test fun testMove() {
@@ -229,7 +250,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val pseudoDir = file.resolveSibling("sub/zip")
     refresh(root)
 
-    watch(pseudoDir, false)
+    watch(pseudoDir, recursive = false)
     assertEvents({ file.writeText("new content") }, mapOf(), SHORT_PROCESS_DELAY)
   }
 
@@ -284,8 +305,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val fileOutsideFlatWatchRoot = tempDir.newFileNio("root/A/B/C/test.txt")
     refresh(root)
 
-    watch(aLink, false)
-    watch(cDir, false)
+    watch(aLink, recursive = false)
+    watch(cDir, recursive = false)
     assertEvents({ flatWatchedFile.writeText("new content") }, mapOf(flatWatchedFile to 'U'))
     assertEvents({ fileOutsideFlatWatchRoot.writeText("new content") }, mapOf(fileOutsideFlatWatchRoot to 'U'))
   }
@@ -704,14 +725,16 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   //<editor-fold desc="Helpers">
-  private fun watch(file: Path, recursive: Boolean = true, isManual: Boolean = false): LocalFileSystem.WatchRequest {
-    val request = watch(watcher, file, recursive)
-    assertThat(watcher.manualWatchRoots).let { if (isManual) it.contains(file.toString()) else it.doesNotContain(file.toString()) }
+  private fun watch(root: Path, recursive: Boolean = true, isManual: Boolean = false): LocalFileSystem.WatchRequest {
+    val request = fs.addRootToWatch(root.toString(), recursive)!!
+    wait { watcher.isSettingRoots }
+    assertThat(watcher.manualWatchRoots).let { if (isManual) it.contains(root.toString()) else it.doesNotContain(root.toString()) }
     return request
   }
 
   private fun unwatch(request: LocalFileSystem.WatchRequest) {
-    unwatch(watcher, request)
+    fs.removeWatchedRoot(request)
+    wait { watcher.isSettingRoots }
     fs.refresh(false)
   }
 
