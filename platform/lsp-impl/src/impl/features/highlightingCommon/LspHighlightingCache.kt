@@ -52,7 +52,7 @@ internal abstract class LspHighlightingCache<T>(protected val project: Project) 
   protected open val quiescenceDelay: Duration get() = LOW_PRIORITY_QUIESCENCE_DELAY
 
   /** Whether this cache requests data from the server. `false` for a cache fed by server notifications. */
-  protected open val supportsPull: Boolean get() = true
+  internal open val supportsPull: Boolean get() = true
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   abstract fun isSupportedForFile(file: VirtualFile): Boolean
@@ -270,6 +270,14 @@ internal abstract class LspHighlightingCache<T>(protected val project: Project) 
   }
 
   protected open fun clearAdditionalCache() {}
+
+  /**
+   * Marks [file] stale like [invalidate]. It also forgets the per-file protocol state that would let the server
+   * answer "unchanged", a stored result id for example, because what changed is the answer itself.
+   */
+  internal open fun forceFullRepull(file: VirtualFile) {
+    invalidate(file)
+  }
 
   /**
    * Marks the cached results for [file] stale so the next [getHighlightings] re-requests them from the server, while

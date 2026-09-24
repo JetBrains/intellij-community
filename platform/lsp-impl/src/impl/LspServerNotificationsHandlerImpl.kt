@@ -143,12 +143,23 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
       it == LspDynamicCapabilities.documentHighlight.first
     }
 
+    // A registration that replaces an earlier one — servers re-register after re-reading their configuration — means
+    // the diagnostics pulled through the previous one are stale. Restarting the daemon alone doesn't re-request them:
+    // the cache is only considered stale when the PSI changed, which it didn't.
+    val needsDiagnosticsRefresh = registeredCapabilities.any {
+      it == LspDynamicCapabilities.diagnostic.first
+    }
+
     val needsCodeLensesRefresh = registeredCapabilities.any {
       it == LspDynamicCapabilities.codeLens.first
     }
 
     if (needsInlayHintRefresh) {
       lspClient.refreshInlayHints()
+    }
+
+    if (needsDiagnosticsRefresh) {
+      lspClient.refreshDiagnostics()
     }
 
     if (needsCodeLensesRefresh) {

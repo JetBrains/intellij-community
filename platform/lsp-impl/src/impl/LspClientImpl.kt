@@ -220,6 +220,18 @@ class LspClientImpl internal constructor(
     }
   }
 
+  override fun invalidateServerResults() {
+    requestExecutor.clearCaches()
+    forEachOpenedFile { file ->
+      highlightingCacheRegistry.invalidatePulledResults(file)
+      LspHighlightingApplier.getInstance(project).scheduleHighlightingRefresh(file)
+      LspInlayApplier.getInstance(project).scheduleRefresh(file)
+    }
+    if (!project.isDisposed) {
+      LspFeaturesRefreshing.refreshCodeLenses(project)
+    }
+  }
+
   internal fun refreshSemanticTokens() {
     highlightingCacheRegistry.semanticTokensCache.clearCache()
     forEachOpenedFile { file ->
@@ -240,13 +252,14 @@ class LspClientImpl internal constructor(
   }
 
   /**
-   * Handles a server-forced `workspace/diagnostic/refresh`: re-pulls diagnostics for every opened file even without
-   * a document edit. Invalidating the cache keeps the current diagnostics on screen (no flicker);
+   * Handles a server-forced `workspace/diagnostic/refresh`, and a server re-registering `textDocument/diagnostic`:
+   * both mean the diagnostics the IDE pulled no longer reflect what the server would answer now. Invalidating the
+   * cache keeps the current diagnostics on screen (no flicker);
    * [LspHighlightingApplier.scheduleHighlightingRefresh] kicks the re-pull and applies the fresh results once they land.
    */
   internal fun refreshDiagnostics() {
     forEachOpenedFile { file ->
-      highlightingCacheRegistry.pullDiagnosticsCache.serverForcedRefresh(file)
+      highlightingCacheRegistry.pullDiagnosticsCache.forceFullRepull(file)
       LspHighlightingApplier.getInstance(project).scheduleHighlightingRefresh(file)
     }
   }

@@ -31,6 +31,7 @@ internal fun fakePyLspClient(
   override val initializeResult: InitializeResult? = null
 
   override fun sendNotification(lsp4jSender: (Lsp4jServer) -> Unit): Unit = unused()
+  override fun invalidateServerResults(): Unit = unused()
   override suspend fun <R> sendRequest(lsp4jSender: (Lsp4jServer) -> CompletableFuture<R>): R? = null
   override fun <R> sendRequestSync(timeoutMs: Int, lsp4jSender: (Lsp4jServer) -> CompletableFuture<R>): R? = null
   override fun getDocumentIdentifier(file: VirtualFile): TextDocumentIdentifier = unused()

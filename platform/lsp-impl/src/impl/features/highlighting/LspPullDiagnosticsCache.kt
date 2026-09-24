@@ -100,10 +100,10 @@ internal class LspPullDiagnosticsCache(private val lspClient: LspClientImpl) : L
   }
 
   /**
-   * Handles a server-forced `workspace/diagnostic/refresh` for [file]: drops the stored result ids, so the forced
-   * re-pull returns a full report, and marks the cached results stale while keeping them visible.
+   * Drops the stored result ids for [file], so the forced re-pull returns a full report instead of an "unchanged"
+   * one, and marks the cached results stale while keeping them visible.
    */
-  internal fun serverForcedRefresh(file: VirtualFile) {
+  override fun forceFullRepull(file: VirtualFile) {
     fileToResultIds.remove(file)
     invalidate(file)
   }

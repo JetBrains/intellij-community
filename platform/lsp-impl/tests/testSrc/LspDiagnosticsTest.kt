@@ -1,5 +1,6 @@
 package com.intellij.platform.lsp
 
+import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -9,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.platform.lsp.common.FakeLspServerSupportProvider
 import com.intellij.platform.lsp.common.SpaceTokenizingFileType
@@ -47,8 +49,12 @@ import org.eclipse.lsp4j.DocumentDiagnosticReport
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.PublishDiagnosticsParams
 import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.Registration
+import org.eclipse.lsp4j.RegistrationParams
 import org.eclipse.lsp4j.RelatedFullDocumentDiagnosticReport
 import org.eclipse.lsp4j.RelatedUnchangedDocumentDiagnosticReport
+import org.eclipse.lsp4j.Unregistration
+import org.eclipse.lsp4j.UnregistrationParams
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
@@ -724,6 +730,88 @@ internal class LspDiagnosticsTest {
       serverSession.sendRequest(serverSession.WORKSPACE_DIAGNOSTIC_REFRESH) { }
 
       // No document edit happened. The fresh diagnostics must arrive anyway.
+      val expected = createExpectedDataFromText("""<error descr="fresh">hello</error> world""")
+      waitUntilAssertSucceeds {
+        (codeInsightFixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(expected)
+      }
+    }
+
+    /**
+     * A new `textDocument/diagnostic` registration replaces the previous one, so the results pulled through the
+     * previous one are stale. The client pulls again for the open files and sends no `previousResultId`, as
+     * vscode-languageclient does. A server can use this instead of `workspace/diagnostic/refresh`.
+     */
+    @Test
+    @TestFor(issues = ["IJPL-256620"])
+    fun `re-registering the diagnostic capability triggers a full re-pull`(): Unit = timeoutRunBlocking {
+      (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
+
+      val virtualFile = codeInsightFixture.configureByText("test.txt", """
+      <error descr="stale">hello</error> world
+      """.trimIndent()).virtualFile
+      val expectedData = stripHighlightingMarkup()
+      val serverSession = configureServerSession(project, virtualFile)
+      val uri = serverSession.fileUri(virtualFile)
+
+      serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri && it.previousResultId == null }) {
+        DocumentDiagnosticReport(RelatedFullDocumentDiagnosticReport(listOf(
+          Diagnostic(Range(Position(0, 0), Position(0, 5)), "stale", DiagnosticSeverity.Error, null)
+        )).apply { resultId = "r1" })
+      }
+      checkHighlightingByPolling(expectedData)
+
+      // The re-pull forced by the new registration must not send previousResultId either.
+      serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri && it.previousResultId == null }) {
+        DocumentDiagnosticReport(RelatedFullDocumentDiagnosticReport(listOf(
+          Diagnostic(Range(Position(0, 0), Position(0, 5)), "fresh", DiagnosticSeverity.Error, null)
+        )))
+      }
+      serverSession.sendRequest(serverSession.UNREGISTER_CAPABILITY) {
+        UnregistrationParams(listOf(Unregistration("diagnostic-id", "textDocument/diagnostic")))
+      }
+      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
+        RegistrationParams(listOf(Registration("diagnostic-id", "textDocument/diagnostic", DiagnosticRegistrationOptions())))
+      }
+
+      val expected = createExpectedDataFromText("""<error descr="fresh">hello</error> world""")
+      waitUntilAssertSucceeds {
+        (codeInsightFixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(expected)
+      }
+    }
+
+    /**
+     * [com.intellij.platform.lsp.api.LspClient.invalidateServerResults]: the IDE changed what the server bases
+     * its answers on, so nothing it answered before can be trusted, and no server request says so.
+     */
+    @Test
+    @TestFor(issues = ["IJPL-256620"])
+    fun `invalidating server results triggers a full re-pull`(): Unit = timeoutRunBlocking {
+      (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
+
+      val virtualFile = codeInsightFixture.configureByText("test.txt", """
+      <error descr="stale">hello</error> world
+      """.trimIndent()).virtualFile
+      val expectedData = stripHighlightingMarkup()
+      val serverSession = configureServerSession(project, virtualFile)
+      val uri = serverSession.fileUri(virtualFile)
+
+      serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri && it.previousResultId == null }) {
+        DocumentDiagnosticReport(RelatedFullDocumentDiagnosticReport(listOf(
+          Diagnostic(Range(Position(0, 0), Position(0, 5)), "stale", DiagnosticSeverity.Error, null)
+        )).apply { resultId = "r1" })
+      }
+      checkHighlightingByPolling(expectedData)
+
+      serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri && it.previousResultId == null }) {
+        DocumentDiagnosticReport(RelatedFullDocumentDiagnosticReport(listOf(
+          Diagnostic(Range(Position(0, 0), Position(0, 5)), "fresh", DiagnosticSeverity.Error, null)
+        )))
+      }
+      LspClientManager.getInstance(project)
+        .getClients(FakeLspServerSupportProvider::class.java)
+        .single()
+        .invalidateServerResults()
+
       val expected = createExpectedDataFromText("""<error descr="fresh">hello</error> world""")
       waitUntilAssertSucceeds {
         (codeInsightFixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(expected)

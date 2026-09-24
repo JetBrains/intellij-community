@@ -61,6 +61,11 @@ class LspRequestExecutor(
   }
 
   override fun afterShutdown() {
+    clearCaches()
+  }
+
+  /** Drops every cached response, so the next reader asks the server again. */
+  internal fun clearCaches() {
     allCaches.forEach { it.clearCache() }
   }
 

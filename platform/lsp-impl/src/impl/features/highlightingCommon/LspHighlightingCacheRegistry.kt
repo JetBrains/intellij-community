@@ -48,6 +48,14 @@ internal class LspHighlightingCacheRegistry(private val lspClient: LspClientImpl
   }
 
   /**
+   * Marks every result the IDE pulled for [file] stale, so the next read re-requests it while the current results
+   * stay on screen. Pushed diagnostics are left alone: the server resends those itself.
+   */
+  internal fun invalidatePulledResults(file: VirtualFile) {
+    allCaches.forEach { if (it.supportsPull) it.forceFullRepull(file) }
+  }
+
+  /**
    * The quick fixes in the returned list are special wrappers that may or may not possess a real
    * [LspIntentionAction][com.intellij.platform.lsp.api.customization.LspIntentionAction] object at this moment,
    * but clients shouldn't care about that. For curious: see [LspQuickFixSet][com.intellij.platform.lsp.impl.features.quickFix.LspQuickFixSet].
