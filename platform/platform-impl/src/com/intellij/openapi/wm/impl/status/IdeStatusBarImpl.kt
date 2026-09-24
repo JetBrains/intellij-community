@@ -425,8 +425,8 @@ open class IdeStatusBarImpl @Internal constructor(
         DialogDragImageView(WidgetDragImageDialog(dragImage))
       }
 
-      // The placeholder is as wide as the dragged widget, so hiding the widget does not move its neighbors.
-      placeholder.dropWidth = component.width
+      // The placeholder takes the size of the dragged widget, so hiding the widget does not move its neighbors or change the status bar height.
+      placeholder.dropSize = Dimension(component.width, component.preferredSize.height)
       component.isVisible = false
       rightPanel.add(placeholder)
 
@@ -458,7 +458,7 @@ open class IdeStatusBarImpl @Internal constructor(
      */
     private fun dropIndexAt(event: MouseEvent): Int {
       val point = SwingUtilities.convertPoint(event.component, event.point, rightPanel)
-      val centerX = point.x - initialOffset.x + placeholder.dropWidth / 2
+      val centerX = point.x - initialOffset.x + placeholder.dropSize.width / 2
 
       var index = 0
       for (bean in dragOrder) {
@@ -550,13 +550,13 @@ open class IdeStatusBarImpl @Internal constructor(
    * Reserves the space of a dragged widget and shows where it lands.
    */
   private class WidgetDropPlaceholder : JComponent() {
-    var dropWidth: Int = 0
+    var dropSize: Dimension = Dimension()
 
     init {
       isOpaque = false
     }
 
-    override fun getPreferredSize(): Dimension = Dimension(dropWidth, 1)
+    override fun getPreferredSize(): Dimension = Dimension(dropSize)
 
     override fun paintComponent(g: Graphics) {
       val arc = if (InternalUICustomization.getInstance()?.isRoundedTabDuringDrag == true) {
