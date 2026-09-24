@@ -5,7 +5,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.json.backend"/>
-    <module name="intellij.libraries.gradle"/>
     <module name="intellij.libraries.jackson3"/>
     <module name="intellij.libraries.jackson3.databind"/>
     <module name="intellij.libraries.jackson3.module.kotlin"/>
