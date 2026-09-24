@@ -92,7 +92,7 @@ copy_file(
 )
 
 jvm_import(
-    name = "android-adt-ui-ibm-db2-jcc",
+    name = "android-adt-ui-tests-ibm-db2-jcc",
     jar = "@com_ibm_db2-jcc-11_5_7_0_http//file",
     visibility = ["//visibility:public"],
 )
@@ -135,6 +135,12 @@ copy_file(
 
 jvm_import(
     name = "android-app-inspection-inspectors-network-model-brotli-dec",
+    jar = "@org_brotli-dec-0_1_2_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "android-app-inspection-inspectors-network-model-tests-brotli-dec",
     jar = "@org_brotli-dec-0_1_2_http//file",
     visibility = ["//visibility:public"],
 )
@@ -255,7 +261,7 @@ copy_file(
 )
 
 jvm_import(
-    name = "android-profilers-ui-traceprocessor-protos",
+    name = "android-profilers-ui-tests-traceprocessor-protos",
     jar = "@org_jetbrains_intellij_deps_android_tools_base-traceprocessor_protos-232_1_23_0_http//file",
     visibility = ["//visibility:public"],
 )
@@ -269,7 +275,7 @@ copy_file(
 )
 
 jvm_import(
-    name = "android-server-flags-libserver-flag-test-proto",
+    name = "android-server-flags-tests-libserver-flag-test-proto",
     jar = "@org_jetbrains_intellij_deps_android_tools_base-libserver-flag-test-proto-232_1_23_0_http//file",
     visibility = ["//visibility:public"],
 )
