@@ -55,26 +55,7 @@ object VcsUpdateProcess {
     @RequiresEdt onSuccess: () -> Unit = {},
   ) {
     LOG.debug { "project: $project, show update options: $showUpdateOptions" }
-
-    val roots = getRoots(project, actionInfo, scopeInfo, context)
-    if (roots.isEmpty()) {
-      LOG.debug { "No roots found." }
-      return
-    }
-
-    val updateSpec = createUpdateSpec(project, roots, actionInfo)
-    if (!isUpdateSpecValid(updateSpec)) {
-      LOG.debug { "Options not valid for update spec: $updateSpec" }
-      return
-    }
-
-    if (showUpdateOptions) {
-      val dialogOk = showOptionsDialog(project, actionInfo, scopeInfo, updateSpec, context)
-      if (!dialogOk) {
-        return
-      }
-    }
-
+    val (roots, updateSpec) = prepareUpdate(project, actionInfo, scopeInfo, context, showUpdateOptions) ?: return
     launchUpdate(project, roots, updateSpec, actionInfo, actionName, onSuccess)
   }
 
@@ -88,6 +69,40 @@ object VcsUpdateProcess {
     @RequiresEdt onSuccess: () -> Unit = {},
   ) {
     project.service<ProjectVcsUpdateTaskExecutor>().launchUpdate(roots, updateSpec, actionInfo, actionName, onSuccess)
+  }
+
+  /**
+   * Resolves the update roots and spec, and, when [showUpdateOptions] is set, shows the update options dialog (Merge/Rebase and "Reset to the
+   * Remote Branch"). Returns the roots and spec for [update], or null when there is nothing to update or the user canceled.
+   */
+  @ApiStatus.Internal
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun prepareUpdate(
+    project: Project,
+    actionInfo: ActionInfo,
+    scopeInfo: ScopeInfo,
+    context: DataContext,
+    showUpdateOptions: Boolean,
+  ): Pair<Array<FilePath>, List<VcsUpdateSpecification>>? {
+    val roots = getRoots(project, actionInfo, scopeInfo, context)
+    if (roots.isEmpty()) {
+      LOG.debug { "No roots found." }
+      return null
+    }
+
+    val updateSpec = createUpdateSpec(project, roots, actionInfo)
+    if (!isUpdateSpecValid(updateSpec)) {
+      LOG.debug { "Options not valid for update spec: $updateSpec" }
+      return null
+    }
+
+    if (showUpdateOptions) {
+      val dialogOk = showOptionsDialog(project, actionInfo, scopeInfo, updateSpec, context)
+      if (!dialogOk) {
+        return null
+      }
+    }
+    return roots to updateSpec
   }
 
   @ApiStatus.Internal
@@ -201,6 +216,7 @@ object VcsUpdateProcess {
   }
 
   @ApiStatus.Internal
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun showOptionsDialog(
     project: Project,
     actionInfo: ActionInfo,
