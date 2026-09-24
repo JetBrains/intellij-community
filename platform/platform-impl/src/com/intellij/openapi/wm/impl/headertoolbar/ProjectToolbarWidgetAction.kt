@@ -41,6 +41,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
@@ -157,39 +158,59 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     val widget = component as? ToolbarComboButton ?: return
     widget.isOpaque = false
     widget.positionListeners?.setProjectFromPresentation(presentation)
-    widget.showChevron = presentation.getClientProperty(showChevronKey) ?: true
+    widget.showChevron = presentation.getClientProperty(showChevronKey) ?: false
   }
 
   override fun update(e: AnActionEvent) {
-    val project = e.project
+    val eventProject = e.project
+    val project = eventProject ?: e.getData(IdeFrame.KEY)?.project // we can handle not yet fully-initialized projects
     val projectName = project?.name ?: ""
+    val projectInitialized = eventProject != null
+
     e.presentation.setText(projectName, false)
-    e.presentation.description = FileUtil.getLocationRelativeToUserHome(project?.guessProjectDir()?.path) ?: projectName
     e.presentation.putClientProperty(projectKey, project)
+    if (projectInitialized) { // compute paths only for fully initialized projects
+      e.presentation.description = FileUtil.getLocationRelativeToUserHome(project?.guessProjectDir()?.path) ?: projectName
+    }
 
-    e.presentation.putClientProperty(showChevronKey, !hideProjectSwitching(e) || UpdatesInfoProviderManager.getInstance().getUpdateActions().isNotEmpty())
+    if (projectName.isNotEmpty()) { // chevron appears only when project ready
+      e.presentation.putClientProperty(
+        showChevronKey,
+        !hideProjectSwitching(e) || UpdatesInfoProviderManager.getInstance().getUpdateActions().isNotEmpty())
+    }
 
-    val icons = buildList {
-      UpdatesInfoProviderManager.getInstance().getUpdateIcons().let { updateIcons ->
-        for (icon in updateIcons) {
-          if (isNotEmpty()) {
-            addGap()
-          }
-          add(icon)
+    if (project != null) {
+      val customizer = ProjectWindowCustomizerService.getInstance()
+      if (!projectInitialized) {
+        // not yet fully initialized project, draw good enough icon
+        if (customizer.isAvailable()) {
+          e.presentation.icon = customizer.getProjectIcon(project)
         }
       }
+      else {
+        val icons = buildList {
+          UpdatesInfoProviderManager.getInstance().getUpdateIcons().let { updateIcons ->
+            for (icon in updateIcons) {
+              if (isNotEmpty()) {
+                addGap()
+              }
+              add(icon)
+            }
+          }
 
-      val customizer = ProjectWindowCustomizerService.getInstance()
-      if (project != null && customizer.isAvailable()) {
-        if (isNotEmpty()) addGap()
-        add(customizer.getProjectIcon(project))
+          if (customizer.isAvailable()) {
+            if (isNotEmpty()) addGap()
+            add(customizer.getProjectIcon(project))
+          }
+        }
+        e.presentation.icon = when (icons.size) {
+          0 -> null
+          1 -> icons.single()
+          else -> IconManager.getInstance().createRowIcon(*icons.toTypedArray())
+        }
       }
     }
-    e.presentation.icon = when (icons.size) {
-      0 -> null
-      1 -> icons.single()
-      else -> IconManager.getInstance().createRowIcon(*icons.toTypedArray())
-    }
+
   }
 
   private fun createPopup(project: Project, step: ListPopupStep<PopupFactoryImpl.ActionItem>): ListPopup {
