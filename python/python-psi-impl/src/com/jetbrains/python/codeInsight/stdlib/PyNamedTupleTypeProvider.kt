@@ -49,6 +49,7 @@ import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -118,6 +119,18 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
       }
 
       return cls.getSuperClassTypes(context).any(isTypingNT)
+    }
+
+    /**
+     * Returns true if [attribute] is a field of a class that inherits directly from typing `NamedTuple`.
+     * A field has an annotation and is not a `ClassVar`.
+     * An instance also cannot change an unannotated class attribute, but this function does not include it.
+     */
+    @ApiStatus.Internal
+    fun isNamedTupleField(attribute: PyTargetExpression, context: TypeEvalContext): Boolean {
+      if (attribute.annotationValue == null || !PyUtil.isClassAttribute(attribute) || PyTypingTypeProvider.isClassVar(attribute, context)) return false
+      val cls = attribute.containingClass ?: return false
+      return isTypingNamedTupleDirectInheritor(cls, context)
     }
   }
 }

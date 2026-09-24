@@ -329,6 +329,57 @@ class PyClassesTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `overriding a named tuple field with a subtype violates invariance`() = test("""
+      from typing import NamedTuple
+
+      class A(NamedTuple):
+          a: int
+
+      class B(A):
+          a: bool  # WARNING Type 'bool' of the overridden NamedTuple field must be the inherited type 'int', because the subclass keeps the NamedTuple constructor
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `override of an imported frozen dataclass field reads the stubs`() {
+      test("""
+        from dataclasses import dataclass
+        from mod import A
+
+        @dataclass(frozen=True)
+        class B(A):
+            a: bool
+        """.trimIndent(),
+        "mod.py" to """
+          from dataclasses import dataclass
+
+          @dataclass(frozen=True)
+          class A:
+              a: int
+          """)
+      assertFileNotParsed("mod.py")
+    }
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `override of an imported named tuple field reads the stubs`() {
+      test("""
+        from mod import A
+
+        class B(A):
+            a: bool  # WARNING Type 'bool' of the overridden NamedTuple field must be the inherited type 'int', because the subclass keeps the NamedTuple constructor
+        """.trimIndent(),
+        "mod.py" to """
+          from typing import NamedTuple
+
+          class A(NamedTuple):
+              a: int
+          """)
+      assertFileNotParsed("mod.py")
+    }
+
+    @Test
     fun `overriding a class variable of a frozen dataclass with a subtype violates invariance`() = test("""
       from dataclasses import dataclass
       from typing import ClassVar
@@ -355,21 +406,18 @@ class PyClassesTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    fun `mypy-compatible variance allows a subtype but still rejects an unrelated type`() {
-      val inspection = PyTypeCheckerInspection().also { it.mypyCompatibleAttributeVariance = true }
-      myFixture.configureByText("aaa.py", """
-        class A:
-            a: int
+    fun `covariant attribute overrides allow a subtype but still reject an unrelated type`() = testWithInspection(
+      PyTypeCheckerInspection().also { it.allowCovariantAttributeOverrides = true },
+      """
+      class A:
+          a: int
 
-        class B(A):
-            a: bool
+      class B(A):
+          a: bool
 
-        class C(A):
-            a: <warning descr="Type 'str' of the overridden attribute is not compatible with the inherited type 'int'">str</warning>
+      class C(A):
+          a: <warning descr="Type 'str' of the overridden attribute is not compatible with the inherited type 'int'">str</warning>
       """.trimIndent())
-      myFixture.enableInspections(inspection)
-      myFixture.checkHighlighting(true, false, false)
-    }
 
     private fun testWithInspection(inspection: LocalInspectionTool, text: String) {
       myFixture.configureByText("aaa.py", text)

@@ -329,6 +329,15 @@ class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-87917"])
+  fun `Named tuple field`() = test("""
+    from typing import NamedTuple
+    class A[T](NamedTuple):
+        attr: T  # read-only
+    #         └ EXPECTED_VARIANCE COVARIANT
+    """.trimIndent())
+
+  @Test
   @TestFor(issues = ["PY-90863"])
   fun `Attribute of a subclass of a frozen dataclass`() = test("""
     from dataclasses import dataclass

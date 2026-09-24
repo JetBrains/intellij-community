@@ -4,15 +4,12 @@ package com.jetbrains.python.psi.types
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.isFrozenAttribute
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.CALLABLE
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.CALLABLE_EXT
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.GENERIC
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.PROTOCOL
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.PROTOCOL_EXT
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.isFinal
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.isReadOnly
 import com.jetbrains.python.psi.PyAnnotation
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyAssignmentStatement
@@ -123,13 +120,13 @@ object PyExpectedVarianceJudgment {
       is PyFunction -> {
         if (isDunderInit(parentClass)) {
           if (!PyUtil.isInstanceAttribute(targetExpr)) return NONE
-          if (isEffectivelyReadOnly(targetExpr, context)) return COVARIANT
+          if (PyTypeUtil.isReadOnlyAttribute(targetExpr, context)) return COVARIANT
           return INVARIANT
         }
         return NONE
       }
       is PyClass -> {
-        if (isEffectivelyReadOnly(targetExpr, context)) return COVARIANT
+        if (PyTypeUtil.isReadOnlyAttribute(targetExpr, context)) return COVARIANT
         return INVARIANT
       }
     }
@@ -186,12 +183,6 @@ object PyExpectedVarianceJudgment {
       return getIntermediateVariance(typeParamType, context)
     }
     return NONE
-  }
-
-  /** Return true iff the given element is effectively read-only due to being final, read-only, or frozen. */
-  @JvmStatic
-  fun isEffectivelyReadOnly(targetExpr: PyTargetExpression, context: TypeEvalContext): Boolean {
-    return isFinal(targetExpr, context) || isReadOnly(targetExpr, context) || isFrozenAttribute(targetExpr, context)
   }
 
 }

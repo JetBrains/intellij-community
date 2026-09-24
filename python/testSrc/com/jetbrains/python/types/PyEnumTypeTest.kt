@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.types
 
+import com.intellij.idea.TestFor
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.runInEdtAndWait
-import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
-import com.intellij.idea.TestFor
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.extensions.isExhaustive
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -1362,7 +1362,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
       @unique
       class ByTuple(Enum):
-          _ignore_ = ("tmp", "other")
+          _ignore_ = ["tmp", "other"]
           tmp = 1
           other = 2
           RED = 1

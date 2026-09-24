@@ -352,11 +352,11 @@ object PyTypeChecker {
   }
 
   /** Best-effort reason a protocol member didn't match, used as the breakdown node above the type leaf. */
-  private fun protocolMemberFailureMessage(protocolMember: PyTypeMember, candidates: List<PyTypeMember>): ProblemMessage {
+  private fun protocolMemberFailureMessage(protocolMember: PyTypeMember, candidates: List<PyTypeMember>, context: TypeEvalContext): ProblemMessage {
     val name = protocolMember.name
     val candidate = candidates.singleOrNull()
     if (candidate != null) {
-      if (protocolMember.isWritable && !candidate.isWritable) {
+      if (PyTypeUtil.isSettable(protocolMember, context) && !PyTypeUtil.isSettable(candidate, context)) {
         return PyPsiBundle.problemMessage("INSP.type.checker.breakdown.member.not.writable", name)
       }
       if (protocolMember.isClassVar != candidate.isClassVar) {
@@ -1343,7 +1343,7 @@ object PyTypeChecker {
       for (subclassElementMember in subclassElementMembers) {
         val isMatchingProtocolMember = recordFrameBool(
           protocolContext,
-          { protocolMemberFailureMessage(protocolMember, subclassElementMembers) },
+          { protocolMemberFailureMessage(protocolMember, subclassElementMembers, context) },
           // The subclass's type for the attribute, so the Attribute step can report the attribute's own types when the
           // mismatch is buried inside a parameterized type (`list[set[int]]` vs `list[set[None]]`).
           { protocolMember.name?.let {
@@ -1364,8 +1364,8 @@ object PyTypeChecker {
 
   private fun isMatchingProtocolMember(expected: PyClassType, actual: PyClassType, protocolMember: PyTypeMember, subclassElementMember: PyTypeMember, protocolElementType: PyType?, expectedSubstitutions: GenericSubstitutions, actualSubstitutions: GenericSubstitutions, protocolContext: MatchContext): Boolean  {
     val context = protocolContext.context
-    val isSettableProtocolMember = protocolMember.isSettable(context)
-    if (isSettableProtocolMember && !subclassElementMember.isSettable(context)) {
+    val isSettableProtocolMember = PyTypeUtil.isSettable(protocolMember, context)
+    if (isSettableProtocolMember && !PyTypeUtil.isSettable(subclassElementMember, context)) {
       return false
     }
     if (protocolMember.isDeletable && !subclassElementMember.isDeletable) {
@@ -1443,16 +1443,6 @@ object PyTypeChecker {
       return false
     }
     return true
-  }
-
-  /**
-   * Returns true when the member has a setter and is not effectively read-only.
-   * A `Final` or `ReadOnly` attribute and a field of a frozen dataclass are read-only.
-   */
-  private fun PyTypeMember.isSettable(context: TypeEvalContext): Boolean {
-    if (!isWritable) return false
-    val element = element
-    return element !is PyTargetExpression || !PyExpectedVarianceJudgment.isEffectivelyReadOnly(element, context)
   }
 
   /**

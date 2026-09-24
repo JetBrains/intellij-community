@@ -13,10 +13,10 @@ literals: 33/34 required lines met, 3 unexpected
 namedtuples: 28/34 required lines met, 9 unexpected
 narrowing: 13/13 required lines met, 0 unexpected
 overloads: 5/5 required lines met, 17 unexpected
-protocols: 56/71 required lines met, 3 unexpected
+protocols: 60/71 required lines met, 3 unexpected
 qualifiers: 37/51 required lines met, 3 unexpected
 specialtypes: 13/19 required lines met, 14 unexpected
 tuples: 31/31 required lines met, 0 unexpected
 typeddicts: 87/87 required lines met, 0 unexpected
 typeforms: 9/16 required lines met, 3 unexpected
-total: 896/1034 required lines met, 106 unexpected
+total: 900/1034 required lines met, 106 unexpected

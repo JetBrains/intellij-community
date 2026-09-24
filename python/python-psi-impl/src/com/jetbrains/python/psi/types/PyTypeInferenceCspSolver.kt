@@ -631,8 +631,8 @@ private object ConstraintReducer {
         if (variance == PyVariance.INVARIANT) {
           val leftMemberElement = leftMember.element
           val rightMemberElement = rightMember.element
-          val leftIsReadOnly = leftMemberElement is PyTargetExpression && PyExpectedVarianceJudgment.isEffectivelyReadOnly(leftMemberElement, cp.context)
-          val rightIsReadOnly = rightMemberElement is PyTargetExpression && PyExpectedVarianceJudgment.isEffectivelyReadOnly(rightMemberElement, cp.context)
+          val leftIsReadOnly = leftMemberElement is PyTargetExpression && PyTypeUtil.isReadOnlyAttribute(leftMemberElement, cp.context)
+          val rightIsReadOnly = rightMemberElement is PyTargetExpression && PyTypeUtil.isReadOnlyAttribute(rightMemberElement, cp.context)
           if (leftIsReadOnly != rightIsReadOnly) continue
         }
         val leftMemberType = PyTypeChecker.substitute(leftMember.type, leftSubstitutions, cp.context)
