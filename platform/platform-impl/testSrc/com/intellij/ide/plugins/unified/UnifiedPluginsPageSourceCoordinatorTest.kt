@@ -589,6 +589,28 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
   }
 
   @Test
+  fun `text search ranks match scores before enabled state`() {
+    val disabledExact = localItem(plugin("disabled.exact", "Target"), enabled = false)
+    val enabledPartial = localItem(plugin("enabled.partial", "Target Integration"), enabled = true)
+    val enabledExact = localItem(plugin("enabled.exact", "Target"), enabled = true)
+    val local = localState(
+      listOf(
+        PluginSectionState(PluginSectionId.Installed, items = listOf(disabledExact, enabledPartial, enabledExact)),
+        PluginSectionState(PluginSectionId.Bundled),
+      )
+    )
+
+    fun result(query: String): List<String> = composeUnifiedPluginsPageSourceState(
+      PluginsQueryState(query, query),
+      local,
+    ).sections.single { it.id == PluginSectionId.Installed }.items.map { it.pluginId.idString }
+
+    assertThat(result("/userInstalled")).containsExactly("enabled.partial", "enabled.exact", "disabled.exact")
+    assertThat(result("Target")).containsExactly("enabled.exact", "disabled.exact", "enabled.partial")
+    assertThat(result("/userInstalled Target")).containsExactly("enabled.exact", "disabled.exact", "enabled.partial")
+  }
+
+  @Test
   fun `installed relevance uses legacy name and description match scores`() {
     val shortName = localItem(plugin("name.short", "Target"), enabled = true)
     val longName = localItem(plugin("name.long", "Target Integration"), enabled = true)

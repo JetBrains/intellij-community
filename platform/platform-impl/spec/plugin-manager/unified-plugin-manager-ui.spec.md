@@ -287,7 +287,9 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 
 - The first result for a query revision must set the plugin order in each section.
 - Relevance must initially place local plugins with errors before healthy plugins.
-- Within each error group, relevance must place enabled plugins before disabled plugins, then use the existing match scores.
+- Without text terms, relevance must place enabled plugins before disabled plugins within each error group.
+- With text terms, relevance must use the existing match scores before enabled state within each error group.
+- Enabled plugins must win a match score tie.
 - Later results in the same query revision must retain the relative order of plugins that remain in a section.
 - A new plugin must append after existing plugins. A plugin that leaves and returns must resume its retained position.
 - In expanded Bundled, a new plugin must append in its category. A new category must append after existing categories.
@@ -295,6 +297,7 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 - An explicit sort must override both local priorities and control Marketplace ordering. Custom repositories must retain their source order.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
     `local relevance prioritizes errors and enabled plugins while explicit sorts override priorities`;
+    `text search ranks match scores before enabled state`;
     `installed relevance uses legacy name and description match scores`;
     `sort controls primary Marketplace without suppressing cached filtering`
   )
