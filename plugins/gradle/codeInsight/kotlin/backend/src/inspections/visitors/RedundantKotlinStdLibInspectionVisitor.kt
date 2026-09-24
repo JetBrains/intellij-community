@@ -101,11 +101,22 @@ internal class RedundantKotlinStdLibInspectionVisitor(private val holder: Proble
   }
 
   private fun extractVersionFromKotlinCall(kotlinCall: KtCallExpression): String? {
-    val kotlinCallArgs = kotlinCall.valueArgumentList?.arguments ?: return null
-    if (kotlinCallArgs.size != 2) return null
-
-    val kotlinId = kotlinCallArgs[0].getArgumentExpression()?.evaluateString() ?: return null
-    return if (kotlinId == "stdlib") kotlinCallArgs[1].getArgumentExpression()?.evaluateString() else null
+    val kotlinCallArgList = kotlinCall.valueArgumentList ?: return null
+    val kotlinCallArgs = kotlinCallArgList.arguments
+    when (kotlinCallArgs.size) {
+      2 -> {
+        val kotlinId = kotlinCallArgList.findNamedOrPositionalArgument("module", 0)?.evaluateString() ?: return null
+        return if (kotlinId == "stdlib") kotlinCallArgList.findNamedOrPositionalArgument("version", 1)?.evaluateString() else null
+      }
+      1 -> {
+        val (kotlinId, version) = kotlinCallArgList.findNamedOrPositionalArgument("module", 0)
+                                    ?.evaluateString()?.split(':').takeIf { it?.size == 2 } ?: return null
+        return if (kotlinId == "stdlib") version else null
+      }
+      else -> {
+        return null
+      }
+    }
   }
 
   private fun extractVersionFromVersionCatalog(catalogExpression: KtDotQualifiedExpression): String? {
