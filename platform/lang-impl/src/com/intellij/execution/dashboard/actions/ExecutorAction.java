@@ -21,6 +21,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.progress.ProgressManager;
@@ -41,7 +42,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.getLeafTargets;
-import static com.intellij.openapi.actionSystem.LangDataKeys.RUN_CONTENT_DESCRIPTOR;
 
 /**
  * @author konstantin.aleev
@@ -92,7 +92,7 @@ public abstract class ExecutorAction extends DumbAwareAction implements ActionRe
   }
 
   private static boolean isContextualDescriptorNotTerminated(@NotNull AnActionEvent e) {
-    var descriptor = e.getData(RUN_CONTENT_DESCRIPTOR);
+    var descriptor = e.getData(ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR);
     ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
     return processHandler != null && !processHandler.isProcessTerminated();
   }

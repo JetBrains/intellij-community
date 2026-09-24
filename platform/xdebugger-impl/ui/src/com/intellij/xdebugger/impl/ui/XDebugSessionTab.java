@@ -28,8 +28,8 @@ import com.intellij.openapi.actionSystem.Constraints;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -149,7 +149,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       if (mySession != null) {
         sink.set(XDebugSessionProxy.DEBUG_SESSION_PROXY_KEY, mySession);
         mySession.putKey(sink);
-        sink.set(LangDataKeys.CONSOLE_VIEW, mySession.getConsoleView());
+        sink.set(ExecutionDataKeys.CONSOLE_VIEW, mySession.getConsoleView());
       }
     });
   }

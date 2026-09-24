@@ -48,7 +48,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
@@ -267,7 +267,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     }
 
     protected ProcessHandler getProcessHandler(@NotNull AnActionEvent e) {
-      RunContentDescriptor contentDescriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
+      RunContentDescriptor contentDescriptor = e.getData(ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR);
       return contentDescriptor == null ? null : contentDescriptor.getProcessHandler();
     }
 

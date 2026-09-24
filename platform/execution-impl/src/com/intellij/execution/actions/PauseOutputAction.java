@@ -8,7 +8,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
@@ -22,7 +22,7 @@ final class PauseOutputAction extends ToggleAction implements DumbAware {
   }
 
   private static @Nullable ConsoleView getConsoleView(AnActionEvent event) {
-    return event.getData(LangDataKeys.CONSOLE_VIEW);
+    return event.getData(ExecutionDataKeys.CONSOLE_VIEW);
   }
 
   @Override

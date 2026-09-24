@@ -6,7 +6,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -55,7 +55,7 @@ final class FoldLinesLikeThis extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
 
-    final boolean enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null && editor != null && getSingleLineSelection(editor) != null;
+    final boolean enabled = e.getData(ExecutionDataKeys.CONSOLE_VIEW) != null && editor != null && getSingleLineSelection(editor) != null;
     e.getPresentation().setEnabledAndVisible(enabled);
   }
 
@@ -77,7 +77,7 @@ final class FoldLinesLikeThis extends DumbAwareAction {
         UIUtil.invokeLaterIfNeeded(() -> addRule(selection));
       }
     });
-    final ConsoleView consoleView = e.getData(LangDataKeys.CONSOLE_VIEW);
+    final ConsoleView consoleView = e.getData(ExecutionDataKeys.CONSOLE_VIEW);
     if (consoleView instanceof ConsoleViewImpl) {
       ((ConsoleViewImpl)consoleView).foldImmediately();
     }

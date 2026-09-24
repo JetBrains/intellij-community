@@ -6,7 +6,7 @@ import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -129,7 +129,7 @@ final class ShowAsJsonAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
-    boolean enabled = editor != null && e.getData(LangDataKeys.CONSOLE_VIEW) != null && new JsonLineExtractor(editor).has();
+    boolean enabled = editor != null && e.getData(ExecutionDataKeys.CONSOLE_VIEW) != null && new JsonLineExtractor(editor).has();
     e.getPresentation().setEnabledAndVisible(enabled);
   }
 

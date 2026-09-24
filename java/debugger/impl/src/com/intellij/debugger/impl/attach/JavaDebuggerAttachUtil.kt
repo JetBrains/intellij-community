@@ -7,7 +7,7 @@ import com.intellij.execution.process.BaseProcessHandler
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.targetEnvironment
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.ExecutionDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.sun.tools.attach.AttachNotSupportedException
@@ -87,7 +87,7 @@ object JavaDebuggerAttachUtil {
   @JvmStatic
   @ApiStatus.Internal
   fun getTargetEnvironment(editor: Editor): TargetEnvironment? {
-    val descriptor = LangDataKeys.RUN_CONTENT_DESCRIPTOR.getData(DataManager.getInstance().getDataContext(editor.contentComponent))
+    val descriptor = ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR.getData(DataManager.getInstance().getDataContext(editor.contentComponent))
                      ?: return null
     return descriptor.processHandler?.targetEnvironment
   }

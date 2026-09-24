@@ -11,7 +11,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -187,7 +187,7 @@ public final class TextPrintHandler extends PrintActionHandler {
   }
 
   private static String generateFileName(DataContext dataContext) {
-    RunProfile runProfile = dataContext.getData(LangDataKeys.RUN_PROFILE);
+    RunProfile runProfile = dataContext.getData(ExecutionDataKeys.RUN_PROFILE);
     return runProfile == null ? "unknown" : runProfile.getName();
   }
 

@@ -16,7 +16,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.diagnostic.Logger;
@@ -110,7 +110,7 @@ public class StopAction extends DumbAwareAction implements ActionRemoteBehaviorS
         }
       }
 
-      RunProfile runProfile = e.getData(LangDataKeys.RUN_PROFILE);
+      RunProfile runProfile = e.getData(ExecutionDataKeys.RUN_PROFILE);
       if (runProfile == null && contentDescriptor == null) {
         presentation.setText(getTemplatePresentation().getText());
       }
@@ -277,7 +277,7 @@ public class StopAction extends DumbAwareAction implements ActionRemoteBehaviorS
   }
 
   static @Nullable RunContentDescriptor getRecentlyStartedContentDescriptor(@NotNull DataContext dataContext) {
-    final RunContentDescriptor contentDescriptor = LangDataKeys.RUN_CONTENT_DESCRIPTOR.getData(dataContext);
+    final RunContentDescriptor contentDescriptor = ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR.getData(dataContext);
     if (contentDescriptor != null) {
       // toolwindow case
       return contentDescriptor;

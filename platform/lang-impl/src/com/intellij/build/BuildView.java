@@ -34,7 +34,6 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -407,10 +406,10 @@ public class BuildView extends CompositeView<ExecutionConsole>
   public void uiDataSnapshot(@NotNull DataSink sink) {
     super.uiDataSnapshot(sink);
     ExecutionConsole consoleView = getConsoleView();
-    sink.set(LangDataKeys.CONSOLE_VIEW, consoleView instanceof ConsoleView o ? o : null);
+    sink.set(ExecutionDataKeys.CONSOLE_VIEW, consoleView instanceof ConsoleView o ? o : null);
 
     ExecutionEnvironment environment = myBuildDescriptor.getExecutionEnvironment();
-    sink.set(LangDataKeys.RUN_PROFILE, environment == null ? null : environment.getRunProfile());
+    sink.set(ExecutionDataKeys.RUN_PROFILE, environment == null ? null : environment.getRunProfile());
     sink.set(ExecutionDataKeys.EXECUTION_ENVIRONMENT, myBuildDescriptor.getExecutionEnvironment());
     sink.set(RESTART_ACTIONS, myBuildDescriptor.getRestartActions());
   }

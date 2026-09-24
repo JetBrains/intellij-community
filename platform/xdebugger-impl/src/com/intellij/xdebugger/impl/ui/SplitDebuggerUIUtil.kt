@@ -7,7 +7,6 @@ import com.intellij.frontend.FrontendApplicationInfo.getFrontendType
 import com.intellij.frontend.FrontendType
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ExecutionDataKeys
-import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.xdebugger.SplitDebuggerMode.showSplitWarnings
 import com.intellij.xdebugger.frame.XExecutionStack
@@ -24,7 +23,7 @@ object SplitDebuggerUIUtil {
 
   @JvmStatic
   fun getRunContentDescriptor(dataContext: DataContext): RunContentDescriptor? {
-    return LangDataKeys.RUN_CONTENT_DESCRIPTOR.getData(dataContext)
+    return ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR.getData(dataContext)
   }
 
   @JvmStatic

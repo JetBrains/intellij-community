@@ -9,7 +9,6 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.eel.provider"/>
-    <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.usageView"/>
@@ -27,6 +26,5 @@
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.lang.IdeLanguageCustomization" open="true"/>
-    <sdkType implementation="com.intellij.openapi.projectRoots.SimpleJavaSdkType"/>
   </extensions>
 </idea-plugin>

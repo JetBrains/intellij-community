@@ -45,8 +45,8 @@ import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.ExecutionDataKeys
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiCompatibleDataProvider
@@ -798,7 +798,7 @@ open class ConsoleViewImpl protected constructor(
   override fun uiDataSnapshot(sink: DataSink) {
     val editor = editor as EditorEx?
     sink.set(CommonDataKeys.EDITOR, this.editor)
-    sink.set(LangDataKeys.CONSOLE_VIEW, this)
+    sink.set(ExecutionDataKeys.CONSOLE_VIEW, this)
     sink.set(PlatformCoreDataKeys.HELP_ID, myHelpId)
 
     if (editor == null) return
