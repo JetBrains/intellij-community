@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.IdeaPluginDependency
 import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.contentModuleName
+import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService
 import com.intellij.ide.ui.OptionsSearchTopHitProvider
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.openapi.application.ApplicationManager
@@ -148,22 +149,26 @@ class PluginAutoUpdateService(private val coroutineScope: CoroutineScope) {
       return@filter true
     }
     reportProgress(downloaders.size) { reporter ->
-      for (downloader in downloaders) {
+      for (initialDownloader in downloaders) {
         currentCoroutineContext().ensureActive()
         if (!isAutoUpdateEnabled()) {
           throw CancellationException("auto-update disabled")
         }
-        reporter.itemStep(IdeBundle.message("progress.downloading.plugin", downloader.pluginName)) {
-          LOG.debug { "downloading ${downloader.pluginName}" }
-          val plugin = PluginManagerCore.getPlugin(downloader.id)
+        reporter.itemStep(IdeBundle.message("progress.downloading.plugin", initialDownloader.pluginName)) {
+          LOG.debug { "downloading ${initialDownloader.pluginName}" }
+          val plugin = PluginManagerCore.getPlugin(initialDownloader.id)
                        ?: return@itemStep
+          val autoUpdateDir = PluginAutoUpdateRepository.getAutoUpdateDirPath()
+          val downloader = initialDownloader.withDownloadService(MarketplacePluginDownloadService(autoUpdateDir))
           if (!plugin.isBundled) {
             downloader.setOldFile(plugin.pluginPath)
           }
           val updateFile = downloadPluginUpdateToTempFile(downloader) ?: return@itemStep
           val updatePathInAutoUpdateDir = withContext(Dispatchers.IO) {
-            val autoUpdateDir = PluginAutoUpdateRepository.getAutoUpdateDirPath()
             val updatePathInAutoUpdatesDir = autoUpdateDir.resolve(updateFile.fileName)
+            if (updateFile == updatePathInAutoUpdatesDir) {
+              return@withContext updatePathInAutoUpdatesDir
+            }
             if (!autoUpdateDir.exists()) {
               autoUpdateDir.createDirectories()
             }
