@@ -142,7 +142,9 @@ object PyRequirementParser {
             getInstallOptions(element, element.packageName.text, joinedExtras, element.editableOption, globalOptions),
             joinedExtras,
             getEnvironmentMarker(element.quotedMarker),
-            (element.uri ?: element.gitUri ?: element.bzrLaunchpadUri)!!.text
+            // `url_req` is pinned on `AT`, so a half-typed `pkg @ ` is already a UrlReq with no uri
+            // child yet; keep the requirement with a null url instead of dereferencing (!!) it.
+            (element.uri ?: element.gitUri ?: element.bzrLaunchpadUri)?.text
           )
           requirements.add(Pair(element, req))
         }

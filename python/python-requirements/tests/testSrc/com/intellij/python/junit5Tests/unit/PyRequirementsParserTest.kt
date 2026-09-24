@@ -14,6 +14,7 @@ import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.packaging.requirement.PyRequirementEnvMarkerType
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertInstanceOf
 import org.junit.jupiter.api.assertNotNull
@@ -193,6 +194,16 @@ class PyRequirementsParserTest(val project: Project) {
     assertEquals(0, req.versionSpecs.size)
     assertEquals("example-project", req.name)
     assertEquals(uri, req.urlReference)
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["example-project @", "example-project @ ", "example-project [extra] @ "])
+  fun testIncompleteUrlRequirement(text: String) {
+    // `url_req` is pinned on `AT`, so these already parse as a UrlReq without any uri child.
+    val req = PyRequirementParser.fromLine(text, project)
+    assertNotNull(req)
+    assertEquals("example-project", req.name)
+    assertNull(req.urlReference)
   }
 
   @ParameterizedTest
