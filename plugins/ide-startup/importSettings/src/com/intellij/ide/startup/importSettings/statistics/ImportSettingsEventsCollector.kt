@@ -12,7 +12,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.components.SettingsCategory
 
 object ImportSettingsEventsCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("import.settings", 6)
+  private val GROUP = EventLogGroup("import.settings", 7)
   override fun getGroup(): EventLogGroup = GROUP
   private const val UNKNOWN = "UNKNOWN"
   private const val FOLDER = "FOLDER"
@@ -113,8 +113,6 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
   private val configurePageButton = GROUP.registerEvent("page.configure.button", SECOND_PAGE_BUTTONS)
   private val configurePageTimeSpent = GROUP.registerEvent("page.configure.time.spent", EventFields.DurationMs)
 
-  private val featuredPluginsPageShown = GROUP.registerEvent("page.featured.plugins.shown")
-
   // third page - (import) progress dialog
   private val importPageShown = GROUP.registerEvent("page.import.shown")
   private val importPageClosed = GROUP.registerEvent("page.import.closed")
@@ -207,10 +205,6 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
 
   fun oldJbIdes(jbIdes: List<String>) {
     jbIdeOldValues.log(jbIdes)
-  }
-
-  fun featuredPluginsPageShown() {
-    featuredPluginsPageShown.log()
   }
 
   fun importProgressPageShown() {

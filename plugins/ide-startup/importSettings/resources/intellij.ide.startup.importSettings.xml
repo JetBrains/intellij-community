@@ -36,7 +36,6 @@
   <actions>
     <!--suppress PluginXmlI18n -->
     <action id="ImportSettingDialogAction" class="com.intellij.ide.startup.importSettings.testActions.ImportSettingDialogAction" text="[INTERNAL] 3 Transfer: Show Import Settings Dialog" internal="true"/>
-    <action id="StartWizardAction" class="com.intellij.ide.startup.importSettings.testActions.StartWizardAction" text="[INTERNAL] 5 Transfer: StartWizardAction" internal="true"/>
     <action id="OnboardingTestDialogAction" class="com.intellij.ide.startup.importSettings.testActions.OnboardingTestDialogAction" text="[INTERNAL] 4 Transfer: Onboarding Test Dialog Action" internal="true"/>
     <!--suppress PluginXmlCapitalization -->
     <action id="TransferSettingsDemoAction" class="com.intellij.ide.startup.importSettings.transfer.backend.TransferSettingsDemoAction"
@@ -44,9 +43,6 @@
   </actions>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.startupWizardPages"
-                    interface="com.intellij.ide.startup.importSettings.data.StartupWizardService"
-                    dynamic="true" />
     <extensionPoint name="transferSettings.vscode.pluginMapping"
                     interface="com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.mappings.VSCodePluginMapping"
                     dynamic="true" />
@@ -62,9 +58,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.ide.startup.importSettings.data.StartupWizardService"
-                        serviceImplementation="com.intellij.ide.startup.importSettings.data.DisabledStartupWizardPages"/>
-
     <transferSettings.thirdPartyProductSettingsTransfer id="VSCodeSettingsTransfer"
                                                        implementation="com.intellij.ide.startup.importSettings.transfer.VsCodeSettingsTransfer"/>
 

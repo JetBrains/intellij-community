@@ -2,10 +2,10 @@
 package com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers
 
 import com.intellij.ide.startup.importSettings.models.Settings
-import com.intellij.ide.startup.importSettings.transfer.backend.LegacySettingsTransferWizard
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,7 +23,9 @@ class StateDatabaseParser(private val scope: CoroutineScope, private val setting
   private val recentsKey = "history.recentlyOpenedPathsList"
 
   fun process(file: File) {
-    LegacySettingsTransferWizard.warnBackgroundThreadIfNotLegacy()
+    if (EDT.isCurrentThreadEdt()) {
+      logger.error("Should not be called from EDT.")
+    }
     try {
       val databaseFileToOpen = createTemporaryFileCopy(file)
       try {
