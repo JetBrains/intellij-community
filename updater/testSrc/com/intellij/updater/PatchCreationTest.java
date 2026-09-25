@@ -168,9 +168,8 @@ class PatchCreationTest {
 
     var file = dirs.oldDir.resolve("Readme.txt");
     try (var channel = FileChannel.open(file, StandardOpenOption.APPEND); var ignored = channel.lock()) {
-      var lockReport = WindowsNative.supplier().get() != null;
-      var message = lockReport ? "Locked by: [" + ProcessHandle.current().pid() + "] OpenJDK Platform binary" : "Access denied";
-      var option = lockReport ? ValidationResult.Option.KILL_PROCESS : ValidationResult.Option.IGNORE;
+      var message = Utils.IS_WINDOWS ? "Locked by: [" + ProcessHandle.current().pid() + "] OpenJDK Platform binary" : "Access denied";
+      var option = Utils.IS_WINDOWS ? ValidationResult.Option.KILL_PROCESS : ValidationResult.Option.IGNORE;
       assertThat(patch.validate(dirs.oldDir.toFile(), testUI)).containsExactly(
         new ValidationResult(ValidationResult.Kind.ERROR,
                              "Readme.txt",

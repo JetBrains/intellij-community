@@ -19,7 +19,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = ["//libraries/jetbrains/annotations"],
+    deps = [
+        # do not sort,
+        "//libraries/jetbrains/annotations",
+        "//libraries/jna",
+    ],
 )
 
 jvm_library(
@@ -36,6 +40,7 @@ jvm_library(
         # do not sort,
         ":updater",
         "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/jna:jna_test_lib",
     ],
 )
 ### auto-generated section `build intellij.tools.updater` end
@@ -48,111 +53,6 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.tools.updater` end
-
-### auto-generated section `build intellij.tools.updater.ffm` start
-jvm_library(
-    name = "tools-updater-ffm",
-    srcs = glob(
-        [
-            "srcJava22/**/*.kt",
-            "srcJava22/**/*.java",
-            "srcJava22/**/*.form",
-        ],
-        allow_empty = True,
-    ),
-    module_name = "intellij.tools.updater.ffm",
-    visibility = ["//visibility:public"],
-    deps = [
-        # do not sort,
-        "//libraries/jetbrains/annotations",
-        "//updater",
-    ],
-)
-
-jvm_library(
-    name = "tools-updater-ffm_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.tools.updater.ffm",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":tools-updater-ffm",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//updater:updater_test_lib",
-    ],
-)
-### auto-generated section `build intellij.tools.updater.ffm` end
-
-### auto-generated section `iml intellij.tools.updater.ffm` start
-exports_files(
-    [
-        "intellij.tools.updater.ffm.iml",
-    ],
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `iml intellij.tools.updater.ffm` end
-
-### auto-generated section `build intellij.tools.updater.ffm.tests` start
-jvm_library(
-    name = "tools-updater-ffm-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.tools.updater.ffm.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
-    name = "tools-updater-ffm-tests_test_lib",
-    testonly = True,
-    srcs = glob(
-        [
-            "testSrcJava22/**/*.kt",
-            "testSrcJava22/**/*.java",
-            "testSrcJava22/**/*.form",
-        ],
-        allow_empty = True,
-    ),
-    associates = [
-        "//updater:tools-updater-ffm",
-        "//updater:tools-updater-ffm_test_lib",
-    ],
-    visibility = ["//visibility:public"],
-    runtime_deps = [":tools-updater-ffm-tests"],
-    deps = [
-        # do not sort,
-        "//libraries/jetbrains/annotations",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
-        "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
-        "//updater",
-        "//updater:updater_test_lib",
-    ],
-)
-### auto-generated section `build intellij.tools.updater.ffm.tests` end
-
-### auto-generated section `iml intellij.tools.updater.ffm.tests` start
-exports_files(
-    [
-        "intellij.tools.updater.ffm.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `iml intellij.tools.updater.ffm.tests` end
-
-### auto-generated section `test intellij.tools.updater.ffm.tests` start
-jps_test(
-    name = "tools-updater-ffm-tests_test",
-    runtime_deps = [":tools-updater-ffm-tests_test_lib"],
-)
-### auto-generated section `test intellij.tools.updater.ffm.tests` end
 
 ### auto-generated section `build intellij.tools.updater.tests` start
 jvm_library(
@@ -186,6 +86,8 @@ jvm_library(
         # do not sort,
         "//libraries/jetbrains/annotations",
         "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/jna",
+        "//libraries/jna:jna_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/assertj-core",

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.DynamicBundle
@@ -170,10 +170,14 @@ object UpdateInstaller {
 
     args += jre.resolve(if (OS.CURRENT == OS.Windows) "bin\\java.exe" else "bin/java").toString()
     args += "-Xmx${2000}m"
-    currentJavaVersion().takeIf { it.feature >= 22 }?.let { args += "--enable-native-access=ALL-UNNAMED" }
+    currentJavaVersion().takeIf { it.feature >= 25 }?.let { args += "--enable-native-access=ALL-UNNAMED" }
     args += "-cp"
     args += patchFiles.last().toString()
 
+    args += "-Djna.nosys=true"
+    args += "-Djna.boot.library.path="
+    args += "-Djna.debug_load=true"
+    args += "-Djna.debug_load.jna=true"
     args += "-Djava.io.tmpdir=${tempDir}"
     args += "-Didea.updater.log=${PathManager.getLogDir()}"
     System.getProperty("sun.java2d.metal")?.let { args += "-Dsun.java2d.metal=${it}" }

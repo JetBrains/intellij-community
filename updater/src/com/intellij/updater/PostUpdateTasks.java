@@ -1,6 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
+import com.sun.jna.platform.win32.Advapi32Util;
+import com.sun.jna.platform.win32.ShlObj;
+import com.sun.jna.platform.win32.Win32Exception;
+import com.sun.jna.platform.win32.WinDef;
+import com.sun.jna.platform.win32.WinError;
+import com.sun.jna.platform.win32.WinReg;
+import com.sun.jna.win32.StdCallLibrary;
 import mslinks.ShellLink;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,14 +35,7 @@ import static java.util.Objects.requireNonNullElse;
 
 final class PostUpdateTasks {
   private static final String[] EMPTY_ARRAY = {};
-  private static final int ERROR_FILE_NOT_FOUND = 2;
-
-  private static final int CSIDL_STARTMENU = 0x000B;
-  private static final int CSIDL_DESKTOPDIRECTORY = 0x0010;
-  private static final int CSIDL_COMMON_STARTMENU = 0x0016;
-  private static final int CSIDL_COMMON_DESKTOPDIRECTORY = 0x0019;
-
-  private static final Supplier<WindowsNative> NATIVE = WindowsNative.supplier();
+  private static final int ERROR_FILE_NOT_FOUND = 0x80070002;  // Severity: FAILURE (1), FACILITY_WIN32 (0x7), Code 0x2
 
   static void refreshAppBundleIcon(Path targetDir) {
     try {
@@ -47,40 +49,35 @@ final class PostUpdateTasks {
   }
 
   static void updateWindowsRegistry(Path targetDir, String nameAndVersion, String buildNumber, boolean united) {
-    var nativeApi = NATIVE.get();
-    if (nativeApi == null) {
-      LOG.info("updateWindowsRegistry skipped: Windows native helpers are not available");
-      return;
-    }
     var targetPath = targetDir.toString();
     LOG.info("path: " + targetPath + "; name/version: " + nameAndVersion + "; build: " + buildNumber + "; united: " + united);
-    updateUninstallerSection(nativeApi, targetPath, nameAndVersion, buildNumber);
-    updateManufacturerSection(nativeApi, targetPath, buildNumber, united);
+    updateUninstallerSection(targetPath, nameAndVersion, buildNumber);
+    updateManufacturerSection(targetPath, buildNumber, united);
     if (united) {
-      updateContextMenuEntries(nativeApi, targetPath);
+      updateContextMenuEntries(targetPath);
     }
   }
 
-  private static void updateUninstallerSection(WindowsNative nativeApi, String targetPath, String nameAndVersion, String buildNumber) {
+  private static void updateUninstallerSection(String targetPath, String nameAndVersion, String buildNumber) {
     try {
-      var rootKeys = List.of(WindowsNative.HKEY_CURRENT_USER, WindowsNative.HKEY_LOCAL_MACHINE);
+      var rootKeys = List.of(WinReg.HKEY_CURRENT_USER, WinReg.HKEY_LOCAL_MACHINE);
       var nodes = List.of("Software", "Software\\WOW6432Node");
       for (var rootKey : rootKeys) {
         for (var node : nodes) {
           var baseKey = node + "\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
           LOG.info("scanning: " + formatKey(rootKey, baseKey));
-          for (var key : getRegistrySubKeys(nativeApi, rootKey, baseKey)) {
+          for (var key : getRegistryGetKeys(rootKey, baseKey)) {
             try {
-              var location = nativeApi.registryGetString(rootKey, baseKey + '\\' + key, "InstallLocation");
-              if (location != null && targetPath.equalsIgnoreCase(location)) {
+              var location = Advapi32Util.registryGetStringValue(rootKey, baseKey + '\\' + key, "InstallLocation");
+              if (targetPath.equalsIgnoreCase(location)) {
                 LOG.info("found: " + formatKey(rootKey, baseKey, key));
-                nativeApi.registrySetString(rootKey, baseKey + '\\' + key, "DisplayName", nameAndVersion);
-                nativeApi.registrySetString(rootKey, baseKey + '\\' + key, "DisplayVersion", buildNumber);
+                Advapi32Util.registrySetStringValue(rootKey, baseKey + '\\' + key, "DisplayName", nameAndVersion);
+                Advapi32Util.registrySetStringValue(rootKey, baseKey + '\\' + key, "DisplayVersion", buildNumber);
                 return;
               }
             }
-            catch (WindowsNative.NativeException e) {
-              if (e.errorCode != ERROR_FILE_NOT_FOUND) {
+            catch (Win32Exception e) {
+              if (e.getHR().intValue() != ERROR_FILE_NOT_FOUND) {
                 LOG.log(Level.FINE, e, () -> "updateUninstallerSection: " + formatKey(rootKey, baseKey, key));
               }
             }
@@ -93,30 +90,32 @@ final class PostUpdateTasks {
     }
   }
 
-  private static void updateManufacturerSection(WindowsNative nativeApi, String targetPath, String buildNumber, boolean united) {
+  private static void updateManufacturerSection(String targetPath, String buildNumber, boolean united) {
     try {
-      var rootKeys = List.of(WindowsNative.HKEY_CURRENT_USER, WindowsNative.HKEY_LOCAL_MACHINE);
+      var rootKeys = List.of(WinReg.HKEY_CURRENT_USER, WinReg.HKEY_LOCAL_MACHINE);
       var nodes = List.of("Software", "Software\\WOW6432Node");
       for (var rootKey : rootKeys) {
         for (var node : nodes) {
           var baseKey = node + "\\JetBrains";
           LOG.info("scanning: " + formatKey(rootKey, baseKey));
-          for (var productKey : getRegistrySubKeys(nativeApi, rootKey, baseKey)) {
-            for (var buildKey : getRegistrySubKeys(nativeApi, rootKey, baseKey + '\\' + productKey)) {
+          for (var productKey : getRegistryGetKeys(rootKey, baseKey)) {
+            for (var buildKey : getRegistryGetKeys(rootKey, baseKey + '\\' + productKey)) {
               try {
                 var oldKey = baseKey + '\\' + productKey + '\\' + buildKey;
-                var location = nativeApi.registryGetString(rootKey, oldKey, "");
-                if (location != null && targetPath.equalsIgnoreCase(location)) {
+                var location = Advapi32Util.registryGetStringValue(rootKey, oldKey, "");
+                if (targetPath.equalsIgnoreCase(location)) {
                   var newKey = baseKey + '\\' + (united ? stripCeSuffixes(productKey) : productKey) + '\\' + buildNumber;
                   LOG.info("found: " + formatKey(rootKey, oldKey) + "; moving to: " + formatKey(rootKey, newKey));
-                  nativeApi.registryCreateKey(rootKey, newKey);
-                  nativeApi.registryCopyValues(rootKey, oldKey, newKey);
-                  nativeApi.registryDeleteKey(rootKey, oldKey);
+                  Advapi32Util.registryCreateKey(rootKey, newKey);
+                  for (var entry : Advapi32Util.registryGetValues(rootKey, oldKey).entrySet()) {
+                    Advapi32Util.registrySetStringValue(rootKey, newKey, entry.getKey(), entry.getValue().toString());
+                  }
+                  Advapi32Util.registryDeleteKey(rootKey, oldKey);
                   return;
                 }
               }
-              catch (WindowsNative.NativeException e) {
-                if (e.errorCode != ERROR_FILE_NOT_FOUND) {
+              catch (Win32Exception e) {
+                if (e.getHR().intValue() != ERROR_FILE_NOT_FOUND) {
                   LOG.log(Level.FINE, e, () -> "updateManufacturerSection: " + formatKey(rootKey, baseKey, productKey, buildKey));
                 }
               }
@@ -130,21 +129,21 @@ final class PostUpdateTasks {
     }
   }
 
-  private static void updateContextMenuEntries(WindowsNative nativeApi, String targetPath) {
+  private static void updateContextMenuEntries(String targetPath) {
     try {
-      var rootKeys = List.of(WindowsNative.HKEY_CURRENT_USER, WindowsNative.HKEY_LOCAL_MACHINE);
+      var rootKeys = List.of(WinReg.HKEY_CURRENT_USER, WinReg.HKEY_LOCAL_MACHINE);
       var updated = false;
       for (var rootKey : rootKeys) {
         // file association target
-        updated |= processContextMenuKey(nativeApi, rootKey, "Software\\Classes", true, targetPath);
+        updated |= processContextMenuKey(rootKey, "Software\\Classes", true, targetPath);
         // "edit with" context menu
-        updated |= processContextMenuKey(nativeApi, rootKey, "Software\\Classes\\*\\shell", false, targetPath);
+        updated |= processContextMenuKey(rootKey, "Software\\Classes\\*\\shell", false, targetPath);
         // folder context menu
-        updated |= processContextMenuKey(nativeApi, rootKey, "Software\\Classes\\Directory\\shell", false, targetPath);
-        updated |= processContextMenuKey(nativeApi, rootKey, "Software\\Classes\\Directory\\Background\\shell", false, targetPath);
+        updated |= processContextMenuKey(rootKey, "Software\\Classes\\Directory\\shell", false, targetPath);
+        updated |= processContextMenuKey(rootKey, "Software\\Classes\\Directory\\Background\\shell", false, targetPath);
       }
       if (updated) {
-        notifyShellAboutChangedAssociations(nativeApi);
+        notifyShellAboutChangedAssociations();
       }
     }
     catch (Throwable t) {
@@ -152,33 +151,29 @@ final class PostUpdateTasks {
     }
   }
 
-  private static boolean processContextMenuKey(
-    WindowsNative nativeApi, long rootKey, String baseKey, boolean fileAssociation, String targetPath
-  ) {
+  private static boolean processContextMenuKey(WinReg.HKEY rootKey, String baseKey, boolean fileAssociation, String targetPath) {
     var updated = false;
     LOG.info("scanning: " + formatKey(rootKey, baseKey));
-    for (var subKey : getRegistrySubKeys(nativeApi, rootKey, baseKey)) {
+    for (var subKey : getRegistryGetKeys(rootKey, baseKey)) {
       if (fileAssociation && (baseKey.startsWith(".") || baseKey.startsWith("ms-") || baseKey.startsWith("microsoft"))) continue;
       try {
         var key = baseKey + '\\' + subKey;
         var iconPath = fileAssociation
-                       ? nativeApi.registryGetString(rootKey, key + "\\DefaultIcon", "")
-                       : nativeApi.registryGetString(rootKey, key, "Icon");
-        if (iconPath != null && iconPath.regionMatches(true, 0, targetPath, 0, targetPath.length())) {
+          ? Advapi32Util.registryGetStringValue(rootKey, key + "\\DefaultIcon", "")
+          : Advapi32Util.registryGetStringValue(rootKey, key, "Icon");
+        if (iconPath.regionMatches(true, 0, targetPath, 0, targetPath.length())) {
           LOG.info("found: " + formatKey(rootKey, key));
-          var name = nativeApi.registryGetString(rootKey, key, "");
-          if (name != null) {
-            var newName = stripCeSuffixes(name);
-            if (!name.equals(newName)) {
-              LOG.info("renaming '" + name + "' to '" + newName + "'");
-              nativeApi.registrySetString(rootKey, key, "", newName);
-              updated = true;
-            }
+          var name = Advapi32Util.registryGetStringValue(rootKey, key, "");
+          var newName = stripCeSuffixes(name);
+          if (!name.equals(newName)) {
+            LOG.info("renaming '" + name + "' to '" + newName + "'");
+            Advapi32Util.registrySetStringValue(rootKey, key, "", newName);
+            updated = true;
           }
         }
       }
-      catch (WindowsNative.NativeException e) {
-        if (e.errorCode != ERROR_FILE_NOT_FOUND) {
+      catch (Win32Exception e) {
+        if (e.getHR().intValue() != ERROR_FILE_NOT_FOUND) {
           LOG.log(Level.FINE, e, () -> "processContextMenuKey: " + formatKey(rootKey, baseKey, subKey));
         }
       }
@@ -186,49 +181,55 @@ final class PostUpdateTasks {
     return updated;
   }
 
-  private static String[] getRegistrySubKeys(WindowsNative nativeApi, long rootKey, String key) {
+  private static String[] getRegistryGetKeys(WinReg.HKEY rootKey, String key) {
     try {
-      return nativeApi.registrySubKeys(rootKey, key);
+      return Advapi32Util.registryGetKeys(rootKey, key);
     }
-    catch (WindowsNative.NativeException e) {
-      if (e.errorCode != ERROR_FILE_NOT_FOUND) {
-        LOG.log(Level.FINE, e, () -> "registrySubKeys(" + formatKey(rootKey, key) + ')');
+    catch (Win32Exception e) {
+      if (e.getHR().intValue() != ERROR_FILE_NOT_FOUND) {
+        LOG.log(Level.FINE, e, () -> "registryGetKeys(" + formatKey(rootKey, key) + ')');
       }
       return EMPTY_ARRAY;
     }
   }
 
-  private static String formatKey(long rootKey, String... subKeys) {
+  private static String formatKey(WinReg.HKEY rootKey, String... subKeys) {
     var sb = new StringBuilder().append(
-      rootKey == WindowsNative.HKEY_CURRENT_USER ? "HKCU" :
-      rootKey == WindowsNative.HKEY_LOCAL_MACHINE ? "HKLM" :
-      "0x" + Long.toHexString(rootKey)
+      rootKey == WinReg.HKEY_CURRENT_USER ? "HKCU" :
+      rootKey == WinReg.HKEY_LOCAL_MACHINE ? "HKLM" :
+      "0x" + Long.toHexString(Pointer.nativeValue(rootKey.getPointer()))
     );
     for (var subKey : subKeys) sb.append('\\').append(subKey);
     return sb.toString();
   }
 
-  private static void notifyShellAboutChangedAssociations(WindowsNative nativeApi) {
+  private static void notifyShellAboutChangedAssociations() {
     try {
-      nativeApi.notifyShellAssociationsChanged();
+      var shell32 = Native.load("shell32", Shell32.class);
+      shell32.SHChangeNotify(new WinDef.LONG(Shell32.SHCNE_ASSOCCHANGED), new WinDef.UINT(Shell32.SHCNF_IDLIST), null, null);
     }
     catch (Throwable t) {
       LOG.log(Level.WARNING, "notifyShellAboutChangedAssociations failed", t);
     }
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
+  private interface Shell32 extends StdCallLibrary {
+    long SHCNE_ASSOCCHANGED = 0x08000000L;
+    int SHCNF_IDLIST = 0;
+
+    void SHChangeNotify(WinDef.LONG wEventId, WinDef.UINT uFlags, Pointer dwItem1, Pointer dwItem2);
+  }
+
   static void updateWindowsShortcuts(Path targetDir, String nameAndVersion) {
     LOG.info("path: " + targetDir + "; name/version: " + nameAndVersion);
     try {
-      var nativeApi = NATIVE.get();
-      var desktop = getFolderPath(nativeApi, CSIDL_DESKTOPDIRECTORY, () -> Path.of(System.getProperty("user.home"), "Desktop"));
-      var commonDesktop = getFolderPath(nativeApi, CSIDL_COMMON_DESKTOPDIRECTORY, () -> Path.of(System.getenv("PUBLIC"), "Desktop"));
-      var startMenu = getFolderPath(
-        nativeApi, CSIDL_STARTMENU, () -> Path.of(System.getenv("APPDATA"), "Microsoft\\Windows\\Start Menu")
-      ).resolve("Programs\\JetBrains");
-      var commonStartMenu = getFolderPath(
-        nativeApi, CSIDL_COMMON_STARTMENU, () -> Path.of(System.getenv("ProgramData"), "Microsoft\\Windows\\Start Menu")
-      ).resolve("Programs\\JetBrains");
+      var desktop = getFolderPath(ShlObj.CSIDL_DESKTOPDIRECTORY, () -> Path.of(System.getProperty("user.home"), "Desktop"));
+      var commonDesktop = getFolderPath(ShlObj.CSIDL_COMMON_DESKTOPDIRECTORY, () -> Path.of(System.getenv("PUBLIC"), "Desktop"));
+      var startMenu = getFolderPath(ShlObj.CSIDL_STARTMENU, () -> Path.of(System.getenv("APPDATA"), "Microsoft\\Windows\\Start Menu"))
+        .resolve("Programs\\JetBrains");
+      var commonStartMenu = getFolderPath(ShlObj.CSIDL_COMMON_STARTMENU, () -> Path.of(System.getenv("ProgramData"), "Microsoft\\Windows\\Start Menu"))
+        .resolve("Programs\\JetBrains");
       var targetPath = targetDir.toString();
       var versionPattern = Pattern.compile("\\d+\\.\\d+");
       for (var folder : List.of(desktop, commonDesktop, startMenu, commonStartMenu)) {
@@ -265,9 +266,20 @@ final class PostUpdateTasks {
     }
   }
 
-  private static Path getFolderPath(@Nullable WindowsNative nativeApi, int csidl, Supplier<Path> fallback) {
-    var path = nativeApi != null ? nativeApi.folderPath(csidl) : null;
-    return path != null ? path : fallback.get();
+  private static Path getFolderPath(int folder, Supplier<Path> fallback) {
+    try {
+      var path = new char[WinDef.MAX_PATH];
+      var res = com.sun.jna.platform.win32.Shell32.INSTANCE.SHGetFolderPath(null, folder, null, ShlObj.SHGFP_TYPE_CURRENT, path);
+      if (WinError.S_OK.equals(res)) {
+        var len = 0;
+        while (len < path.length && path[len] != 0) len++;
+        return Path.of(new String(path, 0, len));
+      }
+    }
+    catch (Exception e) {
+      LOG.log(Level.WARNING, "getFolderPath(" + folder + ')', e);
+    }
+    return fallback.get();
   }
 
   private static @Nullable String getLinkTarget(Path shortcutFile) {
