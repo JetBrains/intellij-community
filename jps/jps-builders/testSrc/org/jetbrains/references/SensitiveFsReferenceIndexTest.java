@@ -28,11 +28,28 @@ import java.util.HashSet;
 import static org.jetbrains.jps.backwardRefs.index.JavaCompilerIndices.BACK_USAGES;
 
 public class SensitiveFsReferenceIndexTest extends ReferenceIndexTestBase {
+  private String myPreviousFsProperty;
 
   @Override
   public void setUp() {
     super.setUp();
+    myPreviousFsProperty = System.getProperty(JavaBackwardReferenceIndexWriter.FS_KEY);
     System.setProperty(JavaBackwardReferenceIndexWriter.FS_KEY, "true");
+  }
+
+  @Override
+  public void tearDown() {
+    try {
+      if (myPreviousFsProperty == null) {
+        System.clearProperty(JavaBackwardReferenceIndexWriter.FS_KEY);
+      }
+      else {
+        System.setProperty(JavaBackwardReferenceIndexWriter.FS_KEY, myPreviousFsProperty);
+      }
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override
