@@ -88,6 +88,18 @@ class PathFromRootResolverTest(private val inputType: InputType) {
   }
 
   @Test
+  fun `filters a nested root beside a similar independent root`() {
+    val outer = baseDir.newVirtualDirectory("root")
+    val nested = baseDir.newVirtualDirectory("root/dir")
+    val similar = baseDir.newVirtualDirectory("root-copy")
+    val file = baseDir.newVirtualFile("root/dir/file.txt")
+
+    val path = PathFromRootResolver(listOf(similar, nested, outer)).resolve(file)
+
+    assertThat(path).isEqualTo("root/dir/file.txt")
+  }
+
+  @Test
   fun `returns null for a file outside the roots`() {
     val root = baseDir.newVirtualDirectory("root")
     val file = baseDir.newVirtualFile("other/file.txt")

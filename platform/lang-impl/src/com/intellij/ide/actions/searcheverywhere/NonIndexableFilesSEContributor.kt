@@ -21,12 +21,10 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.PathPrefixTree
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.openapi.vfs.VirtualFilePrefixTree
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -61,6 +59,7 @@ import javax.swing.ListCellRenderer
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -428,43 +427,29 @@ private class SearchJobsState {
 @ApiStatus.Internal
 @VisibleForTesting
 class PathFromRootResolver(roots: Collection<VirtualFile>) {
+  private val rootNamesByPath: Map<String, String> = roots.associate { it.path to it.name }
   // "outer" here means that we remove nested roots, and getPathFromRoot will provide the longest possible path
-  private val outerRoots = VirtualFilePrefixTree.createSet().also { outerRoots ->
-    val allRoots = VirtualFilePrefixTree.createSet()
-    allRoots.addAll(roots)
-    outerRoots.addAll(allRoots.getRoots())
-  }
-  private val nioRoots = PathPrefixTree.createMap<VirtualFile>().also { nioRoots ->
-    for (root in outerRoots.getRoots()) {
-      root.fileSystem.getNioPath(root)?.let { nioRoots[it] = root }
+  private val outerRoots: List<String> = buildList {
+    for (root in rootNamesByPath.keys.sortedWith(FileUtil::comparePaths)) {
+      if (isEmpty() || !FileUtil.startsWith(root, last())) add(root)
     }
   }
 
+  /** The caller must pass an absolute [path] after calling [Path.normalize]. */
   fun getPathFromRoot(path: Path): String? {
-    val ancestorRoots = nioRoots.getAncestorEntries(path)
-    if (ancestorRoots.isEmpty()) return null
-    if (ancestorRoots.size > 1) {
-      LOG.error("Path $path has multiple outer roots: $ancestorRoots")
-      return null
-    }
-    val (rootPath, root) = ancestorRoots.single()
-    return qualify(root.name, rootPath.relativize(path).joinToString("/"))
+    return getPathFromRoot(path.invariantSeparatorsPathString)
   }
 
   fun getPathFromRoot(file: VirtualFile): String? {
-    val ancestorRoots = outerRoots.getAncestors(file)
-    if (ancestorRoots.isEmpty()) return null
-    if (ancestorRoots.size > 1) {
-      LOG.error("File $file has multiple outer roots: $ancestorRoots")
-      return null
-    }
-    val root = ancestorRoots.single()
-    val relativePath = VfsUtilCore.getRelativePath(file, root, '/') ?: return null
-    return qualify(root.name, relativePath)
+    return getPathFromRoot(file.path)
   }
 
-  private fun qualify(rootName: String, relativePath: String): String =
-    if (relativePath.isEmpty()) rootName else "$rootName/$relativePath"
+  private fun getPathFromRoot(path: String): String? {
+    val root = outerRoots.firstOrNull { FileUtil.startsWith(path, it) } ?: return null
+    val relativePath = path.substring(root.length).removePrefix("/")
+    val rootName = rootNamesByPath.getValue(root)
+    return if (relativePath.isEmpty()) rootName else "${rootName}/$relativePath"
+  }
 }
 
 // Implementation note:
