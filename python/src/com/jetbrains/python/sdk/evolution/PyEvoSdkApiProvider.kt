@@ -132,12 +132,16 @@ import java.nio.file.Path
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.pathString
+import kotlin.time.Duration as KotlinDuration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTimedValue
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
@@ -153,6 +157,17 @@ private val LOG = logger<PyEvoSdkApiProvider>()
 
 /** The platform group holding every tool's package-manager actions (uv lock/sync, conda export/update, …). */
 private const val PACKAGE_MANAGER_ACTIONS_GROUP: String = "PythonPackageManagerActions"
+
+/**
+ * How long a rebuild waits for the interpreter's own background refresh before going ahead regardless — see
+ * [PyEvoSdkApiImpl.awaitSdkQuiet]. Generous, because the slow part is skeleton generation on a fresh environment; past
+ * it the interpreter is most likely held by something that will not let go on its own, and waiting longer only makes
+ * the widget look stuck.
+ */
+private val SDK_QUIESCE_TIMEOUT: KotlinDuration = 20.seconds
+
+/** How often [PyEvoSdkApiImpl.awaitSdkQuiet] re-asks. `isUpdateScheduled` is a lock and a set lookup, so this is cheap. */
+private val SDK_QUIESCE_POLL: KotlinDuration = 200.milliseconds
 
 /**
  * The statistics identity of [nodeId], taken from the provider that owns it.
@@ -790,6 +805,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     val homePath = request.envHomePath.toNioPathOrNull()
                    ?: return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.env.not.found", request.envHomePath))
     return withSdkConfigurationLock(workspace.project) {
+      awaitSdkQuiet(homePath)
       val baseToken = inToolTrace(workspace.project, traceId, nodeId) {
         installedBaseToken(request.baseToken, request.installPythonVersion, fileSystem, workspace.baseDir)
       }
@@ -802,6 +818,35 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
       PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk, false)
       EvoSelectResultDto.Ok
     }
+  }
+
+  /**
+   * Waits, briefly, for the background refresh of the interpreter at [homePath] to finish before its environment is
+   * destroyed.
+   *
+   * A refresh runs that interpreter — it reads its version, its paths, its packages, and generates its skeletons — and
+   * on Windows a running executable cannot be deleted at all. So a rebuild started while one is in flight deletes
+   * everything around `python.exe` and then fails on the binary itself, leaving a half-emptied environment that the
+   * create step cannot use either (PY-92488).
+   *
+   * A rebuild is what makes this likely rather than rare: it ends by refreshing the SDK it rebuilt
+   * ([refreshRebuiltSdk]), so a second rebuild of the same environment races the first one's refresh. Deleting also
+   * fires VFS events under the interpreter's own roots, and those schedule a refresh of their own
+   * (`PythonPackageManagerServiceImpl` watches them).
+   *
+   * Waiting rather than refusing, because the refresh ends on its own and the user asked for a rebuild. The wait is
+   * bounded because nothing here can make it end: skeleton generation on a fresh environment runs for a while, and a
+   * console or a debug session holding the interpreter never ends by itself. Past the bound the rebuild goes ahead and
+   * reports what it finds — which, where the interpreter is genuinely held, is the message [deleteEnvDir] gives an
+   * `AccessDeniedException`, naming the environment as in use rather than saying only that a delete failed.
+   */
+  private suspend fun awaitSdkQuiet(homePath: Path) {
+    val sdk = PythonSdkUtil.getAllSdks().firstOrNull { it.homePath?.toNioPathOrNull() == homePath } ?: return
+    withTimeoutOrNull(SDK_QUIESCE_TIMEOUT) {
+      while (PythonSdkUpdater.isUpdateScheduled(sdk)) {
+        delay(SDK_QUIESCE_POLL)
+      }
+    } ?: LOG.info("Evo: '${sdk.name}' is still refreshing after ${SDK_QUIESCE_TIMEOUT}; rebuilding anyway")
   }
 
   /**
