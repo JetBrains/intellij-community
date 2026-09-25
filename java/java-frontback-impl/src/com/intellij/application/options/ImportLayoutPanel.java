@@ -392,14 +392,21 @@ public abstract class ImportLayoutPanel extends JPanel {
           }
           append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
-          if (entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY || entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY) {
+          if (entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY) {
             append(JavaFrontbackBundle.message("import.layout.panel.all.other.imports"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
-          else if (entry == PackageEntry.ALL_MODULE_IMPORTS) {
-            append(JavaFrontbackBundle.message("import.layout.panel.module.imports"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          else if (entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY) {
+            append(JavaFrontbackBundle.message("import.layout.panel.all.other.static.imports"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
           else {
-            append(entry.getPackageName() + ".*", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            if (entry == PackageEntry.ALL_MODULE_IMPORTS) {
+              append(JavaKeywords.MODULE, SimpleTextAttributes.fromTextAttributes(attributes));
+              append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+              append(JavaFrontbackBundle.message("import.layout.panel.module.imports"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            }
+            else {
+              append(entry.getPackageName() + ".*", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            }
           }
         }
       }
