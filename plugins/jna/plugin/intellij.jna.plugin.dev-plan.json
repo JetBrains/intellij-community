@@ -1,36 +1,41 @@
 {
     "version": 3,
-    "plugin": "intellij.pty4j.plugin",
+    "plugin": "intellij.jna.plugin",
     "variant": "{platform}",
     "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
-            "destination": "lib/modules/intellij.libraries.pty4j.jar",
+            "destination": "lib/modules/intellij.libraries.jna.jar",
             "recipe": {
                 "sources": [
                     {
-                        "input": "intellij.libraries.pty4j",
+                        "input": "intellij.libraries.jna",
                         "kind": "module",
                         "filter": "module-v1"
                     },
                     {
-                        "input": "native-select:128c84449b8d6c2ab6b3f032:output",
+                        "input": "@lib//:net.java.dev.jna/jna-platform-5.19.1.jar",
+                        "kind": "archive",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "native-select:c8993745404a01a7de270806:output",
                         "kind": "prepared",
                         "filter": "prepared"
                     }
                 ],
                 "writer": {
-                    "manifest": "keep",
+                    "manifest": "drop",
                     "mergeEntities": true
                 }
             }
         },
         {
-            "destination": "lib/pty4j-plugin.jar",
+            "destination": "lib/jna-plugin.jar",
             "recipe": {
                 "sources": [
                     {
-                        "input": "descriptor:intellij.pty4j.plugin",
+                        "input": "descriptor:intellij.jna.plugin",
                         "kind": "file",
                         "filter": "none",
                         "entry": "META-INF/plugin.xml",
@@ -39,7 +44,7 @@
                         ]
                     },
                     {
-                        "input": "intellij.pty4j.plugin",
+                        "input": "intellij.jna.plugin",
                         "kind": "module",
                         "filter": "module-v1"
                     }
@@ -50,9 +55,9 @@
             }
         },
         {
-            "destination": "lib/pty4j",
+            "destination": "lib/jna",
             "inputs": [
-                "native-select:128c84449b8d6c2ab6b3f032:output"
+                "native-select:c8993745404a01a7de270806:output"
             ],
             "kind": "tree",
             "classPath": false,
@@ -61,24 +66,24 @@
     ],
     "preparations": [
         {
-            "id": "native-select:128c84449b8d6c2ab6b3f032",
+            "id": "native-select:c8993745404a01a7de270806",
             "inputs": [
-                "@lib//:libraries-pty4j-pty4j"
+                "@lib//:net.java.dev.jna/jna-5.19.1.jar"
             ],
             "outputs": [
-                "native-select:128c84449b8d6c2ab6b3f032:output"
+                "native-select:c8993745404a01a7de270806:output"
             ],
-            "modelSignature": "3av6twz0u4bute28mqdi4suzm"
+            "modelSignature": "9b963xy2rywd369q7ntd5sex1"
         }
     ],
     "operations": [
         {
-            "id": "native-select:128c84449b8d6c2ab6b3f032",
+            "id": "native-select:c8993745404a01a7de270806",
             "kind": "native-select",
             "input": {
-                "artifact": "@lib//:libraries-pty4j-pty4j"
+                "artifact": "@lib//:net.java.dev.jna/jna-5.19.1.jar"
             },
-            "output": "native-select:128c84449b8d6c2ab6b3f032:output",
+            "output": "native-select:c8993745404a01a7de270806:output",
             "manifest": "keep",
             "filter": "library"
         }

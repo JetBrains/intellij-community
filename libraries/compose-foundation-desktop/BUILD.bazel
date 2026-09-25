@@ -36,6 +36,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//libraries/skiko",
+        "//plugins/skiko/plugin",
         "//libraries/compose-runtime-desktop",
         "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
         "@lib//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-desktop",
@@ -64,6 +65,7 @@ jvm_library(
         # do not sort,
         ":compose-foundation-desktop",
         "//libraries/skiko:skiko_test_lib",
+        "//plugins/skiko/plugin:plugin_test_lib",
         "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
     ],
 )

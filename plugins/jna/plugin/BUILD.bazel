@@ -1,0 +1,93 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
+
+### auto-generated section `dev intellij.jna.plugin` start
+dev_dist_plugin(
+    content_modules = ["intellij.libraries.jna"],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = ["intellij.libraries.jna"],
+    main_module = "intellij.jna.plugin",
+)
+
+dev_dist_complex_plugin(
+    artifact_inputs = {
+        "//libraries/jna:jna.jar": "intellij.libraries.jna",
+        "//plugins/jna/plugin:plugin.jar": "intellij.jna.plugin",
+    },
+    descriptor = "//plugins/jna/plugin:intellij.jna.plugin_dev_descriptor",
+    execution_version = 3,
+    main_module = "intellij.jna.plugin",
+    platform_values = {
+        "darwin_aarch64": {
+            "layoutSignature": "c94lb75t192zywar6j8cx4u4j",
+        },
+        "darwin_x64": {
+            "layoutSignature": "f0t3o3thqdsgx787ctmy68hww",
+        },
+        "linux_aarch64": {
+            "layoutSignature": "16r2pmtoaidjotv4h1gec54cz",
+        },
+        "linux_x64": {
+            "layoutSignature": "by01h3d21glx0ifqnqedir3rj",
+        },
+        "windows_aarch64": {
+            "layoutSignature": "aiy6gt2z4txkp0y5e1h2t6wjt",
+        },
+        "windows_x64": {
+            "layoutSignature": "36ngos8af1apq61jg7p64tezi",
+        },
+    },
+    platforms = [
+        "windows_x64",
+        "windows_aarch64",
+        "darwin_x64",
+        "darwin_aarch64",
+        "linux_x64",
+        "linux_aarch64",
+    ],
+    resource_inputs = {
+        "@lib//:net.java.dev.jna/jna-platform-5.19.1.jar": "@lib//:net.java.dev.jna/jna-platform-5.19.1.jar",
+        "@lib//:net.java.dev.jna/jna-5.19.1.jar": "@lib//:net.java.dev.jna/jna-5.19.1.jar",
+    },
+)
+### auto-generated section `dev intellij.jna.plugin` end
+
+### auto-generated section `build intellij.jna.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.jna.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["@lib//:kotlin-stdlib"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.jna.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+### auto-generated section `build intellij.jna.plugin` end
+
+### auto-generated section `iml intellij.jna.plugin` start
+exports_files(
+    [
+        "intellij.jna.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.jna.plugin` end

@@ -8,6 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.libraries.skiko" />
+    <orderEntry type="module" module-name="intellij.skiko.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.compose.runtime.desktop" exported="" />
     <orderEntry type="module-library" exported="">
       <library name="compose-foundation-desktop" type="repository">

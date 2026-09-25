@@ -1379,6 +1379,7 @@ plugins/javaFX/jps
 plugins/javaFX/sceneBuilder
 plugins/jcef/frontend
 plugins/jcef/plugin
+plugins/jna/plugin
 plugins/jshell
 plugins/jshell/console
 plugins/jshell/execution
@@ -1748,6 +1749,7 @@ plugins/sh/plugin
 plugins/sh/python
 plugins/sh/terminal
 plugins/sh/terminal/frontend
+plugins/skiko/plugin
 plugins/space/jps-plugin
 plugins/stats-collector
 plugins/stream-debugger

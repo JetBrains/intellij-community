@@ -1,36 +1,41 @@
 {
     "version": 3,
-    "plugin": "intellij.pty4j.plugin",
+    "plugin": "intellij.skiko.plugin",
     "variant": "{platform}",
     "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
-            "destination": "lib/modules/intellij.libraries.pty4j.jar",
+            "destination": "lib/modules/intellij.libraries.skiko.jar",
             "recipe": {
                 "sources": [
                     {
-                        "input": "intellij.libraries.pty4j",
+                        "input": "intellij.libraries.skiko",
                         "kind": "module",
                         "filter": "module-v1"
                     },
                     {
-                        "input": "native-select:128c84449b8d6c2ab6b3f032:output",
+                        "input": "@lib//:libraries-skiko-jetbrains-skiko-awt-compose",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "native-select:a6904bf5ca5ca55e3909dcc0:output",
                         "kind": "prepared",
                         "filter": "prepared"
                     }
                 ],
                 "writer": {
-                    "manifest": "keep",
+                    "manifest": "drop",
                     "mergeEntities": true
                 }
             }
         },
         {
-            "destination": "lib/pty4j-plugin.jar",
+            "destination": "lib/skiko-plugin.jar",
             "recipe": {
                 "sources": [
                     {
-                        "input": "descriptor:intellij.pty4j.plugin",
+                        "input": "descriptor:intellij.skiko.plugin",
                         "kind": "file",
                         "filter": "none",
                         "entry": "META-INF/plugin.xml",
@@ -39,7 +44,7 @@
                         ]
                     },
                     {
-                        "input": "intellij.pty4j.plugin",
+                        "input": "intellij.skiko.plugin",
                         "kind": "module",
                         "filter": "module-v1"
                     }
@@ -50,9 +55,9 @@
             }
         },
         {
-            "destination": "lib/pty4j",
+            "destination": "lib/skiko-awt-runtime-all",
             "inputs": [
-                "native-select:128c84449b8d6c2ab6b3f032:output"
+                "native-select:a6904bf5ca5ca55e3909dcc0:output"
             ],
             "kind": "tree",
             "classPath": false,
@@ -61,24 +66,24 @@
     ],
     "preparations": [
         {
-            "id": "native-select:128c84449b8d6c2ab6b3f032",
+            "id": "native-select:a6904bf5ca5ca55e3909dcc0",
             "inputs": [
-                "@lib//:libraries-pty4j-pty4j"
+                "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all"
             ],
             "outputs": [
-                "native-select:128c84449b8d6c2ab6b3f032:output"
+                "native-select:a6904bf5ca5ca55e3909dcc0:output"
             ],
-            "modelSignature": "3av6twz0u4bute28mqdi4suzm"
+            "modelSignature": "1hg8a3lsj7n9u1v7p0dnolvh"
         }
     ],
     "operations": [
         {
-            "id": "native-select:128c84449b8d6c2ab6b3f032",
+            "id": "native-select:a6904bf5ca5ca55e3909dcc0",
             "kind": "native-select",
             "input": {
-                "artifact": "@lib//:libraries-pty4j-pty4j"
+                "artifact": "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all"
             },
-            "output": "native-select:128c84449b8d6c2ab6b3f032:output",
+            "output": "native-select:a6904bf5ca5ca55e3909dcc0:output",
             "manifest": "keep",
             "filter": "library"
         }

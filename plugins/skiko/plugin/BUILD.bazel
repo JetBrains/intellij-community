@@ -1,0 +1,93 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
+
+### auto-generated section `dev intellij.skiko.plugin` start
+dev_dist_plugin(
+    content_modules = ["intellij.libraries.skiko"],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = ["intellij.libraries.skiko"],
+    main_module = "intellij.skiko.plugin",
+)
+
+dev_dist_complex_plugin(
+    artifact_inputs = {
+        "//libraries/skiko:skiko.jar": "intellij.libraries.skiko",
+        "//plugins/skiko/plugin:plugin.jar": "intellij.skiko.plugin",
+    },
+    descriptor = "//plugins/skiko/plugin:intellij.skiko.plugin_dev_descriptor",
+    execution_version = 3,
+    libraries = {
+        "@lib//:libraries-skiko-jetbrains-skiko-awt-compose": "@lib//:libraries-skiko-jetbrains-skiko-awt-compose",
+        "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all": "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all",
+    },
+    main_module = "intellij.skiko.plugin",
+    platform_values = {
+        "darwin_aarch64": {
+            "layoutSignature": "b9han25lufjrjxf9qk5x3unop",
+        },
+        "darwin_x64": {
+            "layoutSignature": "1eu2uczkdfphrlaq5s51pcilk",
+        },
+        "linux_aarch64": {
+            "layoutSignature": "42aiqz6upllc3v3hx83iqrq5u",
+        },
+        "linux_x64": {
+            "layoutSignature": "5q70nwudif0jurxrdur60qw3x",
+        },
+        "windows_aarch64": {
+            "layoutSignature": "7e9m8rxl15enzvunjxdd2ia6z",
+        },
+        "windows_x64": {
+            "layoutSignature": "63mqthn4zbolm0eteah6k87tl",
+        },
+    },
+    platforms = [
+        "windows_x64",
+        "windows_aarch64",
+        "darwin_x64",
+        "darwin_aarch64",
+        "linux_x64",
+        "linux_aarch64",
+    ],
+)
+### auto-generated section `dev intellij.skiko.plugin` end
+
+### auto-generated section `build intellij.skiko.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.skiko.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["@lib//:kotlin-stdlib"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.skiko.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+### auto-generated section `build intellij.skiko.plugin` end
+
+### auto-generated section `iml intellij.skiko.plugin` start
+exports_files(
+    [
+        "intellij.skiko.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.skiko.plugin` end

@@ -1,0 +1,17 @@
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>com.intellij.modules.skiko</id>
+  <name>Skia for Kotlin (Skiko)</name>
+  <vendor>JetBrains</vendor>
+  <description><![CDATA[
+    Holds the one Skiko copy and its native renderer that Compose and Jewel use to draw the UI.
+  ]]></description>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.platform"/>
+  </dependencies>
+
+  <content namespace="jetbrains">
+    <module name="intellij.libraries.skiko" loading="required"/>
+  </content>
+</idea-plugin>

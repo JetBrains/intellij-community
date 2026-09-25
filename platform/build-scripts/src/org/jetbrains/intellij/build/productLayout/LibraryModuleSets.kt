@@ -41,7 +41,7 @@ object LibraryModuleSets {
    * **Note:** UI/IDE-specific libraries (JCEF, Jediterm, SSH) have been moved to `librariesIde()`,
    * and the OpenTelemetry wrappers to `CoreModuleSets.telemetry()` / `CoreModuleSets.telemetryImpl()` - they
    * belong next to the telemetry modules that are their only reason to exist.
-   * JNA and pty4j are content of the bundled plugin `intellij.pty4j.plugin`, because the `jnidispatch` native
+   * JNA is content of the bundled plugin `intellij.jna.plugin`, because the `jnidispatch` native
    * binds to one classloader per JVM. A consumer names `intellij.libraries.jna` in its `<dependencies>`.
    *
    * @see librariesIde for UI and IDE-specific libraries
@@ -251,7 +251,7 @@ object LibraryModuleSets {
   /**
    * UI and IDE-specific library modules.
    * Contains libraries for browser embedding, terminal UI, SSH, and other IDE features.
-   * pty4j is content of the bundled plugin `intellij.pty4j.plugin`, next to JNA.
+   * pty4j is content of the bundled plugin `intellij.pty4j.plugin`, which depends on the plugin `intellij.jna.plugin`.
    *
    * **Typical use cases:** Full IDEs with user interface (IDEA, PyCharm, WebStorm, etc.)
    * **Typical NON-users:** CodeServer (analysis-only tool), headless tools, pure analysis products

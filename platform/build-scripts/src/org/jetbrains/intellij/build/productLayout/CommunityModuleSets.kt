@@ -295,10 +295,10 @@ object CommunityModuleSets {
   /**
    * Compose UI modules.
    * `intellij.libraries.compose.runtime.desktop` depends on the jspecify annotations.
+   * Skiko is content of the bundled plugin `intellij.skiko.plugin`, because its native renderer binds to one classloader per JVM.
    */
   fun compose(): ModuleSet = moduleSet("compose") {
     module("intellij.libraries.jspecify")
-    module("intellij.libraries.skiko")
     module("intellij.libraries.coil")
     module("intellij.libraries.compose.swing")
     module("intellij.platform.compose")

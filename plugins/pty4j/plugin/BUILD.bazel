@@ -4,22 +4,14 @@ load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_
 
 ### auto-generated section `dev intellij.pty4j.plugin` start
 dev_dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.libraries.jna",
-        "intellij.libraries.pty4j",
-    ],
+    content_modules = ["intellij.libraries.pty4j"],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.libraries.jna",
-        "intellij.libraries.pty4j",
-    ],
+    descriptor_modules = ["intellij.libraries.pty4j"],
     main_module = "intellij.pty4j.plugin",
 )
 
 dev_dist_complex_plugin(
     artifact_inputs = {
-        "//libraries/jna:jna.jar": "intellij.libraries.jna",
         "//libraries/pty4j:pty4j.jar": "intellij.libraries.pty4j",
         "//plugins/pty4j/plugin:plugin.jar": "intellij.pty4j.plugin",
     },
@@ -31,22 +23,22 @@ dev_dist_complex_plugin(
     main_module = "intellij.pty4j.plugin",
     platform_values = {
         "darwin_aarch64": {
-            "layoutSignature": "efppal0spmjnup08a7o51beyg",
+            "layoutSignature": "4kuje6xdy8cgu7u6vfqdq02x8",
         },
         "darwin_x64": {
-            "layoutSignature": "dznt8bf95zyt486pvoky1wjfj",
+            "layoutSignature": "e7pkjjfgbvizluw4ik0ndb5o5",
         },
         "linux_aarch64": {
-            "layoutSignature": "c5m0sd4dd3orq0dze0dagocw",
+            "layoutSignature": "8p7in06u7pxiklpuizcy4nv5z",
         },
         "linux_x64": {
-            "layoutSignature": "3r80mq690vuab6d9j5sc93y9l",
+            "layoutSignature": "i8ncazt2yzu9z45xdn6sv2t8",
         },
         "windows_aarch64": {
-            "layoutSignature": "7w5zzcv1uyvs23mpywhkv3e7n",
+            "layoutSignature": "95jvaq9jx7z6w8b6qknxuxm0b",
         },
         "windows_x64": {
-            "layoutSignature": "8ed13xij3pfyt7x10304hg7a0",
+            "layoutSignature": "entjxa5c7bi43zu6rvhzpljgp",
         },
     },
     platforms = [
@@ -57,10 +49,6 @@ dev_dist_complex_plugin(
         "linux_x64",
         "linux_aarch64",
     ],
-    resource_inputs = {
-        "@lib//:net.java.dev.jna/jna-platform-5.19.1.jar": "@lib//:net.java.dev.jna/jna-platform-5.19.1.jar",
-        "@lib//:net.java.dev.jna/jna-5.19.1.jar": "@lib//:net.java.dev.jna/jna-5.19.1.jar",
-    },
 )
 ### auto-generated section `dev intellij.pty4j.plugin` end
 
@@ -77,7 +65,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["@lib//:kotlin-stdlib"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/jna/plugin",
+    ],
 )
 
 jvm_library(
@@ -89,7 +81,11 @@ jvm_library(
     ),
     module_name = "intellij.pty4j.plugin",
     visibility = ["//visibility:public"],
-    runtime_deps = [":plugin"],
+    runtime_deps = [
+        # do not sort,
+        ":plugin",
+        "//plugins/jna/plugin:plugin_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.pty4j.plugin` end
 
