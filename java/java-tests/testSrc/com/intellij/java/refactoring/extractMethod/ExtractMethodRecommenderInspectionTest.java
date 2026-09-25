@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.refactoring.extractMethod;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.refactoring.extractMethod;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.java.JavaBundle;
+import com.intellij.refactoring.extractMethod.ExtractMethodRecommenderInspection;
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodService;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
