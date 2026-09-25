@@ -9,16 +9,16 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.Settings
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MasterDetailsComponent
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.NamedConfigurable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspIntegrationProvider
@@ -36,7 +36,8 @@ import javax.swing.tree.TreeNode
 
 private const val LSP_PLUGIN_SEARCH_TAG = "/tag:\"Language Server\""
 
-internal class LspServersConfigurable(private val project: Project) : com.intellij.openapi.ui.MasterDetailsComponent(), SearchableConfigurable, Disposable {
+internal class LspServersConfigurable(private val project: Project) :
+  MasterDetailsComponent(), SearchableConfigurable, Configurable.WithEpDependencies, Disposable {
   private val settings = LspIntegrationSettingsImpl.getInstance(project)
   private val morePluginsLinkPanel = NonOpaquePanel(BorderLayout()).apply {
     border = JBUI.Borders.empty(8, 20, 8, 0)
@@ -48,6 +49,8 @@ internal class LspServersConfigurable(private val project: Project) : com.intell
   }
 
   override fun getId(): String = "lsp.servers"
+
+  override fun getDependencies(): Collection<BaseExtensionPointName<*>> = listOf(LspIntegrationSettingsProvider.EP_NAME)
 
   override fun getDisplayName(): String = LspUiBundle.message("lsp.settings.name")
 
