@@ -4,10 +4,14 @@
 <!--suppress PluginXmlPluginLogo -->
 <!--suppress AllContentModulesOptionalLoadingRule -->
 <idea-plugin>
-  <id>intellij.structuralSearch.plugin</id>
+  <id>com.intellij.structuralSearch</id>
   <name>Structural Search</name>
   <description>Provides Structural Search platform modules for the IDE.</description>
   <vendor>JetBrains</vendor>
+
+  <!-- old ID for Backward compatibility -->
+  <module value="intellij.structuralSearch.plugin"/>
+
   <content namespace="jetbrains">
     <module name="intellij.platform.structuralSearch"/>
   </content>

@@ -3,7 +3,7 @@
 <!--suppress SplitModeMixedDependencies -->
 <!--suppress AllContentModulesOptionalLoadingRule -->
 <idea-plugin>
-  <id>intellij.execution.serviceView.plugin</id>
+  <id>com.intellij.platform.serviceView</id>
   <name>Services View</name>
   <vendor>JetBrains</vendor>
   <description><![CDATA[
@@ -16,6 +16,9 @@
     <br/>
     Other plugins add their own services to the same tree such as Database, Docker, MCP Server and Kubernetes.
   ]]></description>
+
+  <!-- old ID for Backward compatibility -->
+  <module value="intellij.execution.serviceView.plugin"/>
 
   <content namespace="jetbrains">
     <module name="intellij.platform.execution.serviceView"/>

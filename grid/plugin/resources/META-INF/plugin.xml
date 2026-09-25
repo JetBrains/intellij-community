@@ -1,13 +1,16 @@
 <!--suppress SplitModeMixedDependencies -->
 <!--suppress AllContentModulesOptionalLoadingRule -->
 <idea-plugin>
-  <id>intellij.grid.plugin</id>
+  <id>com.intellij.grid</id>
   <name>Data Editor and Viewer</name>
   <vendor>JetBrains</vendor>
   <category>Other Tools</category>
   <description><![CDATA[
     Provides UI component and <b>Settings | Appearance & Behavior | Data Editor and Viewer</b>.
   ]]></description>
+
+  <!-- old ID for Backward compatibility -->
+  <module value="intellij.grid.plugin"/>
 
   <content namespace="jetbrains">
     <module name="intellij.grid" loading="required"/>

@@ -3,10 +3,14 @@
 <!--suppress PluginXmlPluginLogo -->
 <!--suppress AllContentModulesOptionalLoadingRule -->
 <idea-plugin>
-  <id>intellij.structureView.plugin</id>
+  <id>com.intellij.structureView</id>
   <name>Structure View</name>
   <description>Provides Structure View tool window and actions</description>
   <vendor>JetBrains</vendor>
+
+  <!-- old ID for Backward compatibility -->
+  <module value="intellij.structureView.plugin"/>
+
   <content namespace="jetbrains">
     <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.structureView.backend"/>

@@ -1,10 +1,14 @@
 <!--suppress SplitModeMixedDependencies -->
 <!--suppress PluginXmlPluginLogo -->
 <idea-plugin implementation-detail="true">
-  <id>intellij.testRunner.plugin</id>
+  <id>com.intellij.platform.testRunner</id>
   <name>Test Runner</name>
   <description>Provides test runner platform modules for the IDE.</description>
   <vendor>JetBrains</vendor>
+
+  <!-- old ID for Backward compatibility -->
+  <module value="intellij.testRunner.plugin"/>
+
   <content namespace="jetbrains">
     <module name="intellij.platform.testRunner" loading="required"/>
     <module name="intellij.platform.smRunner" loading="required"/>

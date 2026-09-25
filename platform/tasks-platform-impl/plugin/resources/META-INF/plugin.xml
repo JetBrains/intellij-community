@@ -3,7 +3,7 @@
 <!--suppress SplitModeImplicitModuleKind -->
 <!--suppress PluginXmlPluginLogo -->
 <idea-plugin>
-  <id>intellij.platform.tasks.plugin</id>
+  <id>com.intellij.platform.tasks</id>
   <name>Tasks and Contexts</name>
   <description><![CDATA[
     Automatically saves and restores relevant context information on VCS branch switches, such as

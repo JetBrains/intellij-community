@@ -1,6 +1,6 @@
 <!--suppress PluginXmlPluginLogo -->
 <idea-plugin allow-bundled-update="true">
-  <id>intellij.xml.plugin</id>
+  <id>com.intellij.xml</id>
   <name>XML and HTML</name>
   <vendor>JetBrains</vendor>
   <category>Languages</category>

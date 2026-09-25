@@ -4,11 +4,15 @@
 <!--suppress PluginXmlPluginLogo -->
 <!--suppress AllContentModulesOptionalLoadingRule -->
 <idea-plugin>
-  <id>intellij.todo.plugin</id>
+  <id>com.intellij.todo</id>
   <name>TODO Comments</name>
   <description>Highlights TODO and FIXME comments in the editor and lists every occurrence in the TODO tool window,
     with grouping and filtering.</description>
   <vendor>JetBrains</vendor>
+
+  <!-- old ID for Backward compatibility -->
+  <module value="intellij.todo.plugin"/>
+
   <content namespace="jetbrains">
     <module name="intellij.platform.todo"/>
     <module name="intellij.platform.todo.backend"/>

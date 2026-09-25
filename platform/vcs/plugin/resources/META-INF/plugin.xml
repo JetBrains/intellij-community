@@ -2,7 +2,7 @@
 <!--suppress SplitModeImplicitModuleKind, AllContentModulesOptionalLoadingRule -->
 <!--suppress PluginXmlPluginLogo, AllContentModulesOptionalLoadingRule -->
 <idea-plugin>
-  <id>intellij.vcs.plugin</id>
+  <id>com.intellij.platform.vcs</id>
   <name>Version Control</name>
   <description><![CDATA[
     Provides the core version control support shared by all VCS integrations: the Commit and Local Changes views,
@@ -11,6 +11,7 @@
     Individual integrations, such as Git, Subversion, and Mercurial, build on top of this plugin.
   ]]></description>
   <vendor>JetBrains</vendor>
+
   <content namespace="jetbrains">
     <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.vcs.impl"/>

@@ -3,13 +3,16 @@
 <!--suppress SplitModeMixedDependencies -->
 <!--suppress PluginXmlPluginLogo -->
 <idea-plugin>
-  <id>intellij.navbar.plugin</id>
+  <id>com.intellij.navbar</id>
   <name>Navigation Bar</name>
   <vendor>JetBrains</vendor>
   <description><![CDATA[
   The navigation bar is a quick alternative to the Project view, where you can go through the structure of your project,
   open specific files, and jump to specific code elements in the current file.
   ]]></description>
+
+  <!-- old ID for Backward compatibility -->
+  <module value="intellij.navbar.plugin"/>
 
   <content namespace="jetbrains">
     <module name="intellij.platform.navbar" loading="required"/>

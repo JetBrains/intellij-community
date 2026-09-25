@@ -4,10 +4,14 @@
 <!--suppress PluginXmlPluginLogo -->
 <!--suppress AllContentModulesOptionalLoadingRule -->
 <idea-plugin>
-  <id>intellij.recentFiles.plugin</id>
+  <id>com.intellij.recentFiles</id>
   <name>Recent Files</name>
   <description>Provides Recent Files platform modules for the IDE.</description>
   <vendor>JetBrains</vendor>
+
+  <!-- old ID for Backward compatibility -->
+  <module value="intellij.recentFiles.plugin"/>
+
   <content namespace="jetbrains">
     <module name="intellij.platform.recentFiles"/>
     <module name="intellij.platform.recentFiles.backend" required-if-available="intellij.platform.backend"/>

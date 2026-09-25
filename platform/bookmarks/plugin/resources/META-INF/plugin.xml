@@ -1,6 +1,6 @@
 <!--suppress SplitModeMixedDependencies -->
 <idea-plugin>
-  <id>intellij.bookmarks.plugin</id>
+  <id>com.intellij.bookmarks</id>
   <name>Bookmarks</name>
   <vendor>JetBrains</vendor>
   <description><![CDATA[
@@ -8,6 +8,9 @@
     supports anonymous and mnemonic bookmarks accessible via keyboard shortcuts,
     and organizes them into named lists in a dedicated tool window.
   ]]></description>
+
+  <!-- old ID for Backward compatibility -->
+  <module value="intellij.bookmarks.plugin"/>
 
   <content namespace="jetbrains">
     <module name="intellij.platform.bookmarks" loading="required"/>
