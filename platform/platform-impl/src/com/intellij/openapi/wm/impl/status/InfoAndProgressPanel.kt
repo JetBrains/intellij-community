@@ -76,6 +76,9 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.job
@@ -422,6 +425,7 @@ class InfoAndProgressPanel internal constructor(
       getPopup().show(requestFocus)
       shouldClosePopupAndOnProcessFinish = hasProgressIndicators()
       mainPanel.updateProgressState(true)
+      showInPresentationModeFlow.value = false
       this.shouldClosePopupAndOnProcessFinish = shouldClosePopupAndOnProcessFinish
     }
   }
@@ -433,6 +437,7 @@ class InfoAndProgressPanel internal constructor(
       }
       popup!!.hide()
       mainPanel.updateProgressState(false)
+      showInPresentationModeFlow.value = true
     }
   }
 
@@ -581,6 +586,8 @@ class InfoAndProgressPanel internal constructor(
         hideProcessPopup()
       }
     }
+
+  private val showInPresentationModeFlow = MutableStateFlow(!isProcessWindowOpen)
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     mainPanel.uiSettingsChanged(uiSettings)
@@ -976,9 +983,8 @@ class InfoAndProgressPanel internal constructor(
       if (isCompact) mainPanel.inlinePanel.fireAccessibleValueChanged()
     }
 
-    fun showInPresentationMode(): Boolean {
-      return !isProcessWindowOpen
-    }
+    val showInPresentationMode: StateFlow<Boolean>
+      get() = showInPresentationModeFlow.asStateFlow()
 
     override fun setTitle(title: @NlsContexts.ProgressTitle String) {
       processNameValue = title
