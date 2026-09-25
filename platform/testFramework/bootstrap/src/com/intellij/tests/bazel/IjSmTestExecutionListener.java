@@ -3,6 +3,7 @@ package com.intellij.tests.bazel;
 
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestSource;
+import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.CompositeTestSource;
@@ -29,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -103,6 +105,7 @@ public final class IjSmTestExecutionListener implements TestExecutionListener {
   public void executionStarted(TestIdentifier testIdentifier) {
     String id = getId(testIdentifier);
     if (testIdentifier.isContainer()) {
+      if (isHidden(testIdentifier)) return;
       if (!startedSuites.contains(id)) {
         Map<String, String> attrs = baseAttrs(testIdentifier);
         // Provide location hint for class-like containers
@@ -127,6 +130,7 @@ public final class IjSmTestExecutionListener implements TestExecutionListener {
 
   @Override
   public void executionSkipped(TestIdentifier testIdentifier, String reason) {
+    if (isHidden(testIdentifier)) return;
     // IDEA needs a matching executionStarted event first for skipped tests to show up in the UI
     executionStarted(testIdentifier);
     if (testIdentifier.isTest()) {
@@ -149,7 +153,7 @@ public final class IjSmTestExecutionListener implements TestExecutionListener {
       if ((testExecutionResult.getStatus() == TestExecutionResult.Status.FAILED
            || testExecutionResult.getStatus() == TestExecutionResult.Status.ABORTED) && throwable.isPresent()) {
         String syntheticId = id + "/[suite-setup]";
-        String parentId = id;
+        String parentId = isHidden(testIdentifier) ? getParentId(testIdentifier) : id;
         String suiteSetupName = "<suite setup>";
         Map<String, String> start = new LinkedHashMap<>();
         start.put("name", suiteSetupName);
@@ -299,7 +303,31 @@ public final class IjSmTestExecutionListener implements TestExecutionListener {
 
   private String getParentId(TestIdentifier id) {
     if (testPlan == null) return "0";
-    return testPlan.getParent(id).map(this::getId).orElse("0");
+    Optional<TestIdentifier> parent = testPlan.getParent(id);
+    while (parent.isPresent() && isHidden(parent.get())) {
+      parent = testPlan.getParent(parent.get());
+    }
+    return parent.map(this::getId).orElse("0");
+  }
+
+  /**
+   * Tells whether the IDE should show no node for this container.
+   *
+   * An engine is such a container: it adds a level to the tree, and that level carries no
+   * information. A run of a JUnit Platform Suite brings two of them, one above the suite class
+   * and one below it. The JUnit runner of the IDE hides the same nodes,
+   * see {@code com.intellij.junit5.report.SuiteReporter#isSkipped}.
+   *
+   * A hidden container reports nothing, and {@link #getParentId} moves its children
+   * to the nearest visible ancestor.
+   */
+  private static boolean isHidden(TestIdentifier testIdentifier) {
+    if (!testIdentifier.isContainer()) return false;
+    List<UniqueId.Segment> segments = UniqueId.parse(testIdentifier.getUniqueId()).getSegments();
+    if (segments.isEmpty()) return false;
+    UniqueId.Segment segment = segments.get(segments.size() - 1);
+    String segmentType = segment.getType();
+    return "engine".equals(segmentType);
   }
 
   private static String getMetaInfo(TestIdentifier id) {
