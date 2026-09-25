@@ -43,7 +43,7 @@ import org.jetbrains.intellij.build.productLayout.validator.PluginDependencyDecl
 import org.jetbrains.intellij.build.productLayout.validator.PluginDescriptorIdConflictValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginPluginDependencyValidator
 import org.jetbrains.intellij.build.productLayout.validator.ProductModuleSetValidator
-import org.jetbrains.intellij.build.productLayout.validator.RdClientModuleLoadingValidator
+import org.jetbrains.intellij.build.productLayout.validator.RestrictedModuleActivationValidator
 import org.jetbrains.intellij.build.productLayout.validator.SelfContainedModuleSetValidator
 import org.jetbrains.intellij.build.productLayout.validator.SuppressionConfigValidator
 import org.jetbrains.intellij.build.productLayout.validator.TestLibraryScopeValidator
@@ -546,7 +546,7 @@ internal class GenerationPipeline(
           SelfContainedModuleSetValidator,
           ContentModuleBackingValidator,
           EmbeddedContentModuleDependencyValidator,
-          RdClientModuleLoadingValidator,
+          RestrictedModuleActivationValidator,
           UnusedEmbeddedLibraryModuleValidator,
           UnusedSharedLibraryModuleValidator,
           LibraryLicenseValidator,

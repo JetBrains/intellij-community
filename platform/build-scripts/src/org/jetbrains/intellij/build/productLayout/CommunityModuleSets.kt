@@ -361,13 +361,22 @@ object CommunityModuleSets {
     onDemandModule("intellij.platform.split.protocol")
 
     // These modules are included in all IDEs.
-    // Since they are on-demand, those modules should be loaded only: in JetBrains Client, Rider and an IDE if a Radler is installed.
+    // They are restricted: only a product or a plugin with [rdClientActivation] can load them.
     // Packaging of those modules to the all IDEs is required to load a JetBrains Client from the big IDE distribution.
-    onDemandModule("intellij.rd.client")
-    onDemandModule("intellij.rd.client.debugger")
-    onDemandModule("intellij.rd.client.base")
-    onDemandModule("intellij.rd.client.internal")
+    onDemandModule("intellij.rd.client", restricted = true)
+    onDemandModule("intellij.rd.client.debugger", restricted = true)
+    onDemandModule("intellij.rd.client.base", restricted = true)
+    onDemandModule("intellij.rd.client.internal", restricted = true)
   }
+
+  /**
+   * The activation of the restricted RD client modules from [rdCommon].
+   * JetBrains Client, Rider, and the Radler plugin grant it.
+   */
+  fun rdClientActivation(): ModuleActivation = ModuleActivation.create(
+    required = listOf("intellij.rd.client", "intellij.rd.client.base"),
+    allowed = listOf("intellij.rd.client.debugger", "intellij.rd.client.internal", "intellij.rd.client.testFramework"),
+  )
 
   /**
    * The spellchecker core module and its Lucene dictionary index.

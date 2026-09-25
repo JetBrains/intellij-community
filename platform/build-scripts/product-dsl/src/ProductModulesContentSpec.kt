@@ -78,6 +78,30 @@ enum class CompositionType {
 }
 
 /**
+ * Permission to activate restricted content modules (see [ContentModule.restricted]).
+ *
+ * A product grants it with [ProductModulesContentSpecBuilder.moduleActivation].
+ * A plugin grants it through `ModuleSetGenerationConfig.pluginModuleActivations`.
+ *
+ * @param required Modules that must be active where this activation applies.
+ * @param allowed Modules that can be active where this activation applies. The set always includes [required].
+ */
+@Serializable
+class ModuleActivation private constructor(
+  @JvmField val required: Set<ContentModuleName>,
+  @JvmField val allowed: Set<ContentModuleName>,
+) {
+  companion object {
+    fun create(required: Collection<String>, allowed: Collection<String> = emptyList()): ModuleActivation {
+      val requiredNames = required.mapTo(LinkedHashSet()) { ContentModuleName(it) }
+      val allowedNames = LinkedHashSet(requiredNames)
+      allowed.mapTo(allowedNames) { ContentModuleName(it) }
+      return ModuleActivation(requiredNames, allowedNames)
+    }
+  }
+}
+
+/**
  * Metadata about a product spec's origin for traceability.
  */
 @Serializable
@@ -173,6 +197,11 @@ class ProductModulesContentSpec(
    */
   @JvmField val testPlugins: List<TestPluginSpec> = emptyList(),
 
+  /** Restricted modules that this product can activate. See [ProductModulesContentSpecBuilder.moduleActivation]. */
+  @JvmField val moduleActivations: List<ModuleActivation> = emptyList(),
+
+  /** Bundled plugins of which only one loads at a time. See [ProductModulesContentSpecBuilder.exclusivePlugins]. */
+  @JvmField val exclusivePluginIds: List<PluginId> = emptyList(),
 )
 
 /**
@@ -188,6 +217,8 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
   private val bundledPlugins = mutableListOf<TargetName>()
   private val allowedMissingDeps = LinkedHashSet<ContentModuleName>()
   private val testPlugins = mutableListOf<TestPluginSpec>()
+  private val moduleActivations = ArrayList<ModuleActivation>()
+  private val exclusivePluginIds = ArrayList<PluginId>()
 
   // Composition tracking
   private val compositionGraph = mutableListOf<SpecComposition>()
@@ -254,6 +285,8 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
     moduleSets.addAll(spec.moduleSets)
     additionalModules.addAll(spec.additionalModules)
     allowedMissingDeps.addAll(spec.allowedMissingDependencies)
+    moduleActivations.addAll(spec.moduleActivations)
+    exclusivePluginIds.addAll(spec.exclusivePluginIds)
 
     // Also preserve the nested spec's composition graph for deep analysis
     compositionGraph.addAll(spec.compositionGraph)
@@ -427,13 +460,47 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
     ))
   }
 
-  /** Adds a module with on-demand loading. */
+  /**
+   * Adds a module with on-demand loading.
+   *
+   * @param restricted If true, the module can be active only where a [ModuleActivation] allows it.
+   */
   fun onDemandModule(
     name: String,
     namespace: String? = PluginModuleId.DEFAULT_NAMESPACE,
     allowedMissingPluginIds: List<String> = emptyList(),
+    restricted: Boolean = false,
   ) {
-    module(name, namespace = namespace, loading = ModuleLoadingRuleValue.ON_DEMAND, allowedMissingPluginIds = allowedMissingPluginIds)
+    additionalModules.add(
+      ContentModule(
+        moduleId = PluginModuleId(name, namespace),
+        loading = ModuleLoadingRuleValue.ON_DEMAND,
+        allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
+        restricted = restricted,
+      )
+    )
+    compositionGraph.add(SpecComposition(
+      type = CompositionType.DIRECT_MODULE,
+      reference = name,
+      path = pathStack.toList(),
+      sourceLocation = null,
+    ))
+  }
+
+  /**
+   * Lets this product activate the restricted modules of [activation].
+   * The product must also activate the required modules of [activation].
+   */
+  fun moduleActivation(activation: ModuleActivation) {
+    moduleActivations.add(activation)
+  }
+
+  /**
+   * Declares bundled plugins of which only one loads at a time, for example two engine plugins.
+   * The `restrictedModuleActivationValidation` rule checks one configuration per plugin and disables the others.
+   */
+  fun exclusivePlugins(vararg pluginIds: String) {
+    pluginIds.mapTo(exclusivePluginIds) { PluginId(it) }
   }
 
   /**
@@ -498,6 +565,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    * @param allowedMissingPluginIds Plugin IDs that are allowed to be missing for this test plugin.
    *   If a plugin dependency is inferred but not resolvable, it will be skipped and reported as an error unless listed here.
    *   Use module-level allowedMissingPluginIds for more precise suppression scoped to a single module.
+   * @param checkModuleActivation If true, the `restrictedModuleActivationValidation` rule also checks the product with this test plugin.
    * @param block DSL block to define the test plugin's content modules
    * @see <a href="../test-plugins.md">Test Plugin Generation Documentation</a>
    */
@@ -508,6 +576,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
     platformModule: String? = null,
     additionalBundledPluginTargetNames: List<String> = emptyList(),
     allowedMissingPluginIds: List<String> = emptyList(),
+    checkModuleActivation: Boolean = false,
     block: ProductModulesContentSpecBuilder.() -> Unit,
   ) {
     addTestPlugin(
@@ -517,6 +586,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
       platformModule = platformModule,
       additionalBundledPluginTargetNames = additionalBundledPluginTargetNames,
       allowedMissingPluginIds = allowedMissingPluginIds,
+      checkModuleActivation = checkModuleActivation,
       spec = ProductModulesContentSpecBuilder().apply(block).build()
     )
   }
@@ -529,6 +599,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
     platformModule: String?,
     additionalBundledPluginTargetNames: List<String>,
     allowedMissingPluginIds: List<String>,
+    checkModuleActivation: Boolean,
     spec: ProductModulesContentSpec,
   ) {
     testPlugins.add(
@@ -540,6 +611,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
         spec = spec,
         additionalBundledPluginTargetNames = additionalBundledPluginTargetNames.map { TargetName(it) },
         allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
+        checkModuleActivation = checkModuleActivation,
       )
     )
   }
@@ -557,6 +629,8 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
       compositionGraph = java.util.List.copyOf(compositionGraph),
       metadata = metadata,
       testPlugins = java.util.List.copyOf(testPlugins),
+      moduleActivations = java.util.List.copyOf(moduleActivations),
+      exclusivePluginIds = java.util.List.copyOf(exclusivePluginIds),
     )
   }
 }
@@ -604,6 +678,7 @@ inline fun productModules(block: ProductModulesContentSpecBuilder.() -> Unit): P
  * @param additionalBundledPluginTargetNames Extra plugin JPS module target names to treat as bundled for this test plugin's
  *   dependency resolution and auto-add
  * @param allowedMissingPluginIds Plugin IDs that are allowed to be missing for this test plugin
+ * @param checkModuleActivation If true, the `restrictedModuleActivationValidation` rule also checks the product with this test plugin
  */
 @Serializable
 data class TestPluginSpec(
@@ -614,5 +689,6 @@ data class TestPluginSpec(
   @JvmField val spec: ProductModulesContentSpec,
   @JvmField val additionalBundledPluginTargetNames: List<TargetName> = emptyList(),
   @JvmField val allowedMissingPluginIds: List<PluginId> = emptyList(),
+  @JvmField val checkModuleActivation: Boolean = false,
 )
 

@@ -5,9 +5,11 @@ package org.jetbrains.intellij.build.productLayout.discovery
 
 import com.intellij.platform.buildScripts.licenses.LibraryLicense
 import com.intellij.platform.pluginGraph.ContentModuleName
+import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.productLayout.ModuleActivation
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.debug
 import org.jetbrains.intellij.build.productLayout.generateProductXml
@@ -49,6 +51,12 @@ data class ModuleSetGenerationConfig(
    * Used for validation purposes only (to recognize these plugins as valid dependency targets).
    */
   @JvmField val knownPlugins: Set<TargetName> = emptySet(),
+  /**
+   * Maps a plugin ID to the restricted modules that the plugin can activate.
+   * The activation applies in each product configuration that loads the plugin.
+   * The `restrictedModuleActivationValidation` rule reads it.
+   */
+  @JvmField val pluginModuleActivations: Map<PluginId, ModuleActivation> = emptyMap(),
   /**
    * The main modules of the plugins that a product leaves out of its build, even when the plugin is compatible with it.
    * `ProductModulesLayout.compatiblePluginsToIgnore` of each discovered product holds them.

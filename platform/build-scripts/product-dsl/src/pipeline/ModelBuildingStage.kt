@@ -1253,6 +1253,8 @@ internal object ModelBuildingStage {
       compositionGraph = spec.spec.compositionGraph,
       metadata = spec.spec.metadata,
       testPlugins = spec.spec.testPlugins,
+      moduleActivations = spec.spec.moduleActivations,
+      exclusivePluginIds = spec.spec.exclusivePluginIds,
     )
 
     return spec.copy(spec = updatedSpec)

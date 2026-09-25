@@ -27,7 +27,7 @@ This directory is the normative spec for product-dsl validation behavior. Each f
 | Plugin dependency declaration duplicates | `PluginDependencyDeclarationValidator` | `pluginDependencyDeclarationValidation` | [plugin-dependency-declaration.md](plugin-dependency-declaration.md) |
 | Test plugin plugin dependencies | `TestPluginPluginDependencyValidator` | `testPluginPluginDependencyValidation` | [test-plugin-plugin-dependency.md](test-plugin-plugin-dependency.md) |
 | Content module dependencies (bundled plugins) | `ContentModuleDependencyValidator` | `pluginContentModuleValidation` | [content-module-dependency.md](content-module-dependency.md) |
-| RD client module loading | `RdClientModuleLoadingValidator` | `rdClientModuleLoadingValidation` | [rd-client-module-loading.md](rd-client-module-loading.md) |
+| Restricted module activation | `RestrictedModuleActivationValidator` | `restrictedModuleActivationValidation` | [restricted-module-activation.md](restricted-module-activation.md) |
 | Content module dependency declarations | `ContentModuleDependencyDeclarationValidator` | `contentModuleDependencyDeclarationValidation` | [content-module-dependency-declaration.md](content-module-dependency-declaration.md) |
 | Duplicate plugin content modules | `PluginContentDuplicatesValidator` | `pluginContentDuplicateValidation` | [plugin-content-duplicates.md](plugin-content-duplicates.md) |
 | Content module copy conflicts | `ContentModuleCopyConflictValidator` | `contentModuleCopyConflictValidation` | [content-module-copy-conflict.md](content-module-copy-conflict.md) |

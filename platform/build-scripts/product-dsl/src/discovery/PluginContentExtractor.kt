@@ -52,10 +52,13 @@ internal enum class PluginSource {
 /**
  * Content module with its loading mode.
  * Consolidates module id and loading into a single structure.
+ *
+ * @param requiredIfAvailable The `required-if-available` target. The module is required when the product mode keeps the target.
  */
 internal data class ContentModuleInfo(
   @JvmField val moduleId: PluginModuleId,
   @JvmField val loadingMode: ModuleLoadingRuleValue?,
+  val requiredIfAvailable: ContentModuleName? = null,
 )
 
 /**
@@ -235,7 +238,11 @@ internal fun extractPluginContent(
     pluginXmlContent = content,
     pluginId = extractPluginId(content),
     contentModules = extractedContent.contentModules.map {
-      ContentModuleInfo(moduleId = PluginModuleId(it.name, it.namespace), loadingMode = it.loadingRule)
+      ContentModuleInfo(
+        moduleId = PluginModuleId(it.name, it.namespace),
+        loadingMode = it.loadingRule,
+        requiredIfAvailable = it.requiredIfAvailable?.let(::ContentModuleName),
+      )
     },
 
     moduleDependencies = extractedContent.moduleDependencies,

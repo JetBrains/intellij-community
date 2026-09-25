@@ -65,8 +65,8 @@ enum class ErrorCategory {
   /** [MissingDependenciesError] - hard failure, not suppressible */
   MISSING_DEPENDENCY,
 
-  /** [RdClientModuleLoadingError] reports a product activation violation. */
-  RD_CLIENT_MODULE_LOADING,
+  /** [RestrictedModuleActivationError] reports a restricted module activation violation. */
+  RESTRICTED_MODULE_ACTIVATION,
 
   /** [ImplicitEmbeddedContentModuleError] - hard failure, not suppressible */
   IMPLICIT_EMBEDDED_CONTENT_MODULE,
@@ -123,7 +123,7 @@ fun ValidationError.errorId(): String {
     is FileDiff -> "diff:${path.fileName}"
     is XIncludeResolutionError -> "xinclude:$pluginName:$xIncludePath"
     is MissingDependenciesError -> "missing-deps:$context"
-    is RdClientModuleLoadingError -> "rd-client-loading:$context"
+    is RestrictedModuleActivationError -> "restricted-module-activation:$context"
     is MissingModuleSetsError -> "missing-sets:$context"
     is DuplicateModulesError -> "duplicates:$context"
     is SelfContainedValidationError -> "self-contained:$context"
