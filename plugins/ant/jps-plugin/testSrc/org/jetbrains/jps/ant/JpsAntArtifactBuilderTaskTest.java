@@ -18,6 +18,8 @@ package org.jetbrains.jps.ant;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.platform.bazel.runfiles.BazelLabel;
+import com.intellij.testFramework.common.BazelTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderTestCase;
@@ -58,6 +60,10 @@ public class JpsAntArtifactBuilderTaskTest extends ArtifactBuilderTestCase {
   @Nullable
   @Override
   protected String getTestDataRootPath() {
+    if (BazelTestUtil.isUnderBazelTest()) {
+      var label = BazelLabel.Companion.fromString("@community//plugins/ant/jps-plugin:testData");
+      return BazelTestUtil.getFileFromBazelRuntime(label).toAbsolutePath().toString();
+    }
     return PathManagerEx.findFileUnderProjectHome("plugins/ant/jps-plugin/testData", getClass()).getAbsolutePath();
   }
 
