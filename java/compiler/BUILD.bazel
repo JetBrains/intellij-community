@@ -1,5 +1,21 @@
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
+
+jps_test(
+    name = "compiler-tests_test",
+    timeout = "long",
+    data = [
+        BAZEL_TARGETS_JSON,
+        "@community//platform/platform-tests:testData",
+    ],
+    jvm_flags = ["-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON],
+    tags = ["community-compiler-test"],
+    runtime_deps = [":compiler-tests_test_lib"],
+)
+### skip generation section `test intellij.java.compiler.tests`
 
 ### auto-generated section `build intellij.java.compiler.tests` start
 jvm_library(
@@ -20,6 +36,12 @@ jvm_library(
         "//java/idea-ui:ui",
         "//java/java-syntax:syntax",
         "//spellchecker",
+        "//xml/plugin",
+        "//aether-dependency-resolver/plugin",
+        "//platform/structuralsearch/plugin",
+        "//platform/structure-view-impl/plugin",
+        "//platform/testRunner/plugin",
+        "//platform/todo/plugin",
         "//platform/core-ui",
         "//platform/workspace/jps",
     ],
@@ -44,6 +66,12 @@ jvm_library(
         # do not sort,
         ":compiler-tests",
         "//spellchecker:spellchecker_test_lib",
+        "//xml/plugin:plugin_test_lib",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
+        "//platform/structuralsearch/plugin:plugin_test_lib",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//platform/testRunner/plugin:plugin_test_lib",
+        "//platform/todo/plugin:plugin_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
     ],
@@ -131,6 +159,12 @@ jvm_library(
         "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-params",
         "//libraries/junit6-params:junit6-params_test_lib",
+        "//platform/bazel-runfiles",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
+        "//plugins/properties/properties-common:properties",
+        "//plugins/properties/properties-common:properties_test_lib",
+        "//java/langInjection",
+        "//java/langInjection:langInjection_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.compiler.tests` end
@@ -143,13 +177,6 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.compiler.tests` end
-
-### auto-generated section `test intellij.java.compiler.tests` start
-jps_test(
-    name = "compiler-tests_test",
-    runtime_deps = [":compiler-tests_test_lib"],
-)
-### auto-generated section `test intellij.java.compiler.tests` end
 
 ### auto-generated section `build intellij.java.compiler.tests.main` start
 jvm_library(

@@ -7,9 +7,11 @@ import com.intellij.openapi.module.ConfigurationErrorDescription
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.openapi.project.Project
 import com.intellij.packaging.artifacts.ArtifactManager
+import com.intellij.platform.bazel.runfiles.BazelLabel
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.common.BazelTestUtil
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
@@ -57,6 +59,11 @@ class LoadingInvalidProjectTest {
     val appRule = ApplicationRule()
 
     private val testDataRoot: Path
-      get() = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("platform/platform-tests/testData/configurationStore/invalid")
+      get() = if (BazelTestUtil.isUnderBazelTest) {
+        BazelTestUtil.getFileFromBazelRuntime(BazelLabel.fromString("@community//platform/platform-tests:testData")).resolve("configurationStore/invalid")
+      }
+      else {
+        Paths.get(PathManagerEx.getCommunityHomePath()).resolve("platform/platform-tests/testData/configurationStore/invalid")
+      }
   }
 }

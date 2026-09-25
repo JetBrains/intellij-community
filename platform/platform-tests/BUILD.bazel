@@ -5,6 +5,12 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
+
 jps_test(
     name = "tests_test",
     timeout = "eternal",
