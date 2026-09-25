@@ -147,8 +147,11 @@ open class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor(), Delegatin
 
         if (substitutedJavaElement == null) return element
         // canRename shows an error hint. A caller with no user reports the message itself.
-        val renamable = if (askUser) canRename(element.project, editor, substitutedJavaElement)
-        else PsiElementRenameHandler.getRenameErrorMessage(element.project, null, substitutedJavaElement) == null
+        val renamable = if (askUser) {
+            canRename(element.project, editor, substitutedJavaElement)
+        } else {
+            PsiElementRenameHandler.getRenameErrorMessage(element.project, null, substitutedJavaElement) == null
+        }
         return if (renamable) substitutedJavaElement else element
     }
 
@@ -246,7 +249,9 @@ open class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor(), Delegatin
                     newName,
                     renameRefactoringSupport.getModuleNameSuffixForMangledName(baseName)!!
                 )
-            } else newName
+            } else {
+                newName
+            }
 
             prepareOverrideRenaming(declaration, baseName, newBaseName.quoteIfNeeded(), safeNewName, allRenames)
         }
