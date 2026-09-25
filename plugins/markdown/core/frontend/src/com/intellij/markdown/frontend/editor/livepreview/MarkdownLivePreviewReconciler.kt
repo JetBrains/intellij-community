@@ -339,15 +339,20 @@ class MarkdownLivePreviewReconciler private constructor(
     }
   }
 
-  /** Preserves each caret and the viewport across fold changes, decoration updates, and any failed decoration cleanup. */
+  /**
+   * Preserves each caret and the viewport across fold changes, decoration updates, and any failed decoration cleanup.
+   * A viewport at the top of the document stays at the top.
+   */
   private fun runEditorUpdate(body: () -> Unit) {
     val snapshot = editor.caretModel.allCarets.map { CaretSnapshot(it) }
+    val update = Runnable {
+      body()
+      snapshot.forEach { it.restore() }
+    }
     updating = true
     try {
-      EditorScrollingPositionKeeper.perform(editor, false) {
-        body()
-        snapshot.forEach { it.restore() }
-      }
+      if (editor.scrollingModel.visibleAreaOnScrollingFinished.y == 0) update.run()
+      else EditorScrollingPositionKeeper.perform(editor, false, update)
     }
     finally {
       updating = false

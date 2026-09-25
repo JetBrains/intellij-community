@@ -94,6 +94,34 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     }
   }
 
+  fun testLateSpecsKeepViewportAtDocumentTop() {
+    val text = "Some long text goes here"
+    val content = "# Heading\n\n$text" + "\nline".repeat(60)
+    val specs = configureWithLateSpecs(content, content.indexOf(text))
+    val editor = myFixture.editor
+    editor.scrollingModel.scrollVertically(0)
+
+    MarkdownLivePreviewReconciler.getExisting(editor)!!.publishSpecs(specs)
+
+    assertTrue("The heading must be taller than a line", headingFolds().single().heightInPixels > editor.lineHeight)
+    assertEquals(0, editor.scrollingModel.verticalScrollOffset)
+  }
+
+  fun testLateSpecsKeepCaretScreenPositionBelowTop() {
+    val text = "Some long text goes here"
+    val content = "# Heading\n\n" + "line\n".repeat(20) + text + "\nline".repeat(60)
+    val specs = configureWithLateSpecs(content, content.indexOf(text))
+    val editor = myFixture.editor
+    val caretLine = editor.caretModel.visualPosition.line
+    editor.scrollingModel.scrollVertically(editor.visualLineToY(caretLine - 3))
+    val caretScreenY = editor.visualLineToY(caretLine) - editor.scrollingModel.verticalScrollOffset
+
+    MarkdownLivePreviewReconciler.getExisting(editor)!!.publishSpecs(specs)
+
+    assertTrue("The heading must be taller than a line", headingFolds().single().heightInPixels > editor.lineHeight)
+    assertEquals(caretScreenY, editor.visualLineToY(caretLine) - editor.scrollingModel.verticalScrollOffset)
+  }
+
   fun testHeadingSelectionAndMultipleCaretsKeepTheSourceVisible() {
     val content = "before\n# title\n\nafter"
     configure("$content<caret>")
@@ -370,6 +398,21 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
   private fun headingFolds(): List<CustomFoldRegion> =
     myFixture.editor.foldingModel.allFoldRegions.filterIsInstance<CustomFoldRegion>().sortedBy { it.startOffset }
+
+  /**
+   * Shows [content] as source in a small viewport with the caret at [caretOffset], as an editor does before its specs arrive.
+   * Returns the specs to publish.
+   */
+  private fun configureWithLateSpecs(content: String, caretOffset: Int): MarkdownLivePreviewSpecSet {
+    configure(content)
+    val editor = myFixture.editor
+    val specs = computeLivePreviewSpecs(myFixture.file, editor)
+    MarkdownLivePreviewReconciler.getExisting(editor)!!.publishSpecs(null)
+    EditorTestUtil.setEditorVisibleSize(editor, 80, 10)
+    moveCaretTo(caretOffset)
+    assertEmpty(headingFolds())
+    return specs
+  }
 
   fun testInlineLinkShowsOnlyItsTitle() {
     configure("Read [the docs](https://example.org) today<caret>")
