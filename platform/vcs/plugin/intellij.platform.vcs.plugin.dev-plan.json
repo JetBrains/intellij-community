@@ -68,16 +68,25 @@
                         "filter": "module-v1"
                     },
                     {
-                        "input": "native-select:113d8587d2428b543a912648:output",
-                        "kind": "prepared",
-                        "filter": "prepared"
+                        "input": "@lib//:libraries-sqlite-native-sqlite-native",
+                        "kind": "library",
+                        "filter": "library-v1"
                     }
                 ],
                 "writer": {
-                    "manifest": "keep",
-                    "mergeEntities": true
+                    "mergeEntities": true,
+                    "nativeLib": "native"
                 }
             }
+        },
+        {
+            "destination": "lib/native",
+            "inputs": [
+                "native-tree:intellij.libraries.sqlite.native"
+            ],
+            "kind": "tree",
+            "classPath": false,
+            "scope": "distribution"
         },
         {
             "destination": "lib/platform-vcs-plugin.jar",
@@ -102,39 +111,6 @@
                     "mergeEntities": true
                 }
             }
-        },
-        {
-            "destination": "lib/native",
-            "inputs": [
-                "native-select:113d8587d2428b543a912648:output"
-            ],
-            "kind": "tree",
-            "classPath": false,
-            "scope": "distribution"
-        }
-    ],
-    "preparations": [
-        {
-            "id": "native-select:113d8587d2428b543a912648",
-            "inputs": [
-                "@lib//:libraries-sqlite-native-sqlite-native"
-            ],
-            "outputs": [
-                "native-select:113d8587d2428b543a912648:output"
-            ],
-            "modelSignature": "dd8iqcdwjq7dxdcp97qt2oit5"
-        }
-    ],
-    "operations": [
-        {
-            "id": "native-select:113d8587d2428b543a912648",
-            "kind": "native-select",
-            "input": {
-                "artifact": "@lib//:libraries-sqlite-native-sqlite-native"
-            },
-            "output": "native-select:113d8587d2428b543a912648:output",
-            "manifest": "keep",
-            "filter": "library"
         }
     ]
 }

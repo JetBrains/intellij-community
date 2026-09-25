@@ -82,6 +82,9 @@ type JarWriter struct {
 	DirectoryEntries     bool
 	RewriteBootClassPath bool
 	OutputName           string
+	// NativeLib is the presigned native library whose native entries the jar leaves out, or empty. Only a reused
+	// content_module_jar packs such a jar.
+	NativeLib string
 }
 
 // Preparation is one preparation definition. Its operation is in File.Operations under the same ID.
@@ -166,6 +169,7 @@ type rawJarWriter struct {
 	DirectoryEntries     *bool   `json:"directoryEntries"`
 	RewriteBootClassPath *bool   `json:"rewriteBootClassPath"`
 	OutputName           *string `json:"outputName"`
+	NativeLib            *string `json:"nativeLib"`
 }
 
 type rawPreparation struct {
@@ -329,6 +333,12 @@ func (raw *rawJarRecipe) decode() (JarRecipe, error) {
 		recipe.Writer.RewriteBootClassPath = writer.RewriteBootClassPath != nil && *writer.RewriteBootClassPath
 		if writer.OutputName != nil {
 			recipe.Writer.OutputName = *writer.OutputName
+		}
+		if writer.NativeLib != nil {
+			if *writer.NativeLib == "" {
+				return JarRecipe{}, fmt.Errorf("a jar writer states an empty native library")
+			}
+			recipe.Writer.NativeLib = *writer.NativeLib
 		}
 	}
 	for _, raw := range *raw.Sources {

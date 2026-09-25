@@ -19,16 +19,25 @@
                         "filter": "library-v1"
                     },
                     {
-                        "input": "native-select:a6904bf5ca5ca55e3909dcc0:output",
-                        "kind": "prepared",
-                        "filter": "prepared"
+                        "input": "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all",
+                        "kind": "library",
+                        "filter": "library-v1"
                     }
                 ],
                 "writer": {
-                    "manifest": "drop",
-                    "mergeEntities": true
+                    "mergeEntities": true,
+                    "nativeLib": "skiko-awt-runtime-all"
                 }
             }
+        },
+        {
+            "destination": "lib/skiko-awt-runtime-all",
+            "inputs": [
+                "native-tree:intellij.libraries.skiko"
+            ],
+            "kind": "tree",
+            "classPath": false,
+            "scope": "distribution"
         },
         {
             "destination": "lib/skiko-plugin.jar",
@@ -53,39 +62,6 @@
                     "mergeEntities": true
                 }
             }
-        },
-        {
-            "destination": "lib/skiko-awt-runtime-all",
-            "inputs": [
-                "native-select:a6904bf5ca5ca55e3909dcc0:output"
-            ],
-            "kind": "tree",
-            "classPath": false,
-            "scope": "distribution"
-        }
-    ],
-    "preparations": [
-        {
-            "id": "native-select:a6904bf5ca5ca55e3909dcc0",
-            "inputs": [
-                "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all"
-            ],
-            "outputs": [
-                "native-select:a6904bf5ca5ca55e3909dcc0:output"
-            ],
-            "modelSignature": "1hg8a3lsj7n9u1v7p0dnolvh"
-        }
-    ],
-    "operations": [
-        {
-            "id": "native-select:a6904bf5ca5ca55e3909dcc0",
-            "kind": "native-select",
-            "input": {
-                "artifact": "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all"
-            },
-            "output": "native-select:a6904bf5ca5ca55e3909dcc0:output",
-            "manifest": "keep",
-            "filter": "library"
         }
     ]
 }

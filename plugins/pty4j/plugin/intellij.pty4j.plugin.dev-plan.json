@@ -14,16 +14,25 @@
                         "filter": "module-v1"
                     },
                     {
-                        "input": "native-select:128c84449b8d6c2ab6b3f032:output",
-                        "kind": "prepared",
-                        "filter": "prepared"
+                        "input": "@lib//:libraries-pty4j-pty4j",
+                        "kind": "library",
+                        "filter": "library-v1"
                     }
                 ],
                 "writer": {
-                    "manifest": "keep",
-                    "mergeEntities": true
+                    "mergeEntities": true,
+                    "nativeLib": "pty4j"
                 }
             }
+        },
+        {
+            "destination": "lib/pty4j",
+            "inputs": [
+                "native-tree:intellij.libraries.pty4j"
+            ],
+            "kind": "tree",
+            "classPath": false,
+            "scope": "distribution"
         },
         {
             "destination": "lib/pty4j-plugin.jar",
@@ -48,39 +57,6 @@
                     "mergeEntities": true
                 }
             }
-        },
-        {
-            "destination": "lib/pty4j",
-            "inputs": [
-                "native-select:128c84449b8d6c2ab6b3f032:output"
-            ],
-            "kind": "tree",
-            "classPath": false,
-            "scope": "distribution"
-        }
-    ],
-    "preparations": [
-        {
-            "id": "native-select:128c84449b8d6c2ab6b3f032",
-            "inputs": [
-                "@lib//:libraries-pty4j-pty4j"
-            ],
-            "outputs": [
-                "native-select:128c84449b8d6c2ab6b3f032:output"
-            ],
-            "modelSignature": "3av6twz0u4bute28mqdi4suzm"
-        }
-    ],
-    "operations": [
-        {
-            "id": "native-select:128c84449b8d6c2ab6b3f032",
-            "kind": "native-select",
-            "input": {
-                "artifact": "@lib//:libraries-pty4j-pty4j"
-            },
-            "output": "native-select:128c84449b8d6c2ab6b3f032:output",
-            "manifest": "keep",
-            "filter": "library"
         }
     ]
 }

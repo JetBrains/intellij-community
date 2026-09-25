@@ -1,4 +1,14 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.jna` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jna-jna"],
+    module = ":jna",
+    native_lib = "jna",
+    native_lib_dir = "jna",
+)
+### auto-generated section `dev intellij.libraries.jna` end
 
 ### auto-generated section `build intellij.libraries.jna` start
 jvm_library(

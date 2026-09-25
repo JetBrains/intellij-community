@@ -762,12 +762,25 @@ def _dev_plugin_component_impl(ctx):
         bound[metadata] = True
         payload.append(jar)
         inputs.append(metadata)
-        independent.append({
+        entry = {
             "artifact": identifier,
             "source": jar.path,
             "metadata": metadata.path,
             "relativePath": jar.basename,
-        })
+        }
+
+        # A natives jar has a tree per platform. The component takes the tree of its own platform, and the plan
+        # places it at the distribution root.
+        if info.native_trees:
+            if not ctx.attr.target_platform:
+                fail("independent artifact %s packs native files, so the component needs a target platform" % identifier)
+            native = info.native_trees.get(ctx.attr.target_platform)
+            if native == None:
+                fail("independent artifact %s has no native tree for '%s'" % (identifier, ctx.attr.target_platform))
+            payload.append(native.tree)
+            inputs.append(native.metadata)
+            entry["nativeTree"] = {"source": native.tree.path, "metadata": native.metadata.path}
+        independent.append(entry)
     for source in declared:
         if source not in bound:
             fail("unbound independent artifact: %s" % source.path)

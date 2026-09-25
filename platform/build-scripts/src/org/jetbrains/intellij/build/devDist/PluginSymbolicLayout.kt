@@ -234,6 +234,22 @@ class PluginSymbolicJarAssembly {
     jars.computeIfAbsent(destination) { SymbolicJar() }.sources.addAll(sources)
   }
 
+  /**
+   * Marks the jar at [destination] as the jar of the presigned native library [library]. The jar leaves the library's
+   * native entries out, and its native tree goes to [distributionPrefix] at the distribution root. Only a reused
+   * `content_module_jar` packs such a jar, and the tree is its output.
+   */
+  internal fun markNatives(destination: String, library: String, distributionPrefix: String, reportGap: (PluginSymbolicLayoutGap) -> Unit) {
+    val jar = jars.computeIfAbsent(destination) { SymbolicJar() }
+    val natives = PluginSymbolicJarNatives(library, distributionPrefix)
+    val previous = jar.natives
+    if (previous != null && previous != natives) {
+      reportGap(PluginSymbolicLayoutGap("native-library:$destination", "A jar merges two presigned native libraries: ${previous.library} and $library"))
+      return
+    }
+    jar.natives = natives
+  }
+
   fun assets(
     preparedSourceManifests: Map<String, PluginSymbolicPreparedSourceManifest> = emptyMap(),
     libraryFileCounts: Map<String, Int> = emptyMap(),
@@ -256,18 +272,40 @@ class PluginSymbolicJarAssembly {
         return@mapNotNull null
       }
       val sources = resolveSources(ordered)
+      val natives = jar.natives
       if (sources.isEmpty()) {
-        null
+        emptyList()
       }
-      else {
+      else if (natives == null) {
         val asset = PluginPackingAsset(
           destination = destination,
           inputs = sources.map { it.input }.distinct(),
           recipe = CanonicalJarRecipe(sources = sources, writer = JarWriterRecipe(mergeEntities = true, directoryEntries = jar.testOutput)),
         )
-        resolvePluginSymbolicManifest(asset, preparedSourceManifests, libraryFileCounts, reportGap)
+        listOf(resolvePluginSymbolicManifest(asset, preparedSourceManifests, libraryFileCounts, reportGap))
       }
-    }
+      else {
+        val owner = sources.first()
+        if (owner.kind != "module" || sources.drop(1).any { it.kind != "library" } || jar.testOutput) {
+          reportGap(PluginSymbolicLayoutGap("native-library:$destination", "A jar with a presigned native library must be one module jar with its libraries"))
+          return@mapNotNull null
+        }
+        listOf(
+          PluginPackingAsset(
+            destination = destination,
+            inputs = sources.map { it.input }.distinct(),
+            recipe = CanonicalJarRecipe(sources = sources, writer = JarWriterRecipe(mergeEntities = true, nativeLib = natives.library)),
+          ),
+          PluginPackingAsset(
+            destination = natives.distributionPrefix.removeSuffix("/"),
+            inputs = listOf(NATIVE_TREE_INPUT_PREFIX + owner.input),
+            kind = "tree",
+            classPath = false,
+            scope = DISTRIBUTION_ASSET_SCOPE,
+          ),
+        )
+      }
+    }.flatten()
   }
 
   private fun resolveSources(ordered: List<PluginSymbolicJarSource>): List<JarSourceRecipe> {
@@ -304,5 +342,8 @@ class PluginSymbolicJarAssembly {
     val modules = ArrayList<List<PluginSymbolicJarSource>>()
     var descriptorModuleSources: List<PluginSymbolicJarSource>? = null
     var testOutput = false
+    var natives: PluginSymbolicJarNatives? = null
   }
 }
+
+private data class PluginSymbolicJarNatives(val library: String, val distributionPrefix: String)

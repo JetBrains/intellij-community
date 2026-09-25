@@ -14,21 +14,25 @@
                         "filter": "module-v1"
                     },
                     {
-                        "input": "@lib//:net.java.dev.jna/jna-platform-5.19.1.jar",
-                        "kind": "archive",
+                        "input": "@lib//:libraries-jna-jna",
+                        "kind": "library",
                         "filter": "library-v1"
-                    },
-                    {
-                        "input": "native-select:c8993745404a01a7de270806:output",
-                        "kind": "prepared",
-                        "filter": "prepared"
                     }
                 ],
                 "writer": {
-                    "manifest": "drop",
-                    "mergeEntities": true
+                    "mergeEntities": true,
+                    "nativeLib": "jna"
                 }
             }
+        },
+        {
+            "destination": "lib/jna",
+            "inputs": [
+                "native-tree:intellij.libraries.jna"
+            ],
+            "kind": "tree",
+            "classPath": false,
+            "scope": "distribution"
         },
         {
             "destination": "lib/jna-plugin.jar",
@@ -53,39 +57,6 @@
                     "mergeEntities": true
                 }
             }
-        },
-        {
-            "destination": "lib/jna",
-            "inputs": [
-                "native-select:c8993745404a01a7de270806:output"
-            ],
-            "kind": "tree",
-            "classPath": false,
-            "scope": "distribution"
-        }
-    ],
-    "preparations": [
-        {
-            "id": "native-select:c8993745404a01a7de270806",
-            "inputs": [
-                "@lib//:net.java.dev.jna/jna-5.19.1.jar"
-            ],
-            "outputs": [
-                "native-select:c8993745404a01a7de270806:output"
-            ],
-            "modelSignature": "9b963xy2rywd369q7ntd5sex1"
-        }
-    ],
-    "operations": [
-        {
-            "id": "native-select:c8993745404a01a7de270806",
-            "kind": "native-select",
-            "input": {
-                "artifact": "@lib//:net.java.dev.jna/jna-5.19.1.jar"
-            },
-            "output": "native-select:c8993745404a01a7de270806:output",
-            "manifest": "keep",
-            "filter": "library"
         }
     ]
 }

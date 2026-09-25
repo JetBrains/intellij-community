@@ -108,7 +108,9 @@ func executionVersionOf(assets []Asset) int {
 // output first, then only library containers, with the default writer and mode. The generator states the rest of the
 // equality, so the libraries are not compared here.
 func reusableModuleJar(recipe JarRecipe, mode uint32) (string, bool) {
-	if mode != DefaultMode || recipe.Writer != moduleJarRecipe("").Writer || len(recipe.Sources) == 0 {
+	writer := recipe.Writer
+	writer.NativeLib = ""
+	if mode != DefaultMode || writer != moduleJarRecipe("").Writer || len(recipe.Sources) == 0 {
 		return "", false
 	}
 	owner := recipe.Sources[0]
@@ -121,6 +123,19 @@ func reusableModuleJar(recipe JarRecipe, mode uint32) (string, bool) {
 		}
 	}
 	return owner.Input, true
+}
+
+// nativeTreeInputPrefix names the native tree of a reused content_module_jar: `native-tree:<module>`.
+const nativeTreeInputPrefix = "native-tree:"
+
+// nativeTreeModule is the module whose reused natives jar writes the tree of [asset]. The asset is a distribution tree
+// with the one input `native-tree:<module>`.
+func nativeTreeModule(asset Asset) (string, bool) {
+	if asset.Kind != "tree" || len(asset.Inputs) != 1 || !strings.HasPrefix(asset.Inputs[0], nativeTreeInputPrefix) {
+		return "", false
+	}
+	module := strings.TrimPrefix(asset.Inputs[0], nativeTreeInputPrefix)
+	return module, module != "" && asset.Scope == pluginpack.DistributionScope
 }
 
 // plainSource reports whether the source states nothing beyond its input, kind and filter.
@@ -149,9 +164,29 @@ func (c *compiler) plan() error {
 		}
 		independent[module] = true
 	}
+	// A reused natives jar leaves its native entries out, and the tree of its native files is the jar's own output.
+	nativeJars := make(map[string]bool)
+	for _, asset := range file.Assets {
+		if recipe := asset.Recipe; recipe != nil && recipe.Writer.NativeLib != "" {
+			module, ok := reusableModuleJar(*recipe, asset.Mode)
+			if !ok || !independent[module] {
+				return fmt.Errorf("%s: a jar with a native library must be a reused content_module_jar", asset.Destination)
+			}
+			nativeJars[module] = true
+		}
+	}
 	used := make(map[string]bool)
 	for _, asset := range file.Assets {
 		planned := plannedAsset{asset: asset}
+		if module, isNativeTree := nativeTreeModule(asset); isNativeTree {
+			if !nativeJars[module] {
+				return fmt.Errorf("%s: the native tree of %q requires its reused natives jar", asset.Destination, module)
+			}
+			planned.artifact = module
+			used[module] = true
+			c.assets = append(c.assets, planned)
+			continue
+		}
 		if recipe := asset.Recipe; recipe != nil && !slices.ContainsFunc(recipe.Sources, func(source JarSource) bool { return source.Kind == "prepared" }) {
 			inputs := make(map[string]bool, len(asset.Inputs))
 			for _, input := range asset.Inputs {

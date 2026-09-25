@@ -12,33 +12,30 @@ dev_dist_plugin(
 
 dev_dist_complex_plugin(
     artifact_inputs = {
-        "//libraries/pty4j:pty4j.jar": "intellij.libraries.pty4j",
         "//plugins/pty4j/plugin:plugin.jar": "intellij.pty4j.plugin",
     },
     descriptor = "//plugins/pty4j/plugin:intellij.pty4j.plugin_dev_descriptor",
     execution_version = 3,
-    libraries = {
-        "@lib//:libraries-pty4j-pty4j": "@lib//:libraries-pty4j-pty4j",
-    },
+    independent_artifacts = ["//libraries/pty4j:pty4j_content_module_jar"],
     main_module = "intellij.pty4j.plugin",
     platform_values = {
         "darwin_aarch64": {
-            "layoutSignature": "4kuje6xdy8cgu7u6vfqdq02x8",
+            "layoutSignature": "b64hdaotesp7l3zk1imzna6ln",
         },
         "darwin_x64": {
-            "layoutSignature": "e7pkjjfgbvizluw4ik0ndb5o5",
+            "layoutSignature": "cd3so8z124enzowf3vcq2pxde",
         },
         "linux_aarch64": {
-            "layoutSignature": "8p7in06u7pxiklpuizcy4nv5z",
+            "layoutSignature": "sbkf5z0apbsbye0vumtzup7t",
         },
         "linux_x64": {
-            "layoutSignature": "i8ncazt2yzu9z45xdn6sv2t8",
+            "layoutSignature": "2hl03t8ihteqtbzzitbbfdc4o",
         },
         "windows_aarch64": {
-            "layoutSignature": "95jvaq9jx7z6w8b6qknxuxm0b",
+            "layoutSignature": "bfsir0nfsodxs4x2zf2bibdep",
         },
         "windows_x64": {
-            "layoutSignature": "entjxa5c7bi43zu6rvhzpljgp",
+            "layoutSignature": "e57cmp8x7w54jqpgux3mpmyow",
         },
     },
     platforms = [

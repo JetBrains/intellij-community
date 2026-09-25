@@ -591,6 +591,10 @@ private class SymbolicLayoutProjector(
     if (requirement.handling == PluginSymbolicNativeHandling.UNTOUCHED) {
       if (binding != null) gap("native-binding:$occurrence", "An untouched source must not have a native binding")
     }
+    else if (requirement.handling == PluginSymbolicNativeHandling.PRESIGNED_EXTRACTION) {
+      // The reused natives jar and its tree replace the extraction, so no preparation binds this source.
+      if (keys.isNotEmpty()) gap("native-binding:$occurrence", "A presigned native library must not have a preparation: $keys")
+    }
     else if (binding == null || binding.requirementSignature != use.modelSignature || binding.effectKey.isBlank()) {
       gap("native-binding:$occurrence", "The source requires a native effect bound to its current occurrence and policy signature")
     }
@@ -603,6 +607,12 @@ private class SymbolicLayoutProjector(
   private fun applyNative(use: PluginSymbolicNativeUse?, original: List<JarSourceRecipe>): List<JarSourceRecipe> {
     if (use == null || collectNativeContext) return original
     if (use.handling == PluginSymbolicNativeHandling.UNTOUCHED) return recordNativeSources(use, original)
+    if (use.handling == PluginSymbolicNativeHandling.PRESIGNED_EXTRACTION) {
+      val occurrence = use.occurrence
+      val library = getLibNameBySourceFile(Path.of(artifacts.getValue(occurrence.input).fileName))
+      assembly.markNatives(occurrence.destination, library, checkNotNull(use.distributionPrefix)) { gap(it.key, it.detail) }
+      return recordNativeSources(use, original)
+    }
     val occurrence = use.occurrence
     val binding = preparationFacts.nativeBindings.get(occurrence) ?: return emptyList()
     if (binding.requirementSignature != use.modelSignature || binding.effectKey.isBlank()) return emptyList()
@@ -765,7 +775,8 @@ private class SymbolicLayoutProjector(
   private fun validateInputs(assets: List<PluginPackingAsset>, preparations: List<PluginPackingPreparation>) {
     val produced = preparations.flatMap { it.outputs }.toSet()
     val libraryIds = catalogue.libraries.mapNotNull { it.id }.toSet()
-    val consumed = assets.flatMap { it.inputs } + preparations.flatMap { it.inputs } + roots
+    // A native tree names its reused natives jar, not a catalogue input.
+    val consumed = assets.filterNot(::isNativeTreeAsset).flatMap { it.inputs } + preparations.flatMap { it.inputs } + roots
     for (input in consumed) {
       if (input !in artifacts && input !in produced && input !in libraryIds) {
         gap("artifact:$input", "Declare this input in the catalogue or preparation graph")

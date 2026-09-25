@@ -149,8 +149,10 @@ func ValidateAssets(version int, assets []Asset, identity func(string) string, c
 		if asset.NormalizeTreeModes && kind != "tree" {
 			return nil, fmt.Errorf("non-tree asset %q requests tree mode normalization", asset.Destination)
 		}
-		if kind == "tree" && (version < TreeVersion || asset.Producer != "remainder" || asset.ClassPath == nil || *asset.ClassPath) {
-			return nil, fmt.Errorf("tree %q requires version 2 or 3, remainder ownership, and classPath false", asset.Destination)
+		// A remainder tree, or the native tree of a reused natives jar at the distribution root.
+		ownedTree := asset.Producer == "remainder" || asset.Producer == "independent" && scope == DistributionScope
+		if kind == "tree" && (version < TreeVersion || !ownedTree || asset.ClassPath == nil || *asset.ClassPath) {
+			return nil, fmt.Errorf("tree %q requires version 2 or 3, remainder or distribution independent ownership, and classPath false", asset.Destination)
 		}
 		if scope == DistributionScope && (asset.ClassPath == nil || *asset.ClassPath) {
 			return nil, fmt.Errorf("distribution asset %q requires classPath false", asset.Destination)
@@ -192,7 +194,9 @@ func Plan(recipe Recipe, catalogue Catalogue) (*Execution, error) {
 	for _, asset := range recipe.Assets {
 		switch asset.Producer {
 		case "independent":
-			if !validID(asset.Artifact) || assetKind(asset) != "file" {
+			// A file is a reused jar. A tree is the native tree of a reused natives jar, at the distribution root.
+			kind := assetKind(asset)
+			if !validID(asset.Artifact) || kind != "file" && (kind != "tree" || asset.Scope != DistributionScope) {
 				return nil, fmt.Errorf("independent asset %q requires an artifact ID", asset.Destination)
 			}
 		case "remainder":

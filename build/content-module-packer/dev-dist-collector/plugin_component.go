@@ -64,6 +64,15 @@ type pluginComponentIndependent struct {
 	Source       string `json:"source"`
 	Metadata     string `json:"metadata"`
 	RelativePath string `json:"relativePath"`
+	// NativeTree is the native tree the natives jar writes for the component's platform, or nil for a plain jar.
+	NativeTree *pluginComponentNativeTree `json:"nativeTree,omitempty"`
+}
+
+// pluginComponentNativeTree is the directory of a reused jar's native files and the metadata of the action that wrote
+// it. The metadata names the tree root by its directory name.
+type pluginComponentNativeTree struct {
+	Source   string `json:"source"`
+	Metadata string `json:"metadata"`
 }
 
 // pluginComponentAsset is one row of the asset table of a remainder. The Kotlin preparation or the packing action
@@ -186,6 +195,10 @@ func validatePluginComponentSpec(opts options, spec pluginComponentSpec) error {
 		}
 		metadata = append(metadata, artifact.Metadata)
 		payload = append(payload, artifact.Source)
+		if tree := artifact.NativeTree; tree != nil {
+			metadata = append(metadata, tree.Metadata)
+			payload = append(payload, tree.Source)
+		}
 	}
 	if err := validatePluginArtifactPaths(opts, metadata, payload); err != nil {
 		return err
@@ -397,6 +410,7 @@ func collectPluginComponent(spec pluginComponentSpec, tracer *span.Tracer, paren
 		remaining[entry.RelativePath] = entry
 	}
 	independent := make(map[string]sourcedFile, len(spec.Independent))
+	nativeTrees := make(map[string]independentNativeTree)
 	bySource := make(map[string]filemetadata.Entry)
 	for _, artifact := range spec.Independent {
 		entries, err := filemetadata.Read(artifact.Metadata)
@@ -414,6 +428,13 @@ func collectPluginComponent(spec pluginComponentSpec, tracer *span.Tracer, paren
 		}
 		bySource[identity] = entry
 		independent[artifact.Artifact] = sourcedFile{Source: artifact.Source, metadata: &entry}
+		if artifact.NativeTree != nil {
+			tree, err := readIndependentNativeTree(*artifact.NativeTree)
+			if err != nil {
+				return nil, fmt.Errorf("independent artifact %s: %w", artifact.Artifact, err)
+			}
+			nativeTrees[artifact.Artifact] = tree
+		}
 	}
 	claimedRemainder := make(map[int]filemetadata.Entry)
 	for index, asset := range assets {
@@ -430,7 +451,7 @@ func collectPluginComponent(spec pluginComponentSpec, tracer *span.Tracer, paren
 	}
 	treeIndexes := make([]int, 0)
 	for index, asset := range assets {
-		if asset.Kind == "tree" {
+		if asset.Kind == "tree" && asset.Producer == "remainder" {
 			treeIndexes = append(treeIndexes, index)
 		}
 	}
@@ -467,7 +488,30 @@ func collectPluginComponent(spec pluginComponentSpec, tracer *span.Tracer, paren
 	}
 	used := make(map[string]bool)
 	entries := make([]filemetadata.Entry, 0, len(assets))
+	usedTrees := make(map[string]bool)
 	for assetIndex, asset := range assets {
+		if asset.Kind == "tree" && asset.Producer == "independent" {
+			tree, exists := nativeTrees[asset.Artifact]
+			if !exists || usedTrees[asset.Artifact] {
+				return nil, fmt.Errorf("missing or repeated native tree of %s for %s", asset.Artifact, asset.Destination)
+			}
+			usedTrees[asset.Artifact] = true
+			for _, entry := range tree.entries {
+				file := sourcedFile{Source: tree.source, RelativePath: pluginComponentDestination(spec.PluginDirectory, asset.Scope, asset.Destination), metadata: &entry}
+				if entry.RelativePath != independentNativeTreeRoot {
+					relative := strings.TrimPrefix(entry.RelativePath, independentNativeTreeRoot+"/")
+					file.Source = path.Join(tree.source, relative)
+					file.RelativePath = pluginComponentDestination(spec.PluginDirectory, asset.Scope, asset.Destination+"/"+relative)
+				}
+				if entry.Type != "symlink" {
+					file.mode = &entry.Mode
+				}
+				entry.RelativePath = file.RelativePath
+				entries = append(entries, entry)
+				files = append(files, file)
+			}
+			continue
+		}
 		if asset.Kind == "tree" {
 			for _, entry := range treeEntries[assetIndex] {
 				logicalDestination, err := pluginTreeLogicalDestination(spec.Version, asset, entry.RelativePath)
@@ -517,6 +561,9 @@ func collectPluginComponent(spec pluginComponentSpec, tracer *span.Tracer, paren
 		entry.RelativePath = file.RelativePath
 		entries = append(entries, entry)
 		files = append(files, file)
+	}
+	if len(usedTrees) != len(nativeTrees) {
+		return nil, fmt.Errorf("stale plugin ownership: %d unused native trees", len(nativeTrees)-len(usedTrees))
 	}
 	if len(remaining) != 0 || len(used) != len(independent) {
 		return nil, fmt.Errorf("stale plugin ownership: %d unclaimed remainder outputs, %d unused independent artifacts", len(remaining), len(independent)-len(used))
@@ -603,7 +650,7 @@ func validatePluginComponentAssets(version int, assets []pluginComponentAsset) e
 		return err
 	}
 	for _, asset := range assets {
-		if asset.Kind == "tree" && asset.Artifact != "" {
+		if asset.Kind == "tree" && asset.Artifact != "" && asset.Producer != "independent" {
 			return fmt.Errorf("tree %s must not name an independent artifact", asset.Destination)
 		}
 	}
@@ -630,6 +677,34 @@ func validatePluginComponentAssets(version int, assets []pluginComponentAsset) e
 
 func pluginTreeContains(root, name string) bool {
 	return root == "" || name == root || strings.HasPrefix(name, root+"/")
+}
+
+// independentNativeTreeRoot is the directory name of a natives jar's tree, and the key its metadata names the root by.
+const independentNativeTreeRoot = "native"
+
+// independentNativeTree is the inventory of a reused jar's native tree: the root and every entry under it, keyed as the
+// packer wrote them. An empty tree has no entry, so it places nothing, as before it had a producer.
+type independentNativeTree struct {
+	source  string
+	entries []filemetadata.Entry
+}
+
+func readIndependentNativeTree(tree pluginComponentNativeTree) (independentNativeTree, error) {
+	if path.Base(filepath.ToSlash(tree.Source)) != independentNativeTreeRoot {
+		return independentNativeTree{}, fmt.Errorf("native tree %s is not named %s", tree.Source, independentNativeTreeRoot)
+	}
+	inventory, err := filemetadata.Read(tree.Metadata)
+	if err != nil {
+		return independentNativeTree{}, err
+	}
+	owned, err := pluginTreeInventory(independentNativeTreeRoot, inventory)
+	if err != nil {
+		return independentNativeTree{}, err
+	}
+	if len(owned) == 1 {
+		owned = nil
+	}
+	return independentNativeTree{source: tree.Source, entries: owned}, nil
 }
 
 // pluginTreeInventory runs the shared link-graph walk a second time, because the collector validates the packer's
