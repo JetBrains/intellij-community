@@ -37,15 +37,12 @@ import com.intellij.util.indexing.UpdatableIndex;
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
-import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProviderKt;
+import com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
-import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage;
-import com.intellij.util.indexing.memory.InMemoryIndexStorage;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
@@ -59,6 +56,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 
 @ApiStatus.Internal
 public final class StubIndexImpl extends StubIndexEx {
@@ -146,12 +145,16 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
-  private static <K> void registerIndexer(final @NotNull StubIndexExtension<K, ?> extension, final boolean forceClean,
-                                          @NotNull AsyncState state, @NotNull IndexVersionRegistrationSink registrationResultSink)
+  private static <K> void registerIndexer(@NotNull StubIndexExtension<K, ?> extension,
+                                          boolean forceClean,
+                                          @NotNull AsyncState state,
+                                          @NotNull IndexVersionRegistrationSink registrationResultSink)
     throws IOException {
     final StubIndexKey<K, ?> indexKey = extension.getKey();
     final int version = extension.getVersion();
     FileBasedIndexExtension<K, Void> wrappedExtension = wrapStubIndexExtension(extension);
+    VfsAwareIndexStorageLayout<K, Void> storageLayout =
+      new StubIndexStorageLayout<>(IndexStorageLayoutLocator.getLayout(wrappedExtension));
 
     Path indexRootDir = IndexInfrastructure.getIndexRootDir(indexKey);
     IndexVersion.IndexVersionDiff versionDiff = forceClean
@@ -160,6 +163,8 @@ public final class StubIndexImpl extends StubIndexEx {
 
     registrationResultSink.setIndexVersionDiff(indexKey, versionDiff);
     if (versionDiff != IndexVersion.IndexVersionDiff.UP_TO_DATE) {
+      storageLayout.clearIndexData();
+      //TODO RC: do we need this after clearIndexData()?
       FileUtil.deleteWithRenamingIfExists(indexRootDir);
       IndexVersion.rewriteVersion(indexKey, version);
 
@@ -174,9 +179,9 @@ public final class StubIndexImpl extends StubIndexEx {
     }
 
     for (int attempt = 0; attempt < 2; attempt++) {
+      UpdatableIndex<K, Void, FileContent, ?> index = null;
       try {
-        UpdatableIndex<K, Void, FileContent, ?> index =
-          TransientFileContentIndex.createIndex(wrappedExtension, new StubIndexStorageLayout<>(wrappedExtension, indexKey));
+        index = TransientFileContentIndex.createIndex(wrappedExtension, storageLayout);
 
         for (FileBasedIndexInfrastructureExtension infrastructureExtension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
           UpdatableIndex<K, Void, FileContent, ?> intermediateIndex = infrastructureExtension.combineIndex(wrappedExtension, index);
@@ -192,14 +197,14 @@ public final class StubIndexImpl extends StubIndexEx {
       }
       catch (IOException e) {
         registrationResultSink.setIndexVersionDiff(indexKey, new IndexVersion.IndexVersionDiff.CorruptedRebuild(version));
-        onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e);
+        onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e, index, storageLayout);
       }
       catch (RuntimeException e) {
         Throwable cause = FileBasedIndexEx.extractCauseToRebuildIndex(e);
         if (cause == null) {
           throw e;
         }
-        onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e);
+        onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e, index, storageLayout);
       }
     }
   }
@@ -207,7 +212,34 @@ public final class StubIndexImpl extends StubIndexEx {
   private static <K> void onExceptionInstantiatingIndex(@NotNull StubIndexKey<K, ?> indexKey,
                                                         int version,
                                                         @NotNull Path indexRootDir,
-                                                        @NotNull Exception e) throws IOException {
+                                                        @NotNull Exception e,
+                                                        @Nullable UpdatableIndex<?, ?, ?, ?> index,
+                                                        @NotNull VfsAwareIndexStorageLayout<?, ?> storageLayout) throws IOException {
+    if (index != null) {
+      try {
+        index.dispose();
+      }
+      catch (Throwable t) {
+        rethrowControlFlowException(t);
+        LOG.error(t);
+      }
+    }
+    try {
+      storageLayout.clearIndexData();
+    }
+    catch (Throwable t) {
+      rethrowControlFlowException(t);
+      LOG.error(t);
+    }
+    for (FileBasedIndexInfrastructureExtension extension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
+      try {
+        extension.resetPersistentState(indexKey);
+      }
+      catch (Exception resetError) {
+        rethrowControlFlowException(resetError);
+        LOG.error(resetError);
+      }
+    }
     IndexStatisticGroup.reportIndexRebuild(indexKey, e, true);
     LOG.info(e);
     FileUtil.deleteWithRenaming(indexRootDir.toFile());
@@ -345,42 +377,20 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   private static final class StubIndexStorageLayout<K> implements VfsAwareIndexStorageLayout<K, Void> {
-    private final FileBasedIndexExtension<K, Void> myWrappedExtension;
-    private final StubIndexKey<K, ?> myIndexKey;
+    private final VfsAwareIndexStorageLayout<K, Void> delegate;
 
-    private StubIndexStorageLayout(FileBasedIndexExtension<K, Void> wrappedExtension, StubIndexKey<K, ?> indexKey) {
-      myWrappedExtension = wrappedExtension;
-      myIndexKey = indexKey;
+    private StubIndexStorageLayout(@NotNull VfsAwareIndexStorageLayout<K, Void> delegate) {
+      this.delegate = delegate;
     }
 
     @Override
     public @NotNull IndexStorage<K, Void> openIndexStorage() throws IOException {
-      if (FileBasedIndex.USE_IN_MEMORY_INDEX) {
-        return new InMemoryIndexStorage<>(myWrappedExtension.getKeyDescriptor());
-      }
-
-      Path storageFile = IndexInfrastructure.getStorageFile(myIndexKey);
-      StorageLockContext storageLockContext = DefaultIndexStorageLayoutProviderKt.newStorageLockContext();
-      try {
-        return new VfsAwareMapIndexStorage<>(
-          storageFile,
-          myWrappedExtension.getKeyDescriptor(),
-          myWrappedExtension.getValueExternalizer(),
-          myWrappedExtension.getCacheSize(),
-          myWrappedExtension.keyIsUniqueForIndexedFile(),
-          myWrappedExtension.traceKeyHashToVirtualFileMapping(),
-          storageLockContext
-        );
-      }
-      catch (IOException e) {
-        IOUtil.deleteAllFilesStartingWith(storageFile);
-        throw e;
-      }
+      return delegate.openIndexStorage();
     }
 
     @Override
     public void clearIndexData() {
-      throw new UnsupportedOperationException();
+      delegate.clearIndexData();
     }
   }
 

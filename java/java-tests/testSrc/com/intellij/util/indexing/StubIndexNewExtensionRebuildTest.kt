@@ -53,12 +53,19 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.psiFileFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
+import com.intellij.util.indexing.impl.IndexStorage
+import com.intellij.util.indexing.impl.forward.ForwardIndex
+import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor
+import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
+import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.io.IOException
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.minutes
 
@@ -114,6 +121,18 @@ class StubIndexNewExtensionRebuildTest {
         val project = psiFile.get().project
         IndexingTestUtil.suspendUntilIndexesAreReady(project)
 
+        StubIndexTestLayoutProvider.reset(NewTestStringStubIndexExtension.KEY)
+        withContext(Dispatchers.EDT) {
+          val providerText = """
+            <fileBasedIndexLayout id="stub-index-test"
+                                  priority="${Int.MAX_VALUE}"
+                                  presentableNameKey="unused"
+                                  providerClass="${StubIndexTestLayoutProvider::class.java.name}"
+                                  version="0"/>
+          """.trimIndent()
+          Disposer.register(disposable, loadExtensionWithText(providerText))
+        }
+
         NewTestStringStubIndexExtension.extensionRegistered = true
         withContext(Dispatchers.EDT) {
           val text = "<stubIndex implementation=\"${NewTestStringStubIndexExtension::class.java.name}\"/>"
@@ -126,7 +145,68 @@ class StubIndexNewExtensionRebuildTest {
           StubIndex.getElements(NewTestStringStubIndexExtension.KEY, "hello", project, scope, TestWordPsiElement::class.java)
         }
         assertEquals(listOf("hello"), elements.map { it.name })
+        assertTrue(StubIndexTestLayoutProvider.layoutRequested, "The stub index must request its storage from the active layout provider")
+        assertTrue(StubIndexTestLayoutProvider.storageOpened, "The stub index must open the storage supplied by the layout provider")
+        assertTrue(StubIndexTestLayoutProvider.storageCleared, "A new stub index must clear the selected provider layout before initialization")
       }
+    }
+  }
+}
+
+/** Tracks storage layout calls for a dynamically registered secondary stub index. */
+class StubIndexTestLayoutProvider : FileBasedIndexLayoutProvider {
+  override fun isApplicable(extension: FileBasedIndexExtension<*, *>): Boolean = extension.name.name == targetIndexId
+
+  override fun <K, V> getLayout(
+    extension: FileBasedIndexExtension<K, V>,
+    otherApplicableProviders: Iterable<FileBasedIndexLayoutProvider>,
+  ): VfsAwareIndexStorageLayout<K, V> {
+    layoutRequested = true
+    val fallbackProviders = otherApplicableProviders.toList()
+    val delegate = fallbackProviders.first().getLayout(extension, fallbackProviders.drop(1))
+    return object : VfsAwareIndexStorageLayout<K, V> {
+      @Throws(IOException::class)
+      override fun openIndexStorage(): IndexStorage<K, V> {
+        storageOpened = true
+        return delegate.openIndexStorage()
+      }
+
+      override fun openForwardIndex(): ForwardIndex? {
+        error("A secondary stub index must not open a forward index")
+      }
+
+      override fun getForwardIndexAccessor(): ForwardIndexAccessor<K, V>? {
+        error("A secondary stub index must not request a forward index accessor")
+      }
+
+      override fun clearIndexData() {
+        storageCleared = true
+        delegate.clearIndexData()
+      }
+    }
+  }
+
+  companion object {
+    @Volatile
+    private var targetIndexId: String? = null
+
+    @Volatile
+    var layoutRequested: Boolean = false
+      private set
+
+    @Volatile
+    var storageOpened: Boolean = false
+      private set
+
+    @Volatile
+    var storageCleared: Boolean = false
+      private set
+
+    fun reset(indexKey: StubIndexKey<*, *>) {
+      targetIndexId = indexKey.name
+      layoutRequested = false
+      storageOpened = false
+      storageCleared = false
     }
   }
 }
