@@ -12,7 +12,6 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.navigation.GotoRelatedItem;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -26,19 +25,16 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.Icon;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -96,7 +92,6 @@ import java.util.function.Supplier;
  * </ul>
  */
 public class NavigationGutterIconBuilder<T> {
-  private static final @NonNls String PATTERN = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
   protected static final NotNullFunction<PsiElement,Collection<? extends PsiElement>> DEFAULT_PSI_CONVERTOR =
     ContainerUtil::createMaybeSingletonList;
 
@@ -341,14 +336,13 @@ public class NavigationGutterIconBuilder<T> {
     NotNullLazyValue<List<SmartPsiElementPointer<?>>> pointers = createPointersThunk(myLazy, project, factory, myConverter);
 
     final boolean empty = isEmpty();
-    boolean newUI = ExperimentalUI.isNewUI() && !ApplicationManager.getApplication().isUnitTestMode();
 
     if (myTooltipText == null && !myLazy) {
       final SortedSet<String> names = new TreeSet<>();
       for (T t : myTargets.getValue()) {
         final String text = myNamer.apply(t);
         if (text != null) {
-          names.add(newUI ? text : MessageFormat.format(PATTERN, text));
+          names.add(text);
         }
       }
       @Nls StringBuilder sb = new StringBuilder("<html><body>");

@@ -70,7 +70,7 @@ public class ActionDeclarationRelatedItemLineMarkerProviderTest extends JavaCode
 
   private static String buildTooltipText(String... actionIds) {
     return "<html><body>" +
-           StringUtil.join(actionIds, s -> "&nbsp;&nbsp;&nbsp;&nbsp;" + s + "<br>", "") +
+           StringUtil.join(actionIds, s -> s + "<br>", "") +
            "</body></html>";
   }
 }

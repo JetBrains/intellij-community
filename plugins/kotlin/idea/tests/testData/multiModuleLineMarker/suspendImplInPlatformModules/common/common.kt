@@ -3,7 +3,7 @@ interface <!LINE_MARKER("descr='Is implemented by KJs KJvm Press ... to navigate
 }
 
 /*
-LINEMARKER: <html><body>Is implemented in <br>&nbsp;&nbsp;&nbsp;&nbsp;KJs<br>&nbsp;&nbsp;&nbsp;&nbsp;KJvm</body></html>
+LINEMARKER: <html><body>Is implemented in <br>KJs<br>KJvm</body></html>
 TARGETS:
 js.kt
     suspend override fun <1>foo(s: String) {

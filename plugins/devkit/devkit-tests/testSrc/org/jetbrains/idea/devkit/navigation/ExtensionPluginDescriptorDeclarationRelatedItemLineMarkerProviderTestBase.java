@@ -26,7 +26,7 @@ public abstract class ExtensionPluginDescriptorDeclarationRelatedItemLineMarkerP
     assertFalse(expectedTagPosition == -1);
 
     GutterMark gutter = myFixture.findGutter(file);
-    DevKitGutterTargetsChecker.checkGutterTargets(gutter, "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;com.intellij.myEp<br></body></html>",
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter, "<html><body>com.intellij.myEp<br></body></html>",
                                                   DevkitCoreIcons.Gutter.Plugin, "myEp");
   }
 

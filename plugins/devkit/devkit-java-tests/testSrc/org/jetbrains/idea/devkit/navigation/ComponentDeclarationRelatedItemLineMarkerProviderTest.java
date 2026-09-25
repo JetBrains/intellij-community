@@ -51,7 +51,7 @@ public class ComponentDeclarationRelatedItemLineMarkerProviderTest extends Light
 
   private static String buildTooltipText(String... componentFqns) {
     return "<html><body>" +
-           StringUtil.join(componentFqns, s -> "&nbsp;&nbsp;&nbsp;&nbsp;" + s + "<br>", "") +
+           StringUtil.join(componentFqns, s -> s + "<br>", "") +
            "</body></html>";
   }
 }

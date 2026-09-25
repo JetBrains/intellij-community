@@ -1229,7 +1229,7 @@
     },
     {
       "key": "GutterTooltip.lineSeparatorColor",
-      "description": "Separator line between lines of text"
+      "deprecated": true
     },
     {
       "key": "HeaderColor.active",

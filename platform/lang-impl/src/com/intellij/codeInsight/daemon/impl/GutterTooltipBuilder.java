@@ -1,17 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +28,6 @@ import static com.intellij.ui.ColorUtil.toHex;
 
 @ApiStatus.Internal
 public abstract class GutterTooltipBuilder {
-  private static final JBColor SEPARATOR_COLOR = JBColor.namedColor("GutterTooltip.lineSeparatorColor", HintUtil.INFORMATION_BORDER_COLOR);
   private static final JBColor CONTEXT_HELP_FOREGROUND
     = JBColor.namedColor("GutterTooltip.infoForeground", new JBColor(0x787878, 0x878787));
 
@@ -85,9 +81,6 @@ public abstract class GutterTooltipBuilder {
     if (elementsCount <= 1) return " ";
     StringBuilder sb = new StringBuilder("</p><p style='margin-top:2pt");
     if (marginLeft) sb.append(";margin-left:20pt");
-    if (!firstElement && (!ExperimentalUI.isNewUI() || ApplicationManager.getApplication().isUnitTestMode())) {
-      sb.append(";border-top:thin solid #").append(toHex(SEPARATOR_COLOR));
-    }
     return sb.append(";'>").toString();
   }
 
@@ -179,11 +172,7 @@ public abstract class GutterTooltipBuilder {
     if (action == null) return; // action is not exist
     String text = getPreferredShortcutText(action.getShortcutSet().getShortcuts());
     if (StringUtil.isEmpty(text)) return; // action have no shortcuts
-    sb.append("</p><p style='margin-top:8px;'><font");
-    if (!ExperimentalUI.isNewUI() || ApplicationManager.getApplication().isUnitTestMode()) {
-      sb.append(" size='2'");
-    }
-    sb.append(" color='#").append(toHex(CONTEXT_HELP_FOREGROUND));
+    sb.append("</p><p style='margin-top:8px;'><font color='#").append(toHex(CONTEXT_HELP_FOREGROUND));
     sb.append("'>").append(LangBundle.message(key, text)).append("</font>");
   }
 

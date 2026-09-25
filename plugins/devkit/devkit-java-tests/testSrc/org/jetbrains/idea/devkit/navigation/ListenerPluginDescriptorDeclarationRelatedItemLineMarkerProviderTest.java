@@ -52,7 +52,7 @@ public class ListenerPluginDescriptorDeclarationRelatedItemLineMarkerProviderTes
 
   private static String buildTooltipText(String... topics) {
     return "<html><body>" +
-           StringUtil.join(topics, s -> "&nbsp;&nbsp;&nbsp;&nbsp;" + s + "<br>", "") +
+           StringUtil.join(topics, s -> s + "<br>", "") +
            "</body></html>";
   }
 }
