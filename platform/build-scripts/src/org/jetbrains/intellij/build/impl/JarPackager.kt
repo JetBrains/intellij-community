@@ -592,7 +592,6 @@ class JarPackager private constructor(
         ZipSource(
           file = file,
           isPreSignedAndExtractedCandidate = isRootDir && isJarPreSigned(file, context),
-          optimizeConfigId = libraryName.takeIf { isRootDir && libraryName == "jsvg" },
           distributionFileEntryProducer = {
             if (moduleName == null) {
               val data = projectLibraryData ?: throw IllegalStateException("Metadata not specified for $libraryName")

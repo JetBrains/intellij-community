@@ -155,16 +155,6 @@ data class RecipeSource(
   /** Whether this source's native files are candidates for being taken out, signed, and laid beside the jar. */
   @JvmField val presigned: Boolean = false,
 
-  /**
-   * `ZipSource.optimizeConfigId`, verbatim.
-   *
-   * Recorded because it is on the source and a recipe may not drop what the build set, not because it does anything:
-   * the field is set at one site and read nowhere in the repository, and it is in neither `ZipSource.equals` nor the
-   * jar-cache digest. A non-null value here therefore means "the build labelled this source and then ignored the
-   * label"; it is not a transformation an executor has to reproduce.
-   */
-  @JvmField val optimizeConfigId: String? = null,
-
   /** The generated relative path of an `inMemory` source, or the name of a `lazy` one. */
   @JvmField val name: String? = null,
 

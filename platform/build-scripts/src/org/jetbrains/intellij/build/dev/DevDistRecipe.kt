@@ -208,7 +208,6 @@ object DevDistRecipe {
       filter = filterKindOf(source),
       filterCacheKey = source.filterCacheKey,
       presigned = source is ZipSource && source.isPreSignedAndExtractedCandidate,
-      optimizeConfigId = (source as? ZipSource)?.optimizeConfigId,
       name = when (source) {
         is InMemoryContentSource -> source.relativePath
         is FileSource -> source.relativePath
