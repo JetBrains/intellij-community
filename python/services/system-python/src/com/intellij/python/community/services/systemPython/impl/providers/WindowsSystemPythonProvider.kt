@@ -47,7 +47,7 @@ class WindowsSystemPythonProvider(val winRegistryBase: WinRegistryService? = nul
   private val pythonVersionedExePattern = Pattern.compile("python[0-9.]*?\\.exe$")
 
   override suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>> {
-    if (eelApi != localEel || !eelApi.platform.isWindows || useLegacyPythonProvider()) {
+    if (eelApi != localEel || !eelApi.platform.isWindows) {
       return PyResult.success(emptySet())
     }
 

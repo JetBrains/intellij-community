@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.services.systemPython.impl.providers
 
 import com.intellij.platform.eel.EelApi
@@ -35,7 +35,7 @@ internal class MacSystemPythonProvider : SystemPythonProvider {
 
   override suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>> {
     // Check if we're on a Unix system that's not Mac
-    if (!eelApi.platform.isMac || useLegacyPythonProvider()) {
+    if (!eelApi.platform.isMac) {
       return PyResult.success(emptySet())
     }
 
