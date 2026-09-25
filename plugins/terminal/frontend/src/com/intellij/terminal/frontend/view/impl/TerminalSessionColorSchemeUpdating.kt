@@ -4,6 +4,7 @@ package com.intellij.terminal.frontend.view.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.ui.ColorUtil
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
@@ -19,9 +20,11 @@ internal fun installSessionColorSchemeUpdating(terminalInput: TerminalInput, cor
   var lastColorScheme: TerminalColorSchemeDto? = null
 
   fun sendColorSchemeIfChanged() {
+    val background = TerminalUi.defaultBackground()
     val colorScheme = TerminalColorSchemeDto(
       foreground = TerminalUi.defaultForeground().toRgbColorDto(),
-      background = TerminalUi.defaultBackground().toRgbColorDto(),
+      background = background.toRgbColorDto(),
+      isDark = ColorUtil.isDark(background),
     )
     if (colorScheme != lastColorScheme) {
       lastColorScheme = colorScheme

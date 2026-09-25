@@ -217,6 +217,7 @@ internal class EmulatorTestSession(width: Int, height: Int, maxScrollbackBytes: 
   val backgroundColor: TerminalColor.Rgb? get() = emulator.backgroundColor
   fun setDefaultForegroundColor(color: TerminalColor.Rgb): Unit = emulator.setDefaultForegroundColor(color)
   fun setDefaultBackgroundColor(color: TerminalColor.Rgb): Unit = emulator.setDefaultBackgroundColor(color)
+  fun setColorScheme(scheme: ColorScheme): Unit = emulator.setColorScheme(scheme)
   val usingAlternateScreen: Boolean get() = emulator.usingAlternateScreen
   val bracketedPaste: Boolean get() = emulator.bracketedPaste
   val synchronizedOutput: Boolean get() = emulator.synchronizedOutput

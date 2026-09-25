@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit
  * [com.intellij.terminal.frontend.view.impl.TerminalViewImpl] sends the terminal colors of the global color scheme
  * ([BlockTerminalColors.DEFAULT_FOREGROUND] and [BlockTerminalColors.DEFAULT_BACKGROUND]) to the session as its default colors,
  * and sends them again when the global color scheme changes.
- * A program reads them with the color queries `OSC 10 ; ?` and `OSC 11 ; ?`.
+ * A program reads them with the color queries `OSC 10 ; ?` and `OSC 11 ; ?`, and asks if they are dark with `CSI ? 996 n`.
  *
  * Ghostty-only: JediTerm reads the default colors on demand and ignores a program override.
  */
@@ -80,6 +80,19 @@ internal class TerminalSessionColorSchemeUpdatingTest(emulatorType: TerminalEmul
     }
   }
 
+  @Test
+  fun `the color scheme query reports if the terminal background is dark`() {
+    setGlobalSchemeColorsForTest(foreground = Color(0xF0, 0xE0, 0xD0), background = Color(0x01, 0x02, 0x03))
+
+    doTest { fixture ->
+      assertThat(fixture.queryColor(csi("?996n"))).describedAs("a dark background").isEqualTo(csi("?997;1n"))
+
+      setGlobalSchemeColorsForTest(foreground = Color(0x10, 0x0F, 0x0E), background = Color(0xF0, 0xF1, 0xF2))
+
+      assertThat(fixture.queryColor(csi("?996n"))).describedAs("a light background").isEqualTo(csi("?997;2n"))
+    }
+  }
+
   /**
    * Feeds [query] to the session and returns the first reply that the session writes to the pty.
    * The session applies the color events asynchronously, so this function first waits until it handles them.
@@ -114,6 +127,8 @@ internal class TerminalSessionColorSchemeUpdatingTest(emulatorType: TerminalEmul
   }
 
   private fun osc(body: String): String = "$ESC]$body$BEL"
+
+  private fun csi(body: String): String = "$ESC[$body"
 
   companion object {
     private const val AWAIT_TIMEOUT_MS: Long = 5_000

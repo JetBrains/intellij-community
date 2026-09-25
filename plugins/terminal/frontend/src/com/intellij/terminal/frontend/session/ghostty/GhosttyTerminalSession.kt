@@ -9,6 +9,7 @@ import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.emulator.ColorScheme
 import com.intellij.terminal.emulator.CursorShape
 import com.intellij.terminal.emulator.ScreenChange
 import com.intellij.terminal.emulator.ScrollbackPullPolicy
@@ -442,6 +443,7 @@ class GhosttyTerminalSession internal constructor(
         if (disposed) return
         emulator.setDefaultForegroundColor(event.colorScheme.foreground.toEmulatorColor())
         emulator.setDefaultBackgroundColor(event.colorScheme.background.toEmulatorColor())
+        emulator.setColorScheme(if (event.colorScheme.isDark) ColorScheme.DARK else ColorScheme.LIGHT)
       }
       is TerminalSetDefaultCursorShapeEvent -> lock.withLock {
         if (disposed) return

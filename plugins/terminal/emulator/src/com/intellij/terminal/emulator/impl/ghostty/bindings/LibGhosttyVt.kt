@@ -348,6 +348,14 @@ internal object LibGhosttyVt {
     LINKER.upcallStub(handle, PROGRESS_REPORT_DESC, arena)
 
   /**
+   * Bind [handle] as a native upcall stub for the COLOR_SCHEME callback `bool(terminal, userdata, out)`,
+   * scoped to [arena]. The bound method's signature must be `(MemorySegment, MemorySegment, MemorySegment) -> boolean`;
+   * `out` points at the `GhosttyColorScheme` to fill when the method returns `true`.
+   */
+  fun colorSchemeUpcallStub(handle: MethodHandle, arena: Arena): MemorySegment =
+    LINKER.upcallStub(handle, COLOR_SCHEME_DESC, arena)
+
+  /**
    * Bind [handle] as a native upcall stub for the sys log callback
    * `void(userdata, level, scope, scope_len, message, message_len)`. The bound method's signature
    * must be `(MemorySegment, int, MemorySegment, long, MemorySegment, long) -> void`.
@@ -375,6 +383,9 @@ internal object LibGhosttyVt {
 
   // GhosttyTerminalProgressReportFn: void(terminal, userdata, const GhosttyTerminalProgressReport*).
   private val PROGRESS_REPORT_DESC: FunctionDescriptor = FunctionDescriptor.ofVoid(C_PTR, C_PTR, C_PTR)
+
+  // GhosttyTerminalColorSchemeFn: bool(terminal, userdata, GhosttyColorScheme* out).
+  private val COLOR_SCHEME_DESC: FunctionDescriptor = FunctionDescriptor.of(C_BOOL, C_PTR, C_PTR, C_PTR)
 
   // GhosttySysLogFn: void(userdata, level, scope, scope_len, message, message_len); size_t -> C_LONG.
   private val LOG_CB_DESC: FunctionDescriptor = FunctionDescriptor.ofVoid(C_PTR, C_INT, C_PTR, C_LONG, C_PTR, C_LONG)

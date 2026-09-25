@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.terminal.emulator.Cell
 import com.intellij.terminal.emulator.CellStyle
 import com.intellij.terminal.emulator.CellWidth
+import com.intellij.terminal.emulator.ColorScheme
 import com.intellij.terminal.emulator.Cursor
 import com.intellij.terminal.emulator.CursorShape
 import com.intellij.terminal.emulator.HistoryMark
@@ -31,6 +32,7 @@ import com.intellij.terminal.emulator.Underline
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyCellContentTag
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyCellData
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyCellWide
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyColorScheme
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyCursorVisualStyle
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyKeyAction
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts
@@ -158,6 +160,9 @@ internal class GhosttyTerminalEmulator(
   // Last OSC 9;4 report, set by the progress-report effect and kept until the program replaces or removes
   // it (see [progress]).
   private var progressReport: TerminalProgress? = null
+
+  // The color scheme that the color-scheme callback reports (see [setColorScheme]); null leaves the query unanswered.
+  private var colorScheme: ColorScheme? = null
 
   // Reusable scratch buffers + cell holder (this instance is single-threaded).
   private val scratchPoint: MemorySegment = arena.allocate(POINT)
@@ -323,6 +328,20 @@ internal class GhosttyTerminalEmulator(
         throw RuntimeException("installing progress-report effect failed", t)
       }
 
+      // Install the color-scheme callback; it answers the program's CSI ? 996 n with [colorScheme].
+      try {
+        val colorSchemeHandle = MethodHandles.lookup().bind(this, "onColorSchemeQuery",
+          MethodType.methodType(java.lang.Boolean.TYPE, MemorySegment::class.java, MemorySegment::class.java,
+            MemorySegment::class.java))
+        val colorSchemeStub = LibGhosttyVt.colorSchemeUpcallStub(colorSchemeHandle, arena)
+        val r = LibGhosttyVt.terminalSet(terminalHandle, GhosttyTerminalOption.COLOR_SCHEME.code, colorSchemeStub)
+        if (r != GhosttyResult.SUCCESS) {
+          throw IllegalStateException("ghostty_terminal_set(COLOR_SCHEME) returned $r")
+        }
+      } catch (t: Throwable) {
+        throw RuntimeException("installing color-scheme callback failed", t)
+      }
+
       keyEncoderHandle = createInputHandle("ghostty_key_encoder_new", LibGhosttyVt::keyEncoderNew)
       keyEventHandle = createInputHandle("ghostty_key_event_new", LibGhosttyVt::keyEventNew)
       mouseEncoderHandle = createInputHandle("ghostty_mouse_encoder_new", LibGhosttyVt::mouseEncoderNew)
@@ -460,6 +479,11 @@ internal class GhosttyTerminalEmulator(
 
   override fun setDefaultBackgroundColor(color: TerminalColor.Rgb) {
     terminalSetRgb(GhosttyTerminalOption.COLOR_BACKGROUND, color)
+  }
+
+  override fun setColorScheme(scheme: ColorScheme) {
+    ensureOpen()
+    colorScheme = scheme
   }
 
   override fun paletteColor(index: Int): TerminalColor.Rgb {
@@ -842,6 +866,21 @@ internal class GhosttyTerminalEmulator(
       GhosttyTerminalProgressState.INDETERMINATE -> TerminalProgress(TerminalProgressState.INDETERMINATE, percent)
       GhosttyTerminalProgressState.PAUSE -> TerminalProgress(TerminalProgressState.PAUSED, percent)
     }
+  }
+
+  /**
+   * Invoked from native code (the upcall stub) when the program queries the color scheme (`CSI ? 996 n`).
+   * Fills [out] (a `GhosttyColorScheme`) and returns true, or returns false to leave the query unanswered.
+   */
+  @Suppress("unused", "UNUSED_PARAMETER")
+  private fun onColorSchemeQuery(terminal: MemorySegment, userdata: MemorySegment, out: MemorySegment): Boolean {
+    val scheme = colorScheme ?: return false
+    val code = when (scheme) {
+      ColorScheme.LIGHT -> GhosttyColorScheme.LIGHT.code
+      ColorScheme.DARK -> GhosttyColorScheme.DARK.code
+    }
+    out.reinterpret(C_INT.byteSize()).set(C_INT, 0L, code)
+    return true
   }
 
   /**

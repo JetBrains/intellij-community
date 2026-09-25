@@ -173,6 +173,7 @@ internal enum class GhosttyRowData(val code: Int) {
 internal enum class GhosttyTerminalOption(val code: Int) {
   WRITE_PTY(1),
   BELL(2),
+  COLOR_SCHEME(7),
   COLOR_FOREGROUND(11),
   COLOR_BACKGROUND(12),
   DEFAULT_CURSOR_STYLE(22),
@@ -215,6 +216,15 @@ internal enum class GhosttyTerminalProgressState(val code: Int) {
       else -> null
     }
   }
+}
+
+/**
+ * `GhosttyColorScheme` (device.h) — the value that the [GhosttyTerminalOption.COLOR_SCHEME] callback
+ * reports for a color scheme query (`CSI ? 996 n`).
+ */
+internal enum class GhosttyColorScheme(val code: Int) {
+  LIGHT(0),
+  DARK(1),
 }
 
 /** `GhosttyRenderStateData` (render.h) — selector for `ghostty_render_state_get`. */

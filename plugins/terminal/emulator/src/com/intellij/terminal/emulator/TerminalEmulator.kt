@@ -23,6 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 //   TerminalMouseEvents.kt   TerminalMouseEvent (+ TerminalMouseAction, TerminalMouseButton)
 //   TerminalInputModifier.kt TerminalInputModifier — modifier state shared by both event types
 //   TerminalProgress.kt      TerminalProgress, TerminalProgressState (OSC 9;4)
+//   TerminalColorScheme.kt   ColorScheme — dark or light, for the color scheme query (CSI ? 996 n)
 //   TerminalChangeTracking.kt ScreenChange, HistoryMark — what to repaint / append
 //   TerminalListener.kt      TerminalListener, TerminalCustomCommandListener — the push callbacks
 //
@@ -119,6 +120,12 @@ interface TerminalEmulator : AutoCloseable {
 
   /** Same semantics as [setDefaultForegroundColor], for [backgroundColor] and `OSC 11`. */
   fun setDefaultBackgroundColor(color: TerminalColor.Rgb)
+
+  /**
+   * Sets whether the embedder colors are dark or light. The reply to the color scheme query (`CSI ? 996 n`) reports it.
+   * Until the first call, the query gets no reply.
+   */
+  fun setColorScheme(scheme: ColorScheme)
 
   /**
    * The current RGB of palette slot [index] (`0..255`), reflecting any program `OSC 4` overrides (and
