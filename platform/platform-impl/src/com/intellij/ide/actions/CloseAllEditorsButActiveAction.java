@@ -29,13 +29,19 @@ public class CloseAllEditorsButActiveAction extends AnAction implements DumbAwar
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
-    VirtualFile selectedFile;
-    final EditorWindow window = e.getData(EditorWindow.DATA_KEY);
+    EditorWindow window = e.getData(EditorWindow.DATA_KEY);
+    if (window == null) {
+      window = fileEditorManager.getCurrentWindow();
+    }
     if (window != null) {
-      closeAllExcept(fileEditorManager, window, e.getData(CommonDataKeys.VIRTUAL_FILE));
+      VirtualFile selectedFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+      if (selectedFile == null || !window.getFileList().contains(selectedFile)) {
+        selectedFile = window.getSelectedFile();
+      }
+      closeAllExcept(fileEditorManager, window, selectedFile);
       return;
     }
-    selectedFile = fileEditorManager.getSelectedFiles()[0];
+    VirtualFile selectedFile = fileEditorManager.getSelectedFiles()[0];
     List<Pair<EditorComposite, EditorWindow>> filesToClose = new ArrayList<>();
     for (EditorWindow editorWindow : fileEditorManager.getWindows()) {
       for (final VirtualFile sibling : fileEditorManager.getSiblings(selectedFile)) {
@@ -76,7 +82,10 @@ public class CloseAllEditorsButActiveAction extends AnAction implements DumbAwar
 
     FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     VirtualFile selectedFile;
-    final EditorWindow window = event.getData(EditorWindow.DATA_KEY);
+    EditorWindow window = event.getData(EditorWindow.DATA_KEY);
+    if (window == null) {
+      window = fileEditorManager.getCurrentWindow();
+    }
     if (window != null) {
       presentation.setEnabled(window.getFileList().size() > 1);
       return;
