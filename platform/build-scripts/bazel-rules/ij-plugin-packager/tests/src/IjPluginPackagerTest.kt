@@ -140,6 +140,7 @@ internal class IjPluginPackagerTest {
         - name: lib/descriptor.jar
           modules:
           - name: descriptor
+          contentModules:
           - name: module.with.package
         - name: lib/embedded.module.jar
           contentModules:

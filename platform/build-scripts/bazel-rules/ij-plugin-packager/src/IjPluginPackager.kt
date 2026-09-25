@@ -169,7 +169,7 @@ object IjPluginPackager {
     }
     packedModulesWriter?.addModule(descriptorOutputJar, descriptorModuleArgument.name)
     contentModulesToMergeWithMainJar.forEach {
-      packedModulesWriter?.addModule(descriptorOutputJar, it.moduleElement.name)
+      packedModulesWriter?.addContentModule(descriptorOutputJar, it.moduleElement.name)
     }
     copyNonClasspathData(nonClasspathData, outputDirectory)
     val additionalJars = descriptorModuleArgument.jars.asSequence().drop(1)
