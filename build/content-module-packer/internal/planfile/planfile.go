@@ -109,7 +109,7 @@ type Operation struct {
 	LayoutAssets *LayoutAssetPreparation
 }
 
-// LayoutAssetPreparation is the layoutAssets payload of one operation. Format is tree, entries, or file.
+// LayoutAssetPreparation is the layoutAssets payload of one operation. Format is tree or entries.
 type LayoutAssetPreparation struct {
 	Format string
 	Root   string

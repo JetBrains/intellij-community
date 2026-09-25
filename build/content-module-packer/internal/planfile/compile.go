@@ -12,12 +12,11 @@ import (
 	"jetbrains.com/content-module-packer/internal/pluginpack"
 )
 
-// goLayoutFormats are the layoutAssets formats the Go packer executes: a tree under one root, the entries of one
-// jar, and one file at its root.
-var goLayoutFormats = map[string]bool{"tree": true, "entries": true, "file": true}
+// goLayoutFormats are the layoutAssets formats the Go packer executes: a tree under one root and the entries of one jar.
+var goLayoutFormats = map[string]bool{"tree": true, "entries": true}
 
 // goLayoutTransforms are the transform kinds the Go packer executes. A nil transform is a plain copy.
-var goLayoutTransforms = map[string]bool{"archive-tree": true, "gzip-xml-archive": true, "tree-map": true, "inline-text": true}
+var goLayoutTransforms = map[string]bool{"archive-tree": true, "gzip-xml-archive": true, "tree-map": true}
 
 // Derivation is the execution contract of one chain, derived from the plan file.
 // Catalogue is the input catalogue without its libraries. The derivation expands every library into its files, so
@@ -357,7 +356,7 @@ func (c *compiler) bindOperations() error {
 }
 
 // validateConsumers applies the consumer rules of the Kotlin generator: a tree output has one tree asset at its
-// root, a file output has one plain file asset at its root, and a module-filter or entries output is a prepared jar source.
+// root, and a module-filter or entries output is a prepared jar source.
 // A native-select output has one distribution tree and one prepared jar source.
 func (c *compiler) validateConsumers(operation *Operation) error {
 	var consumers []Asset
@@ -402,13 +401,6 @@ func (c *compiler) validateConsumers(operation *Operation) error {
 		if layout.Format == "tree" {
 			if len(consumers) != 1 || consumers[0].Kind != "tree" || consumers[0].Destination != layout.Root || !slices.Equal(consumers[0].Inputs, []string{operation.Output}) || consumers[0].ClassPath {
 				return fmt.Errorf("layout asset preparation %q requires one tree asset at %q", operation.ID, layout.Root)
-			}
-			return nil
-		}
-		if layout.Format == "file" {
-			if len(consumers) != 1 || consumers[0].Kind != "file" || consumers[0].Destination != layout.Root || !slices.Equal(consumers[0].Inputs, []string{operation.Output}) ||
-				consumers[0].Recipe != nil || consumers[0].SymlinkTarget != nil || consumers[0].ClassPath {
-				return fmt.Errorf("layout asset preparation %q requires one file asset at %q", operation.ID, layout.Root)
 			}
 			return nil
 		}
@@ -668,15 +660,6 @@ func (c *compiler) operations() ([]pluginpack.Operation, error) {
 			}
 			input := asset.Inputs[0]
 			operation.Mode = asset.Mode
-			if goOperation, executed := c.goExecuted[input]; executed {
-				layout := goOperation.LayoutAssets
-				if layout == nil || layout.Format != "file" || layout.Root != asset.Destination {
-					return nil, fmt.Errorf("file %q requires a layout-assets file operation at its destination", asset.Destination)
-				}
-				operation.Kind = "layout-file"
-				operation.Layout = &pluginpack.LayoutAssets{Inputs: goOperation.Inputs, Assets: layout.Assets}
-				break
-			}
 			if _, produced := c.producers[input]; produced {
 				return nil, fmt.Errorf("completed asset %q requires a prepared file, not a Go-executed output", asset.Destination)
 			}

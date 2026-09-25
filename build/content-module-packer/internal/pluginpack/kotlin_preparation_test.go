@@ -187,9 +187,6 @@ func kotlinLayoutAssetsOperation(t *testing.T, id, output, format, root string, 
 			if transform.StripComponents != 0 {
 				text += fmt.Sprintf(`,"stripComponents":%d`, transform.StripComponents)
 			}
-			if transform.Text != "" {
-				text += `,"text":` + kotlinJSON(t, transform.Text)
-			}
 			if len(transform.Mappings) != 0 {
 				mappings := make([]string, 0, len(transform.Mappings))
 				for _, mapping := range transform.Mappings {
@@ -659,8 +656,7 @@ func chmodTestTree(t *testing.T, root string) {
 }
 
 // layoutParityFixture is one layout-assets operation with its raw inputs on disk. A tree fixture names its root; an
-// entries fixture names its jar; a file fixture names its file. present lists the output paths the fixture exists
-// for. hostOrder marks a jar whose entry order follows the readdir order of the host: the live comparison checks the
+// entries fixture names its jar. present lists the output paths the fixture exists for. hostOrder marks a jar whose entry order follows the readdir order of the host: the live comparison checks the
 // order, the golden does not. decompress marks a jar of gzip entries: the golden holds the entry names and the
 // decompressed payload, because the Go deflater writes other bytes than the JDK deflater.
 type layoutParityFixture struct {
@@ -825,7 +821,7 @@ var layoutParityFixtures = []struct {
 			inputs:  Catalogue{Version: Version, Artifacts: []Artifact{directoryArtifact("first", first), directoryArtifact("second", second)}},
 			present: []string{"overlay/shared.txt", "overlay/a.txt", "overlay/link.txt", "overlay/sub/inner.txt", "overlay/b.txt", "overlay/bin/tool"}}
 	}},
-	{"inline text and plain file copies inside a tree", func(t *testing.T, inputs string) layoutParityFixture {
+	{"plain file copies inside a tree", func(t *testing.T, inputs string) layoutParityFixture {
 		launcher, tool := filepath.Join(inputs, "launcher"), filepath.Join(inputs, "tool.jar")
 		writeTestFile(t, launcher, []byte("launcher"))
 		writeTestFile(t, tool, []byte("tool"))
@@ -833,11 +829,10 @@ var layoutParityFixtures = []struct {
 		chmodTestFile(t, tool, 0o755)
 		return layoutParityFixture{format: "tree", root: "jbr",
 			layout: LayoutAssets{Inputs: []Reference{{Artifact: "launcher"}, {Artifact: "tool"}}, Assets: []LayoutAsset{
-				{Destination: "jre-build.txt", Transform: &LayoutTransform{Kind: "inline-text", Text: "21.0.7"}},
 				{Destination: "bin/launcher", Sources: []int{0}},
 				{Destination: "lib/tool.jar", Sources: []int{1}, Mode: 0o644}}},
 			inputs:  Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("launcher", launcher), fileArtifact("tool", tool)}},
-			present: []string{"jbr/jre-build.txt", "jbr/bin/launcher", "jbr/lib/tool.jar"}}
+			present: []string{"jbr/bin/launcher", "jbr/lib/tool.jar"}}
 	}},
 	{"gzip-xml-archive entries hold the XML of each archive in central-directory order", func(t *testing.T, inputs string) layoutParityFixture {
 		// The first archive has a Unix directory entry and its files out of name order; the second repeats a name that
@@ -853,22 +848,6 @@ var layoutParityFixtures = []struct {
 			inputs:  Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("first", first), fileArtifact("second", second)}},
 			present: []string{"lib/dialects.jar"}}
 	}},
-	{"a layout file holds inline text", func(t *testing.T, inputs string) layoutParityFixture {
-		return layoutParityFixture{format: "file", root: "jre-build.txt",
-			layout: LayoutAssets{Inputs: []Reference{}, Assets: []LayoutAsset{
-				{Destination: "jre-build.txt", Transform: &LayoutTransform{Kind: "inline-text", Text: "21.0.7"}}}},
-			inputs:  Catalogue{Version: Version, Artifacts: []Artifact{}},
-			present: []string{"jre-build.txt"}}
-	}},
-	{"a layout file copies one file at the declared mode", func(t *testing.T, inputs string) layoutParityFixture {
-		build := filepath.Join(inputs, "build.txt")
-		writeTestFile(t, build, []byte("21.0.7"))
-		chmodTestFile(t, build, 0o755)
-		return layoutParityFixture{format: "file", root: "bin/jre-build.txt",
-			layout:  LayoutAssets{Inputs: []Reference{{Artifact: "build"}}, Assets: []LayoutAsset{{Destination: "bin/jre-build.txt", Sources: []int{0}}}},
-			inputs:  Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("build", build)}},
-			present: []string{"bin/jre-build.txt"}}
-	}},
 }
 
 func layoutInputIDs(layout LayoutAssets) []string {
@@ -882,8 +861,8 @@ func layoutInputIDs(layout LayoutAssets) []string {
 }
 
 // TestKotlinLayoutMaterializationMatchesGoTransforms packs the hand-written Go recipe of every layout-assets fixture:
-// the layout-tree operation, the layout-file operation, or the layout source. Go executes it from the raw inputs. The
-// test requires the same bytes, modes, and links as the golden of the Kotlin materialization.
+// the layout-tree operation or the layout source. Go executes it from the raw inputs. The test requires the same
+// bytes, modes, and links as the golden of the Kotlin materialization.
 func TestKotlinLayoutMaterializationMatchesGoTransforms(t *testing.T) {
 	golden := openKotlinGolden(t, "kotlin-layout")
 	const output = "layout-assets:output"
@@ -894,13 +873,7 @@ func TestKotlinLayoutMaterializationMatchesGoTransforms(t *testing.T) {
 			preparation := kotlinPreparation{ID: "layout", Inputs: layoutInputIDs(fixture.layout), Outputs: []string{output}}
 			var plan kotlinPlanFile
 			var recipe Recipe
-			if fixture.format == "file" {
-				operation := kotlinLayoutAssetsOperation(t, "layout", output, "file", fixture.root, fixture.layout)
-				plan = kotlinPlan(t, Version, "layout-plugin", []kotlinPlanAsset{{Destination: fixture.root, Inputs: []string{output}, ClassPath: &excluded}}, preparation, operation)
-				recipe = Recipe{Version: Version, Plugin: plan.Plugin, LayoutSignature: plan.LayoutSignature,
-					Assets:     []Asset{{Destination: fixture.root, Producer: "remainder", ClassPath: &excluded}},
-					Operations: []Operation{{Kind: "layout-file", Destination: fixture.root, Mode: 0o644, Layout: &fixture.layout}}}
-			} else if fixture.format == "tree" {
+			if fixture.format == "tree" {
 				operation := kotlinLayoutAssetsOperation(t, "layout", output, "tree", fixture.root, fixture.layout)
 				plan = kotlinPlan(t, TreeVersion, "layout-plugin", []kotlinPlanAsset{{Destination: fixture.root, Inputs: []string{output},
 					Kind: "tree", ClassPath: &excluded, NormalizeTreeModes: fixture.normalize}}, preparation, operation)

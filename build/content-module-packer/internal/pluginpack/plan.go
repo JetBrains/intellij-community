@@ -304,8 +304,8 @@ func (execution *Execution) validateOperation(operation Operation, used, usedLib
 	if operation.Mode > 0o777 {
 		return fmt.Errorf("invalid file mode %o", operation.Mode)
 	}
-	if operation.Layout != nil && operation.Kind != "layout-tree" && operation.Kind != "layout-file" {
-		return fmt.Errorf("only a layout-tree or a layout-file operation carries layout assets")
+	if operation.Layout != nil && operation.Kind != "layout-tree" {
+		return fmt.Errorf("only a layout-tree operation carries layout assets")
 	}
 	if operation.Native != nil && operation.Kind != "native-tree" {
 		return fmt.Errorf("only a native-tree operation carries a native target")
@@ -330,14 +330,6 @@ func (execution *Execution) validateOperation(operation Operation, used, usedLib
 			return fmt.Errorf("layout-tree requires version 2 or 3 and layout assets without an input, file, or jar options")
 		}
 		return execution.validateLayout(operation.Layout, layoutTreeFormat, used)
-	case "layout-file":
-		if len(operation.Sources) != 0 || operation.Options != nil || operation.Target != "" || operation.Input != nil || operation.Layout == nil {
-			return fmt.Errorf("layout-file requires layout assets without an input, a link target, or jar options")
-		}
-		if len(operation.Layout.Assets) != 1 || operation.Layout.Assets[0].Destination != operation.Destination {
-			return fmt.Errorf("layout-file requires one layout asset at its destination")
-		}
-		return execution.validateLayout(operation.Layout, layoutFileFormat, used)
 	case "copy-tree":
 		if execution.recipe.Version < TreeVersion || len(operation.Sources) != 0 || operation.Options != nil || operation.Target != "" ||
 			operation.Mode != 0 && operation.Mode != 0o644 || operation.Input == nil || operation.Input.Path != "" {
@@ -674,13 +666,12 @@ func (execution *Execution) validateReference(reference *Reference, used map[str
 	return nil
 }
 
-// layoutFormat is the shape a layout payload writes: a tree under one root, the file entries of one jar, or one file.
+// layoutFormat is the shape a layout payload writes: a tree under one root or the file entries of one jar.
 type layoutFormat string
 
 const (
 	layoutTreeFormat    layoutFormat = "tree"
 	layoutEntriesFormat layoutFormat = "entries"
-	layoutFileFormat    layoutFormat = "file"
 )
 
 // validateLayout applies the operation rules of the Kotlin generator to a layout payload without reading the filesystem.
@@ -751,9 +742,6 @@ func validateLayoutAsset(asset LayoutAsset, format layoutFormat, kinds []string)
 	} else if err := validateRelativePath(asset.Destination); err != nil {
 		return err
 	}
-	if format == layoutFileFormat && (kind != "" && kind != "inline-text" || transform == nil && !sourcesAre("file")) {
-		return fmt.Errorf("a layout file is a plain copy of one file or an inline text")
-	}
 	if transform == nil {
 		if len(asset.Sources) != 1 {
 			return fmt.Errorf("a plain copy requires one source")
@@ -801,20 +789,15 @@ func validateLayoutAsset(asset LayoutAsset, format layoutFormat, kinds []string)
 	}
 	switch kind {
 	case "archive-tree":
-		if len(asset.Sources) != 1 || transform.Text != "" || !sourcesAre("file") {
+		if len(asset.Sources) != 1 || !sourcesAre("file") {
 			return fmt.Errorf("archive-tree requires one archive file")
 		}
 	case "gzip-xml-archive":
-		if format != layoutEntriesFormat || len(asset.Sources) == 0 || transform.StripComponents != 0 || transform.Text != "" ||
-			len(transform.Mappings) != 0 || !sourcesAre("file") {
+		if format != layoutEntriesFormat || len(asset.Sources) == 0 || transform.StripComponents != 0 || len(transform.Mappings) != 0 || !sourcesAre("file") {
 			return fmt.Errorf("gzip-xml-archive requires ordered archive files and jar entries")
 		}
-	case "inline-text":
-		if len(asset.Sources) != 0 || transform.StripComponents != 0 || len(transform.Mappings) != 0 || strings.ContainsAny(transform.Text, "\r\n") {
-			return fmt.Errorf("inline-text requires text without a newline and no inputs")
-		}
 	case "tree-map":
-		if len(asset.Sources) == 0 || transform.StripComponents != 0 || transform.Text != "" || len(transform.Mappings) == 0 || !sourcesAre("directory") {
+		if len(asset.Sources) == 0 || transform.StripComponents != 0 || len(transform.Mappings) == 0 || !sourcesAre("directory") {
 			return fmt.Errorf("tree-map requires ordered directories and mappings")
 		}
 	}

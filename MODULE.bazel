@@ -144,6 +144,8 @@ use_repo(
     "dev_launch_libghostty",
     "dev_launch_libwebp",
     "dev_launch_maven",
+    "dev_launch_maven3_libraries",
+    "dev_launch_maven_telemetry_libraries",
     "dev_launch_restarter",
     "dev_launch_restarter_extracted",
 )

@@ -70,11 +70,11 @@ data class DevPluginPreparationOperation(
 
 /** The layout-assets transforms the Go remainder packer executes, with the plain copy of a `null` transform. */
 @ApiStatus.Internal
-val GO_LAYOUT_TRANSFORMS: Set<String> = java.util.Set.of("archive-tree", "gzip-xml-archive", "tree-map", "inline-text")
+val GO_LAYOUT_TRANSFORMS: Set<String> = java.util.Set.of("archive-tree", "gzip-xml-archive", "tree-map")
 
 /**
  * The one statement of what the Go remainder packer executes from a plan file. A `module-filter` operation, a
- * `native-select` operation and a `layout-assets` operation in every layout format (`tree`, `entries`, `file`) with
+ * `native-select` operation and a `layout-assets` operation in every layout format (`tree`, `entries`) with
  * every transform in [GO_LAYOUT_TRANSFORMS] are Go-executed. [devPluginPreparationOperationSignature] refuses every
  * other operation, so a plan file never holds one. The chain of a complex plugin declares no preparation target, and
  * the Go packer reads the plan file directly.
@@ -84,7 +84,7 @@ fun isGoExecutedOperation(operation: DevPluginPreparationOperation): Boolean {
   if (operation.kind == "module-filter" || operation.kind == "native-select") return true
   if (operation.kind != "layout-assets") return false
   val layoutAssets = requireNotNull(operation.layoutAssets) { "A layout-assets operation requires layout assets" }
-  return layoutAssets.format in setOf("tree", "entries", "file") &&
+  return layoutAssets.format in setOf("tree", "entries") &&
          layoutAssets.assets.all { asset -> asset.transform?.let { it.kind in GO_LAYOUT_TRANSFORMS } ?: true }
 }
 
@@ -134,7 +134,7 @@ fun validateDevPluginNativeSelectConsumers(operation: DevPluginPreparationOperat
 }
 
 /**
- * A layout-assets output in the `tree` or `file` format has one consumer: the asset of that kind at the layout root.
+ * A layout-assets output in the `tree` format has one consumer: the tree asset at the layout root.
  * An `entries` output is a prepared jar source, which the jar recipe validation checks.
  */
 @ApiStatus.Internal
@@ -146,7 +146,7 @@ fun validateDevPluginLayoutAssetConsumers(operation: DevPluginPreparationOperati
   require(
     consumer != null && consumer.artifact == null && consumer.asset.kind == layoutAssets.format &&
     consumer.asset.destination == layoutAssets.root && consumer.asset.inputs == listOf(operation.output) &&
-    !consumer.asset.classPath && (layoutAssets.format == "tree" || consumer.asset.recipe == null)
+    !consumer.asset.classPath
   ) {
     "Layout asset preparation '${operation.id}' requires one ${layoutAssets.format} asset at '${layoutAssets.root}'"
   }

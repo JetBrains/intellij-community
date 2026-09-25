@@ -352,14 +352,14 @@ def _only_select(platforms, value, default):
 
 # What a dev-mode assembly downloads, of the groups community owns.
 COMMUNITY_DEV_LAUNCH_REPOS = merge_repo_sets(
-    _shared_repos(["libghostty", "libwebp", "maven", "restarter", "jserialcomm"]),
+    _shared_repos(["libghostty", "libwebp", "maven", "maven3_libraries", "maven_telemetry_libraries", "restarter", "jserialcomm"]),
     _per_platform_repos("jcef"),
 )
 
 # Just the bundled Maven distribution and its libraries: what a test that opens a Maven project needs,
 # because `MavenDistributionsCache` resolves the bundled Maven through `BundledMavenDownloader` and would
 # otherwise download it. Deliberately not the whole dev-launch set - a test has no use for JCEF.
-MAVEN_DEV_LAUNCH_REPOS = _shared_repos(["maven"])
+MAVEN_DEV_LAUNCH_REPOS = _shared_repos(["maven", "maven3_libraries", "maven_telemetry_libraries"])
 
 # What IDE Starter downloads to launch an IDE under test. Deliberately apart from the dev-launch set: a
 # `bazel run` dev launch runs on the JVM Bazel gave it and never touches these 400 MB.
@@ -409,6 +409,9 @@ def _dev_launch_deps_community_impl(module_ctx):
         name = "dev_launch_restarter_extracted",
         url = restarter_url,
     )
+
+    # BundledMavenDownloader.downloadMavenDistribution - the one archive of `:files`, so a plugin layout names it
+    # without its version
     dev_launch_deps_repo(
         name = "dev_launch_maven",
         urls = [maven_url(
@@ -418,10 +421,22 @@ def _dev_launch_deps_community_impl(module_ctx):
             pinned(community, _COMMUNITY_DEPENDENCIES, "bundledMavenVersion"),
             "zip",
             classifier = "bin",
-        )] + maven_coordinates_urls(
+        )],
+    )
+
+    # BundledMavenDownloader.resolveMaven3Libs - a plugin layout copies the whole tree, so it names no jar
+    dev_launch_deps_repo(
+        name = "dev_launch_maven3_libraries",
+        urls = maven_coordinates_urls(
             MAVEN_CENTRAL_URL,
             pinned(community, _COMMUNITY_DEPENDENCIES, "bundledMaven3Libraries"),
-        ) + maven_coordinates_urls(
+        ),
+    )
+
+    # BundledMavenDownloader.resolveMavenTelemetryDependencies - a plugin layout copies the whole tree
+    dev_launch_deps_repo(
+        name = "dev_launch_maven_telemetry_libraries",
+        urls = maven_coordinates_urls(
             MAVEN_CENTRAL_URL,
             pinned(community, _COMMUNITY_DEPENDENCIES, "bundledMavenTelemetryLibraries"),
         ),

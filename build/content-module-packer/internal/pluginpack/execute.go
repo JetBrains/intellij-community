@@ -380,14 +380,6 @@ func (execution *Execution) resolveOperations(cache map[Reference]string, scratc
 			operations = append(operations, tree...)
 			continue
 		}
-		if operation.Kind == "layout-file" {
-			file, err := layouts.file(operation)
-			if err != nil {
-				return nil, fmt.Errorf("%s: %w", operation.Destination, err)
-			}
-			operations = append(operations, file)
-			continue
-		}
 		resolved := resolvedOperation{operation: operation}
 		var err error
 		resolved.input, err = resolve(operation.Input)
