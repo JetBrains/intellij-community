@@ -797,12 +797,14 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       }
     }
 
-    ProgressIndicator oldIndicator = getProgressIndicator();
+    Thread currentThread = Thread.currentThread();
+    // read the raw per-thread indicator: an overridden getProgressIndicator() may return a fallback,
+    // and restoring it instead of null would leave the entry in threadTopLevelIndicators forever
+    ProgressIndicator oldIndicator = getCurrentIndicator(currentThread);
     if (progress == oldIndicator) {
       return process.compute();
     }
 
-    Thread currentThread = Thread.currentThread();
     long threadId = currentThread.getId();
     setCurrentIndicator(threadId, progress);
     try {
