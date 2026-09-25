@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2.conda
 
 import com.intellij.openapi.application.EDT
@@ -19,7 +19,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
-import com.jetbrains.python.conda.saveLocalPythonCondaPath
+import com.jetbrains.python.conda.savePythonCondaPath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -59,7 +59,7 @@ internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAdd
   private val isReloadLinkVisible = AtomicBooleanProperty(false)
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.condaViewModel.condaExecutable
   override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
-    (pathHolder as? PathHolder.Eel)?.let { if (model.fileSystem.isLocal) saveLocalPythonCondaPath(it.path) }
+    (pathHolder as? PathHolder.Eel)?.let { if (model.fileSystem.isLocal) savePythonCondaPath(it.path) }
   }
 
   // Conda's reader has no detection fallback, so it keeps persisting on setup (persister gated to local).

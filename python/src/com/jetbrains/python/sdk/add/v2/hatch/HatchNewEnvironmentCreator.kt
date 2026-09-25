@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2.hatch
 
 import com.intellij.openapi.module.Module
@@ -7,12 +7,13 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.hatch.HatchPyTool
-import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.getHatchService
+import com.intellij.python.pytools.backend.PyTool
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
@@ -71,7 +72,7 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
     }
 
     val hatchService = module.getHatchService(
-      fileSystem = localEel.toFileSystem(),
+      fileSystem = hatchExecutablePath.getEelDescriptor().toEelApi().toFileSystem(),
       hatchExecutablePath = hatchExecutablePath,
     ).getOr { return it }
 
