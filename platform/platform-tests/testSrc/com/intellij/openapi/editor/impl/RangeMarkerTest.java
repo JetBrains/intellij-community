@@ -1546,7 +1546,7 @@ public class RangeMarkerTest {
         markupModel.processRangeHighlightersOverlappingWith(2*i, 2*i+1, coll);
         assertEquals(2, list.size());  // 1 line plus one exact range marker
       }
-    }).start();
+    }).runAsStressTest().start();
   }
 
   @Test
@@ -1785,7 +1785,7 @@ public class RangeMarkerTest {
         }
         assertEquals(markers.size(), length);
       }
-    }).start();
+    }).runAsStressTest().start();
     deleteString(doc, 0, 1);
   }
 
@@ -1813,7 +1813,7 @@ public class RangeMarkerTest {
         }
       }
       deleteString(doc, 0, 1);
-    }).start();
+    }).runAsStressTest().start();
   }
 
   @PerformanceUnitTest
@@ -1834,7 +1834,7 @@ public class RangeMarkerTest {
         insertString(doc, 0, " ");
         deleteString(doc, 0, 1);
       }
-    }).start();
+    }).runAsStressTest().start();
     for (RangeMarker rm : markers) {
       assertTrue(rm.isValid());
     }
@@ -1856,7 +1856,7 @@ public class RangeMarkerTest {
       for (RangeMarker marker : markers) {
         marker.dispose();
       }
-    }).start();
+    }).runAsStressTest().start();
   }
 
   @PerformanceUnitTest
@@ -1878,7 +1878,7 @@ public class RangeMarkerTest {
           assertFalse(result);
         }
       }
-    }).start();
+    }).runAsStressTest().start();
     assertNotEmpty(markers);
   }
 
