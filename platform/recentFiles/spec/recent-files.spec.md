@@ -54,7 +54,7 @@ each class. The IJPL UI group owns the plugin and this spec.
 
 ### Plugin layout
 
-- The plugin `intellij.recentFiles.plugin` must ship three content modules.
+- The plugin `com.intellij.recentFiles` must ship three content modules.
   The names are `shared`, `backend` and `frontend`.
 - The `shared` module must hold the model contract and the model.
 - The `backend` module must load only when the process provides `intellij.platform.backend`.

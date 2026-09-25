@@ -41,11 +41,11 @@ Create a new JPS module at `<feature-root>/plugin/`, e.g. `community/platform/<f
   bun build/jps-module.mjs register community/platform/<feature>/plugin/intellij.platform.<feature>.plugin.iml --fix-iml-eof
   ```
 
-- `resources/META-INF/plugin.xml` — a minimal `<idea-plugin>` listing the content modules. Mirror the wrapper shape from navbar, but use the canonical platform plugin id for new wrappers (replace `FEATURE` with the actual short name; the description must be at least 40 characters):
+- `resources/META-INF/plugin.xml` — a minimal `<idea-plugin>` listing the content modules. Mirror the wrapper shape from navbar and use the canonical `com.intellij.*` plugin id (replace `FEATURE` with the actual short name; the description must be at least 40 characters):
 
   ```text
   <idea-plugin>
-    <id>intellij.platform.FEATURE.plugin</id>
+    <id>com.intellij.platform.FEATURE</id>
     <name>FEATURE</name>
     <description>Provides FEATURE platform modules for the IDE.</description>
     <vendor>JetBrains</vendor>
@@ -58,7 +58,7 @@ Create a new JPS module at `<feature-root>/plugin/`, e.g. `community/platform/<f
   </idea-plugin>
   ```
 
-  **Naming:** for new hand-written wrappers, use the JPS wrapper module name as the plugin **id** whenever possible: `intellij.platform.FEATURE.plugin` under `community/platform/` (for example, `intellij.platform.tasks.plugin`) or `intellij.FEATURE.plugin` outside the `platform/` subtree. This keeps bundled plugin ids and bundled plugin module names aligned in Product DSL, logs, and dependency declarations. Some older hand-written wrappers still use short ids such as `intellij.navbar.plugin`; do not copy that form for new platform wrappers. Do **not** reuse the legacy `com.intellij.moduleSet.FEATURE` prefix — that is the auto-generated wrapper convention being phased out, kept only on existing wrappers under `community/module-set-plugins/generated/`. The plugin **name** is a short human-readable label (e.g. `Tasks Platform`).
+  **Naming:** the plugin **id** follows the `com.intellij.*` scheme and is **not** the JPS module name. Use `com.intellij.platform.FEATURE` when the wrapper is platform infrastructure that does nothing on its own and other plugins build on top of it (for example `com.intellij.platform.vcs`, `com.intellij.platform.ssh`, `com.intellij.platform.testRunner`), and `com.intellij.FEATURE` when it is a self-sufficient user-facing feature (for example `com.intellij.bookmarks`, `com.intellij.todo`, `com.intellij.navbar`). Check that the id is free first, it could've been used for another plugin. Do **not** use module-name-style ids (`intellij.platform.FEATURE.plugin`, `intellij.FEATURE.plugin`). Once an id has shipped in a release, any rename must keep the old id as an alias. Do **not** reuse the legacy `com.intellij.moduleSet.FEATURE` prefix — that is the auto-generated wrapper convention being phased out, kept only on existing wrappers under `community/module-set-plugins/generated/`. The plugin **name** is a short human-readable label (e.g. `Tasks and Contexts`).
 
   No wrapper-specific descriptor marker is needed. Add the JPS wrapper module name to `HAND_WRITTEN_MODULE_SET_PLUGIN_MODULES` in `community/platform/build-scripts/product-dsl/src/ModuleSetPlugins.kt`. Generation intersects that build-time registry with each product's `ProductModulesLayout.bundledPluginModules`, avoiding changes to the runtime plugin descriptor model while keeping complete generated dependencies for wrapper content.
 
@@ -87,7 +87,7 @@ Pluginization is a good moment to verify that each former direct module declares
 
 - Trim `intellij.platform.<feature>.<backend|frontend|monolith>.xml` so it declares the actual runtime dependencies (e.g. `intellij.platform.backend`, `intellij.platform.frontend`, the shared `intellij.platform.<feature>` module).
 - If any extension point was renamed/qualified, grep the repo for the old short name and update every `<extensionPoint …>` reference accordingly.
-- If a downstream consumer used a module that the new wrapper now hides, switch the consumer's descriptor to depend on the wrapper plugin: `<plugin id="intellij.platform.<feature>.plugin"/>` instead of `<module name="intellij.platform.<feature>.frontend"/>`. Existing references to legacy `com.intellij.moduleSet.<feature>` ids stay valid for the auto-generated wrappers that have not yet been migrated.
+- If a downstream consumer used a module that the new wrapper now hides, switch the consumer's descriptor to depend on the wrapper plugin: `<plugin id="com.intellij.platform.<feature>"/>` instead of `<module name="intellij.platform.<feature>.frontend"/>`. Existing references to legacy `com.intellij.moduleSet.<feature>` ids stay valid for the auto-generated wrappers that have not yet been migrated.
 
 ## Re-run Code Generation
 

@@ -10,9 +10,9 @@ import com.intellij.driver.model.RdTarget
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-private const val PROBLEMS_VIEW_UI_MODULE: String = "intellij.problemView.plugin/intellij.platform.problemView.ui"
-private const val PROBLEMS_VIEW_FRONTEND_MODULE: String = "intellij.problemView.plugin/intellij.platform.problemView.frontend"
-private const val PROBLEMS_VIEW_BACKEND_MODULE: String = "intellij.problemView.plugin/intellij.platform.problemView.backend"
+private const val PROBLEMS_VIEW_UI_MODULE: String = "com.intellij.problemsView/intellij.platform.problemView.ui"
+private const val PROBLEMS_VIEW_FRONTEND_MODULE: String = "com.intellij.problemsView/intellij.platform.problemView.frontend"
+private const val PROBLEMS_VIEW_BACKEND_MODULE: String = "com.intellij.problemsView/intellij.platform.problemView.backend"
 
 const val HIGHLIGHTING_PANEL_ID: String = "CurrentFile"
 

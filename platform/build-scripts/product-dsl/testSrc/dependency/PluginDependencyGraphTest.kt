@@ -384,7 +384,7 @@ class PluginDependencyGraphTest {
     runBlocking(Dispatchers.Default) {
       val pluginModule = TargetName("intellij.platform.recentFiles.plugin")
       val info = pluginInfo(
-        pluginId = "intellij.recentFiles.plugin",
+        pluginId = "com.intellij.recentFiles",
         contentModules = listOf(
           ContentModuleInfo(
             moduleId = PluginModuleId("intellij.platform.recentFiles.frontend", PluginModuleId.DEFAULT_NAMESPACE),
@@ -397,7 +397,7 @@ class PluginDependencyGraphTest {
       builder.addPlugin(
         name = pluginModule,
         isTest = false,
-        pluginId = PluginId("intellij.recentFiles.plugin"),
+        pluginId = PluginId("com.intellij.recentFiles"),
       )
       builder.addPluginWithContent(pluginModule, info, emptySet())
 
@@ -405,7 +405,7 @@ class PluginDependencyGraphTest {
 
       graph.query {
         val plugin = requireNotNull(plugin(pluginModule.value))
-        assertThat(plugin.pluginId).isEqualTo(PluginId("intellij.recentFiles.plugin"))
+        assertThat(plugin.pluginId).isEqualTo(PluginId("com.intellij.recentFiles"))
         assertThat(plugin.isModuleSetWrapper).isTrue()
 
         val contentNames = mutableListOf<String>()

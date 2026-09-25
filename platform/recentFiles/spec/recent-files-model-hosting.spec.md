@@ -58,7 +58,7 @@ states the placement only. The IJPL UI group owns the plugin.
 
 ### Plugin layout
 
-- The plugin `intellij.recentFiles.plugin` must ship three content modules: `shared`, `backend`, and `frontend`.
+- The plugin `com.intellij.recentFiles` must ship three content modules: `shared`, `backend`, and `frontend`.
 - The module names stay `intellij.platform.recentFiles`, `intellij.platform.recentFiles.backend`,
   and `intellij.platform.recentFiles.frontend`.
 - The plugin must not declare a module named `intellij.platform.recentFiles.model`.
