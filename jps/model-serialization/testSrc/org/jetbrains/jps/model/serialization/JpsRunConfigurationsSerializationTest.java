@@ -29,17 +29,18 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
+import static org.jetbrains.jps.model.serialization.JpsModelFromTestData.getSerializationTestDataPath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class JpsRunConfigurationsSerializationTest {
   @Test
   public void testLoadIpr() {
-    doTest("jps/model-serialization/testData/run-configurations/run-configurations.ipr");
+    doTest(getSerializationTestDataPath("run-configurations/run-configurations.ipr"));
   }
 
   @Test
   public void testLoadDirectoryBased() {
-    doTest("jps/model-serialization/testData/run-configurations-dir");
+    doTest(getSerializationTestDataPath("run-configurations-dir"));
   }
 
   private void doTest(final String relativePath) {

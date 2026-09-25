@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
 import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
+import static org.jetbrains.jps.model.serialization.JpsModelFromTestData.getSerializationTestDataPath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -44,7 +45,7 @@ public class JpsRepositoryLibrarySerializationTest {
 
   @NotNull
   private JpsMavenRepositoryLibraryDescriptor loadLibrary(String name) {
-    JpsProjectData projectData = JpsProjectData.loadFromTestData("jps/model-serialization/testData/repositoryLibraries", getClass());
+    JpsProjectData projectData = JpsProjectData.loadFromTestData(getSerializationTestDataPath("repositoryLibraries"), getClass());
     JpsLibrary library = projectData.getProject().getLibraryCollection().findLibrary(name);
     assertNotNull(library);
     assertSame(JpsRepositoryLibraryType.INSTANCE, library.getType());

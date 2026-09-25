@@ -1,13 +1,29 @@
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
 jps_test(
     name = "model-serialization-tests_test",
     timeout = "short",
+    data = [
+        ":testData",
+        BAZEL_TARGETS_JSON,
+    ],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
+    ],
     tags = ["community-compiler-test"],
     runtime_deps = [":model-serialization-tests_test_lib"],
 )
 ### skip generation section `test intellij.platform.jps.model.serialization.tests`
+
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
 
 ### auto-generated section `build intellij.platform.jps.model.serialization` start
 jvm_library(
@@ -132,6 +148,8 @@ jvm_library(
         "//libraries/assertj-core:assertj-core_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/bazel-runfiles",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
         "//platform/util/jdom",
         "//platform/util/jdom:jdom_test_lib",
         "//platform/projectModel-impl",

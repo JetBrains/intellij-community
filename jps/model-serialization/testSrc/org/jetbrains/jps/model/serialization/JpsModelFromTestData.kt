@@ -3,15 +3,28 @@
 package org.jetbrains.jps.model.serialization
 
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.platform.bazel.runfiles.BazelLabel
+import com.intellij.testFramework.common.BazelTestUtil
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.invariantSeparatorsPathString
+
+fun getSerializationTestDataPath(relativePath: String): String {
+  val root = if (BazelTestUtil.isUnderBazelTest) {
+    BazelTestUtil.getFileFromBazelRuntime(BazelLabel.fromString("@community//jps/model-serialization:testData"))
+  }
+  else {
+    PathManagerEx.findFileUnderCommunityHome("jps/model-serialization/testData").toPath()
+  }
+  return root.resolve(relativePath).absolutePathString()
+}
 
 class JpsProjectData private constructor(relativeProjectPath: String, externalConfigurationRelativePath: String?, testClass: Class<*>, 
                                          pathVariables: Map<String, String>) {
@@ -57,4 +70,3 @@ fun loadGlobalSettings(relativeOptionsPath: String, testClass: Class<*>, additio
   JpsGlobalSettingsLoading.loadGlobalSettings(model.global, optionsPath)
   return model
 }
-

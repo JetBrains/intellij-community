@@ -18,13 +18,14 @@ package org.jetbrains.jps.model;
 import org.jetbrains.jps.model.serialization.JpsProjectData;
 import org.junit.jupiter.api.Test;
 
+import static org.jetbrains.jps.model.serialization.JpsModelFromTestData.getSerializationTestDataPath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class JpsEncodingConfigurationServiceTest {
   @Test
   public void test() {
-    JpsProjectData projectData = JpsProjectData.loadFromTestData("jps/model-serialization/testData/fileEncoding/fileEncoding.ipr", getClass());
+    JpsProjectData projectData = JpsProjectData.loadFromTestData(getSerializationTestDataPath("fileEncoding/fileEncoding.ipr"), getClass());
     JpsEncodingProjectConfiguration configuration = JpsEncodingConfigurationService.getInstance().getEncodingConfiguration(projectData.getProject());
     assertNotNull(configuration);
     assertEncoding("windows-1251", "dir/a.txt", configuration, projectData);
