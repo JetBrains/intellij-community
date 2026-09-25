@@ -147,6 +147,15 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     updateState();
   }
 
+  /**
+   * The user has declined the build: it is never announced again, and the toolbar button stops announcing it right away.
+   */
+  static void skipUpdate(@NotNull PlatformUpdates.Loaded platformUpdateInfo) {
+    UpdateSettings.getInstance().getIgnoredBuildNumbers()
+      .add(platformUpdateInfo.getNewBuild().getNumber().asStringWithoutProductCode());
+    clearPlatformUpdateInfo();
+  }
+
   public static void newPlatformUpdate(@NotNull PlatformUpdates.Loaded platformUpdateInfo,
                                        @NotNull List<PluginUiModel> updatesForPlugins,
                                        @NotNull List<String> incompatiblePluginNames,

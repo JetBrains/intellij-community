@@ -253,8 +253,7 @@ internal class WhatsNewAction : UpdatePopupAction() {
 internal class SkipThisUpdateAction : UpdatePopupAction() {
 
   override fun actionPerformed(e: AnActionEvent, update: PlatformUpdates.Loaded) {
-    UpdateSettings.getInstance().ignoredBuildNumbers.add(update.newBuild.number.asStringWithoutProductCode())
-    UpdateSettingsEntryPointActionProvider.clearUpdatesInfo()
+    UpdateSettingsEntryPointActionProvider.skipUpdate(update)
   }
 }
 
