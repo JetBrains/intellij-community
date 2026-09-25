@@ -68,12 +68,14 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -84,6 +86,14 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotator.State, Pep8ExternalAnnotator.Results> {
   // Taken directly from the sources of pycodestyle.py
   private static final String DEFAULT_IGNORED_ERRORS = "E121,E123,E126,E226,E24,E704,W503,W504";
+
+  /**
+   * {@code PYTHONUTF8} keeps PY-37054 fixed. The helper reads stdin with {@code io.TextIOWrapper} and no explicit
+   * encoding, so it falls back to the locale encoding. That is the ANSI code page on Windows, and then {@code E501}
+   * counts UTF-8 bytes instead of characters. UTF-8 mode makes that fallback UTF-8, and it also makes the helper write
+   * the report in UTF-8.
+   */
+  private static final Map<String, String> PYCODESTYLE_ENV = ImmutableMap.of("PYTHONBUFFERED", "1", "PYTHONUTF8", "1");
   private static final Logger LOG = Logger.getInstance(Pep8ExternalAnnotator.class);
   private static final Pattern E303_LINE_COUNT_PATTERN = Pattern.compile(".*\\((\\d+)\\)$");
 
@@ -214,6 +224,23 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
                      customSettings.HANG_CLOSING_BRACKETS);
   }
 
+  /**
+   * Selects the bundled pycodestyle copy that {@code level} can run.
+   * <p>
+   * {@code pycodestyle.py} is 2.14.0. It calls {@code keyword.issoftkeyword}, which Python adds in 3.9.
+   * The two older copies guard that call with a version check, so they also run on an older interpreter.
+   */
+  @VisibleForTesting
+  static @NotNull PythonHelper selectPycodestyleHelper(@NotNull LanguageLevel level) {
+    if (level.isOlderThan(LanguageLevel.PYTHON36)) {
+      return PythonHelper.PYCODESTYLE_2_8_0;
+    }
+    if (level.isOlderThan(LanguageLevel.PYTHON39)) {
+      return PythonHelper.PYCODESTYLE_2_10_0;
+    }
+    return PythonHelper.PYCODESTYLE;
+  }
+
   private static void reportMissingInterpreter() {
     LOG.info("Found no suitable interpreter to run pycodestyle.py. Available interpreters are: [");
     List<Sdk> allSdks = ContainerUtil.sorted(PythonSdkUtil.getAllSdks(), PreferredSdkComparator.INSTANCE);
@@ -237,20 +264,11 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
     options.add("--max-line-length=" + collectedInfo.margin);
     options.add("-");
 
-    PythonHelper pycodestyleScript;
-    if (collectedInfo.interpreterVersion.isOlderThan(LanguageLevel.PYTHON36)) {
-      pycodestyleScript = PythonHelper.PYCODESTYLE_2_8_0;
-    }
-    else if (collectedInfo.interpreterVersion.isOlderThan(LanguageLevel.PYTHON38)) {
-      pycodestyleScript = PythonHelper.PYCODESTYLE_2_10_0;
-    }
-    else {
-      pycodestyleScript = PythonHelper.PYCODESTYLE;
-    }
+    PythonHelper pycodestyleScript = selectPycodestyleHelper(collectedInfo.interpreterVersion);
     GeneralCommandLine cmd = pycodestyleScript.newCommandLine(collectedInfo.interpreterPath, options);
 
     ProcessOutput output = PySdkUtil.getProcessOutput(cmd, new File(collectedInfo.interpreterPath).getParent(),
-                                                      ImmutableMap.of("PYTHONBUFFERED", "1"),
+                                                      PYCODESTYLE_ENV,
                                                       10000,
                                                       collectedInfo.fileText.getBytes(StandardCharsets.UTF_8), false);
 
