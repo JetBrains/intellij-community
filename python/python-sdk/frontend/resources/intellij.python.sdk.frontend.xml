@@ -22,9 +22,30 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
+    <!--
+      Anchored on the platform's own widget, which is the only one of the three this widget sits among that is an
+      extension point in *this* process.
+
+      `after pythonInterpreterWidget, before pythonDependencyFileWidget` named neither. Both are registered by backend
+      modules, so in split mode they reach the frontend over RPC (`BackendStatusBarHost` → `FrontendStatusBarModelListener`)
+      rather than as EPs — and `sortRightWidgets` only stands in for an *EP* that has no widget, so nothing here could
+      resolve either id and the widget sorted as `ANY`, landing at the far left of the status bar (PY-92487).
+
+      `pythonInterpreterWidget` was the wrong anchor in monolith too: it is the classic widget, and it disables itself
+      whenever this one is enabled (`PySdkStatusBarWidgetFactory.isAvailable`). The placement only held there because a
+      registered-but-disabled EP still gets a placeholder in the sort.
+
+      `CodeStyleStatusBarWidget` (intellij.platform.lang.impl) is loaded in both processes, which is why the classic
+      widget and `pythonTypeEngineWidget` anchor on it as well. Staying before `git`/`hg`/`Notifications` keeps this
+      widget in the same band as the Python widgets it belongs with.
+
+      `before pythonDependencyFileWidget` is kept alongside it, so the order the two Python widgets are drawn in is
+      still stated where both are EPs. An id that names nothing contributes no edge to the sort, so it costs the
+      frontend nothing to carry.
+    -->
     <statusBarWidgetFactory id="EvoPySdkStatusBarWidget"
                             implementation="com.intellij.python.sdk.frontend.evolution.PySdkStatusBarWidgetFactory"
-                            order="after pythonInterpreterWidget, before pythonDependencyFileWidget"/>
+                            order="after CodeStyleStatusBarWidget, before pythonDependencyFileWidget, before git, before hg, before Notifications"/>
     <!-- Evo widget registry keys live in intellij.python.sdk.common.xml (registered in both frontend and backend). -->
   </extensions>
 </idea-plugin>
