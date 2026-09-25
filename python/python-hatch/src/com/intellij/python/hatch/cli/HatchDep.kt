@@ -3,6 +3,8 @@ package com.intellij.python.hatch.cli
 
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.cliArg
+import com.intellij.python.pytools.backend.runtime.cliArgs
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.add.v2.PathHolder
 
@@ -39,15 +41,21 @@ class HatchDepShow<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>(arr
    * @param features only show the dependencies of the specified features
    */
   suspend fun requirements(scope: Scope = Scope.All, features: List<String>? = null): PyResult<String> {
-    val options = features?.flatMap { listOf("--feature", it) }?.toTypedArray() ?: arrayOf("--all")
-    return executeAndHandleErrors("requirements", *scope.options, *options, transformer = ZeroCodeStdoutTransformer)
+    val arguments = cliArgs(
+      scope.options.asList(),
+      features?.flatMap { listOf("--feature", it) } ?: listOf("--all"),
+    )
+    return executeAndHandleErrors("requirements", *arguments, transformer = ZeroCodeStdoutTransformer)
   }
 
   /**
    * Enumerate dependencies in a tabular format.
    */
   suspend fun table(scope: Scope = Scope.All): PyResult<String> {
-    val options = listOf(null to "--lines", true to "--ascii").makeOptions()
-    return executeAndHandleErrors("table", *scope.options, *options, transformer = ZeroCodeStdoutTransformer)
+    val arguments = cliArgs(
+      scope.options.asList(),
+      cliArg("--ascii"),
+    )
+    return executeAndHandleErrors("table", *arguments, transformer = ZeroCodeStdoutTransformer)
   }
 }

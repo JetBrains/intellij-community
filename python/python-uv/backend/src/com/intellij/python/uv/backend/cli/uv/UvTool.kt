@@ -3,6 +3,8 @@ package com.intellij.python.uv.backend.cli.uv
 
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.cliArg
+import com.intellij.python.pytools.backend.runtime.cliArgs
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.mapResult
@@ -27,8 +29,11 @@ class UvTool(runtime: PyToolRuntime) : UvCommand("tool", runtime) {
    *  otherwise, and `uv tool upgrade` is bounded by the original constraints so it cannot help).
    */
   suspend fun install(name: String, reinstall: Boolean = false): PyResult<String> {
-    val options = listOf(reinstall to "--reinstall").makeOptions()
-    return executeAndHandleErrors("install", name, *options, transformer = ZeroCodeStdoutTransformer)
+    val arguments = cliArgs(
+      cliArg(name),
+      cliArg("--reinstall".takeIf { reinstall }),
+    )
+    return executeAndHandleErrors("install", *arguments, transformer = ZeroCodeStdoutTransformer)
   }
 
   /**
@@ -51,12 +56,12 @@ class UvTool(runtime: PyToolRuntime) : UvCommand("tool", runtime) {
    * several). Paths may contain spaces, so the parenthesized tails are matched greedily.
    */
   suspend fun list(showVersionSpecifiers: Boolean = false, showPaths: Boolean = false, outdated: Boolean = false): PyResult<List<UvToolListResult>> {
-    val options = listOf(
-      showVersionSpecifiers to "--show-version-specifiers",
-      showPaths to "--show-paths",
-      outdated to "--outdated",
-    ).makeOptions()
-    val stdout = executeAndHandleErrors("list", *options, transformer = ZeroCodeStdoutTransformer).getOr { return it }
+    val arguments = cliArgs(
+      cliArg("--show-version-specifiers".takeIf { showVersionSpecifiers }),
+      cliArg("--show-paths".takeIf { showPaths }),
+      cliArg("--outdated".takeIf { outdated }),
+    )
+    val stdout = executeAndHandleErrors("list", *arguments, transformer = ZeroCodeStdoutTransformer).getOr { return it }
 
     val headerRegex = Regex("""^(\S+) v(\S+)(?: \[latest:\s*(\S+)])?(?: \((.+)\))?$""")
     val entryPointRegex = Regex("""^-\s+(\S+)\s+\((.+)\)$""")
@@ -111,8 +116,10 @@ class UvTool(runtime: PyToolRuntime) : UvCommand("tool", runtime) {
    * executables are placed on `PATH`. uv prints a single path line, parsed here into a [Path].
    */
   suspend fun dir(bin: Boolean = false): PyResult<Path> {
-    val options = listOf(bin to "--bin").makeOptions()
-    val output = executeAndHandleErrors("dir", *options, transformer = ZeroCodeStdoutTransformer).getOr { return it }
+    val arguments = cliArgs(
+      cliArg("--bin".takeIf { bin }),
+    )
+    val output = executeAndHandleErrors("dir", *arguments, transformer = ZeroCodeStdoutTransformer).getOr { return it }
     return Result.success(Path.of(output.trim()))
   }
 }

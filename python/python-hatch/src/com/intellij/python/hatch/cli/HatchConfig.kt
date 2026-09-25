@@ -3,6 +3,8 @@ package com.intellij.python.hatch.cli
 
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.cliArg
+import com.intellij.python.pytools.backend.runtime.cliArgs
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.add.v2.PathHolder
 
@@ -44,8 +46,10 @@ class HatchConfig<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("con
    * @param all Do not scrub secret fields
    */
   suspend fun show(all: Boolean? = null): PyResult<String> {
-    val options = listOf(all to "--all").makeOptions()
-    return executeAndHandleErrors("show", *options, transformer = ZeroCodeStdoutTransformer)
+    val arguments = cliArgs(
+      cliArg("--all".takeIf { all == true }),
+    )
+    return executeAndHandleErrors("show", *arguments, transformer = ZeroCodeStdoutTransformer)
   }
 
   /**

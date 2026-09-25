@@ -53,3 +53,29 @@ suspend fun <T> PyToolRuntime.executeAndMatch(
     }
   }
 }
+
+// Builders for the arguments of a tool's command line. Each returns the tokens one argument contributes — none when
+// the caller left it unset — and `cliArgs` concatenates them into the array the runtime takes, so that every
+// parameter of a command occupies one line of the call, in the order the command's signature declares it.
+
+/**
+ * One token, passed when [value] is not null — a switch, `cliArg("--bare".takeIf { bare })`, or a positional value,
+ * `cliArg(projectName)`.
+ *
+ * Taking the token rather than a name and a boolean keeps one builder for every switch, including a set of mutually
+ * exclusive ones modelled as an enum of flags — `cliArg(kind?.flag)` — where "which one" and "whether any" are one
+ * question.
+ */
+fun cliArg(value: Any?): List<String> = listOfNotNull(value?.toString())
+
+/** An option and its value, passed together when [value] is not null, and both dropped when it is. */
+fun cliOption(name: String, value: Any?): List<String> = if (value == null) emptyList() else listOf(name, value.toString())
+
+/**
+ * Renders [cliArgs] into the token array the runtime takes.
+ *
+ * An argument the caller left unset contributes nothing, which is not the same as naming the tool's default: those
+ * are the tool's own and can change between releases — `uv init` creates a git repository when `--vcs` is absent — so
+ * a caller that must have the other behaviour passes the opposing value rather than leaving the argument out.
+ */
+fun cliArgs(vararg cliArgs: List<String>): Array<String> = cliArgs.flatMap { it }.toTypedArray()

@@ -8,6 +8,8 @@ import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.hatch.runtime.HatchConstants
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.cliArg
+import com.intellij.python.pytools.backend.runtime.cliArgs
 import com.intellij.python.pytools.backend.runtime.executeAndHandleErrors
 import com.intellij.python.pytools.backend.runtime.executeAndMatch
 import com.jetbrains.python.Result
@@ -183,12 +185,12 @@ suspend fun HatchCli<PathHolder.Eel>.new(
   location: Path? = null,
   initExistingProject: Boolean = false,
 ): PyResult<String> {
-  val options = listOf(
-    initExistingProject to "--init",
-    true to projectName,
-    (location != null) to location,
-  ).makeOptions()
-  return runtime.executeInteractive("new", *options) { eelProcess, _ ->
+  val arguments = cliArgs(
+    cliArg("--init".takeIf { initExistingProject }),
+    cliArg(projectName),
+    cliArg(location),
+  )
+  return runtime.executeInteractive("new", *arguments) { eelProcess, _ ->
     if (initExistingProject) {
       try {
         eelProcess.sendWholeText("$projectName\n")
@@ -201,12 +203,3 @@ suspend fun HatchCli<PathHolder.Eel>.new(
   }
 }
 
-
-internal fun List<Pair<Boolean?, *>>.makeOptions(): Array<String> {
-  return this.mapNotNull { (flag, option) ->
-    when (flag) {
-      true -> option.toString()
-      else -> null
-    }
-  }.toTypedArray()
-}

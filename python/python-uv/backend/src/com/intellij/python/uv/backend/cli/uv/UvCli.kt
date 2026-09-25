@@ -5,6 +5,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.cliArg
+import com.intellij.python.pytools.backend.runtime.cliArgs
+import com.intellij.python.pytools.backend.runtime.cliOption
 import com.intellij.python.pytools.backend.runtime.executeAndHandleErrors
 import com.intellij.python.pytools.backend.runtime.executeAndMatch
 import com.jetbrains.python.Result
@@ -74,13 +77,18 @@ class UvCli(private val runtime: PyToolRuntime) {
    *   knows the version the user asked for must name it here, or the project is pinned to something else. uv only
    *   records the request, so a version it has yet to download is accepted.
    */
-  suspend fun init(name: String? = null, bare: Boolean = false, kind: UvInitKind? = null, python: String? = null): PyResult<String> {
-    val arguments = buildList {
-      if (bare) add("--bare")
-      kind?.let { add(it.flag) }
-      python?.let { addAll(listOf("--python", it)) }
-      if (name != null) add(name)
-    }.toTypedArray()
+  suspend fun init(
+    name: String? = null,
+    bare: Boolean = false,
+    kind: UvInitKind? = null,
+    python: String? = null,
+  ): PyResult<String> {
+    val arguments = cliArgs(
+      cliArg("--bare".takeIf { bare }),
+      cliArg(kind?.flag),
+      cliOption("--python", python),
+      cliArg(name), // uv takes the project name by position, so it goes after every named argument.
+    )
     return runtime.executeAndHandleErrors("init", *arguments, transformer = ZeroCodeStdoutTransformer)
   }
 
@@ -110,8 +118,11 @@ class UvCli(private val runtime: PyToolRuntime) {
    * Update the project's environment
    */
   suspend fun sync(frozen: Boolean? = null, locked: Boolean? = null): PyResult<String> {
-    val options = listOf(frozen to "--frozen", locked to "--locked").makeOptions()
-    return runtime.executeAndHandleErrors("sync", *options, transformer = ZeroCodeStdoutTransformer)
+    val arguments = cliArgs(
+      cliArg("--frozen".takeIf { frozen == true }),
+      cliArg("--locked".takeIf { locked == true }),
+    )
+    return runtime.executeAndHandleErrors("sync", *arguments, transformer = ZeroCodeStdoutTransformer)
   }
 
   /**
@@ -183,11 +194,3 @@ class UvCli(private val runtime: PyToolRuntime) {
 }
 
 
-internal fun List<Pair<Boolean?, *>>.makeOptions(): Array<String> {
-  return this.mapNotNull { (flag, option) ->
-    when (flag) {
-      true -> option.toString()
-      else -> null
-    }
-  }.toTypedArray()
-}

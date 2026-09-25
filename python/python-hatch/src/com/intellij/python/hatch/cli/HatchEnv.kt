@@ -7,6 +7,8 @@ import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.hatch.PyHatchBundle
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.cliArg
+import com.intellij.python.pytools.backend.runtime.cliArgs
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.PyResult
@@ -243,9 +245,13 @@ class HatchEnv<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("env", 
    * - An error wrapped in [ExecError] if an execution failure occurs.
    */
   suspend fun show(vararg envs: String, internal: Boolean = false): PyResult<HatchEnvironments> {
-    val options = listOf(internal to "--internal").makeOptions()
+    val arguments = cliArgs(
+      cliArg("--ascii"),
+      cliArg("--internal".takeIf { internal }),
+      envs.asList(),
+    )
 
-    return executeAndMatch("show", "--ascii", *options, *envs, expectedOutput = SHOW_RESPONSE_REGEX) { matchResult ->
+    return executeAndMatch("show", *arguments, expectedOutput = SHOW_RESPONSE_REGEX) { matchResult ->
       val (standaloneTable, matricesTable) = matchResult.destructured
       val standalone = standaloneTable.parseAsciiTable()?.parseHatchEnvironments()?.map { it.first } ?: emptyList()
       val matrices = matricesTable.parseAsciiTable()?.parseHatchEnvironments()?.mapNotNull {

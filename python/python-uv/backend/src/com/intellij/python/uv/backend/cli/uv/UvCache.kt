@@ -3,6 +3,8 @@ package com.intellij.python.uv.backend.cli.uv
 
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.cliArg
+import com.intellij.python.pytools.backend.runtime.cliArgs
 import com.jetbrains.python.errorProcessing.PyResult
 
 /**
@@ -21,8 +23,10 @@ class UvCache(runtime: PyToolRuntime) : UvCommand("cache", runtime) {
    * Prune all unreachable objects from the cache
    */
   suspend fun prune(ciFriendly: Boolean? = null): PyResult<String> {
-    val options = listOf(ciFriendly to "--ci").makeOptions()
-    return executeAndHandleErrors("prune", *options, transformer = ZeroCodeStdoutTransformer)
+    val arguments = cliArgs(
+      cliArg("--ci".takeIf { ciFriendly == true }),
+    )
+    return executeAndHandleErrors("prune", *arguments, transformer = ZeroCodeStdoutTransformer)
   }
 
   /**

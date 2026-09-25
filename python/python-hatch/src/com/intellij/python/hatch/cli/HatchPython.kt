@@ -7,6 +7,9 @@ import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.hatch.cli.HatchPython.PythonInstallResponse.AbortReason
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.cliArg
+import com.intellij.python.pytools.backend.runtime.cliArgs
+import com.intellij.python.pytools.backend.runtime.cliOption
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.add.v2.PathHolder
@@ -28,9 +31,13 @@ class HatchPython<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("pyt
    * @param dir The directory in which distributions reside
    */
   suspend fun find(name: String, parent: Boolean? = null, dir: String? = null): PyResult<Path?> {
-    val options = listOf(parent to "--parent").makeOptions() + buildDirOption(dir)
+    val arguments = cliArgs(
+      cliArg("--parent".takeIf { parent == true }),
+      cliOption("--dir", dir),
+      cliArg(name),
+    )
 
-    return executeAndHandleErrors("find", *options, name) { output ->
+    return executeAndHandleErrors("find", *arguments) { output ->
       when {
         output.exitCode == 1 && output.stderrString.contains("Distribution not installed: $name") -> Result.success(null)
         output.exitCode != 0 -> Result.failure(null)
@@ -131,8 +138,13 @@ class HatchPython<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("pyt
     update: Boolean? = null,
     dir: String? = null,
   ): PyResult<PythonInstallResponse> {
-    val options = listOf(update to "--update", private to "--private").makeOptions() + buildDirOption(dir)
-    return executeAndHandleErrors("install", *options, *names) { output ->
+    val arguments = cliArgs(
+      cliArg("--update".takeIf { update == true }),
+      cliArg("--private".takeIf { private == true }),
+      cliOption("--dir", dir),
+      names.asList(),
+    )
+    return executeAndHandleErrors("install", *arguments) { output ->
       Result.success(parsePythonInstallCommandOutput(output))
     }
   }
@@ -146,7 +158,11 @@ class HatchPython<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("pyt
    * @param dir The directory in which distributions reside
    */
   suspend fun remove(vararg names: String = ALL_NAMES, dir: String? = null): PyResult<PythonRemoveResponse> {
-    return executeAndHandleErrors("remove", *buildDirOption(dir), *names) { processOutput ->
+    val arguments = cliArgs(
+      cliOption("--dir", dir),
+      names.asList(),
+    )
+    return executeAndHandleErrors("remove", *arguments) { processOutput ->
       val output = processOutput.stderrString
       val notInstalledRegex = Regex("""^Distribution is not installed: (.*)$""", RegexOption.MULTILINE)
       val notInstalled = notInstalledRegex.findAll(output).map { it.destructured.component1() }.toList()
@@ -183,7 +199,11 @@ class HatchPython<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("pyt
 
     val expectedOutput = """^(?:\s*Installed\s*\n$tableRegex)?\s*Available\s*\n$tableRegex$""".toRegex(RegexOption.MULTILINE)
 
-    return executeAndMatch("show", "--ascii", *buildDirOption(dir), expectedOutput = expectedOutput) { matchResult ->
+    val arguments = cliArgs(
+      cliArg("--ascii"),
+      cliOption("--dir", dir),
+    )
+    return executeAndMatch("show", *arguments, expectedOutput = expectedOutput) { matchResult ->
       matchResult.destructured.let { (installedTable, availableTable) ->
         ShowResponse(
           parseNameToVersions(installedTable),
@@ -202,10 +222,13 @@ class HatchPython<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("pyt
    * @param dir The directory in which distributions reside
    */
   suspend fun update(vararg names: String = ALL_NAMES, dir: String? = null): PyResult<PythonInstallResponse> {
-    return executeAndHandleErrors("update", *buildDirOption(dir), *names) { output ->
+    val arguments = cliArgs(
+      cliOption("--dir", dir),
+      names.asList(),
+    )
+    return executeAndHandleErrors("update", *arguments) { output ->
       Result.success(parsePythonInstallCommandOutput(output))
     }
   }
 
-  private fun buildDirOption(dir: String?): Array<String> = dir?.let { arrayOf("--dir", it) } ?: emptyArray()
 }

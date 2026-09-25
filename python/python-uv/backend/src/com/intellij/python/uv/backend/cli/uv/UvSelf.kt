@@ -5,6 +5,8 @@ import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.cliArg
+import com.intellij.python.pytools.backend.runtime.cliArgs
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 
@@ -20,17 +22,21 @@ class UvSelf(runtime: PyToolRuntime) : UvCommand("self", runtime) {
    * @param dryRun Passes `--dry-run`: report what the update would do and change nothing.
    */
   suspend fun update(targetVersion: String? = null, dryRun: Boolean = false): PyResult<UvSelfUpdateResult> {
-    val arguments = if (targetVersion == null) emptyArray() else arrayOf(targetVersion)
-    val options = listOf(dryRun to "--dry-run").makeOptions()
-    return executeAndHandleErrors("update", *arguments, *options, transformer = SELF_UPDATE_TRANSFORMER)
+    val arguments = cliArgs(
+      cliArg(targetVersion),
+      cliArg("--dry-run".takeIf { dryRun }),
+    )
+    return executeAndHandleErrors("update", *arguments, transformer = SELF_UPDATE_TRANSFORMER)
   }
 
   /**
    * Display uv's version
    */
   suspend fun version(short: Boolean? = null): PyResult<String> {
-    val options = listOf(short to "--short").makeOptions()
-    return executeAndHandleErrors("version", *options, transformer = ZeroCodeStdoutTransformer)
+    val arguments = cliArgs(
+      cliArg("--short".takeIf { short == true }),
+    )
+    return executeAndHandleErrors("version", *arguments, transformer = ZeroCodeStdoutTransformer)
   }
 }
 
