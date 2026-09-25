@@ -3,9 +3,11 @@ package org.jetbrains.jps.ant
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.bazel.runfiles.BazelLabel
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.UsefulTestCase.assertContainsElements
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
+import com.intellij.testFramework.common.BazelTestUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.FileCollectionFactory
 import com.intellij.util.io.directoryContent
@@ -85,7 +87,8 @@ class JpsAntSerializationTest {
   fun testLoadAntConfiguration() {
     val projectData = JpsProjectData.loadFromTestData(PROJECT_PATH, javaClass)
     val model = projectData.project.model
-    loadGlobalSettings(model.global, Path(PathManagerEx.getCommunityHomePath()).resolve(OPTIONS_PATH))
+    loadGlobalSettings(model.global, Path(OPTIONS_PATH))
+    //loadGlobalSettings(model.global, Path(PathManagerEx.getCommunityHomePath()).resolve(OPTIONS_PATH))
     val buildXmlUrl = projectData.getUrl("build.xml")
     val options = JpsAntExtensionService.getOptions(projectData.project, buildXmlUrl)
     assertEquals(128, options.maxHeapSize)
@@ -112,8 +115,20 @@ class JpsAntSerializationTest {
   }
 
   companion object {
-    const val PROJECT_PATH = "plugins/ant/jps-plugin/testData/ant-project"
-    const val OPTIONS_PATH = "plugins/ant/jps-plugin/testData/config/options"
+    val PROJECT_PATH = if (BazelTestUtil.isUnderBazelTest) {
+      val label = BazelLabel.fromString("@community//plugins/ant/jps-plugin:testData")
+      BazelTestUtil.getFileFromBazelRuntime(label).resolve("ant-project").absolutePathString()
+    }
+    else {
+      Path(PathManagerEx.getCommunityHomePath()).resolve("plugins/ant/jps-plugin/testData/ant-project").absolutePathString()
+    }
+    val OPTIONS_PATH = if (BazelTestUtil.isUnderBazelTest) {
+      val label = BazelLabel.fromString("@community//plugins/ant/jps-plugin:testData")
+      BazelTestUtil.getFileFromBazelRuntime(label).resolve("config/options").absolutePathString()
+    }
+    else {
+      Path(PathManagerEx.getCommunityHomePath()).resolve("plugins/ant/jps-plugin/testData/config/options").absolutePathString()
+    }
 
     private fun toFiles(classpath: List<String>): Set<File> {
       val result = FileCollectionFactory.createCanonicalFileSet()

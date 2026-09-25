@@ -1,9 +1,24 @@
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+)
+
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
 jps_test(
     name = "jps-tests_test",
     timeout = "short",
+    data = [
+        ":testData",
+        BAZEL_TARGETS_JSON,
+    ],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
+    ],
     tags = ["community-compiler-test"],
     runtime_deps = [":jps-tests_test_lib"],
 )
@@ -118,6 +133,8 @@ jvm_library(
         "//jps/jps-builders:build-tests_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/bazel-runfiles",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
         "//platform/util/base",
         "//platform/util/base:base_test_lib",
         "@lib//:kotlin-stdlib",

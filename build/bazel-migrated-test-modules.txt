@@ -4,6 +4,7 @@
 
 language-server.*
 intellij.air.frontend.session.view.tests
+intellij.ant.jps.tests
 intellij.ant.tests
 intellij.commander.tests
 intellij.completionMlRanking.tests
