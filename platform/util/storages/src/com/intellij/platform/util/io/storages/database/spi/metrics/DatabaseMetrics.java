@@ -4,6 +4,8 @@ package com.intellij.platform.util.io.storages.database.spi.metrics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.StringJoiner;
+
 /// An immutable snapshot of the database state and the events from the current session
 @ApiStatus.Internal
 public record DatabaseMetrics(@NotNull CatalogMetrics catalog,
@@ -14,6 +16,54 @@ public record DatabaseMetrics(@NotNull CatalogMetrics catalog,
     new ChunksMetrics(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
     new BlocksMetrics(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
   );
+
+  public boolean hasRecoveryEvents() {
+    return catalog.catalogLogRecoveries() > 0 ||
+           chunks.statesReconciled() > 0 ||
+           chunks.tailsRolledBack() > 0 ||
+           chunks.filesDeleted() > 0 ||
+           blocks.incompleteBlocksDiscarded() > 0 ||
+           blocks.droppedStoreBlocksRetired() > 0 ||
+           blocks.staleBlockCopiesRetired() > 0;
+  }
+
+  public @NotNull String recoverySummary() {
+    var summary = new StringJoiner(", ");
+    addIfPositive(summary, "catalogLogRecoveries", catalog.catalogLogRecoveries());
+    addIfPositive(summary, "chunkStatesReconciled", chunks.statesReconciled());
+    addIfPositive(summary, "chunkTailsRolledBack", chunks.tailsRolledBack());
+    addIfPositive(summary, "chunkTailBytesRolledBack", chunks.tailBytesRolledBack());
+    addIfPositive(summary, "incompleteBlocksDiscarded", blocks.incompleteBlocksDiscarded());
+    addIfPositive(summary, "droppedStoreBlocksRetired", blocks.droppedStoreBlocksRetired());
+    addIfPositive(summary, "staleBlockCopiesRetired", blocks.staleBlockCopiesRetired());
+    addIfPositive(summary, "orphanChunkFilesDeleted", chunks.filesDeleted());
+    return summary.toString();
+  }
+
+  public @NotNull String lifecycleSummary() {
+    var summary = new StringJoiner(", ");
+    addIfPositive(summary, "storesCreated", catalog.storesCreated());
+    addIfPositive(summary, "storesDropped", catalog.storesDropped());
+    addIfPositive(summary, "chunksCreated", chunks.created());
+    addIfPositive(summary, "chunksOpened", chunks.opened());
+    addIfPositive(summary, "chunksSealed", chunks.sealed());
+    addIfPositive(summary, "chunksRetired", chunks.retired());
+    addIfPositive(summary, "chunksReleased", chunks.released());
+    addIfPositive(summary, "blocksAllocated", blocks.allocated());
+    addIfPositive(summary, "blocksActivated", blocks.activated());
+    addIfPositive(summary, "blocksDiscarded", blocks.discarded());
+    addIfPositive(summary, "blocksSealed", blocks.sealed());
+    addIfPositive(summary, "blocksRetired", blocks.retired());
+    addIfPositive(summary, "blocksEvacuated", blocks.evacuated());
+    return summary.toString();
+  }
+
+  private static void addIfPositive(@NotNull StringJoiner summary, @NotNull String name, long value) {
+    if (value > 0) {
+      summary.add(name + "=" + value);
+    }
+  }
+
   public record CatalogMetrics(
     int storesTotal,
     int storesCreated,       // Stores created during the current session

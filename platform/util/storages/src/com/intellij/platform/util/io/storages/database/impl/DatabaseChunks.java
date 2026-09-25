@@ -244,6 +244,10 @@ final class DatabaseChunks implements Closeable, Flushable {
     return databaseCatalog.chunkSize();
   }
 
+  @NotNull Path databaseDirectory() {
+    return databaseDirectory;
+  }
+
   private void openRegisteredChunks() throws IOException {
     synchronized (lock) {
       for (var chunkInfo : databaseCatalog.chunks()) {
@@ -282,7 +286,8 @@ final class DatabaseChunks implements Closeable, Flushable {
           if (chunk.state() == ACTIVE) {
             activeChunks.addLast(chunk);
           }
-          LOG.info("Opened chunk " + chunkInfo.chunkId() + " (" + chunk.state() + "): " + chunkPath);
+          LOG.info("Opened chunk #" + chunkInfo.chunkId() + " (" + chunk.state() + "), " +
+                   chunk.blocks().size() + " blocks, [" + chunkPath + "]");
         }
       }
       if (activeChunks.size() > MAX_ACTIVE_CHUNKS) {
@@ -315,7 +320,10 @@ final class DatabaseChunks implements Closeable, Flushable {
     }
     databaseCatalog.flush();
     chunkStatesReconciled++;
-    LOG.info("Recovered chunk " + chunkInfo.chunkId() + " state " + headerState + ": " + chunk.storagePath());
+    LOG.debug(
+      "Chunk #" + chunkInfo.chunkId() + ": recovered state {catalog(=" + chunkInfo.state() + ") <> header(=" + headerState + ")} " +
+      chunk.storagePath()
+    );
   }
 
   /// Removes files that have chunk-like names, but are not registered in the catalog
@@ -335,7 +343,7 @@ final class DatabaseChunks implements Closeable, Flushable {
               Files.isRegularFile(file)) {
             if (Files.deleteIfExists(file)) {
               chunkFilesDeleted++;
-              LOG.info("Deleted unregistered chunk " + chunkId + ": " + file);
+              LOG.debug("Deleted unregistered chunk " + chunkId + ": " + file);
             }
           }
         }
@@ -365,7 +373,7 @@ final class DatabaseChunks implements Closeable, Flushable {
           var file = chunkPath(databaseDirectory, chunkId);
           if (Files.deleteIfExists(file)) {
             chunkFilesDeleted++;
-            LOG.info("Deleted retired chunk " + chunkId + ": " + file);
+            LOG.debug("Deleted retired chunk " + chunkId + ": " + file);
           }
         }
       }

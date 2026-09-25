@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.database.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.platform.util.io.storages.UnsupportedFormatException;
 import com.intellij.platform.util.io.storages.database.spi.housekeeping.OnStartupHousekeeper;
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabase;
@@ -19,9 +20,13 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 /// Provides named block stores over database chunks
 @ApiStatus.Internal
 public final class BlocksDatabaseImpl implements BlocksDatabase {
+  private static final Logger LOG = Logger.getInstance(BlocksDatabaseImpl.class);
+
   private static final String DATABASE_META_FILE_NAME = "database.meta";
 
   private final @NotNull DatabaseCatalog databaseCatalog;
@@ -58,6 +63,7 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
                                                  boolean fsyncOnFlush,
                                                  boolean fsyncOnClose,
                                                  @NotNull List<? extends OnStartupHousekeeper> startupHousekeepers) throws IOException {
+    var startedAtNanos = System.nanoTime();
     var databaseCatalog = DatabaseCatalogOverAppendOnlyLog.open(
       databaseDirectory.resolve(DATABASE_META_FILE_NAME),
       chunkSize,
@@ -70,13 +76,34 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
         return new BlocksDatabaseImpl(catalog, chunks, databaseBlocks, fsyncOnClose);
       });
     });
+    var recoveredState = database.metrics(/*snapshot: */ false);
+    if (recoveredState.hasRecoveryEvents()) {
+      LOG.info("Database recovered: {" + recoveredState.recoverySummary() + "}");
+    }
 
-    return IOUtil.wrapSafely(database, openedDatabase -> {
+    var openedDatabase = IOUtil.wrapSafely(database, opened -> {
       for (var startupHousekeeper : startupHousekeepers) {
-        startupHousekeeper.runHousekeeping(openedDatabase);
+        startupHousekeeper.runHousekeeping(opened);
       }
-      return openedDatabase;
+      return opened;
     });
+    var metrics = openedDatabase.metrics(/*snapshot: */ false);
+    DatabaseMetrics.ChunksMetrics chunkMetrics = metrics.chunks();
+    DatabaseMetrics.BlocksMetrics blockMetrics = metrics.blocks();
+    //@formatter:off
+    LOG.info(
+      "Database opened in " +
+      NANOSECONDS.toMillis(System.nanoTime() - startedAtNanos) + " ms; " +
+      "stores: " + metrics.catalog().storesTotal() + ", " +
+      "chunks: " + chunkMetrics.total() + " " +
+      "{active: " + chunkMetrics.activeCurrent() + ", sealed: " + chunkMetrics.sealedCurrent() + ", retired: " + chunkMetrics.retiredCurrent() + "}, " +
+      "blocks: " + blockMetrics.total() + " " +
+      "{allocated: " + blockMetrics.allocatedCurrent() + ", active: " + blockMetrics.activeCurrent() + ", sealed: " + blockMetrics.sealedCurrent() + ", retired: " + blockMetrics.retiredCurrent() + "}, " +
+      "totalMappedBytes: " + chunkMetrics.totalMappedBytes()+"; " +
+      "[" + databaseDirectory + "]"
+    );
+    //@formatter:on
+    return openedDatabase;
   }
 
   @Override
@@ -157,10 +184,14 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
 
   @Override
   public void close() throws IOException {
+    var startedAtNanos = System.nanoTime();
+    var databaseDirectory = databaseChunks.databaseDirectory();
+    DatabaseMetrics metricsOnClose;
     synchronized (databaseLock) {
       if (closed) {
         return;
       }
+      metricsOnClose = metrics(/*snapshotMetrics: */ true);
       closed = true; //logically: db is closed after this point
     }
 
@@ -185,6 +216,10 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
         failure.addSuppressed(e);
       }
     }
+    var lifecycleSummary = metricsOnClose.lifecycleSummary();
+    LOG.info("Closed database in " + NANOSECONDS.toMillis(System.nanoTime() - startedAtNanos) + " ms; " +
+             (lifecycleSummary.isEmpty() ? "" : lifecycleSummary + " ") +
+             "[" + databaseDirectory + ']');
 
     if (failure != null) {
       throw failure;
