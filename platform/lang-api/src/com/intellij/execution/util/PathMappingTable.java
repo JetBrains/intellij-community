@@ -16,7 +16,7 @@
 
 package com.intellij.execution.util;
 
-import com.intellij.execution.ExecutionBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,13 +27,13 @@ import com.intellij.util.ui.ListTableModel;
 
 final class PathMappingTable extends ListTableWithButtons<PathMapping> {
   PathMappingTable() {
-    getTableView().getEmptyText().setText(ExecutionBundle.message("empty.text.no.mappings"));
+    getTableView().getEmptyText().setText(LangBundle.message("empty.text.no.mappings"));
   }
 
   @Override
   protected ListTableModel<PathMapping> createListModel() {
     ColumnInfo<PathMapping, @NlsContexts.ListItem String> local = 
-      new ElementsColumnInfoBase<>(ExecutionBundle.message("path.mapping.column.path.local")) {
+      new ElementsColumnInfoBase<>(LangBundle.message("path.mapping.column.path.local")) {
       @Override
       public @NlsSafe String valueOf(PathMapping pathMapping) {
         return pathMapping.getLocalRoot();
@@ -60,7 +60,7 @@ final class PathMappingTable extends ListTableWithButtons<PathMapping> {
     };
 
     ColumnInfo<PathMapping, @NlsContexts.ListItem String> remote = 
-      new ElementsColumnInfoBase<>(ExecutionBundle.message("path.mapping.column.path.remote")) {
+      new ElementsColumnInfoBase<>(LangBundle.message("path.mapping.column.path.remote")) {
       @Override
       public @NlsSafe String valueOf(PathMapping pathMapping) {
         return pathMapping.getRemoteRoot();

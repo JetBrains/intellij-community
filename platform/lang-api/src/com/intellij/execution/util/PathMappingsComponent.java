@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
-import com.intellij.execution.ExecutionBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -34,7 +34,7 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
     final TextFieldWithBrowseButton pathTextField = new TextFieldWithBrowseButton();
     pathTextField.setEditable(false);
     setComponent(pathTextField);
-    setText(ExecutionBundle.message("label.path.mappings"));
+    setText(LangBundle.message("label.path.mappings"));
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, pathTextField.getChildComponent());
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
     getComponent().addActionListener(new ActionListener() {
@@ -106,7 +106,7 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
 
       myPathMappingTable.setValues(mappingsComponent.getMappingSettings().getPathMappings());
       myWholePanel.add(myPathMappingTable.getComponent(), BorderLayout.CENTER);
-      setTitle(ExecutionBundle.message("dialog.title.edit.path.mappings"));
+      setTitle(LangBundle.message("dialog.title.edit.path.mappings"));
       init();
     }
 
