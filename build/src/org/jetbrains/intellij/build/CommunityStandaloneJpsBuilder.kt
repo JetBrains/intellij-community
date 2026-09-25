@@ -127,7 +127,6 @@ fun buildCommunityStandaloneJpsBuilder(
     JarPackager.pack(
       includedModules = layout.includedModules,
       outputDir = tempDir,
-      isRootDir = false,
       isCodesignEnabled = false,
       layout = layout,
       platformLayout = null,
