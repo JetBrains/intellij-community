@@ -48,11 +48,13 @@ import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadWriteActionSupport
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readActionUndispatched
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.application.rw.PlatformReadWriteActionSupport
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
@@ -1097,6 +1099,8 @@ object Utils {
     }
     val potemkin = PotemkinOverlayProgress(contextComponent)
     ourInUpdateSessionForInputEventEDTLoop = true
+    val rwService = application.service<ReadWriteActionSupport>() as? PlatformReadWriteActionSupport
+    rwService?.signalSuspendedEdtWriteActionNeedsToBeRetried()
     try {
       potemkin.start()
       return runBlockingForActionExpand(CoroutineName("runWithInputEventEdtDispatcher") +
@@ -1120,6 +1124,7 @@ object Utils {
       }
     }
     finally {
+      rwService?.signalSuspendedEdtWriteActionCanProceed()
       ourInUpdateSessionForInputEventEDTLoop = false
       ourCurrentInputEventProcessingJobFlow.value = null
       potemkin.stop()
