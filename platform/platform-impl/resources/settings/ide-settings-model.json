@@ -2923,7 +2923,7 @@
     {
       "name": "ScriptedLoadersAssociations",
       "scope": "app",
-      "pluginId": "intellij.grid.plugin",
+      "pluginId": "com.intellij.grid",
       "classFqn": "com.intellij.grid.scripting.impl.DataLoaderManager$Associations",
       "storage": "csvSettings.xml",
       "properties": [
