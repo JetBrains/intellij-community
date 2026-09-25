@@ -190,7 +190,7 @@ open class TypeEvalContextImpl internal constructor(
   }
 
   fun putSubstitutions(si: SubstitutionsIdentifier, substitutions: PyTypeChecker.GenericSubstitutions) {
-    mySubstitutionsCache[si] = substitutions
+    mySubstitutionsCache.putIfAbsent(si, substitutions)
   }
 
   fun removeSubstitutions(si: SubstitutionsIdentifier) {
@@ -249,8 +249,7 @@ open class TypeEvalContextImpl internal constructor(
 
       assertValid(type, element)
       PyAnyType.validate(type, element)
-      myEvaluated[element] = type ?: PyNullType
-      type
+      publish(myEvaluated, element, type)
     } ?: PyAnyType.unknown
   }
 
@@ -268,9 +267,17 @@ open class TypeEvalContextImpl internal constructor(
       val type = callable.getReturnType(this, KeyImpl)
       assertValid(type, callable)
       PyAnyType.validate(type)
-      myEvaluatedReturn[callable] = type ?: PyNullType
-      type
+      publish(myEvaluatedReturn, callable, type)
     } ?: PyAnyType.unknown
+  }
+
+  /**
+   * Stores [type] for [key] unless another thread stored a type first, and returns the stored type.
+   * All threads that share this context then see the same type for [key].
+   */
+  private fun <K : Any> publish(cache: MutableMap<K?, PyType?>, key: K, type: PyType?): PyType? {
+    val stored = cache.putIfAbsent(key, type ?: PyNullType) ?: return type
+    return if (stored === PyNullType) null else stored
   }
 
   @get:ApiStatus.Experimental
