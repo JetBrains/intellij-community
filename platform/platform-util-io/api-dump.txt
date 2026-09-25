@@ -317,6 +317,8 @@ f:com.intellij.execution.process.OSProcessUtil
 - s:processName(java.lang.ProcessHandle):java.lang.String
 - s:terminateProcessGracefully(I):V
 - s:terminateProcessGracefully(java.lang.Process):V
+f:com.intellij.execution.process.ProcessHandlerFunctions
+- sf:initiateProcessTermination(com.intellij.execution.process.ProcessHandler):V
 c:com.intellij.execution.process.ProcessInfo
 - sf:EMPTY_ARRAY:com.intellij.execution.process.ProcessInfo[]
 - <init>(I,java.lang.String,java.lang.String,java.lang.String):V

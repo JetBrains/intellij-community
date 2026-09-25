@@ -29,6 +29,7 @@ jvm_library(
         "//platform/util-ex",
         "//platform/diagnostic",
         "//platform/eel-nioFs",
+        "//platform/util/coroutines",
     ],
 )
 
@@ -53,6 +54,7 @@ jvm_library(
         "//platform/util-ex:util-ex_test_lib",
         "//platform/diagnostic:diagnostic_test_lib",
         "//platform/eel-nioFs:eel-nioFs_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.util.io` end

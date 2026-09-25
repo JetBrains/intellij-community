@@ -38,6 +38,7 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.process.ProcessTerminatedListener
+import com.intellij.execution.process.initiateProcessTermination
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ExecutionUtil
@@ -190,31 +191,13 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
       stopProcess(descriptor?.processHandler)
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     @JvmStatic
     fun stopProcess(processHandler: ProcessHandler?) {
       if (processHandler == null) {
         return
       }
 
-      processHandler.putUserData(ProcessHandler.TERMINATION_REQUESTED, true)
-      GlobalScope.childScope("Destroy " + processHandler.javaClass.name, Dispatchers.Default, true).launch {
-        if (processHandler is KillableProcess && processHandler.isProcessTerminating) {
-          // process termination was requested, but it's still alive
-          // in this case 'force quit' will be performed
-          processHandler.killProcess()
-        }
-        else {
-          if (!processHandler.isProcessTerminated) {
-            if (processHandler.detachIsDefault()) {
-              processHandler.detachProcess()
-            }
-            else {
-              processHandler.destroyProcess()
-            }
-          }
-        }
-      }
+      initiateProcessTermination(processHandler)
     }
 
     @JvmStatic
