@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.fir.testIntegration
 
 
 import com.intellij.openapi.editor.Document
-import com.intellij.testIntegration.JvmTestDiffUpdateTest
+import com.intellij.java.testIntegration.JvmTestDiffUpdateTest
 import org.intellij.lang.annotations.Language
 
 @Suppress("NewClassNamingConvention", "SameParameterValue")

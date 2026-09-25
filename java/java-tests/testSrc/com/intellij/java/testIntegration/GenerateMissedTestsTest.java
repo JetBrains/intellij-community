@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.testIntegration;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.testIntegration;
 
 import com.intellij.execution.junit.JUnit4Framework;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -7,6 +7,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.testIntegration.createTest.JavaTestGenerator;
 
 import java.util.List;
