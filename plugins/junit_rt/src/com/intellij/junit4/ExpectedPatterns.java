@@ -4,30 +4,9 @@ package com.intellij.junit4;
 import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.testFrameworks.AbstractExpectedPatterns;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Pattern;
-
 public final class ExpectedPatterns extends AbstractExpectedPatterns {
-  private static final List<Pattern> PATTERNS = new ArrayList<>();
-
-  private static final String[] PATTERN_STRINGS = new String[]{
-    "\nexpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n",
-    "\nexpected: is \"(.*)\"\n\\s*but:\\s+was \"(.*)\"",
-    "\nexpected: (.*)\n\\s*got: (.*)",
-    "expected same:<(.*)> was not:<(.*)>",
-    "\nexpected: \"(.*)\"\n\\s*but: was \"(.*)\"",
-    "expected: (.*)\n\\s*but: was (.*)",
-    "expected: (.*)\\s+but was: (.*)",
-    "expecting:\\s+<(.*)> to be equal to:\\s+<(.*)>\\s+but was not"
-  };
-
-  static {
-    registerPatterns(PATTERN_STRINGS, PATTERNS);
-  }
-
   public static ComparisonFailureData createExceptionNotification(String message) {
-    return createExceptionNotification(message, PATTERNS);
+    return parseComparisonFailure(message);
   }
 
   public static ComparisonFailureData createExceptionNotification(Throwable assertion) {

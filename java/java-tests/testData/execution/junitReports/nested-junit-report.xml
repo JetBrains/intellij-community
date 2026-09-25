@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Hand-written report with one branch nested more deeply than its sibling. -->
+<testsuites>
+  <testsuite name="idea.import.AllChecks" tests="7" failures="1" errors="1" skipped="1" time="0.730">
+    <testsuite name="idea.import.FastChecks" tests="4" failures="1" errors="1" skipped="1" time="0.130">
+      <testsuite name="idea.import.ArithmeticChecks" tests="4" failures="1" errors="1" skipped="1" time="0.120">
+        <testcase name="addsTwoNumbers" classname="idea.import.ArithmeticChecks" time="0.010"/>
+        <testcase name="reportsUnexpectedProduct" classname="idea.import.ArithmeticChecks" time="0.020">
+          <failure message="Expected product 42 but was 41" type="java.lang.AssertionError">
+            at idea.import.ArithmeticChecks.reportsUnexpectedProduct(ArithmeticChecks.java:24)
+          </failure>
+        </testcase>
+        <testcase name="skipsDivisionByZero" classname="idea.import.ArithmeticChecks" time="0.000">
+          <skipped message="Zero divisor is covered elsewhere"/>
+        </testcase>
+        <testcase name="reportsMissingOperand" classname="idea.import.ArithmeticChecks" time="0.090">
+          <error message="Right operand was not initialized" type="java.lang.IllegalStateException">
+            at idea.import.ArithmeticChecks.reportsMissingOperand(ArithmeticChecks.java:41)
+          </error>
+        </testcase>
+        <system-out><![CDATA[Arithmetic checks produced diagnostic output]]></system-out>
+        <system-err><![CDATA[Arithmetic checks produced diagnostic warnings]]></system-err>
+      </testsuite>
+      <system-out><![CDATA[Fast checks finished]]></system-out>
+    </testsuite>
+    <testsuite name="idea.import.ServiceChecks" tests="3" failures="0" errors="0" skipped="0" time="0.600">
+      <testcase name="createsSession" classname="idea.import.ServiceChecks" time="0.200"/>
+      <testcase name="refreshesSession" classname="idea.import.ServiceChecks" time="0.180"/>
+      <testcase name="closesSession" classname="idea.import.ServiceChecks" time="0.220"/>
+      <system-out><![CDATA[Service checks completed]]></system-out>
+    </testsuite>
+  </testsuite>
+</testsuites>
