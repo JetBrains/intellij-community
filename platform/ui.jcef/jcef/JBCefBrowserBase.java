@@ -389,6 +389,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    *
    * @return true if the browser starts a navigation, or starts one after it is created
    */
+  @ApiStatus.Internal
   public final boolean requestLoadURL(@NotNull String url) {
     if (isCefBrowserCreated() || !scheduleLoading(new LoadDeferrer(null, url))) {
       return loadUrlImpl(url);
