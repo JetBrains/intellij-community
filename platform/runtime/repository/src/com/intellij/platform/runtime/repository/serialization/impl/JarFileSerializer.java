@@ -18,12 +18,14 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -33,6 +35,11 @@ public final class JarFileSerializer {
   public static final String SPECIFICATION_TITLE = "IntelliJ Runtime Module Repository";
   private static final Attributes.Name BOOTSTRAP_MODULE_ATTRIBUTE_NAME = new Attributes.Name("Bootstrap-Module-Name");
   private static final Attributes.Name BOOTSTRAP_CLASSPATH_ATTRIBUTE_NAME = new Attributes.Name("Bootstrap-Class-Path");
+  /**
+   * The time of every entry, fixed so that the same descriptors always give the same bytes. A ZIP entry stores a local
+   * date-time, so it is set as one and no time zone can move it.
+   */
+  private static final LocalDateTime ENTRY_TIME = LocalDateTime.of(1980, 2, 1, 0, 0);
 
   public static @NotNull RawRuntimeModuleRepositoryData loadFromJar(@NotNull Path jarPath) throws IOException, XMLStreamException {
     Map<RuntimeModuleId, RawRuntimeModuleDescriptor> rawData = new HashMap<>();
@@ -100,24 +107,33 @@ public final class JarFileSerializer {
       Collection<String> bootstrapClasspath = CachedClasspathComputation.computeBootstrapClasspath(descriptors, bootstrapModuleName);
       attributes.put(BOOTSTRAP_CLASSPATH_ATTRIBUTE_NAME, String.join(" ", bootstrapClasspath));
     }
-    try (JarOutputStream jarOutput = new JarOutputStream(new BufferedOutputStream(Files.newOutputStream(jarFile)), manifest)) {
+    try (JarOutputStream jarOutput = new JarOutputStream(new BufferedOutputStream(Files.newOutputStream(jarFile)))) {
+      jarOutput.putNextEntry(newEntry(JarFile.MANIFEST_NAME));
+      manifest.write(jarOutput);
+      jarOutput.closeEntry();
       XMLOutputFactory factory = XMLOutputFactory.newDefaultFactory();
       for (RawRuntimeModuleDescriptor descriptor : descriptors) {
         String moduleName = descriptor.getModuleId().getName();
         String namespace = descriptor.getModuleId().getNamespace();
         String fileName = namespace.equals(RuntimeModuleId.DEFAULT_NAMESPACE) ? moduleName : moduleName + "_" + namespace;
-        jarOutput.putNextEntry(new JarEntry(fileName + ".xml"));
+        jarOutput.putNextEntry(newEntry(fileName + ".xml"));
         PrintWriter output = new PrintWriter(jarOutput, false, StandardCharsets.UTF_8);
         ModuleXmlSerializer.writeModuleXml(descriptor, output, factory);
         jarOutput.closeEntry();
       }
       for (RuntimePluginHeader pluginHeader : pluginHeaders) {
         String moduleName = pluginHeader.getPluginDescriptorModuleId().getName();
-        jarOutput.putNextEntry(new JarEntry("plugins/" + moduleName + ".xml"));
+        jarOutput.putNextEntry(newEntry("plugins/" + moduleName + ".xml"));
         PrintWriter output = new PrintWriter(jarOutput, false, StandardCharsets.UTF_8);
         PluginHeaderXmlSerializer.writePluginHeaderXml(pluginHeader, output, factory);
         jarOutput.closeEntry();
       }
     }
+  }
+
+  private static @NotNull JarEntry newEntry(@NotNull String name) {
+    JarEntry entry = new JarEntry(name);
+    entry.setTimeLocal(ENTRY_TIME);
+    return entry;
   }
 }
