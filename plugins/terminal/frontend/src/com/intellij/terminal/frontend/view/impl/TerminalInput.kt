@@ -162,7 +162,7 @@ class TerminalInput(
     sendEvent(event)
   }
 
-  private fun sendEvent(event: TerminalInputEvent) {
+  fun sendEvent(event: TerminalInputEvent) {
     LOG.trace { "Input event received: ${event}" }
 
     val result = bufferChannel.trySend(event)

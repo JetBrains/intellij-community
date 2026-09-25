@@ -1,11 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend.session.ghostty
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.openapi.editor.colors.EditorColorsListener
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
@@ -51,7 +48,6 @@ import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalUtil
-import org.jetbrains.plugins.terminal.block.ui.TerminalUi
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.original
 import org.jetbrains.plugins.terminal.session.impl.TerminalBeepEvent
@@ -63,12 +59,14 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSetDefaultBackgroundEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSetDefaultForegroundEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalRgbColorDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalStateDto
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
-import java.awt.Color
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
@@ -295,10 +293,6 @@ class GhosttyTerminalSession internal constructor(
     // below starts, so the emulator never shows Ghostty's own hardcoded defaults even briefly.
     installDefaultCursorStateUpdating(coroutineScope.childScope("Default cursor state updating"))
 
-    // Applies the IDE terminal colors as the emulator's default colors, and keeps them in sync with the color scheme.
-    // Must run before the read loop below starts, so the emulator answers the first color query (OSC 10/11) of a program.
-    installColorSchemeUpdating(coroutineScope.childScope("Color scheme updating"))
-
     // Windows host is using ConPTY that has its own buffer: it stores screen lines only,
     // and when terminal size grows, it can't pull scrollback lines to the screen.
     // So, we have to use "ScrollbackPullPolicy.NEVER" in the Windows case to ensure
@@ -452,6 +446,12 @@ class GhosttyTerminalSession internal constructor(
       }
       is TerminalClearBufferEvent -> handleClearBuffer()
       is TerminalCloseEvent -> runCatching { ttyConnector.close() }
+      is TerminalSetDefaultForegroundEvent -> lock.withLock {
+        if (!disposed) emulator.setDefaultForegroundColor(event.color.toEmulatorColor())
+      }
+      is TerminalSetDefaultBackgroundEvent -> lock.withLock {
+        if (!disposed) emulator.setDefaultBackgroundColor(event.color.toEmulatorColor())
+      }
     }
   }
 
@@ -740,43 +740,6 @@ class GhosttyTerminalSession internal constructor(
       updateCursorBlinkIfChangedLocked()
     }
   }
-
-  /**
-   * Subscribes to the global editor color scheme ([EditorColorsManager.TOPIC]), and pushes the IDE terminal colors
-   * ([TerminalUi.defaultForeground] and [TerminalUi.defaultBackground]) into [emulator] as its default colors.
-   * The emulator reports them to a program that queries them (`OSC 10 ; ?` and `OSC 11 ; ?`).
-   */
-  private fun installColorSchemeUpdating(scope: CoroutineScope) {
-    var lastForeground: TerminalColor.Rgb? = null
-    var lastBackground: TerminalColor.Rgb? = null
-
-    fun Color.toEmulatorColor(): TerminalColor.Rgb = TerminalColor.Rgb(red, green, blue)
-
-    fun updateColorsIfChangedLocked() {
-      val foreground = TerminalUi.defaultForeground().toEmulatorColor()
-      if (foreground != lastForeground) {
-        lastForeground = foreground
-        emulator.setDefaultForegroundColor(foreground)
-      }
-      val background = TerminalUi.defaultBackground().toEmulatorColor()
-      if (background != lastBackground) {
-        lastBackground = background
-        emulator.setDefaultBackgroundColor(background)
-      }
-    }
-
-    ApplicationManager.getApplication().messageBus
-      .connect(scope.asDisposable())
-      .subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
-        lock.withLock {
-          if (!disposed) updateColorsIfChangedLocked()
-        }
-      })
-
-    lock.withLock {
-      updateColorsIfChangedLocked()
-    }
-  }
 }
 
 private val LOG = logger<GhosttyTerminalSession>()
@@ -797,6 +760,8 @@ private val OUTPUT_POLL_INTERVAL: Duration = 20.milliseconds
 private val CLEAR_BUFFER_SEQUENCE: ByteArray = "\u001B[2J\u001B[3J".encodeToByteArray()
 
 private val CTRL_L_BYTE: ByteArray = byteArrayOf(0x0C)
+
+private fun TerminalRgbColorDto.toEmulatorColor(): TerminalColor.Rgb = TerminalColor.Rgb(red, green, blue)
 
 /** Escapes control characters (e.g. `\e` for ESC) so raw PTY output is readable in the log. */
 private fun String.escapeControlCharactersForLog(): String {
