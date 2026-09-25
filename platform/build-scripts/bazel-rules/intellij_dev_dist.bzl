@@ -354,9 +354,12 @@ def _project_model_tree_impl(ctx):
         outputs = [tree] + ([spans] if spans else []),
         executable = ctx.executable.materializer,
         arguments = [args],
-        # No execution requirements: this one is hermetic. It reads its manifest and the execroot-relative sources that
-        # manifest names, writes only under its output directory, and consults no environment variable, no home
-        # directory and no network - so it may be sandboxed, and both caches may keep it.
+        # Hermetic. It reads its manifest and the execroot-relative sources that manifest names, writes only under its
+        # output directory, and consults no environment variable, no home directory and no network, so it may be
+        # sandboxed and the disk cache may keep it. The remote cache may not. The output is tens of thousands of small
+        # files, every model edit re-keys it, and every consumer is a fragment that runs locally. A remote hit would
+        # download the whole tree to save a few seconds of local copying.
+        execution_requirements = {"no-remote-cache": "1"},
         resource_set = _small_tool_resources,
         mnemonic = "IntellijProjectModelTree",
         progress_message = "Materializing the project model tree %s" % ctx.label,
