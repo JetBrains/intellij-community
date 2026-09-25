@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -164,8 +165,9 @@ public final class StubIndexImpl extends StubIndexEx {
     registrationResultSink.setIndexVersionDiff(indexKey, versionDiff);
     if (versionDiff != IndexVersion.IndexVersionDiff.UP_TO_DATE) {
       storageLayout.clearIndexData();
-      //TODO RC: do we need this after clearIndexData()?
-      FileUtil.deleteWithRenamingIfExists(indexRootDir);
+      if (Files.exists(indexRootDir) && !FileUtil.deleteWithRenaming(indexRootDir)) {
+        LOG.warn("Failed to delete stub index files at " + indexRootDir);
+      }
       IndexVersion.rewriteVersion(indexKey, version);
 
       try {
@@ -197,21 +199,20 @@ public final class StubIndexImpl extends StubIndexEx {
       }
       catch (IOException e) {
         registrationResultSink.setIndexVersionDiff(indexKey, new IndexVersion.IndexVersionDiff.CorruptedRebuild(version));
-        onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e, index, storageLayout);
+        onExceptionInstantiatingIndex(indexKey, version, e, index, storageLayout);
       }
       catch (RuntimeException e) {
         Throwable cause = FileBasedIndexEx.extractCauseToRebuildIndex(e);
         if (cause == null) {
           throw e;
         }
-        onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e, index, storageLayout);
+        onExceptionInstantiatingIndex(indexKey, version, e, index, storageLayout);
       }
     }
   }
 
   private static <K> void onExceptionInstantiatingIndex(@NotNull StubIndexKey<K, ?> indexKey,
                                                         int version,
-                                                        @NotNull Path indexRootDir,
                                                         @NotNull Exception e,
                                                         @Nullable UpdatableIndex<?, ?, ?, ?> index,
                                                         @NotNull VfsAwareIndexStorageLayout<?, ?> storageLayout) throws IOException {
@@ -242,7 +243,6 @@ public final class StubIndexImpl extends StubIndexEx {
     }
     IndexStatisticGroup.reportIndexRebuild(indexKey, e, true);
     LOG.info(e);
-    FileUtil.deleteWithRenaming(indexRootDir.toFile());
     IndexVersion.rewriteVersion(indexKey, version); // todo snapshots indices
   }
 
