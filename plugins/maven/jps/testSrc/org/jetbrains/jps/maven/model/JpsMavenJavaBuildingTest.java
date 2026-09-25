@@ -17,6 +17,8 @@ package org.jetbrains.jps.maven.model;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.platform.bazel.runfiles.BazelLabel;
+import com.intellij.testFramework.common.BazelTestUtil;
 import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
@@ -27,7 +29,10 @@ import java.io.IOException;
 
 public class JpsMavenJavaBuildingTest extends JpsBuildTestCase {
   public void testCompileJava() throws IOException {
-    File srcDir = PathManagerEx.findFileUnderProjectHome("plugins/maven/jps/testData/compiler/classpathTest", getClass());
+    var testDataRoot = BazelTestUtil.isUnderBazelTest()
+                       ? BazelTestUtil.getFileFromBazelRuntime(BazelLabel.Companion.fromString("@community//plugins/maven/jps:testData"))
+                       : PathManagerEx.findFileUnderCommunityHome("plugins/maven/jps/testData").toPath();
+    File srcDir = testDataRoot.resolve("compiler/classpathTest").toFile();
     File workDir = FileUtil.createTempDirectory("mavenJavaBuild", null);
     FileUtil.copyDir(srcDir, workDir);
     addJdk("1.6");

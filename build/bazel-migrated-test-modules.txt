@@ -67,6 +67,7 @@ intellij.kotlin.onboarding.gradle.tests
 intellij.kotlin.onboarding.tests
 intellij.markdown.tests
 intellij.maven.groovy.tests
+intellij.maven.jps.tests
 intellij.maven.proofreading.tests
 intellij.maven.server.eventListener.tests
 intellij.maven.testFramework.tests
