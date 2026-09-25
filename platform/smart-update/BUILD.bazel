@@ -39,6 +39,7 @@ jvm_library(
         "//platform/platform-impl/ui",
         "//platform/util:util-ui",
         "//platform/execution",
+        "//platform/execution-impl",
     ],
 )
 
@@ -72,6 +73,7 @@ jvm_library(
         "//platform/platform-impl/ui:ui_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/execution:execution_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
     ],
 )
 

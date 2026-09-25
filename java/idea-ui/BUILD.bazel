@@ -102,6 +102,7 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//jps/jps-builders:build",
         "//platform/lang-api:lang",
+        "//platform/execution-impl",
     ],
 )
 
@@ -176,6 +177,7 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//jps/jps-builders:build_test_lib",
         "//platform/lang-api:lang_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.ui` end

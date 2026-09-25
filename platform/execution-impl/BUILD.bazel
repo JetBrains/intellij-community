@@ -93,6 +93,7 @@ jvm_library(
         "//platform/progress/shared:ide-progress",
         "//platform/remote-topics/shared:rpc-topics",
         "//fleet/rhizomedb",
+        "//platform/tracing:tracing-rt",
     ],
 )
 
@@ -168,6 +169,7 @@ jvm_library(
         "//platform/progress/shared:ide-progress_test_lib",
         "//platform/remote-topics/shared:rpc-topics_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/tracing:tracing-rt_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.execution.impl` end

@@ -205,7 +205,6 @@
     <extensionPoint qualifiedName="com.intellij.documentationCssProvider" interface="com.intellij.codeInsight.documentation.DocumentationCssProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jbProtocolRevisionResolver" interface="com.intellij.navigation.JBProtocolRevisionResolver" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.findInDirectoryScopeProvider" interface="com.intellij.find.impl.FindInDirectoryScopeProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.projectTaskManagerListener" interface="com.intellij.task.impl.ProjectTaskManagerListenerExtensionPoint" dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.usagePresentationProvider"
                     interface="com.intellij.find.impl.UsagePresentationProvider"
                     dynamic="true"/>
@@ -619,7 +618,6 @@
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.template.impl.LiveTemplateRunLogger"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.task.impl.ProjectTaskManagerStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.util.projectWizard.LightweightNewProjectWizardCollector" />
     <postStartupActivity implementation="com.intellij.ide.actions.PowerSaveModeNotifier"/>
     <postStartupActivity implementation="com.intellij.ide.actions.EssentialHighlightingNotifier"/>
@@ -1578,9 +1576,6 @@
                                    order="last"/>
     <runAnything.executionProvider implementation="com.intellij.ide.actions.runAnything.activity.RunAnythingCommandExecutionProvider"
                                    order="last"/>
-    <!-- Project tasks execution (delegation of the build/run actions) -->
-    <projectService serviceInterface="com.intellij.task.ProjectTaskManager"
-                    serviceImplementation="com.intellij.task.impl.ProjectTaskManagerImpl"/>
     <!-- Build view -->
     <projectService serviceInterface="com.intellij.build.BuildContentManager"
                     serviceImplementation="com.intellij.build.BuildContentManagerImpl"/>
@@ -1809,8 +1804,6 @@
     <applicationSettings service="com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings"/>
     <applicationSettings service="com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings"/>
     <applicationSettings service="com.intellij.codeInsight.template.postfix.settings.PostfixTemplateStorage"/>
-    <projectService serviceInterface="com.intellij.execution.runners.ExecutionEnvironmentProvider"
-                    serviceImplementation="com.intellij.task.impl.ExecutionEnvironmentProviderImpl"/>
     <runAnything.executionProvider id="RunAnythingRunConfigurationProvider"
                                    implementation="com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationProvider"/>
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"

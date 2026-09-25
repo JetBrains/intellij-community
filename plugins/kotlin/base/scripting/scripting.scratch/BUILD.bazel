@@ -96,6 +96,7 @@ jvm_library(
         "//platform/code-style-api:codeStyle",
         "//java/idea-ui:ui",
         "//java/openapi:java",
+        "//platform/execution-impl",
     ],
 )
 
@@ -163,6 +164,7 @@ jvm_library(
         "//platform/code-style-api:codeStyle_test_lib",
         "//java/idea-ui:ui_test_lib",
         "//java/openapi:java_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.scripting.scratch` end

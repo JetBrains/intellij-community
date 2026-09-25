@@ -49,6 +49,7 @@ jvm_library(
         "//java/openapi:java",
         "//java/java-frontback-psi-api:frontback-psi",
         "//platform/execution",
+        "//platform/execution-impl",
     ],
 )
 
@@ -89,6 +90,7 @@ jvm_library(
         "//java/openapi:java_test_lib",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
         "//platform/execution:execution_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.performancePlugin` end

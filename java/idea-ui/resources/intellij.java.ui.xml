@@ -3,8 +3,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.java-capable"/>
-    <module name="intellij.platform.externalSystem"/>
-    <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.java"/>
     <module name="intellij.java.aetherDependencyResolver"/>
@@ -34,6 +32,9 @@
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.platform.feedback"/>
     <module name="intellij.platform.ide.concurrency"/>
     <module name="intellij.platform.ide.core"/>

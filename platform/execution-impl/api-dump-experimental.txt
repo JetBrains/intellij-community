@@ -34,6 +34,16 @@ a:com.intellij.execution.runners.RunTab
 f:com.intellij.execution.util.EnvFilesUtilKt
 - *sf:configureEnvsFromFiles(com.intellij.execution.EnvFilesOptions,Z):java.util.Map
 - *bs:configureEnvsFromFiles$default(com.intellij.execution.EnvFilesOptions,Z,I,java.lang.Object):java.util.Map
+f:com.intellij.task.impl.ProjectTaskManagerImpl
+- com.intellij.task.ProjectTaskManager
+- *:createProjectTaskExecutionEnvironment(com.intellij.task.ProjectTask):com.intellij.execution.runners.ExecutionEnvironment
+- *s:waitForPromise(org.jetbrains.concurrency.Promise):java.lang.Object
+*:com.intellij.task.impl.ProjectTaskManagerListener
+- a:afterRun(com.intellij.task.ProjectTaskManager$Result):V
+- a:beforeRun(com.intellij.task.ProjectTaskContext):V
+*:com.intellij.task.impl.ProjectTaskScope
+- sf:KEY:com.intellij.openapi.util.Key
+- a:getRequestedTasks(java.lang.Class):java.util.List
 f:com.intellij.terminal.TerminalTitle
 - *f:buildFullTitle(Z):java.lang.String
 - *f:buildTitle(Z):java.lang.String

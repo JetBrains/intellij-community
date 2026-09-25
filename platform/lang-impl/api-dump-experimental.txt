@@ -1221,16 +1221,6 @@ c:com.intellij.refactoring.rename.RenameProcessor
 - a:setSafeToDelete(Z):V
 *:com.intellij.refactoring.safeDelete.api.SafeDeleteUsageSearcher
 - com.intellij.model.search.Searcher
-f:com.intellij.task.impl.ProjectTaskManagerImpl
-- com.intellij.task.ProjectTaskManager
-- *:createProjectTaskExecutionEnvironment(com.intellij.task.ProjectTask):com.intellij.execution.runners.ExecutionEnvironment
-- *s:waitForPromise(org.jetbrains.concurrency.Promise):java.lang.Object
-*:com.intellij.task.impl.ProjectTaskManagerListener
-- a:afterRun(com.intellij.task.ProjectTaskManager$Result):V
-- a:beforeRun(com.intellij.task.ProjectTaskContext):V
-*:com.intellij.task.impl.ProjectTaskScope
-- sf:KEY:com.intellij.openapi.util.Key
-- a:getRequestedTasks(java.lang.Class):java.util.List
 f:com.intellij.testIntegration.TestFinderHelper
 - *s:navigateToTestImmediately(com.intellij.psi.PsiElement):Z
 *f:com.intellij.ui.preview.DescriptorPreview

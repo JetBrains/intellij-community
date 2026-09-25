@@ -663,6 +663,34 @@ f:com.intellij.ide.macro.MacrosDialog
 - s:getPathMacros(Z):java.util.HashMap
 com.intellij.openapi.module.WorkingDirectoryProvider
 - a:getWorkingDirectoryPath(com.intellij.openapi.module.Module):java.lang.String
+a:com.intellij.task.impl.AbstractProjectTask
+- com.intellij.task.ProjectTask
+- <init>():V
+- <init>(java.util.Collection):V
+- getDependsOn():java.util.Collection
+- setDependsOn(java.util.Collection):V
+f:com.intellij.task.impl.ExecuteRunConfigurationTaskImpl
+- com.intellij.task.impl.AbstractProjectTask
+- com.intellij.task.ExecuteRunConfigurationTask
+- getRunProfile():com.intellij.execution.configurations.RunProfile
+c:com.intellij.task.impl.ModuleBuildTaskImpl
+- com.intellij.task.BuildTask
+- com.intellij.task.ModuleBuildTask
+- com.intellij.task.impl.AbstractProjectTask
+f:com.intellij.task.impl.ModuleFilesBuildTaskImpl
+- com.intellij.task.impl.ModuleBuildTaskImpl
+- com.intellij.task.ModuleFilesBuildTask
+c:com.intellij.task.impl.ProjectModelBuildTaskImpl
+- com.intellij.task.BuildTask
+- com.intellij.task.ProjectModelBuildTask
+- com.intellij.task.impl.AbstractProjectTask
+- getBuildableElement():com.intellij.openapi.roots.ProjectModelBuildableElement
+f:com.intellij.task.impl.ProjectTaskList
+- com.intellij.util.SmartList
+- com.intellij.task.ProjectTask
+- <init>(java.util.Collection):V
+f:com.intellij.task.impl.ProjectTaskManagerImpl
+- com.intellij.task.ProjectTaskManager
 f:com.intellij.terminal.AppendableTerminalDataStream
 - com.jediterm.terminal.TerminalDataStream
 - java.lang.Appendable
