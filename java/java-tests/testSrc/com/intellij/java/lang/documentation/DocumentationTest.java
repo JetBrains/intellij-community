@@ -1,10 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lang.documentation;
+package com.intellij.java.lang.documentation;
 
 import com.intellij.lang.java.JavaDocumentationTarget;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -19,13 +21,13 @@ import static com.intellij.platform.ide.documentation.ActionsKt.DOCUMENTATION_TA
 
 public final class DocumentationTest extends LightJavaCodeInsightTestCase {
 
-  public void testDocumentationTargets() {
+  public void testDocumentationTargets() throws Exception {
     DataContext editorContext = configureJavaEditorAndGetItsContext(false, "class <caret>A {}");
 
     getAndCheckTargets(editorContext);
   }
 
-  public void testInjectedCachingIsNotHarmfulForObtainingTopLevelEditor() {
+  public void testInjectedCachingIsNotHarmfulForObtainingTopLevelEditor() throws Exception {
     DataContext editorContext = configureJavaEditorAndGetItsContext(true, "class <caret>A {}");
 
     Editor editor = CommonDataKeys.EDITOR.getData(editorContext);
@@ -36,7 +38,7 @@ public final class DocumentationTest extends LightJavaCodeInsightTestCase {
     getAndCheckTargets(editorContext);
   }
 
-  public void testDocumentationTargetsInInjected() {
+  public void testDocumentationTargetsInInjected() throws Exception {
     DataContext editorContext = configureJavaEditorAndGetItsContext(true, """
       public class A {
           public static void main(String... args) {
@@ -51,8 +53,9 @@ public final class DocumentationTest extends LightJavaCodeInsightTestCase {
     assertInstanceOf(singleTarget.getElement(), ClsMethodImpl.class);
   }
 
-  private static @NotNull List<DocumentationTarget> getAndCheckTargets(DataContext dataContext) {
-    List<DocumentationTarget> targets = dataContext.getData(DOCUMENTATION_TARGETS);
+  private static @NotNull List<DocumentationTarget> getAndCheckTargets(DataContext dataContext) throws Exception {
+    List<DocumentationTarget> targets = ApplicationManager.getApplication().executeOnPooledThread(
+      () -> ReadAction.computeBlocking(() -> dataContext.getData(DOCUMENTATION_TARGETS))).get();
     assertInstanceOf(assertOneElement(targets), JavaDocumentationTarget.class);
     return targets;
   }
