@@ -302,7 +302,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
         final Module module = getModuleForSourceContentFile(file);
         ContainerUtil.addIfNotNull(modulesToBeMarkedDirty, module);
       }
-      else if (event instanceof VFilePropertyChangeEvent pce) {
+      else if (event instanceof VFilePropertyChangeEvent pce && pce.getFile().isDirectory()) {
         String propertyName = pce.getPropertyName();
         if (VirtualFile.PROP_NAME.equals(propertyName) || VirtualFile.PROP_SYMLINK_TARGET.equals(propertyName)) {
           final String path = pce.getFile().getPath();
