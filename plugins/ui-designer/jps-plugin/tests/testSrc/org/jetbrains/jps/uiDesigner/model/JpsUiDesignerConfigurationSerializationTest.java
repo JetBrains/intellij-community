@@ -15,6 +15,9 @@
  */
 package org.jetbrains.jps.uiDesigner.model;
 
+import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.platform.bazel.runfiles.BazelLabel;
+import com.intellij.testFramework.common.BazelTestUtil;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.serialization.JpsProjectData;
 import org.junit.jupiter.api.Test;
@@ -26,7 +29,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class JpsUiDesignerConfigurationSerializationTest {
   @Test
   public void testLoad() {
-    JpsProjectData projectData = JpsProjectData.loadFromTestData("plugins/ui-designer/jps-plugin/tests/testData/uiDesigner", getClass());
+    var testDataRoot = BazelTestUtil.isUnderBazelTest()
+                       ? BazelTestUtil.getFileFromBazelRuntime(
+                         BazelLabel.Companion.fromString("@community//plugins/ui-designer/jps-plugin/tests:testData"))
+                       : PathManagerEx.findFileUnderCommunityHome("plugins/ui-designer/jps-plugin/tests/testData").toPath();
+    JpsProjectData projectData = JpsProjectData.loadFromTestData(testDataRoot.resolve("uiDesigner").toAbsolutePath().toString(), getClass());
     JpsProject project = projectData.getProject();
     JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(project);
     assertNotNull(configuration);

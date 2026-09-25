@@ -17,6 +17,8 @@ package org.jetbrains.jps.uiDesigner.build;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.platform.bazel.runfiles.BazelLabel;
+import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
@@ -34,7 +36,16 @@ import java.io.File;
 import java.io.IOException;
 
 public class FormsBuilderTest extends JpsBuildTestCase {
-  private static final String SIMPLE_FORM_PATH = "plugins/ui-designer/jps-plugin/tests/testData/build/simple";
+  private static final String SIMPLE_FORM_PATH = "build/simple";
+
+  @Override
+  protected File findFindUnderProjectHome(String relativeSourcePath) {
+    if (BazelTestUtil.isUnderBazelTest()) {
+      var label = BazelLabel.Companion.fromString("@community//plugins/ui-designer/jps-plugin/tests:testData");
+      return BazelTestUtil.getFileFromBazelRuntime(label).resolve(relativeSourcePath).toFile();
+    }
+    return super.findFindUnderProjectHome("plugins/ui-designer/jps-plugin/tests/testData/" + relativeSourcePath);
+  }
 
   public void testSimple() {
     JpsModule m = addModule("m", copyToProject(SIMPLE_FORM_PATH, "src"));
@@ -99,7 +110,7 @@ public class FormsBuilderTest extends JpsBuildTestCase {
   }
 
   public void testDoNotCopyRuntimeClassesIfOnlyAlienFormFilesExist() {
-    JpsModule module = addModule("m", copyToProject("plugins/ui-designer/jps-plugin/tests/testData/build/alienFormFile", "src"));
+    JpsModule module = addModule("m", copyToProject("build/alienFormFile", "src"));
     buildAllModules().assertSuccessful();
     assertFalse(isRuntimeClassesCopied(module));
   }

@@ -46,6 +46,7 @@ intellij.java.debugger.streams.tests
 intellij.java.frontback.tests
 intellij.java.guiForms.compiler.tests
 intellij.java.guiForms.designer.tests
+intellij.java.guiForms.jps.tests
 intellij.java.i18n.tests
 intellij.java.jshell.console.tests
 intellij.java.jshell.protocol.tests
