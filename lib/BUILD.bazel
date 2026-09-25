@@ -10822,17 +10822,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-browser-debug-2.5.0-dev-7359.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-browser-debug-2_5_0-dev-7359_http//file",
-    out = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-browser-debug-2.5.0-dev-7359.jar",
+    name = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-browser-debug-2.5.0-Beta1.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-browser-debug-2_5_0-Beta1_http//file",
+    out = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-browser-debug-2.5.0-Beta1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-kotlin-gradle-plugin-idea-browser-debug-kotlin-gradle-plugin-idea-browser-debug",
-    jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-browser-debug-2_5_0-dev-7359_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-browser-debug-2_5_0-dev-7359-sources_http//file",
+    jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-browser-debug-2_5_0-Beta1_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-browser-debug-2_5_0-Beta1-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

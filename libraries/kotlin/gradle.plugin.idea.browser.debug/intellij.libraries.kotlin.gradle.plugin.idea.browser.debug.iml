@@ -11,19 +11,19 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" scope="RUNTIME" />
     <orderEntry type="module-library" exported="">
       <library name="kotlin-gradle-plugin-idea-browser-debug" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-plugin-idea-browser-debug:2.5.0-dev-7359">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-plugin-idea-browser-debug:2.5.0-Beta1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-browser-debug/2.5.0-dev-7359/kotlin-gradle-plugin-idea-browser-debug-2.5.0-dev-7359.jar">
-              <sha256sum>b2ad5dc29fd84798302148ec70ae85c8da7123fa13ea53bd6ca6163171b1cdfd</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-browser-debug/2.5.0-Beta1/kotlin-gradle-plugin-idea-browser-debug-2.5.0-Beta1.jar">
+              <sha256sum>8900df52f82d602348b582f0fc7778b3b89941e50652dc54d5a04afbd2b5db76</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-browser-debug/2.5.0-dev-7359/kotlin-gradle-plugin-idea-browser-debug-2.5.0-dev-7359.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-browser-debug/2.5.0-Beta1/kotlin-gradle-plugin-idea-browser-debug-2.5.0-Beta1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-browser-debug/2.5.0-dev-7359/kotlin-gradle-plugin-idea-browser-debug-2.5.0-dev-7359-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-browser-debug/2.5.0-Beta1/kotlin-gradle-plugin-idea-browser-debug-2.5.0-Beta1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
