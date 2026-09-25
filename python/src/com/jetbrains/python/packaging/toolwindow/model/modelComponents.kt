@@ -96,6 +96,15 @@ class RequirementPackage(
 
 class InstallablePackage(name: String, override val repository: PyPackageRepository) : DisplayablePackage(name, repository)
 
+/**
+ * Pseudo-row surfaced for each JPS `ModuleOrderEntry` target of the SDK's owning module. Rendered
+ * with the generic module glyph and inert to package actions (uninstall / change-version / details
+ * panel), so a plain multi-module Python project sees "this module also depends on X" in the same
+ * list as its installed packages, matching the redesigned interpreter-settings Packages tab.
+ */
+@ApiStatus.Internal
+class ModuleDependencyDisplayablePackage(name: String) : DisplayablePackage(name, null)
+
 class LoadingNode : DisplayablePackage("", null)
 
 open class PyPackagesViewData(

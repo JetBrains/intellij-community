@@ -33,6 +33,7 @@ import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.LoadingNode
+import com.jetbrains.python.packaging.toolwindow.model.ModuleDependencyDisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
 import com.jetbrains.python.packaging.toolwindow.model.UndeclaredPackagesGroup
 import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
@@ -91,6 +92,16 @@ internal class PyPackagesTree(
       updateTreeModel()
       treeListener?.onTreeStructureChanged()
     }
+
+  /**
+   * Names that should render with the Python module glyph instead of the package glyph — uv/poetry
+   * workspace members plus JPS modules that carry their own `pyproject.toml`. Populated by
+   * [PyPackagingToolWindowService.refreshInstalledPackagesImpl] alongside [items] so the renderer
+   * can flip icons per-cell without re-querying the workspace on every paint. Kept as a plain
+   * mutable set because updates happen on EDT during refresh and reads happen on EDT during paint.
+   */
+  @set:RequiresEdt
+  var moduleAliasNames: Set<String> = emptySet()
 
   /**
    * Service-side seeded sorted match list (cross-repo merge + global priority sort). Tree's
@@ -277,6 +288,20 @@ internal class PyPackagesTree(
     rootNode.removeAllChildren()
     items.forEach { pkg -> rootNode.add(pkg.toTreeNode()) }
     myTreeModel.reload()
+    // Match the "Workspace Structure → Dependencies" tree: expand every top-level row on refresh
+    // so the first transitive level is visible without the user having to click each chevron. The
+    // search-result flow calls `expandAll()` on top of this to reveal deeper matches, so this
+    // baseline never regresses the search UX.
+    expandTopLevelRows()
+  }
+
+  private fun expandTopLevelRows() {
+    var row = 0
+    while (row < rowCount) {
+      val path = getPathForRow(row) ?: break
+      if (path.pathCount == 2) expandPath(path)
+      row++
+    }
   }
 
   private fun setupTreeInteractions() {
@@ -310,7 +335,8 @@ internal class PyPackagesTree(
       is InstallablePackage -> controller.packageSelected(pkg)
       is RequirementPackage -> controller.packageSelected(pkg)
       is WorkspaceMember -> controller.packageSelected(pkg)
-      is LoadingNode, is DependencyGroupNode, is UndeclaredPackagesGroup -> {}
+      is LoadingNode, is DependencyGroupNode, is UndeclaredPackagesGroup,
+      is ModuleDependencyDisplayablePackage -> {}
     }
   }
 
@@ -383,6 +409,7 @@ internal class PyPackagesTree(
           is UndeclaredPackagesGroup,
           is DependencyGroupNode,
           is WorkspaceMember,
+          is ModuleDependencyDisplayablePackage,
           is LoadingNode,
             -> false
         }
@@ -406,6 +433,7 @@ internal class PyPackagesTree(
       is InstalledPackage,
       is RequirementPackage,
       is WorkspaceMember,
+      is ModuleDependencyDisplayablePackage,
       is LoadingNode,
       is DependencyGroupNode,
       is UndeclaredPackagesGroup,
@@ -564,7 +592,8 @@ internal class PyPackagesTree(
   override fun isCopyVisible(dataContext: DataContext): Boolean = true
 
   private fun getTextForCopy(): String? = when (val pkg = selectedItem()) {
-    is InstalledPackage, is InstallablePackage, is RequirementPackage, is WorkspaceMember -> pkg.name
+    is InstalledPackage, is InstallablePackage, is RequirementPackage, is WorkspaceMember,
+    is ModuleDependencyDisplayablePackage -> pkg.name
     is LoadingNode, is DependencyGroupNode, is UndeclaredPackagesGroup, null -> null
   }
 }

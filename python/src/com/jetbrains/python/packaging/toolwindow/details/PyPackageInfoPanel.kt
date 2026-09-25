@@ -22,6 +22,7 @@ import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.LoadingNode
+import com.jetbrains.python.packaging.toolwindow.model.ModuleDependencyDisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
 import com.jetbrains.python.packaging.toolwindow.model.UndeclaredPackagesGroup
 import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
@@ -92,7 +93,8 @@ internal class PyPackageInfoPanel(
   fun setPackage(pyPackage: DisplayablePackage?) {
     val isDocumentable = when (pyPackage) {
       is InstalledPackage, is InstallablePackage, is RequirementPackage -> true
-      is WorkspaceMember, is DependencyGroupNode, is UndeclaredPackagesGroup, is LoadingNode, null -> false
+      is WorkspaceMember, is DependencyGroupNode, is UndeclaredPackagesGroup,
+      is ModuleDependencyDisplayablePackage, is LoadingNode, null -> false
     }
     if (!isDocumentable) {
       updateJob?.cancel()

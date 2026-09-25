@@ -62,7 +62,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.LW;
 import static com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.DISABLED_SELECTED_COLOR;
 import static com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.DISABLED_TEXT_COLOR;
 import static com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.ENABLED_SELECTED_COLOR;
@@ -96,6 +98,13 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   private Color myTabHoverColor;
 
   private static final JBValue OFFSET = new JBValue.Float(1);
+
+  /** Client / layout properties that force a `contentBorderInsets` rebuild in [installListeners]. */
+  private static final Set<String> BORDER_INSET_PROPS = Set.of(
+    "JTabbedPane.hasFullBorder",
+    "JTabbedPane.hideContentBorder",
+    "tabLayoutPolicy"
+  );
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -148,7 +157,12 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
     Object rStyle = UIManager.get("TabbedPane.tabFillStyle");
     tabStyle = rStyle != null ? TabStyle.valueOf(rStyle.toString()) : TabStyle.underline;
-    contentBorderInsets = tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT ? JBUI.insetsTop(1) : JBInsets.emptyInsets();
+    // Callers can pre-set "JTabbedPane.hideContentBorder=true" before installing the UI so the
+    // tab strip has no separator line — the property-change listener updates the insets on later
+    // toggles, but the initial value has to honor the client property already present.
+    boolean hideContentBorder = tabPane.getClientProperty("JTabbedPane.hideContentBorder") == Boolean.TRUE;
+    contentBorderInsets = hideContentBorder ? JBInsets.emptyInsets() :
+                          (tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT ? JBUI.insetsTop(1) : JBInsets.emptyInsets());
     tabsOverlapBorder = UIManager.getBoolean("TabbedPane.tabsOverlapBorder");
   }
 
@@ -165,11 +179,17 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
     panePropertyListener = evt -> {
       String propName = evt.getPropertyName();
-      if ("JTabbedPane.hasFullBorder".equals(propName) || "tabLayoutPolicy".equals(propName)) {
+      if (BORDER_INSET_PROPS.contains(propName)) {
         boolean fullBorder = tabPane.getClientProperty("JTabbedPane.hasFullBorder") == Boolean.TRUE;
-        contentBorderInsets = (tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT) ?
-                              fullBorder ? JBUI.insets(1) : JBUI.insetsTop(1) :
-                              fullBorder ? JBUI.insets(0, 1, 1, 1) : JBInsets.emptyInsets();
+        boolean hideContentBorder = tabPane.getClientProperty("JTabbedPane.hideContentBorder") == Boolean.TRUE;
+        if (hideContentBorder) {
+          contentBorderInsets = JBInsets.emptyInsets();
+        }
+        else {
+          contentBorderInsets = (tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT) ?
+                                fullBorder ? JBUI.insets(1) : JBUI.insetsTop(1) :
+                                fullBorder ? JBUI.insets(0, 1, 1, 1) : JBUI.emptyInsets();
+        }
         tabPane.revalidate();
         tabPane.repaint();
       }

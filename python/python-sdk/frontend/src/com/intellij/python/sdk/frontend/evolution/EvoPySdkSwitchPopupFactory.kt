@@ -121,8 +121,15 @@ private fun <T : Any> SimpleDataContext.Builder.addOrNull(key: DataKey<T>, value
 /** The project's Python interpreter settings page, matched by id the way `ShowSettingsUtil` matches one. */
 private const val PY_INTERPRETER_CONFIGURABLE_ID: String = "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
 
-/** The package-manager settings page, matched the same way. */
-private const val PY_PACKAGE_MANAGERS_CONFIGURABLE_ID: String = "python.package.managers.group.settings"
+/**
+ * The redesigned "Workspace Structure" / "Project Structure" page (PY-89840). Duplicated as a
+ * string literal on purpose: `intellij.python.sdk.frontend` has no back-dependency on the
+ * `intellij.pycharm.community.ide.impl` module that owns `PyWorkspaceStructureConfigurable`, so
+ * we address it the same way `ShowSettingsUtil` does — by its configurable id. Keep in sync with
+ * `PyWorkspaceStructureConfigurable.ID`.
+ */
+private const val PY_WORKSPACE_STRUCTURE_CONFIGURABLE_ID: String =
+  "com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyWorkspaceStructureConfigurable"
 
 @ApiStatus.Internal
 class EvoPySdkSwitchPopupFactory(
@@ -580,17 +587,20 @@ class EvoPySdkSwitchPopupFactory(
     }
 
   /**
-   * "Settings" — the package-manager settings page.
+   * "Settings" — the redesigned Workspace / Project Structure page (PY-89840).
    *
    * A row of the main list rather than a gear on the section header. The gear was a glyph painted onto the header with
    * hit-testing and hover written by hand, and it named nothing: what it opened could only be learned by clicking it.
+   *
+   * Previously opened the package-manager page; the redesign moves the entry point to the new
+   * page that hosts the SDK selector + Packages / Sources / Dependencies tabs.
    */
-  private fun packageManagerSettingsAction(): AnAction =
+  private fun settingsAction(): AnAction =
     object : AnAction({ PySdkFrontendBundle.message("evo.sdk.status.bar.popup.package.manager.settings") },
                       { "" }, AllIcons.General.Settings), DumbAware {
       override fun actionPerformed(e: AnActionEvent) {
         PyEvoWidgetCollector.controlUsed(project, PyEvoWidgetCollector.Control.GEAR_SETTINGS)
-        ShowSettingsUtilImpl.showSettingsDialog(project, PY_PACKAGE_MANAGERS_CONFIGURABLE_ID, null)
+        ShowSettingsUtilImpl.showSettingsDialog(project, PY_WORKSPACE_STRUCTURE_CONFIGURABLE_ID, null)
       }
     }
 
@@ -646,7 +656,7 @@ class EvoPySdkSwitchPopupFactory(
     if (associated.isNotEmpty()) nonToolNodes.add(0, associatedInterpretersNode(traceId))
     // Last, under "Custom": it leaves the popup for a settings dialog rather than offering an environment, which is
     // what every row above it does.
-    nonToolNodes += EvoTreeLeafElement(packageManagerSettingsAction())
+    nonToolNodes += EvoTreeLeafElement(settingsAction())
 
     val toolsCaption = ListSeparator(PySdkFrontendBundle.message(
       // "Change" once there is something to change: the section switches the interpreter rather than setting a first one.

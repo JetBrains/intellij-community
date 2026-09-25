@@ -58,7 +58,8 @@ import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.swing.Icon
 
-internal abstract class DialogAction(
+@ApiStatus.Internal
+abstract class DialogAction(
   dynamicText: Supplier<@NlsActions.ActionText String>,
   val icon: Icon,
   val target: @Nls String,
@@ -81,7 +82,8 @@ internal abstract class DialogAction(
   }
 }
 
-internal fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onSdkCreated: Consumer<Sdk>): List<DialogAction> {
+@ApiStatus.Internal
+fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onSdkCreated: Consumer<Sdk>): List<DialogAction> {
   // If module resides on this target, we can't use any target except same target and target types that explicitly allow that
   // example: on ``\\wsl$`` you can only use wsl target and dockers
   val targetModuleSitsOn = when (moduleOrProject) {

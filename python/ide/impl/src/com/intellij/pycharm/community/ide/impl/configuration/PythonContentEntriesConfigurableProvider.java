@@ -5,6 +5,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyInterpreterRedesignFlags;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Contract;
 
@@ -17,6 +18,7 @@ public final class PythonContentEntriesConfigurableProvider extends Configurable
 
   @Override
   public boolean canCreateConfigurable() {
+    if (PyInterpreterRedesignFlags.isEnabled()) return false;
     return ArrayUtil.getFirstElement(ModuleManager.getInstance(myProject).getModules()) != null;
   }
 

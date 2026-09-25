@@ -18,9 +18,11 @@ import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.toolwindow.model.DependencyGroupNode
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.PyPackageIcons
+import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.LoadingNode
+import com.jetbrains.python.packaging.toolwindow.model.ModuleDependencyDisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
 import com.jetbrains.python.packaging.toolwindow.model.UndeclaredPackagesGroup
 import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
@@ -115,8 +117,14 @@ internal class PyPackageTreeCellRenderer(
       is InstalledPackage -> renderInstalledPackage(pkg, node, isRowHovered)
       is RequirementPackage -> renderRequirementPackage(pkg, node)
       is InstallablePackage -> renderInstallablePackage(pkg, node.level, isRowHovered)
+      is ModuleDependencyDisplayablePackage -> renderModuleDependency(pkg)
       is LoadingNode -> renderLoadingNode()
     }
+  }
+
+  private fun renderModuleDependency(pkg: ModuleDependencyDisplayablePackage) {
+    icon = AllIcons.Nodes.Module
+    append(pkg.name)
   }
 
   override fun paintComponent(g: Graphics) {

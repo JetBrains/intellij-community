@@ -7,6 +7,7 @@ import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.LoadingNode
+import com.jetbrains.python.packaging.toolwindow.model.ModuleDependencyDisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
 import com.jetbrains.python.packaging.toolwindow.model.UndeclaredPackagesGroup
 import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
@@ -30,6 +31,7 @@ internal object PyPackageTreePresenter {
     is RequirementPackage,
     is InstallablePackage,
     is WorkspaceMember,
+    is ModuleDependencyDisplayablePackage,
     is DependencyGroupNode,
     is LoadingNode,
       -> false
@@ -57,6 +59,7 @@ internal fun DisplayablePackage?.asInstalledPackageOrNull(): InstalledPackage? =
   is InstallablePackage,
   is RequirementPackage,
   is WorkspaceMember,
+  is ModuleDependencyDisplayablePackage,
   is LoadingNode,
   is DependencyGroupNode,
   is UndeclaredPackagesGroup,
@@ -70,6 +73,7 @@ internal fun DisplayablePackage.trailingIconTooltip(): String? = when (this) {
   is InstalledPackage -> PyBundle.message("python.toolwindow.packages.tooltip.uninstall")
   is RequirementPackage,
   is WorkspaceMember,
+  is ModuleDependencyDisplayablePackage,
   is LoadingNode,
   is DependencyGroupNode,
   is UndeclaredPackagesGroup,

@@ -116,7 +116,13 @@ class InterpreterSettingsQuickFix(private val myModule: Module?) : LocalQuickFix
 
   companion object {
     fun showPythonInterpreterSettings(project: Project, module: Module?) {
-      // one tree, both for the test and for the dialog
+      // Ask each registered navigator (typically the redesigned "Workspace Structure" page in
+      // `intellij.pycharm.community.ide.impl`) before falling back to the legacy configurable. The
+      // lower-level module here has no back-dependency on the concrete Configurable classes, so the
+      // routing runs through an extension point instead of a hardcoded FQN.
+      val target = module?.let { ModuleOrProject.ModuleAndProject(it) } ?: ModuleOrProject.ProjectOnly(project)
+      if (PythonInterpreterSettingsNavigator.getInstance()?.tryNavigate(target) == true) return
+
       val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, true)
       val configurable = ConfigurableVisitor.findById(PyActiveSdkModuleConfigurable.CONFIGURABLE_ID, listOf(group))
       if (configurable != null) {

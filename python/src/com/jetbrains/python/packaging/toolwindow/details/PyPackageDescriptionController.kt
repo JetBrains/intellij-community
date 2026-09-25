@@ -45,6 +45,7 @@ import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.LoadingNode
+import com.jetbrains.python.packaging.toolwindow.model.ModuleDependencyDisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
 import com.jetbrains.python.packaging.toolwindow.model.UndeclaredPackagesGroup
 import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
@@ -225,6 +226,7 @@ internal class PyPackageDescriptionController(
             is WorkspaceMember,
             is DependencyGroupNode,
             is UndeclaredPackagesGroup,
+            is ModuleDependencyDisplayablePackage,
             is LoadingNode,
             null -> false
           }
@@ -317,6 +319,7 @@ internal class PyPackageDescriptionController(
     is WorkspaceMember,
     is DependencyGroupNode,
     is UndeclaredPackagesGroup,
+    is ModuleDependencyDisplayablePackage,
     is LoadingNode,
     null -> InstallContext.NONE
   }

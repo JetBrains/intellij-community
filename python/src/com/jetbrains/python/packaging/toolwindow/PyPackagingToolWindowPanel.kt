@@ -4,11 +4,7 @@ package com.jetbrains.python.packaging.toolwindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.application.EDT
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.openapi.components.service
@@ -23,6 +19,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -47,7 +44,6 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
-import java.awt.Cursor
 import java.awt.KeyboardFocusManager
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -56,7 +52,7 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
-internal class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindowPanel(false, true), Disposable {
+class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindowPanel(false, true), Disposable {
 
   private val packageSearchController = PyPackageSearchTextField(project).also {
     Disposer.register(this, it)
@@ -202,40 +198,25 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
   }
 
   private fun createSearchBar(): JComponent {
-    val bundledAction = ActionManager.getInstance().getAction(PY_INSTALL_PACKAGE_ACTION_ID)
-    val installAction = object : DumbAwareAction(
-      message("action.PyInstallPackageAction.text"),
-      null,
-      PyPackageIcons.AddPackage,
-    ) {
-      override fun actionPerformed(e: AnActionEvent) {
-        PythonPackagesToolwindowStatisticsCollector.installDialogOpenedEvent.log(PyInstallDialogSource.HEADER)
-        PyInstallPackageDialog(project).show(packageSearchController.text.trim().takeIf { it.isNotEmpty() })
-      }
-    }.apply {
-      bundledAction?.shortcutSet?.let { shortcutSet = it }
-    }
-    val toolbar = ActionManager.getInstance().createActionToolbar(
-      ActionPlaces.TOOLWINDOW_CONTENT,
-      DefaultActionGroup(installAction),
-      true,
-    ).apply {
-      setReservePlaceAutoPopupIcon(false)
-      component.border = JBUI.Borders.empty()
-      component.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    }
+    packageSearchController.addExtension(
+      ExtendableTextComponent.Extension.create(
+        PyPackageIcons.AddPackage,
+        message("action.PyInstallPackageAction.text"),
+        Runnable {
+          PythonPackagesToolwindowStatisticsCollector.installDialogOpenedEvent.log(PyInstallDialogSource.HEADER)
+          PyInstallPackageDialog(project).show(packageSearchController.text.trim().takeIf { it.isNotEmpty() })
+        },
+      )
+    )
     val hPad = UIUtil.getListCellHPadding()
     val vPad = UIUtil.getListCellVPadding()
-    val searchBarPanel = panel {
+    return panel {
       row {
         cell(packageSearchController).align(AlignX.FILL).resizableColumn().customize(UnscaledGaps.EMPTY)
-        cell(toolbar.component).customize(UnscaledGaps(left = hPad))
       }.customize(UnscaledGapsY.EMPTY)
     }.apply {
       border = JBUI.Borders.empty(vPad, hPad, vPad, hPad)
     }
-    toolbar.targetComponent = searchBarPanel
-    return searchBarPanel
   }
 
   private fun trackModules() {
@@ -324,7 +305,8 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
   override fun dispose() {}
 
   companion object {
-    internal const val PY_PACKAGES_TOOL_WINDOW_ID: String = "Python Packages"
+    /** Tool-window id shared with the settings side and any callers that activate / focus this pane. */
+    const val PY_PACKAGES_TOOL_WINDOW_ID: String = "Python Packages"
 
     @Language("devkit-action-id")
     private const val ADDITIONAL_PACKAGE_TOOLBAR_ACTION_ID = "PyPackageToolbarAdditional"

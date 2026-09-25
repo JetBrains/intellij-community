@@ -13,6 +13,7 @@ import com.jetbrains.python.packaging.toolwindow.model.DependencyGroupNode
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.LoadingNode
+import com.jetbrains.python.packaging.toolwindow.model.ModuleDependencyDisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
 import com.jetbrains.python.packaging.toolwindow.model.UndeclaredPackagesGroup
 import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
@@ -54,6 +55,7 @@ internal class PyPackagesTreeDocPreviewSupport(private val tree: PyPackagesTree,
       // any other row for that package, and not only the plain tooltip (PY-90174).
       is WorkspaceMember -> pkg.instance?.name
       is InstallablePackage,
+      is ModuleDependencyDisplayablePackage,
       is LoadingNode,
       is DependencyGroupNode,
       is UndeclaredPackagesGroup,

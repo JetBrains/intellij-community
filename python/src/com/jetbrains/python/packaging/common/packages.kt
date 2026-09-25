@@ -9,6 +9,7 @@ import com.jetbrains.python.packaging.management.findPackageSpecification
 import com.intellij.python.requirements.pyRequirement
 import com.intellij.python.requirements.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPackageRepository
+import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
@@ -31,6 +32,15 @@ open class PythonPackage @JvmOverloads constructor(name: String, val version: St
 
   val name: String = normalizedName.name
   val presentableName: String = name
+
+  /**
+   * Repository the shared displayable-packages pipeline uses when the manager has no explicit
+   * specification for this package. Default is [PyPiPackageRepository]; a subclass whose
+   * repository is not PyPI (e.g. a conda-installed package) overrides.
+   */
+  @get:ApiStatus.Internal
+  open val defaultRepository: PyPackageRepository
+    get() = PyPiPackageRepository
 
   override fun toString(): String {
     return "PythonPackage(name='${this@PythonPackage.name}', version='$version')"

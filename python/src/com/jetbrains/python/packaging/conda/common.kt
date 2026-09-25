@@ -12,6 +12,10 @@ class CondaPackage(
   editableMode: Boolean,
   val installedWithPip: Boolean = false,
 ) : PythonPackage(name, version, editableMode) {
+  /** A pip-installed package inside a conda env still resolves through PyPI; a native conda install does not. */
+  override val defaultRepository: PyPackageRepository
+    get() = if (installedWithPip) super.defaultRepository else CondaPackageRepository
+
   override fun toString(): String {
     return "CondaPackage(name='$name', version='$version', installedWithPip=$installedWithPip)"
   }

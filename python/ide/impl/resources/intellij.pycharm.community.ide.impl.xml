@@ -115,12 +115,51 @@
                        displayNameKey="settings.python.group.title"
                        descriptionKey="settings.python.group.description"/>
 
+    <groupConfigurable id="python.tools.group.settings"
+                       parentId="python.group.settings"
+                       weight="72"
+                       bundle="messages.PyBundle"
+                       displayNameKey="settings.python.tools.group.title"
+                       descriptionKey="settings.python.tools.group.description"/>
+
+    <!-- Interpreter Settings Redesign (PY-89840). On (default): new pages replace legacy ones. Off: legacy layout. -->
+    <registryKey defaultValue="true"
+                 description="PY-89840 Interpreter Settings Redesign: show new 'All Interpreters' and 'Workspace/Project Structure' pages instead of the legacy 'Python | Interpreter' and 'Project Structure' pages"
+                 key="python.interpreter.settings.redesign"
+                 restartRequired="false"/>
+
     <projectConfigurable groupId="python.group.settings"
                          id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
                          bundle="messages.PyBundle"
                          key="configurable.PyActiveSdkModuleConfigurable.pycharm.interpreter.display.name"
-                         instance="com.intellij.pycharm.community.ide.impl.PyCharmPyActiveSdkModuleConfigurable"
+                         provider="com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyCharmPyActiveSdkModuleConfigurableProvider"
                          groupWeight="200"/> <!-- id is used in InterpreterSettingsQuickFix.showPythonInterpreterSettings -->
+
+    <!-- New "Python | All Interpreters" page (PY-89840); gated by python.interpreter.settings.redesign -->
+    <projectConfigurable groupId="python.group.settings"
+                         id="com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyAllInterpretersConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyAllInterpretersConfigurable.display.name"
+                         provider="com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyAllInterpretersConfigurableProvider"
+                         groupWeight="199"/>
+
+    <!-- New Project/Workspace Structure page (PY-89840); gated by python.interpreter.settings.redesign. -->
+    <projectConfigurable groupId="root"
+                         id="com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyWorkspaceStructureConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyWorkspaceStructureConfigurable.display.name"
+                         provider="com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyWorkspaceStructureConfigurableProvider"
+                         groupWeight="1010"
+                         nonDefaultProject="true"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+
+    <!-- Routes the "Interpreter Settings" quick fix to the redesigned Workspace Structure page (PY-89840). -->
+    <applicationService
+      serviceInterface="com.jetbrains.python.sdk.inspections.PythonInterpreterSettingsNavigator"
+      serviceImplementation="com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyWorkspaceStructureSettingsNavigator"/>
+
 
     <applicationConfigurable id="memory.settings" groupWeight="45"
                              key="settings.memory.group.title"

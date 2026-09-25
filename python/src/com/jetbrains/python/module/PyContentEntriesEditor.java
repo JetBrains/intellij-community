@@ -136,6 +136,10 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
     return myContentEntryEditor;
   }
 
+  protected final void setContentEntryEditor(MyContentEntryEditor editor) {
+    this.myContentEntryEditor = editor;
+  }
+
   protected class MyContentEntryEditor extends ContentEntryEditor {
     private final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
 
