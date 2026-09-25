@@ -18,6 +18,7 @@ import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
 import com.intellij.python.uv.backend.UvPyTool
+import com.intellij.python.uv.backend.cli.uv.UvInitVcs
 import com.intellij.python.uv.backend.runtime.uvCli
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
@@ -295,7 +296,14 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
     )
   }
 
-  override suspend fun createPythonModuleStructure(module: Module): PyResult<Unit> {
+  /**
+   * PY-92436: [createGitRepository] is forwarded rather than dropped. uv's `init` defaults to `--vcs git`, so with the
+   * flag omitted the wizard produced a repository whichever way the user left the checkbox. The wizard's own
+   * initializer still runs when the box is ticked, over the repository uv just made: `git init` is idempotent, and the
+   * IDE appends to uv's `.gitignore` instead of replacing it, so the project ends up with both uv's Python ignores and
+   * the IDE's VCS mapping.
+   */
+  override suspend fun createPythonModuleStructure(module: Module, createGitRepository: Boolean): PyResult<Unit> {
     val uv = toolExecutable.get()?.pathHolder!!
     val baseDir = module.baseDir!!
     val runtime = PyToolRuntime(
@@ -308,7 +316,8 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
     // interpreter it defaults to, and the environment `setupEnvSdk` then builds on the chosen version is undone by the
     // next sync that reads those two files back. Null is left for the case where the combo offered nothing to pick, and
     // `setupEnvSdk` omits `--python` for it too.
-    return runtime.uvCli().init(python = pythonVersion.get()?.languageLevel()).mapSuccess {
+    val vcs = if (createGitRepository) UvInitVcs.GIT else UvInitVcs.NONE
+    return runtime.uvCli().init(python = pythonVersion.get()?.languageLevel(), vcs = vcs).mapSuccess {
       // Refresh so the just-created project structure is visible in VFS as a source root for the welcome step.
       VfsUtil.markDirtyAndRefresh(false, true, true, baseDir)
 

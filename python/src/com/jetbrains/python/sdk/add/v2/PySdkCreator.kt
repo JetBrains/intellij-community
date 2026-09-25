@@ -45,7 +45,13 @@ internal interface PySdkCreator {
    *  │   └── __init__.py
    *  ├── README.md
    *  └── pyproject.toml
+   *
+   * @param createGitRepository what the user asked of the wizard's repository checkbox. A tool that would initialize a
+   *   repository on its own has to be told, because it cannot otherwise be stopped: uv runs `git init` unless
+   *   `--vcs none` says not to, so a tool left uninformed creates the repository the user unchecked (PY-92436). Where
+   *   the tool does create one, the wizard's own initializer still runs over it, which is harmless — `git init` is
+   *   idempotent and the IDE appends to an existing `.gitignore` rather than replacing it.
    */
-  suspend fun createPythonModuleStructure(module: Module): PyResult<Unit> = Result.success(Unit)
+  suspend fun createPythonModuleStructure(module: Module, createGitRepository: Boolean): PyResult<Unit> = Result.success(Unit)
 
 }

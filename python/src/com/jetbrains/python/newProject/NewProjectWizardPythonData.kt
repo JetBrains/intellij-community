@@ -3,6 +3,7 @@ package com.jetbrains.python.newProject
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
+import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -120,8 +121,12 @@ class NewPythonProjectStep(parent: NewProjectWizardStep, val createPythonModuleS
     }
 
     moduleOrProject.moduleIfExists?.takeIf { createPythonModuleStructure }?.let { module ->
+      // What the shared Git step of this wizard was left at, so that a tool scaffolding the project does not create a
+      // repository against it (PY-92436). Absent step — no git4idea, or an added module rather than a new project —
+      // reads as unchecked, which is what the wizard itself would then do.
+      val createGitRepository = gitData?.git == true
       runWithModalProgressBlocking(project, PyBundle.message("python.sdk.creating.python.module.structure")) {
-        pySdkCreator.createPythonModuleStructure(module).onFailure {
+        pySdkCreator.createPythonModuleStructure(module, createGitRepository).onFailure {
           errorSink.emit(it, project)
         }
       }

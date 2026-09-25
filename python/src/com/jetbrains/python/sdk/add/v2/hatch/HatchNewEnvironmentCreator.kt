@@ -62,7 +62,8 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
     hatchFormFields.onShown(scope, model, isFilterOnlyExisting = false)
   }
 
-  override suspend fun createPythonModuleStructure(module: Module): PyResult<Unit> {
+  // `hatch new` initializes no repository, so the wizard's own initializer is left to act on `createGitRepository`.
+  override suspend fun createPythonModuleStructure(module: Module, createGitRepository: Boolean): PyResult<Unit> {
     val hatchExecutablePath = when (val pathHolder = model.hatchViewModel.hatchExecutable.get()?.pathHolder) {
       is PathHolder.Eel -> pathHolder.path
       is PathHolder.Target -> return PyResult.localizedError(message("target.is.not.supported", pathHolder))

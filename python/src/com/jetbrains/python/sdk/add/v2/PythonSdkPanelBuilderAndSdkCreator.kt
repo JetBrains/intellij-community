@@ -190,10 +190,10 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
     custom.onShown(scope)
   }
 
-  override suspend fun createPythonModuleStructure(module: Module): PyResult<Unit> {
+  override suspend fun createPythonModuleStructure(module: Module, createGitRepository: Boolean): PyResult<Unit> {
     return when (selectedMode.get()) {
-      CUSTOM -> custom.currentSdkManager.createPythonModuleStructure(module)
-      PROJECT_UV -> uvSection.getUvCreator().createPythonModuleStructure(module)
+      CUSTOM -> custom.currentSdkManager.createPythonModuleStructure(module, createGitRepository)
+      PROJECT_UV -> uvSection.getUvCreator().createPythonModuleStructure(module, createGitRepository)
       PROJECT_VENV, BASE_CONDA -> Result.success(Unit)
     }
   }

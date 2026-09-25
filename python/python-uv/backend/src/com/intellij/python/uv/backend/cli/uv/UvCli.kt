@@ -50,6 +50,22 @@ enum class UvInitKind(@NlsSafe val flag: String) {
   SCRIPT("--script"),
 }
 
+/**
+ * The value of `uv init --vcs`: the version control system uv initializes in the new project.
+ *
+ * uv defaults to [GIT] when the flag is absent, so a caller that must not create a repository has to pass [NONE]
+ * rather than omit the flag.
+ *
+ * @see <a href="https://docs.astral.sh/uv/reference/cli/#uv-init">uv init</a>
+ */
+enum class UvInitVcs(@NlsSafe val value: String) {
+  /** `--vcs git`: initialize a git repository, and write uv's Python `.gitignore` next to it. */
+  GIT("git"),
+
+  /** `--vcs none`: initialize no repository. */
+  NONE("none"),
+}
+
 @Suppress("unused")
 class UvCli(private val runtime: PyToolRuntime) {
   /**
@@ -76,17 +92,21 @@ class UvCli(private val runtime: PyToolRuntime) {
    *   its own preference order lands on once a `.python-version` or a `requires-python` above applies. So a caller that
    *   knows the version the user asked for must name it here, or the project is pinned to something else. uv only
    *   records the request, so a version it has yet to download is accepted.
+   * @param vcs Passes `--vcs`: the version control system to initialize. Left null, uv initializes a git repository,
+   *   which is why a caller that offers the user the choice must pass [UvInitVcs.NONE] and not merely omit the flag.
    */
   suspend fun init(
     name: String? = null,
     bare: Boolean = false,
     kind: UvInitKind? = null,
     python: String? = null,
+    vcs: UvInitVcs? = null,
   ): PyResult<String> {
     val arguments = cliArgs(
       cliArg("--bare".takeIf { bare }),
       cliArg(kind?.flag),
       cliOption("--python", python),
+      cliOption("--vcs", vcs?.value),
       cliArg(name), // uv takes the project name by position, so it goes after every named argument.
     )
     return runtime.executeAndHandleErrors("init", *arguments, transformer = ZeroCodeStdoutTransformer)

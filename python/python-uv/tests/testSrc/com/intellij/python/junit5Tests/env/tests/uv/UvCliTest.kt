@@ -6,6 +6,7 @@ import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
 import com.intellij.python.uv.backend.cli.uv.UvInitKind
+import com.intellij.python.uv.backend.cli.uv.UvInitVcs
 import com.intellij.python.uv.backend.cli.uv.UvSelfUpdateResult
 import com.intellij.python.uv.backend.runtime.uvCli
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -67,6 +68,12 @@ class UvCliTest {
 
     /** The file `uv init` pins the project's interpreter in, alongside `requires-python`. */
     private const val PYTHON_VERSION_FILE: String = ".python-version"
+
+    /** The repository directory whose presence the new-project wizard's checkbox is about. */
+    private const val GIT_DIR: String = ".git"
+
+    /** uv writes its own Python ignore file, but only for a repository it initialized itself. */
+    private const val GIT_IGNORE_FILE: String = ".gitignore"
   }
 
   @BeforeEach
@@ -146,6 +153,39 @@ class UvCliTest {
       "requires-python should name the requested version, got:\n$pyProjectToml"
     }
     assertEquals(REQUESTED_LANGUAGE_LEVEL, projectPath.resolve(PYTHON_VERSION_FILE).readText().trim())
+  }
+
+  /**
+   * Covers PY-92436: `init(vcs = …)` must decide whether the new project gets a repository, in both directions.
+   *
+   * Both cases are asserted together because the defect was not that uv refused an instruction — it was never given
+   * one. uv's own default is `--vcs git`, so a run that omits the flag produces the same repository as [UvInitVcs.GIT]
+   * would, and a one-sided test would pass against exactly the code that created a repository the user unchecked.
+   */
+  @Test
+  fun testInitHonoursTheRequestedVcs(@TempDir vcsTempDir: Path): Unit = timeoutRunBlocking(60.seconds) {
+    val realVcsTempDir = vcsTempDir.toRealPath()
+
+    // GIVEN two fresh, empty project directories
+    val withGit = realVcsTempDir.resolve("with_git").also { Files.createDirectories(it) }
+    val withoutGit = realVcsTempDir.resolve("without_git").also { Files.createDirectories(it) }
+
+    // WHEN initializing each with the opposite request
+    uvContext.globalRuntime.withWorkingDirectory(withGit).uvCli().init(vcs = UvInitVcs.GIT).getOrThrow()
+    uvContext.globalRuntime.withWorkingDirectory(withoutGit).uvCli().init(vcs = UvInitVcs.NONE).getOrThrow()
+
+    // THEN only the one that asked for a repository has one. `.git` is what the new-project wizard's checkbox is
+    // about, and what the reporter saw appear against an unchecked box.
+    assertTrue(withGit.resolve(GIT_DIR).isDirectory()) { "init(vcs = GIT) should have created a repository" }
+    assertFalse(withoutGit.resolve(GIT_DIR).exists()) { "init(vcs = NONE) must not create a repository" }
+
+    // AND uv writes its Python `.gitignore` only alongside a repository it created, so the flag decides that too.
+    assertTrue(withGit.resolve(GIT_IGNORE_FILE).exists()) { "init(vcs = GIT) should have written uv's .gitignore" }
+    assertFalse(withoutGit.resolve(GIT_IGNORE_FILE).exists()) { "init(vcs = NONE) must not write a .gitignore" }
+
+    // AND the request changes nothing else: both are real uv projects.
+    assertTrue(withGit.resolve(PY_PROJECT_TOML).exists())
+    assertTrue(withoutGit.resolve(PY_PROJECT_TOML).exists())
   }
 
   private fun assertSrcPackageLayout(projectPath: Path) {

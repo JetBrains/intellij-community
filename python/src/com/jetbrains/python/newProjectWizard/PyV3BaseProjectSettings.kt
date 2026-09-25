@@ -40,7 +40,9 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
     if (supportsNotEmptyModuleStructure) {
       withBackgroundProgress(project, PyBundle.message("python.sdk.creating.python.module.structure")) {
         withContext(Dispatchers.IO) {
-          sdkCreator.createPythonModuleStructure(module).also {
+          // The tool is told what the checkbox said so that it can leave the repository alone; the initializer above
+          // still runs for a ticked box, over whatever the tool created. See PySdkCreator.createPythonModuleStructure.
+          sdkCreator.createPythonModuleStructure(module, createGitRepository).also {
             VfsUtil.markDirtyAndRefresh(false, true, true, baseDir)
           }
         }

@@ -110,7 +110,8 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
     toolExecutablePersister(savingPath)
   }
 
-  open suspend fun createPythonModuleStructure(module: Module): PyResult<Unit> = Result.success(Unit)
+  /** @see PySdkCreator.createPythonModuleStructure */
+  open suspend fun createPythonModuleStructure(module: Module, createGitRepository: Boolean): PyResult<Unit> = Result.success(Unit)
 
   internal abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
 }
