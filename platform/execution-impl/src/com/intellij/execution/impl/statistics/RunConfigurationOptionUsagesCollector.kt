@@ -15,13 +15,14 @@ import org.jetbrains.annotations.ApiStatus
 object RunConfigurationOptionUsagesCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
-  val GROUP = EventLogGroup("run.configuration.ui.interactions", 22)
+  val GROUP = EventLogGroup("run.configuration.ui.interactions", 23)
 
   val optionId = EventFields.String("option_id", listOf("before.launch.editSettings", "before.launch.openToolWindow", "beforeRunTasks",
                                                         "commandLineParameters", "coverage", "doNotBuildBeforeRun", "environmentVariables",
                                                         "jrePath", "log.monitor", "mainClass", "module.classpath", "redirectInput",
                                                         "runParallel", "shorten.command.line", "target.project.path", "vmParameters",
                                                         "workingDirectory",
+                                                        "profiler.record.run.to.cursor", // Java
                                                         "count", "junit.test.kind", "repeat", "testScope", // junit
                                                         "maven.params.workingDir", "maven.params.goals", "maven.params.profiles",
                                                         "maven.params.resolveToWorkspace",
