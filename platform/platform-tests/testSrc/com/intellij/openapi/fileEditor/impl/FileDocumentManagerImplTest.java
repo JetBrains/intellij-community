@@ -17,12 +17,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManager.ConflictResolution;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
@@ -411,6 +413,14 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   private static void changeOnDisk(@NotNull VirtualFile file, byte @NotNull [] content) throws IOException {
+    writeToDisk(file, content);
+    file.refresh(false, false);
+  }
+
+  /**
+   * Writes the content without a refresh, so that the caller can bring several files into one VFS event batch
+   */
+  private static void writeToDisk(@NotNull VirtualFile file, byte @NotNull [] content) throws IOException {
     PlatformTestUtil.flushPendingVFSUpdatesFor(file); //otherwise AsyncableLocalFileSystem will wake up later and overwrite the file again
     File ioFile = new File(file.getPath());
     byte[] loaded;
@@ -427,7 +437,6 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
       try (FileOutputStream stream = new FileOutputStream(ioFile)) {
         stream.getFD().sync();
     }}
-    file.refresh(false, false);
   }
 
   public void testContentChanged_noDocument() throws Exception {
@@ -526,7 +535,9 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
 
 
 
-  /** The Rider shape: a client owning its documents is never asked and never merged into. */
+  /**
+   * The Rider shape: a client owning its documents is never asked and never merged into.
+   */
   public void testContentChanged_keepMemoryChangesIgnoresExternalChange() throws Exception {
     overrideConflictResolution(ConflictResolution.KEEP_MEMORY_CHANGES);
 
@@ -537,18 +548,152 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
 
 
   /**
-   * MERGE is declared but not implemented yet, so asking for it has to keep behaving like KEEP_MEMORY_CHANGES -- which is
-   * what the clients migrating to it got from the boolean API before.
+   * The MCP shape: a client writes the file while the user has unsaved changes.
    */
-  public void testContentChanged_mergeNotImplementedYetKeepsMemoryChanges() throws Exception {
+  public void testContentChanged_mergeCombinesBothSides() throws Exception {
     overrideConflictResolution(ConflictResolution.MERGE);
 
-    Document document = editInMemoryThenOnDisk("merge-not-implemented.txt");
+    // myAskReloadFromDiskResult stays null, so the stub fails the test if the dialog appears
+    Document document = editInMemoryThenRefreshFromDisk("merge.txt", "first\nsecond\nTHIRD\n");
+
+    assertEquals("first\nSECOND\nTHIRD\n", document.getText());
+    assertFalse("the merge has to reach the disk", myDocumentManager.isDocumentUnsaved(document));
+    assertEquals("first\nSECOND\nTHIRD\n", diskTextOf(document));
+  }
+
+  public void testContentChanged_mergeAsksWhenBothSidesTouchTheSameLine() throws Exception {
+    overrideConflictResolution(ConflictResolution.MERGE);
+    myAskReloadFromDiskResult = Boolean.TRUE;
+
+    Document document = editInMemoryThenRefreshFromDisk("merge-conflict.txt", "first\nsecond-on-disk\nthird\n");
+
+    // the user was asked and picked the disk version
+    assertEquals("first\nsecond-on-disk\nthird\n", document.getText());
+  }
+
+  public void testContentChanged_mergeReloadsACleanDocument() throws Exception {
+    overrideConflictResolution(ConflictResolution.MERGE);
+
+    VirtualFile file = createFile("merge-clean.txt", "first\nsecond\nthird\n");
+    Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
+
+    changeOnDisk(file, "first\nsecond\nTHIRD\n");
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+
+    assertEquals("first\nsecond\nTHIRD\n", document.getText());
+    assertEquals(file.getModificationStamp(), document.getModificationStamp());
+  }
+
+  /**
+   * A read-only document rejects the merge, so the platform asks instead of dropping the unsaved changes.
+   */
+  public void testContentChanged_mergeAsksWhenTheDocumentIsReadOnly() throws Exception {
+    overrideConflictResolution(ConflictResolution.MERGE);
+    myAskReloadFromDiskResult = Boolean.FALSE;
+
+    VirtualFile file = createFile("merge-read-only.txt", "first\nsecond\nthird\n");
+    Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
+
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.setText("first\nSECOND\nthird\n"));
+    document.setReadOnly(true);
+    changeOnDisk(file, "first\nsecond\nTHIRD\n");
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+
+    // the user was asked and kept the memory version. A merge that ran anyway would throw, and leave the disk
+    // version in a document that is no longer unsaved
+    assertEquals("first\nSECOND\nthird\n", document.getText());
+    assertTrue("the unsaved changes have to survive", myDocumentManager.isDocumentUnsaved(document));
+  }
+
+  /**
+   * The merge decodes the new content itself, so it has to agree with the document about the charset and the BOM.
+   */
+  public void testContentChanged_mergeKeepsTheBomOfTheChangedFile() throws Exception {
+    overrideConflictResolution(ConflictResolution.MERGE);
+
+    VirtualFile file = createFile("merge-bom.txt", "");
+    changeOnDisk(file, bytesWithUtf8Bom("first\nsecond\nthird\n"));
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+
+    Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
+    assertEquals("first\nsecond\nthird\n", document.getText());
+
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.setText("first\nSECOND\nthird\n"));
+    changeOnDisk(file, bytesWithUtf8Bom("first\nsecond\nTHIRD\n"));
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+
+    assertEquals("first\nSECOND\nTHIRD\n", document.getText());
+    Assert.assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
+  }
+
+  /**
+   * With the flag off, a client that asks for MERGE keeps the unsaved changes, as before the feature.
+   */
+  public void testContentChanged_mergeIsOffBehindTheRegistryFlag() throws Exception {
+    Registry.get("ide.merge.external.changes").setValue(false, getTestRootDisposable());
+    overrideConflictResolution(ConflictResolution.MERGE);
+    assertEquals(ConflictResolution.KEEP_MEMORY_CHANGES, myDocumentManager.getConflictResolution());
+
+    // myAskReloadFromDiskResult stays null, so the stub fails the test if the dialog appears
+    Document document = editInMemoryThenRefreshFromDisk("merge-disabled.txt", "first\nsecond\nTHIRD\n");
 
     assertEquals("first\nSECOND\nthird\n", document.getText());
   }
 
-  /** Without an override the dialog is still the answer: merging only happens for a client that asked for it. */
+  public void testContentChanged_mergeYieldsToKeepMemoryChanges() throws Exception {
+    overrideConflictResolution(ConflictResolution.KEEP_MEMORY_CHANGES);
+    overrideConflictResolution(ConflictResolution.MERGE);
+
+    Document document = editInMemoryThenRefreshFromDisk("merge-yields.txt", "first\nsecond\nTHIRD\n");
+
+    assertEquals("first\nSECOND\nthird\n", document.getText());
+  }
+
+  /**
+   * One refresh of two files makes one event batch, which is what this test needs.
+   */
+  public void testContentChanged_mergesEveryConflictOfOneEventBatch() throws Exception {
+    overrideConflictResolution(ConflictResolution.MERGE);
+
+    VirtualFile firstFile = createFile("batch-one.txt", "first\nsecond\nthird\n");
+    VirtualFile secondFile = createFile("batch-two.txt", "first\nsecond\nthird\n");
+    Document firstDocument = myDocumentManager.getDocument(firstFile);
+    Document secondDocument = myDocumentManager.getDocument(secondFile);
+    assertNotNull(firstFile.toString(), firstDocument);
+    assertNotNull(secondFile.toString(), secondDocument);
+
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      firstDocument.setText("first\nSECOND\nthird\n");
+      secondDocument.setText("first\nSECOND\nthird\n");
+    });
+    writeToDisk(firstFile, "first\nsecond\nTHIRD\n".getBytes(StandardCharsets.UTF_8));
+    writeToDisk(secondFile, "first\nsecond\nTHIRD\n".getBytes(StandardCharsets.UTF_8));
+    VfsUtil.markDirtyAndRefresh(false, false, false, firstFile, secondFile);
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+
+    assertEquals("first\nSECOND\nTHIRD\n", firstDocument.getText());
+    assertEquals("first\nSECOND\nTHIRD\n", secondDocument.getText());
+  }
+
+  /**
+   * A change that does not come from a VFS refresh never reaches the merge, because nothing preloads its content.
+   */
+  public void testContentChanged_mergeAsksWhenItCannotMerge() throws Exception {
+    overrideConflictResolution(ConflictResolution.MERGE);
+    myAskReloadFromDiskResult = Boolean.TRUE;
+
+    Document document = editInMemoryThenOnDisk("merge-cannot.txt");
+
+    // the user was asked and picked the disk version, so the in-memory edit is dropped rather than combined
+    assertEquals("first\nsecond\nTHIRD\n", document.getText());
+  }
+
+  /**
+   * Without an override the dialog is still the answer: merging only happens for a client that asked for it.
+   */
   public void testContentChanged_defaultAsksWithoutAnyOverride() throws Exception {
     assertEquals("the premise of this test", ConflictResolution.ASK, myDocumentManager.getConflictResolution());
     myAskReloadFromDiskResult = Boolean.TRUE;
@@ -583,6 +728,27 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     return document;
   }
 
+  /**
+   * Edits the second line in memory, then writes {@code diskText} through a VFS refresh. Only a refresh reaches the
+   * merge, because the platform preloads the content in the read part of a refresh.
+   */
+  private @NotNull Document editInMemoryThenRefreshFromDisk(@NotNull String fileName, @NotNull String diskText) throws Exception {
+    VirtualFile file = createFile(fileName, "first\nsecond\nthird\n");
+    Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
+
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.setText("first\nSECOND\nthird\n"));
+    changeOnDisk(file, diskText);
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    return document;
+  }
+
+  private @NotNull String diskTextOf(@NotNull Document document) throws IOException {
+    VirtualFile file = myDocumentManager.getFile(document);
+    assertNotNull(file);
+    return new String(file.contentsToByteArray(), StandardCharsets.UTF_8);
+  }
+
 
 
   public void testConflictResolutionOverrideIsBoundToDisposable() {
@@ -608,7 +774,9 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertEquals(ConflictResolution.ASK, myDocumentManager.getConflictResolution());
   }
 
-  /** Two clients asking for the same resolution must stay distinguishable, or one disposal drops the other's entry. */
+  /**
+   * Two clients asking for the same resolution must stay distinguishable, or one disposal drops the other's entry.
+   */
   public void testDisposingOneOfTwoEqualConflictResolutionOverridesKeepsTheOther() {
     Disposable firstOverride = Disposer.newDisposable();
     Disposable secondOverride = Disposer.newDisposable();
@@ -628,7 +796,9 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     }
   }
 
-  /** MERGE yields to KEEP_MEMORY_CHANGES, but only while that override is actually alive. */
+  /**
+   * MERGE yields to KEEP_MEMORY_CHANGES, but only while that override is actually alive.
+   */
   public void testMergeOverrideAppliesOnceKeepMemoryChangesOverrideIsDisposed() {
     Disposable keepMemory = Disposer.newDisposable();
     Disposable merge = Disposer.newDisposable();

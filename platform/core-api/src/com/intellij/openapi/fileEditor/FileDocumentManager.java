@@ -219,8 +219,8 @@ public abstract class FileDocumentManager implements SavingRequestor {
      */
     ASK,
     /**
-     * Merge the external change into the unsaved changes, keeping both. The user is never asked, not even when the two turn
-     * out to be unmergeable; the external change wins in that case.
+     * Merge the external change into the unsaved changes, keeping both. The platform saves the merge, so the writer of
+     * the file can read it back.
      */
     MERGE,
     /**

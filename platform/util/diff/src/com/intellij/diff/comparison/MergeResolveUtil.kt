@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.comparison
 
 import com.intellij.diff.fragments.DiffFragment
@@ -17,13 +17,19 @@ import kotlin.math.max
 import kotlin.math.min
 
 object MergeResolveUtil {
+  @JvmOverloads
   @JvmStatic
-  fun tryResolve(leftText: CharSequence, baseText: CharSequence, rightText: CharSequence): CharSequence? {
+  fun tryResolve(
+    leftText: CharSequence,
+    baseText: CharSequence,
+    rightText: CharSequence,
+    indicator: CancellationChecker = CancellationChecker.EMPTY,
+  ): CharSequence? {
     try {
-      val resolved = trySimpleResolve(leftText, baseText, rightText, ComparisonPolicy.DEFAULT)
+      val resolved = trySimpleResolve(leftText, baseText, rightText, ComparisonPolicy.DEFAULT, indicator)
       if (resolved != null) return resolved
 
-      return trySimpleResolve(leftText, baseText, rightText, ComparisonPolicy.IGNORE_WHITESPACES)
+      return trySimpleResolve(leftText, baseText, rightText, ComparisonPolicy.IGNORE_WHITESPACES, indicator)
     }
     catch (e: DiffTooBigException) {
       return null
@@ -42,13 +48,19 @@ object MergeResolveUtil {
    * deleted-deleted conflicts can be resolved by merging deleted intervals.
    * modifications can be considered as "insertion + deletion" and resolved accordingly.
    */
+  @JvmOverloads
   @JvmStatic
-  fun tryGreedyResolve(leftText: CharSequence, baseText: CharSequence, rightText: CharSequence): CharSequence? {
+  fun tryGreedyResolve(
+    leftText: CharSequence,
+    baseText: CharSequence,
+    rightText: CharSequence,
+    indicator: CancellationChecker = CancellationChecker.EMPTY,
+  ): CharSequence? {
     try {
-      val resolved = tryGreedyResolve(leftText, baseText, rightText, ComparisonPolicy.DEFAULT)
+      val resolved = tryGreedyResolve(leftText, baseText, rightText, ComparisonPolicy.DEFAULT, indicator)
       if (resolved != null) return resolved
 
-      return tryGreedyResolve(leftText, baseText, rightText, ComparisonPolicy.IGNORE_WHITESPACES)
+      return tryGreedyResolve(leftText, baseText, rightText, ComparisonPolicy.IGNORE_WHITESPACES, indicator)
     }
     catch (e: DiffTooBigException) {
       return null
@@ -57,13 +69,13 @@ object MergeResolveUtil {
 }
 
 private fun trySimpleResolve(leftText: CharSequence, baseText: CharSequence, rightText: CharSequence,
-                             policy: ComparisonPolicy): CharSequence? {
-  return SimpleHelper(leftText, baseText, rightText).execute(policy)
+                             policy: ComparisonPolicy, indicator: CancellationChecker): CharSequence? {
+  return SimpleHelper(leftText, baseText, rightText).execute(policy, indicator)
 }
 
 private fun tryGreedyResolve(leftText: CharSequence, baseText: CharSequence, rightText: CharSequence,
-                             policy: ComparisonPolicy): CharSequence? {
-  return GreedyHelper(leftText, baseText, rightText).execute(policy)
+                             policy: ComparisonPolicy, indicator: CancellationChecker): CharSequence? {
+  return GreedyHelper(leftText, baseText, rightText).execute(policy, indicator)
 }
 
 
@@ -76,8 +88,8 @@ private class SimpleHelper(val leftText: CharSequence, val baseText: CharSequenc
 
   private val texts = listOf(leftText, baseText, rightText)
 
-  fun execute(policy: ComparisonPolicy): CharSequence? {
-    val changes = ByWordRt.compare(leftText, baseText, rightText, policy, CancellationChecker.EMPTY)
+  fun execute(policy: ComparisonPolicy, indicator: CancellationChecker): CharSequence? {
+    val changes = ByWordRt.compare(leftText, baseText, rightText, policy, indicator)
 
     for (fragment in changes) {
       val baseRange = nextMergeRange(fragment.getStartOffset(ThreeSide.LEFT),
@@ -167,9 +179,9 @@ private class GreedyHelper(val leftText: CharSequence, val baseText: CharSequenc
   private var index1 = 0
   private var index2 = 0
 
-  fun execute(policy: ComparisonPolicy): CharSequence? {
-    val fragments1 = ByWordRt.compare(baseText, leftText, policy, CancellationChecker.EMPTY)
-    val fragments2 = ByWordRt.compare(baseText, rightText, policy, CancellationChecker.EMPTY)
+  fun execute(policy: ComparisonPolicy, indicator: CancellationChecker): CharSequence? {
+    val fragments1 = ByWordRt.compare(baseText, leftText, policy, indicator)
+    val fragments2 = ByWordRt.compare(baseText, rightText, policy, indicator)
 
     while (true) {
       val changeStart1 = fragments1.getOrNull(index1)?.startOffset1 ?: -1

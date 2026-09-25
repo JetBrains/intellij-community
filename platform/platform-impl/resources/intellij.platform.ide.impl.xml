@@ -480,6 +480,11 @@
       description="Center the Settings title and header actions vertically"
     />
     <registryKey
+      key="ide.merge.external.changes"
+      defaultValue="true"
+      description="Merge an external file change into the unsaved changes, for a client that asks for it. Turning this off makes such a client keep the unsaved changes, and it takes effect at once. Turning it on reaches a document once the document loads or saves again."
+    />
+    <registryKey
       key="ide.hide.default.project.directory.for.isolated.workspace"
       defaultValue="true"
       description="Hide the 'Default project directory' setting for projects in an isolated environment (Docker containers/devcontainers, SSH, remote dev)"
@@ -2030,6 +2035,8 @@
               topic="com.intellij.ide.AppLifecycleListener"
               activeInHeadlessMode="true"
               activeInTestMode="false" />
+    <listener class="com.intellij.openapi.fileEditor.impl.FileDocumentCommonText"
+              topic="com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.openapi.fileEditor.impl.EditorHistoryManager$MyEditorManagerListener"

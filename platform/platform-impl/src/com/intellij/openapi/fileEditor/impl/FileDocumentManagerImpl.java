@@ -51,24 +51,21 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.AsyncFileListener;
-import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.openapi.vfs.limits.FileSizeLimit;
-import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener;
 import com.intellij.openapi.vfs.newvfs.persistent.executor.AsyncFileContentWriteRequestor;
 import com.intellij.pom.core.impl.PomModelImpl;
@@ -135,7 +132,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
   private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
 
-  private final List<ConflictResolutionOverride> myConflictResolutionOverrides = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Set<Document> myUnsavedDocuments = ConcurrentCollectionFactory.createConcurrentSet();
 
   private final FileDocumentManagerListenerBackgroundableBridge bridge = new FileDocumentManagerListenerBackgroundableBridge();
@@ -401,7 +397,12 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
     if (file == null || !isTrackable(file) || file.isValid() && !isFileModified(file)) {
       if (LOG.isTraceEnabled()) {
-        LOG.trace("doSaveDocument: removing from unsaved without saving: file:"+file+"; isTrackable:"+(file==null?"-":isTrackable(file))+"; isValid:"+(file==null?"-":file.isValid())+"; isFileModified:"+(file==null?"-":isFileModified(file)));
+        LOG.trace(
+          "doSaveDocument: removing from unsaved without saving: file:" + file +
+          "; isTrackable:" + (file == null ? "-" : isTrackable(file)) +
+          "; isValid:" + (file == null ? "-" : file.isValid()) +
+          "; isFileModified:"+(file == null ? "-" : isFileModified(file))
+        );
       }
       removeFromUnsaved(document);
       return;
@@ -410,7 +411,9 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     if (file.isValid() && needsRefresh(file)) {
       LOG.trace("  refreshing...");
       file.refresh(false, false);
-      if (!myUnsavedDocuments.contains(document)) return;
+      if (!myUnsavedDocuments.contains(document)) {
+        return;
+      }
     }
 
     if (!maySaveDocument(file, document, isExplicit)) {
@@ -428,7 +431,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   private boolean maySaveDocument(@NotNull VirtualFile file, @NotNull Document document, boolean isExplicit) {
-    if (myConflictResolver.hasConflict(file)) {
+    if (myConflictResolver.isInConflictQueue(file)) {
       if (LOG.isTraceEnabled()) {
         LOG.trace("maySaveDocument: save for " + file + " is vetoed by conflict resolver");
       }
@@ -692,26 +695,16 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     return BinaryFileTypeDecompilers.getInstance().hasDecompiler(file);
   }
 
-  /// We try to preload content in read part of VFS refreshes in order to not stall write part with IO
-  private record PrefetchedContent(byte @NotNull [] content, long expectedModificationStamp) {
-    boolean stillMakesSenseFor(@NotNull VirtualFile file) {
-      return file.getModificationStamp() == expectedModificationStamp;
-    }
-  }
-
   static final class MyAsyncFileListener implements AsyncFileListener {
-    /// The listener reads no more content than this in one event batch. Without the limit a large batch, such as a branch
-    /// switch, holds every changed file in memory until the write action runs.
-    private static final long MAX_PREFETCHED_CONTENT_BYTES = 50L * FileUtilRt.MEGABYTE;
-
     private final FileDocumentManagerImpl myFileDocumentManager = (FileDocumentManagerImpl)getInstance();
 
     @Override
     public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+      MemoryDiskConflictResolver conflictResolver = myFileDocumentManager.myConflictResolver;
+      ContentPrefetcher prefetcher = new ContentPrefetcher(myFileDocumentManager);
       List<VirtualFile> toRecompute = new ArrayList<>();
       Map<VirtualFile, Document> strongRefsToDocuments = new HashMap<>();
-      Map<VirtualFile, PrefetchedContent> prefetchedContents = new HashMap<>();
-      long prefetchBudget = MAX_PREFETCHED_CONTENT_BYTES;
+      Map<VirtualFile, ResolvedConflict> resolvedConflicts = new HashMap<>();
       List<VFileContentChangeEvent> contentChanges = ContainerUtil.findAll(events, VFileContentChangeEvent.class);
       for (VFileContentChangeEvent event : contentChanges) {
         ProgressManager.checkCanceled();
@@ -728,22 +721,21 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
         prepareForRangeMarkerUpdate(strongRefsToDocuments, virtualFile);
         // read the new content here, in a read action, to keep the disk read out of the write action below
-        prefetchBudget -= prefetchContent(prefetchedContents, event, toRecompute, prefetchBudget);
-      }
+        var prefetched = prefetcher.prefetch(event, toRecompute);
 
+        ResolvedConflict resolved = conflictResolver.tryMerge(event, prefetched);
+        if (resolved != null) {
+          resolvedConflicts.put(virtualFile, resolved);
+        }
+      }
       return new ChangeApplier() {
         @Override
         public void beforeVfsChange() {
           for (VFileContentChangeEvent event : contentChanges) {
             // new range markers could've appeared after "prepareChange" in some read action
             prepareForRangeMarkerUpdate(strongRefsToDocuments, event.getFile());
-            // only ASK is acted on so far; MERGE is not implemented yet and so behaves like KEEP_MEMORY_CHANGES, which is
-            // what the clients asking for it got before
-            if (myFileDocumentManager.getConflictResolution() == ConflictResolution.ASK) {
-              myFileDocumentManager.myConflictResolver.beforeContentChange(event);
-            }
+            conflictResolver.scheduleConflictDialog(event);
           }
-
           for (VirtualFile file : toRecompute) {
             file.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
           }
@@ -753,80 +745,25 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         public void afterVfsChange() {
           for (VFileEvent event : events) {
             switch (event) {
-              case VFileContentChangeEvent changeEvent when changeEvent.getFile().isValid() ->
-                myFileDocumentManager.contentsChanged(changeEvent, prefetchedContents.get(changeEvent.getFile()));
-              case VFileDeleteEvent deleteEvent -> myFileDocumentManager.fileDeleted(deleteEvent.getFile());
-              case VFilePropertyChangeEvent propEvent when propEvent.getFile().isValid() -> myFileDocumentManager.propertyChanged(propEvent);
+              case VFileContentChangeEvent changeEvent when changeEvent.getFile().isValid() -> {
+                VirtualFile changedFile = changeEvent.getFile();
+                PrefetchedContent prefetched = prefetcher.getPrefetched(changedFile);
+                ResolvedConflict resolved = resolvedConflicts.get(changedFile);
+                myFileDocumentManager.contentsChanged(changeEvent, prefetched, resolved);
+              }
+              case VFileDeleteEvent deleteEvent -> {
+                myFileDocumentManager.fileDeleted(deleteEvent.getFile());
+              }
+              case VFilePropertyChangeEvent propEvent when propEvent.getFile().isValid() -> {
+                myFileDocumentManager.propertyChanged(propEvent);
+              }
               default -> {
               }
             }
           }
-          prefetchedContents.clear();
           Reference.reachabilityFence(strongRefsToDocuments);
         }
       };
-    }
-
-    /// Reads the new content of {@code event.getFile()} and puts it into {@code prefetchedContents}.
-    ///
-    /// The method reads through the file system, because the VFS content cache still holds the old content at this point.
-    ///
-    /// @return the number of bytes it read. Useful for keeping the budget
-    private long prefetchContent(@NotNull Map<? super VirtualFile, ? super PrefetchedContent> prefetchedContents,
-                                 @NotNull VFileContentChangeEvent event,
-                                 @NotNull List<? extends VirtualFile> toRecompute,
-                                 long budget) {
-      if (budget <= 0 || event.isFromSave()) {
-        return 0;
-      }
-      if (!event.isFromRefresh()) {
-        // this listener can be invoked via VfsUtil.saveText, which modifies disk content only after firing `before` events.
-        // in this case, content preload is meaningless
-        return 0;
-      }
-      VirtualFile file = event.getFile();
-      Document document = myFileDocumentManager.getCachedDocument(file);
-      if (document == null) {
-        // document is not strongly reachable; no need to read
-        return 0;
-      }
-      if (toRecompute.contains(file)) {
-        // the file type changes together with the content, so the reload path is still unknown
-        return 0;
-      }
-      if (file.getFileType().isBinary()) {
-        // a decompiler loads its own text; we shall decompile asynchronously later
-        return 0;
-      }
-      // the event carries UNDEFINED_TIMESTAMP_OR_LENGTH when it doesn't know the new length
-      long newLength = event.getNewLength();
-      boolean newLengthKnown = newLength != VFileContentChangeEvent.UNDEFINED_TIMESTAMP_OR_LENGTH;
-      long expectedLength = newLengthKnown ? newLength : file.getLength();
-      if (expectedLength > budget) {
-        return 0;
-      }
-      if (FileSizeLimit.isTooLargeForContentLoading(expectedLength, file.getExtension())) {
-        return 0;
-      }
-      if (expectedLength > PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE) {
-        return 0;
-      }
-      if (!(file.getFileSystem() instanceof FileSystemInterface fileSystem)) {
-        return 0;
-      }
-      try {
-        byte[] content = fileSystem.contentsToByteArray(file);
-        if (newLengthKnown && content.length != newLength) {
-          // the file changed again after the event appeared; let the write action read it
-          return 0;
-        }
-        prefetchedContents.put(file, new PrefetchedContent(content, event.getModificationStamp()));
-        return content.length;
-      }
-      catch (IOException e) {
-        LOG.debug(e);
-        return 0;
-      }
     }
 
     private void prepareForRangeMarkerUpdate(@NotNull Map<? super VirtualFile, ? super Document> strongRefsToDocuments,
@@ -846,10 +783,12 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   public void contentsChanged(@NotNull VFileContentChangeEvent event) {
-    contentsChanged(event, null);
+    contentsChanged(event, null, null);
   }
 
-  private void contentsChanged(@NotNull VFileContentChangeEvent event, @Nullable PrefetchedContent prefetchedContent) {
+  private void contentsChanged(@NotNull VFileContentChangeEvent event,
+                               @Nullable PrefetchedContent prefetched,
+                               @Nullable ResolvedConflict resolved) {
     VirtualFile virtualFile = event.getFile();
     Document document = getCachedDocument(virtualFile);
 
@@ -865,7 +804,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         eventMessage += " , dispatched from save";
         LOG.trace(eventMessage);
       }
-
       return;
     }
 
@@ -882,30 +820,40 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         LOG.trace(eventMessage);
       }
 
-      if (document.getModificationStamp() == event.getOldModificationStamp() || !isDocumentUnsaved(document)) {
-        reloadFromDisk(document, prefetchedContent);
+      if (document.getModificationStamp() == event.getOldModificationStamp() ||
+          !isDocumentUnsaved(document) ||
+          canApplyMerge(virtualFile, document, prefetched, resolved)) {
+        reloadFromDisk(document, prefetched, resolved);
       }
     }
   }
 
-  private void reloadFromDisk(@NotNull Document document, @Nullable PrefetchedContent prefetchedContent) {
+  private void reloadFromDisk(@NotNull Document document,
+                              @Nullable PrefetchedContent prefetched,
+                              @Nullable ResolvedConflict resolved) {
     VirtualFile file = Objects.requireNonNull(getFile(document));
-    reloadFromDisk(document, ProjectLocator.getInstance().guessProjectForFile(file), prefetchedContent);
+    Project project = ProjectLocator.getInstance().guessProjectForFile(file);
+    reloadFromDisk(document, project, prefetched, resolved);
   }
 
   @Override
   public void reloadFromDisk(@NotNull Document document, @Nullable Project project) {
-    reloadFromDisk(document, project, null);
+    reloadFromDisk(document, project, null, null);
   }
 
-  private void reloadFromDisk(@NotNull Document document, @Nullable Project project, @Nullable PrefetchedContent prefetchedContent) {
+  private void reloadFromDisk(@NotNull Document document,
+                              @Nullable Project project,
+                              @Nullable PrefetchedContent prefetched,
+                              @Nullable ResolvedConflict resolved) {
     ThreadContext.installThreadContext(ThreadContext.currentThreadContext().minusKey(ClientIdContextElement.Key), true, () -> {
       ThreadingAssertions.assertWriteIntentReadAccess();
 
       VirtualFile file = getFile(document);
       assert file != null;
       if (!file.isValid()) {
-        if (LOG.isTraceEnabled()) LOG.trace("reloadFromDisk: file is not valid " + file);
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("reloadFromDisk: file is not valid " + file);
+        }
         return null;
       }
 
@@ -914,30 +862,47 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       }
 
       boolean isReloadable = isReloadable(file, document, project);
+      boolean shouldApplyMerge = false;
       if (isReloadable) {
         // Special handling for files with decompiler - run decompilation in background with progress
         if (isBinaryWithDecompiler(file)) {
           reloadFromDiskWithDecompiler(document, project, file);
         }
         else {
-          if (prefetchedContent != null && prefetchedContent.stillMakesSenseFor(file)) {
-            // We need to put the content that prepareChange read into the VFS content cache.
-            // Some clients (e.g. local history) rely on the content changes being reflected in the vfs cache
-            boolean cached = ((PersistentFSImpl)PersistentFS.getInstance()).cacheFileContent(file, prefetchedContent.content());
-            if (!cached && LOG.isDebugEnabled()) {
-              LOG.debug("reloadFromDisk: the VFS refused the prefetched content of " + file + "; loadText reads the file here");
-            }
+          boolean contentIsCurrent = prefetched != null && prefetched.isUpToDate(file);
+          boolean prefetchApplied = contentIsCurrent && prefetched.cacheInVfs(file);
+          if (LOG.isDebugEnabled() && contentIsCurrent && !prefetchApplied) {
+            LOG.debug("reloadFromDisk: the VFS refused the prefetched content of " + file + "; loadText reads the file here");
           }
-          CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
-            ExternalChangeActionUtil.externalDocumentChangeAction(() -> {
-              if (!isBinaryWithoutDecompiler(file)) {
-                setNewText(document, project, file, vFile -> {
-                  boolean tooLarge = isTooLarge(vFile.getLength());
-                  return tooLarge ? LoadTextUtil.loadText(vFile, getPreviewCharCount(vFile)) : LoadTextUtil.loadText(vFile);
-                });
-              }
-            })
-          ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
+          boolean canApplyMerge = canApplyMerge(file, document, prefetched, resolved);
+          Ref<Boolean> reloaded = new Ref<>(false);
+          Runnable reloadText = () -> {
+            if (!isBinaryWithoutDecompiler(file)) {
+              boolean set = setNewText(document, project,
+                file,
+                vFile -> {
+                  if (isTooLarge(vFile.getLength())) {
+                    return LoadTextUtil.loadText(vFile, getPreviewCharCount(vFile));
+                  }
+                  return LoadTextUtil.loadText(vFile);
+                }
+              );
+              reloaded.set(set);
+            }
+          };
+          CommandProcessor.getInstance().executeCommand(
+            project,
+            () -> ApplicationManager.getApplication().runWriteAction(
+              ExternalChangeActionUtil.externalDocumentChangeAction(reloadText)
+            ),
+            UIBundle.message("file.cache.conflict.action"),
+            null,
+            UndoConfirmationPolicy.REQUEST_CONFIRMATION
+          );
+          shouldApplyMerge = canApplyMerge && reloaded.get();
+          if (LOG.isDebugEnabled() && resolved != null && !shouldApplyMerge) {
+            LOG.debug("reloadFromDisk: the merge of " + file + " is dropped; the conflict dialog asks instead");
+          }
         }
       }
       if (isReloadable) {
@@ -954,27 +919,50 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
       myUnsavedDocuments.remove(document);
       document.putUserData(FORCE_SAVE_DOCUMENT_KEY, null);
+
+      if (shouldApplyMerge) {
+        // after `fileContentReloaded`, because its listeners read the document as the content of the file
+        CommandProcessor.getInstance().executeCommand(
+          project,
+          () -> ApplicationManager.getApplication().runWriteAction(
+            () -> resolved.applyTo(document)
+          ),
+          UIBundle.message("file.cache.conflict.automerge.action"),
+          null,
+          UndoConfirmationPolicy.REQUEST_CONFIRMATION
+        );
+        myConflictResolver.cancelConflictDialog(file);
+        // a save in this write action would refresh the VFS re-entrantly, so it waits for a write-safe context
+        ApplicationManager.getApplication().invokeLater(() -> saveDocument(document));
+      }
       return null;
     });
   }
 
-  private static void setNewText(@NotNull Document document,
-                                 @Nullable Project project,
-                                 @NotNull VirtualFile file,
-                                 @NotNull Function<? super @NotNull VirtualFile, ? extends @NotNull CharSequence> loader) {
+  private static boolean setNewText(
+    @NotNull Document document,
+    @Nullable Project project,
+    @NotNull VirtualFile file,
+    @NotNull Function<? super @NotNull VirtualFile, ? extends @NotNull CharSequence> loader
+  ) {
     LoadTextUtil.clearCharsetAutoDetectionReason(file);
     file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
     file.setCharset(null, null, false);
+    boolean tooLarge = isTooLarge(file.getLength());
     boolean wasWritable = document.isWritable();
     document.setReadOnly(false);
-    boolean[] isReloadable = {isReloadable(file, document, project)};
-    if (isReloadable[0]) {
-      boolean tooLarge = isTooLarge(file.getLength());
-      CharSequence reloaded = loader.apply(file);
-      ((DocumentEx)document).replaceText(reloaded, file.getModificationStamp());
-      setDocumentTooLarge(document, tooLarge);
+    try {
+      boolean isReloadable = isReloadable(file, document, project);
+      if (isReloadable) {
+        CharSequence reloaded = loader.apply(file);
+        ((DocumentEx)document).replaceText(reloaded, file.getModificationStamp());
+        setDocumentTooLarge(document, tooLarge);
+        return true;
+      }
+      return false;
+    } finally {
+      document.setReadOnly(!wasWritable);
     }
-    document.setReadOnly(!wasWritable);
   }
 
   private void reloadFromDiskWithDecompiler(@NotNull Document document, @Nullable Project project, @NotNull VirtualFile file) {
@@ -1021,26 +1009,13 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   @Override
   public void overrideConflictResolution(@NotNull ConflictResolution resolution, @NotNull Disposable parentDisposable) {
-    ContainerUtil.add(new ConflictResolutionOverride(resolution), myConflictResolutionOverrides, parentDisposable);
+    myConflictResolver.overrideConflictResolution(resolution, parentDisposable);
   }
 
-  /**
-   * How a conflict has to be resolved right now, honouring the precedence documented on {@link #overrideConflictResolution}.
-   */
+  @TestOnly
   @ApiStatus.Internal
   public @NotNull ConflictResolution getConflictResolution() {
-    ConflictResolutionOverride override = ContainerUtil.getLastItem(myConflictResolutionOverrides);
-    ConflictResolution resolution = override == null ? ConflictResolution.ASK : override.resolution;
-    if (resolution != ConflictResolution.MERGE) {
-      return resolution;
-    }
-    // MERGE is the only resolution that changes a document without asking, so anyone who opted out of that wins over it
-    for (ConflictResolutionOverride other : myConflictResolutionOverrides) {
-      if (other.resolution == ConflictResolution.KEEP_MEMORY_CHANGES) {
-        return ConflictResolution.KEEP_MEMORY_CHANGES;
-      }
-    }
-    return ConflictResolution.MERGE;
+    return myConflictResolver.getConflictResolution();
   }
 
   // NB: virtualFile might be invalid by now
@@ -1159,18 +1134,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     });
   }
 
-  /**
-   * Deliberately a class and not a record: {@link ContainerUtil#add} unregisters by {@code equals}, so value equality would
-   * let one client's disposal drop another client's entry whenever the two asked for the same resolution.
-   */
-  private static final class ConflictResolutionOverride {
-    private final ConflictResolution resolution;
-
-    private ConflictResolutionOverride(@NotNull ConflictResolution resolution) {
-      this.resolution = resolution;
-    }
-  }
-
   @Override
   protected void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
     ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListenerBackgroundable.TOPIC)
@@ -1199,6 +1162,23 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   public void prepareForNextTest() {
     dropAllUnsavedDocuments();
     clearDocumentCache();
+  }
+
+  /**
+   * The decision to reload and the merge both ask this, in one write action, so they agree.
+   * Call it before the reload, which gives the document the stamp of the file.
+   */
+  private static boolean canApplyMerge(
+    @NotNull VirtualFile file,
+    @NotNull Document document,
+    @Nullable PrefetchedContent prefetched,
+    @Nullable ResolvedConflict resolved
+  ) {
+    return resolved != null &&
+           prefetched != null &&
+           resolved.isUpToDate(document) &&
+           prefetched.isUpToDate(file) &&
+           document.isWritable();
   }
 
   private static boolean isTooLarge(long fileLengthInBytes) {
