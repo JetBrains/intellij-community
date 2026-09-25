@@ -4,6 +4,8 @@ package com.intellij.python.junit5Tests.unit
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.python.sdk.common.evolution.EvoLeafDto
+import com.intellij.python.sdk.common.evolution.EvoLeafKind
 import com.intellij.python.sdk.common.evolution.EvoNodeDto
 import com.intellij.python.sdk.common.evolution.EvoNodeKind
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
@@ -52,7 +54,11 @@ class PyEvoWidgetToolListTest {
     build(interpreter, nodes).also { it.isFolded = !toolsExpanded }
 
   /** The tree as the factory builds it, holding every tool — folded, which is how a popup opens. */
-  private fun build(interpreter: PyInterpreterDto?, nodes: List<EvoNodeDto>): EvoTreeStaticNodeElement =
+  private fun build(
+    interpreter: PyInterpreterDto?,
+    nodes: List<EvoNodeDto>,
+    packageManagerActions: List<EvoLeafDto> = emptyList(),
+  ): EvoTreeStaticNodeElement =
     EvoPySdkSwitchPopupFactory(
       project = projectFixture.get(),
       pyProjectKey = "key",
@@ -65,8 +71,12 @@ class PyEvoWidgetToolListTest {
       // Never used by this: only a lazy tool node needs it, and nothing here opens one.
       scope = @OptIn(DelicateCoroutinesApi::class) GlobalScope,
       expandTools = {},
-      packageManagerActionIds = emptyList(),
+      packageManagerActions = packageManagerActions,
     ).buildTree()
+
+  /** A package-manager row as the backend sends one — an ACTION leaf run back by its own action id. */
+  private fun packageManagerAction(title: String): EvoLeafDto =
+    EvoLeafDto(title = title, icon = AllIcons.Actions.Install.rpcId(), kind = EvoLeafKind.ACTION, actionId = title)
 
   /**
    * Every row the popup lists, in order.
@@ -146,4 +156,41 @@ class PyEvoWidgetToolListTest {
     assertEquals(listOf("uv"), rows(tree).filter { it == "uv" })
     assertEquals(null, toggle(tree))
   }
+
+  @Test
+  @DisplayName("the package-manager rows are the backend's answer, drawn as it comes")
+  fun `the current environment section draws the package-manager rows the backend sent`() {
+    // PY-92487: which of that group's actions apply is decided on the backend, where the interpreter's package manager
+    // and its dependency file are. The frontend used to ask its own ActionManager and run each action's update() to
+    // find out — which in RemDev answers with a delegating wrapper that decides nothing, leaving every tool's rows on
+    // screen at once. So this asserts on what the popup draws for a given backend answer, and on nothing else being
+    // there: a frontend that went back to deciding for itself would show rows this never sent it.
+    val sent = listOf(packageManagerAction("uv Lock"), packageManagerAction("uv Sync"))
+    val tree = build(interpreter = interpreter(activeNodeId = "uv"), nodes = tools(1), packageManagerActions = sent)
+
+    val drawn = currentEnvironmentRows(tree)
+    assertEquals(listOf("uv Lock", "uv Sync"), drawn.filter { it in setOf("uv Lock", "uv Sync", "Poetry Lock", "Conda Export") },
+                 "expected exactly the rows the backend sent, in order")
+
+    // The rows around them are the section's own and stay put, so the assertion above is about the group and not about
+    // an empty section.
+    assertTrue(drawn.size > sent.size, "expected the section's own rows beside them, got $drawn")
+  }
+
+  @Test
+  fun `no package-manager row is drawn when the backend sent none`() {
+    val tree = build(interpreter = interpreter(activeNodeId = "uv"), nodes = tools(1))
+    val drawn = currentEnvironmentRows(tree)
+    assertTrue(drawn.none { it in setOf("uv Lock", "uv Sync", "Poetry Lock", "Conda Export") },
+               "expected no package-manager row, got $drawn")
+  }
+
+  /**
+   * The rows of the "Current Environment" section — the last one, which is where the package-manager rows sit.
+   *
+   * Found by position rather than by its caption, so this does not turn on the wording: the section that acts on
+   * whatever interpreter is current is always last (see `EvoPySdkSwitchPopupFactory.sectionsWith`).
+   */
+  private fun currentEnvironmentRows(tree: EvoTreeStaticNodeElement): List<String> =
+    tree.sections.last().elements.map { it.presentation.text.orEmpty() }
 }
