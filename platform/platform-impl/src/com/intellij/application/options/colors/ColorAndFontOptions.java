@@ -542,7 +542,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     mySubPanelFactories = new LinkedHashMap<>(panelFactories.size());
     for (ColorAndFontPanelFactory panelFactory : panelFactories) {
-      mySubPanelFactories.put(panelFactory, new InnerSearchableConfigurable(panelFactory));
+      mySubPanelFactories.put(panelFactory, isBeta(panelFactory)
+                                            ? new BetaInnerSearchableConfigurable(panelFactory)
+                                            : new InnerSearchableConfigurable(panelFactory));
     }
 
     return mySubPanelFactories.values().toArray(new Configurable[0]);
@@ -1705,7 +1707,18 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return child == null ? null : child.createPanel();
   }
 
-  private final class InnerSearchableConfigurable
+  private static boolean isBeta(@NotNull ColorAndFontPanelFactory factory) {
+    return factory instanceof Configurable.Beta ||
+           factory instanceof ColorAndFontPanelFactoryEx ex && Configurable.Beta.class.isAssignableFrom(ex.getOriginalClass());
+  }
+
+  private final class BetaInnerSearchableConfigurable extends InnerSearchableConfigurable implements Configurable.Beta {
+    private BetaInnerSearchableConfigurable(@NotNull ColorAndFontPanelFactory factory) {
+      super(factory);
+    }
+  }
+
+  private class InnerSearchableConfigurable
     implements SearchableConfigurable, OptionsContainingConfigurable, NoScroll, InnerWithModifiableParent,
                CustomizedSettingsProvider {
     private NewColorAndFontPanel mySubPanel;
