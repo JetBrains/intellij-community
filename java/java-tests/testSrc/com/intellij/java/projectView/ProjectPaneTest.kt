@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.projectView
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.projectView
 
 import com.intellij.ide.projectView.ProjectViewSettings
 import com.intellij.ide.projectView.ViewSettings
@@ -8,11 +8,12 @@ import com.intellij.ide.util.treeView.NodeOptions
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
+import kotlin.test.assertNotEquals
 
-class PackagesPaneTest : AbstractProjectViewTest() {
+class ProjectPaneTest : AbstractProjectViewTest() {
   override fun setUp() {
     super.setUp()
-    selectPackagesPane()
+    selectProjectPane()
   }
 
   fun `test default settings`() {
@@ -22,9 +23,9 @@ class PackagesPaneTest : AbstractProjectViewTest() {
     // ProjectViewSettings
 
     val defaultShowExcludedFiles = ProjectViewSettings.Immutable.DEFAULT.isShowExcludedFiles
-    assertEquals(false, settings.isShowExcludedFiles) // not supported in the Packages view
+    assertEquals(defaultShowExcludedFiles, settings.isShowExcludedFiles)
     state.showExcludedFiles = !defaultShowExcludedFiles
-    assertEquals(false, settings.isShowExcludedFiles) // not supported in the Packages view
+    assertEquals(!defaultShowExcludedFiles, settings.isShowExcludedFiles)
 
     val defaultShowVisibilityIcons = ProjectViewSettings.Immutable.DEFAULT.isShowVisibilityIcons
     assertEquals(defaultShowVisibilityIcons, settings.isShowVisibilityIcons)
@@ -32,9 +33,9 @@ class PackagesPaneTest : AbstractProjectViewTest() {
     assertEquals(!defaultShowVisibilityIcons, settings.isShowVisibilityIcons)
 
     val defaultUseFileNestingRules = ProjectViewSettings.Immutable.DEFAULT.isUseFileNestingRules
-    assertEquals(false, settings.isUseFileNestingRules) // not supported in the Packages view
+    assertEquals(defaultUseFileNestingRules, settings.isUseFileNestingRules)
     state.useFileNestingRules = !defaultUseFileNestingRules
-    assertEquals(false, settings.isUseFileNestingRules) // not supported in the Packages view
+    assertEquals(!defaultUseFileNestingRules, settings.isUseFileNestingRules)
 
     // ViewSettings
 
@@ -52,16 +53,14 @@ class PackagesPaneTest : AbstractProjectViewTest() {
     assertEquals(defaultStructureView, settings.isStructureView)
 
     val defaultShowModules = ViewSettings.Immutable.DEFAULT.isShowModules
-    assertEquals(defaultShowModules, settings.isShowModules)
+    assertEquals(false, settings.isShowModules) // not supported in the Project view
     state.showModules = !defaultShowModules
-    assertEquals(!defaultShowModules, settings.isShowModules)
+    assertEquals(false, settings.isShowModules) // not supported in the Project view
 
     val defaultFlattenModules = ViewSettings.Immutable.DEFAULT.isFlattenModules
-    assertEquals(defaultFlattenModules, settings.isFlattenModules)
+    assertEquals(false, settings.isFlattenModules) // no modules in project
     state.flattenModules = !defaultFlattenModules
-    assertEquals(false, settings.isFlattenModules) // depends on show modules
-    state.showModules = true // to test dependency of FlattenModules and ShowModules
-    assertEquals(!defaultFlattenModules, settings.isFlattenModules)
+    assertEquals(false, settings.isFlattenModules) // no modules in project
 
     val defaultShowURL = ViewSettings.Immutable.DEFAULT.isShowURL
     assertEquals(defaultShowURL, settings.isShowURL)
@@ -86,14 +85,14 @@ class PackagesPaneTest : AbstractProjectViewTest() {
     assertEquals(!defaultHideEmptyMiddlePackages, settings.isHideEmptyMiddlePackages)
 
     val defaultCompactDirectories = NodeOptions.Immutable.DEFAULT.isCompactDirectories
-    assertEquals(false, settings.isCompactDirectories) // not supported in the Packages view
+    assertEquals(false, settings.isCompactDirectories) // not supported in the Project view
     state.compactDirectories = !defaultCompactDirectories
-    assertEquals(false, settings.isCompactDirectories) // not supported in the Packages view
+    assertEquals(false, settings.isCompactDirectories) // not supported in the Project view
 
     val defaultShowLibraryContents = NodeOptions.Immutable.DEFAULT.isShowLibraryContents
-    assertEquals(defaultShowLibraryContents, settings.isShowLibraryContents)
+    assertEquals(false, settings.isShowLibraryContents) // not supported in the Project view
     state.showLibraryContents = !defaultShowLibraryContents
-    assertEquals(!defaultShowLibraryContents, settings.isShowLibraryContents)
+    assertEquals(false, settings.isShowLibraryContents) // not supported in the Project view
   }
 
   fun `test default settings with modules in project`() {
@@ -111,9 +110,9 @@ class PackagesPaneTest : AbstractProjectViewTest() {
     // ProjectViewSettings
 
     val defaultShowExcludedFiles = ProjectViewSettings.Immutable.DEFAULT.isShowExcludedFiles
-    assertEquals(false, settings.isShowExcludedFiles) // not supported in the Packages view
+    assertEquals(defaultShowExcludedFiles, settings.isShowExcludedFiles)
     state.showExcludedFiles = !defaultShowExcludedFiles
-    assertEquals(false, settings.isShowExcludedFiles) // not supported in the Packages view
+    assertEquals(!defaultShowExcludedFiles, settings.isShowExcludedFiles)
 
     val defaultShowVisibilityIcons = ProjectViewSettings.Immutable.DEFAULT.isShowVisibilityIcons
     assertEquals(defaultShowVisibilityIcons, settings.isShowVisibilityIcons)
@@ -121,9 +120,9 @@ class PackagesPaneTest : AbstractProjectViewTest() {
     assertEquals(!defaultShowVisibilityIcons, settings.isShowVisibilityIcons)
 
     val defaultUseFileNestingRules = ProjectViewSettings.Immutable.DEFAULT.isUseFileNestingRules
-    assertEquals(false, settings.isUseFileNestingRules) // not supported in the Packages view
+    assertEquals(defaultUseFileNestingRules, settings.isUseFileNestingRules)
     state.useFileNestingRules = !defaultUseFileNestingRules
-    assertEquals(false, settings.isUseFileNestingRules) // not supported in the Packages view
+    assertEquals(!defaultUseFileNestingRules, settings.isUseFileNestingRules)
 
     // ViewSettings
 
@@ -141,15 +140,13 @@ class PackagesPaneTest : AbstractProjectViewTest() {
     assertEquals(defaultStructureView, settings.isStructureView)
 
     val defaultShowModules = ViewSettings.Immutable.DEFAULT.isShowModules
-    assertEquals(defaultShowModules, settings.isShowModules)
+    assertEquals(false, settings.isShowModules) // not supported in the Project view
     state.showModules = !defaultShowModules
-    assertEquals(!defaultShowModules, settings.isShowModules)
+    assertEquals(false, settings.isShowModules) // not supported in the Project view
 
     val defaultFlattenModules = ViewSettings.Immutable.DEFAULT.isFlattenModules
     assertEquals(defaultFlattenModules, settings.isFlattenModules)
     state.flattenModules = !defaultFlattenModules
-    assertEquals(false, settings.isFlattenModules) // depends on show modules
-    state.showModules = true // to test dependency of FlattenModules and ShowModules
     assertEquals(!defaultFlattenModules, settings.isFlattenModules)
 
     val defaultShowURL = ViewSettings.Immutable.DEFAULT.isShowURL
@@ -180,8 +177,75 @@ class PackagesPaneTest : AbstractProjectViewTest() {
     assertEquals(false, settings.isCompactDirectories) // not supported in the Project view
 
     val defaultShowLibraryContents = NodeOptions.Immutable.DEFAULT.isShowLibraryContents
-    assertEquals(defaultShowLibraryContents, settings.isShowLibraryContents)
+    assertEquals(false, settings.isShowLibraryContents) // not supported in the Project view
     state.showLibraryContents = !defaultShowLibraryContents
-    assertEquals(!defaultShowLibraryContents, settings.isShowLibraryContents)
+    assertEquals(false, settings.isShowLibraryContents) // not supported in the Project view
+  }
+
+  fun `test node collapse on sibling add`() {
+    with(ProjectViewState.getInstance(project)) {
+      hideEmptyMiddlePackages = false
+    }
+    val test = createTreeTest()
+    val temp = getOrCreateModuleDir(module)
+    val root = createChildDirectory(temp, "module")
+    PsiTestUtil.addSourceRoot(module, root)
+
+    val parent = createChildDirectory(root, "parent")
+    val folder = createChildDirectory(parent, "folder")
+
+    selectFile(folder)
+    test.assertStructure(" -PsiDirectory: module\n" +
+                         "  -PsiDirectory: parent\n" +
+                         "   PsiDirectory: folder\n" +
+                         " +External Libraries\n")
+
+    selectFile(createChildDirectory(folder, "child"))
+    test.assertStructure(" -PsiDirectory: module\n" +
+                         "  -PsiDirectory: parent\n" +
+                         "   -PsiDirectory: folder\n" +
+                         "    PsiDirectory: child\n" +
+                         " +External Libraries\n")
+
+    selectFile(createChildDirectory(parent, "sibling"))
+    test.assertStructure(" -PsiDirectory: module\n" +
+                         "  -PsiDirectory: parent\n" +
+                         "   -PsiDirectory: folder\n" +
+                         "    PsiDirectory: child\n" +
+                         "   PsiDirectory: sibling\n" +
+                         " +External Libraries\n")
+  }
+
+  fun `test file nesting support`() {
+    val test = createTreeTest()
+    val root = directoryContent {
+      dir("src") {
+        dir("com") {
+          file("test.js")
+          file("test.js.map")
+        }
+      }
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addSourceRoot(module, root.findChild("src")!!)
+    val mapFile = root.findFileByRelativePath("src/com/test.js.map")!!
+
+    setFileNestingRules(".js" to ".js.map")
+    selectFile(mapFile)
+    test.assertStructure(" -PsiDirectory: src\n" +
+                         "  -PsiDirectory: com\n" +
+                         "   -test.js\n" +
+                         "    test.js.map\n" +
+                         " +External Libraries\n")
+
+    val structureBefore = test.toString()
+    projectView.setUseFileNestingRules(false)
+    selectFile(mapFile)
+    test.assertStructure(" -PsiDirectory: src\n" +
+                         "  -PsiDirectory: com\n" +
+                         "   test.js\n" +
+                         "   test.js.map\n" +
+                         " +External Libraries\n")
+
+    assertNotEquals(structureBefore, test.toString())
   }
 }

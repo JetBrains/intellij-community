@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.projectView;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.projectView;
 
 import com.intellij.ide.projectView.NodeSortKey;
 import com.intellij.ide.projectView.PresentationData;
@@ -13,6 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectView.BaseProjectViewTestCase;
+import com.intellij.projectView.TestProjectViewPSIPane;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ui.tree.TreeUtil;
