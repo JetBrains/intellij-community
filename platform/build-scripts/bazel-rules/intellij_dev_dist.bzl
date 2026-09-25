@@ -375,12 +375,14 @@ def _project_model_tree_impl(ctx):
 intellij_project_model_tree = rule(
     doc = """The checkout-shaped JPS project model tree that dev-distribution fragments read.
 
-    One tree per product and target platform, shared by every fragment of it. A fragment used to build its own, and at
-    7 432 file copies that cost as much as the assembly itself - affordable once, not once per fragment.
+    A consuming repository can declare one tree for many products and share it with every fragment of those products.
+    A fragment used to build its own, and at 7 432 file copies that cost as much as the assembly itself - affordable
+    once, not once per fragment.
 
     It carries the union of what the fragments need, so a file only one of them reads (the OS natives of the resources
-    fragment, say) now invalidates all of them. Those change far less often than the model does, and the model was
-    already invalidating every fragment: project files are inputs no fragment can prune, unlike the module jars.
+    fragment, or the branding of one product, say) invalidates all of them. Those change far less often than the model
+    does, and the model was already invalidating every fragment: project files are inputs no fragment can prune, unlike
+    the module jars.
     """,
     implementation = _project_model_tree_impl,
     attrs = {
