@@ -9,10 +9,10 @@ import org.jetbrains.annotations.ApiStatus
 @Serializable
 sealed interface TodoEvent {
   @Serializable
-  data class ItemUpserted(val item: TodoFileResult) : TodoEvent
+  data class FileUpserted(val item: TodoFileResult) : TodoEvent
 
   @Serializable
-  data class ItemRemoved(val fileId: VirtualFileId) : TodoEvent
+  data class FileRemoved(val fileId: VirtualFileId) : TodoEvent
 
   @Serializable
   data object AllItemsRemoved : TodoEvent

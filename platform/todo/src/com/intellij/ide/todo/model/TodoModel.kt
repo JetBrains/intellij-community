@@ -32,14 +32,14 @@ internal class TodoModel {
   @Synchronized
   fun applyEvent(event: TodoEvent): TodoModelChange {
     when (event) {
-      is TodoEvent.ItemUpserted -> {
+      is TodoEvent.FileUpserted -> {
         val file = event.item.fileId.virtualFile() ?: return TodoModelChange.Nothing
         if (!file.isValid || event.item.todos.isEmpty()) return removeFile(file)
         val previous = files.put(file.rpcId(), event.item)
         todoItemCount.addAndGet(event.item.todos.size - (previous?.todos?.size ?: 0))
         return TodoModelChange.FileUpdated(file)
       }
-      is TodoEvent.ItemRemoved -> {
+      is TodoEvent.FileRemoved -> {
         val file = event.fileId.virtualFile() ?: return TodoModelChange.Nothing
         return removeFile(file)
       }

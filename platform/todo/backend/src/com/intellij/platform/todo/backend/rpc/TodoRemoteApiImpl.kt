@@ -121,7 +121,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
           val virtualFile = psiFile.virtualFile ?: return@processFilesWithTodoItems true
           val result = buildTodoFileResult(project, psiFile, virtualFile, filter)
           if (result != null) {
-            trySend(TodoEvent.ItemUpserted(result))
+            trySend(TodoEvent.FileUpserted(result))
           }
           true
         }
@@ -136,7 +136,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
           if (!searchScope.contains(virtualFile)) return@processFilesWithTodoItems true
           val result = buildTodoFileResult(project, psiFile, virtualFile, filter)
           if (result != null) {
-            trySend(TodoEvent.ItemUpserted(result))
+            trySend(TodoEvent.FileUpserted(result))
           }
           true
         }
@@ -155,7 +155,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     if (!virtualFile.isValid) return
     val psiFile = psiManager.findFile(virtualFile) ?: return
     val result = buildTodoFileResult(project, psiFile, virtualFile, filter) ?: return
-    trySend(TodoEvent.ItemUpserted(result))
+    trySend(TodoEvent.FileUpserted(result))
   }
 
   private suspend fun ProducerScope<TodoEvent>.scheduleFileChanges(
@@ -169,21 +169,21 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
       val helper = PsiTodoSearchHelper.getInstance(project)
 
       if (!file.isValid || searchScope?.contains(file) == false) {
-        trySend(TodoEvent.ItemRemoved(file.rpcId()))
+        trySend(TodoEvent.FileRemoved(file.rpcId()))
         return@readAction
       }
 
       val psiFile = psiManager.findFile(file)
       if (psiFile == null || helper.getTodoItemsCount(psiFile) == 0) {
-        trySend(TodoEvent.ItemRemoved(file.rpcId()))
+        trySend(TodoEvent.FileRemoved(file.rpcId()))
         return@readAction
       }
       val result = buildTodoFileResult(project, psiFile, file, filter)
       if (result != null) {
-        trySend(TodoEvent.ItemUpserted(result))
+        trySend(TodoEvent.FileUpserted(result))
       }
       else {
-        trySend(TodoEvent.ItemRemoved(file.rpcId()))
+        trySend(TodoEvent.FileRemoved(file.rpcId()))
       }
     }
   }
