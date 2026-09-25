@@ -1,0 +1,32 @@
+<!--
+Analyzer/Language Server-only registrations, loaded explicitly from init.kt (org.jetbrains.ls.plugin.java).
+This file is NOT xi-included by intellij.java.xml.dom.impl.xml: that would change the module visibility and register
+the same extensions twice in the IDE. Entries here mirror intellij.java.xml.dom.impl.xml. Keep them in sync.
+
+This is the Java side of the DOM: `PsiClassConverter`, `PsiPackageConverter` and the `@ExtendClass` checker.
+User plugins need them for their `DomFileDescription`s (DevKit for plugin.xml).
+The DOM itself comes from the XML Core plugin (org.jetbrains.ls.plugin.xml, `language-server.analyzer.xml`).
+XML Core registers no `ConverterManager`: only Java-aware DOM descriptions need one, so this is the only
+registration in the analyzer set and `overrides` is not needed.
+Skipped: `dom.uiControlsProvider` (Swing controls) and the `UsedIconsListing` action (UI).
+-->
+<!--suppress PluginXmlRegistrationCheck (dom.converter interfaceClass attributes reference API types that other modules own) -->
+<idea-plugin visibility="internal">
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- `open` as in intellij.xml.dom.impl: PluginModelValidator wants every declaration of an open service to be open or overriding. -->
+    <applicationService serviceInterface="com.intellij.util.xml.ConverterManager" open="true"
+                        serviceImplementation="com.intellij.util.xml.impl.JavaDomConverterManagerImpl"/>
+    <completion.contributor language="XML" id="basic2ClassName" order="after xml, before javaClassReference"
+                            implementationClass="com.intellij.codeInsight.completion.XmlBasicToClassNameDelegator"/>
+    <customPropertyScopeProvider implementation="com.intellij.psi.impl.search.SimpleAccessorScopeProvider"/>
+    <dom.converter interfaceClass="com.intellij.util.xml.JvmPsiTypeConverter"
+                   implementationClass="com.intellij.util.xml.JvmPsiTypeConverterImpl"/>
+    <dom.converter interfaceClass="com.intellij.util.xml.CanonicalPsiTypeConverter"
+                   implementationClass="com.intellij.util.xml.CanonicalPsiTypeConverterImpl"/>
+    <dom.converter interfaceClass="com.intellij.util.xml.converters.values.ClassValueConverter"
+                   implementationClass="com.intellij.util.xml.converters.ClassValueConverterImpl"/>
+    <dom.converter interfaceClass="com.intellij.util.xml.converters.values.ClassArrayConverter"
+                   implementationClass="com.intellij.util.xml.converters.ClassArrayConverterImpl"/>
+    <dom.customAnnotationChecker implementation="com.intellij.util.xml.impl.ExtendsClassChecker"/>
+  </extensions>
+</idea-plugin>
