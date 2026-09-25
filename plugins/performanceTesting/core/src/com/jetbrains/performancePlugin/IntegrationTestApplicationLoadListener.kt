@@ -1,11 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin
 
-import com.intellij.ide.ApplicationLoadListener
-import com.intellij.openapi.application.Application
-import java.nio.file.Path
+import com.intellij.ide.ApplicationLoadHandler
+import com.intellij.ide.BeforeApplicationLoadedEvent
 
-class IntegrationTestApplicationLoadListener : ApplicationLoadListener {
+internal class IntegrationTestApplicationLoadListener : ApplicationLoadHandler {
   data class Data(val projectPath: String, val args: List<String>)
 
   companion object {
@@ -13,13 +12,9 @@ class IntegrationTestApplicationLoadListener : ApplicationLoadListener {
     var data: Data? = null
   }
 
-  override suspend fun beforeApplicationLoaded(application: Application, configPath: Path, args: List<String>) {
-    if (args.isEmpty()) return
-    else data = Data(args.first(), args)
+  override suspend fun beforeApplicationLoaded(event: BeforeApplicationLoadedEvent) {
+    if (event.args.isEmpty()) return
 
-    super.beforeApplicationLoaded(application, configPath, args)
-  }
-
-  override suspend fun beforeApplicationLoaded(application: Application, configPath: Path) {
+    data = Data(event.args.first(), event.args)
   }
 }

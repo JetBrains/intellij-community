@@ -15,7 +15,8 @@ import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.ApplicationActivity
 import com.intellij.ide.ApplicationInitializedListener
-import com.intellij.ide.ApplicationLoadListener
+import com.intellij.ide.ApplicationLoadHandlers
+import com.intellij.ide.BeforeApplicationLoadedEvent
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.CliResult
 import com.intellij.ide.CommandLineProcessor
@@ -450,9 +451,10 @@ suspend fun initConfigurationStore(app: ApplicationImpl, args: List<String>) {
     }
 
     span("beforeApplicationLoaded") {
-      for (extension in ApplicationLoadListener.EP_NAME.filterableLazySequence()) {
+      val event = BeforeApplicationLoadedEvent(app, configDir, args)
+      for (extension in ApplicationLoadHandlers.EP_NAME.filterableLazySequence()) {
         extension.useOrLogError {
-          it.beforeApplicationLoaded(app, configDir, args)
+          it.beforeApplicationLoaded(event)
         }
       }
     }

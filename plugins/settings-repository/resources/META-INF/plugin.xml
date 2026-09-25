@@ -59,7 +59,7 @@
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
-    <ApplicationLoadListener implementation="org.jetbrains.settingsRepository.IcsApplicationLoadListener"/>
+    <applicationLoadHandler implementation="org.jetbrains.settingsRepository.IcsApplicationLoadListener"/>
 
     <applicationConfigurable groupId="tools" instance="org.jetbrains.settingsRepository.IcsConfigurable" id="ics"
                              key="ics.settings" bundle="messages.IcsBundle"/>

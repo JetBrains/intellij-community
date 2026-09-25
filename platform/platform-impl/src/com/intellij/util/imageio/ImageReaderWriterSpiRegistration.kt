@@ -2,15 +2,14 @@
 package com.intellij.util.imageio
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.ide.ApplicationLoadListener
-import com.intellij.openapi.application.Application
+import com.intellij.ide.ApplicationLoadHandler
+import com.intellij.ide.BeforeApplicationLoadedEvent
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.serviceContainer.BaseKeyedLazyInstance
 import com.intellij.util.xmlb.annotations.Attribute
-import java.nio.file.Path
 import java.util.Locale
 import javax.imageio.spi.IIORegistry
 import javax.imageio.spi.IIOServiceProvider
@@ -22,11 +21,13 @@ private const val WRITE_SPI_TYPE = "write"
 
 private val EP_NAME = ExtensionPointName<ImageReaderWriterSpiBean>("com.intellij.imageReaderWriterSpi")
 
-internal class ImageReaderWriterSpiRegistrar : ApplicationLoadListener {
-  override suspend fun beforeApplicationLoaded(application: Application, configPath: Path) {
+internal class ImageReaderWriterSpiRegistrar : ApplicationLoadHandler {
+  override suspend fun beforeApplicationLoaded(event: BeforeApplicationLoadedEvent) {
     val registry = IIORegistry.getDefaultInstance()
-    EP_NAME.extensionList.forEach { it.registerIn(registry) }
-    EP_NAME.addExtensionPointListener(application, object : ExtensionPointListener<ImageReaderWriterSpiBean> {
+    EP_NAME.forEachExtensionSafe {
+      it.registerIn(registry)
+    }
+    EP_NAME.addExtensionPointListener(event.application, object : ExtensionPointListener<ImageReaderWriterSpiBean> {
       override fun extensionAdded(extension: ImageReaderWriterSpiBean, pluginDescriptor: PluginDescriptor) {
         extension.registerIn(registry)
       }

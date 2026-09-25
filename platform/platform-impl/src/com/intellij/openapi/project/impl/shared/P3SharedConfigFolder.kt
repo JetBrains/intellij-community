@@ -2,10 +2,10 @@
 package com.intellij.openapi.project.impl.shared
 
 import com.intellij.ide.ApplicationActivity
-import com.intellij.ide.ApplicationLoadListener
+import com.intellij.ide.ApplicationLoadHandler
+import com.intellij.ide.BeforeApplicationLoadedEvent
 import com.intellij.ide.plugins.DisabledPluginsState
 import com.intellij.ide.plugins.DynamicPluginListener
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.impl.stores.stateStore
@@ -31,13 +31,13 @@ import kotlin.io.path.readBytes
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
-internal class P3SharedConfigFolderApplicationLoadListener : ApplicationLoadListener {
-  override suspend fun beforeApplicationLoaded(application: Application, configPath: Path) {
-    if (application.isUnitTestMode || !processPerProjectSupport().isEnabled()) {
+internal class P3SharedConfigFolderApplicationLoadListener : ApplicationLoadHandler {
+  override suspend fun beforeApplicationLoaded(event: BeforeApplicationLoadedEvent) {
+    if (event.application.isUnitTestMode || !processPerProjectSupport().isEnabled()) {
       return
     }
 
-    SharedConfigFolderUtil.installStreamProvider(application, PathManager.getOriginalConfigDir())
+    SharedConfigFolderUtil.installStreamProvider(event.application, PathManager.getOriginalConfigDir())
   }
 }
 

@@ -4,7 +4,8 @@ package org.jetbrains.settingsRepository
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.ide.AppLifecycleListener
-import com.intellij.ide.ApplicationLoadListener
+import com.intellij.ide.ApplicationLoadHandler
+import com.intellij.ide.BeforeApplicationLoadedEvent
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -253,12 +254,12 @@ private class IcsManagerService(private val coroutineScope: CoroutineScope) {
   }
 }
 
-internal class IcsApplicationLoadListener : ApplicationLoadListener {
-  override suspend fun beforeApplicationLoaded(application: Application, configPath: Path) {
-    if (application.isUnitTestMode) {
+internal class IcsApplicationLoadListener : ApplicationLoadHandler {
+  override suspend fun beforeApplicationLoaded(event: BeforeApplicationLoadedEvent) {
+    if (event.application.isUnitTestMode) {
       return
     }
 
-    application.serviceAsync<IcsManagerService>().init(application, configPath)
+    event.application.serviceAsync<IcsManagerService>().init(event.application, event.configPath)
   }
 }

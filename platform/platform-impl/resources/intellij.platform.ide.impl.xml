@@ -216,7 +216,7 @@
     <extensionPoint qualifiedName="com.intellij.projectTemplate"
                     beanClass="com.intellij.platform.ProjectTemplateEP" dynamic="true"/>
     <!--suppress PluginXmlValidity -->
-    <extensionPoint qualifiedName="com.intellij.ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.applicationLoadHandler" interface="com.intellij.ide.ApplicationLoadHandler" dynamic="false"/>
     <!-- Please do not use this extension point. Consider using `nonLockedIdeEventQueueDispatcher` instead.-->
     <extensionPoint qualifiedName="com.intellij.ideEventQueueDispatcher" interface="com.intellij.ide.IdeEventQueue$EventDispatcher" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.nonLockedIdeEventQueueDispatcher" interface="com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher"
@@ -459,7 +459,7 @@
     <applicationService serviceImplementation="com.intellij.application.options.colors.FontPreviewService" open="true"/>
     <applicationService serviceInterface="com.intellij.openapi.ui.DialogBackgroundImageProvider" open="true"
                         serviceImplementation="com.intellij.openapi.wm.impl.DialogBackgroundImageProviderImpl"/>
-    <ApplicationLoadListener implementation="com.intellij.util.imageio.ImageReaderWriterSpiRegistrar"/>
+    <applicationLoadHandler implementation="com.intellij.util.imageio.ImageReaderWriterSpiRegistrar"/>
     <applicationActivity implementation="com.intellij.ide.debug.ImageDebugUtilLoader"/>
     <applicationService serviceImplementation="com.intellij.ui.WaylandAppIconPatcher"
                         preload="notHeadless"
@@ -654,7 +654,7 @@
     <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager"
                         serviceImplementation="com.intellij.openapi.keymap.impl.KeymapManagerImpl"/>
     <applicationService serviceImplementation="com.intellij.openapi.project.impl.shared.P3DynamicPluginSynchronizer"/>
-    <ApplicationLoadListener implementation="com.intellij.openapi.project.impl.shared.P3SharedConfigFolderApplicationLoadListener"/>
+    <applicationLoadHandler implementation="com.intellij.openapi.project.impl.shared.P3SharedConfigFolderApplicationLoadListener"/>
     <applicationActivity implementation="com.intellij.openapi.project.impl.shared.ProcessPerProjectSharedConfigFolderApplicationInitializedListener"/>
     <!-- listen VFS_CHANGES - it is a core service, so, don't want to use a lazy message bus listener without a reason -->
     <applicationService serviceInterface="com.intellij.openapi.command.undo.DocumentReferenceManager"
