@@ -137,9 +137,19 @@
     <applicationService serviceInterface="com.jetbrains.python.errorProcessing.ErrorSink"
                         serviceImplementation="com.jetbrains.python.impl.ShowingMessageErrorSink"/>
     <python.pytools.genericPyToolManagerProvider implementation="com.jetbrains.python.sdk.configuration.SystemPythonToolManagerProvider"/>
+    <!--
+      Drawn right after the interpreter widget, at the right end of the bar: the two name the same environment, so they
+      are read together. `after EvoPySdkStatusBarWidget` states that from this side; the interpreter widget states it
+      from the other.
+
+      It no longer follows `pythonInterpreterWidget`. That is the classic widget, which disables itself whenever the Evo
+      one is on, and an anchor naming a widget that is not registered is dropped rather than honoured — which is how
+      this one ended up separated from the interpreter widget by the schema widget (PY-92487). `CodeStyleStatusBarWidget`
+      leads instead, as the one anchor present in every process and every project.
+    -->
     <statusBarWidgetFactory id="pythonDependencyFileWidget"
                             implementation="com.jetbrains.python.requirements.widget.PyDependenciesFileStatusBarWidgetFactory"
-                            order="after pythonInterpreterWidget, before git, before hg, before Notifications"/>
+                            order="after CodeStyleStatusBarWidget, after EvoPySdkStatusBarWidget, after pythonInterpreterWidget, after git, after hg, after JSONSchemaSelector, before ReadOnlyAttribute"/>
 
     <registryKey defaultValue="20" description="How often conda environments cache must be refreshed (seconds)"
                  key="python.conda.envs.refresh.seconds" restartRequired="true"/>
