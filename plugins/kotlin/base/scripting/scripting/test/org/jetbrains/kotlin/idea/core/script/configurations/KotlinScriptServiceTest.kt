@@ -30,6 +30,7 @@ import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.api.acceptedLocations
 import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.collectedAnnotations
+import kotlin.script.experimental.api.defaultImports
 import kotlin.script.experimental.api.fileExtension
 import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.api.importScripts
@@ -41,7 +42,7 @@ import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
 @Target(AnnotationTarget.FILE)
-private annotation class CircularImport(val path: String)
+annotation class CircularImport(val path: String)
 
 class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun runInDispatchThread(): Boolean = false
@@ -290,6 +291,7 @@ class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
                 defaultJvmScriptingHostConfiguration,
                 compilation = {
                     fileExtension("imports.kts")
+                    defaultImports(CircularImport::class)
                     ide { acceptedLocations(ScriptAcceptedLocation.Everywhere) }
                     refineConfiguration {
                         onAnnotations(CircularImport::class) { context -> resolveImportedScripts(context) }
