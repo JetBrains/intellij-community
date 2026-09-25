@@ -1,4 +1,14 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.sqlite.native` start
+content_module_jar(
+    libraries = ["@lib//:libraries-sqlite-native-sqlite-native"],
+    module = ":sqlite-native",
+    native_lib = "native",
+    native_lib_dir = "native",
+)
+### auto-generated section `dev intellij.libraries.sqlite.native` end
 
 ### auto-generated section `build intellij.libraries.sqlite.native` start
 jvm_library(

@@ -59,7 +59,7 @@
             "module": "intellij.platform.vcs.protocol.split.generated"
         },
         {
-            "destination": "lib/intellij.libraries.sqlite.native.jar",
+            "destination": "lib/modules/intellij.libraries.sqlite.native.jar",
             "recipe": {
                 "sources": [
                     {
@@ -68,7 +68,7 @@
                         "filter": "module-v1"
                     },
                     {
-                        "input": "native-select:b67205ba251a9dbedb029d5c:output",
+                        "input": "native-select:113d8587d2428b543a912648:output",
                         "kind": "prepared",
                         "filter": "prepared"
                     }
@@ -106,7 +106,7 @@
         {
             "destination": "lib/native",
             "inputs": [
-                "native-select:b67205ba251a9dbedb029d5c:output"
+                "native-select:113d8587d2428b543a912648:output"
             ],
             "kind": "tree",
             "classPath": false,
@@ -115,24 +115,24 @@
     ],
     "preparations": [
         {
-            "id": "native-select:b67205ba251a9dbedb029d5c",
+            "id": "native-select:113d8587d2428b543a912648",
             "inputs": [
                 "@lib//:libraries-sqlite-native-sqlite-native"
             ],
             "outputs": [
-                "native-select:b67205ba251a9dbedb029d5c:output"
+                "native-select:113d8587d2428b543a912648:output"
             ],
-            "modelSignature": "cl4wrg2859fx2acded5h2y16a"
+            "modelSignature": "dd8iqcdwjq7dxdcp97qt2oit5"
         }
     ],
     "operations": [
         {
-            "id": "native-select:b67205ba251a9dbedb029d5c",
+            "id": "native-select:113d8587d2428b543a912648",
             "kind": "native-select",
             "input": {
                 "artifact": "@lib//:libraries-sqlite-native-sqlite-native"
             },
-            "output": "native-select:b67205ba251a9dbedb029d5c:output",
+            "output": "native-select:113d8587d2428b543a912648:output",
             "manifest": "keep",
             "filter": "library"
         }
