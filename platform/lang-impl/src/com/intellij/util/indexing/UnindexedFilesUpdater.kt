@@ -48,8 +48,8 @@ object UnindexedFilesUpdater {
    */
   private val IS_HT_SMT_ENABLED: Boolean = getBooleanProperty("intellij.system.ht.smt.enabled", false)
 
-  private val THREAD_COUNT: Int = (getNumberOfScanningThreads() - 1).coerceAtLeast(1)
-  private val ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Scanning", THREAD_COUNT)
+  private val THREAD_COUNT: Int by lazy { (getNumberOfScanningThreads() - 1).coerceAtLeast(1) }
+  private val ourExecutor by lazy { AppExecutorUtil.createBoundedApplicationPoolExecutor("Scanning", THREAD_COUNT) }
 
   /**
    * Returns the best number of threads to be used for indexing at this moment.
