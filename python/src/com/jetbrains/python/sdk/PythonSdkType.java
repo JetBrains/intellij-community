@@ -1,9 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
-import com.intellij.python.sdk.backend.PythonInterpreter;
-import com.intellij.python.sdk.backend.PythonInterpreterKt;
-import com.intellij.python.sdk.backend.PythonBinaryExtKt;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.Notification;
@@ -29,16 +26,22 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.provider.EelPathDescriptorKt;
+import com.intellij.platform.eel.provider.EelProviderProjectUtilKt;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.ide.progress.ModalTaskOwner;
 import com.intellij.platform.ide.progress.TaskCancellation;
+import com.intellij.python.sdk.backend.PythonBinaryExtKt;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.reference.SoftReference;
 import com.intellij.remote.ExceptionFix;
+import com.intellij.remote.RemoteSdkException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
-import com.intellij.remote.RemoteSdkException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
@@ -61,6 +64,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.Icon;
@@ -117,13 +121,25 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Override
-  public @NonNls @Nullable String suggestHomePath(@NotNull Path path) {
-    return null;
+  @ApiStatus.Internal
+  public @Nullable String suggestHomePath(@NotNull Path path) {
+    return getHomePaths(EelPathDescriptorKt.getEelDescriptor(path)).stream().findFirst().orElse(null);
   }
 
   @Override
-  public @NotNull Collection<String> suggestHomePaths() {
-    final String latest = StreamEx.of(SdkInternalUtilKt.getBasePythonsPaths()).findFirst().orElse(null);
+  @ApiStatus.Internal
+  public @Unmodifiable @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {
+    EelDescriptor eelDescriptor = null;
+    if (project != null) {
+      eelDescriptor = EelProviderProjectUtilKt.getEelDescriptor(project);
+    }
+    return getHomePaths(eelDescriptor);
+  }
+
+  private static @NotNull Collection<@NotNull String> getHomePaths(@Nullable EelDescriptor eelDescriptor) {
+    final String latest =
+      StreamEx.of(SdkInternalUtilKt.getBasePythonsPaths(eelDescriptor != null ? eelDescriptor : LocalEelDescriptor.INSTANCE)).findFirst()
+        .orElse(null);
     if (latest != null) {
       return Collections.singleton(latest);
     }
@@ -463,6 +479,7 @@ public final class PythonSdkType extends SdkType {
     }
     return path;
   }
+
   /**
    * @deprecated use {@link PythonInterpreterExtKt#getPythonInfo(PythonInterpreter)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv.impl
 
 import com.intellij.openapi.ui.ValidationInfo
@@ -63,7 +63,7 @@ private suspend fun <P : PathHolder> runUv(
                                    downloadConfig = downloadConfig)
 }
 
-private class UvCliImpl<P : PathHolder>(val dispatcher: CoroutineDispatcher, val uv: P, private val fileSystem: FileSystem<P>) : UvCli<P> {
+private class UvCliImpl<P : PathHolder>(val dispatcher: CoroutineDispatcher, val uv: P, override val fileSystem: FileSystem<P>) : UvCli<P> {
 
   override suspend fun runUv(workingDir: Path?, venvPath: P?, canChangeTomlOrLock: Boolean, args: Args): PyResult<String> =
     withContext(dispatcher) {

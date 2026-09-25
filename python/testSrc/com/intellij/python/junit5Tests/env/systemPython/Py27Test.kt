@@ -1,6 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.systemPython
 
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test
 class Py27Test {
   @Test
   fun testPy27(): Unit = timeoutRunBlocking {
-    val testEnvironments = SystemPythonService().findSystemPythons()
+    val testEnvironments = SystemPythonService().findSystemPythons(localEel)
     val python27 = testEnvironments.firstOrNull { it.pythonInfo.languageLevel == LanguageLevel.PYTHON27 }
                    ?: error("No 2.7 found in $testEnvironments")
     SystemPythonService().registerSystemPython(python27.pythonBinary).getOrThrow()

@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -44,11 +45,11 @@ internal class SystemPythonStartCountTest {
     ApplicationManager.getApplication().registerExtension(SystemPythonProvider.EP, FixedPythonProvider(python), disposable)
     val sut = SystemPythonServiceImpl(this)
 
-    val firstSearch = sut.findSystemPythons(forceRefresh = true)
+    val firstSearch = sut.findSystemPythons(localEel, forceRefresh = true)
     assertThat(firstSearch.map { it.pythonBinary }).contains(python)
     assertThat(starts.startCount()).describedAs("The first search must read the info of $python").isEqualTo(1)
 
-    sut.findSystemPythons(forceRefresh = true)
+    sut.findSystemPythons(localEel, forceRefresh = true)
     assertThat(starts.startCount()).describedAs("$python did not change, so the second search must not start it").isEqualTo(1)
 
     coroutineContext.job.cancelChildren() // The service updates its cache on the scope of this test

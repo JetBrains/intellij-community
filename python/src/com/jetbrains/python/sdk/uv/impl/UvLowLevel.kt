@@ -1,7 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv.impl
 
-import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.execService.Args
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.pyproject.PyDependencyGroupKind
@@ -242,7 +243,11 @@ private class UvLowLevelImpl<P : PathHolder>(
     return PyExecResult.success(Unit)
   }
 
-  override suspend fun removeDependencies(pyPackages: Array<out String>, workspaceMember: PyWorkspaceMember?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> {
+  override suspend fun removeDependencies(
+    pyPackages: Array<out String>,
+    workspaceMember: PyWorkspaceMember?,
+    dependencyGroup: PyDependencyGroup?,
+  ): PyResult<Unit> {
     val args = mutableListOf("remove")
     if (workspaceMember != null) {
       args.add("--package")
@@ -387,18 +392,17 @@ internal fun constructSyncArgs(inexact: Boolean): MutableList<String> {
   return args
 }
 
-internal fun createUvLowLevelLocal(cwd: Path?, uvCli: UvCli<PathHolder.Eel>): UvLowLevel<PathHolder.Eel> =
-  createUvLowLevel(cwd, uvCli, EelFileSystem(localEel), null)
-
 /**
  * [cwd] is the directory uv runs in. Pass `null` for a caller that only queries uv and needs no directory.
  * [UvLowLevel.initializeEnvironment] needs a real one.
  */
-internal fun <P : PathHolder> createUvLowLevel(cwd: Path?, uvCli: UvCli<P>, fileSystem: FileSystem<P>, venvPath: P?): UvLowLevel<P> =
-  UvLowLevelImpl(cwd, venvPath, uvCli, fileSystem)
+internal fun <P : PathHolder> createUvLowLevel(cwd: Path?, uvCli: UvCli<P>, venvPath: P? = null): UvLowLevel<P> =
+  UvLowLevelImpl(cwd, venvPath, uvCli, uvCli.fileSystem)
 
-internal suspend fun createUvLowLevelLocal(cwd: Path?): PyResult<UvLowLevel<PathHolder.Eel>> =
-  validateAndCreateUvCli(null, EelFileSystem(localEel)).mapSuccess { createUvLowLevelLocal(cwd, it) }
+internal suspend fun createUvLowLevelOnEel(eelApi: EelApi, cwd: Path? = null): PyResult<UvLowLevel<PathHolder.Eel>> {
+  check(cwd == null || cwd.getEelDescriptor() == eelApi.descriptor) { "$cwd is not on $eelApi" }
+  return validateAndCreateUvCli(null, EelFileSystem(eelApi)).mapSuccess { createUvLowLevel(cwd, it) }
+}
 
 private fun tryExtractStderr(err: PyError): String? =
   when (err) {

@@ -38,7 +38,6 @@ import com.jetbrains.python.sdk.createSdk
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.jetbrains.python.sdk.poetry.PyPoetrySdkAdditionalData
-import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.pytools.resolveExecutable
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.poetry.runPoetry
@@ -46,6 +45,8 @@ import com.jetbrains.python.sdk.poetry.setupPoetry
 import com.jetbrains.python.sdk.poetry.suggestedSdkName
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.withProject
+import com.jetbrains.python.module.eelDescriptor
+import com.jetbrains.python.module.getEel
 import com.jetbrains.python.sdk.poetry.POETRY_TOML
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -88,7 +89,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
     }
     else true
 
-    val canManage = isPoetryProject && PoetryPyTool.getInstance().resolveExecutable(EelFileSystem(localEel)) != null
+    val canManage = isPoetryProject && PoetryPyTool.getInstance().resolveExecutable(EelFileSystem(module.getEel())) != null
     val intentionName = PyBundle.message("sdk.set.up.poetry.environment")
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
@@ -108,7 +109,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
     else if (poetryLockExists || (isPoetryProject && checkToml)) {
       // poetry was just installed; drop the detection cache so the next lookup finds it (don't persist).
       val pathPersister: (Path) -> Unit = { _ ->
-        PyExecutableCache.getInstance().invalidate(module.project.getEelDescriptor(), PoetryPyTool.getInstance())
+        PyExecutableCache.getInstance().invalidate(module.eelDescriptor, PoetryPyTool.getInstance())
       }
       val tool = PoetryPyTool.getInstance()
       EnvCheckerResult.SuggestToolInstallation(
@@ -142,6 +143,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
         confirmInstallation = { true },
         pythonService = SystemPythonService(),
         versionSpecifiers = versionSpecifiers,
+        eelDescriptor = module.eelDescriptor,
       ).getOr { return@withBackgroundProgress it }
 
       val poetry = setupPoetry(

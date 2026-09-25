@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.systemPython
 
 import com.intellij.openapi.Disposable
@@ -8,6 +8,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.readWholeText
 import com.intellij.platform.eel.spawnProcess
@@ -43,7 +44,7 @@ class SystemPythonServiceShowCaseTest {
   @ThrowsChecked(ExecuteProcessException::class)
   @Test
   fun testListPythons(): Unit = timeoutRunBlocking(10.minutes) {
-    for (systemPython in SystemPythonService().findSystemPythons(forceRefresh = true)) {
+    for (systemPython in SystemPythonService().findSystemPythons(localEel, forceRefresh = true)) {
       fileLogger().info("Python found: $systemPython")
       val eelApi = systemPython.pythonBinary.getEelDescriptor().toEelApi()
       val process = eelApi.exec.spawnProcess(systemPython.pythonBinary.pathString, "--version").eelIt()
@@ -67,7 +68,7 @@ class SystemPythonServiceShowCaseTest {
     repeat(10) {
       sut.registerSystemPython(path).orThrow()
     }
-    val pythons = sut.findSystemPythons(forceRefresh = true).map { it.pythonBinary }
+    val pythons = sut.findSystemPythons(localEel, forceRefresh = true).map { it.pythonBinary }
     MatcherAssert.assertThat("No registered python", pythons, Matchers.hasItem(path))
     Assertions.assertEquals(pythons.distinct().size, pythons.size, "Duplicates found")
   }
@@ -77,13 +78,13 @@ class SystemPythonServiceShowCaseTest {
     val provider = CountingTestProvider(Result.failure(MessageError("...")))
     val sut = SystemPythonService()
     // Warm up cache before registering test provider
-    sut.findSystemPythons()
+    sut.findSystemPythons(localEel)
     ApplicationManager.getApplication().registerExtension(SystemPythonProvider.EP, provider, disposable)
     repeat(10) {
-      sut.findSystemPythons()
+      sut.findSystemPythons(localEel)
     }
     Assertions.assertTrue(provider.calls == 0, "Provider should not be called while cache is valid")
-    sut.findSystemPythons(forceRefresh = true)
+    sut.findSystemPythons(localEel, forceRefresh = true)
     Assertions.assertTrue(provider.calls >= 1, "Provider should be called after force refresh")
   }
 
@@ -95,7 +96,7 @@ class SystemPythonServiceShowCaseTest {
     val sut = SystemPythonServiceImpl(this)
     ApplicationManager.getApplication().registerExtension(SystemPythonProvider.EP, provider, disposable)
     repeat(timesToRepeat) {
-      sut.findSystemPythons()
+      sut.findSystemPythons(localEel)
     }
     Assertions.assertTrue(provider.calls == timesToRepeat)
   }

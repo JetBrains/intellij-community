@@ -5,6 +5,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.EelApi
+import com.jetbrains.python.module.getEel
 import com.jetbrains.python.project.impl.PyProjectService
 import com.jetbrains.python.venvReader.Directory
 import org.jetbrains.annotations.ApiStatus
@@ -38,3 +40,5 @@ interface PyProject {
   }
 }
 
+@ApiStatus.Internal
+suspend fun PyProject.getEel(): EelApi = residesOnModule.getEel()
