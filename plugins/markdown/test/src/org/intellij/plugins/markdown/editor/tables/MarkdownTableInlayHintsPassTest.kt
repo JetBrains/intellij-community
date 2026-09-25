@@ -12,7 +12,7 @@ import com.intellij.testFramework.MockFontLayoutService
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertNothingLogged
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import org.intellij.plugins.markdown.editor.livepreview.enableLivePreviewSupport
+import org.intellij.plugins.markdown.editor.livepreview.enableLivePreview
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
@@ -80,7 +80,7 @@ class MarkdownTableInlayHintsPassTest : BasePlatformTestCase() {
       """.trimIndent()
     myFixture.configureByText("some.md", content)
     myFixture.doHighlighting()
-    myFixture.editor.enableLivePreviewSupport()
+    myFixture.editor.enableLivePreview()
     myFixture.editor.caretModel.moveToOffset(content.length)
 
     val reconciler = requireNotNull(MarkdownLivePreviewReconciler.getOrCreate(myFixture.editor))

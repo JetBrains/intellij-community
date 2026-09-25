@@ -3,6 +3,7 @@ package com.intellij.markdown.frontend.editor.livepreview
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
@@ -26,8 +27,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
-import org.intellij.plugins.markdown.editor.livepreview.supportsLivePreview
+import org.intellij.plugins.markdown.editor.livepreview.isLivePreviewEnabled
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -52,6 +56,9 @@ class MarkdownLivePreviewReconciler private constructor(
 
   /** The elements already revealed, so [revealNow] can act on the difference alone. */
   private var revealedElements = emptySet<MarkdownLivePreviewElementPresentation>()
+
+  /** Completes when [reconcileNow] first brings a presentation to the editor. */
+  private val presented = CompletableDeferred<Unit>()
 
   /** Set while we are mutating folds ourselves, so our own listeners do not reenter. */
   private var updating = false
@@ -113,7 +120,7 @@ class MarkdownLivePreviewReconciler private constructor(
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun reconcileNow() {
     if (updating || editor.isDisposed || disposed || editor.document.isInBulkUpdate) return
-    if (!editor.supportsLivePreview() || presentation == null) {
+    if (!editor.isLivePreviewEnabled() || presentation == null) {
       removeAllOwned()
       return
     }
@@ -124,6 +131,7 @@ class MarkdownLivePreviewReconciler private constructor(
       presentationFactory.reconcile(presentation)
     }
     revealedElements = revealed
+    presented.complete(Unit)
   }
 
   override fun dispose() {
@@ -228,7 +236,7 @@ class MarkdownLivePreviewReconciler private constructor(
     // While a bulk change runs, the fold tree is not maintained. During event handling the folding model
     // may still be catching up, since it is a document listener itself.
     if (document.isInBulkUpdate || document.isInEventsHandling) return
-    if (!editor.supportsLivePreview()) return
+    if (!editor.isLivePreviewEnabled()) return
     val presentation = currentPresentation() ?: return
     val revealed = findRevealedElements(presentation)
     val newlyRevealed = revealed - revealedElements
@@ -406,6 +414,12 @@ class MarkdownLivePreviewReconciler private constructor(
     }
 
     fun getExisting(editor: Editor): MarkdownLivePreviewReconciler? = editor.getUserData(KEY)
+
+    /** Suspends until [editor] shows live preview for the first time. Returns at once when [editor] can't have a reconciler. */
+    suspend fun awaitPresentation(editor: Editor) {
+      val reconciler = withContext(Dispatchers.EDT) { getOrCreate(editor) } ?: return
+      reconciler.presented.await()
+    }
   }
 }
 

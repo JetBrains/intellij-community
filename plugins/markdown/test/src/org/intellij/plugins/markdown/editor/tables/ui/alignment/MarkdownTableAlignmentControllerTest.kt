@@ -9,7 +9,7 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.MockFontLayoutService
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertNothingLogged
-import org.intellij.plugins.markdown.editor.livepreview.enableLivePreviewSupport
+import org.intellij.plugins.markdown.editor.livepreview.enableLivePreview
 
 @Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownTableAlignmentControllerTest : LightPlatformCodeInsightTestCase() {
@@ -53,7 +53,7 @@ class MarkdownTableAlignmentControllerTest : LightPlatformCodeInsightTestCase() 
       | **bb** | y |
       """.trimIndent()
     configureFromFileText("some.md", content)
-    editor.enableLivePreviewSupport()
+    editor.enableLivePreview()
     editor.caretModel.moveToOffset(content.length)
 
     val reconciler = requireNotNull(MarkdownLivePreviewReconciler.getOrCreate(editor))

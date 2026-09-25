@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewRemoteApi
-import org.intellij.plugins.markdown.editor.livepreview.livePreviewSupportFlow
+import org.intellij.plugins.markdown.editor.livepreview.livePreviewEnablednessFlow
 import org.intellij.plugins.markdown.lang.supportsMarkdown
 
 /** Follows the live-preview state of each Markdown editor and keeps the backend and the reconciler in line with it. */
@@ -34,7 +34,7 @@ internal class MarkdownLivePreviewEditorListener : EditorFactoryListener {
       EditorScopeProvider.getInstance(project).getEditorScope(editor).launch(Dispatchers.Default) {
         try {
           // Skips the initial off state, so an editor that never turns live preview on makes no RPC calls.
-          editor.livePreviewSupportFlow().dropWhile { !it }.collectLatest { enabled ->
+          editor.livePreviewEnablednessFlow().dropWhile { !it }.collectLatest { enabled ->
             synchronize(editor, editorId, enabled)
           }
         }

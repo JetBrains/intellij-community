@@ -66,7 +66,7 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview imple
 
     this.settings = settings;
     this.previewAvailable = previewAvailable;
-    MarkdownLivePreviewSpecKt.setLivePreviewSupport(editor.getEditor(), PropertiesComponent.getInstance().getBoolean(LIVE_PREVIEW_PROPERTY));
+    MarkdownLivePreviewSpecKt.setLivePreviewEnabledness(editor.getEditor(), PropertiesComponent.getInstance().getBoolean(LIVE_PREVIEW_PROPERTY));
 
     // allow launching actions while in preview mode;
     // FIXME: better solution IDEA-354102
@@ -108,7 +108,7 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview imple
     if (state instanceof MyFileEditorState editorState && editorState.getSplitLayout() != null) {
       var layout = supportedLayout(editorState.getSplitLayout());
       if (layout != Layout.SHOW_EDITOR) {
-        MarkdownLivePreviewSpecKt.setLivePreviewSupport(myEditor.getEditor(), false);
+        MarkdownLivePreviewSpecKt.setLivePreviewEnabledness(myEditor.getEditor(), false);
       }
       if (layout != editorState.getSplitLayout()) {
         restoredState = new MyFileEditorState(
@@ -138,12 +138,12 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview imple
    * Returns true when the text editor is shown alone with Markdown live preview on.
    */
   public boolean isLivePreviewLayout() {
-    return getLayout() == Layout.SHOW_EDITOR && MarkdownLivePreviewSpecKt.supportsLivePreview(myEditor.getEditor());
+    return getLayout() == Layout.SHOW_EDITOR && MarkdownLivePreviewSpecKt.isLivePreviewEnabled(myEditor.getEditor());
   }
 
   private void setViewMode(@NotNull Layout layout, boolean livePreview) {
     PropertiesComponent.getInstance().setValue(LIVE_PREVIEW_PROPERTY, livePreview, false);
-    MarkdownLivePreviewSpecKt.setLivePreviewSupport(myEditor.getEditor(), livePreview);
+    MarkdownLivePreviewSpecKt.setLivePreviewEnabledness(myEditor.getEditor(), livePreview);
     super.setLayout(supportedLayout(layout));
   }
 

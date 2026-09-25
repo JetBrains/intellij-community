@@ -19,7 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
-import org.intellij.plugins.markdown.editor.livepreview.supportsLivePreview
+import org.intellij.plugins.markdown.editor.livepreview.isLivePreviewEnabled
 import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 
 /** Recomputes live-preview specs when the Markdown PSI changes. */
@@ -96,4 +96,4 @@ private fun Editor.hasCurrentLivePreviewSpecs(project: Project): Boolean {
  * Live preview is on when the frontend state is visible on this editor, which is the monolith case,
  * or when the frontend requested it over RPC, which is the split-mode case.
  */
-private fun Editor.computesLivePreview(): Boolean = supportsLivePreview() || isLivePreviewRequested()
+private fun Editor.computesLivePreview(): Boolean = isLivePreviewEnabled() || isLivePreviewRequested()
