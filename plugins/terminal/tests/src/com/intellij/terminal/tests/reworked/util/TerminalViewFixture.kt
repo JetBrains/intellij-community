@@ -160,19 +160,31 @@ internal class TerminalViewFixture(private val project: Project, emulatorType: T
   }
 
   /**
-   * Suspends until the session handles every input event that the view sent before this call.
+   * Runs [action], then suspends until the session handles every input event that the view sent before, and the events of [action].
    * The session handles the input events in order, so it writes [INPUT_BARRIER] to the pty only after them.
+   * Returns the writes to the pty before [INPUT_BARRIER], in order.
+   * The recording starts before [action], because the session can write for an event of [action] before this function sends
+   * [INPUT_BARRIER].
    * [LoopbackTtyConnector.responseHandler] is replaced while this function waits.
    */
-  suspend fun awaitInputEventsHandled(timeout: Duration = 5.seconds) {
+  suspend fun awaitInputEventsHandled(timeout: Duration = 5.seconds, action: () -> Unit = {}): List<String> {
     val previousHandler = connector.responseHandler
     val written = LinkedBlockingQueue<String>()
     connector.responseHandler = { bytes -> written.add(String(bytes, Charsets.UTF_8)) }
     try {
+      action()
       view.sendText(INPUT_BARRIER)
-      // The poll blocks, so it must not run on the EDT.
-      val barrier = withContext(Dispatchers.IO) { written.poll(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS) }
-      assertThat(barrier).describedAs("the session never wrote the input barrier to the pty").isEqualTo(INPUT_BARRIER)
+      val writtenBefore = ArrayList<String>()
+      // The polls block, so they must not run on the EDT.
+      withContext(Dispatchers.IO) {
+        while (true) {
+          val next = written.poll(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+          assertThat(next).describedAs("the session never wrote the input barrier to the pty; it wrote $writtenBefore").isNotNull()
+          if (next == INPUT_BARRIER) break
+          writtenBefore.add(next!!)
+        }
+      }
+      return writtenBefore
     }
     finally {
       connector.responseHandler = previousHandler

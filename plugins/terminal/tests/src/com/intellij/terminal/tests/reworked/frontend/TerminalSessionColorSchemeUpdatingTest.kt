@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit
  * ([BlockTerminalColors.DEFAULT_FOREGROUND] and [BlockTerminalColors.DEFAULT_BACKGROUND]) to the session as its default colors,
  * and sends them again when the global color scheme changes.
  * A program reads them with the color queries `OSC 10 ; ?` and `OSC 11 ; ?`, and asks if they are dark with `CSI ? 996 n`.
+ * While a program enables the color scheme reports (mode 2031), each change sends a report `CSI ? 997 ; Ps n`.
  *
  * Ghostty-only: JediTerm reads the default colors on demand and ignores a program override.
  */
@@ -90,6 +91,36 @@ internal class TerminalSessionColorSchemeUpdatingTest(emulatorType: TerminalEmul
       setGlobalSchemeColorsForTest(foreground = Color(0x10, 0x0F, 0x0E), background = Color(0xF0, 0xF1, 0xF2))
 
       assertThat(fixture.queryColor(csi("?996n"))).describedAs("a light background").isEqualTo(csi("?997;2n"))
+    }
+  }
+
+  @Test
+  fun `a global color scheme change sends the color scheme report while a program enables it`() {
+    setGlobalSchemeColorsForTest(foreground = Color(0xF0, 0xE0, 0xD0), background = Color(0x01, 0x02, 0x03))
+
+    doTest { fixture ->
+      // The reply proves that the session enabled the mode before the color scheme changes below.
+      assertThat(fixture.queryColor(csi("?2031h") + csi("?996n"))).isEqualTo(csi("?997;1n"))
+
+      assertThat(fixture.awaitInputEventsHandled {
+        setGlobalSchemeColorsForTest(foreground = Color(0x10, 0x0F, 0x0E), background = Color(0xF0, 0xF1, 0xF2))
+      })
+        .describedAs("a change to a light background")
+        .containsExactly(csi("?997;2n"))
+
+      assertThat(fixture.awaitInputEventsHandled {
+        setGlobalSchemeColorsForTest(foreground = Color(0x20, 0x1F, 0x1E), background = Color(0xF0, 0xF1, 0xF2))
+      })
+        .describedAs("a change of the foreground only: the program must query the new colors")
+        .containsExactly(csi("?997;2n"))
+
+      assertThat(fixture.queryColor(csi("?2031l") + csi("?996n"))).isEqualTo(csi("?997;2n"))
+
+      assertThat(fixture.awaitInputEventsHandled {
+        setGlobalSchemeColorsForTest(foreground = Color(0xF0, 0xE0, 0xD0), background = Color(0x01, 0x02, 0x03))
+      })
+        .describedAs("a change after the program disabled the mode")
+        .isEmpty()
     }
   }
 

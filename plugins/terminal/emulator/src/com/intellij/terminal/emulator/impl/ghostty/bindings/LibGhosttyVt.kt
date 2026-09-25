@@ -302,6 +302,16 @@ internal object LibGhosttyVt {
     MOUSE_EVENT_SET_POSITION.invokeExact(event, position)
   }
 
+  // ---- color scheme report encoding (color_scheme.h) ----
+
+  /**
+   * `ghostty_color_scheme_report_encode`: encode the color scheme report (`CSI ? 997 ; Ps n`) for [scheme]
+   * ([GhosttyColorScheme]) into [buf] (capacity [bufLen]); [outWritten] receives the byte count (or the
+   * required size on `OUT_OF_SPACE`).
+   */
+  fun colorSchemeReportEncode(scheme: Int, buf: MemorySegment, bufLen: Long, outWritten: MemorySegment): GhosttyResult =
+    GhosttyResult.of(COLOR_SCHEME_REPORT_ENCODE.invokeExact(scheme, buf, bufLen, outWritten) as Int)
+
   // ---- sys interface (sys.h): process-global, runtime-swappable hooks ----
 
   /**
@@ -447,6 +457,8 @@ internal object LibGhosttyVt {
     FunctionDescriptor.of(C_INT, C_PTR, C_INT, C_PTR)) }
   private val TRACKED_GRID_REF_SET: MethodHandle by lazy { downcall("ghostty_tracked_grid_ref_set",
     FunctionDescriptor.of(C_INT, C_PTR, C_PTR, POINT)) }
+  private val COLOR_SCHEME_REPORT_ENCODE: MethodHandle by lazy { downcall("ghostty_color_scheme_report_encode",
+    FunctionDescriptor.of(C_INT, C_INT, C_PTR, C_LONG, C_PTR)) }
   private val SYS_SET: MethodHandle by lazy { downcall("ghostty_sys_set",
     FunctionDescriptor.of(C_INT, C_INT, C_PTR)) }
   private val TYPE_JSON: MethodHandle by lazy { downcall("ghostty_type_json",

@@ -62,6 +62,7 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.CursorShapeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalColorSchemeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalRgbColorDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalStateDto
 import org.jetbrains.plugins.terminal.session.impl.dto.toCursorShape
@@ -191,8 +192,8 @@ class GhosttyTerminalSession internal constructor(
   // flushed by syncLocked().
   private val pendingEvents = ArrayList<TerminalOutputEvent>()
 
-  // Emulator replies to host queries (DSR, DA, OSC reports), collected during a write
-  // and written to the PTY by [flushResponses] *after* [lock] is released. They must
+  // Emulator replies to host queries (DSR, DA, OSC reports) and color scheme reports, collected during a write
+  // or a color scheme change and written to the PTY by [flushResponses] *after* [lock] is released. They must
   // not be written inline: the write-pty effect fires synchronously inside
   // emulator.write, so a full PTY buffer would park the read thread both inside
   // ghostty's vt_write (see terminal.h: effects "must not block for too long ... they
@@ -261,7 +262,7 @@ class GhosttyTerminalSession internal constructor(
   @OptIn(AwaitCancellationAndInvoke::class)
   fun start() {
     emulator.listener = object : TerminalListener {
-      // Fires synchronously inside emulator.write, i.e. under [lock] on the read thread.
+      // Fires synchronously inside emulator.write (or emulator.setColorScheme), i.e. under [lock].
       // Queue only: the actual pty write happens in flushResponses(), once the lock is
       // released. See [pendingResponses].
       override fun onRespondToHost(data: ByteArray) {
@@ -439,12 +440,7 @@ class GhosttyTerminalSession internal constructor(
       }
       is TerminalClearBufferEvent -> handleClearBuffer()
       is TerminalCloseEvent -> runCatching { ttyConnector.close() }
-      is TerminalSetColorSchemeEvent -> lock.withLock {
-        if (disposed) return
-        emulator.setDefaultForegroundColor(event.colorScheme.foreground.toEmulatorColor())
-        emulator.setDefaultBackgroundColor(event.colorScheme.background.toEmulatorColor())
-        emulator.setColorScheme(if (event.colorScheme.isDark) ColorScheme.DARK else ColorScheme.LIGHT)
-      }
+      is TerminalSetColorSchemeEvent -> handleSetColorScheme(event.colorScheme)
       is TerminalSetDefaultCursorShapeEvent -> lock.withLock {
         if (disposed) return
         emulator.setDefaultCursorShape(event.cursorShape.toEmulatorCursorShape())
@@ -452,6 +448,19 @@ class GhosttyTerminalSession internal constructor(
         changedSinceLastProjection = true
       }
     }
+  }
+
+  private fun handleSetColorScheme(colorScheme: TerminalColorSchemeDto) {
+    var responses: List<ByteArray> = emptyList()
+    lock.withLock {
+      if (disposed) return
+      emulator.setDefaultForegroundColor(colorScheme.foreground.toEmulatorColor())
+      emulator.setDefaultBackgroundColor(colorScheme.background.toEmulatorColor())
+      // Last, because it can send the color scheme report (mode 2031), after which the program queries the new colors.
+      emulator.setColorScheme(if (colorScheme.isDark) ColorScheme.DARK else ColorScheme.LIGHT)
+      responses = takeResponsesLocked()
+    }
+    flushResponses(responses)
   }
 
   private fun handleClearBuffer() {

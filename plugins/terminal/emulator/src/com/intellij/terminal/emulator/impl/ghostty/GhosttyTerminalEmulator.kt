@@ -484,6 +484,20 @@ internal class GhosttyTerminalEmulator(
   override fun setColorScheme(scheme: ColorScheme) {
     ensureOpen()
     colorScheme = scheme
+    if (!modeEnabled(GhosttyMode.COLOR_SCHEME_REPORT)) {
+      return
+    }
+    val report = try {
+      encodeToBytes { buf, size, outLen -> LibGhosttyVt.colorSchemeReportEncode(scheme.toGhostty().code, buf, size, outLen) }
+    } catch (t: Throwable) {
+      throw RuntimeException("ghostty color scheme report encoding failed", t)
+    }
+    listener?.onRespondToHost(report)
+  }
+
+  private fun ColorScheme.toGhostty(): GhosttyColorScheme = when (this) {
+    ColorScheme.LIGHT -> GhosttyColorScheme.LIGHT
+    ColorScheme.DARK -> GhosttyColorScheme.DARK
   }
 
   override fun paletteColor(index: Int): TerminalColor.Rgb {
@@ -875,11 +889,7 @@ internal class GhosttyTerminalEmulator(
   @Suppress("unused", "UNUSED_PARAMETER")
   private fun onColorSchemeQuery(terminal: MemorySegment, userdata: MemorySegment, out: MemorySegment): Boolean {
     val scheme = colorScheme ?: return false
-    val code = when (scheme) {
-      ColorScheme.LIGHT -> GhosttyColorScheme.LIGHT.code
-      ColorScheme.DARK -> GhosttyColorScheme.DARK.code
-    }
-    out.reinterpret(C_INT.byteSize()).set(C_INT, 0L, code)
+    out.reinterpret(C_INT.byteSize()).set(C_INT, 0L, scheme.toGhostty().code)
     return true
   }
 

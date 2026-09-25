@@ -380,4 +380,5 @@ internal enum class GhosttyMode(val packed: Int) {
   SGR_PIXELS_MOUSE(1016),
   BRACKETED_PASTE(2004),
   SYNC_OUTPUT(2026),
+  COLOR_SCHEME_REPORT(2031),
 }

@@ -3,12 +3,14 @@ package com.intellij.terminal.emulator
 
 import org.jetbrains.annotations.ApiStatus
 
-// Push callbacks, both fired synchronously inside TerminalEmulator.write. Everything else about the
-// terminal is polled state. Part of the backend-agnostic API; see TerminalEmulator.kt.
+// Push callbacks, both fired synchronously inside TerminalEmulator.write (and onRespondToHost also inside
+// TerminalEmulator.setColorScheme). Everything else about the terminal is polled state. Part of the
+// backend-agnostic API; see TerminalEmulator.kt.
 
 /**
  * Events emitted while processing input. Callbacks fire synchronously inside
- * [TerminalEmulator.write]; they must not re-enter the emulator. All methods default to no-ops.
+ * [TerminalEmulator.write], and [onRespondToHost] also inside [TerminalEmulator.setColorScheme];
+ * they must not re-enter the emulator. All methods default to no-ops.
  *
  * Only [onRespondToHost] is guaranteed to be delivered by every backend. [onBell] and
  * [onTitleChanged] are optional and backend-dependent: a backend that does not surface them simply

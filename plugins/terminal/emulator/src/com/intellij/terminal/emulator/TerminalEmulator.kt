@@ -124,6 +124,10 @@ interface TerminalEmulator : AutoCloseable {
   /**
    * Sets whether the embedder colors are dark or light. The reply to the color scheme query (`CSI ? 996 n`) reports it.
    * Until the first call, the query gets no reply.
+   *
+   * While the program enables the color scheme reports (mode 2031), each call also sends a report (`CSI ? 997 ; Ps n`)
+   * through [TerminalListener.onRespondToHost]. The report tells the program to query the embedder colors again.
+   * So call this function for each change of the embedder colors, after the calls that set them.
    */
   fun setColorScheme(scheme: ColorScheme)
 
