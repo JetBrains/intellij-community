@@ -225,18 +225,16 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
      * A qualified name is a name for a package, so {@link PsiPackageRenameValidator} takes it. The
      * rename dialog then reads the parent package of it: an equal parent keeps a rename, and another
      * parent starts a move instead. See {@code createRenameDialog} above, which calls
-     * {@link #createRenameMoveProcessor}. A headless rename holds no move, so it refuses that name
-     * here. It renames the last part of the name, as {@link #renameElement} states with
-     * {@code getShortName}.
+     * {@link #createRenameMoveProcessor}. A headless rename holds no move, so it refuses any
+     * qualified name here, even one with an equal parent: {@link #findExistingNameConflicts} and
+     * {@link #getPostRenameCallback} take the new short name.
      */
     @Override
     public void findExistingNameConflictsHeadless(@NotNull PsiElement element,
                                                   @NotNull String newName,
                                                   @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
                                                   @NotNull Map<PsiElement, String> allRenames) {
-      String newParentName = StringUtil.getPackageName(newName);
-      String oldParentName = StringUtil.getPackageName(((PsiPackage)element).getQualifiedName());
-      if (!newParentName.isEmpty() && !newParentName.equals(oldParentName)) {
+      if (newName.contains(".")) {
         conflicts.putValue(element, JavaBundle.message("rename.package.move.not.supported.conflict", newName));
       }
       findExistingNameConflicts(element, newName, conflicts, allRenames);

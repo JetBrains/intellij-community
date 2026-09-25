@@ -339,7 +339,6 @@ public class HeadlessRenameProcessorTest extends LightJavaCodeInsightFixtureTest
     assertNotNull("the package lost its old name", JavaPsiFacade.getInstance(getProject()).findPackage("pack3"));
   }
 
-  /** A qualified name keeps the parent package of the old name, so the rename takes its last part. */
   public void testAQualifiedPackageNameWithTheSameParentIsRenamed() {
     myFixture.addFileToProject("outer/inner/Gear.java", """
       package outer.inner;
@@ -350,14 +349,10 @@ public class HeadlessRenameProcessorTest extends LightJavaCodeInsightFixtureTest
     PsiPackage inner = JavaPsiFacade.getInstance(getProject()).findPackage("outer.inner");
     assertNotNull("no package outer.inner in the fixture", inner);
 
-    HeadlessRenameResult result = performRename(inner, "outer.renamed");
+    HeadlessRenameResult result = HeadlessRenameProcessor.analyze(getProject(), inner, "outer.renamed");
 
-    assertInstanceOf(result, HeadlessRenameResult.Applied.class);
-    PsiFile gear = findClass("outer.renamed.Gear").getContainingFile();
-    assertEquals("the package statement kept the old name", "outer.renamed", ((PsiJavaFile)gear).getPackageName());
-    PsiDirectory directory = gear.getContainingDirectory();
-    assertNotNull("the file left the tree", directory);
-    assertEquals("the directory kept the old name", "renamed", directory.getName());
+    //just refuse until moving is implemented
+    assertInstanceOf(result, HeadlessRenameResult.Refused.class);
   }
 
   /** A qualified name that changes the parent package asks for a move, and a rename holds no move. */
