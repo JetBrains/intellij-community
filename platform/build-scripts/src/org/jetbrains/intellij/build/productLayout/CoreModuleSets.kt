@@ -314,7 +314,6 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.ide.concurrency")
     embeddedModule("intellij.platform.builtInServer")
     embeddedModule("intellij.platform.discoverability")
-    module("intellij.platform.externalSystem")
     embeddedModule("intellij.platform.eel.impl")
     embeddedModule("intellij.platform.eel.nioFs.impl")
     embeddedModule("intellij.platform.eel.impl.base")

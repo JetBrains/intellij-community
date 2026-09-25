@@ -312,7 +312,6 @@
     <module name="intellij.platform.ide.concurrency" loading="embedded"/>
     <module name="intellij.platform.builtInServer" loading="embedded"/>
     <module name="intellij.platform.discoverability" loading="embedded"/>
-    <module name="intellij.platform.externalSystem"/>
     <module name="intellij.platform.eel.impl" loading="embedded"/>
     <module name="intellij.platform.eel.nioFs.impl" loading="embedded"/>
     <module name="intellij.platform.eel.impl.base" loading="embedded"/>

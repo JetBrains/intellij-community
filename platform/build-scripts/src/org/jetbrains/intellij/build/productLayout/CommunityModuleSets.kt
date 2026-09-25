@@ -156,6 +156,7 @@ object CommunityModuleSets {
     // Platform language modules (moved from platformLangBase for consolidation)
     // These provide core IDE functionality needed by all full IDE products
     embeddedModule("intellij.platform.builtInServer.impl")
+    module("intellij.platform.externalSystem")
     module("intellij.platform.externalSystem.dependencyUpdater")
     module("intellij.platform.externalSystem.impl")
     module("intellij.platform.externalProcessAuthHelper")
