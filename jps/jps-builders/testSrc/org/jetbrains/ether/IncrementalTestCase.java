@@ -50,7 +50,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    baseDir = new File(PathManagerEx.getTestDataPath(getClass()) + File.separator + "compileServer" + File.separator + "incremental" + File.separator + groupName + File.separator + getProjectName());
+    baseDir = getTestDataDirectory();
     workDir = FileUtil.createTempDirectory("jps-build", null);
 
     FileUtil.copyDir(baseDir, workDir, file -> {
@@ -60,6 +60,10 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
 
     String outputPath = getAbsolutePath("out");
     JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myProject).setOutputUrl(JpsPathUtil.pathToUrl(outputPath));
+  }
+
+  protected File getTestDataDirectory() {
+    return new File(PathManagerEx.getTestDataPath(getClass()), "compileServer/incremental/" + groupName + "/" + getProjectName());
   }
 
   @Override
