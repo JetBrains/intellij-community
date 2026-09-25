@@ -11,6 +11,8 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.JBColor
 import junit.framework.TestCase.assertFalse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -20,6 +22,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.awt.Color
+import javax.swing.UIManager
 import kotlin.test.assertTrue
 
 class RecentProjectManagerTest {
@@ -861,6 +864,8 @@ class RecentProjectManagerTest {
   fun `recent project color palette resolves indexed and custom soft backgrounds`() {
     val indexedInfo = RecentProjectColorInfo().also { it.associatedIndex = 3 }
     assertThat(RecentProjectColorPalette.softBackground(indexedInfo)).isEqualTo(RecentProjectColorPalette.softBackground(3))
+    assertThat(RecentProjectColorPalette.softBackground(3))
+      .isEqualTo(RecentProjectColorPalette.softBackground(ProjectIconPalette.gradients[3].first))
     assertThat(RecentProjectColorPalette.softBackground(-1)).isNull()
     assertThat(RecentProjectColorPalette.softBackground(RecentProjectColorInfo().also { it.associatedIndex = 99 })).isNull()
 
@@ -869,6 +874,28 @@ class RecentProjectManagerTest {
     assertThat(RecentProjectColorPalette.softBackground(customInfo)).isEqualTo(RecentProjectColorPalette.softBackground(customColor))
     assertThat(RecentProjectColorPalette.softBackground(customInfo)).isNotEqualTo(customColor)
     assertThat(RecentProjectColorPalette.softBackground(RecentProjectColorInfo().also { it.customColor = "not-a-color" })).isNull()
+  }
+
+  @Test
+  fun `recent project soft background keeps the panel brightness under a header of the other brightness`() {
+    val isPanelDark = ColorUtil.isDark(JBColor.PanelBackground)
+    val headerColor = if (isPanelDark) Color(0xCBE4F7) else Color(0x31515F)
+    val keys = (1..RecentProjectColorPalette.COLOR_COUNT).map { "RecentProject.Color$it.MainToolbarGradientStart" }
+    val previousValues = keys.map { UIManager.get(it) }
+    try {
+      for (key in keys) {
+        UIManager.put(key, headerColor)
+      }
+
+      for (index in 0 until RecentProjectColorPalette.COLOR_COUNT) {
+        assertThat(ColorUtil.isDark(RecentProjectColorPalette.softBackground(index)!!))
+          .describedAs("soft background of the color index $index")
+          .isEqualTo(isPanelDark)
+      }
+    }
+    finally {
+      keys.zip(previousValues).forEach { (key, value) -> UIManager.put(key, value) }
+    }
   }
 }
 

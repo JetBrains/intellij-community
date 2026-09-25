@@ -132,7 +132,7 @@ private data class ProjectColors(val gradient: Color,
 object RecentProjectColorPalette {
   const val COLOR_COUNT: Int = 9
 
-  private const val CUSTOM_COLOR_BALANCE = 0.18
+  private const val SOFT_BACKGROUND_BALANCE = 0.25
 
   @Suppress("UnregisteredNamedColor")
   private val mainToolbarGradientStartColors: Array<Color>
@@ -152,12 +152,21 @@ object RecentProjectColorPalette {
     return mainToolbarGradientStartColors.getOrNull(index)
   }
 
+  /**
+   * Returns the soft background of the project avatar color at [index], or `null` for an index out of range.
+   * It mixes the avatar color into the panel background, in the same way as a custom project color.
+   */
   fun softBackground(index: Int): Color? {
-    return mainToolbarGradientStart(index)
+    return ProjectIconPalette.gradients.getOrNull(index)?.first?.let(::softBackground)
   }
 
-  fun softBackground(customColor: Color): Color {
-    return ColorUtil.mix(JBColor.PanelBackground, customColor, CUSTOM_COLOR_BALANCE)
+  /**
+   * Returns [projectColor] mixed into the panel background.
+   * The result keeps the brightness of the panel, and not of the main toolbar.
+   * Thus a light theme with a dark header gives a light background.
+   */
+  fun softBackground(projectColor: Color): Color {
+    return ColorUtil.mix(JBColor.PanelBackground, projectColor, SOFT_BACKGROUND_BALANCE)
   }
 
   fun softBackground(colorInfo: RecentProjectColorInfo): Color? {
