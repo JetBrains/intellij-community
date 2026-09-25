@@ -4,14 +4,11 @@ package com.intellij.ide.startup.importSettings.jb
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.plugins.DisabledPluginsState
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginDescriptorLoadingContext
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.PluginStringSetFile
 import com.intellij.ide.plugins.loadCustomDescriptorsFromDirForImportSettings
-import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.chooser.ui.SettingsImportOrigin
@@ -41,22 +38,12 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
-import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.util.progress.ProgressPipe
-import com.intellij.platform.util.progress.RawProgressReporter
-import com.intellij.platform.util.progress.createProgressPipe
-import com.intellij.platform.util.progress.reportProgressScope
-import com.intellij.platform.util.progress.reportRawProgress
-import com.intellij.platform.util.progress.reportSequentialProgress
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -68,8 +55,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.completeWith
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -456,7 +441,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     val startTime = System.currentTimeMillis()
     importStartedDeferred = coroutineScope.async(modalityState.asContextElement()) {
       suspend fun performImport(): ImportResult {
-        if (importEverything && NameMappings.canImportDirectly(productInfo.codeName) && data.featuredPluginIds.isEmpty()) {
+        if (importEverything && NameMappings.canImportDirectly(productInfo.codeName)) {
           logger.info("Started importing all...")
           progressIndicator.text = ImportSettingsBundle.message("progress.text.migrating.options")
           progressIndicator.fraction = 0.5
@@ -508,9 +493,6 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
               (System.currentTimeMillis() - optionsStartTime).let {
                 logger.info("Options migrated in $it ms.")
                 ImportSettingsEventsCollector.jbOptionsImportTimeSpent(it)
-              }
-              if (installPlugins(plugins2import?.keys.orEmpty(), data.featuredPluginIds, progressIndicator)) {
-                restartRequired = true
               }
             }
             catch (@Suppress("IncorrectCancellationExceptionHandling") _: ProcessCanceledException) {
@@ -612,125 +594,6 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
 private fun scheduleRestart() {
   SwingUtilities.invokeLater {
     ApplicationManagerEx.getApplicationEx().restart(true)
-  }
-}
-
-/**
- * Returns whether we want the IDE restart after all the plugins are installed.
- */
-private suspend fun installPlugins(
-  alreadyInstalled: Set<PluginId>,
-  toInstall: List<String>,
-  progressIndicator: ProgressIndicator
-): Boolean {
-  if (progressIndicator.isCanceled || toInstall.isEmpty()) return false
-
-  logger.info("Requested plugin installation for ${toInstall.size} featured plugins: ${toInstall.joinToString()}.")
-  var shouldRestart = false
-  coroutineScope {
-    val pipe = createProgressPipe()
-    val progressProcessorJob = connect(pipe, progressIndicator)
-    try {
-      pipe.collectProgressUpdates {
-        reportProgressScope { reporter ->
-          val pluginsToInstall = reporter.sizedStep(10) {
-            logger.runAndLogException {
-              calculatePluginsToInstall(alreadyInstalled, toInstall)
-            }
-          } ?: return@reportProgressScope
-          logger.info("Installing ${pluginsToInstall.size} plugins: ${pluginsToInstall.joinToString()}.")
-          reporter.sizedStep(90) {
-            reportSequentialProgress(pluginsToInstall.size) { steps ->
-              for (plugin in pluginsToInstall) {
-                if (progressIndicator.isCanceled) break
-                steps.itemStep {
-                  val restartAfterPlugin = logger.runAndLogException { installPlugin(plugin) } ?: false
-                  if (restartAfterPlugin) {
-                    logger.info("Plugin ${plugin.pluginId} requested restart after import.")
-                  }
-                  shouldRestart = shouldRestart || restartAfterPlugin
-                }
-              }
-            }
-          }
-        }
-      }
-    } finally {
-      progressProcessorJob.cancel()
-    }
-  }
-  return shouldRestart
-}
-
-private fun CoroutineScope.connect(pipe: ProgressPipe, indicator: ProgressIndicator) = launch {
-  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-    pipe.progressUpdates().collect { update ->
-      indicator.text = update.text
-      indicator.text2 = update.details
-      indicator.fraction = update.fraction ?: 0.0
-      indicator.isIndeterminate = update.fraction == null
-    }
-  }
-}
-
-private suspend fun calculatePluginsToInstall(alreadyInstalled: Set<PluginId>, toInstall: List<String>): List<PluginNode> {
-  reportRawProgress { reporter ->
-    val pluginsToAttemptInstallation = (toInstall.map(PluginId::getId) - alreadyInstalled)
-      .filter { !PluginManagerCore.isPluginInstalled(it) }
-    if (pluginsToAttemptInstallation.isEmpty()) return emptyList()
-
-    reporter.text(ImportSettingsBundle.message("plugin-installation.progress.determining-plugins-to-download"))
-    val loadedPlugins = withContext(Dispatchers.IO) {
-      MarketplaceRequests.loadLastCompatiblePluginModels(pluginsToAttemptInstallation.toSet(), buildNumber = null, throwExceptions = true)
-        .mapNotNull { it.getDescriptor() as? PluginNode }
-    }
-    return loadedPlugins
-  }
-}
-
-/**
- * Returns whether we want the IDE restart after all the plugins are installed.
- */
-private suspend fun installPlugin(plugin: IdeaPluginDescriptor): Boolean {
-  val downloader = PluginDownloader.createDownloader(plugin).withErrorsConsumer { problem ->
-    logger.warn("Error while downloading plugin ${plugin.pluginId}: $problem")
-  }
-  return reportRawProgress { reporter ->
-    withContext(Dispatchers.IO) {
-      downloader.prepareToInstall(reporter.toBridgeIndicator())
-    }
-    val appliedWithoutRestart = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      downloader.installDynamically(null)
-    }
-
-    !appliedWithoutRestart
-  }
-}
-
-@Suppress("UsagesOfObsoleteApi")
-private fun RawProgressReporter.toBridgeIndicator(): ProgressIndicator {
-  val reporter = this
-  return object : AbstractProgressIndicatorExBase() {
-    override fun setText(text: String?) {
-      super.setText(text)
-      reporter.text(text)
-    }
-
-    override fun setText2(text: String?) {
-      super.setText2(text)
-      reporter.details(text)
-    }
-
-    override fun setIndeterminate(indeterminate: Boolean) {
-      super.setIndeterminate(indeterminate)
-      if (indeterminate)
-        reporter.fraction(null)
-    }
-
-    override fun setFraction(fraction: Double) {
-      super.setFraction(fraction)
-      reporter.fraction(fraction)
-    }
   }
 }
 

@@ -1,12 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.ui
 
-import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.importProgress.ImportProgressPage
 import com.intellij.ide.startup.importSettings.chooser.productChooser.ProductChooserPage
 import com.intellij.ide.startup.importSettings.chooser.settingChooser.SettingChooserPage
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
-import com.intellij.ide.startup.importSettings.data.DataToApply
 import com.intellij.ide.startup.importSettings.data.DialogImportData
 import com.intellij.ide.startup.importSettings.data.Product
 import com.intellij.ide.startup.importSettings.data.SettingsService
@@ -27,7 +25,7 @@ internal sealed interface ImportSettingsController : BaseController {
   fun goToSettingsPage(provider: ActionsDataProvider<*>, product: Product)
   fun goToProductChooserPage()
 
-  fun goToProgressPage(importFromProduct: DialogImportData, dataToApply: DataToApply)
+  fun goToProgressPage(importFromProduct: DialogImportData)
 
   fun skipImport()
 
@@ -66,11 +64,8 @@ private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override va
     dialog.changePage(page)
   }
 
-  override fun goToProgressPage(importFromProduct: DialogImportData, dataToApply: DataToApply) {
-    val dialogTitleOverride = if (dataToApply.featuredPluginIds.isNotEmpty())
-      ImportSettingsBundle.message("onboarding.wizard.getting-ready")
-    else null
-    val page = ImportProgressPage(importFromProduct, this, dialogTitleOverride)
+  override fun goToProgressPage(importFromProduct: DialogImportData) {
+    val page = ImportProgressPage(importFromProduct, this)
     Disposer.tryRegister(dialog.disposable, page)
     ImportSettingsEventsCollector.importProgressPageShown()
     dialog.changePage(page)

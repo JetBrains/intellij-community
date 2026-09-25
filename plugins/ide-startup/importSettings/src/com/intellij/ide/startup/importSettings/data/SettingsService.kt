@@ -221,8 +221,7 @@ interface BaseService {
 }
 
 class DataToApply(
-  val importSettings: List<DataForSave>,
-  val featuredPluginIds: List<String>
+  val importSettings: List<DataForSave>
 )
 
 enum class IconProductSize(val int: Int) {
