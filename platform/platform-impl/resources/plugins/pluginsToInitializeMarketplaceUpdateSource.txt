@@ -468,10 +468,10 @@ Builder Generator
 org.antlr.jetbrains.st4plugin
 com.github.anuragkanwar.modernreactsnippetsplugin
 com.intellij.lang.qml
-intellij.navbar.plugin
-intellij.structureView.plugin
-intellij.execution.serviceView.plugin
-intellij.ssh.plugin
+com.intellij.navbar
+com.intellij.structureView
+com.intellij.platform.serviceView
+com.intellij.platform.ssh
 de.espend.idea.php.phpunit
 com.intellij.plugins.xwinkeymap
 Jenkins Control Plugin
@@ -700,7 +700,7 @@ com.alibaba.autonavi.qa.testng
 Error-prone plugin
 com.albertoventurini.jetbrains.graphdbplugin
 com.midnightgamer.reactnative.snippts
-intellij.grid.plugin
+com.intellij.grid
 manjaro.ptpb
 com.github.mokkapps.codesnapintellijextension
 com.daniel-espinoza.inline-error
@@ -1048,7 +1048,7 @@ zio.intellij.zio-intellij
 com.intellij.jsp
 app.codepreview.plugin
 com.linkkou.plugin.intellij.assistant
-intellij.testRunner.plugin
+com.intellij.platform.testRunner
 com.majera.intellij.codereview.gitlab
 cssvarsassistant
 com.github.milankinen.ideaicebergtheme
@@ -1068,7 +1068,7 @@ uk.co.reecedunn.intellij.plugin.xquery
 io.wiz
 color.scheme.Cobalt 2
 com.coconutmkii.nestjssupport
-intellij.structuralSearch.plugin
+com.intellij.structuralSearch
 com.intellij.editSuggestion
 unoplatform
 de.sist.gitlab
@@ -3071,7 +3071,7 @@ color.scheme.Google Developer Tibau
 org.fever.pypendency
 com.github.gasu-dev.php-array-converter
 com.github.tolgacanunal.intellijgltfviewerplugin
-intellij.todo.plugin
+com.intellij.todo
 org.jfrog
 com.kldo.deepseek-sync
 com.outofmemory.entertainment.dissemination
