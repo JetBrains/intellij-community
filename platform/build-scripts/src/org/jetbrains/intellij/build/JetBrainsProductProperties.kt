@@ -14,7 +14,6 @@ import com.jetbrains.plugin.structure.base.problems.InvalidPluginName
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
-import com.jetbrains.plugin.structure.intellij.problems.IdeBuildComponentsOutOfRange
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.ProhibitedModuleExposed
 import com.jetbrains.plugin.structure.intellij.problems.ReleaseDateInFuture
@@ -128,9 +127,6 @@ private fun isIntentionallyIgnored(problem: PluginProblem, pluginId: String?): B
       pluginId == "com.intellij.ko" || // Korean Language Pack / 한국어 언어 팩
       pluginId == "com.intellij.ja" || // Japanese Language Pack / 日本語言語パック
       pluginId == "com.intellij.clion.west" // CLion Integration for Zephyr® Project
-    is IdeBuildComponentsOutOfRange ->
-      // FIXME MP-8565, MRI-5336: KMM writes the monorepo SNAPSHOT marker to since-build
-      pluginId == "com.jetbrains.kmm"
     /**
      * According to https://plugins.jetbrains.com/docs/marketplace/add-required-parameters.html:
      * > Please make sure the `release-version` and the `version` parameters match.
