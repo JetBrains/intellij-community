@@ -49,7 +49,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
-import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -195,7 +195,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
         final PyType valueType = context.getType(formatValue);
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(oldExpression);
         final PyType tupleType = builtinCache.getTupleType();
-        final PyType mappingType = PyTypeParser.getTypeByName(oldExpression, "collections.abc.Mapping", context);
+        final PyType mappingType = PyLegacyDocstringTypeParser.getTypeByName(oldExpression, "collections.abc.Mapping", context);
         if (!PyTypeChecker.match(tupleType, valueType, context) &&
             !(mappingType != null && PyTypeChecker.match(mappingType, valueType, context))) {
           return replaceSubstringWithSingleValueFormatting(oldExpression, textRange, prefix, suffix, formatValue, newText, substitutions);

@@ -7,7 +7,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.types.PyDynamicallyEvaluatedType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ public final class PyCallSignatureTypeProvider extends PyTypeProviderBase {
     if (name != null) {
       final String typeName = PySignatureCacheManager.getInstance(param.getProject()).findParameterType(func, name);
       if (typeName != null) {
-        final PyType type = PyTypeParser.getTypeByName(param, typeName, context);
+        final PyType type = PyLegacyDocstringTypeParser.getTypeByName(param, typeName, context);
         if (type != null) {
           return Ref.create(PyDynamicallyEvaluatedType.create(type));
         }
@@ -37,7 +37,7 @@ public final class PyCallSignatureTypeProvider extends PyTypeProviderBase {
       if (signature != null && signature.getReturnType() != null) {
         final String typeName = signature.getReturnType().getTypeQualifiedName();
         if (typeName != null) {
-          final PyType type = PyTypeParser.getTypeByName(function, typeName, context);
+          final PyType type = PyLegacyDocstringTypeParser.getTypeByName(function, typeName, context);
           if (type != null) {
             return Ref.create(PyDynamicallyEvaluatedType.create(type));
           }

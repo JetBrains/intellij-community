@@ -86,7 +86,7 @@ import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.PyTypeMember;
-import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser;
 import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -406,7 +406,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       }
     }
     if (typeName != null) {
-      return PyTypeParser.getTypeByName(this, typeName);
+      return PyLegacyDocstringTypeParser.getTypeByName(this, typeName);
     }
     return null;
   }
@@ -420,7 +420,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         typeName = structuredDocString.getParamType(targetExpression.getName());
       }
       if (typeName != null) {
-        return PyTypeParser.getTypeByName(targetExpression, typeName);
+        return PyLegacyDocstringTypeParser.getTypeByName(targetExpression, typeName);
       }
     }
     return null;

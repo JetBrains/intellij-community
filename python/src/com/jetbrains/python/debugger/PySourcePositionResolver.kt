@@ -24,7 +24,7 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.PyType
-import com.jetbrains.python.psi.types.PyTypeParser
+import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus
 
@@ -112,7 +112,7 @@ class PySourcePositionResolver(
     typeName = typeName.replace("__builtin__.", "")
     var pyType: PyType? = null
     if (!typeName.contains(".")) {
-      pyType = PyTypeParser.getTypeByName(file, typeName)
+      pyType = PyLegacyDocstringTypeParser.getTypeByName(file, typeName)
     }
     if (pyType == null) {
       val generator = PyElementGenerator.getInstance(project)

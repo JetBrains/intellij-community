@@ -23,7 +23,7 @@ import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
-import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Substring;
@@ -95,7 +95,7 @@ public final class PyDocstringTypesInspection extends PyInspection {
     }
 
     private @Nullable String getShortestImportableName(@Nullable PsiElement anchor, @NotNull String type) {
-      final PyType pyType = PyTypeParser.getTypeByName(anchor, type, myTypeEvalContext);
+      final PyType pyType = PyLegacyDocstringTypeParser.getTypeByName(anchor, type, myTypeEvalContext);
       if (pyType instanceof PyClassType) {
         // a builtin is spelled without its module both in docstrings and in the message
         return PyNames.FQN.unqualifyBuiltinName(((PyClassType)pyType).getPyClass().getQualifiedName());
@@ -125,8 +125,8 @@ public final class PyDocstringTypesInspection extends PyInspection {
     }
 
     private boolean match(PsiElement anchor, String dynamicTypeName, String specifiedTypeName) {
-      final PyType dynamicType = PyTypeParser.getTypeByName(anchor, dynamicTypeName, myTypeEvalContext);
-      final PyType specifiedType = PyTypeParser.getTypeByName(anchor, specifiedTypeName, myTypeEvalContext);
+      final PyType dynamicType = PyLegacyDocstringTypeParser.getTypeByName(anchor, dynamicTypeName, myTypeEvalContext);
+      final PyType specifiedType = PyLegacyDocstringTypeParser.getTypeByName(anchor, specifiedTypeName, myTypeEvalContext);
       return PyTypeChecker.match(specifiedType, dynamicType, myTypeEvalContext);
     }
   }

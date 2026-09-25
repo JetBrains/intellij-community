@@ -36,7 +36,7 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyType
-import com.jetbrains.python.psi.types.PyTypeParser
+import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isNoneType
@@ -80,7 +80,7 @@ object PyDocumentationLink {
    * instead of falling back to plain, unhighlighted text.
    */
   private fun resolveNamedClassType(typeName: String, anchor: PsiElement, context: TypeEvalContext): PyClassType? {
-    return when (val type = PyTypeParser.getTypeByName(anchor, typeName, context)) {
+    return when (val type = PyLegacyDocstringTypeParser.getTypeByName(anchor, typeName, context)) {
       is PyClassType -> type
       is PyUnionType -> type.members.filterIsInstance<PyClassType>().firstOrNull { it.name == typeName }
       else -> null

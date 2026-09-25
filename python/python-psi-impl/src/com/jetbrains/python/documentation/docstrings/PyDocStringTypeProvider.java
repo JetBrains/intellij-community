@@ -17,7 +17,7 @@ import com.jetbrains.python.psi.types.PyCloningTypeVisitor;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
-import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyTypeVarType;
@@ -80,7 +80,7 @@ public final class PyDocStringTypeProvider extends PyTypeProviderBase {
   }
 
   private @NotNull Ref<PyType> parseType(@NotNull PyCallable callable, @NotNull String typeText, @NotNull TypeEvalContext context) {
-    final PyType type = PyTypeParser.getTypeByName(callable, typeText, context);
+    final PyType type = PyLegacyDocstringTypeParser.getTypeByName(callable, typeText, context);
     if (type != null) {
       type.assertValid("from docstring");
     }

@@ -105,7 +105,7 @@ import com.jetbrains.python.psi.types.PyTypeChecker.collectGenerics
 import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
 import com.jetbrains.python.psi.types.PyTypeParameterMapping
 import com.jetbrains.python.psi.types.PyTypeParameterType
-import com.jetbrains.python.psi.types.PyTypeParser
+import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeVarTupleType
 import com.jetbrains.python.psi.types.PyTypeVarType
@@ -1371,7 +1371,7 @@ class PyTypeHintsInspection : PyInspection() {
         is PyTargetExpression -> {
           val builtinName = declaration.qualifiedName?.let { PyTypingTypeProvider.BUILTIN_COLLECTION_CLASSES[it] }
           if (builtinName != null) {
-            val builtinType = PyTypeParser.getTypeByName(node, builtinName, myTypeEvalContext)
+            val builtinType = PyLegacyDocstringTypeParser.getTypeByName(node, builtinName, myTypeEvalContext)
             val builtinTypeClass = (builtinType as? PyClassType)?.pyClass
             if (builtinTypeClass != null) {
               checkGenericClassParameterization(node, builtinTypeClass)

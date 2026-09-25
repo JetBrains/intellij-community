@@ -131,7 +131,7 @@ import com.jetbrains.python.psi.types.PyTypeChecker.collectGenerics
 import com.jetbrains.python.psi.types.PyTypeFormType
 import com.jetbrains.python.psi.types.PyTypeParameterMapping
 import com.jetbrains.python.psi.types.PyTypeParameterType
-import com.jetbrains.python.psi.types.PyTypeParser
+import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser
 import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.convertToType
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
@@ -2762,10 +2762,10 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       val typingName: String? = element.getQualifiedName()
 
       val builtinName: String? = BUILTIN_COLLECTION_CLASSES[typingName]
-      if (builtinName != null) return PyTypeParser.getTypeByName(element, builtinName, context)
+      if (builtinName != null) return PyLegacyDocstringTypeParser.getTypeByName(element, builtinName, context)
 
       val collectionName: String? = COLLECTIONS_CLASSES[typingName]
-      if (collectionName != null) return PyTypeParser.getTypeByName(element, collectionName, context)
+      if (collectionName != null) return PyLegacyDocstringTypeParser.getTypeByName(element, collectionName, context)
 
       return null
     }

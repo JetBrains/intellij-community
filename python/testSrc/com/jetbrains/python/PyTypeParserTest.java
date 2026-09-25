@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser;
 import com.jetbrains.python.psi.types.PyTypeParser;
 import com.jetbrains.python.psi.types.PyTypeVarType;
 import com.jetbrains.python.psi.types.PyUnionType;
@@ -31,7 +32,7 @@ import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 public class PyTypeParserTest extends PyTestCase {
   public void testClassType() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "MyObject");
+    final PyType type = PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "MyObject");
     assertClassType(type, "MyObject");
   }
 
@@ -42,7 +43,7 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testTupleType() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyTupleType type = (PyTupleType)PyTypeParser.getTypeByName(myFixture.getFile(), "(str, MyObject)");
+    final PyTupleType type = (PyTupleType)PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "(str, MyObject)");
     assertEquals(2, type.getElementCount());
     assertClassType(type.getElementType(0), "str");
     assertClassType(type.getElementType(1), "MyObject");
@@ -50,7 +51,7 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testListType() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyClassType type = (PyClassType) PyTypeParser.getTypeByName(myFixture.getFile(), "list of MyObject");
+    final PyClassType type = (PyClassType) PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "list of MyObject");
     assertNotNull(type);
     assertClassType(type, "list");
     assertClassType(type.getIteratedItemType(), "MyObject");
@@ -58,7 +59,7 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testDictType() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyClassType type = (PyClassType) PyTypeParser.getTypeByName(myFixture.getFile(), "dict from str to MyObject");
+    final PyClassType type = (PyClassType) PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "dict from str to MyObject");
     assertNotNull(type);
     assertClassType(type, "dict");
     final List<PyType> elementTypes = type.getTypeArguments();
@@ -72,7 +73,7 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testUnionType() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyUnionType type = (PyUnionType)PyTypeParser.getTypeByName(myFixture.getFile(), "MyObject or str");
+    final PyUnionType type = (PyUnionType)PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "MyObject or str");
     assertNotNull(type);
     final Collection<PyType> members = type.getMembers();
     assertEquals(2, members.size());
@@ -83,38 +84,38 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testNoneType() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "None");
+    final PyType type = PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "None");
     assertNotNull(type);
     assertTrue(isNoneType(type));
   }
 
   public void testIntegerType() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "integer");
+    final PyType type = PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "integer");
     assertClassType(type, "int");
   }
 
   public void testStringType() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "string");
+    final PyType type = PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "string");
     assertClassType(type, "str");
   }
 
   public void testBooleanType() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "boolean");
+    final PyType type = PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "boolean");
     assertClassType(type, "bool");
   }
 
   public void testDictionaryType() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "dictionary");
+    final PyType type = PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "dictionary");
     assertClassType(type, "dict");
   }
 
   public void testQualifiedNotImportedType() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyTypeParser.ParseResult result = PyTypeParser.parse(myFixture.getFile(), "collections.abc.Iterable");
+    final PyTypeParser.ParseResult result = PyLegacyDocstringTypeParser.parse(myFixture.getFile(), "collections.abc.Iterable");
     final PyType type = result.getType();
     assertClassType(type, "Iterable");
     assertEquals(3, result.getTypes().size());
@@ -123,13 +124,13 @@ public class PyTypeParserTest extends PyTestCase {
   public void testTypeSubparts() {
     myFixture.configureByFile("typeParser/typeParser.py");
     final String s = "list of (MyObject, collections.abc.Iterable of MyObject, int) or None";
-    PyTypeParser.ParseResult result = PyTypeParser.parse(myFixture.getFile(), s);
+    PyTypeParser.ParseResult result = PyLegacyDocstringTypeParser.parse(myFixture.getFile(), s);
     assertEquals(8, result.getTypes().size());
   }
 
   public void testGenericType() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "T");
+    final PyType type = PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "T");
     assertNotNull(type);
     assertInstanceOf(type, PyTypeVarType.class);
     assertEquals("T", type.getName());
@@ -139,7 +140,7 @@ public class PyTypeParserTest extends PyTestCase {
   public void testSphinxFormattedType() {
     myFixture.configureByFile("typeParser/typeParser.py");
     final String s = "(MyObject, :class:`MyObject`, :py:class:`MyObject`, :class:`!MyObject`, :py:class:`~MyObject`)";
-    final PyTupleType type = (PyTupleType)PyTypeParser.getTypeByName(myFixture.getFile(), s);
+    final PyTupleType type = (PyTupleType)PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), s);
     assertNotNull(type);
     final int n = type.getElementCount();
     assertEquals(5, n);
@@ -151,7 +152,7 @@ public class PyTypeParserTest extends PyTestCase {
   // PY-7950
   public void testUnionWithUnresolved() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "Unresolved or int");
+    final PyType type = PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "Unresolved or int");
     assertNotNull(type);
     assertInstanceOf(type, PyUnionType.class);
     final List<PyType> members = new ArrayList<>(((PyUnionType)type).getMembers());
@@ -162,15 +163,15 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testUnionParamPriority() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType t1 = PyTypeParser.getTypeByName(myFixture.getFile(), "list of int or list of str");
+    final PyType t1 = PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "list of int or list of str");
     assertInstanceOf(t1, PyUnionType.class);
-    final PyType t2 = PyTypeParser.getTypeByName(myFixture.getFile(), "list of str or int");
+    final PyType t2 = PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "list of str or int");
     assertInstanceOf(t2, PyUnionType.class);
   }
 
   public void testParenthesesPriority() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "list of (str or int)");
+    final PyType type = PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "list of (str or int)");
     assertInstanceOf(type, PyClassType.class);
     final PyClassType pyClassType = (PyClassType)type;
     assertNotNull(pyClassType);
@@ -181,7 +182,7 @@ public class PyTypeParserTest extends PyTestCase {
   public void testBoundedGeneric() {
     runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
       myFixture.configureByFile("typeParser/typeParser.py");
-      final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "T <= str or unicode");
+      final PyType type = PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "T <= str or unicode");
       assertNotNull(type);
       assertInstanceOf(type, PyTypeVarType.class);
       final PyTypeVarType genericType = (PyTypeVarType)type;
@@ -192,7 +193,7 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testBracketSingleParam() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "list[int]");
+    final PyType type = PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "list[int]");
     assertInstanceOf(type, PyClassType.class);
     final PyClassType pyClassType = (PyClassType)type;
     assertNotNull(pyClassType);
@@ -202,7 +203,7 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testBracketMultipleParams() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "dict[str, int]");
+    final PyType type = PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "dict[str, int]");
     assertInstanceOf(type, PyClassType.class);
     final PyClassType pyClassType = (PyClassType)type;
     assertNotNull(pyClassType);
@@ -219,7 +220,7 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testUnionOrOperator() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyUnionType type = (PyUnionType)PyTypeParser.getTypeByName(myFixture.getFile(), "MyObject | str | bytes");
+    final PyUnionType type = (PyUnionType)PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "MyObject | str | bytes");
     assertNotNull(type);
     final Collection<PyType> members = type.getMembers();
     assertEquals(3, members.size());
@@ -231,7 +232,7 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testUnionOfUnion() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyUnionType type = (PyUnionType)PyTypeParser.getTypeByName(myFixture.getFile(), "(int or bytes) or (str or bytes)");
+    final PyUnionType type = (PyUnionType)PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "(int or bytes) or (str or bytes)");
     assertNotNull(type);
     final Collection<PyType> members = type.getMembers();
     assertEquals(3, members.size());
@@ -243,7 +244,7 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testCallableType() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "(int, T) -> T");
+    final PyType type = PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "(int, T) -> T");
     assertInstanceOf(type, PyCallableType.class);
     final PyCallableType callableType = (PyCallableType)type;
     assertNotNull(callableType);
@@ -263,7 +264,7 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testCallableWithoutArgs() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "() -> int");
+    final PyType type = PyLegacyDocstringTypeParser.getTypeByName(myFixture.getFile(), "() -> int");
     assertInstanceOf(type, PyCallableType.class);
     final PyCallableType callableType = (PyCallableType)type;
     assertNotNull(callableType);
@@ -282,7 +283,7 @@ public class PyTypeParserTest extends PyTestCase {
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByFile("typeParser/typeParser.py");
     final PsiFile file = myFixture.getFile();
-    final PyType type = PyTypeParser.getTypeByName(file, text);
+    final PyType type = PyLegacyDocstringTypeParser.getTypeByName(file, text);
     TypeEvalContext context = TypeEvalContext.userInitiated(file.getProject(), file).withTracing();
     final String actualType = PythonDocumentationProvider.getTypeName(type, context);
     assertEquals(expectedType, actualType);
