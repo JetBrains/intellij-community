@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.imports;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -7,6 +7,7 @@ import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiImportList;
 import com.intellij.psi.PsiImportModuleStatement;
 import com.intellij.psi.PsiImportStatement;
 import com.intellij.psi.PsiImportStatementBase;
@@ -109,11 +110,28 @@ public final class ReplaceOnDemandImportIntention extends MCIntention {
   private static <T> void createImportStatements(PsiImportStatementBase importStatement,
                                                  T[] importedMembers,
                                                  Function<? super T, ? extends PsiImportStatementBase> function) {
-    final PsiElement importList = importStatement.getParent();
+    final PsiImportList importList = (PsiImportList)importStatement.getParent();
     for (T importedMember : importedMembers) {
-      importList.add(function.apply(importedMember));
+      final PsiImportStatementBase newImport = function.apply(importedMember);
+      if (!isAlreadyImported(importList, newImport)) {
+        importList.add(newImport);
+      }
     }
     new CommentTracker().deleteAndRestoreComments(importStatement);
+  }
+
+  private static boolean isAlreadyImported(@NotNull PsiImportList importList,
+                                           @NotNull PsiImportStatementBase newImport) {
+    final PsiJavaCodeReferenceElement newReference = newImport.getImportReference();
+    if (newReference == null) return false;
+    final String qualifiedName = newReference.getQualifiedName();
+    final boolean isStatic = newImport instanceof PsiImportStaticStatement;
+    for (PsiImportStatementBase existing : importList.getAllImportStatements()) {
+      if (existing.isOnDemand() || (existing instanceof PsiImportStaticStatement) != isStatic) continue;
+      final PsiJavaCodeReferenceElement reference = existing.getImportReference();
+      if (reference != null && Objects.equals(qualifiedName, reference.getQualifiedName())) return true;
+    }
+    return false;
   }
 
   private static class ClassCollector extends JavaRecursiveElementWalkingVisitor {
