@@ -19,6 +19,7 @@ import java.nio.file.Path;
 
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.INT32_LAYOUT;
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.INT8_LAYOUT;
+import static java.util.Objects.requireNonNull;
 
 /// ```
 /// BlockHeaderLayout[=20 bytes] {
@@ -155,7 +156,9 @@ public final class BlockHeaderLayout {
 
   /// Unconditional lifecycle transition: `<any state>` -> [LifecycleState#RETIRED]
   /// Used to discard a block when it is removed from its owning store
-  public static void retireForStoreDrop(@NotNull MemorySegment blockSegment) {
+  ///
+  /// @return previous state that has changed to [LifecycleState#RETIRED], or [LifecycleState#RETIRED] if it was already retired
+  public static @NotNull LifecycleState retireForStoreDrop(@NotNull MemorySegment blockSegment) {
     while (true) {
       int stateCode = (int)STATE_HANDLE.getVolatile(blockSegment, 0L);
       switch (stateCode) {
@@ -163,11 +166,11 @@ public final class BlockHeaderLayout {
              ACTIVE_STATE_CODE,
              SEALED_STATE_CODE -> {
           if (STATE_HANDLE.compareAndSet(blockSegment, 0L, stateCode, RETIRED_STATE_CODE)) {
-            return;
+            return requireNonNull(persistentCodeToState(stateCode));
           }
         }
         case RETIRED_STATE_CODE -> {
-          return;
+          return LifecycleState.RETIRED;
         }
 
         default -> throw new IllegalStateException("unexpected stateCode(=" + stateCode + ")");
@@ -178,7 +181,9 @@ public final class BlockHeaderLayout {
   /// Retires an old block copy of evacuated block, after block evacuation publishes a newer copy;
   /// The block could be in any state except [LifecycleState#ALLOCATED] (allocated blocks can't be evacuated);
   /// If the block is already retired => the method does nothing;
-  public static void retireEvacuatedBlock(@NotNull MemorySegment blockSegment) {
+  ///
+  /// @return previous state that has changed to [LifecycleState#RETIRED], or [LifecycleState#RETIRED] if it was already retired
+  public static @NotNull LifecycleState retireEvacuatedBlock(@NotNull MemorySegment blockSegment) {
     while (true) {
       int stateCode = (int)STATE_HANDLE.getVolatile(blockSegment, 0L);
       switch (stateCode) {
@@ -186,12 +191,12 @@ public final class BlockHeaderLayout {
           throw new IllegalStateException("An ALLOCATED block cannot be an evacuated source");
         }
         case RETIRED_STATE_CODE -> {
-          return;
+          return LifecycleState.RETIRED;
         }
         case ACTIVE_STATE_CODE,
              SEALED_STATE_CODE -> {
           if (STATE_HANDLE.compareAndSet(blockSegment, 0L, stateCode, RETIRED_STATE_CODE)) {
-            return;
+            return requireNonNull(persistentCodeToState(stateCode));
           }
         }
 

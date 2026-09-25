@@ -108,10 +108,12 @@ public class DatabaseBlockTest {
 
     moveCommittedTailToChunkHeader(chunkPath);
 
-    try (var chunk = DatabaseChunk.open(chunkPath, DATABASE_ID, CHUNK_ID, CHUNK_SIZE, true)) {
+    var openResult = DatabaseChunk.openWithRecovery(chunkPath, DATABASE_ID, CHUNK_ID, CHUNK_SIZE, true);
+    try (var chunk = openResult.chunk()) {
       assertEquals(0, chunk.blocks().size());
       assertEquals(ChunkHeaderLayout.HEADER_SIZE, chunk.committedTail());
       assertEquals(chunk.committedTail(), chunk.allocatedTail());
+      assertEquals(BLOCK_LENGTH, openResult.tailBytesRolledBack(), "Recovery must report the discarded tail size");
     }
   }
 
@@ -235,8 +237,9 @@ public class DatabaseBlockTest {
         block.retire();
       }
 
-      block.retireForStoreDrop();
-      block.retireForStoreDrop();
+      assertEquals(initialState, block.retireForStoreDrop(), "The first retirement must return the replaced state");
+      assertEquals(BlocksStore.Block.LifecycleState.RETIRED, block.retireForStoreDrop(),
+                   "Repeated retirement must report that the block was already retired");
 
       assertEquals(BlocksStore.Block.LifecycleState.RETIRED, block.state(), "Recovery must be able to repeat retirement");
       assertThrows(IllegalStateException.class, block::seal, "Dropping a store must not allow a block to become live again");
@@ -244,6 +247,41 @@ public class DatabaseBlockTest {
     }
     try (var chunk = DatabaseChunk.open(chunkPath, DATABASE_ID, CHUNK_ID, CHUNK_SIZE, true)) {
       assertEquals(BlocksStore.Block.LifecycleState.RETIRED, chunk.blocks().getFirst().state());
+    }
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = BlocksStore.Block.LifecycleState.class, names = {"ACTIVE", "SEALED", "RETIRED"})
+  public void evacuationRetirementReturnsPreviousState(BlocksStore.Block.LifecycleState initialState) throws Exception {
+    try (var arena = Arena.ofConfined()) {
+      var chunk = arena.allocate(CHUNK_SIZE, BlockHeaderLayout.BLOCK_ALIGNMENT);
+      var block = DatabaseBlock.create(
+        chunk, CHUNK_ID, ChunkHeaderLayout.HEADER_SIZE, BLOCK_ID, BLOCK_LENGTH, STORE_ID, VALUE_ROLE
+      );
+      block.activate();
+      if (initialState != BlocksStore.Block.LifecycleState.ACTIVE) {
+        block.seal();
+      }
+      if (initialState == BlocksStore.Block.LifecycleState.RETIRED) {
+        block.retire();
+      }
+
+      assertEquals(initialState, block.retireEvacuatedBlock(), "The first retirement must return the replaced state");
+      assertEquals(BlocksStore.Block.LifecycleState.RETIRED, block.retireEvacuatedBlock(),
+                   "Repeated retirement must report that the block was already retired");
+    }
+  }
+
+  @Test
+  public void evacuationRetirementRejectsAllocatedState() throws Exception {
+    try (var arena = Arena.ofConfined()) {
+      var chunk = arena.allocate(CHUNK_SIZE, BlockHeaderLayout.BLOCK_ALIGNMENT);
+      var block = DatabaseBlock.create(
+        chunk, CHUNK_ID, ChunkHeaderLayout.HEADER_SIZE, BLOCK_ID, BLOCK_LENGTH, STORE_ID, VALUE_ROLE
+      );
+
+      assertThrows(IllegalStateException.class, block::retireEvacuatedBlock,
+                   "An allocated block cannot be an evacuated source");
     }
   }
 

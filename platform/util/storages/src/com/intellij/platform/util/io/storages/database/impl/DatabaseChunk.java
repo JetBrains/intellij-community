@@ -94,11 +94,20 @@ final class DatabaseChunk implements Closeable, Flushable {
   }
 
   /// Opens an existing chunk. Rejects a file with an incompatible identity
+  @SuppressWarnings("SameParameterValue")
   static @NotNull DatabaseChunk open(@NotNull Path storagePath,
                                      long expectedDatabaseId,
                                      int expectedChunkId,
                                      int expectedChunkSize,
                                      boolean fsyncOnFlush) throws IOException {
+    return openWithRecovery(storagePath, expectedDatabaseId, expectedChunkId, expectedChunkSize, fsyncOnFlush).chunk();
+  }
+
+  static @NotNull DatabaseChunk.OpenChunkResult openWithRecovery(@NotNull Path storagePath,
+                                                                 long expectedDatabaseId,
+                                                                 int expectedChunkId,
+                                                                 int expectedChunkSize,
+                                                                 boolean fsyncOnFlush) throws IOException {
     if (!Files.exists(storagePath)) {
       throw new NoSuchFileException(storagePath.toString());
     }
@@ -112,21 +121,35 @@ final class DatabaseChunk implements Closeable, Flushable {
     return mmappedFileFactory(expectedChunkSize, fsyncOnFlush).wrapStorageSafely(storagePath, storage -> {
       var mapping = chunkMemorySegment(storage, expectedChunkSize);
       ChunkHeaderLayout.validate(storagePath, mapping, expectedChunkSize);
-      var identity = new ChunkIdentity(ChunkHeaderLayout.readDatabaseId(mapping), ChunkHeaderLayout.readChunkId(mapping));
-      if (identity.databaseId() != expectedDatabaseId) {
+      var chunkId = new ChunkIdentity(
+        ChunkHeaderLayout.readDatabaseId(mapping),
+        ChunkHeaderLayout.readChunkId(mapping)
+      );
+      if (chunkId.databaseId() != expectedDatabaseId) {
         throw new CorruptedException(
-          "[" + storagePath + "]: databaseId(=" + identity.databaseId() + ") != expectedDatabaseId(=" + expectedDatabaseId + ")"
+          "[" + storagePath + "]: databaseId(=" + chunkId.databaseId() + ") != expectedDatabaseId(=" + expectedDatabaseId + ")"
         );
       }
-      if (identity.chunkId() != expectedChunkId) {
+      if (chunkId.chunkId() != expectedChunkId) {
         throw new CorruptedException(
-          "[" + storagePath + "]: chunkId(=" + identity.chunkId() + ") != expectedChunkId(=" + expectedChunkId + ")"
+          "[" + storagePath + "]: chunkId(=" + chunkId.chunkId() + ") != expectedChunkId(=" + expectedChunkId + ")"
         );
       }
-      var blocks = recoverBlocks(storagePath, mapping, identity.chunkId(), ChunkHeaderLayout.readCommittedTail(mapping));
-      return new DatabaseChunk(storage, mapping, identity, blocks, expectedChunkSize);
+      var allocatedTail = ChunkHeaderLayout.readAllocatedTail(mapping);
+      var committedTail = ChunkHeaderLayout.readCommittedTail(mapping);
+      var blocks = recoverBlocks(storagePath, mapping, chunkId.chunkId(), committedTail);
+      var tailBytesRolledBack = allocatedTail - committedTail;
+      return new OpenChunkResult(
+        new DatabaseChunk(storage, mapping, chunkId, blocks, expectedChunkSize),
+        tailBytesRolledBack
+      );
     });
   }
+
+  /// The chunk and the recovery result from chunk-open operation
+  /// (Should be a chunk's metrics/counter field, but I don't want to create the only counter in the chunk just
+  /// for a constant value needed only on the open phase)
+  record OpenChunkResult(@NotNull DatabaseChunk chunk, long tailBytesRolledBack) { }
 
   @NotNull DatabaseBlock allocateBlock(int blockId, int storeId, int blockRole, int blockLength) throws IOException {
     synchronized (lock) {

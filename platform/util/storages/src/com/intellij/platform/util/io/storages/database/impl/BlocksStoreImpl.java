@@ -133,16 +133,19 @@ final class BlocksStoreImpl implements BlocksStore {
     @Override
     public void activate() {
       block.activate();
+      database.recordBlockActivated();
     }
 
     @Override
     public void discard() {
       block.discard();
+      database.recordBlockDiscarded();
     }
 
     @Override
     public void seal() {
       block.seal();
+      database.recordBlockSealed();
     }
 
     @Override

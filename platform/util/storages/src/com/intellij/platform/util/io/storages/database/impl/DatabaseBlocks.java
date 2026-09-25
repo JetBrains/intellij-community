@@ -3,6 +3,7 @@ package com.intellij.platform.util.io.storages.database.impl;
 
 import com.intellij.platform.util.io.storages.database.impl.layout.ChunkHeaderLayout;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
+import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics;
 import com.intellij.util.io.CorruptedException;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -14,8 +15,12 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ALLOCATED;
+import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ACTIVE;
+import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.RETIRED;
+import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.SEALED;
 
 /** Catalog and allocator of blocks */
 final class DatabaseBlocks implements Closeable {
@@ -33,6 +38,24 @@ final class DatabaseBlocks implements Closeable {
   //@GuardedBy(lock)
   private boolean closed;
 
+  // ========================== monitoring counters: ==========================
+  private final AtomicInteger allocatedBlocksCurrent = new AtomicInteger();
+  private final AtomicInteger activeBlocksCurrent = new AtomicInteger();
+  private final AtomicInteger sealedBlocksCurrent = new AtomicInteger();
+  private final AtomicInteger retiredBlocksCurrent = new AtomicInteger();
+  //@GuardedBy(lock)
+  private int blocksAllocated;
+  private final AtomicInteger blocksActivated = new AtomicInteger();
+  private final AtomicInteger blocksDiscarded = new AtomicInteger();
+  private final AtomicInteger blocksSealed = new AtomicInteger();
+  private final AtomicInteger blocksRetired = new AtomicInteger();
+  //@GuardedBy(lock):
+  private int blocksEvacuated;
+  private int incompleteBlocksDiscarded;
+  private int droppedStoreBlocksRetired;
+  private int staleBlockCopiesRetired;
+  // ===========================================================================
+
   private DatabaseBlocks(@NotNull DatabaseCatalog databaseCatalog, @NotNull DatabaseChunks chunks) throws CorruptedException {
     this.databaseCatalog = databaseCatalog;
     this.chunks = chunks;
@@ -47,14 +70,18 @@ final class DatabaseBlocks implements Closeable {
         //Recovery/clean up after possible crash:
 
         var recoveredState = block.state();
-        if (block.state() == ALLOCATED) {
+        if (recoveredState == ALLOCATED) {
           //block is allocated, but requestor hasn't finished block initialization => discard
           block.discard();
+          incompleteBlocksDiscarded++;
         }
         if (!currentStoreIds.contains(block.storeId())) {
           //active/sealed blocks belongs to removed store: normally, if the block is removed from the store, it must be
           // RETIRED already; but if DB was crashed, some blocks could be left in active/sealed state => fix that:
-          block.retireForStoreDrop();
+          var previousState = block.retireForStoreDrop();
+          if (previousState != RETIRED) {
+            droppedStoreBlocksRetired++;
+          }
         }
         registerRecoveredBlock(block, recoveredState, recoveredStatesById);
       }
@@ -86,6 +113,7 @@ final class DatabaseBlocks implements Closeable {
       var targetChunk = chunks.chunkForAllocation(blockLength);
       var block = targetChunk.allocateBlock(blockId, storeId, role, blockLength);
       registerBlock(block);
+      blocksAllocated++;
       return block;
     }
   }
@@ -118,6 +146,7 @@ final class DatabaseBlocks implements Closeable {
       blocksById.put(evacuatedBlock.blockId(), evacuatedBlock);
       blocksByStoreId.computeIfAbsent(evacuatedBlock.storeId(), _ -> new ArrayList<>()).add(evacuatedBlock);
       blockToEvacuate.retireEvacuatedBlock();
+      blocksEvacuated++;
     }
   }
 
@@ -126,6 +155,7 @@ final class DatabaseBlocks implements Closeable {
       for (var block : chunk.blocks()) {
         if (blocksById.get(block.blockId()) == block) {
           blocksById.remove(block.blockId());
+          updateCurrentBlocks(block.state(), /*delta:*/-1);
         }//else: old copy of evacuated block
         var storeBlocks = blocksByStoreId.get(block.storeId());
         if (storeBlocks == null || !storeBlocks.remove(block)) {
@@ -145,10 +175,33 @@ final class DatabaseBlocks implements Closeable {
       var blocks = blocksByStoreId.get(storeId);
       if (blocks != null) {
         for (var block : blocks) {
-          block.retireForStoreDrop();
+          var previousState = block.retireForStoreDrop();
+          if (blocksById.get(block.blockId()) == block && previousState != RETIRED) {
+            recordCurrentTransition(previousState, RETIRED);
+          }
         }
       }
     }
+  }
+
+  void recordBlockActivated() {
+    recordCurrentTransition(ALLOCATED, ACTIVE);
+    blocksActivated.incrementAndGet();
+  }
+
+  void recordBlockDiscarded() {
+    recordCurrentTransition(ALLOCATED, RETIRED);
+    blocksDiscarded.incrementAndGet();
+  }
+
+  void recordBlockSealed() {
+    recordCurrentTransition(ACTIVE, SEALED);
+    blocksSealed.incrementAndGet();
+  }
+
+  void recordBlockRetired() {
+    recordCurrentTransition(SEALED, RETIRED);
+    blocksRetired.incrementAndGet();
   }
 
   ///Pure function, does not change the counter -- counter is updated in [registerBlock]
@@ -170,6 +223,7 @@ final class DatabaseBlocks implements Closeable {
         );
       }
       blocksByStoreId.computeIfAbsent(block.storeId(), _ -> new ArrayList<>()).add(block);
+      updateCurrentBlocks(block.state(), /*delta: */ 1);
       lastBlockId = Math.max(lastBlockId, blockId);
     }
   }
@@ -180,6 +234,7 @@ final class DatabaseBlocks implements Closeable {
     synchronized (lock) {
       var blockId = block.blockId();
       var previous = blocksById.get(blockId);
+      BlocksStore.Block.LifecycleState previousState = null;
       if (previous != null) {
         //likely, the block was evacuated, but old remnants remains => check is it true
         var previousRecoveredState = recoveredStatesById.get(blockId);
@@ -187,9 +242,16 @@ final class DatabaseBlocks implements Closeable {
           throw new IllegalStateException("Missing recovered state for block " + blockId);
         }
         validateEvacuatedCopy(previous, previousRecoveredState, block, recoveredState);
-        previous.retireEvacuatedBlock(); //if not yet retired (e.g. crash interrupts evacuation) => fix it
+        previousState = previous.retireEvacuatedBlock(); //if not yet retired (e.g. crash interrupts evacuation) => fix it
+        if (previousRecoveredState != RETIRED) {
+          staleBlockCopiesRetired++;
+        }
       }
       blocksById.put(blockId, block);
+      if (previousState != null) {
+        updateCurrentBlocks(previousState, -1);
+      }
+      updateCurrentBlocks(block.state(), 1);
       recoveredStatesById.put(blockId, recoveredState);
       blocksByStoreId.computeIfAbsent(block.storeId(), _ -> new ArrayList<>()).add(block);
       lastBlockId = Math.max(lastBlockId, blockId);
@@ -224,11 +286,46 @@ final class DatabaseBlocks implements Closeable {
     );
   }
 
+  private void recordCurrentTransition(@NotNull BlocksStore.Block.LifecycleState from,
+                                       @NotNull BlocksStore.Block.LifecycleState to) {
+    updateCurrentBlocks(from, -1);
+    updateCurrentBlocks(to, 1);
+  }
+
+  private void updateCurrentBlocks(@NotNull BlocksStore.Block.LifecycleState state, int delta) {
+    switch (state) {
+      case ALLOCATED -> allocatedBlocksCurrent.addAndGet(delta);
+      case ACTIVE -> activeBlocksCurrent.addAndGet(delta);
+      case SEALED -> sealedBlocksCurrent.addAndGet(delta);
+      case RETIRED -> retiredBlocksCurrent.addAndGet(delta);
+    }
+  }
+
+  /// Returns the current block metrics.
+  ///
+  /// @param snapshotMetrics true requires a consistent snapshot; false permits weakly consistent values without locking
+  @NotNull DatabaseMetrics.BlocksMetrics metrics(@SuppressWarnings("unused") boolean snapshotMetrics) {
+    // TODO RC: implement weakly-consistent metrics without locking
+    synchronized (lock) {
+      return new DatabaseMetrics.BlocksMetrics(
+        blocksById.size(),
+        allocatedBlocksCurrent.get(), activeBlocksCurrent.get(), sealedBlocksCurrent.get(), retiredBlocksCurrent.get(),
+        blocksAllocated, blocksActivated.get(), blocksDiscarded.get(), blocksSealed.get(), blocksRetired.get(),
+        blocksEvacuated,
+        incompleteBlocksDiscarded, droppedStoreBlocksRetired, staleBlockCopiesRetired
+      );
+    }
+  }
+
   @Override
   public void close() {
     synchronized (lock) {
       blocksById.clear();
       blocksByStoreId.clear();
+      allocatedBlocksCurrent.set(0);
+      activeBlocksCurrent.set(0);
+      sealedBlocksCurrent.set(0);
+      retiredBlocksCurrent.set(0);
       closed = true;
     }
   }

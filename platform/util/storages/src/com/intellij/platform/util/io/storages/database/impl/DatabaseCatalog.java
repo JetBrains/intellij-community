@@ -2,6 +2,7 @@
 package com.intellij.platform.util.io.storages.database.impl;
 
 import com.intellij.platform.util.io.storages.database.spi.StoreMetadata;
+import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,6 +71,11 @@ public interface DatabaseCatalog extends Closeable, Flushable {
 
   /** @return true when completed metadata changes still require a flush */
   boolean isDirty();
+
+  /// Returns the current catalog metrics.
+  ///
+  /// @param snapshotMetrics true requires a consistent snapshot; false permits weakly consistent values without locking
+  @NotNull DatabaseMetrics.CatalogMetrics metrics(boolean snapshotMetrics);
 
   /** Flushes all completed metadata changes according to the storage configuration */
   @Override

@@ -222,15 +222,19 @@ final class DatabaseBlock {
 
   /// Unconditional transition: `<any state>` -> [LifecycleState#RETIRED]
   /// Used exclusively to discard the block when it is removed from its owning store
-  void retireForStoreDrop() {
+  ///
+  /// @return block previous state; [LifecycleState#RETIRED] if block was already retired (i.e., no actual transition happened)
+  @NotNull LifecycleState retireForStoreDrop() {
     //Could be implemented as if(active) -> seal(); if(sealed) -> retire()
     // but I prefer slightly faster method:
-    BlockHeaderLayout.retireForStoreDrop(blockSegment);
+    return BlockHeaderLayout.retireForStoreDrop(blockSegment);
   }
 
   /// Retires this physical copy after evacuation publishes the same logical block in a newer chunk.
-  void retireEvacuatedBlock() {
-    BlockHeaderLayout.retireEvacuatedBlock(blockSegment);
+  ///
+  /// @return block previous state; [LifecycleState#RETIRED] if block was already retired (i.e., no actual transition happened)
+  @NotNull LifecycleState retireEvacuatedBlock() {
+    return BlockHeaderLayout.retireEvacuatedBlock(blockSegment);
   }
 
   /// Copies full block, including header, onto target;

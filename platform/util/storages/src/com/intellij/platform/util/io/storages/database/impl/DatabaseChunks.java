@@ -2,6 +2,7 @@
 package com.intellij.platform.util.io.storages.database.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
@@ -61,6 +62,19 @@ final class DatabaseChunks implements Closeable, Flushable {
 
   /// GuardedBy(lock)
   private boolean closed;
+
+  // =========== monitoring counters (guarded by lock): =======================
+  private long chunksCreated;
+  private long chunksOpened;
+  private long chunksSealed;
+  private long chunksRetired;
+  private long chunksReleased;
+  private long chunkFilesDeleted;
+
+  private long chunkStatesReconciled;
+  private long chunkTailsRolledBack;
+  private long chunkTailBytesRolledBack;
+  // ==========================================================================
 
   /** Creates an empty owner before reconciliation can open mappings */
   private DatabaseChunks(@NotNull Path databaseDirectory, @NotNull DatabaseCatalog databaseCatalog, boolean fsyncOnFlush) {
@@ -125,6 +139,7 @@ final class DatabaseChunks implements Closeable, Flushable {
 
       chunksById.put(chunkId, chunk);
       activeChunks.addLast(chunk);
+      chunksCreated++;
       sealOldestActiveChunks();
       LOG.info("Created chunk #" + chunkId + ": " + chunk.mappedSize() + "b; " +
                chunksById.size() + " total chunks, [" + chunk.storagePath() + "]");
@@ -203,6 +218,7 @@ final class DatabaseChunks implements Closeable, Flushable {
     chunk.seal();
     databaseCatalog.markChunkSealed(chunk.chunkId());
     databaseCatalog.flush();
+    chunksSealed++;
   }
 
   private @NotNull DatabaseCatalog.ChunkInfo catalogChunkInfo(int chunkId) {
@@ -220,6 +236,7 @@ final class DatabaseChunks implements Closeable, Flushable {
         throw new IllegalArgumentException("Unknown chunkId(=" + chunkToRelease.chunkId() + ")");
       }
       chunksPendingForRelease.put(chunkToRelease.chunkId(), chunkToRelease);
+      chunksRetired++;
     }
   }
 
@@ -238,13 +255,19 @@ final class DatabaseChunks implements Closeable, Flushable {
           throw new CorruptedException("[" + chunkPath + "]: the catalog references a missing chunk file");
         }
 
-        var chunk = DatabaseChunk.open(
+        var openResult = DatabaseChunk.openWithRecovery(
           chunkPath,
           databaseCatalog.databaseId(),
           chunkInfo.chunkId(),
           databaseCatalog.chunkSize(),
           fsyncOnFlush
         );
+        var chunk = openResult.chunk();
+        if (openResult.tailBytesRolledBack() > 0) {
+          chunkTailsRolledBack++;
+          chunkTailBytesRolledBack += openResult.tailBytesRolledBack();
+        }
+        chunksOpened++;
         chunksById.put(chunkInfo.chunkId(), chunk);
 
         //We do a (limited) recovery/reconciliation here, on DB opening -- but afterward, during normal DB operation,
@@ -291,6 +314,7 @@ final class DatabaseChunks implements Closeable, Flushable {
       );
     }
     databaseCatalog.flush();
+    chunkStatesReconciled++;
     LOG.info("Recovered chunk " + chunkInfo.chunkId() + " state " + headerState + ": " + chunk.storagePath());
   }
 
@@ -310,6 +334,7 @@ final class DatabaseChunks implements Closeable, Flushable {
               !registeredChunkIds.contains(chunkId) &&
               Files.isRegularFile(file)) {
             if (Files.deleteIfExists(file)) {
+              chunkFilesDeleted++;
               LOG.info("Deleted unregistered chunk " + chunkId + ": " + file);
             }
           }
@@ -334,14 +359,44 @@ final class DatabaseChunks implements Closeable, Flushable {
           if (mappedChunk != null) {
             mappedChunk.close();
             chunksPendingForRelease.remove(chunkId, mappedChunk);
+            chunksReleased++;
           }
 
           var file = chunkPath(databaseDirectory, chunkId);
           if (Files.deleteIfExists(file)) {
+            chunkFilesDeleted++;
             LOG.info("Deleted retired chunk " + chunkId + ": " + file);
           }
         }
       }
+    }
+  }
+
+  /// Returns the current chunk metrics.
+  ///
+  /// @param snapshotValues true requires a consistent snapshot; false permits weakly consistent values without locking
+  @NotNull DatabaseMetrics.ChunksMetrics metrics(@SuppressWarnings("unused") boolean snapshotValues) {
+    // TODO RC: return weakly consistent values without taking the lock
+    synchronized (lock) {
+      int activeChunks = 0, sealedChunks = 0;
+      int retiredChunks = chunksPendingForRelease.size();
+      long totalMappedBytes = 0;
+      for (var chunk : chunksById.values()) {
+        switch (chunk.state()) {
+          case ACTIVE -> activeChunks++;
+          case SEALED -> sealedChunks++;
+          case RETIRED -> retiredChunks++;
+        }
+        totalMappedBytes += chunk.mappedSize();
+      }
+      for (var chunk : chunksPendingForRelease.values()) {
+        totalMappedBytes += chunk.mappedSize();
+      }
+      return new DatabaseMetrics.ChunksMetrics(
+        chunksById.size() + retiredChunks, activeChunks, sealedChunks, retiredChunks, totalMappedBytes,
+        chunksCreated, chunksOpened, chunksSealed, chunksRetired, chunksReleased,
+        chunkStatesReconciled, chunkTailsRolledBack, chunkTailBytesRolledBack, chunkFilesDeleted
+      );
     }
   }
 

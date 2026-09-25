@@ -44,6 +44,9 @@ public class DatabaseBlocksTest {
       assertEquals(SEALED, metadata.chunks().getFirst().state(), "The catalog must publish the sealed state");
       assertEquals(ACTIVE, chunks.chunks().get(1).state(), "Allocation must continue in an active chunk");
       assertEquals(ACTIVE, chunks.chunks().get(2).state(), "The newest chunk must remain active");
+      assertEquals(3, chunks.metrics(true).created(), "Each allocation target must record its chunk creation");
+      assertEquals(1, chunks.metrics(true).sealed(), "The evicted chunk must record its seal event");
+      assertEquals(3, blocks.metrics(true).allocated(), "Each successful allocation must update the block counter");
     }
   }
 
@@ -74,6 +77,10 @@ public class DatabaseBlocksTest {
         assertNotNull(recoveredBlock);
         assertEquals(BlocksStore.Block.LifecycleState.RETIRED, recoveredBlock.state());
         assertTrue(blocks.blocks(storeId).contains(recoveredBlock), "Recovery must retain the discarded block for compaction");
+        assertEquals(attempt + 1, blocks.metrics(true).total(), "Recovery must count each logical block once");
+        assertEquals(1, blocks.metrics(true).retiredCurrent(), "Recovery must count the discarded block as retired");
+        assertEquals(attempt == 0 ? 1 : 0, blocks.metrics(true).incompleteBlocksDiscarded(),
+                     "Recovery must report only the first repair of the incomplete block");
 
         var store = metadata.findStore("store");
         assertNotNull(store);
@@ -134,6 +141,9 @@ public class DatabaseBlocksTest {
         for (var block : droppedBlocks) {
           assertEquals(BlocksStore.Block.LifecycleState.RETIRED, block.state(), "Recovery must finish the recorded deletion");
         }
+        var expectedRepairs = attempt == 0 ? (partiallyRetired ? 1 : 2) : 0;
+        assertEquals(expectedRepairs, blocks.metrics(true).droppedStoreBlocksRetired(),
+                     "Recovery must report only blocks whose persisted state changed");
         var replacement = metadata.findStore("dropped");
         assertNotNull(replacement);
         for (var block : blocks.blocks(replacement.storeId())) {
@@ -255,6 +265,9 @@ public class DatabaseBlocksTest {
       assertEquals(2, copies.size());
       assertEquals(BlocksStore.Block.LifecycleState.RETIRED, copies.getFirst().state());
       assertEquals(state, copies.getLast().state());
+      assertEquals(3, blocks.metrics(true).total(), "Recovery must count the evacuated block once");
+      assertEquals(0, blocks.metrics(true).retiredCurrent(), "The stale retired copy must not affect current metrics");
+      assertEquals(1, blocks.metrics(true).staleBlockCopiesRetired(), "Recovery must report the completed block evacuation");
     }
   }
 

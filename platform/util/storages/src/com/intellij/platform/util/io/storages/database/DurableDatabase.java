@@ -3,6 +3,7 @@ package com.intellij.platform.util.io.storages.database;
 
 import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
+import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetricsProvider;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
 import com.intellij.platform.util.io.storages.durablemap.PatchableDurableMap;
 import org.jetbrains.annotations.ApiStatus;
@@ -15,7 +16,7 @@ import java.util.List;
 
 /// A database of named storages. The current API provides durable maps
 @ApiStatus.Internal
-public interface DurableDatabase extends Flushable, Closeable {
+public interface DurableDatabase extends Flushable, Closeable, DatabaseMetricsProvider {
   /** Opens the named map or creates it if it does not exist yet */
   <K, V> @NotNull DurableMap<K, V> openMap(@NotNull String name,
                                            int dataVersion,

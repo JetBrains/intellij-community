@@ -18,6 +18,7 @@ import com.intellij.platform.util.io.storages.database.impl.layout.StoreDropPayl
 import com.intellij.platform.util.io.storages.database.impl.layout.StoreMetadataPayloadLayout;
 import com.intellij.platform.util.io.storages.database.impl.layout.StoreMetadataPayloadLayout.StoreMetadataRecordPayload;
 import com.intellij.platform.util.io.storages.database.spi.StoreMetadata;
+import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.CorruptedException;
 import org.jetbrains.annotations.NotNull;
@@ -63,16 +64,24 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
   /** Data accumulated over {@link #catalogChangesLog} */
   private final @NotNull InMemoryCatalog currentCatalog;
 
+  //======= monitoring counters (guarded by this): =============
+  private final int catalogJournalRecoveries;
+  private int storesCreated;
+  private int storesDropped;
+  //============================================================
+
   private boolean closed;
 
   private DatabaseCatalogOverAppendOnlyLog(@NotNull Path storagePath,
                                            @NotNull AppendOnlyLogOverMMappedFile catalogChangesLog,
                                            @NotNull DatabaseHeaderLayout.DatabaseHeader header,
-                                           @NotNull InMemoryCatalog currentCatalog) {
+                                           @NotNull InMemoryCatalog currentCatalog,
+                                           boolean catalogJournalRecovered) {
     this.storagePath = storagePath;
     this.catalogChangesLog = catalogChangesLog;
     this.header = header;
     this.currentCatalog = currentCatalog;
+    this.catalogJournalRecoveries = catalogJournalRecovered ? 1 : 0;
   }
 
   /** Opens existing metadata or appends the first database header. */
@@ -114,7 +123,10 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
     }
 
     // TODO RC: Implement ownerPid, ownerStartedAt, and ownershipAcquiredAt -- to protect from concurrent process access.
-    return new DatabaseCatalogOverAppendOnlyLog(storagePath, appendOnlyLog, loadedCatalog.header(), loadedCatalog.catalog());
+    return new DatabaseCatalogOverAppendOnlyLog(
+      storagePath, appendOnlyLog, loadedCatalog.header(), loadedCatalog.catalog(),
+      /*catalogJournalRecovered: */ appendOnlyLog.wasRecoveryNeeded()
+    );
   }
 
   private static long generateDatabaseID() {
@@ -337,6 +349,7 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
     currentCatalog.addStore(
       storeId, name, dataVersion, storeMetadata
     );
+    storesCreated++;
   }
 
   @Override
@@ -377,6 +390,7 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
       CatalogChangeHeaderLayout.HEADER_SIZE + StoreDropPayloadLayout.PAYLOAD_SIZE
     );
     currentCatalog.dropStore(storeId);
+    storesDropped++;
   }
 
   @Override
@@ -445,6 +459,14 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
   @Override
   public synchronized boolean isDirty() {
     return false;
+  }
+
+  @Override
+  public @NotNull DatabaseMetrics.CatalogMetrics metrics(@SuppressWarnings("unused") boolean snapshotMetrics) {
+    //TODO RC: implement weakly-consistent metrics collection, without database lock
+    synchronized (this) {
+      return new DatabaseMetrics.CatalogMetrics(currentCatalog.storesCount(), storesCreated, storesDropped, catalogJournalRecoveries);
+    }
   }
 
   @Override

@@ -103,12 +103,17 @@ class DatabaseStartupHousekeepingTest {
       ),
     )
     factory.open(directory).use { database ->
+      val implementation = database as BlocksDatabaseImpl
       val store = requireNotNull(database.findStore("store"))
       val copies = store.blocks().filter { it.id() == liveBlockId }
       assertEquals(1, copies.size, "Startup evacuation must remove the retired source copy")
       assertEquals(state, copies.single().state())
       assertEquals(state, requireNotNull(store.findBlock(liveBlockId)).state())
       assertEquals(42, requireNotNull(store.findBlock(liveBlockId)).content().get(JAVA_INT, 0))
+      assertEquals(0, implementation.metrics(true).chunks().retiredCurrent(),
+                   "Startup drop must release the retired source chunk")
+      assertEquals(1, implementation.metrics(true).chunks().released(),
+                   "Startup drop must report the released source chunk")
       assertFalse(Files.exists(firstChunkPath), "Startup drop must delete the retired source chunk file")
     }
 

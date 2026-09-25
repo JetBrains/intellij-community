@@ -13,6 +13,7 @@ import com.intellij.platform.util.io.storages.database.impl.housekeeping.Houseke
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabase;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
 import com.intellij.platform.util.io.storages.database.spi.StoreMetadata;
+import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapOverBlocks;
 import com.intellij.platform.util.io.storages.durablemap.DefaultEntryExternalizer;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
@@ -195,6 +196,11 @@ public final class DurableDatabaseImpl implements DurableDatabase {
     }
 
     throwFailure(failure);
+  }
+
+  @Override
+  public @NotNull DatabaseMetrics metrics(boolean snapshotMetrics) {
+    return blocksDatabase.metrics(snapshotMetrics);
   }
 
   private static @NotNull Throwable collectFailure(@Nullable Throwable failure, @NotNull Throwable nextFailure) {

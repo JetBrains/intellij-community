@@ -6,6 +6,7 @@ import com.intellij.platform.util.io.storages.database.spi.housekeeping.OnStartu
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabase;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
 import com.intellij.platform.util.io.storages.database.spi.StoreMetadata;
+import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -190,6 +191,21 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
     }
   }
 
+  /// Returns the current database metrics.
+  ///
+  /// @param snapshotMetrics true requires a consistent snapshot; false permits weakly consistent values without locking
+  @Override
+  public @NotNull DatabaseMetrics metrics(boolean snapshotMetrics) {
+    //TODO RC: implement weakly-consistent metrics collection, without database lock
+    synchronized (databaseLock) {
+      return new DatabaseMetrics(
+        databaseCatalog.metrics(snapshotMetrics),
+        databaseChunks.metrics(snapshotMetrics),
+        databaseBlocks.metrics(snapshotMetrics)
+      );
+    }
+  }
+
   private void fsync() throws IOException {
     databaseChunks.fsync();
     databaseCatalog.fsync();
@@ -370,6 +386,19 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
     synchronized (databaseLock) {
       requireOwnedBlock(store, block).retire();
     }
+    databaseBlocks.recordBlockRetired();
+  }
+
+  void recordBlockActivated() {
+    databaseBlocks.recordBlockActivated();
+  }
+
+  void recordBlockDiscarded() {
+    databaseBlocks.recordBlockDiscarded();
+  }
+
+  void recordBlockSealed() {
+    databaseBlocks.recordBlockSealed();
   }
 
   /// Resolves the same block instance without allowing access across store boundaries

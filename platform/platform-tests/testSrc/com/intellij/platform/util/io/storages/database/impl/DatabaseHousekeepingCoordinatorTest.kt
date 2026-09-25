@@ -12,6 +12,7 @@ import com.intellij.platform.util.io.storages.database.spi.BlocksStore
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ACTIVE
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.RETIRED
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.SEALED
+import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics
 import com.intellij.platform.util.io.storages.database.storages.durablemap.RetireUnusedBlockInDurableMapHousekeeper
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapOverBlocks
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.DATA
@@ -434,6 +435,8 @@ class DatabaseHousekeepingCoordinatorTest {
     override fun flush() = Unit
 
     override fun isClosed(): Boolean = closed
+
+    override fun metrics(snapshotMetrics: Boolean): DatabaseMetrics = DatabaseMetrics.DUMMY
 
     override fun close() {
       closed = true

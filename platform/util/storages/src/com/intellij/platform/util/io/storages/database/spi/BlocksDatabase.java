@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.database.spi;
 
+import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetricsProvider;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +14,7 @@ import java.util.List;
 /// SPI that provides named block stores to application storages.
 /// A particular application storage should obtain its [BlocksStore] through [findStore] or [openStore] methods.
 @ApiStatus.Internal
-public interface BlocksDatabase extends Flushable, Closeable {
+public interface BlocksDatabase extends Flushable, Closeable, DatabaseMetricsProvider {
   /// Opens the named store or creates it with the specified data version
   @NotNull BlocksStore openStore(@NotNull String name, int dataVersion) throws IOException;
 

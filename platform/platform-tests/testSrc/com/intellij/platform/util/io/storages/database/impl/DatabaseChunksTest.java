@@ -103,6 +103,7 @@ public class DatabaseChunksTest {
       assertEquals(ACTIVE, opened.get(1).state(), "The second chunk must remain active");
       assertEquals(ACTIVE, opened.get(2).state(), "The newest chunk must remain active");
       assertEquals(SEALED, catalog.findChunk(1).state(), "The catalog must record the eviction");
+      assertEquals(1, chunks.metrics(true).sealed(), "The eviction must update the seal counter");
     }
   }
 
@@ -126,6 +127,7 @@ public class DatabaseChunksTest {
       assertEquals(ACTIVE, catalog.findChunk(4).state(), "The newest two chunks must remain active");
       assertEquals(3, chunks.chunkForAllocation(DatabaseBlock.blockLengthForContent(32)).chunkId(),
                    "Allocation must use the oldest remaining active chunk");
+      assertEquals(2, chunks.metrics(true).sealed(), "Startup must count both seal transitions");
     }
   }
 
@@ -140,9 +142,10 @@ public class DatabaseChunksTest {
     }
 
     try (var metadata = DatabaseCatalogOverAppendOnlyLog.open(catalogPath, CHUNK_SIZE);
-         var chunks = DatabaseChunks.open(databaseDirectory, metadata)) {
+         var chunks = DatabaseChunks.open(databaseDirectory, metadata, true)) {
       assertEquals(SEALED, metadata.chunks().getFirst().state(), "Recovery must complete the catalog transition");
       assertEquals(SEALED, chunks.chunks().getFirst().state(), "The recovered chunk must stay sealed");
+      assertEquals(1, chunks.metrics(true).statesReconciled(), "Recovery must report the completed state transition");
     }
   }
 
@@ -161,13 +164,17 @@ public class DatabaseChunksTest {
     }
 
     try (var metadata = DatabaseCatalogOverAppendOnlyLog.open(catalogPath, CHUNK_SIZE);
-         var chunks = DatabaseChunks.open(databaseDirectory, metadata)) {
+         var chunks = DatabaseChunks.open(databaseDirectory, metadata, true)) {
       assertEquals(RETIRED, metadata.chunks().getFirst().state(), "Recovery must complete the catalog transition");
       assertTrue(chunks.chunks().isEmpty(), "A recovered retired chunk must not become accessible");
       assertTrue(Files.exists(chunkPath), "Recovery must keep the retired chunk file for startup housekeeping");
+      var metrics = chunks.metrics(true);
+      assertEquals(1, metrics.statesReconciled(), "Recovery must report the completed state transition");
+      assertEquals(0, metrics.filesDeleted(), "Recovery must not report the retired chunk as an orphan file");
 
       chunks.dropRetiredChunks();
       assertFalse(Files.exists(chunkPath), "Startup housekeeping must delete the retired chunk file");
+      assertEquals(1, chunks.metrics(true).filesDeleted(), "Startup housekeeping must report the deleted retired chunk file");
     }
   }
 
@@ -181,9 +188,10 @@ public class DatabaseChunksTest {
         assertTrue(Files.exists(chunkPath), "The setup must create an unpublished chunk file");
       }
 
-      try (var chunks = DatabaseChunks.open(databaseDirectory, metadata)) {
+      try (var chunks = DatabaseChunks.open(databaseDirectory, metadata, true)) {
         assertFalse(Files.exists(chunkPath), "Recovery must remove an unpublished chunk file");
         assertTrue(chunks.chunks().isEmpty(), "An orphan file must not become a catalog chunk");
+        assertEquals(1, chunks.metrics(true).filesDeleted(), "Recovery must report the deleted unpublished chunk file");
       }
     }
   }
