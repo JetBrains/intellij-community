@@ -73,18 +73,19 @@ class ModuleBridgeLoaderService {
           val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceAsync(project.getEelMachine())
           globalWorkspaceModel.registerInitializingProjectForUpdatesFromGlobalModel(project)
 
+          if (workspaceModel.loadedFromCache && projectModelSynchronizer.hasNoSerializedJpsModules()) {
+              LOG.warn(
+                  "Loaded from cache, but no serialized modules found. " +
+                          "Workspace model cache will be ignored, project structure will be recreated."
+              )
+              workspaceModel.ignoreCache() // sets `WorkspaceModelImpl#loadedFromCache` to `false`
+              project.putUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES, true)
+          }
+
           if (workspaceModel.loadedFromCache) {
               val globalWsmAppliedToProjectWsm = CompletableDeferred<Project>()
               span("modules loading with cache") {
                   LOG.info("Workspace model loaded from cache.")
-                  if (projectModelSynchronizer.hasNoSerializedJpsModules()) {
-                      LOG.warn(
-                          "Loaded from cache, but no serialized modules found. " +
-                                  "Workspace model cache will be ignored, project structure will be recreated."
-                      )
-                      workspaceModel.ignoreCache() // sets `WorkspaceModelImpl#loadedFromCache` to `false`
-                      project.putUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES, true)
-                  }
                   loadModules(
                       project = project,
                       targetBuilder = null,
