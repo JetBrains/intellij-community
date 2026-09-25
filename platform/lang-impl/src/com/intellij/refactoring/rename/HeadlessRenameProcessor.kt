@@ -649,6 +649,7 @@ internal class HeadlessRenameDriver(
     }
     catch (e: Throwable) {
       rethrowControlFlowException(e)
+      LOG.warn("The rename of $primaryElement stopped while it wrote", e)
       //provides notifications
       writeRefusal = WriteRefusal(e.message, renamedBefore(primaryElement), myAllRenames.size)
       return
