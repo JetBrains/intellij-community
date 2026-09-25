@@ -1,6 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.internal.statistic.libraryUsage
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.internal.statistic.libraryUsage
 
+import com.intellij.internal.statistic.libraryUsage.LibraryUsage
+import com.intellij.internal.statistic.libraryUsage.LibraryUsageStatisticsStorageService
+import com.intellij.internal.statistic.libraryUsage.ProcessedFilesStorageService
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.xmlb.XmlSerializer

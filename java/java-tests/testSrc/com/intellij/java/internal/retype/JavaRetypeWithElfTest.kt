@@ -1,8 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.internal.retype
+package com.intellij.java.internal.retype
 
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.ide.IdeEventQueue
+import com.intellij.internal.retype.RETYPE_SESSION_KEY
+import com.intellij.internal.retype.RetypeSession
 import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.editor.elf.ElfFeatureFlag
 import com.intellij.openapi.editor.impl.EditorImpl
