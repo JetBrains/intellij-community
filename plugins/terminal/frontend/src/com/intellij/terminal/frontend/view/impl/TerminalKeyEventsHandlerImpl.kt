@@ -71,7 +71,7 @@ open class TerminalKeyEventsHandlerImpl(
       LOG.trace { "Key event ignored: ${e}" }
       return
     }
-    val event = TerminalKeyEventImpl(e, outputModel.cursorOffset)
+    val event = TerminalKeyEventImpl(e, outputModel.cursorOffset, outputModel)
     if (beforeKeyEvent(event)) {
       e.consume()
       LOG.trace { "Key event intercepted: $e" }
@@ -102,7 +102,7 @@ open class TerminalKeyEventsHandlerImpl(
     LOG.trace { "Key pressed event received: ${e}" }
 
     ignoreNextKeyTypedEvent = false
-    val event = TerminalKeyEventImpl(e, outputModel.cursorOffset)
+    val event = TerminalKeyEventImpl(e, outputModel.cursorOffset, outputModel)
     if (beforeKeyEvent(event)) {
       e.consume()
       ignoreNextKeyTypedEvent = true

@@ -394,6 +394,7 @@ internal class TerminalCommandCompletionStatisticsTest {
             'a',
           ),
           TerminalOffset.ZERO,
+          outputModel,
         )
       )
     }
@@ -410,6 +411,7 @@ internal class TerminalCommandCompletionStatisticsTest {
             KeyEvent.CHAR_UNDEFINED,
           ),
           TerminalOffset.ZERO,
+          outputModel,
         )
       )
     }

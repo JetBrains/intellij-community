@@ -40,7 +40,7 @@ import kotlin.time.Duration.Companion.seconds
  * Implementation of [TerminalTypingTracker]. Create instances via [installTypingTracker].
  *
  * Uses [TerminalTypeAheadSession] to confirm the order of input events.
- * Only reacts to key events and output updates while [TerminalShellIntegration.outputStatus] is
+ * Only reacts to key events of [model] and output updates while [TerminalShellIntegration.outputStatus] is
  * [TerminalOutputStatus.TypingCommand].
  */
 @ApiStatus.Internal
@@ -72,6 +72,7 @@ class TerminalTypingTrackerImpl(
   }
 
   fun handleKeyEvent(event: TerminalKeyEvent) {
+    if (event.outputModel !== model) return
     if (shellIntegration.outputStatus.value != TerminalOutputStatus.TypingCommand) return
 
     when (event.awtEvent.id) {
@@ -235,7 +236,7 @@ class TerminalTypingTrackerImpl(
    * this one was typed.
    */
   private fun PendingInputEvent.resolvedKeyEvent(): TerminalKeyEvent {
-    return TerminalKeyEventImpl(keyEvent.awtEvent, model.logicalPositionToOffset(position))
+    return TerminalKeyEventImpl(keyEvent.awtEvent, model.logicalPositionToOffset(position), model)
   }
 
   private fun fireEvent(event: TerminalTypingEvent) {

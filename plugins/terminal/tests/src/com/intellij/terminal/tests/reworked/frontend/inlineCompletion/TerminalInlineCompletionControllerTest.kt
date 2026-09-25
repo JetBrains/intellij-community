@@ -204,12 +204,12 @@ internal class TerminalInlineCompletionControllerTest : BasePlatformTestCase() {
 
     fun type(char: Char, cursorOffset: TerminalOffset) {
       typingTracker.handleKeyEvent(
-        TerminalKeyEventImpl(KeyEvent(Canvas(), KeyEvent.KEY_TYPED, 0, 0, KeyEvent.VK_UNDEFINED, char), cursorOffset)
+        TerminalKeyEventImpl(KeyEvent(Canvas(), KeyEvent.KEY_TYPED, 0, 0, KeyEvent.VK_UNDEFINED, char), cursorOffset, model)
       )
     }
 
     fun press(keyCode: Int, cursorOffset: TerminalOffset, modifiersEx: Int = 0) {
-      typingTracker.handleKeyEvent(TerminalKeyEventImpl(KeyEvent(Canvas(), KeyEvent.KEY_PRESSED, 0, modifiersEx, keyCode, KeyEvent.CHAR_UNDEFINED), cursorOffset))
+      typingTracker.handleKeyEvent(TerminalKeyEventImpl(KeyEvent(Canvas(), KeyEvent.KEY_PRESSED, 0, modifiersEx, keyCode, KeyEvent.CHAR_UNDEFINED), cursorOffset, model))
     }
 
     suspend fun startNewCommand() {
@@ -223,7 +223,7 @@ internal class TerminalInlineCompletionControllerTest : BasePlatformTestCase() {
     }
 
     fun keyEvent(id: Int, keyCode: Int, keyChar: Char, cursorOffset: TerminalOffset, modifiersEx: Int = 0) {
-      typingTracker.handleKeyEvent(TerminalKeyEventImpl(KeyEvent(Canvas(), id, 0, modifiersEx, keyCode, keyChar), cursorOffset))
+      typingTracker.handleKeyEvent(TerminalKeyEventImpl(KeyEvent(Canvas(), id, 0, modifiersEx, keyCode, keyChar), cursorOffset, model))
     }
 
     override fun close() {

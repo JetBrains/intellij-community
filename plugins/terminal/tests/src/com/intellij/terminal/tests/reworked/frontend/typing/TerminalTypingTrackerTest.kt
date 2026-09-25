@@ -43,6 +43,7 @@ import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import org.jetbrains.plugins.terminal.view.TerminalOffset
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
 import org.jetbrains.plugins.terminal.view.TerminalSendTextBuilder
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
@@ -351,6 +352,20 @@ internal class TerminalTypingTrackerTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `key events of another output model are ignored`(): Unit = doTest { fixture ->
+    // The cursor of the other model is beyond the end of the tracked model, which is empty.
+    val otherModel = TerminalTestUtil.createOutputModel()
+    otherModel.updateContent(0, outputPattern("full screen app<cursor>"))
+
+    fixture.type('a', otherModel.cursorOffset, otherModel)
+    fixture.press(KeyEvent.VK_BACK_SPACE, otherModel.cursorOffset, outputModel = otherModel)
+    fixture.press(KeyEvent.VK_ENTER, otherModel.cursorOffset, outputModel = otherModel)
+
+    assertThat(fixture.events.tryReceive().getOrNull()).isNull()
+    fixture.assertTrackerState(hasInputSession = false, pendingEventsCount = 0, predictionsCount = 0)
+  }
+
+  @Test
   fun `no confirmation within the timeout produces a mismatch`(): Unit = doTest { fixture ->
     fixture.type('a', TerminalOffset.ZERO)
     fixture.assertTrackerState(hasInputSession = true, pendingEventsCount = 1, predictionsCount = 1)
@@ -433,7 +448,7 @@ internal class TerminalTypingTrackerTest : BasePlatformTestCase() {
 
         // The TerminalKeyEventsListener that installTypingTracker registers on the view forwards into the tracker.
         terminalView.fireKeyEvent(
-          TerminalKeyEventImpl(KeyEvent(Canvas(), KeyEvent.KEY_TYPED, 0, 0, KeyEvent.VK_UNDEFINED, 'a'), TerminalOffset.ZERO)
+          TerminalKeyEventImpl(KeyEvent(Canvas(), KeyEvent.KEY_TYPED, 0, 0, KeyEvent.VK_UNDEFINED, 'a'), TerminalOffset.ZERO, model)
         )
         // The TerminalOutputModelListener that installTypingTracker registers on the model forwards into the tracker.
         model.updateContent(0, outputPattern("a<cursor>"))
@@ -448,7 +463,7 @@ internal class TerminalTypingTrackerTest : BasePlatformTestCase() {
         scope.coroutineContext.job.cancelAndJoin()
 
         terminalView.fireKeyEvent(
-          TerminalKeyEventImpl(KeyEvent(Canvas(), KeyEvent.KEY_TYPED, 0, 0, KeyEvent.VK_UNDEFINED, 'b'), TerminalOffset.ZERO)
+          TerminalKeyEventImpl(KeyEvent(Canvas(), KeyEvent.KEY_TYPED, 0, 0, KeyEvent.VK_UNDEFINED, 'b'), TerminalOffset.ZERO, model)
         )
         model.updateContent(0, outputPattern("ab<cursor>"))
         assertThat(events.tryReceive().getOrNull()).isNull()
@@ -554,18 +569,25 @@ internal class TerminalTypingTrackerTest : BasePlatformTestCase() {
       shellIntegration.onCommandStarted(model.cursorOffset, "test-command")
     }
 
-    fun type(char: Char, cursorOffset: TerminalOffset) {
+    fun type(char: Char, cursorOffset: TerminalOffset, outputModel: TerminalOutputModel = model) {
       tracker.handleKeyEvent(
-        TerminalKeyEventImpl(KeyEvent(Canvas(), KeyEvent.KEY_TYPED, 0, 0, KeyEvent.VK_UNDEFINED, char), cursorOffset)
+        TerminalKeyEventImpl(KeyEvent(Canvas(), KeyEvent.KEY_TYPED, 0, 0, KeyEvent.VK_UNDEFINED, char), cursorOffset, outputModel)
       )
     }
 
-    fun press(keyCode: Int, cursorOffset: TerminalOffset, modifiersEx: Int = 0) {
-      keyEvent(KeyEvent.KEY_PRESSED, keyCode, KeyEvent.CHAR_UNDEFINED, cursorOffset, modifiersEx)
+    fun press(keyCode: Int, cursorOffset: TerminalOffset, modifiersEx: Int = 0, outputModel: TerminalOutputModel = model) {
+      keyEvent(KeyEvent.KEY_PRESSED, keyCode, KeyEvent.CHAR_UNDEFINED, cursorOffset, modifiersEx, outputModel)
     }
 
-    fun keyEvent(id: Int, keyCode: Int, keyChar: Char, cursorOffset: TerminalOffset, modifiersEx: Int = 0) {
-      tracker.handleKeyEvent(TerminalKeyEventImpl(KeyEvent(Canvas(), id, 0, modifiersEx, keyCode, keyChar), cursorOffset))
+    fun keyEvent(
+      id: Int,
+      keyCode: Int,
+      keyChar: Char,
+      cursorOffset: TerminalOffset,
+      modifiersEx: Int = 0,
+      outputModel: TerminalOutputModel = model,
+    ) {
+      tracker.handleKeyEvent(TerminalKeyEventImpl(KeyEvent(Canvas(), id, 0, modifiersEx, keyCode, keyChar), cursorOffset, outputModel))
     }
 
     fun assertTrackerState(hasInputSession: Boolean, pendingEventsCount: Int, predictionsCount: Int) {
