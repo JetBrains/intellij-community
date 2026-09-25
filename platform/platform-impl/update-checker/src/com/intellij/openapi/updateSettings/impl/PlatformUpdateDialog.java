@@ -205,8 +205,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
     actions.add(new AbstractAction(IdeBundle.message("updates.skip.update.button")) {
                   @Override
                   public void actionPerformed(ActionEvent e) {
-                    var build = myPlatformUpdate.getNewBuild().getNumber().asStringWithoutProductCode();
-                    UpdateSettings.getInstance().getIgnoredBuildNumbers().add(build);
+                    UpdateSettingsEntryPointActionProvider.skipUpdate(myPlatformUpdate);
                     doCancelAction();
                   }
                 }
