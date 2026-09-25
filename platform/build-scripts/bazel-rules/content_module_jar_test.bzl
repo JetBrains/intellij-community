@@ -3,6 +3,7 @@
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
+load("//build:dev_launch_dependencies.bzl", "HOST_PLATFORMS")
 load(
     ":content_module_jar.bzl",
     "ContentModuleJarInfo",
@@ -87,6 +88,8 @@ def _packing_test_impl(ctx):
     asserts.equals(env, 1 if ctx.attr.spans else 0, len(spans))
     if spans:
         asserts.equals(env, target.label.name + ".production.spans.json", spans[0].basename)
+    asserts.equals(env, {}, info.native_trees)
+    asserts.equals(env, "", info.native_lib_dir)
     return analysistest.end(env)
 
 _PACKING_ATTRS = {
@@ -108,6 +111,60 @@ def _coverage_no_agent_test_impl(ctx):
     return analysistest.end(env)
 
 _coverage_no_agent_test = analysistest.make(_coverage_no_agent_test_impl, expect_failure = True)
+
+def _natives_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    info = target[ContentModuleJarInfo]
+    groups = target[OutputGroupInfo]
+    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "PackContentModuleJar"]
+
+    # One jar action and one tree action per platform. The jar is the one `DefaultInfo` names, and it only reserves
+    # the natives, so it does not depend on the platform.
+    asserts.equals(env, 1 + len(HOST_PLATFORMS), len(actions))
+    asserts.equals(env, [info.jar], target[DefaultInfo].files.to_list())
+    asserts.equals(env, ctx.attr.native_lib_dir, info.native_lib_dir)
+    asserts.equals(env, sorted(HOST_PLATFORMS), sorted(info.native_trees.keys()))
+    library_jars = [jar for entry in info.library_jars for jar in entry.jars]
+    jar_action = [action for action in actions if info.jar in action.outputs.to_list()]
+    asserts.equals(env, 1, len(jar_action))
+    jar_argv = jar_action[0].argv[1:]
+    asserts.true(env, "native-lib=" + ctx.attr.native_lib in jar_argv, str(jar_argv))
+    asserts.false(env, [line for line in jar_argv if line.startswith("native-tree=") or line.startswith("native-variant=")], str(jar_argv))
+
+    # A tree action packs the libraries alone into a scratch jar and writes the tree of its platform beside it.
+    for platform in HOST_PLATFORMS:
+        native = info.native_trees[platform]
+        asserts.true(env, native.tree.is_directory)
+        asserts.equals(env, "native", native.tree.basename)
+        asserts.true(env, native.tree.path.endswith("/" + target.label.name + ".native_" + platform + "/native"), native.tree.path)
+        asserts.equals(env, [native.tree, native.metadata], getattr(groups, "native_tree_" + platform).to_list())
+        tree_action = [action for action in actions if native.tree in action.outputs.to_list()]
+        asserts.equals(env, 1, len(tree_action))
+        outputs = tree_action[0].outputs.to_list()
+        scratch = [file for file in outputs if file.basename == "scratch.jar"]
+        asserts.equals(env, 1, len(scratch))
+        expected = ["output=" + scratch[0].path, "metadata-file=" + native.metadata.path]
+        if len(library_jars) == 1:
+            expected.append("keep-manifest=true")
+        expected += [
+            "native-tree=" + native.tree.path,
+            "native-variant=" + platform,
+            "native-lib=" + ctx.attr.native_lib,
+        ]
+        expected += ["library=" + jar.path for jar in library_jars]
+        asserts.equals(env, expected, tree_action[0].argv[1:])
+        asserts.equals(env, [scratch[0], native.metadata, native.tree], outputs)
+    return analysistest.end(env)
+
+_natives_test = analysistest.make(
+    _natives_test_impl,
+    attrs = {
+        "native_lib": attr.string(mandatory = True),
+        "native_lib_dir": attr.string(mandatory = True),
+    },
+    config_settings = {_TRACE_SPANS: False},
+)
 
 def _selected_output_test_impl(ctx):
     env = analysistest.begin(ctx)
@@ -135,30 +192,13 @@ def _platform_jar_test_impl(ctx):
     asserts.true(env, info.jar.path.endswith("/" + target.label.name + "/" + ctx.attr.destination), info.jar.path)
     asserts.equals(env, ctx.attr.member_modules, list(info.member_modules))
 
-    # The flag file in grammar order. The fixture merges one meaningful source, so the manifest is kept. Without natives
-    # the jar rejects a native entry. With them the same action writes the tree beside the jar, and the three lines
-    # name it. The rejection is absent then, because the packer refuses the pair.
-    expected = ["output=" + info.jar.path, "metadata-file=" + info.metadata.path, "keep-manifest=true", "merge-entities=true"]
-    outputs = [info.jar, info.metadata]
-    if ctx.attr.native_lib:
-        asserts.true(env, info.native_tree.is_directory)
-        asserts.equals(env, "native", info.native_tree.basename)
-        asserts.true(env, info.native_tree.path.endswith("/" + target.label.name + "/native"), info.native_tree.path)
-        asserts.equals(env, ctx.attr.native_lib_dir, info.native_lib_dir)
-        expected += [
-            "native-tree=" + info.native_tree.path,
-            "native-variant=" + ctx.attr.native_platform,
-            "native-lib=" + ctx.attr.native_lib,
-        ]
-        outputs.append(info.native_tree)
-    else:
-        asserts.equals(env, None, info.native_tree)
-        asserts.equals(env, "", info.native_lib_dir)
-        expected.append("reject-native-entries=true")
+    # The flag file in grammar order. The fixture merges one meaningful source, so the manifest is kept. A residual jar
+    # rejects a native entry, because a presigned library packs as a `content_module_jar`.
+    expected = ["output=" + info.jar.path, "metadata-file=" + info.metadata.path, "keep-manifest=true", "merge-entities=true", "reject-native-entries=true"]
     expected += ["module=" + jar.path for jar in info.member_jars]
     asserts.equals(env, expected, action.argv[1:])
-    asserts.equals(env, outputs, action.outputs.to_list())
-    asserts.equals(env, [info.jar] + ([info.native_tree] if ctx.attr.native_lib else []), target[DefaultInfo].files.to_list())
+    asserts.equals(env, [info.jar, info.metadata], action.outputs.to_list())
+    asserts.equals(env, [info.jar], target[DefaultInfo].files.to_list())
     return analysistest.end(env)
 
 _platform_jar_test = analysistest.make(
@@ -166,20 +206,17 @@ _platform_jar_test = analysistest.make(
     attrs = {
         "destination": attr.string(mandatory = True),
         "member_modules": attr.string_list(),
-        "native_lib": attr.string(),
-        "native_lib_dir": attr.string(),
-        "native_platform": attr.string(),
     },
     config_settings = {_TRACE_SPANS: False},
 )
 
-def _platform_jar_failure_test_impl(ctx):
+def _natives_failure_test_impl(ctx):
     env = analysistest.begin(ctx)
     asserts.expect_failure(env, ctx.attr.expected_message)
     return analysistest.end(env)
 
-_platform_jar_failure_test = analysistest.make(
-    _platform_jar_failure_test_impl,
+_natives_failure_test = analysistest.make(
+    _natives_failure_test_impl,
     expect_failure = True,
     attrs = {"expected_message": attr.string(mandatory = True)},
 )
@@ -251,21 +288,13 @@ def content_module_jar_test_suite(name):
 
     # A platform jar states its own destination, and it may name a subdirectory of the plugin's `lib/`. The three
     # residual jars of `idea` do - `ext/platform-main.jar` and the two `frontend-split/` jars - so the destination must
-    # survive both the rule and the provider rather than collapsing to the jar's own name. The `natives` case is a jar
-    # whose presigned library carries native files: the same action writes the tree, and the provider carries it.
-    for case, destination, native_lib, native_lib_dir, native_platform in [
-        ("flat", "platform-flat.jar", "", "", ""),
-        ("nested", "ext/platform-nested.jar", "", "", ""),
-        ("natives", "platform-natives.jar", "jna", "jna", "linux_x64"),
-    ]:
+    # survive both the rule and the provider rather than collapsing to the jar's own name.
+    for case, destination in [("flat", "platform-flat.jar"), ("nested", "ext/platform-nested.jar")]:
         platform_jar = name + "_platform_" + case
         dev_dist_platform_jar(
             name = platform_jar,
             relative_output_file = destination,
             modules = [":" + first],
-            native_lib = native_lib,
-            native_lib_dir = native_lib_dir,
-            native_platform = native_platform,
             tags = ["manual"],
         )
         _platform_jar_test(
@@ -273,33 +302,34 @@ def content_module_jar_test_suite(name):
             target_under_test = ":" + platform_jar,
             destination = destination,
             member_modules = ["test." + first],
-            native_lib = native_lib,
-            native_lib_dir = native_lib_dir,
-            native_platform = native_platform,
         )
         tests.append(platform_jar + "_test")
 
-    # The natives mode is all three attributes or none, the platform is a `HOST_PLATFORMS` token and the directory is
-    # one name under `lib/`. Each is refused at analysis, where the jar is still named, rather than in a distribution.
-    for case, native_lib, native_lib_dir, native_platform, expected_message in [
-        ("partial", "jna", "", "", "native_lib_dir, native_platform"),
-        ("bad_platform", "jna", "jna", "linux_riscv", "'linux_riscv' is not one of"),
-        ("bad_dir", "jna", "jna/x64", "linux_x64", "is not one directory name"),
+    # A content module jar with a presigned library reserves its natives, and one action per platform writes the tree.
+    natives_owner = name + "_natives"
+    _fixture_module(name = natives_owner, module_name = "intellij.libraries.natives")
+    content_module_jar(module = ":" + natives_owner, libraries = [":" + name + "_single_library"], native_lib = "jna", native_lib_dir = "jna")
+    _natives_test(
+        name = natives_owner + "_test",
+        target_under_test = content_module_jar_target_name(natives_owner),
+        native_lib = "jna",
+        native_lib_dir = "jna",
+    )
+    tests.append(natives_owner + "_test")
+
+    # The natives mode is both attributes or none, and the directory is one name under `lib/`. Each is refused at
+    # analysis, where the jar is still named, rather than in a distribution.
+    for case, native_lib, native_lib_dir, expected_message in [
+        ("partial", "jna", "", "needs both native_lib and native_lib_dir"),
+        ("bad_dir", "jna", "jna/x64", "is not one directory name"),
     ]:
-        platform_jar = name + "_platform_natives_" + case
-        dev_dist_platform_jar(
-            name = platform_jar,
-            relative_output_file = "platform-natives.jar",
-            modules = [":" + first],
-            native_lib = native_lib,
-            native_lib_dir = native_lib_dir,
-            native_platform = native_platform,
-            tags = ["manual"],
-        )
-        _platform_jar_failure_test(
-            name = platform_jar + "_test",
-            target_under_test = ":" + platform_jar,
+        owner = name + "_natives_" + case
+        _fixture_module(name = owner, module_name = "intellij.libraries.natives." + case)
+        content_module_jar(module = ":" + owner, libraries = [":" + name + "_single_library"], native_lib = native_lib, native_lib_dir = native_lib_dir)
+        _natives_failure_test(
+            name = owner + "_test",
+            target_under_test = content_module_jar_target_name(owner),
             expected_message = expected_message,
         )
-        tests.append(platform_jar + "_test")
+        tests.append(owner + "_test")
     native.test_suite(name = name, tests = tests)

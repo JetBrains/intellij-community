@@ -246,6 +246,41 @@ func TestNativesModeInventoriesTheJarAndTheTree(t *testing.T) {
 	}
 }
 
+// A reservation packs the natives-mode jar and inventories the jar alone: there is no tree, so the directory stays absent.
+func TestNativesReservationInventoriesTheJarAlone(t *testing.T) {
+	baseDir := packOneNativeJar(t)
+	recipe := "output=out/intellij.libraries.jna.jar\nmetadata-file=jna.metadata.json\nnative-lib=jna\nlibrary=jna-5.14.0.jar\n"
+	if err := os.WriteFile(filepath.Join(baseDir, "recipe.txt"), []byte(recipe), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var out strings.Builder
+	if code := pack(context.Background(), []string{"--flagfile=" + filepath.Join(baseDir, "recipe.txt")}, baseDir, &out); code != 0 {
+		t.Fatalf("exit %d: %s", code, out.String())
+	}
+	entries, err := filemetadata.Read(filepath.Join(baseDir, "jna.metadata.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 || entries[0].RelativePath != "intellij.libraries.jna.jar" {
+		t.Fatalf("inventory is %#v, want the jar alone", entries)
+	}
+	if _, err := os.Stat(filepath.Join(baseDir, "out/native")); !os.IsNotExist(err) {
+		t.Errorf("a reservation wrote a tree, stat error = %v", err)
+	}
+	reader, err := zip.OpenReader(filepath.Join(baseDir, "out/intellij.libraries.jna.jar"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reader.Close()
+	var names []string
+	for _, file := range reader.File {
+		names = append(names, file.Name)
+	}
+	if !reflect.DeepEqual(names, []string{"com/sun/jna/Native.class", "__index__"}) {
+		t.Errorf("jar entries are %v, want the class and the index alone", names)
+	}
+}
+
 func TestNativesModeInventoriesAnEmptyTree(t *testing.T) {
 	// The linux jar has no macOS native: the inventory names the empty tree root and the jar, and nothing else.
 	baseDir := packOneNativeJar(t)
@@ -286,7 +321,7 @@ func TestNativesModeFailsBeforeWritingWhenTheRecipeIsIncomplete(t *testing.T) {
 	}
 	before := packingFileSnapshot(t, baseDir)
 	var out strings.Builder
-	if code := pack(context.Background(), []string{"--flagfile=" + filepath.Join(baseDir, "recipe.txt")}, baseDir, &out); code != 3 || !strings.Contains(out.String(), "required together") {
+	if code := pack(context.Background(), []string{"--flagfile=" + filepath.Join(baseDir, "recipe.txt")}, baseDir, &out); code != 3 || !strings.Contains(out.String(), "require each other") {
 		t.Fatalf("exit %d: %s", code, out.String())
 	}
 	if after := packingFileSnapshot(t, baseDir); !reflect.DeepEqual(before, after) {

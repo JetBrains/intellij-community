@@ -50,6 +50,7 @@ data class JarSourceRecipe(
 }
 
 @ApiStatus.Internal
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class JarWriterRecipe(
   @JvmField val manifest: String = "single-meaningful-source",
@@ -57,6 +58,11 @@ data class JarWriterRecipe(
   @JvmField val directoryEntries: Boolean = false,
   @JvmField val rewriteBootClassPath: Boolean = false,
   @JvmField val outputName: String = "",
+  /**
+   * The presigned native library whose native entries the jar leaves out, or empty. A jar with it and a jar without it
+   * differ, so a plugin reuses a natives jar only with a recipe that states the same library.
+   */
+  @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val nativeLib: String = "",
 )
 
 @ApiStatus.Internal

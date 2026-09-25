@@ -197,7 +197,7 @@ func validateTraceDestination(traceFile string, specs []jarpack.MergeSpec) error
 		if traceFile == spec.MetadataFile {
 			return fmt.Errorf("trace destination is a metadata output: %s", traceFile)
 		}
-		if spec.Native != nil && traceFile == spec.Native.Tree {
+		if spec.Native.WritesTree() && traceFile == spec.Native.Tree {
 			return fmt.Errorf("trace destination is a native tree output: %s", traceFile)
 		}
 		for _, source := range spec.Sources {
@@ -329,7 +329,7 @@ func inventoryPackingOutput(spec jarpack.MergeSpec, inventory *span.Span) error 
 	entries := []filemetadata.Entry{entry}
 	hashed, byteCount := int64(1), entry.Size
 	nativeFiles := int64(0)
-	if spec.Native != nil {
+	if spec.Native.WritesTree() {
 		base := filepath.Base(spec.Native.Tree)
 		root, err := filemetadata.Inspect(spec.Native.Tree, base)
 		if err != nil {
@@ -356,7 +356,7 @@ func inventoryPackingOutput(spec jarpack.MergeSpec, inventory *span.Span) error 
 	inventory.SetInt("fileCount", int64(len(entries)))
 	inventory.SetInt("hashedFileCount", hashed)
 	inventory.SetInt("byteCount", byteCount)
-	if spec.Native != nil {
+	if spec.Native.WritesTree() {
 		inventory.SetInt("nativeFileCount", nativeFiles)
 	}
 	return nil

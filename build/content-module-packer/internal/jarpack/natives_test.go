@@ -61,7 +61,7 @@ func treeFiles(t *testing.T, root string) map[string]fs.FileMode {
 	return files
 }
 
-func TestParseFlagFileNativesModeTakesAllThreeLinesOrNone(t *testing.T) {
+func TestParseFlagFileNativesModeTakesAllThreeLinesTheLibOrNone(t *testing.T) {
 	specs, err := parseRecipe(t, "output=out/a.jar\nnative-tree=out/native\nnative-variant=darwin_aarch64\nnative-lib=jna\n"+
 		"library=lib/jna-5.14.0.jar\nmodule=mod/a.jar\noutput=out/b.jar\nmodule=mod/b.jar\n")
 	if err != nil {
@@ -77,25 +77,32 @@ func TestParseFlagFileNativesModeTakesAllThreeLinesOrNone(t *testing.T) {
 	if specs[1].Native != nil {
 		t.Errorf("the second group inherited the first one's natives mode: %+v", specs[1].Native)
 	}
+	reserving, err := parseRecipe(t, "output=out/a.jar\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n")
+	if err != nil || reserving[0].Native == nil || *reserving[0].Native != (NativeSpec{LibName: "jna"}) || reserving[0].Native.WritesTree() {
+		t.Errorf("`native-lib=` alone is a reservation, got %+v, error = %v", reserving[0].Native, err)
+	}
 	absolute, err := parseRecipe(t, "output=out/a.jar\nnative-tree=/tmp/./native\nnative-variant=windows_x64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n")
 	if err != nil || absolute[0].Native.Tree != "/tmp/native" || absolute[0].Native.Family != nativelib.Windows || absolute[0].Native.Arch != nativelib.X64 {
 		t.Errorf("native spec is %+v, error = %v", absolute[0].Native, err)
 	}
 	for name, lines := range map[string]string{
-		"a tree alone":              "output=out/a.jar\nnative-tree=out/native\nlibrary=lib/jna-5.14.0.jar\n",
-		"a variant alone":           "output=out/a.jar\nnative-variant=darwin_aarch64\nlibrary=lib/jna-5.14.0.jar\n",
-		"a lib alone":               "output=out/a.jar\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
-		"a tree and a lib":          "output=out/a.jar\nnative-tree=out/native\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
-		"an empty tree":             "output=out/a.jar\nnative-tree=\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
-		"an unknown variant":        "output=out/a.jar\nnative-tree=out/native\nnative-variant=mac_arm64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
-		"a tree twice":              "output=out/a.jar\nnative-tree=out/native\nnative-tree=out/other\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
-		"a tree before any output":  "native-tree=out/native\noutput=out/a.jar\nlibrary=lib/jna-5.14.0.jar\n",
-		"rejected natives as well":  "output=out/a.jar\nreject-native-entries=true\nnative-tree=out/native\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
-		"the tree is the jar":       "output=out/a.jar\nnative-tree=out/a.jar\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
-		"the tree is the metadata":  "output=out/a.jar\nmetadata-file=out/a.json\nnative-tree=out/a.json\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
-		"the tree is the trace":     "output=out/a.jar\ntrace-file=out/a.json\nnative-tree=out/a.json\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
-		"the tree is an input":      "output=out/a.jar\nnative-tree=lib/jna-5.14.0.jar\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
-		"two groups share the tree": "output=out/a.jar\nnative-tree=out/native\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n" + "output=out/b.jar\nnative-tree=out/native\nnative-variant=darwin_aarch64\nnative-lib=pty4j\nlibrary=lib/pty4j-0.13.jar\n",
+		"a tree alone":                       "output=out/a.jar\nnative-tree=out/native\nlibrary=lib/jna-5.14.0.jar\n",
+		"a variant alone":                    "output=out/a.jar\nnative-variant=darwin_aarch64\nlibrary=lib/jna-5.14.0.jar\n",
+		"a variant and a lib":                "output=out/a.jar\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
+		"a tree and a variant":               "output=out/a.jar\nnative-tree=out/native\nnative-variant=darwin_aarch64\nlibrary=lib/jna-5.14.0.jar\n",
+		"a lib twice":                        "output=out/a.jar\nnative-lib=jna\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
+		"a reservation and rejected natives": "output=out/a.jar\nreject-native-entries=true\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
+		"a tree and a lib":                   "output=out/a.jar\nnative-tree=out/native\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
+		"an empty tree":                      "output=out/a.jar\nnative-tree=\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
+		"an unknown variant":                 "output=out/a.jar\nnative-tree=out/native\nnative-variant=mac_arm64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
+		"a tree twice":                       "output=out/a.jar\nnative-tree=out/native\nnative-tree=out/other\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
+		"a tree before any output":           "native-tree=out/native\noutput=out/a.jar\nlibrary=lib/jna-5.14.0.jar\n",
+		"rejected natives as well":           "output=out/a.jar\nreject-native-entries=true\nnative-tree=out/native\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
+		"the tree is the jar":                "output=out/a.jar\nnative-tree=out/a.jar\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
+		"the tree is the metadata":           "output=out/a.jar\nmetadata-file=out/a.json\nnative-tree=out/a.json\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
+		"the tree is the trace":              "output=out/a.jar\ntrace-file=out/a.json\nnative-tree=out/a.json\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
+		"the tree is an input":               "output=out/a.jar\nnative-tree=lib/jna-5.14.0.jar\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
+		"two groups share the tree":          "output=out/a.jar\nnative-tree=out/native\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n" + "output=out/b.jar\nnative-tree=out/native\nnative-variant=darwin_aarch64\nnative-lib=pty4j\nlibrary=lib/pty4j-0.13.jar\n",
 	} {
 		t.Run(name, func(t *testing.T) {
 			if _, err := parseRecipe(t, lines); err == nil {
@@ -169,6 +176,25 @@ func TestNativesModeMovesThePlatformNativesOutOfTheJar(t *testing.T) {
 	content, err := os.ReadFile(filepath.Join(native.Tree, "darwin-aarch64", "libfoo.dylib"))
 	if err != nil || string(content) != "mac arm" {
 		t.Errorf("the native holds %q, error = %v", content, err)
+	}
+}
+
+// A reservation packs the jar that natives mode packs, and writes nothing else. So the jar does not depend on the
+// platform, and a tree action per platform can write the tree beside it.
+func TestNativesReservationPacksTheNativesModeJarAndNoTree(t *testing.T) {
+	library := nativeLibrarySource(t)
+	module := moduleSource(t, "module.jar")
+	sources := func() []Source {
+		return []Source{{Path: library, Filter: LibraryNameFilter, Library: true}, {Path: module, Filter: ModuleOutputNameFilter}}
+	}
+	withTree, _ := pack(t, MergeSpec{Output: "intellij.libraries.foo.jar", Native: nativeSpec(t, "linux_x64", "foo"), Sources: sources()})
+	reserved, _ := pack(t, MergeSpec{Output: "intellij.libraries.foo.jar", Native: &NativeSpec{LibName: "foo"}, Sources: sources()})
+	if !bytes.Equal(withTree, reserved) {
+		t.Error("a reservation packed other jar bytes than natives mode")
+	}
+	missing := MergeSpec{Output: filepath.Join(t.TempDir(), "out.jar"), Native: &NativeSpec{LibName: "bar"}, Sources: sources()}
+	if _, err := missing.Pack(); err == nil {
+		t.Error("packed a reservation of a library no source is")
 	}
 }
 

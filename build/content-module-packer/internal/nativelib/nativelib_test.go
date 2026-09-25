@@ -103,13 +103,14 @@ func TestRelativePathFollowsEachLibraryRule(t *testing.T) {
 
 func TestLibNameFromFile(t *testing.T) {
 	for file, want := range map[string]string{
-		"native-3.42.0-jb.1.jar":           "native",
-		"async-profiler-3.0-9-9d5c2f3.jar": "async-profiler",
-		"jna-5.14.0.jar":                   "jna",
-		"skiko-awt-runtime-all-0.8.18.jar": "skiko-awt-runtime-all",
-		"pty4j-0.13.5.jar":                 "pty4j",
-		"sqlite-native.jar":                "sqlite",
-		"native.jar":                       "",
+		"native-3.42.0-jb.1.jar":              "native",
+		"async-profiler-3.0-9-9d5c2f3.jar":    "async-profiler",
+		"jna-5.14.0.jar":                      "jna",
+		"skiko-awt-runtime-all-0.8.18.jar":    "skiko-awt-runtime-all",
+		"pty4j-0.13.5.jar":                    "pty4j",
+		"intellij-deps-rocksdbjni-10.8.3.jar": "intellij-deps-rocksdbjni",
+		"sqlite-native.jar":                   "sqlite",
+		"native.jar":                          "",
 	} {
 		if got := LibNameFromFile(file); got != want {
 			t.Errorf("%s: %q, want %q", file, got, want)
@@ -178,6 +179,29 @@ func TestSelectTakesTheEntriesOfOnePlatform(t *testing.T) {
 	}
 	if matches, err := Select(pty4j, Windows, X64); err != nil || len(matches) != 0 {
 		t.Fatalf("a 32-bit Windows file has no architecture: %+v, %v", matches, err)
+	}
+	// rocksdbjni keeps every native at the jar root, and ships more Linux flavours than the six platforms take.
+	rocksdb := []string{"librocksdbjni-linux-aarch64-musl.so", "librocksdbjni-linux-aarch64.so", "librocksdbjni-linux-ppc64le-musl.so",
+		"librocksdbjni-linux-ppc64le.so", "librocksdbjni-linux-riscv64.so", "librocksdbjni-linux-s390x-musl.so", "librocksdbjni-linux-s390x.so",
+		"librocksdbjni-linux32-musl.so", "librocksdbjni-linux32.so", "librocksdbjni-linux64-musl.so", "librocksdbjni-linux64.so",
+		"librocksdbjni-osx-arm64.jnilib", "librocksdbjni-osx-x86_64.jnilib", "librocksdbjni-win-arm64.dll", "librocksdbjni-win64.dll"}
+	for variant, want := range map[string]string{
+		"darwin_aarch64": "librocksdbjni-osx-arm64.jnilib", "darwin_x64": "librocksdbjni-osx-x86_64.jnilib",
+		"linux_aarch64": "librocksdbjni-linux-aarch64.so", "linux_x64": "librocksdbjni-linux64.so",
+		"windows_aarch64": "librocksdbjni-win-arm64.dll", "windows_x64": "librocksdbjni-win64.dll",
+	} {
+		family, arch, err := ParseVariant(variant)
+		if err != nil {
+			t.Fatal(err)
+		}
+		matches, err := Select(rocksdb, family, arch)
+		if err != nil || len(matches) != 1 || matches[0].Path != want {
+			t.Errorf("rocksdbjni %s: %+v, %v, want %s alone", variant, matches, err, want)
+			continue
+		}
+		if path, err := RelativePath("intellij-deps-rocksdbjni", matches[0].Arch, matches[0].FileName(), matches[0].Path); err != nil || path != want {
+			t.Errorf("rocksdbjni %s: relative path %q, %v, want %q", variant, path, err, want)
+		}
 	}
 	if _, err := Select([]string{"a/linux-x64/libx.so", "b/linux-x64/libx.so"}, Linux, X64); err == nil || !strings.Contains(err.Error(), "common path prefix") {
 		t.Fatalf("two prefixes: %v", err)

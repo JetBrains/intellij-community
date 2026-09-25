@@ -17,16 +17,20 @@ import (
 // NativeSpec is the natives mode of one `output=` group: the jar leaves every native entry of one library out, and
 // the entries of one target platform are written as files under Tree instead.
 //
+// A spec with an empty Tree only reserves: the jar is the same, and no tree is written. A `content_module_jar` packs its
+// jar this way, so the jar does not depend on the platform, and writes each platform's tree in an action of its own.
+//
 // This is what JarPackager does for a presigned library such as jna, pty4j, skiko or async-profiler. The native entry's
 // name is claimed, so a later source cannot smuggle another copy in, but neither the bytes nor an index record are
 // written, and the platform's files land under `lib/<lib>/`. A jar packed this way is byte-identical to the one
 // JarPackager writes, and the tree is what the distribution loads the natives from.
 type NativeSpec struct {
-	// Tree is the directory the selected files are written into. It is absent or empty before the pack, and a tree
-	// that already holds a file is refused: the collector trusts the inventory of the tree, so every file in it must be
-	// one this pack wrote. A platform with no matching entry leaves it empty.
+	// Tree is the directory the selected files are written into, or empty when the spec only reserves. It is absent or
+	// empty before the pack, and a tree that already holds a file is refused: the collector trusts the inventory of the
+	// tree, so every file in it must be one this pack wrote. A platform with no matching entry leaves it empty.
 	Tree string
-	// Family and Arch are the target platform, read from `native-variant=` by nativelib.ParseVariant.
+	// Family and Arch are the target platform, read from `native-variant=` by nativelib.ParseVariant. Both are empty
+	// when the spec only reserves.
 	Family nativelib.Family
 	Arch   nativelib.Arch
 	// LibName is the Maven artifact name that selects the native source among the `library=` lines, by
@@ -34,8 +38,19 @@ type NativeSpec struct {
 	LibName string
 }
 
+// WritesTree reports whether the spec writes a tree, rather than only reserving the native entries.
+func (spec *NativeSpec) WritesTree() bool {
+	return spec != nil && spec.Tree != ""
+}
+
 func (spec *NativeSpec) validate(output string) error {
-	if spec.Tree == "" || spec.LibName == "" || !nativelib.ValidFamily(spec.Family) || !nativelib.ValidArch(spec.Arch) {
+	if !spec.WritesTree() {
+		if spec.LibName == "" || spec.Family != "" || spec.Arch != "" {
+			return fmt.Errorf("%s: incomplete native reservation", output)
+		}
+		return nil
+	}
+	if spec.LibName == "" || !nativelib.ValidFamily(spec.Family) || !nativelib.ValidArch(spec.Arch) {
 		return fmt.Errorf("%s: incomplete native tree specification", output)
 	}
 	entries, err := os.ReadDir(spec.Tree)

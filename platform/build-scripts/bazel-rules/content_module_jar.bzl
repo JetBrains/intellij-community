@@ -72,6 +72,11 @@ ContentModuleJarInfo = provider(
         target's label, which is not derivable from the files. Deduplication is therefore within a container here, where
         the action's flat list dedups across them as well - the packer needs one copy of a jar, a manifest needs the
         container that offered it.""",
+        # The jar leaves the presigned library's native entries out, as `JarPackager` does. The tree of each platform is
+        # an action of its own, so the jar does not depend on the platform and a consumer builds one tree only.
+        "native_lib_dir": "string: the `lib/` subdirectory that receives the native tree, empty without natives.",
+        "native_trees": """dict of string to struct(tree, metadata): the native tree of each `HOST_PLATFORMS` token, with
+        the metadata of the action that wrote it. Empty without natives.""",
     },
 )
 
@@ -306,6 +311,58 @@ _merge_order_jars = merge_order_jars
 _declare_spans = declare_spans
 _pack = pack_jar
 
+# The tree's base name. The packer writes the tree's inventory under this key, and the packed-jars component's
+# catalogue names the tree by it. So the two spell it once, here.
+_NATIVE_TREE_NAME = "native"
+
+def _natives(ctx):
+    """The natives mode as `struct(lib, lib_dir)`, or `None` when both attributes are empty.
+
+    Both or none. The library's name finds the native files, and the `lib/` subdirectory receives them. One without the
+    other would place nothing or place it nowhere, so it is refused rather than guessed at. The directory is one name,
+    with no separator and no relative element, because the composer places the tree under `lib/<name>/`.
+    """
+    lib = ctx.attr.native_lib
+    lib_dir = ctx.attr.native_lib_dir
+    if not lib and not lib_dir:
+        return None
+    if not lib or not lib_dir:
+        fail("natives mode needs both native_lib and native_lib_dir", attr = "native_lib" if not lib else "native_lib_dir")
+    if "/" in lib_dir or lib_dir == "." or lib_dir == "..":
+        fail("'%s' is not one directory name under `lib/`" % lib_dir, attr = "native_lib_dir")
+    return struct(lib = lib, lib_dir = lib_dir)
+
+def _native_trees(ctx, natives, library_jars):
+    """Declares the native tree of each `HOST_PLATFORMS` token, one action per platform.
+
+    One action per platform, not one for all: a consumer builds the tree of its own platform only, and the packer
+    cannot write an executable native file on a Windows host. The action packs the libraries into a scratch jar, because
+    the packer writes a tree beside a jar. The module outputs stay out, so a module edit does not rebuild the trees.
+    """
+    trees = {}
+    for platform in HOST_PLATFORMS:
+        prefix = ctx.label.name + ".native_" + platform
+        tree = ctx.actions.declare_directory(prefix + "/" + _NATIVE_TREE_NAME)
+        metadata = _pack(
+            ctx,
+            output = ctx.actions.declare_file(prefix + "/scratch.jar"),
+            spans = None,
+            metadata = ctx.actions.declare_file(prefix + ".metadata.json"),
+            module_jars = [],
+            library_jars = library_jars,
+            merged_module_names = [],
+            mnemonic = "PackContentModuleJar",
+            progress_message = "Selecting the %s natives of %%{label}" % platform,
+            extra_flags = [
+                struct(file = tree, format = "native-tree=%s"),
+                "native-variant=" + platform,
+                "native-lib=" + natives.lib,
+            ],
+            extra_outputs = [tree],
+        )
+        trees[platform] = struct(tree = tree, metadata = metadata)
+    return trees
+
 def _content_module_jar_impl(ctx):
     before = [_module(target, "modules_before") for target in ctx.attr.modules_before]
     owner = _module(ctx.attr.module, "module")
@@ -318,6 +375,7 @@ def _content_module_jar_impl(ctx):
 
     library_entries = _library_entries(ctx)
     library_jars = _merge_order_jars(library_entries)
+    natives = _natives(ctx)
 
     # The predeclared outputs, so the plan files and the plugin chain can name the jar by its label.
     output = ctx.outputs.production_jar
@@ -332,12 +390,13 @@ def _content_module_jar_impl(ctx):
         merged_module_names = merged_module_names,
         mnemonic = "PackContentModuleJar",
         progress_message = "Packing distribution jar of %{label}",
-        extra_flags = ["merge-entities=true"],
+        extra_flags = ["merge-entities=true"] + (["native-lib=" + natives.lib] if natives else []),
         descriptor = ctx.file.descriptor,
         descriptor_module = module_name,
         descriptor_path = ctx.attr.descriptor_path,
         coverage_agent_manifest = "intellij.platform.coverage.agent" in module_name,
     )
+    native_trees = _native_trees(ctx, natives, library_jars) if natives else {}
     return [
         DefaultInfo(files = depset([output])),
         # Deliberately not a field of `ContentModuleJarInfo`: everything in that provider is read to *declare* something,
@@ -346,6 +405,10 @@ def _content_module_jar_impl(ctx):
         OutputGroupInfo(
             trace_spans = depset([spans] if spans else []),
             file_metadata = depset([metadata]),
+            **{
+                "native_tree_" + platform: depset([native.tree, native.metadata])
+                for platform, native in native_trees.items()
+            }
         ),
         ContentModuleJarInfo(
             jar = output,
@@ -355,6 +418,8 @@ def _content_module_jar_impl(ctx):
             member_jars = tuple(module_jars),
             member_modules = tuple(merged_module_names),
             library_jars = tuple(library_entries),
+            native_lib_dir = natives.lib_dir if natives else "",
+            native_trees = native_trees,
         ),
     ]
 
@@ -365,7 +430,11 @@ One `PackContentModuleJar` action writes `<target>.production.jar` and `<target>
 `DefaultInfo`, and the plan files and the plugin chain name it by that label. The destination `<module>.jar` travels
 in `ContentModuleJarInfo.relative_path`. The action merges the entity lists of its sources. When the module name
 contains `intellij.platform.coverage.agent`, it rewrites the `Boot-Class-Path` of each source named
-`intellij-coverage-agent*`, the way `JarPackager` does for the same jar.""",
+`intellij-coverage-agent*`, the way `JarPackager` does for the same jar.
+
+With `native_lib` and `native_lib_dir` set, the jar leaves the native entries of that presigned library out, and one
+action per `HOST_PLATFORMS` token writes the platform's native files into `<target>.native_<platform>/native`. A consumer
+places the tree of its platform under `lib/<native_lib_dir>/`, the way `JarPackager` extracts the natives.""",
     implementation = _content_module_jar_impl,
     outputs = {
         "production_jar": "%{name}.production.jar",
@@ -408,6 +477,12 @@ ends up in the jar.""",
             doc = "The path of the product descriptor in the owner module output.",
             default = "META-INF/plugin.xml",
         ),
+        "native_lib": attr.string(
+            doc = "The Maven artifact name of the presigned library whose native files the jar leaves out, such as `jna`. Empty means no natives mode.",
+        ),
+        "native_lib_dir": attr.string(
+            doc = "The `lib/` subdirectory that receives the native tree, `presignedNativeLibs[native_lib]`. One directory name, no `/`.",
+        ),
         "_packer": attr.label(
             default = "//build/content-module-packer",
             executable = True,
@@ -441,33 +516,6 @@ def _relative_output_file(ctx):
             fail("'%s' holds an empty or relative path element" % path, attr = "relative_output_file")
     return path
 
-# The tree's base name. The packer writes the tree's inventory into the jar's metadata file under this key, and the
-# packed-jars component's catalogue names the tree by it. So the two spell it once, here.
-_NATIVE_TREE_NAME = "native"
-
-_NATIVE_ATTRS = ["native_lib", "native_lib_dir", "native_platform"]
-
-def _native_mode(ctx):
-    """The natives mode as `struct(lib, lib_dir, platform)`, or `None` when the three attributes are empty.
-
-    All three or none. The library's name finds the native files, the platform selects them and the `lib/` subdirectory
-    receives them. A partial set would place nothing or place it nowhere, so it is refused rather than guessed at. The
-    directory is checked the way `_relative_output_file` checks a destination: one name, with no separator and no
-    relative element, because the composer places the tree under `lib/<name>/`.
-    """
-    empty = [name for name in _NATIVE_ATTRS if not getattr(ctx.attr, name)]
-    if len(empty) == len(_NATIVE_ATTRS):
-        return None
-    if empty:
-        fail("natives mode needs all of %s, and these are empty: %s" % (", ".join(_NATIVE_ATTRS), ", ".join(empty)), attr = empty[0])
-    platform = ctx.attr.native_platform
-    if platform not in HOST_PLATFORMS:
-        fail("'%s' is not one of %s" % (platform, HOST_PLATFORMS), attr = "native_platform")
-    lib_dir = ctx.attr.native_lib_dir
-    if "/" in lib_dir or lib_dir == "." or lib_dir == "..":
-        fail("'%s' is not one directory name under the plugin's `lib/`" % lib_dir, attr = "native_lib_dir")
-    return struct(lib = ctx.attr.native_lib, lib_dir = lib_dir, platform = platform)
-
 DevDistPlatformJarInfo = provider(
     fields = {
         "jar": "The packed `File`.",
@@ -479,33 +527,15 @@ DevDistPlatformJarInfo = provider(
         "member_jars": "tuple of File: the own jar of every merged module.",
         "member_modules": "tuple of string: the same members by JPS module name.",
         "library_jars": "tuple of struct(label, jars): the merged libraries, one entry per container.",
-        # Written by the same action as the jar. The packer keeps the presigned library's native entries out of the
-        # jar. It writes the ones of the selected platform here, as `JarPackager` extracts them to `lib/<lib>/`.
-        "native_tree": "File or None: the directory with the selected native files, placed under `lib/<native_lib_dir>/`.",
-        "native_lib_dir": "string: the `lib/` subdirectory, empty without natives.",
     },
 )
 
 def _dev_dist_platform_jar_impl(ctx):
     members = [_module(target, "modules") for target in ctx.attr.modules]
     destination = _relative_output_file(ctx)
-    natives = _native_mode(ctx)
     libraries = _library_entries(ctx)
     output = ctx.actions.declare_file(ctx.label.name + "/" + destination)
     spans = _declare_spans(ctx, ctx.label.name)
-    flags = ["merge-entities=true"]
-    native_tree = None
-    if natives == None:
-        flags.append("reject-native-entries=true")
-    else:
-        # A sibling of the jar under the target's own directory. Not `reject-native-entries=true` with it: the packer
-        # refuses that pair, because in natives mode the entries are selected rather than rejected.
-        native_tree = ctx.actions.declare_directory(ctx.label.name + "/" + _NATIVE_TREE_NAME)
-        flags += [
-            struct(file = native_tree, format = "native-tree=%s"),
-            "native-variant=" + natives.platform,
-            "native-lib=" + natives.lib,
-        ]
     metadata = _pack(
         ctx,
         output = output,
@@ -515,11 +545,11 @@ def _dev_dist_platform_jar_impl(ctx):
         merged_module_names = [member.name for member in members],
         mnemonic = "PackContentModuleJar",
         progress_message = "Packing the platform jar of %{label}",
-        extra_flags = flags,
-        extra_outputs = [native_tree] if native_tree else [],
+        # A residual jar carries no native file: a module with a presigned library packs as a `content_module_jar`.
+        extra_flags = ["merge-entities=true", "reject-native-entries=true"],
     )
     return [
-        DefaultInfo(files = depset([output] + ([native_tree] if native_tree else []))),
+        DefaultInfo(files = depset([output])),
         OutputGroupInfo(trace_spans = depset([spans] if spans else []), file_metadata = depset([metadata])),
         DevDistPlatformJarInfo(
             jar = output,
@@ -528,26 +558,19 @@ def _dev_dist_platform_jar_impl(ctx):
             member_jars = tuple([member.jar for member in members]),
             member_modules = tuple([member.name for member in members]),
             library_jars = tuple(libraries),
-            native_tree = native_tree,
-            native_lib_dir = natives.lib_dir if natives else "",
         ),
     ]
 
 dev_dist_platform_jar = rule(
     doc = """Packs one generated residual platform jar of a dev distribution.
 
-One `PackContentModuleJar` action writes the jar at `<target>/<relative_output_file>` and its metadata. With the three
-`native_*` attributes set, the same action also writes `<target>/native`. That tree holds the native files of the named
-presigned library for the named platform. They stay out of the jar, and the packed-jars component places them under
-`lib/<native_lib_dir>/`, the way `JarPackager` extracts them.""",
+One `PackContentModuleJar` action writes the jar at `<target>/<relative_output_file>` and its metadata. The jar holds no
+native file.""",
     implementation = _dev_dist_platform_jar_impl,
     attrs = {
         "relative_output_file": attr.string(mandatory = True),
         "modules": attr.label_list(providers = [_KtJvmInfo], mandatory = True),
         "libraries": attr.label_list(providers = [[JavaInfo]]),
-        "native_lib": attr.string(doc = "The Maven artifact name of the presigned library whose native files the jar leaves out, such as `jna`. Empty means no natives mode."),
-        "native_lib_dir": attr.string(doc = "The `lib/` subdirectory that receives the tree, `presignedNativeLibs[lib]`. One directory name, no `/`."),
-        "native_platform": attr.string(doc = "The `HOST_PLATFORMS` token whose native files the tree holds. Configurable: the macro passes a `select()` over the host when the set names no target platform."),
         "_packer": attr.label(default = "//build/content-module-packer", executable = True, cfg = "exec"),
         "_trace_spans": attr.label(default = ":trace_spans", providers = [BuildSettingInfo]),
     },
