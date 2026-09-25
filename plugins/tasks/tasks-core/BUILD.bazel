@@ -25,10 +25,6 @@ dev_dist_plugin(
     ],
     directory_name = "tasks",
     jars = {
-        "lib/modules/intellij.libraries.xml.rpc.jar": [
-            "intellij.libraries.xml.rpc",
-            "@lib//:libraries-xml-rpc-xml-rpc",
-        ],
         "lib/intellij.tasks.core.libraries.commonsDiscovery.jar": [
             "intellij.tasks.core.libraries.commonsDiscovery",
             "@lib//:tasks-core-libraries-commons_discovery-commons-discovery",

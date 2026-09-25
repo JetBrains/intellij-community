@@ -221,6 +221,36 @@ const rtRecipe = `{"sources": [{"input": "demo.rt", "kind": "module", "filter": 
 // TestDeriveMatchesOwnershipByRecipeAndMode pins the reuse rule: the chain names the reused modules, and the asset
 // whose recipe and mode are the plain module jar of one is independent, under the module name. A jar at another
 // destination with the same recipe is independent too. A jar at another mode, or with another writer, is remainder.
+// A content_module_jar target packs the module output first and then the library containers. An asset of that shape is
+// the reused jar; any other source kind, a prepared source, another writer or another mode keeps it in the remainder.
+func TestDeriveReusesAModuleJarThatMergesLibraries(t *testing.T) {
+	library := `{"input": "@lib//:demo-lib", "kind": "library", "filter": "library-v1"}`
+	module := `{"input": "demo.rt", "kind": "module", "filter": "module-v1"}`
+	derivation, err := derive(t, plan(1,
+		`{"destination": "lib/modules/demo.rt.jar", "recipe": {"sources": [`+module+`, `+library+`], "writer": {"mergeEntities": true}}}, `+
+			`{"destination": "lib/rt-first.jar", "recipe": {"sources": [`+library+`, `+module+`], "writer": {"mergeEntities": true}}}, `+
+			`{"destination": "lib/rt-kept.jar", "recipe": {"sources": [`+module+`, `+library+`], "writer": {"manifest": "keep", "mergeEntities": true}}}`),
+		reusedLibraryCatalogue(), 1, "demo.rt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []pluginpack.Asset{
+		{Destination: "lib/modules/demo.rt.jar", Producer: "independent", Artifact: "demo.rt"},
+		{Destination: "lib/rt-first.jar", Producer: "remainder"},
+		{Destination: "lib/rt-kept.jar", Producer: "remainder"},
+	}
+	if !reflect.DeepEqual(derivation.Assets, want) {
+		t.Fatalf("asset rows: %+v", derivation.Assets)
+	}
+}
+
+// reusedLibraryCatalogue holds the module `demo.rt` and the one-jar library container `@lib//:demo-lib`.
+func reusedLibraryCatalogue() pluginpack.Catalogue {
+	inputs := catalogue(fileArtifact("demo.rt"), fileArtifact("@lib//:demo-lib/a.jar"))
+	inputs.Libraries = []pluginpack.Library{{ID: "@lib//:demo-lib", Files: []pluginpack.Reference{{Artifact: "@lib//:demo-lib/a.jar"}}}}
+	return inputs
+}
+
 func TestDeriveMatchesOwnershipByRecipeAndMode(t *testing.T) {
 	derivation, err := derive(t, plan(1, `{"module": "demo.content"}, {"destination": "lib/rt.jar", "recipe": `+rtRecipe+`},
 		{"destination": "lib/rt-exec.jar", "recipe": `+rtRecipe+`, "mode": 493}, {"destination": "lib/rt-explicit.jar", "inputs": ["demo.rt"], "recipe": `+rtRecipe+`},
@@ -247,8 +277,8 @@ func TestDeriveMatchesOwnershipByRecipeAndMode(t *testing.T) {
 		modules []string
 		message string
 	}{
-		"a module at another mode":  {`{"destination": "lib/rt.jar", "recipe": ` + rtRecipe + `, "mode": 493}`, []string{"demo.rt"}, `independent module "demo.rt" matches no plain module jar asset`},
-		"a module without an asset": {`{"module": "demo.content"}`, []string{"demo.rt"}, `independent module "demo.rt" matches no plain module jar asset`},
+		"a module at another mode":  {`{"destination": "lib/rt.jar", "recipe": ` + rtRecipe + `, "mode": 493}`, []string{"demo.rt"}, `independent module "demo.rt" matches no module jar asset`},
+		"a module without an asset": {`{"module": "demo.content"}`, []string{"demo.rt"}, `independent module "demo.rt" matches no module jar asset`},
 		"a module named twice":      {`{"module": "demo.content"}`, []string{"demo.content", "demo.content"}, `independent module "demo.content" is named twice`},
 		"an empty module":           {`{"module": "demo.content"}`, []string{""}, "an independent module requires a name"},
 	} {

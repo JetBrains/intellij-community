@@ -1,7 +1,6 @@
 package planfile
 
 import (
-	"encoding/json"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -51,8 +50,9 @@ type compiler struct {
 // Derive compiles the plan file for the Go packer. catalogue is the Starlark input catalogue of the chain.
 // pluginDirectory is `plugins/<name>`; descriptor is the classpath descriptor in its final byte form.
 // executionVersion is the version the chain declares; it must equal the version of the file and of its assets.
-// independentModules names the modules whose plain module jar the chain reuses from a content_module_jar target. The
-// asset with that recipe at the default mode is independent, and its artifact is the module name.
+// independentModules names the modules whose jar the chain reuses from a content_module_jar target. An asset of the
+// module's jar shape (see reusableModuleJar) is independent, and its artifact is the module name. The generator has
+// matched the whole recipe against the target before it names the module.
 func Derive(file *File, catalogue pluginpack.Catalogue, pluginDirectory string, descriptor []byte, executionVersion int, independentModules []string) (*Derivation, error) {
 	pluginDirName := path.Base(filepath.ToSlash(filepath.Clean(pluginDirectory)))
 	if pluginDirName == "" || pluginDirName == "." || pluginDirName == ".." || pluginDirName == "/" {
@@ -105,33 +105,28 @@ func executionVersionOf(assets []Asset) int {
 	}
 }
 
-// recipeKey is the equality of CanonicalJarRecipe with its mode: the key a reused module jar is matched by.
-func recipeKey(recipe JarRecipe, mode uint32) string {
-	type source struct {
-		Input, Kind, Filter, Entry string
-		Options                    []string
-		Manifest                   *PreparedManifest
+// reusableModuleJar is the module whose jar the recipe packs in the shape a content_module_jar target packs: the module
+// output first, then only library containers, with the default writer and mode. The generator states the rest of the
+// equality, so the libraries are not compared here.
+func reusableModuleJar(recipe JarRecipe, mode uint32) (string, bool) {
+	if mode != DefaultMode || recipe.Writer != moduleJarRecipe("").Writer || len(recipe.Sources) == 0 {
+		return "", false
 	}
-	sources := make([]source, 0, len(recipe.Sources))
-	for _, item := range recipe.Sources {
-		sources = append(sources, source{item.Input, item.Kind, item.Filter, item.Entry, orEmpty(item.Options), item.PreparedManifest})
+	owner := recipe.Sources[0]
+	if owner.Kind != "module" || owner.Filter != "module-v1" || !plainSource(owner) {
+		return "", false
 	}
-	key, err := json.Marshal(struct {
-		Sources []source
-		Writer  JarWriter
-		Mode    uint32
-	}{sources, recipe.Writer, mode})
-	if err != nil {
-		panic(err)
+	for _, source := range recipe.Sources[1:] {
+		if source.Kind != "library" || source.Filter != "library-v1" || !plainSource(source) {
+			return "", false
+		}
 	}
-	return string(key)
+	return owner.Input, true
 }
 
-func orEmpty(values []string) []string {
-	if values == nil {
-		return []string{}
-	}
-	return values
+// plainSource reports whether the source states nothing beyond its input, kind and filter.
+func plainSource(source JarSource) bool {
+	return source.Entry == "" && len(source.Options) == 0 && source.PreparedManifest == nil
 }
 
 // plan is planPluginPacking: the asset rules, the ownership match and the required preparations.
@@ -145,16 +140,15 @@ func (c *compiler) plan() error {
 			return err
 		}
 	}
-	recipes := make(map[string]string, len(c.independentModules))
+	independent := make(map[string]bool, len(c.independentModules))
 	for _, module := range c.independentModules {
 		if module == "" {
 			return fmt.Errorf("an independent module requires a name")
 		}
-		key := recipeKey(moduleJarRecipe(module), DefaultMode)
-		if _, exists := recipes[key]; exists {
+		if independent[module] {
 			return fmt.Errorf("independent module %q is named twice", module)
 		}
-		recipes[key] = module
+		independent[module] = true
 	}
 	used := make(map[string]bool)
 	for _, asset := range file.Assets {
@@ -169,7 +163,9 @@ func (c *compiler) plan() error {
 				sources[source.Input] = true
 			}
 			if len(inputs) == len(sources) && !slices.ContainsFunc(recipe.Sources, func(source JarSource) bool { return !inputs[source.Input] }) {
-				planned.artifact = recipes[recipeKey(*recipe, asset.Mode)]
+				if module, ok := reusableModuleJar(*recipe, asset.Mode); ok && independent[module] {
+					planned.artifact = module
+				}
 			}
 		}
 		if planned.artifact != "" {
@@ -180,7 +176,7 @@ func (c *compiler) plan() error {
 	if len(used) != len(c.independentModules) {
 		for _, module := range c.independentModules {
 			if !used[module] {
-				return fmt.Errorf("independent module %q matches no plain module jar asset; regenerate the dev distribution declarations", module)
+				return fmt.Errorf("independent module %q matches no module jar asset; regenerate the dev distribution declarations", module)
 			}
 		}
 	}
