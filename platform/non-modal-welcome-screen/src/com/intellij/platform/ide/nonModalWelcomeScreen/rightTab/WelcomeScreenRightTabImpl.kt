@@ -152,12 +152,6 @@ internal class WelcomeScreenRightTabImpl(
           val offset = JBUI.scale(16)
 
           var topY = (fullSize.height - bottomSize.height - offset - centeredSize.height) / 2
-          if (contentProvider.productIcon != null) {
-            val iconHeight = JBUI.scale(48)
-            if (topY > iconHeight) {
-              topY -= iconHeight
-            }
-          }
           // A column taller than the tab reads from its top. Centring it would take the title off the top edge.
           topY = max(topY, 0)
           centeredChild.bounds = Rectangle((fullSize.width - centeredSize.width) / 2,
