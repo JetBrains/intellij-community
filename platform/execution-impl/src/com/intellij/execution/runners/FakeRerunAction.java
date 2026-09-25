@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ExecutionDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbService;
@@ -73,7 +72,7 @@ public class FakeRerunAction extends AnAction implements ActionRemoteBehaviorSpe
   }
 
   protected @Nullable RunContentDescriptor getDescriptor(AnActionEvent event) {
-    return event.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
+    return event.getData(ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR);
   }
 
   protected @Nullable ExecutionEnvironmentProxy getEnvironmentProxy(@NotNull AnActionEvent event) {

@@ -8,7 +8,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
@@ -43,7 +43,7 @@ final class UseConsoleInputAction extends ToggleAction implements DumbAware {
   public void setSelected(@NotNull AnActionEvent event, boolean state) {
     useProcessStdIn = !state;
 
-    LanguageConsoleView consoleView = (LanguageConsoleView)event.getData(LangDataKeys.CONSOLE_VIEW);
+    LanguageConsoleView consoleView = (LanguageConsoleView)event.getData(ExecutionDataKeys.CONSOLE_VIEW);
     assert consoleView != null;
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(consoleView.getProject());
     PsiFile file = consoleView.getFile();

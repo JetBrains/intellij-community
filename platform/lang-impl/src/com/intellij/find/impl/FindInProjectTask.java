@@ -61,9 +61,9 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.ConcurrentFileTraversal;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexEx;
-import com.intellij.util.indexing.FilesDeque;
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.ContentOrigin;
@@ -71,6 +71,7 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.util.text.StringSearcher;
 import com.intellij.util.ui.EDT;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -273,7 +274,7 @@ final class FindInProjectTask {
       progressIndicator.setIndeterminate(true);
       progressIndicator.setText(FindBundle.message("progress.text.scanning.non.indexed.files"));
 
-      //search item := { VirtualFile | IndexableFilesIterator | FindModelExtension | FilesDeque }
+      //search item := { VirtualFile | IndexableFilesIterator | FindModelExtension | TraversalItem }
       List<Object> searchItems = collectSearchItems();
 
       AtomicInteger otherFilesCount = new AtomicInteger();
@@ -462,7 +463,7 @@ final class FindInProjectTask {
   }
 
   /**
-   * Unfolds search items (:={ VirtualFile | IndexableFilesIterator | FindModelExtension | FilesDeque }) down to individual
+   * Unfolds search items (:={ VirtualFile | IndexableFilesIterator | FindModelExtension | TraversalItem }) down to individual
    * files, and process them with the fileProcessor. Also does filtering according to {@link #findModel} settings.
    */
   private void unfoldAndProcessSearchItems(@NotNull List<Object> searchItems,
@@ -492,7 +493,7 @@ final class FindInProjectTask {
     processOnAllThreadsInReadActionWithRetries(
       searchItemsDeque,
 
-      searchItem -> { // := { VirtualFile | IndexableFilesIterator | FindModelExtension | FilesDeque }
+      searchItem -> { // := { VirtualFile | IndexableFilesIterator | FindModelExtension | TraversalItem }
         ProgressManager.checkCanceled();
 
         if (searchItem instanceof IndexableFilesIterator filesIterator) {
@@ -508,12 +509,13 @@ final class FindInProjectTask {
 
           return true;
         }
-        else if (searchItem instanceof FilesDeque filesDeque) {
-          for (var file = filesDeque.computeNext(); file != null; file = filesDeque.computeNext()) {
-            if (!file.isDirectory()) {
-              searchItemsDeque.add(file);
-            }
-            ProgressManager.checkCanceled();
+        else if (searchItem instanceof ConcurrentFileTraversal.TraversalItem traversalItem) {
+          boolean shouldProcessFile = traversalItem.expand(children -> {
+            searchItemsDeque.addAll(children);
+            return Unit.INSTANCE;
+          });
+          if (shouldProcessFile && !traversalItem.getFile().isDirectory()) {
+            searchItemsDeque.add(traversalItem.getFile());
           }
           return true;
         }
@@ -610,7 +612,7 @@ final class FindInProjectTask {
 
   /**
    * @return list of search 'items'. Item contains 1 or more files:
-   * <pre>item := { VirtualFile | IndexableFilesIterator | FindModelExtension | FilesDeque }</pre>
+   * <pre>item := { VirtualFile | IndexableFilesIterator | FindModelExtension | TraversalItem }</pre>
    */
   private @NotNull List<Object> collectSearchItems() {
     SearchScope customScope = findModel.isCustomScope() ? findModel.getCustomScope() : null;
@@ -618,7 +620,7 @@ final class FindInProjectTask {
     List<Object> searchItems = new ArrayList<>();
 
     //fill the list from _one of_ {customScope | directory | module | indexingProviders} + FindModelExtensions:
-    //so the resulting list is of { VirtualFile | IndexableFilesIterator | FindModelExtension | FilesDeque }
+    //so the resulting list is of { VirtualFile | IndexableFilesIterator | FindModelExtension | TraversalItem }
 
     if (customScope instanceof LocalSearchScope localSearchScope) {
       searchItems.addAll(GlobalSearchScopeUtil.getLocalScopeFiles(localSearchScope));
@@ -670,7 +672,8 @@ final class FindInProjectTask {
 
         //MAYBE RC: currently nonIndexableFiles() returns transient files already -- but maybe it is safer to return _regular_ files
         //          from nonIndexableFiles(), and wrap them all into transient here, in a unified way?
-        searchItems.add(ReadAction.nonBlocking(() -> FilesDeque.nonIndexableDequeue(project, searchInLibraries)).executeSynchronously());
+        searchItems.addAll(ReadAction.nonBlocking(() -> ConcurrentFileTraversal.nonIndexableTraversal(project, searchInLibraries).getRoots())
+                             .executeSynchronously());
       }
     }
 

@@ -8,7 +8,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.terminal.TerminalExecutionConsole;
@@ -31,7 +31,7 @@ public final class EOFAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    RunContentDescriptor descriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
+    RunContentDescriptor descriptor = e.getData(ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR);
     ConsoleView console = resolveConsole(e, descriptor);
     ProcessHandler handler = descriptor != null ? descriptor.getProcessHandler() : null;
     e.getPresentation().setEnabledAndVisible(console != null
@@ -41,7 +41,7 @@ public final class EOFAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    RunContentDescriptor descriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
+    RunContentDescriptor descriptor = e.getData(ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR);
     ProcessHandler activeProcessHandler = descriptor != null ? descriptor.getProcessHandler() : null;
     if (activeProcessHandler == null || activeProcessHandler.isProcessTerminated()) return;
 
@@ -72,7 +72,7 @@ public final class EOFAction extends DumbAwareAction {
    * the Debug tool window.
    */
   private static @Nullable ConsoleView resolveConsole(@NotNull AnActionEvent e, @Nullable RunContentDescriptor descriptor) {
-    ConsoleView fromData = e.getData(LangDataKeys.CONSOLE_VIEW);
+    ConsoleView fromData = e.getData(ExecutionDataKeys.CONSOLE_VIEW);
     if (fromData != null) return fromData;
 
     ConsoleView fromFocus = UIUtil.getParentOfType(ConsoleView.class, IdeFocusManager.findInstance().getFocusOwner());

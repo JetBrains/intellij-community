@@ -93,7 +93,7 @@ open class DeclarativeInsertHandler protected constructor(
     }
 
     context.editor.caretModel.currentCaret.run {
-      val newOffset = offset + offsetToPutCaret
+      val newOffset = baseOffset + offsetToPutCaret
       moveToOffset(newOffset)
     }
 

@@ -8,7 +8,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -35,7 +35,7 @@ final class UpdateRunningApplicationAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
-    final RunContentDescriptor contentDescriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
+    final RunContentDescriptor contentDescriptor = e.getData(ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR);
     final Presentation presentation = e.getPresentation();
     if (contentDescriptor != null && project != null) {
       final ProcessHandler processHandler = contentDescriptor.getProcessHandler();
@@ -95,7 +95,7 @@ final class UpdateRunningApplicationAction extends DumbAwareAction {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
-    final RunContentDescriptor contentDescriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
+    final RunContentDescriptor contentDescriptor = e.getData(ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR);
     if (contentDescriptor != null) {
       final RunningApplicationUpdater updater = findUpdater(project, contentDescriptor.getProcessHandler());
 

@@ -6,7 +6,7 @@ import com.intellij.ide.CustomDataContextSerializer
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
-import com.intellij.openapi.actionSystem.LangDataKeys.RUN_CONTENT_DESCRIPTOR
+import com.intellij.openapi.actionSystem.ExecutionDataKeys
 import com.intellij.openapi.actionSystem.UiDataRule
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.findValueById
@@ -44,8 +44,8 @@ internal class RunContentDescriptorIdSerializer() : CustomDataContextSerializer<
 
 internal class RunContentDescriptorIdDataRule : UiDataRule {
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
-    if (snapshot[RUN_CONTENT_DESCRIPTOR] != null) return
+    if (snapshot[ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR] != null) return
     val descriptor = snapshot[RUN_CONTENT_DESCRIPTOR_ID]?.findContentValue() ?: return
-    sink[RUN_CONTENT_DESCRIPTOR] = descriptor
+    sink[ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR] = descriptor
   }
 }

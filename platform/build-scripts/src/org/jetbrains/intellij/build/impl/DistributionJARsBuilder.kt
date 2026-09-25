@@ -879,7 +879,6 @@ internal fun layoutDistribution(
         JarPackager.pack(
           includedModules = includedModules,
           outputDir = outputDir,
-          isRootDir = layout is PlatformLayout,
           layout = layout,
           platformLayout = platformLayout,
           moduleOutputPatcher = moduleOutputPatcher,

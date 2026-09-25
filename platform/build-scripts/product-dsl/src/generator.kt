@@ -239,6 +239,8 @@ private fun sortTestPluginContentSpec(spec: ProductModulesContentSpec): ProductM
     compositionGraph = spec.compositionGraph,
     metadata = spec.metadata,
     testPlugins = spec.testPlugins,
+    moduleActivations = spec.moduleActivations,
+    exclusivePluginIds = spec.exclusivePluginIds,
   )
 }
 

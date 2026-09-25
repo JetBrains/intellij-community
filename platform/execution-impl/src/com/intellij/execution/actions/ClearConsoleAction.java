@@ -6,7 +6,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,14 +24,14 @@ public class ClearConsoleAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    ConsoleView data = e.getData(LangDataKeys.CONSOLE_VIEW);
+    ConsoleView data = e.getData(ExecutionDataKeys.CONSOLE_VIEW);
     boolean enabled = data != null && data.getContentSize() > 0;
     e.getPresentation().setEnabled(enabled);
   }
 
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {
-    final ConsoleView consoleView = e.getData(LangDataKeys.CONSOLE_VIEW);
+    final ConsoleView consoleView = e.getData(ExecutionDataKeys.CONSOLE_VIEW);
     if (consoleView != null) {
       consoleView.clear();
     }

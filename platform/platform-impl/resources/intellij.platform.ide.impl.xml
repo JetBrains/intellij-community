@@ -303,6 +303,7 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jbProtocolCommand" interface="com.intellij.openapi.application.JBProtocolCommand" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.notification.group" beanClass="com.intellij.notification.impl.NotificationGroupBean" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.notificationSound" beanClass="com.intellij.notification.impl.NotificationSoundEP" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.troubleInfoCollector" interface="com.intellij.troubleshooting.TroubleInfoCollector" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.generalTroubleInfoCollector" interface="com.intellij.troubleshooting.GeneralTroubleInfoCollector" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.updateSettingsProvider" interface="com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider" dynamic="true"/>

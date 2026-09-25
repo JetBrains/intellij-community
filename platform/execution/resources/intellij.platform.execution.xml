@@ -8,9 +8,11 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.plugins"/>
     <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ex"/>
@@ -48,6 +50,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectSettings service="com.intellij.diagnostic.logging.LogConsolePreferences"/>
     <projectSettings service="com.intellij.execution.target.TargetEnvironmentsManager"/>
+    <sdkType implementation="com.intellij.openapi.projectRoots.SimpleJavaSdkType"/>
     <projectService serviceInterface="com.intellij.execution.AdditionalRunningOptions" open="true"
                     serviceImplementation="com.intellij.execution.EmptyAdditionalRunningOptions"/>
     <executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="first" id="run"/>

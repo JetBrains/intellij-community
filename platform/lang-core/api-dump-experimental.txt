@@ -1,3 +1,0 @@
-c:com.intellij.execution.configurations.SimpleJavaParameters
-- com.intellij.execution.configurations.SimpleProgramParameters
-- *:getTargetDependentParameters():com.intellij.execution.configurations.JavaTargetDependentParameters

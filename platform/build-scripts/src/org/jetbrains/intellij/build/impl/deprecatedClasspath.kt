@@ -101,7 +101,6 @@ private fun generateProjectStructureMapping(
       JarPackager.pack(
         includedModules = platformLayout.includedModules,
         outputDir = context.paths.distAllDir.resolve(LIB_DIRECTORY),
-        isRootDir = true,
         layout = platformLayout,
         platformLayout = platformLayout,
         moduleOutputPatcher = moduleOutputPatcher,
@@ -149,7 +148,6 @@ private fun generateProjectStructureMapping(
     val pluginEntries = JarPackager.pack(
       includedModules = pluginLayout.includedModules,
       outputDir = outputDir,
-      isRootDir = false,
       layout = pluginLayout,
       platformLayout = platformLayout,
       moduleOutputPatcher = moduleOutputPatcher,

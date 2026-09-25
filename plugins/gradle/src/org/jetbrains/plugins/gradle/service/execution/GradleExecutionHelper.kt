@@ -42,6 +42,7 @@ import org.jetbrains.plugins.gradle.connection.GradleConnectorService
 import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
@@ -93,6 +94,8 @@ object GradleExecutionHelper {
 
         modelBuilder.withCancellationToken(context.cancellationToken)
 
+        clearSystemProperties(modelBuilder)
+
         setupJavaHome(modelBuilder, context.settings, context.taskId, context.listener, null)
 
         val gradleProgressListener = GradleProgressListener(
@@ -126,9 +129,10 @@ object GradleExecutionHelper {
       // Setting the custom build file location is deprecated since Gradle 7.6, see IDEA-359161 for more details.
       setupProjectDirectory(context)
 
+      val gradleVersion = guessGradleVersion(context)
       val connectorService = GradleConnectorService.getInstance(context.project)
       return connectorService.withGradleConnection(context) { connection ->
-        SystemPropertiesAdjuster.executeAdjusted(context.projectPath) {
+        SystemPropertiesAdjuster.executeAdjusted(context.projectPath, gradleVersion) {
           buildEnvironment = getModel(connection, context, BuildEnvironment::class.java)
           context.buildEnvironment = buildEnvironment
           checkExecutionEnvironment(context)
@@ -154,6 +158,20 @@ object GradleExecutionHelper {
       val externalSystemException = ExternalSystemException(ExceptionUtil.getMessage(rootCause), e)
       externalSystemException.initCause(e)
       throw externalSystemException
+    }
+  }
+
+  /**
+   * Returns `null` when the version is unknown before the connection, so [SystemPropertiesAdjuster] keeps all masks.
+   */
+  private fun guessGradleVersion(context: GradleExecutionContext): GradleVersion? {
+    try {
+      return GradleInstallationManager.getInstance().guessBuildLayoutParameters(context.project, context.projectPath).gradleVersion
+    }
+    catch (e: Exception) {
+      rethrowControlFlowException(e)
+      LOG.warn("Cannot guess the Gradle version of ${context.projectPath}", e)
+      return null
     }
   }
 

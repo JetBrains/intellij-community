@@ -4,7 +4,7 @@ package com.jetbrains.python.debugger;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.ex.TooltipLinkProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -60,7 +60,7 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase
     if (session != null) {
       return !(session.getDebugProcess() instanceof PyStepIntoSupport);
     }
-    RunProfile runProfile = event.getData(LangDataKeys.RUN_PROFILE);
+    RunProfile runProfile = event.getData(ExecutionDataKeys.RUN_PROFILE);
     return !(runProfile instanceof AbstractPythonRunConfiguration);
   }
 

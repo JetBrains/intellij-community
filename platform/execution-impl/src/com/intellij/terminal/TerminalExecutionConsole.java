@@ -25,7 +25,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -562,7 +562,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
       super.uiDataSnapshot(sink);
-      sink.set(LangDataKeys.CONSOLE_VIEW, TerminalExecutionConsole.this);
+      sink.set(ExecutionDataKeys.CONSOLE_VIEW, TerminalExecutionConsole.this);
     }
   }
 

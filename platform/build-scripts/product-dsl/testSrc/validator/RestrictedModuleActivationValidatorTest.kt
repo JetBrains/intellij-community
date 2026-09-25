@@ -10,6 +10,8 @@ import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.intellij.build.productLayout.ModuleActivation
+import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.dependency.TestPluginGraphBuilder
@@ -17,18 +19,20 @@ import org.jetbrains.intellij.build.productLayout.dependency.pluginGraph
 import org.jetbrains.intellij.build.productLayout.dependency.runValidationRule
 import org.jetbrains.intellij.build.productLayout.dependency.testGenerationModel
 import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
+import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetSourceLabels
 import org.jetbrains.intellij.build.productLayout.discovery.ProductConfiguration
-import org.jetbrains.intellij.build.productLayout.model.error.RdClientModuleLoadingError
+import org.jetbrains.intellij.build.productLayout.model.error.RestrictedModuleActivationError
 import org.jetbrains.intellij.build.productLayout.model.error.errorId
-import org.jetbrains.intellij.build.productLayout.stats.AnsiStyle
+import org.jetbrains.intellij.build.productLayout.moduleSet
 import org.jetbrains.intellij.build.productLayout.productModules
+import org.jetbrains.intellij.build.productLayout.stats.AnsiStyle
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(TestFailureLogger::class)
-class RdClientModuleLoadingValidatorTest {
+class RestrictedModuleActivationValidatorTest {
   @Test
   fun `bundled on demand modules stay inactive without consumers`() {
     val graph = pluginGraph {
@@ -50,12 +54,11 @@ class RdClientModuleLoadingValidatorTest {
     val error = validate(graph, "idea").single()
     assertThat(error.unexpectedModules.keys).containsExactlyInAnyOrder(ContentModuleName(CLIENT), ContentModuleName(BASE))
     assertThat(error.unexpectedModules.getValue(ContentModuleName(BASE))).containsExactly("consumer", CLIENT, BASE)
-    assertThat(error.errorId()).isEqualTo("rd-client-loading:idea")
+    assertThat(error.errorId()).isEqualTo("restricted-module-activation:idea")
     assertThat(error.format(AnsiStyle(useAnsi = false))).contains(
       "Product 'idea'",
       "consumer -> $CLIENT -> $BASE",
-      "a .frontend.split module without a dependency on intellij.platform.frontend.split",
-      "eligible to load in a monolith IDE",
+      "No module activation of this product or of its plugins allows these modules.",
     )
   }
 
@@ -168,29 +171,27 @@ class RdClientModuleLoadingValidatorTest {
   }
 
   @TestFactory
-  fun `exception products require only the client and base modules`(): List<DynamicTest> {
-    return listOf("Rider", "JetBrainsClient", "GoLandJetBrainsClient", "RiderJetBrainsClient", "ideaJetBrainsClient").map { name ->
+  fun `products with the activation require only the client and base modules`(): List<DynamicTest> {
+    return listOf("Rider", "JetBrainsClient", "GoLandJetBrainsClient").map { name ->
       DynamicTest.dynamicTest(name) {
         val graph = pluginGraph {
           rdProduct(name)
-          product(name) { content("consumer") }
           linkContentModuleDeps("consumer", CLIENT, BASE)
         }
-        assertThat(validate(graph, name)).isEmpty()
+        assertThat(validate(graph, name, specs = mapOf(name to rdSpecWithConsumer()))).isEmpty()
       }
     }
   }
 
   @TestFactory
-  fun `the client and base modules are mandatory in exception products`(): List<DynamicTest> {
+  fun `the client and base modules are mandatory in products with the activation`(): List<DynamicTest> {
     return listOf(CLIENT, BASE).map { removed ->
       DynamicTest.dynamicTest(removed) {
         val graph = pluginGraph {
           rdProduct("Rider")
-          product("Rider") { content("consumer") }
           linkContentModuleDeps("consumer", *RD_MODULES.filterNot { it == removed }.toTypedArray())
         }
-        val error = validate(graph, "Rider").single()
+        val error = validate(graph, "Rider", specs = mapOf("Rider" to rdSpecWithConsumer())).single()
         assertThat(error.missingModules.keys).containsExactly(ContentModuleName(removed))
         assertThat(error.missingModules.getValue(ContentModuleName(removed))).contains("No active consumer")
       }
@@ -199,44 +200,70 @@ class RdClientModuleLoadingValidatorTest {
 
   @Test
   fun `a removed required module reports its absence`() {
-    val graph = pluginGraph {
-      product("Rider") {
-        RD_MODULES.filterNot { it == BASE }.forEach { content(it) }
-      }
+    val graph = pluginGraph { product("Rider") }
+    val spec = productModules {
+      moduleActivation(RD_ACTIVATION)
+      RD_MODULES.filterNot { it == BASE }.forEach { module(it) }
     }
-    val error = validate(graph, "Rider").single()
+    val error = validate(graph, "Rider", specs = mapOf("Rider" to spec)).single()
     assertThat(error.missingModules).containsEntry(ContentModuleName(BASE), "The module is absent from this product.")
-    assertThat(error.format(AnsiStyle(useAnsi = false))).doesNotContain("a monolith IDE")
+    assertThat(error.format(AnsiStyle(useAnsi = false))).doesNotContain("No module activation")
   }
 
   @Test
-  fun `exception products can omit other RD client modules`() {
+  fun `products with the activation can omit other RD client modules`() {
     val graph = pluginGraph {
-      for (name in listOf("Rider", "JetBrainsClient")) {
-        product(name) {
-          content(CLIENT)
-          content(BASE)
-        }
-      }
+      product("Rider")
+      product("JetBrainsClient")
     }
-    assertThat(validate(graph, "Rider", "JetBrainsClient")).isEmpty()
+    val spec = productModules {
+      moduleActivation(RD_ACTIVATION)
+      module(CLIENT)
+      module(BASE)
+    }
+    assertThat(validate(graph, "Rider", "JetBrainsClient", specs = mapOf("Rider" to spec, "JetBrainsClient" to spec))).isEmpty()
   }
 
   @Test
   fun `product overrides replace module set loading rules`() {
-    val graph = pluginGraph {
-      rdProduct("Rider")
-      product("Rider") { RD_MODULES.forEach { content(it, ModuleLoadingRuleValue.REQUIRED) } }
+    val graph = pluginGraph { rdProduct("Rider") }
+    val spec = productModules {
+      moduleActivation(RD_ACTIVATION)
+      moduleSet(RD_SET) {
+        loading(ModuleLoadingRuleValue.REQUIRED, *RD_MODULES.toTypedArray())
+      }
     }
-    assertThat(validate(graph, "Rider")).isEmpty()
+    assertThat(validate(graph, "Rider", specs = mapOf("Rider" to spec))).isEmpty()
   }
 
   @Test
-  fun `future matching modules are forbidden in other products`() {
+  fun `a restricted module of a product spec is prohibited without an activation`() {
     val graph = pluginGraph {
-      product("NewIde") { content("intellij.rd.client.future") }
+      product("NewIde")
+      linkContentModuleDeps("consumer", FUTURE)
     }
-    assertThat(validate(graph, "NewIde").single().unexpectedModules.keys).containsExactly(ContentModuleName("intellij.rd.client.future"))
+    val spec = productModules {
+      onDemandModule(FUTURE, restricted = true)
+      module("consumer")
+    }
+    val error = validate(graph, "NewIde", specs = mapOf("NewIde" to spec)).single()
+    assertThat(error.unexpectedModules.keys).containsExactly(ContentModuleName(FUTURE))
+  }
+
+  @Test
+  fun `an activation does not allow a module outside its allowed set`() {
+    val graph = pluginGraph {
+      rdProduct("Rider")
+      linkContentModuleDeps("consumer", CLIENT, BASE, FUTURE)
+    }
+    val spec = productModules {
+      moduleActivation(RD_ACTIVATION)
+      moduleSet(RD_SET)
+      onDemandModule(FUTURE, restricted = true)
+      module("consumer")
+    }
+    val error = validate(graph, "Rider", specs = mapOf("Rider" to spec)).single()
+    assertThat(error.unexpectedModules.keys).containsExactly(ContentModuleName(FUTURE))
   }
 
   @Test
@@ -294,14 +321,40 @@ class RdClientModuleLoadingValidatorTest {
     val graph = pluginGraph {
       rdProduct("idea")
       plugin("php") { content("php.frontend") }
-      linkContentModuleDeps("php.frontend", CLIENT, "intellij.platform.frontend.split")
+      linkContentModuleDeps("php.frontend", CLIENT, FRONTEND_SPLIT)
     }
     assertThat(validate(graph, "idea", compatiblePlugins = mapOf("idea" to listOf("php")))).isEmpty()
   }
 
   @Test
-  fun `CLion requires the client in Nova and excludes it in Classic`() {
-    assertThat(validate(clionGraph(), "CLion")).isEmpty()
+  fun `the product mode excludes a bundled split module`() {
+    val graph = pluginGraph {
+      rdProduct("idea")
+      product("idea") {
+        content(FRONTEND_SPLIT)
+        content("php.frontend")
+      }
+      linkContentModuleDeps("php.frontend", CLIENT, FRONTEND_SPLIT)
+    }
+    val error = validate(graph, "idea").single()
+    assertThat(error.unexpectedModules.getValue(ContentModuleName(CLIENT))).containsExactly("php.frontend", CLIENT)
+    assertThat(validate(graph, "idea", productModeExcludedModules = mapOf("idea" to setOf(FRONTEND_SPLIT)))).isEmpty()
+  }
+
+  @Test
+  fun `the error lists the modules that the product mode excludes`() {
+    val graph = pluginGraph {
+      rdProduct("idea")
+      product("idea") { content("consumer") }
+      linkContentModuleDeps("consumer", CLIENT)
+    }
+    val error = validate(graph, "idea", productModeExcludedModules = mapOf("idea" to setOf(FRONTEND_SPLIT))).single()
+    assertThat(error.format(AnsiStyle(useAnsi = false))).contains("The 'monolith' product mode excludes: $FRONTEND_SPLIT.")
+  }
+
+  @Test
+  fun `CLion requires the client with Radler and prohibits it with Classic`() {
+    assertThat(validate(clionGraph(), "CLion", specs = mapOf("CLion" to clionSpec()), grants = RADLER_GRANT)).isEmpty()
   }
 
   @Test
@@ -309,15 +362,17 @@ class RdClientModuleLoadingValidatorTest {
     val graph = pluginGraph {
       rdProduct("idea")
       plugin("intellij.clion.radler") {
-        pluginId("org.jetbrains.plugins.clion.radler")
+        pluginId(RADLER)
         content("cpp")
       }
       plugin("unrelated") { content("unexpected") }
       linkContentModuleDeps("cpp", CLIENT, BASE)
       linkContentModuleDeps("unexpected", CLIENT)
     }
-    assertThat(validate(graph, "idea", compatiblePlugins = mapOf("idea" to listOf("intellij.clion.radler")))).isEmpty()
-    val error = validate(graph, "idea", compatiblePlugins = mapOf("idea" to listOf("intellij.clion.radler", "unrelated"))).single()
+    assertThat(validate(graph, "idea", compatiblePlugins = mapOf("idea" to listOf("intellij.clion.radler")), grants = RADLER_GRANT)).isEmpty()
+    val error = validate(
+      graph, "idea", compatiblePlugins = mapOf("idea" to listOf("intellij.clion.radler", "unrelated")), grants = RADLER_GRANT,
+    ).single()
     assertThat(error.context).isEqualTo("idea")
     assertThat(error.unexpectedModules.getValue(ContentModuleName(CLIENT))).containsExactly("compatible plugins", "unexpected", CLIENT)
   }
@@ -326,54 +381,88 @@ class RdClientModuleLoadingValidatorTest {
   fun `IDEA requires RD activation when the C++ plugin is installed`() {
     val graph = pluginGraph {
       rdProduct("idea")
-      plugin("intellij.clion.radler") { pluginId("org.jetbrains.plugins.clion.radler") }
+      plugin("intellij.clion.radler") { pluginId(RADLER) }
     }
-    val error = validate(graph, "idea", compatiblePlugins = mapOf("idea" to listOf("intellij.clion.radler"))).single()
-    assertThat(error.context).isEqualTo("idea (C++ plugin)")
+    val error = validate(graph, "idea", compatiblePlugins = mapOf("idea" to listOf("intellij.clion.radler")), grants = RADLER_GRANT).single()
+    assertThat(error.context).isEqualTo("idea (with compatible intellij.clion.radler)")
     assertThat(error.missingModules.keys).containsExactlyInAnyOrder(ContentModuleName(CLIENT), ContentModuleName(BASE))
   }
 
   @Test
+  fun `a plugin without a grant does not permit RD activation`() {
+    val graph = pluginGraph {
+      rdProduct("idea")
+      plugin("intellij.clion.radler") {
+        pluginId(RADLER)
+        content("cpp")
+      }
+      linkContentModuleDeps("cpp", CLIENT, BASE)
+    }
+    val error = validate(graph, "idea", compatiblePlugins = mapOf("idea" to listOf("intellij.clion.radler"))).single()
+    assertThat(error.context).isEqualTo("idea")
+    assertThat(error.unexpectedModules.keys).containsExactlyInAnyOrder(ContentModuleName(CLIENT), ContentModuleName(BASE))
+  }
+
+  @Test
   fun `CLion Classic reports a consumer outside Radler`() {
-    val error = validate(clionGraph(extraConsumer = true), "CLion").single()
-    assertThat(error.context).isEqualTo("CLion (Classic)")
+    val error = validate(clionGraph(), "CLion", specs = mapOf("CLion" to clionSpec(extraConsumer = true)), grants = RADLER_GRANT).single()
+    assertThat(error.context).isEqualTo("CLion (with $CLASSIC)")
     assertThat(error.unexpectedModules.keys).contains(ContentModuleName(CLIENT))
   }
 
   @Test
   fun `eager RD test frameworks activate the client in Classic`() {
-    val error = validate(clionGraph(), "CLion", testPlugins = mapOf("CLion" to listOf(clionTests(ModuleLoadingRuleValue.OPTIONAL)))).single()
-    assertThat(error.context).isEqualTo("CLion (Classic tests)")
+    val error = validate(
+      clionGraph(), "CLion",
+      specs = mapOf("CLion" to clionSpec()),
+      grants = RADLER_GRANT,
+      testPlugins = mapOf("CLion" to listOf(clionTests(ModuleLoadingRuleValue.OPTIONAL))),
+    ).single()
+    assertThat(error.context).isEqualTo("CLion (with $CLASSIC and $CLION_TESTS)")
     assertThat(error.unexpectedModules.keys).contains(ContentModuleName(CLIENT), ContentModuleName(BASE))
   }
 
   @Test
   fun `on demand RD test frameworks load only for enabled Nova tests`() {
-    assertThat(validate(clionGraph(), "CLion", testPlugins = mapOf("CLion" to listOf(clionTests(ModuleLoadingRuleValue.ON_DEMAND))))).isEmpty()
+    val testPlugins = mapOf("CLion" to listOf(clionTests(ModuleLoadingRuleValue.ON_DEMAND)))
+    assertThat(validate(clionGraph(), "CLion", specs = mapOf("CLion" to clionSpec()), grants = RADLER_GRANT, testPlugins = testPlugins)).isEmpty()
   }
 
-  private fun clionGraph(extraConsumer: Boolean = false): PluginGraph {
+  @Test
+  fun `test plugins without the opt-in are not checked`() {
+    val testPlugins = mapOf("CLion" to listOf(clionTests(ModuleLoadingRuleValue.OPTIONAL, checkModuleActivation = false)))
+    assertThat(validate(clionGraph(), "CLion", specs = mapOf("CLion" to clionSpec()), grants = RADLER_GRANT, testPlugins = testPlugins)).isEmpty()
+  }
+
+  private fun clionGraph(): PluginGraph {
     return pluginGraph {
       rdProduct("CLion")
       product("CLion") {
-        bundlesPlugin("org.jetbrains.plugins.clion.radler")
-        bundlesPlugin("com.intellij.cidr.lang")
-        if (extraConsumer) content("unexpected")
+        bundlesPlugin(RADLER)
+        bundlesPlugin(CLASSIC)
       }
-      plugin("org.jetbrains.plugins.clion.radler") { content("radler") }
-      plugin("com.intellij.cidr.lang") { content("classic") }
-      testPlugin("intellij.clion.dev.build.plugin")
+      plugin(RADLER) { content("radler") }
+      plugin(CLASSIC) { content("classic") }
+      testPlugin(CLION_TESTS)
       linkContentModuleDeps("radler", CLIENT, BASE)
       linkContentModuleDeps("rd.framework", CLIENT)
       linkContentModuleDeps("rider.framework", "rd.framework", CLIENT, BASE)
       linkContentModuleDeps("nova.tests", "radler", "rider.framework")
-      if (extraConsumer) linkContentModuleDeps("unexpected", CLIENT)
+      linkContentModuleDeps("unexpected", CLIENT)
     }
   }
 
-  private fun clionTests(loading: ModuleLoadingRuleValue): TestPluginSpec {
+  private fun clionSpec(extraConsumer: Boolean = false): ProductModulesContentSpec {
+    return productModules {
+      moduleSet(RD_SET)
+      exclusivePlugins(CLASSIC, RADLER)
+      if (extraConsumer) module("unexpected")
+    }
+  }
+
+  private fun clionTests(loading: ModuleLoadingRuleValue, checkModuleActivation: Boolean = true): TestPluginSpec {
     return TestPluginSpec(
-      pluginId = PluginId("intellij.clion.dev.build.plugin"),
+      pluginId = PluginId(CLION_TESTS),
       name = "CLion tests",
       pluginXmlPath = "plugin.xml",
       spec = productModules {
@@ -381,28 +470,39 @@ class RdClientModuleLoadingValidatorTest {
         module("rider.framework", loading = loading)
         module("nova.tests")
       },
+      checkModuleActivation = checkModuleActivation,
     )
   }
 
   private fun validate(
     graph: PluginGraph,
     vararg products: String,
+    specs: Map<String, ProductModulesContentSpec> = emptyMap(),
+    grants: Map<String, ModuleActivation> = emptyMap(),
     bundledPlugins: Map<String, List<String>> = emptyMap(),
     compatiblePlugins: Map<String, List<String>> = emptyMap(),
     testPlugins: Map<String, List<TestPluginSpec>> = emptyMap(),
-  ): List<RdClientModuleLoadingError> {
-    return SharedTaskOwner("RD client validation test").use { owner ->
+    productModeExcludedModules: Map<String, Set<String>> = emptyMap(),
+  ): List<RestrictedModuleActivationError> {
+    return SharedTaskOwner("Restricted module activation test").use { owner ->
       val model = testGenerationModel(graph, owner = owner)
-      val discovery = model.discovery.copy(products = products.map {
-        DiscoveredProduct(
-          it, ProductConfiguration(emptyList(), "test.Properties"), properties = null, spec = null, pluginXmlPath = null,
-          bundledPluginModules = bundledPlugins.get(it).orEmpty().map(::TargetName),
-        )
-      })
-      val config = model.config.copy(nonBundledPlugins = compatiblePlugins.mapValues { (_, plugins) -> plugins.mapTo(LinkedHashSet(), ::TargetName) })
-      val errors = runValidationRule(RdClientModuleLoadingValidator, model.copy(discovery = discovery, config = config, dslTestPluginsByProduct = testPlugins))
-      assertThat(errors).allMatch { it is RdClientModuleLoadingError }
-      errors.filterIsInstance<RdClientModuleLoadingError>()
+      val discovery = model.discovery.copy(
+        moduleSetsByLabel = mapOf(ModuleSetSourceLabels.COMMUNITY to listOf(RD_SET)),
+        products = products.map {
+          DiscoveredProduct(
+            it, ProductConfiguration(emptyList(), "test.Properties"), properties = null, spec = specs.get(it), pluginXmlPath = null,
+            bundledPluginModules = bundledPlugins.get(it).orEmpty().map(::TargetName),
+            productModeExcludedModules = productModeExcludedModules.get(it).orEmpty().mapTo(LinkedHashSet(), ::ContentModuleName),
+          )
+        },
+      )
+      val config = model.config.copy(
+        nonBundledPlugins = compatiblePlugins.mapValues { (_, plugins) -> plugins.mapTo(LinkedHashSet(), ::TargetName) },
+        pluginModuleActivations = grants.mapKeys { PluginId(it.key) },
+      )
+      val errors = runValidationRule(RestrictedModuleActivationValidator, model.copy(discovery = discovery, config = config, dslTestPluginsByProduct = testPlugins))
+      assertThat(errors).allMatch { it is RestrictedModuleActivationError }
+      errors.filterIsInstance<RestrictedModuleActivationError>()
     }
   }
 }
@@ -412,8 +512,24 @@ private fun TestPluginGraphBuilder.rdProduct(name: String) {
   moduleSet("rd.common") { RD_MODULES.forEach { module(it, ModuleLoadingRuleValue.ON_DEMAND) } }
 }
 
+private fun rdSpecWithConsumer(): ProductModulesContentSpec {
+  return productModules {
+    moduleActivation(RD_ACTIVATION)
+    moduleSet(RD_SET)
+    module("consumer")
+  }
+}
+
 private const val CLIENT = "intellij.rd.client"
 private const val BASE = "$CLIENT.base"
 private const val DEBUGGER = "$CLIENT.debugger"
 private const val INTERNAL = "$CLIENT.internal"
+private const val FUTURE = "intellij.future.restricted"
+private const val FRONTEND_SPLIT = "intellij.platform.frontend.split"
+private const val RADLER = "org.jetbrains.plugins.clion.radler"
+private const val CLASSIC = "com.intellij.cidr.lang"
+private const val CLION_TESTS = "intellij.clion.dev.build.plugin"
 private val RD_MODULES = listOf(CLIENT, BASE, DEBUGGER, INTERNAL)
+private val RD_SET = moduleSet("rd.common") { RD_MODULES.forEach { onDemandModule(it, restricted = true) } }
+private val RD_ACTIVATION = ModuleActivation.create(required = listOf(CLIENT, BASE), allowed = listOf(DEBUGGER, INTERNAL))
+private val RADLER_GRANT = mapOf(RADLER to RD_ACTIVATION)

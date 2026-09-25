@@ -5,7 +5,7 @@ import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode
 import com.intellij.execution.dashboard.actions.ExecutorAction
 import com.intellij.execution.dashboard.actions.ExecutorAction.isRunning
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.ExecutionDataKeys
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -84,5 +84,5 @@ private fun isAnythingRunningInSelection(targetNodes: List<RunDashboardRunConfig
 }
 
 private fun isContextualDescriptorNotTerminated(e: AnActionEvent): Boolean {
-  return e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR)?.processHandler?.isProcessTerminated == false
+  return e.getData(ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR)?.processHandler?.isProcessTerminated == false
 }

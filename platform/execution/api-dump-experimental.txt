@@ -30,6 +30,9 @@ a:com.intellij.execution.configurations.RunConfigurationBase
 - com.intellij.execution.configurations.TargetAwareRunProfile
 - com.intellij.execution.ui.FragmentedSettings
 - *:setOptionsFromConfigurationFile(com.intellij.openapi.components.BaseState):V
+c:com.intellij.execution.configurations.SimpleJavaParameters
+- com.intellij.execution.configurations.SimpleProgramParameters
+- *:getTargetDependentParameters():com.intellij.execution.configurations.JavaTargetDependentParameters
 *:com.intellij.execution.configurations.SyntheticConfigurationTypeProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getConfigurationTypes():java.util.Collection

@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ExecutionDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -112,11 +111,11 @@ public abstract class RunTab implements Disposable {
     myUi.getContentManager().addUiDataProvider(sink -> {
       sink.set(CommonDataKeys.PROJECT,  myProject);
       sink.set(KEY, RunTab.this);
-      sink.set(LangDataKeys.RUN_CONTENT_DESCRIPTOR, myRunContentDescriptor);
+      sink.set(ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR, myRunContentDescriptor);
       sink.set(SingleContentSupplier.KEY, getSupplier());
       if (myEnvironment != null) {
         sink.set(ExecutionDataKeys.EXECUTION_ENVIRONMENT, myEnvironment);
-        sink.set(LangDataKeys.RUN_PROFILE, myEnvironment.getRunProfile());
+        sink.set(ExecutionDataKeys.RUN_PROFILE, myEnvironment.getRunProfile());
       }
       if (myEnvironmentProxy != null) {
         sink.set(EXECUTION_ENVIRONMENT_PROXY, myEnvironmentProxy);

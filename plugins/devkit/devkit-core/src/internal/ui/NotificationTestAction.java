@@ -9,6 +9,8 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.notification.impl.NotificationSettings;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -117,6 +119,7 @@ final class NotificationTestAction extends AnAction implements DumbAware {
                         Content:
                         Actions:
                         Sticky
+                        PlaySound
                         --
                         """);
         }
@@ -136,6 +139,7 @@ final class NotificationTestAction extends AnAction implements DumbAware {
                         Title:
                         Content:
                         Content:
+                        PlaySound
                         --
                         """);
         }
@@ -231,6 +235,9 @@ final class NotificationTestAction extends AnAction implements DumbAware {
         else if (line.equals("Toolwindow")) {
           notification.setToolwindow(true);
         }
+        else if (line.equals("PlaySound")) {
+          notification.setPlaySound(true);
+        }
         else if (line.equals("RightCollapseActions")) {
           notification.myLeftActionsDirection = false;
         }
@@ -238,7 +245,16 @@ final class NotificationTestAction extends AnAction implements DumbAware {
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         for (NotificationInfo info : notifications) {
-          myMessageBus.syncPublisher(Notifications.TOPIC).notify(info.getNotification());
+          Notification n = info.getNotification();
+          NotificationsConfigurationImpl configuration = NotificationsConfigurationImpl.getInstanceImpl();
+          NotificationSettings settings = NotificationsConfigurationImpl.getSettings(n.getGroupId());
+          configuration.changeSettings(settings.withPlaySound(info.myPlaySound));
+          try {
+            myMessageBus.syncPublisher(Notifications.TOPIC).notify(n);
+          }
+          finally {
+            configuration.changeSettings(settings);
+          }
         }
       });
     }
@@ -259,6 +275,7 @@ final class NotificationTestAction extends AnAction implements DumbAware {
     private boolean mySuggestionType;
     private boolean myAddExtraAction;
     private boolean myImportantSuggestion;
+    private boolean myPlaySound;
 
     private Notification myNotification;
     private String myRemindLaterHandlerId;
@@ -363,6 +380,10 @@ final class NotificationTestAction extends AnAction implements DumbAware {
 
     public void setToolwindow(boolean toolwindow) {
       myToolwindow = toolwindow;
+    }
+
+    private void setPlaySound(boolean playSound) {
+      myPlaySound = playSound;
     }
 
     public void setType(@Nullable String type) {

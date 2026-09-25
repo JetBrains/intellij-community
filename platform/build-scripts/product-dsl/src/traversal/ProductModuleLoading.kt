@@ -23,10 +23,15 @@ import org.jetbrains.intellij.build.productLayout.deps.PluginDependencyPlanOutpu
 import org.jetbrains.intellij.build.productLayout.deps.TestPluginDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
 
-/** The active content modules and the reasons that exclude other candidates from a product. */
+/**
+ * The active content modules and the reasons that exclude other candidates from a product.
+ *
+ * @param pluginIds The plugins that take part in the configuration. A plugin stays in this set when the analysis excludes it.
+ */
 internal data class ProductModuleLoadingResult(
   @JvmField val activationPaths: Map<ContentModuleName, List<String>>,
   @JvmField val exclusions: Map<ContentModuleName, String>,
+  @JvmField val pluginIds: Set<PluginId> = emptySet(),
 )
 
 /** Computes activation from the product graph and the effective descriptor dependency plans. */
@@ -46,6 +51,8 @@ internal class ProductModuleLoading(
     additionalPlugins: List<TargetName> = emptyList(),
     disabledPluginIds: Set<PluginId> = emptySet(),
     testPlugins: List<TestPluginSpec> = emptyList(),
+    productModeId: String = "monolith",
+    productModeExcludedModules: Set<ContentModuleName> = emptySet(),
   ): ProductModuleLoadingResult {
     val content = spec?.let { buildContentBlocksAndChainMapping(it, collectModuleSetAliases = true) }
     val productAliases = if (content == null) emptySet() else collectAndValidateAliases(spec, content.aliasToSource).toSet()
@@ -58,6 +65,15 @@ internal class ProductModuleLoading(
       val pluginNodes = LinkedHashMap<PluginNode, Candidate>()
       val descriptorPlugins = LinkedHashMap<TargetName, Pair<Candidate, PluginContentInfo>>()
       val coreModules = LinkedHashMap<ContentModuleName, Candidate>()
+      val pluginIds = LinkedHashSet<PluginId>()
+
+      // `ModuleItem.determineLoadingRule` makes a module required when the product mode keeps its target.
+      fun effectiveLoading(loading: ModuleLoadingRuleValue, requiredIfAvailable: ContentModuleName?): ModuleLoadingRuleValue {
+        if (requiredIfAvailable == null || loading == ModuleLoadingRuleValue.REQUIRED || loading == ModuleLoadingRuleValue.EMBEDDED) {
+          return loading
+        }
+        return if (requiredIfAvailable in productModeExcludedModules) loading else ModuleLoadingRuleValue.REQUIRED
+      }
 
       fun addModule(name: ContentModuleName, loading: ModuleLoadingRuleValue, parent: Candidate?): Candidate {
         val candidate = Candidate(name.value, name, parent, loading)
@@ -102,11 +118,15 @@ internal class ProductModuleLoading(
         val candidate = Candidate("plugin ${plugin.name().value}", moduleName = null, parent = null, loading = loading)
         candidates.add(candidate)
         pluginNodes.put(plugin, candidate)
-        plugin.pluginIdOrNull?.let { plugins.getOrPut(it, ::ArrayList).add(candidate) }
+        plugin.pluginIdOrNull?.let {
+          plugins.getOrPut(it, ::ArrayList).add(candidate)
+          if (!plugin.isAlias) pluginIds.add(it)
+        }
         plugin.declaresAlias { alias ->
           alias.pluginIdOrNull?.let { plugins.getOrPut(it, ::ArrayList).add(candidate) }
         }
-        fun addContent(name: ContentModuleName, loading: ModuleLoadingRuleValue) {
+        fun addContent(name: ContentModuleName, declaredLoading: ModuleLoadingRuleValue, requiredIfAvailable: ContentModuleName?) {
+          val loading = effectiveLoading(declaredLoading, requiredIfAvailable)
           val content = addModule(name, loading, candidate)
           content.dependencies.add(Dependency(candidate.label, listOf(candidate)))
           if (loading == ModuleLoadingRuleValue.REQUIRED || loading == ModuleLoadingRuleValue.EMBEDDED) {
@@ -114,11 +134,16 @@ internal class ProductModuleLoading(
           }
         }
         if (testSpec == null) {
-          plugin.containsContent { module, loading -> addContent(module.name(), loading) }
+          val requiredIfAvailable = pluginLookup(plugin.name())?.contentModules.orEmpty()
+            .filter { it.requiredIfAvailable != null }
+            .associate { it.moduleId.contentName() to it.requiredIfAvailable }
+          plugin.containsContent { module, loading -> addContent(module.name(), loading, requiredIfAvailable.get(module.name())) }
         }
         else {
           for (block in buildContentBlocksAndChainMapping(testSpec.spec).contentBlocks) {
-            for (module in block.modules) addContent(module.contentName(), module.loading)
+            for (module in block.modules) {
+              addContent(module.contentName(), module.loading, module.requiredIfAvailable?.contentName())
+            }
           }
         }
       }
@@ -138,11 +163,12 @@ internal class ProductModuleLoading(
         val candidate = Candidate("plugin ${name.value}", null, null, ModuleLoadingRuleValue.REQUIRED)
         candidates.add(candidate)
         descriptorPlugins.put(name, candidate to info)
+        info.pluginId?.let(pluginIds::add)
         for (alias in listOfNotNull(info.pluginId) + info.pluginAliases) {
           plugins.getOrPut(alias, ::ArrayList).add(candidate)
         }
         for (module in info.contentModules) {
-          val loading = module.loadingMode ?: ModuleLoadingRuleValue.OPTIONAL
+          val loading = effectiveLoading(module.loadingMode ?: ModuleLoadingRuleValue.OPTIONAL, module.requiredIfAvailable)
           val child = addModule(module.moduleId.contentName(), loading, candidate)
           child.dependencies.add(Dependency(candidate.label, listOf(candidate)))
           if (loading == ModuleLoadingRuleValue.REQUIRED || loading == ModuleLoadingRuleValue.EMBEDDED) {
@@ -241,7 +267,13 @@ internal class ProductModuleLoading(
         }
       }
 
-      resolve(candidates, modules)
+      // `configureProductModeModules` excludes these modules at startup, before any dependency resolution.
+      for (candidate in candidates) {
+        if (candidate.moduleName in productModeExcludedModules) {
+          candidate.exclusion = "The '$productModeId' product mode excludes ${candidate.label}."
+        }
+      }
+      resolve(candidates, modules).copy(pluginIds = pluginIds)
     }
   }
 }

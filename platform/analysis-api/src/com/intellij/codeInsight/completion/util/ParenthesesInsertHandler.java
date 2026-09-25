@@ -154,13 +154,15 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
       }
     }
 
+    // Preserve the position selected by the handler: lightweight editors may move a right-greedy caret past the closing parenthesis.
+    final int caretInsideOffset = editor.getCaretModel().getOffset();
     document.insertString(context.getTailOffset(), getSpace(mySpaceBetweenParentheses) + myRightParenthesis);
     if (!putCaretInside) {
       editor.getCaretModel().moveToOffset(context.getTailOffset());
     }
     else if (!mySpaceBetweenParentheses) {
       final int rangeStart = context.getStartOffset();
-      final int rangeEnd = Math.max(editor.getCaretModel().getOffset(), context.getStartOffset());
+      final int rangeEnd = Math.max(caretInsideOffset, context.getStartOffset());
 
       TabOutScopesTracker.getInstance().registerScopeRange(editor, rangeStart, rangeEnd);
     }

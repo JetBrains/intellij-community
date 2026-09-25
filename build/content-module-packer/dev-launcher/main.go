@@ -2,8 +2,9 @@
 //
 // The launcher rule (`intellij_dev_launcher` in community/build/intellij_dev.bzl) bakes everything into
 // `<launcher>.launch.json` beside this executable: the Java runtime, the distribution config, the local home tool
-// and the JVM flags. The launcher reads nothing from the workspace. It links the distribution's local home, derives
-// the distribution's system properties the way `PreBuiltDevMain` does, changes to `BUILD_WORKSPACE_DIRECTORY`, and
+// and the JVM flags. The launcher reads no workspace file to decide a flag. It keeps the dev data outside the
+// workspace through the `out/dev-data` link (see devdata.go), links the distribution's local home, derives the
+// distribution's system properties the way `PreBuiltDevMain` does, changes to `BUILD_WORKSPACE_DIRECTORY`, and
 // replaces itself with the IDE's JVM, so the IDE runs with the launcher's process ID.
 package main
 
@@ -28,7 +29,8 @@ type launchManifest struct {
 	LocalHomeTool string   `json:"localHomeTool"`
 	BeforeRun     string   `json:"beforeRun,omitempty"`
 	JvmFlags      []string `json:"jvmFlags"`
-	// Home is the workspace-relative directory under which each launch links its local home.
+	// Home is the workspace-relative directory under which each launch links its local home. It is under the
+	// `out/dev-data` link, so the home is outside the workspace wherever [ensureDevData] makes the link.
 	Home string `json:"home"`
 }
 
@@ -67,6 +69,10 @@ func prepare(args []string, getenv func(string) string, errors io.Writer) (launc
 		return launch{}, err
 	}
 	workspace := getenv("BUILD_WORKSPACE_DIRECTORY")
+	if workspace != "" {
+		// Before linkLocalHome, which would create `out/dev-data` as a directory.
+		ensureDevData(workspace, getenv, errors)
+	}
 	expand := func(value string) string { return expandBraces(value, getenv) }
 
 	commandLine := wrapper.debugFlags

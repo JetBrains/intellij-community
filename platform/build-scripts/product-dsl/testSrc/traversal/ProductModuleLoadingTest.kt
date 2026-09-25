@@ -67,6 +67,49 @@ class ProductModuleLoadingTest {
   }
 
   @Test
+  fun `the product mode excludes a module and its consumers`() {
+    val graph = pluginGraph {
+      product("IDE") {
+        content("intellij.platform.frontend.split")
+        content("frontend.consumer")
+        content("on.demand", loading = ModuleLoadingRuleValue.ON_DEMAND)
+      }
+      linkContentModuleDeps("frontend.consumer", "intellij.platform.frontend.split", "on.demand")
+    }
+    assertThat(analyze(graph).activationPaths).containsKey(ContentModuleName("on.demand"))
+    val result = analyze(graph, productModeExcludedModules = setOf("intellij.platform.frontend.split"))
+    assertThat(result.activationPaths).isEmpty()
+    assertThat(result.exclusions.getValue(ContentModuleName("intellij.platform.frontend.split")))
+      .contains("The 'monolith' product mode excludes intellij.platform.frontend.split.")
+  }
+
+  @Test
+  fun `a required-if-available module is required only while the product mode keeps its target`() {
+    val graph = pluginGraph {
+      product("IDE") { bundlesPlugin("plugin") }
+      plugin("plugin") {
+        content("split.module")
+        content("other")
+      }
+      linkContentModuleDeps("split.module", "missing")
+    }
+    val info = PluginContentInfo(
+      pluginXmlPath = Path.of("plugin.xml"),
+      pluginXmlContent = "<idea-plugin/>",
+      pluginId = PluginId("plugin"),
+      contentModules = listOf(
+        ContentModuleInfo(PluginModuleId("split.module", "jetbrains"), ModuleLoadingRuleValue.OPTIONAL, ContentModuleName("split.target")),
+        ContentModuleInfo(PluginModuleId("other", "jetbrains"), ModuleLoadingRuleValue.OPTIONAL),
+      ),
+    )
+    val kept = analyze(graph, pluginDescriptors = mapOf("plugin" to info))
+    assertThat(kept.activationPaths).isEmpty()
+    assertThat(kept.pluginIds).containsExactly(PluginId("plugin"))
+    val excluded = analyze(graph, pluginDescriptors = mapOf("plugin" to info), productModeExcludedModules = setOf("split.target"))
+    assertThat(excluded.activationPaths.keys).containsExactly(ContentModuleName("other"))
+  }
+
+  @Test
   fun `the product applies loading overrides to a module set`() {
     val graph = pluginGraph {
       product("IDE") { includesModuleSet("shared") }
@@ -313,6 +356,7 @@ class ProductModuleLoadingTest {
     disabledPluginIds: Set<PluginId> = emptySet(),
     testPlugins: List<TestPluginSpec> = emptyList(),
     testPlans: List<TestPluginDependencyPlan> = emptyList(),
+    productModeExcludedModules: Set<String> = emptySet(),
   ): ProductModuleLoadingResult {
     return ProductModuleLoading(
       graph,
@@ -321,7 +365,14 @@ class ProductModuleLoadingTest {
       descriptorLookup = { descriptors.get(it.value) },
       pluginLookup = { pluginDescriptors.get(it.value) },
       testPluginPlans = TestPluginDependencyPlanOutput(testPlans),
-    ).analyze("IDE", spec, modularPlugins.map(::TargetName), disabledPluginIds, testPlugins)
+    ).analyze(
+      productName = "IDE",
+      spec = spec,
+      additionalPlugins = modularPlugins.map(::TargetName),
+      disabledPluginIds = disabledPluginIds,
+      testPlugins = testPlugins,
+      productModeExcludedModules = productModeExcludedModules.mapTo(LinkedHashSet(), ::ContentModuleName),
+    )
   }
 
   private fun descriptor(

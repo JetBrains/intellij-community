@@ -3,7 +3,7 @@ package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.execution.console.ConsoleExecuteAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.xdebugger.impl.actions.handlers.XEvaluateInConsoleFromEditorActionHandler;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ class EvaluateInConsoleFromTreeAction extends XAddToWatchesTreeAction {
   }
 
   private static @Nullable ConsoleExecuteAction getConsoleExecuteAction(@NotNull AnActionEvent e) {
-    return XEvaluateInConsoleFromEditorActionHandler.getConsoleExecuteAction(e.getData(LangDataKeys.CONSOLE_VIEW));
+    return XEvaluateInConsoleFromEditorActionHandler.getConsoleExecuteAction(e.getData(ExecutionDataKeys.CONSOLE_VIEW));
   }
 
   @Override

@@ -9,7 +9,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.openapi.application.ReadAction;
@@ -307,7 +307,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
   }
 
   private static @Nullable ConsoleViewImpl getConsoleView(@NotNull AnActionEvent e) {
-    return ObjectUtils.tryCast(e.getData(LangDataKeys.CONSOLE_VIEW), ConsoleViewImpl.class);
+    return ObjectUtils.tryCast(e.getData(ExecutionDataKeys.CONSOLE_VIEW), ConsoleViewImpl.class);
   }
 
   private static @NotNull BackgroundableActionLock createActionLock(@NotNull Project project, @NotNull ConsoleViewImpl consoleView) {

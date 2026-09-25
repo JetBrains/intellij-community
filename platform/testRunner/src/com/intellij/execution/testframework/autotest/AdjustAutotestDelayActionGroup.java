@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
@@ -32,7 +32,7 @@ public class AdjustAutotestDelayActionGroup extends ActionGroup {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    RunContentDescriptor descriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
+    RunContentDescriptor descriptor = e.getData(ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR);
     boolean visible = false;
     if (descriptor != null) {
       for (AnAction action : descriptor.getRestartActions()) {

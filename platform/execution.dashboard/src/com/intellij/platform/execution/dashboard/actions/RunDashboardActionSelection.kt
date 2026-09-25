@@ -9,7 +9,7 @@ import com.intellij.execution.dashboard.actions.RunDashboardGroupNode
 import com.intellij.execution.services.ServiceViewActionUtils
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.ExecutionDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.productMode.IdeProductMode.Companion.isMonolith
@@ -57,7 +57,7 @@ private fun getFallbackSelectionForEmbeddedBackendRunToolwindowActions(
   e: AnActionEvent,
   project: Project,
 ): JBIterable<RunDashboardRunConfigurationNode> {
-  val currentContentDescriptorId = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR)?.id ?: return JBIterable.empty()
+  val currentContentDescriptorId = e.getData(ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR)?.id ?: return JBIterable.empty()
 
   // Backend case with a non-split Run tool window where frontend data context serialization does not carry Service View selection.
   val maybeService = RunDashboardManager.getInstance(project).findService(currentContentDescriptorId)

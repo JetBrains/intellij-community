@@ -44,12 +44,23 @@ DEFAULT_JVM_FLAGS = [
     "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
 ]
 
+# The data directories of the IDE. `_runtime_jvm_flags` owns them, and a flag that states one would lose to its defaults.
+_LAUNCHER_DATA_PROPERTIES = ["idea.config.path", "idea.system.path", "idea.log.path"]
+
 def _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_path):
     """The flags an IDE needs to run, independent of how it was assembled.
 
     `$${...}` is a literal `${...}` the java stub expands at launch; `BUILD_WORKSPACE_DIRECTORY` is set by `bazel run`,
     so a launcher started any other way must export it itself.
+
+    The config and system directories are `out/dev-data/<name>/config` and `out/dev-data/<name>/system` unless
+    `config_path` and `system_path` say otherwise. On macOS the Go launcher makes `out/dev-data` a link to a directory
+    outside the workspace. `jvm_flags` must not state a data directory.
     """
+    for flag in jvm_flags:
+        for key in _LAUNCHER_DATA_PROPERTIES:
+            if flag.startswith("-D%s=" % key):
+                fail("%s: `%s` states a data directory, which the launcher owns; use `config_path` or `system_path`" % (name, flag))
 
     # Use provided paths or defaults based on target name
     effective_config_path = config_path if config_path else "$${BUILD_WORKSPACE_DIRECTORY}/out/dev-data/" + name + "/config"
@@ -250,8 +261,9 @@ intellij_dev_launcher = rule(
     doc = """Starts a composed dev distribution through the Go launcher, `bazel run //<package>:<name>`.
 
 The launcher reads `<name>.launch.json`, which this rule writes, links the distribution's local home under
-`$BUILD_WORKSPACE_DIRECTORY/<home>`, and replaces itself with the IDE's JVM in the workspace. It takes the java stub's
-wrapper options, so the IDE's Bazel plugin can debug it. See `community/build/content-module-packer/dev-launcher`.""",
+`$BUILD_WORKSPACE_DIRECTORY/<home>`, and replaces itself with the IDE's JVM in the workspace. On macOS it first makes
+`out/dev-data` a link to the dev-data root of the checkout. It takes the java stub's wrapper options, so the IDE's Bazel
+plugin can debug it. See `community/build/content-module-packer/dev-launcher`.""",
     implementation = _intellij_dev_launcher_impl,
     executable = True,
     fragments = ["java"],
@@ -265,7 +277,7 @@ wrapper options, so the IDE's Bazel plugin can debug it. See `community/build/co
         "data": attr.label_list(allow_files = True, doc = "Extra runfiles of the launcher."),
         "local_home_tool": attr.label(mandatory = True, executable = True, cfg = "target", doc = "The collector whose `local-home` links a local home."),
         "before_run": attr.label(executable = True, cfg = "target", doc = "An executable the launcher runs in the workspace before the IDE, and fails with."),
-        "home": attr.string(mandatory = True, doc = "The workspace-relative directory under which each launch links its home."),
+        "home": attr.string(mandatory = True, doc = "The workspace-relative directory under which each launch links its home, under `out/dev-data`."),
         "_launcher": attr.label(default = Label("//build/content-module-packer/dev-launcher"), executable = True, cfg = "target"),
         "_windows": attr.label(default = Label("@platforms//os:windows")),
     },
@@ -286,8 +298,9 @@ def intellij_dev_launcher_binary(
     """The Go launcher of a composed dev distribution, with the flags `intellij_dev_prebuilt_binary` gives its java stub.
 
     `dist` and `ide_config` are the distribution and its `intellij_dev_dist_config`. The home is linked under
-    `out/dev-data/<name>/homes`, one directory per launch, beside the launcher's config and system directories. With
-    `before_run_main_class`, a `java_binary` `<name>_before_run` runs that class over `before_run_runtime_deps` first.
+    `out/dev-data/<name>/homes`, one directory per launch, beside the launcher's config and system directories. On macOS
+    `out/dev-data` is a link to a directory outside the workspace. With `before_run_main_class`, a `java_binary`
+    `<name>_before_run` runs that class over `before_run_runtime_deps` first.
     """
     tags = ["manual"]
     before_run = None

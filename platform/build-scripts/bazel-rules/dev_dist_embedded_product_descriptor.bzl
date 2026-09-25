@@ -6,8 +6,9 @@ load(":content_module_jar.bzl", "library_entries")
 def dev_dist_embedded_product_descriptor_target_name(main_module, product = None):
     """Returns the target name for a plugin's embedded product descriptor.
 
-    The baseline product keeps the unsuffixed name. A divergent product appends `_<product>` so one package can hold
-    one helper per product that packs a CWM frontend of its own.
+    The baseline product keeps the unsuffixed name. The home of another class appends `_<product>`, so one package
+    holds one helper per class. A class is the products whose embedded descriptor has one text, and its home is its
+    first product. The other products of the class read the helper of the home.
     """
     name = main_module + "_dev_embedded_product_descriptor"
     return name if not product else name + "_" + product
@@ -98,8 +99,8 @@ def dev_dist_embedded_product_descriptor(
         **kwargs):
     """Declares one embedded product descriptor action.
 
-    `product` is the `dev-build.json` key of a divergent product. The baseline product omits it and keeps the unsuffixed
-    target name.
+    `product` is the `dev-build.json` key of the home of a class other than the baseline class. The baseline product
+    omits it and keeps the unsuffixed target name.
     """
     if not source:
         fail("dev_dist_embedded_product_descriptor requires a source")

@@ -68,7 +68,6 @@ class CustomAssetShimSource(
 data class ZipSource(
   @JvmField val file: Path,
   @JvmField val isPreSignedAndExtractedCandidate: Boolean = false,
-  @JvmField val optimizeConfigId: String? = null,
   @JvmField val distributionFileEntryProducer: DistributionFileEntryProducer?,
   @JvmField val moduleName: String?,
   override val filter: ((String) -> Boolean),

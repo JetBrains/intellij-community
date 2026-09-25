@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.components.service
@@ -28,6 +27,7 @@ import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunManager
 import com.intellij.execution.executors.DefaultDebugExecutor
+import com.intellij.openapi.actionSystem.ExecutionDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.ApplicationManager
@@ -307,7 +307,7 @@ private fun isPythonDebugTab(e: AnActionEvent): Boolean {
   // The header toolbar takes its data context from the selected tab, but a tab only publishes a run
   // profile when it was started from an execution environment, which a Jupyter or console session
   // was not. Those are recognized through the session instead: they run a pydevd-backed process.
-  if (e.getData(LangDataKeys.RUN_PROFILE) is AbstractPythonRunConfiguration<*>) return true
+  if (e.getData(ExecutionDataKeys.RUN_PROFILE) is AbstractPythonRunConfiguration<*>) return true
   val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return false
   val session = XDebuggerEntityConverter.getSession(sessionProxy) ?: return false
   return session.runProfile is AbstractPythonRunConfiguration<*> || session.debugProcess is PyDebugProcess

@@ -64,6 +64,8 @@ import java.nio.file.Path
  *
  * @param moduleId Plugin module id (e.g., "intellij.platform.vcs.impl" in the "jetbrains" namespace)
  * @param loading Optional loading mode (e.g., ModuleLoadingRule.EMBEDDED)
+ * @param restricted If true, the module can be active only in a product or with a plugin that allows it.
+ *   A [ModuleActivation] gives this permission. The `restrictedModuleActivationValidation` rule checks it.
  */
 @Serializable
 data class ContentModule(
@@ -71,6 +73,7 @@ data class ContentModule(
   @JvmField val loading: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL,
   @JvmField val requiredIfAvailable: PluginModuleId? = null,
   @Transient @JvmField val allowedMissingPluginIds: List<PluginId> = emptyList(),
+  @Transient @JvmField val restricted: Boolean = false,
 )
 
 internal fun ContentModule.contentName(): ContentModuleName = moduleId.contentName()
@@ -156,13 +159,16 @@ class ModuleSetBuilder {
 
   /**
    * Add a single module with ON_DEMAND loading.
+   *
+   * @param restricted If true, the module can be active only where a [ModuleActivation] allows it.
    */
-  fun onDemandModule(name: String, allowedMissingPluginIds: List<String> = emptyList()) {
+  fun onDemandModule(name: String, allowedMissingPluginIds: List<String> = emptyList(), restricted: Boolean = false) {
     modules.add(
       ContentModule(
         moduleId = PluginModuleId(name, PluginModuleId.DEFAULT_NAMESPACE),
         loading = ModuleLoadingRuleValue.ON_DEMAND,
         allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
+        restricted = restricted,
       )
     )
   }

@@ -135,12 +135,16 @@ private val posixExecutableFileAttribute = PosixFilePermissions.asFileAttribute(
   )
 )
 
-/** Forks one task per source archive into the group of the caller. */
+/**
+ * Forks one task per source archive into the group of the caller.
+ *
+ * The native files of a library go to `lib/<dir>/` of the distribution root, where `<dir>` is the value of
+ * `ProductProperties.presignedNativeLibs` for the library.
+ */
 internal fun TaskScope.packNativePresignedFiles(
   nativeFiles: Map<ZipSource, List<String>>,
   dryRun: Boolean,
   context: BuildContext,
-  toRelativePath: (String, String) -> String,
 ) {
   for ((source, paths) in nativeFiles) {
     val sourceFile = source.file
@@ -150,7 +154,6 @@ internal fun TaskScope.packNativePresignedFiles(
         paths = paths,
         dryRun = dryRun,
         context = context,
-        toRelativePath = toRelativePath,
       )
     }
   }
@@ -161,7 +164,6 @@ private fun unpackNativeLibraries(
   paths: List<String>,
   dryRun: Boolean,
   context: BuildContext,
-  toRelativePath: (String, String) -> String,
 ) {
   val signTool = context.proprietaryBuildTools.signTool
   val unsignedFiles = TreeMap<OsFamily, MutableList<Path>>()
@@ -172,6 +174,7 @@ private fun unpackNativeLibraries(
   val sourceFileName = sourceFile.name
   check(sourceFileName.startsWith("$libName-")) { "Unexpected source file name (should start with '$libName-'): $sourceFileName" }
   val libVersion = sourceFileName.removePrefix("$libName-").substringBeforeLast('.')
+  val libDir = "lib/${context.productProperties.presignedNativeLibs.getOrDefault(libName, libName)}"
 
   // we need to keep async-profiler agents for all platforms to support remote target profiling,
   // as a suitable agent is copied to a remote machine
@@ -230,7 +233,7 @@ private fun unpackNativeLibraries(
       context.addDistFile(
         DistFile(
           content = LocalDistFileContent(file = file, isExecutable = isExecutable),
-          relativePath = toRelativePath(libName, nativeLibraryRelativePath(libName = libName, arch = arch, fileName = fileName, path = path)),
+          relativePath = "$libDir/${nativeLibraryRelativePath(libName = libName, arch = arch, fileName = fileName, path = path)}",
           os = os.takeUnless { allPlatformsRequired },
           arch = arch.takeUnless { allPlatformsRequired },
         )

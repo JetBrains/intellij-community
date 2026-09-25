@@ -84,7 +84,6 @@ class JarPackager private constructor(
   private val outDir: Path,
   private val context: BuildContext,
   private val platformLayout: PlatformLayout?,
-  private val isRootDir: Boolean,
   @JvmField internal val moduleOutputPatcher: ModuleOutputPatcher,
 ) {
   private val assets = LinkedHashMap<Path, AssetDescriptor>()
@@ -95,7 +94,7 @@ class JarPackager private constructor(
 
   companion object {
     fun pack(includedModules: Collection<ModuleItem>, outputDir: Path, context: BuildContext) {
-      val packager = JarPackager(outDir = outputDir, context = context, platformLayout = null, isRootDir = false, moduleOutputPatcher = ModuleOutputPatcher())
+      val packager = JarPackager(outDir = outputDir, context = context, platformLayout = null, moduleOutputPatcher = ModuleOutputPatcher())
       packager.computeModuleSources(includedModules = includedModules, layout = null, searchableOptionSet = null, cachedDescriptorWriterProvider = null)
       buildJars(
         assets = packager.assets.values,
@@ -111,7 +110,6 @@ class JarPackager private constructor(
     fun pack(
       includedModules: Collection<ModuleItem>,
       outputDir: Path,
-      isRootDir: Boolean,
       isCodesignEnabled: Boolean = true,
       layout: BaseLayout,
       platformLayout: PlatformLayout?,
@@ -126,7 +124,6 @@ class JarPackager private constructor(
         outDir = outputDir,
         context = context,
         platformLayout = platformLayout,
-        isRootDir = isRootDir,
         moduleOutputPatcher = moduleOutputPatcher,
       )
       packager.computeModuleSources(
@@ -165,12 +162,7 @@ class JarPackager private constructor(
 
       return taskScope {
         if (buildAssetResult.sourceToNativeFiles.isNotEmpty()) {
-          packNativePresignedFiles(
-            nativeFiles = buildAssetResult.sourceToNativeFiles,
-            dryRun = dryRun,
-            context = context,
-            toRelativePath = { libName, fileName -> "lib/${context.productProperties.presignedNativeLibs.getOrDefault(libName, libName)}/$fileName" },
-          )
+          packNativePresignedFiles(nativeFiles = buildAssetResult.sourceToNativeFiles, dryRun = dryRun, context = context)
         }
 
         val list = mutableListOf<DistributionFileEntry>()
@@ -591,8 +583,6 @@ class JarPackager private constructor(
       sources.add(
         ZipSource(
           file = file,
-          isPreSignedAndExtractedCandidate = isRootDir && isJarPreSigned(file, context),
-          optimizeConfigId = libraryName.takeIf { isRootDir && libraryName == "jsvg" },
           distributionFileEntryProducer = {
             if (moduleName == null) {
               val data = projectLibraryData ?: throw IllegalStateException("Metadata not specified for $libraryName")
