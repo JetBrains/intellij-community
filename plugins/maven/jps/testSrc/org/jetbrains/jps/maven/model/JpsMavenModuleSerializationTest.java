@@ -1,5 +1,8 @@
 package org.jetbrains.jps.maven.model;
 
+import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.platform.bazel.runfiles.BazelLabel;
+import com.intellij.testFramework.common.BazelTestUtil;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsProjectData;
@@ -15,7 +18,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class JpsMavenModuleSerializationTest {
   @Test
   public void testLoadProject() {
-    JpsProjectData projectData = JpsProjectData.loadFromTestData("plugins/maven/jps/testData/compiler/classpathTest", getClass());
+    var testDataRoot = BazelTestUtil.isUnderBazelTest()
+                       ? BazelTestUtil.getFileFromBazelRuntime(BazelLabel.Companion.fromString("@community//plugins/maven/jps:testData"))
+                       : PathManagerEx.findFileUnderCommunityHome("plugins/maven/jps/testData").toPath();
+    JpsProjectData projectData =
+      JpsProjectData.loadFromTestData(testDataRoot.resolve("compiler/classpathTest").toAbsolutePath().toString(), getClass());
     List<JpsModule> modules = projectData.getProject().getModules();
     assertEquals(3, modules.size());
     JpsModule dep = modules.get(0);

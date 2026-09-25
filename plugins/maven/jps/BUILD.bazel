@@ -1,14 +1,29 @@
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
+
 jps_test(
     name = "jps-tests_test",
     timeout = "short",
+    data = [
+        ":testData",
+        BAZEL_TARGETS_JSON,
+    ],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
+    ],
     tags = ["community-compiler-test"],
     runtime_deps = [":jps-tests_test_lib"],
 )
 ### skip generation section `test intellij.maven.jps.tests`
+
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+)
 
 ### auto-generated section `dev intellij.maven.jps` start
 content_module_jar(module = ":jps")
@@ -124,6 +139,8 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/bazel-runfiles",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
         "//jps/jps-builders:build",
         "//jps/jps-builders:build_test_lib",
         "//jps/model-serialization",
