@@ -9,6 +9,7 @@ android/adt-testutils
 android/adt-ui
 android/adt-ui-compose
 android/adt-ui-model
+android/adt-ui/src/test
 android/analytics
 android/android
 android/android-adb

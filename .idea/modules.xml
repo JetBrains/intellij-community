@@ -62,7 +62,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/adt-ui-compose/intellij.android.adt.ui.compose.tests.iml" filepath="$PROJECT_DIR$/android/adt-ui-compose/intellij.android.adt.ui.compose.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/adt-ui-model/intellij.android.adt.ui.model.iml" filepath="$PROJECT_DIR$/android/adt-ui-model/intellij.android.adt.ui.model.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/adt-ui-model/intellij.android.adt.ui.model.tests.iml" filepath="$PROJECT_DIR$/android/adt-ui-model/intellij.android.adt.ui.model.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/adt-ui/intellij.android.adt.ui.tests.iml" filepath="$PROJECT_DIR$/android/adt-ui/intellij.android.adt.ui.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/adt-ui/src/test/intellij.android.adt.ui.tests.iml" filepath="$PROJECT_DIR$/android/adt-ui/src/test/intellij.android.adt.ui.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/analytics/intellij.android.analytics.iml" filepath="$PROJECT_DIR$/android/analytics/intellij.android.analytics.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/analytics/intellij.android.analytics.tests.iml" filepath="$PROJECT_DIR$/android/analytics/intellij.android.analytics.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-material/intellij.android.android-material.iml" filepath="$PROJECT_DIR$/android/android-material/intellij.android.android-material.iml" />
