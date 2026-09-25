@@ -1,10 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.plugins
 
+import com.intellij.platform.bazel.runfiles.BazelRunfiles
 import com.intellij.platform.buildScripts.searchableOptionsInjector.SearchableOptionsEntry
 import com.intellij.platform.buildScripts.searchableOptionsInjector.SearchableOptionsInjection
 import com.intellij.platform.buildScripts.searchableOptionsInjector.injectSearchableOptions
 import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
@@ -71,23 +74,30 @@ internal fun buildPluginsByBazel(
 ): List<PluginBuildResult> {
   if (plugins.isEmpty()) return emptyList()
   val pluginsTargets = plugins.map { it.bazelTarget }
-  spanBuilder("build plugins by Bazel")
-    .setAttribute(AttributeKey.stringArrayKey("targets"), pluginsTargets)
-    .use {
-      val explicitBuildNumber = buildContext.options.buildNumber
-      val additionalArguments = buildList {
-        if (explicitBuildNumber != null) {
-          add("--ide_build_number=$explicitBuildNumber")
-          // --ij_plugin_version should be passed explicitly only if it cannot be computed automatically to avoid discarding Bazel analysis cache
-          add("--ij_plugin_version=${buildContext.pluginBuildNumber}")
+  if (!BazelRunfiles.isRunningFromBazel) {
+    spanBuilder("build plugins by Bazel")
+      .setAttribute(AttributeKey.stringArrayKey("targets"), pluginsTargets)
+      .use {
+        val explicitBuildNumber = buildContext.options.buildNumber
+        val additionalArguments = buildList {
+          if (explicitBuildNumber != null) {
+            add("--ide_build_number=$explicitBuildNumber")
+            // --ij_plugin_version should be passed explicitly only if it cannot be computed automatically to avoid discarding Bazel analysis cache
+            add("--ij_plugin_version=${buildContext.pluginBuildNumber}")
+          }
+          add("--ide_stability_level=${computeIdeStabilityLevel(buildContext)}")
+          if (isIncludePluginsInBuiltinCustomRepository(buildContext)) {
+            add("--ij_plugin_force_exact_build_compatibility")
+          }
         }
-        add("--ide_stability_level=${computeIdeStabilityLevel(buildContext)}")
-        if (isIncludePluginsInBuiltinCustomRepository(buildContext)) {
-          add("--ij_plugin_force_exact_build_compatibility")
-        }
+        runBazelBuild(pluginsTargets, additionalArguments, buildContext)
       }
-      runBazelBuild(pluginsTargets, additionalArguments, buildContext)
-    }
+  }
+  else {
+    //if build scripts are working inside Bazel, it's assumed that plugin targets are specified as dependencies and already built
+    Span.current().addEvent("Skipping building plugins by Bazel because the build process is started inside Bazel",
+                            Attributes.of(AttributeKey.stringArrayKey("targets"), pluginsTargets))
+  }
 
   val buildResults = spanBuilder("copy plugins built by Bazel").use {
     plugins.mapConcurrent { plugin ->
