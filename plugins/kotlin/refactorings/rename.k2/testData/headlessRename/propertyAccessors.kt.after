@@ -1,0 +1,12 @@
+// FILE: Counter.kt
+// NEW_NAME: count
+class Counter {
+    var count: Int = 0
+}
+
+// FILE: Caller.java
+public class Caller {
+  int read(Counter counter) {
+    return counter.getCount();
+  }
+}

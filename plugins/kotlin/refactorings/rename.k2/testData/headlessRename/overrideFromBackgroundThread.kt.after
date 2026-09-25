@@ -1,0 +1,8 @@
+// NEW_NAME: execute
+open class Task {
+    open fun execute() {}
+}
+
+class Chore : Task() {
+    override fun execute() {}
+}

@@ -1,0 +1,8 @@
+// NEW_NAME: count
+open class Base {
+    open val count: Int = 0
+}
+
+class Impl : Base() {
+    override val count: Int = 1
+}

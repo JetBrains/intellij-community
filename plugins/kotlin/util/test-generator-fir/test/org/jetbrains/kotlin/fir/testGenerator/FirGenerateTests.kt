@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.fir.testGenerator
 
@@ -121,6 +121,7 @@ import org.jetbrains.kotlin.idea.highlighter.AbstractUsageHighlightingTest
 import org.jetbrains.kotlin.idea.k2.copyright.AbstractFirUpdateKotlinCopyrightTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirMultiModuleRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
+import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2HeadlessRenameProcessorTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameTest
 import org.jetbrains.kotlin.idea.k2.resolve.AbstractLombokReferenceResolveWithCompilerPluginWithoutIdePluginTest
 import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenInspectionTest
@@ -634,6 +635,9 @@ private fun assembleWorkspace(): TWorkspace = workspace() {
         }
         testClass<AbstractFirMultiModuleRenameTest> {
             model("renameMultiModule", pattern = TEST, flatten = true)
+        }
+        testClass<AbstractK2HeadlessRenameProcessorTest> {
+            model("headlessRename")
         }
     }
 

@@ -1,0 +1,8 @@
+// NEW_NAME: execute
+open class Runner {
+    open fun execute() {}
+}
+
+class Worker : Runner() {
+    override fun execute() {}
+}
