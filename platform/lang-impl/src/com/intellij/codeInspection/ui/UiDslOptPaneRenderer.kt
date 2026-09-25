@@ -75,7 +75,6 @@ import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.applyIf
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI.PanelFactory
 import com.intellij.util.ui.UIUtil.setEnabledRecursively
 import org.jetbrains.annotations.ApiStatus
 import java.awt.EventQueue
@@ -454,16 +453,12 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
             .disableUpDownActions()
             .setPreferredSize(InspectionOptionsPanel.getMinimumListSize())
             .createPanel()
-          val label = component.label.label()
-          cell(when {
-                 label.isBlank() -> panel
-                 else -> PanelFactory.panel(panel)
-                   .withLabel(label)
-                   .moveLabelOnTop()
-                   .resizeY(true)
-                   .createPanel()
-               })
-            .description(component.description())
+          cell(panel).apply {
+            val label = component.label.label()
+            if (label.isNotBlank()) {
+              label(label, LabelPosition.TOP)
+            }
+          }.description(component.description())
             .align(Align.FILL)
         }
 

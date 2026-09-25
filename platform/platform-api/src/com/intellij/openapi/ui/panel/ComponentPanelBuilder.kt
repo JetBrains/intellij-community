@@ -107,6 +107,7 @@ open class ComponentPanelBuilder(private val myComponent: JComponent) : GridBagP
    * @param labelText text for the label.
    * @return `this`
    */
+  @Deprecated("Use Kotlin UI DSL")
   open fun withLabel(labelText: @NlsContexts.Label String): ComponentPanelBuilder {
     myLabelText = labelText
     return this
