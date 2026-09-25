@@ -31,6 +31,7 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.highlighter.BeforeResolveHighlightingExtension"/>
     <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.highlighter.AnnotationsHighlightingExtension"/>
+    <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.highlighter.NamedArgumentsHighlightingExtension"/>
   </extensions>
 
 </idea-plugin>

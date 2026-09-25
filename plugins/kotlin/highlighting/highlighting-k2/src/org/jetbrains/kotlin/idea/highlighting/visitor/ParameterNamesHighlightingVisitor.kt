@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExtension
+import org.jetbrains.kotlin.idea.base.highlighting.NamedArgumentsHighlightingRefinement
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.idea.highlighter.visitor.AbstractHighlightingVisitor
@@ -81,7 +82,8 @@ internal class ParameterNamesHighlightingVisitor(
     }
 }
 
-internal class ParameterNamesHighlightingExtension : KotlinAbstractSemanticHighlightingVisitor(), BeforeResolveHighlightingExtension {
+internal class ParameterNamesHighlightingExtension : KotlinAbstractSemanticHighlightingVisitor(), BeforeResolveHighlightingExtension,
+    NamedArgumentsHighlightingRefinement {
     override fun createVisitor(holder: HighlightInfoHolder): AbstractHighlightingVisitor =
         ParameterNamesHighlightingVisitor(holder)
 
