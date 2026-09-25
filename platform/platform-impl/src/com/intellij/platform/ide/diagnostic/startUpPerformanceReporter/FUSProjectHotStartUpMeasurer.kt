@@ -41,6 +41,8 @@ import it.unimi.dsi.fastutil.ints.IntSet
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -66,7 +68,7 @@ object FUSProjectHotStartUpMeasurer {
   private val counter = AtomicInteger(0)
   private val handlingStarted = AtomicBoolean(false)
 
-  private data class ProjectId(val projectOrder: Int) {
+  internal data class ProjectId(val projectOrder: Int) {
     constructor() : this(counter.incrementAndGet())
   }
 
@@ -174,7 +176,7 @@ object FUSProjectHotStartUpMeasurer {
     channel.trySend(Event.SplashBecameVisibleEvent())
   }
 
-  fun isReopenStatEnabled(): Boolean {
+  fun isReopenAndWelcomeScreenStatEnabled(): Boolean {
     if (AppMode.isMonolith()) return true
     if (isRemDevTestWorkaround()) return true
     return false
@@ -187,8 +189,9 @@ object FUSProjectHotStartUpMeasurer {
    */
   private fun isRemDevTestWorkaround(): Boolean = PlatformUtils.isJetBrainsClient() && ApplicationManagerEx.isInIntegrationTest()
 
-  fun getStartUpContextElementIntoIdeStarter(close: Boolean): CoroutineContext.Element? {
-    if (close || !isReopenStatEnabled()) {
+  fun getStartUpContextElementIntoIdeStarter(closeExternal: Boolean): CoroutineContext.Element? {
+    val close = closeExternal || !isReopenAndWelcomeScreenStatEnabled()
+    if (close) {
       statsIsWritten = true
       channel.close()
       return null
@@ -349,6 +352,7 @@ object FUSProjectHotStartUpMeasurer {
 
   fun reportStarterUsed() {
     reportViolation(Violation.ApplicationStarter)
+    WelcomeScreenCollector.close()
   }
 
   fun frameBecameVisible() {
@@ -461,16 +465,27 @@ object FUSProjectHotStartUpMeasurer {
     if (!handlingStarted.compareAndSet(false, true)) return
 
     withContext(Dispatchers.IO) {
-      try {
-        //ensures non-thread-safe structures work correctly on different threads
-        Mutex().withLock {
-          doHandleStatisticEvents()
+      supervisorScope {
+        launch {
+          startWritingReopenProjectStatistics()
+        }
+        launch {
+          WelcomeScreenCollector.startWritingStatistics()
         }
       }
-      finally {
-        statsIsWritten = true
-        channel.close()
+    }
+  }
+
+  private suspend fun startWritingReopenProjectStatistics() {
+    try {
+      //ensures non-thread-safe structures work correctly on different threads
+      Mutex().withLock {
+        doHandleStatisticEvents()
       }
+    }
+    finally {
+      statsIsWritten = true
+      channel.close()
     }
   }
 
@@ -526,12 +541,11 @@ object FUSProjectHotStartUpMeasurer {
         is Event.WelcomeScreenEvent -> {
           val welcomeScreedDurationForFUS = getDurationFromStart(event.time, reportedFirstUiShownEvent)
           if (splashBecameVisibleEvent == null) {
-            WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreedDurationForFUS), SPLASH_SCREEN_WAS_SHOWN.with(false))
+            WelcomeScreenCollector.reportOldWelcomeScreenEvent(welcomeScreedDurationForFUS, null)
           }
           else {
             val splashScreenFUSDuration = getDurationFromStart(splashBecameVisibleEvent.time, reportedFirstUiShownEvent)
-            WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreedDurationForFUS), SPLASH_SCREEN_WAS_SHOWN.with(true),
-                                     SPLASH_SCREEN_VISIBLE_DURATION.with(splashScreenFUSDuration))
+            WelcomeScreenCollector.reportOldWelcomeScreenEvent(welcomeScreedDurationForFUS, splashScreenFUSDuration)
           }
           reportViolation(Violation.WelcomeScreenShown, event.time, ideStarterStartedEvent, reportedFirstUiShownEvent)
           throw CancellationException()
@@ -735,20 +749,6 @@ object FUSProjectHotStartUpMeasurer {
   }
 }
 
-private val WELCOME_SCREEN_GROUP = EventLogGroup("welcome.screen.startup.performance", 1)
-
-private val SPLASH_SCREEN_WAS_SHOWN = EventFields.Boolean("splash_screen_was_shown")
-private val SPLASH_SCREEN_VISIBLE_DURATION = createDurationField(DurationUnit.MILLISECONDS, "splash_screen_became_visible_duration_ms")
-private val DURATION = createDurationField(DurationUnit.MILLISECONDS, "duration_ms")
-private val WELCOME_SCREEN_EVENT = WELCOME_SCREEN_GROUP.registerVarargEvent(
-  "welcome.screen.shown",
-  DURATION, SPLASH_SCREEN_WAS_SHOWN, SPLASH_SCREEN_VISIBLE_DURATION,
-)
-
-internal class WelcomeScreenPerformanceCollector : CounterUsagesCollector() {
-  override fun getGroup(): EventLogGroup = WELCOME_SCREEN_GROUP
-}
-
 private val GROUP = EventLogGroup("reopen.project.startup.performance", 3)
 
 private enum class UIResponseType {
@@ -756,6 +756,7 @@ private enum class UIResponseType {
   Frame,
 }
 
+private val DURATION = createDurationField(DurationUnit.MILLISECONDS, "duration_ms")
 private val UI_RESPONSE_TYPE = EventFields.Enum("type", UIResponseType::class.java)
 private val FIRST_UI_SHOWN_EVENT: EventId2<Duration, UIResponseType> = GROUP.registerEvent(
   "first.ui.shown",
