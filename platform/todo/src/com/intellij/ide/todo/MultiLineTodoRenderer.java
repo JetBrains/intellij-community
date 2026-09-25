@@ -2,7 +2,7 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.todo.nodes.TodoItemNode;
+import com.intellij.ide.todo.nodes.LeafTodoItemNode;
 import com.intellij.ui.HighlightableCellRenderer;
 import com.intellij.ui.HighlightedRegion;
 import com.intellij.usageView.UsageTreeColors;
@@ -48,7 +48,7 @@ public final class MultiLineTodoRenderer extends JPanel implements TreeCellRende
                                                 boolean leaf,
                                                 int row,
                                                 boolean hasFocus) {
-    TodoItemNode node = (TodoItemNode)((DefaultMutableTreeNode)value).getUserObject();
+    var node = (LeafTodoItemNode)((DefaultMutableTreeNode)value).getUserObject();
     String text = value.toString();
     int lineNumPos = text.indexOf(' ');
     int contentStartPos = (lineNumPos >= 0 && lineNumPos < (text.length() - 1)) ? lineNumPos + 1 : 0;

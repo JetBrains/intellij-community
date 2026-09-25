@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
+import com.intellij.ide.todo.nodes.LeafTodoItemNode;
 import com.intellij.ide.todo.nodes.SummaryNode;
-import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ui.HighlightableCellRenderer;
@@ -41,7 +41,7 @@ final class TodoCompositeRenderer implements TreeCellRenderer {
       myNodeRenderer.setIcon(null);
       result = myNodeRenderer;
     }
-    else if (userObject instanceof TodoItemNode && !((TodoItemNode)userObject).getAdditionalLines().isEmpty()) {
+    else if (userObject instanceof LeafTodoItemNode node && !node.getAdditionalLines().isEmpty()) {
       myMultiLineRenderer.getTreeCellRendererComponent(tree, obj, selected, expanded, leaf, row, hasFocus);
       result = myMultiLineRenderer;
     }

@@ -5,6 +5,8 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.rpc.util.TextRangeDto
 import com.intellij.ide.todo.HighlightedRegionProvider
 import com.intellij.ide.todo.TodoTreeBuilder
+import com.intellij.ide.todo.nodes.LeafTodoItemNode.AdditionalTodoLine
+import com.intellij.ide.todo.rpc.TodoAdditionalLine
 import com.intellij.ide.ui.SerializableTextChunk
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -22,13 +24,14 @@ class TodoRemoteItemNode(
   project: Project,
   value: Value,
   builder: TodoTreeBuilder
-) : BaseToDoNode<TodoRemoteItemNode.Value>(project, value, builder), LeafTodoItemNode, HighlightedRegionProvider {
+) : BaseToDoNode<TodoRemoteItemNode.Value>(project, value, builder), LeafTodoItemNode {
 
   data class Value(
     val file: VirtualFile,
     val range: TextRangeDto,
     val line: Int,
     val presentation: List<SerializableTextChunk>,
+    val additionalLines: List<TodoAdditionalLine> = emptyList(),
   )
 
   private fun checkValue() : Value {
@@ -50,6 +53,8 @@ class TodoRemoteItemNode(
 
   override fun getHighlightedRegions(): List<HighlightedRegion> = (presentation as TodoItemNodePresentationData).highlightedRegions
 
+  override fun getAdditionalLines(): List<HighlightedRegionProvider> = (presentation as TodoItemNodePresentationData).additionalLines
+
   override fun getFileCount(`val`: Value?): Int { return 1 }
 
   override fun getTodoItemCount(`val`: Value?): Int { return 1 }
@@ -59,6 +64,7 @@ class TodoRemoteItemNode(
   override fun update(presentation: PresentationData) {
     val data = presentation as TodoItemNodePresentationData
     data.highlightedRegions.clear()
+    data.additionalLines.clear()
     val v = value ?: return
 
     val prefix = "${v.line + 1} "
@@ -68,13 +74,20 @@ class TodoRemoteItemNode(
       HighlightedRegion(0, prefix.length, UsageTreeColors.NUMBER_OF_USAGES_ATTRIBUTES.toTextAttributes())
     )
 
-    var offset = prefix.length
-    for (chunk in v.presentation) {
+    data.highlightedRegions.addAll(collectHighlightedRegions(v.presentation, prefix.length))
+    for ((chunks) in v.additionalLines) {
+      data.additionalLines.add(AdditionalTodoLine(chunks.joinToString("") { it.text }, collectHighlightedRegions(chunks)))
+    }
+  }
+
+  private fun collectHighlightedRegions(chunks: List<SerializableTextChunk>, startOffset: Int = 0): List<HighlightedRegion> = buildList {
+    var offset = startOffset
+    for (chunk in chunks) {
       if (chunk.foregroundColorId != null ||
           chunk.fontType != Font.PLAIN ||
           chunk.effectType != null ||
           chunk.effectColor != null) {
-        data.highlightedRegions.add(
+        add(
           HighlightedRegion(offset, offset + chunk.text.length, chunk.toTextChunk().attributes)
         )
       }

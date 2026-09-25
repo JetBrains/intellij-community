@@ -14,4 +14,12 @@ data class TodoResult(
   val fileId: VirtualFileId,
   val line: Int,
   val range: TextRangeDto,
+  val additionalLines: List<TodoAdditionalLine> = emptyList(),
+)
+
+@ApiStatus.Internal
+@Serializable
+data class TodoAdditionalLine(
+  val presentation: List<SerializableTextChunk>,
+  val range: TextRangeDto,
 )

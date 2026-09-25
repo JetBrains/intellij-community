@@ -52,7 +52,7 @@ class TodoRemoteFileNode(
       results.map { result ->
         TodoRemoteItemNode(
           project,
-          TodoRemoteItemNode.Value(file, result.range, result.line, result.presentation),
+          TodoRemoteItemNode.Value(file, result.range, result.line, result.presentation, result.additionalLines),
           builder,
         )
       }

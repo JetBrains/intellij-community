@@ -3,6 +3,7 @@ package com.intellij.platform.todo.backend.model
 
 import com.intellij.ide.rpc.util.toRpc
 import com.intellij.ide.todo.TodoFilter
+import com.intellij.ide.todo.rpc.TodoAdditionalLine
 import com.intellij.ide.todo.rpc.TodoFileResult
 import com.intellij.ide.todo.rpc.TodoResult
 import com.intellij.ide.ui.SerializableTextChunk
@@ -80,6 +81,10 @@ object TodoFileResultBuilder {
           fileId = virtualFile.rpcId(),
           line = line,
           range = todoItem.textRange.toRpc(),
+          additionalLines = if (document != null) {
+            todoItem.additionalTextRanges.map { TodoAdditionalLine(buildPreviewChunks(document, todoItem, it), it.toRpc()) }
+          }
+          else emptyList(),
         )
       }
   }

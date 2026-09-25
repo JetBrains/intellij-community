@@ -223,27 +223,8 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
     return 5;
   }
 
+  @Override
   public @NotNull List<HighlightedRegionProvider> getAdditionalLines() {
     return Collections.unmodifiableList(((TodoItemNodePresentationData)getPresentation()).getAdditionalLines());
-  }
-
-  private static final class AdditionalTodoLine implements HighlightedRegionProvider {
-    private final String myText;
-    private final List<HighlightedRegion> myHighlights;
-
-    private AdditionalTodoLine(String text, List<HighlightedRegion> highlights) {
-      myText = text;
-      myHighlights = highlights;
-    }
-
-    @Override
-    public Iterable<HighlightedRegion> getHighlightedRegions() {
-      return myHighlights;
-    }
-
-    @Override
-    public String toString() {
-      return myText;
-    }
   }
 }
