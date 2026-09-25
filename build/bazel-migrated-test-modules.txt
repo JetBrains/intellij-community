@@ -56,6 +56,7 @@ intellij.java.typeMigration.tests
 intellij.java.ui.tests
 intellij.javaFX.community.tests
 intellij.javaFX.tests
+intellij.javaee.appServers.weblogic.jps.tests
 intellij.json.networknt.wrapper.tests
 intellij.json.tests
 intellij.jsonpath.tests
