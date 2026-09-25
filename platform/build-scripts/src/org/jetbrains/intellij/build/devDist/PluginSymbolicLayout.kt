@@ -89,21 +89,12 @@ data class PluginSymbolicNativeOccurrence(
   @JvmField val ordinal: Int,
 )
 
-/** A native requirement derived before replacement and bound to the original jar context. No archive has been opened. */
+/** A native requirement derived at one source occurrence of the original jar. No archive has been opened. */
 @ApiStatus.Internal
 data class PluginSymbolicNativeUse(
   @JvmField val occurrence: PluginSymbolicNativeOccurrence,
   @JvmField val handling: PluginSymbolicNativeHandling,
   @JvmField val distributionPrefix: String?,
-  @JvmField val preparationKeys: List<String>,
-  @JvmField val modelSignature: String,
-)
-
-/** Binds one occurrence to an existing effect. Its signature must match the derived requirement, including source filters. */
-@ApiStatus.Internal
-data class PluginSymbolicNativeBinding(
-  @JvmField val effectKey: String,
-  @JvmField val requirementSignature: String,
 )
 
 /**
@@ -113,7 +104,6 @@ data class PluginSymbolicNativeBinding(
  * [modulePatches] gives the final patch order, including the descriptor, after every declared patcher runs.
  * [preparedSourceManifests] is keyed by prepared output ID and records original counts and concrete execution policies.
  * A descriptor callback uses `descriptor`; scrambling reports a gap rather than an unsafe replacement.
- * [nativeBindings] selects occurrence-specific effects. Native effects must consume any preceding generic or Java-filter outputs.
  */
 @ApiStatus.Internal
 data class PluginSymbolicPreparationFacts(
@@ -121,7 +111,6 @@ data class PluginSymbolicPreparationFacts(
   @JvmField val modulePatches: Map<String, List<JarSourceRecipe>> = emptyMap(),
   @JvmField val dependencies: List<PluginPackingPreparation> = emptyList(),
   @JvmField val preparedSourceManifests: Map<String, PluginSymbolicPreparedSourceManifest> = emptyMap(),
-  @JvmField val nativeBindings: Map<PluginSymbolicNativeOccurrence, PluginSymbolicNativeBinding> = emptyMap(),
   /** Declared assets that need no Kotlin preparation. Keys use the same layout slots as [effects]. */
   @JvmField val declaredAssets: Map<String, List<PluginPackingAsset>> = emptyMap(),
   /** Selected layout callback slots that intentionally contribute nothing to this development variant. */
@@ -143,7 +132,6 @@ class PluginSymbolicLayout internal constructor(
   @JvmField val preparations: List<PluginPackingPreparation>,
   @JvmField val preparationRoots: List<String>,
   @JvmField val gaps: List<PluginSymbolicLayoutGap>,
-  @JvmField val nativeRequirements: List<PluginSymbolicNativeUse> = emptyList(),
 ) {
   /**
    * The plan file content and the reuse decision. [artifacts] are the jars the plugin may reuse; the result names the

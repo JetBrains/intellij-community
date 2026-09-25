@@ -36,12 +36,7 @@ func mustReadPlan(t *testing.T, text string) *File {
 
 // plan wraps assets and the optional sections into one neutral plan file text.
 func plan(version int, assets string, sections ...string) string {
-	return variantPlan(version, "", assets, sections...)
-}
-
-// variantPlan is plan for one platform record, the shape a plan with a native-select operation has.
-func variantPlan(version int, variant, assets string, sections ...string) string {
-	text := `{"version": ` + itoa(version) + `, "plugin": "demo", "variant": "` + variant + `", "layoutSignature": "signature", "assets": [` + assets + `]`
+	text := `{"version": ` + itoa(version) + `, "plugin": "demo", "variant": "", "layoutSignature": "signature", "assets": [` + assets + `]`
 	for _, section := range sections {
 		text += ", " + section
 	}
@@ -111,15 +106,10 @@ func TestReadRefusesMalformedForms(t *testing.T) {
 		"a library source with an expansion": plan(1, `{"destination": "lib/x.jar", "recipe": {"sources": [{"input": "l", "kind": "library", "filter": "library-v1", "expansion": ["l/a.jar"]}]}}`),
 		"a prepared manifest off a prepared source": plan(1, `{"destination": "lib/x.jar", "recipe": {"sources": [{"input": "m", "kind": "module", "filter": "module-v1",
 			"preparedManifest": {"sourceManifestPolicies": ["keep"]}}]}}`),
-		"a Kotlin operation kind":                plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "native-archive", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "filter": "library"}]`),
-		"a callback operation kind":              plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "library-layout-patches", "output": "o", "manifest": "keep", "libraryLayout": {"any": 1}}]`),
-		"a module-filter with a native field":    plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "filter": "library"}]`),
-		"a native-select without filter":         plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "native-select", "input": {"artifact": "a"}, "output": "o", "manifest": "keep"}]`),
-		"a native-select with the module filter": plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "native-select", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "filter": "module"}]`),
-		"a native-select with the drop manifest": plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "native-select", "input": {"artifact": "a"}, "output": "o", "manifest": "drop", "filter": "library"}]`),
-		"a native-select with excludes":          plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "native-select", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "filter": "library", "excludes": ["x"]}]`),
-		"a native-select with a mode":            plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "native-select", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "filter": "library", "mode": 420}]`),
-		"a module-filter without input":          plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "output": "o", "manifest": "keep"}]`),
+		"a Kotlin operation kind":             plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "native-archive", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "filter": "library"}]`),
+		"a callback operation kind":           plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "library-layout-patches", "output": "o", "manifest": "keep", "libraryLayout": {"any": 1}}]`),
+		"a module-filter with a native field": plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "filter": "library"}]`),
+		"a module-filter without input":       plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "output": "o", "manifest": "keep"}]`),
 		"a layout-assets with a primary input": plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "layout-assets", "input": {"artifact": "a"}, "output": "o", "manifest": "keep",
 			"layoutAssets": {"format": "tree", "assets": []}}]`),
 		"a layout-assets with the drop manifest": plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "layout-assets", "output": "o", "manifest": "drop",
@@ -137,67 +127,6 @@ func TestReadRefusesMalformedForms(t *testing.T) {
 	}
 	if _, err := readPlan(t, plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "native-presigned", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "filter": "library"}]`)); err == nil || !strings.Contains(err.Error(), "does not execute") {
 		t.Fatalf("a Kotlin kind needs a clear refusal: %v", err)
-	}
-	file := mustReadPlan(t, plan(1, `{"module": "m"}`, nativeSelectOperations))
-	if operation := file.Operations[0]; operation.Kind != nativeSelectKind || operation.Input.Artifact != "native" || operation.Filter != "library" || operation.Manifest != "keep" {
-		t.Fatalf("a native-select operation: %+v", operation)
-	}
-}
-
-// nativeSelectSections are the preparation and operation sections of the vcs plan: one native archive, selected by platform.
-const nativeSelectOperations = `"operations": [{"id": "select", "kind": "native-select", "input": {"artifact": "native"}, "output": "select:output", "manifest": "keep", "filter": "library"}]`
-
-const nativeSelectSections = `"preparations": [{"id": "select", "inputs": ["native"], "outputs": ["select:output"], "modelSignature": "n"}], ` + nativeSelectOperations
-
-const nativeSelectJar = `{"destination": "lib/sqlite.jar", "recipe": {"sources": [{"input": "demo.sqlite", "kind": "module", "filter": "module-v1"},
-	{"input": "select:output", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "keep", "mergeEntities": true}}}`
-
-const nativeSelectTree = `{"destination": "lib/native", "inputs": ["select:output"], "kind": "tree", "classPath": false, "scope": "distribution"}`
-
-// distributionFile keeps a plan at version 3 when a refusal case leaves out the distribution tree.
-const distributionFile = `{"destination": "bin/run", "inputs": ["run"], "mode": 493, "classPath": false, "scope": "distribution"}`
-
-// TestDeriveCompilesNativeSelectFromTheVariant pins the shape the vcs plan takes: the jar keeps the archive with its
-// natives reserved, and the distribution tree selects the natives of the platform the variant names.
-func TestDeriveCompilesNativeSelectFromTheVariant(t *testing.T) {
-	inputs := catalogue(fileArtifact("demo.sqlite"), fileArtifact("native"))
-	for variant, target := range map[string]pluginpack.NativeTarget{
-		"darwin_aarch64": {OS: "darwin", Arch: "aarch64"}, "linux_x64": {OS: "linux", Arch: "x64"}, "windows_aarch64": {OS: "windows", Arch: "aarch64"},
-	} {
-		t.Run(variant, func(t *testing.T) {
-			derivation := mustDerive(t, variantPlan(3, variant, nativeSelectJar+", "+nativeSelectTree, nativeSelectSections), inputs, 3)
-			native := &pluginpack.Reference{Artifact: "native"}
-			want := []pluginpack.Operation{
-				{Kind: "jar", Destination: "lib/sqlite.jar", Mode: DefaultMode, Options: &pluginpack.JarOptions{MergeEntities: true, Directories: "none"}, Sources: []pluginpack.Source{
-					{Kind: "archive", Input: &pluginpack.Reference{Artifact: "demo.sqlite"}, Filter: "module", Manifest: "keep"},
-					{Kind: "archive", Input: native, Filter: "library", Manifest: "keep", ReserveNatives: true}}},
-				{Kind: "native-tree", Destination: "lib/native", Scope: pluginpack.DistributionScope, Input: native, Native: &target},
-			}
-			if got, expected := mustJSON(t, derivation.Recipe.Operations), mustJSON(t, want); got != expected {
-				t.Fatalf("operations differ:\n%s\n%s", got, expected)
-			}
-		})
-	}
-	withRun := catalogue(fileArtifact("demo.sqlite"), fileArtifact("native"), fileArtifact("run"))
-	const consumers = "requires one distribution tree consumer and one prepared jar source"
-	for name, scenario := range map[string]struct {
-		text    string
-		inputs  pluginpack.Catalogue
-		message string
-	}{
-		"a neutral plan":          {plan(3, nativeSelectJar+", "+nativeSelectTree, nativeSelectSections), inputs, "unknown native target variant"},
-		"a placeholder variant":   {variantPlan(3, "{platform}", nativeSelectJar+", "+nativeSelectTree, nativeSelectSections), inputs, "unknown native target variant"},
-		"an unknown architecture": {variantPlan(3, "linux_arm64", nativeSelectJar+", "+nativeSelectTree, nativeSelectSections), inputs, "unknown native target variant"},
-		"a jar without the tree":  {variantPlan(3, "linux_x64", nativeSelectJar+", "+distributionFile, nativeSelectSections), withRun, consumers},
-		"a tree without the jar":  {variantPlan(3, "linux_x64", nativeSelectTree, nativeSelectSections), catalogue(fileArtifact("native")), consumers},
-		"a plugin-scoped tree": {variantPlan(3, "linux_x64", nativeSelectJar+`, {"destination": "lib/native", "inputs": ["select:output"], "kind": "tree", "classPath": false}, `+distributionFile, nativeSelectSections),
-			withRun, consumers},
-	} {
-		t.Run(name, func(t *testing.T) {
-			if _, err := derive(t, scenario.text, scenario.inputs, 3); err == nil || !strings.Contains(err.Error(), scenario.message) {
-				t.Fatalf("expected %q, got %v", scenario.message, err)
-			}
-		})
 	}
 }
 

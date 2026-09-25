@@ -13,7 +13,6 @@ import (
 	"jetbrains.com/content-module-packer/internal/filemetadata"
 	"jetbrains.com/content-module-packer/internal/jarpack"
 	"jetbrains.com/content-module-packer/internal/javaglob"
-	"jetbrains.com/content-module-packer/internal/nativelib"
 )
 
 // Execution contains a validated plan. Planning does not access the filesystem.
@@ -278,7 +277,7 @@ func Plan(recipe Recipe, catalogue Catalogue) (*Execution, error) {
 		if err := execution.validateOperation(operation, used, usedLibraries); err != nil {
 			return nil, fmt.Errorf("%s: %w", operation.Destination, err)
 		}
-		writesTree := operation.Kind == "copy-tree" || operation.Kind == "layout-tree" || operation.Kind == "native-tree"
+		writesTree := operation.Kind == "copy-tree" || operation.Kind == "layout-tree"
 		if (assetKind(asset) == "directory") != (operation.Kind == "directory") || (assetKind(asset) == "tree") != writesTree {
 			return nil, fmt.Errorf("stale asset kind at %q", operation.Destination)
 		}
@@ -311,23 +310,7 @@ func (execution *Execution) validateOperation(operation Operation, used, usedLib
 	if operation.Layout != nil && operation.Kind != "layout-tree" {
 		return fmt.Errorf("only a layout-tree operation carries layout assets")
 	}
-	if operation.Native != nil && operation.Kind != "native-tree" {
-		return fmt.Errorf("only a native-tree operation carries a native target")
-	}
 	switch operation.Kind {
-	case "native-tree":
-		if execution.recipe.Version < TreeVersion || len(operation.Sources) != 0 || operation.Options != nil || operation.Target != "" ||
-			operation.Mode != 0 && operation.Mode != 0o644 || operation.Input == nil || operation.Input.Path != "" || operation.Native == nil {
-			return fmt.Errorf("native-tree requires version 2 or 3, one archive input, and a native target without file or jar options")
-		}
-		if !nativelib.ValidFamily(nativelib.Family(operation.Native.OS)) || !nativelib.ValidArch(nativelib.Arch(operation.Native.Arch)) {
-			return fmt.Errorf("unknown native target %s_%s", operation.Native.OS, operation.Native.Arch)
-		}
-		artifact, exists := execution.artifacts[operation.Input.Artifact]
-		if !exists || artifact.Kind != "file" {
-			return fmt.Errorf("native-tree requires a declared archive file")
-		}
-		used[artifact.ID] = true
 	case "layout-tree":
 		if execution.recipe.Version < TreeVersion || len(operation.Sources) != 0 || operation.Options != nil || operation.Target != "" ||
 			operation.Mode != 0 && operation.Mode != 0o644 || operation.Input != nil || operation.Layout == nil {
@@ -555,16 +538,13 @@ func (execution *Execution) validateSource(source Source, used, usedLibraries ma
 	switch source.Kind {
 	case "layout":
 		if source.Input != nil || source.Library != "" || source.Filter != "" || len(source.Excludes) != 0 || len(source.Entries) != 0 ||
-			len(source.Overrides) != 0 || source.ReserveNatives || source.Layout == nil || jarpack.ManifestMode(source.Manifest) != jarpack.ManifestKeep {
+			len(source.Overrides) != 0 || source.Layout == nil || jarpack.ManifestMode(source.Manifest) != jarpack.ManifestKeep {
 			return fmt.Errorf("layout source requires layout assets and the keep manifest policy without archive or filter options")
 		}
 		return execution.validateLayout(source.Layout, layoutEntriesFormat, used)
 	case "archive", "library":
 		if len(source.Entries) != 0 {
 			return fmt.Errorf("archive or library source cannot contain prepared entries")
-		}
-		if source.ReserveNatives && (source.Kind != "archive" || len(source.Overrides) != 0) {
-			return fmt.Errorf("native reservation requires an archive source without overrides")
 		}
 		if _, err := sourceFilter(source); err != nil {
 			return err
@@ -611,7 +591,7 @@ func (execution *Execution) validateSource(source Source, used, usedLibraries ma
 			}
 		}
 	case "entries":
-		if source.Input != nil || source.Library != "" || source.Filter != "" || len(source.Excludes) != 0 || len(source.Overrides) != 0 || source.ReserveNatives {
+		if source.Input != nil || source.Library != "" || source.Filter != "" || len(source.Excludes) != 0 || len(source.Overrides) != 0 {
 			return fmt.Errorf("prepared entries cannot contain archive or filter options")
 		}
 		for _, entry := range source.Entries {

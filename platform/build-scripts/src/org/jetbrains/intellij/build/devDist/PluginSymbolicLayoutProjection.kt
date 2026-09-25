@@ -3,7 +3,6 @@
 package org.jetbrains.intellij.build.devDist
 
 import com.intellij.openapi.util.JDOMUtil
-import kotlinx.serialization.json.Json
 import org.jdom.Element
 import org.jdom.Namespace
 import org.jetbrains.annotations.ApiStatus
@@ -32,17 +31,12 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.nio.file.Path
 
-private fun nativeFingerprint(values: List<String>): String = devDistSignature {
-  putInt(values.size)
-  for (value in values) putString(value)
-}
-
 /**
  * Projects one original layout without reading compiled roots or invoking layout callbacks.
  * The catalogue describes the output provider's selected roots. Descriptor facts describe the prepared descriptor.
  * The result cannot select producers until every required preparation has declared its inputs and contributions.
  * [nativePolicy] enables native derivation at each source occurrence. Its absence preserves the existing caller-supplied preparation model.
- * Native bindings require a policy; an absent policy is not evidence that native handling leaves archives untouched.
+ * An absent policy is not evidence that native handling leaves archives untouched.
  * [cache] holds the answers the projections of one run share. A caller without one gets a fresh cache.
  */
 @ApiStatus.Internal
@@ -57,37 +51,7 @@ fun projectPluginSymbolicLayout(
   cache: PluginSymbolicProjectionCache = PluginSymbolicProjectionCache(project),
 ): PluginSymbolicLayout {
   require(cache.project === project) { "The projection cache belongs to another project" }
-  val original = if (nativePolicy == null) null else {
-    SymbolicLayoutProjector(
-      layout, project, catalogue, descriptorFacts, preparationFacts, variant, nativePolicy, cache, collectNativeContext = true,
-    ).project()
-  }
-  return SymbolicLayoutProjector(
-    layout, project, catalogue, descriptorFacts, preparationFacts, variant, nativePolicy, cache,
-    nativeContexts = original?.let(::nativeAssetContexts).orEmpty(),
-  ).project()
-}
-
-private fun nativeAssetContexts(original: PluginSymbolicLayout): Map<String, String> {
-  val producers = original.preparations.flatMap { preparation -> preparation.outputs.map { it to preparation } }.toMap()
-  return original.assets.mapNotNull { asset ->
-    val recipe = asset.recipe ?: return@mapNotNull null
-    val values = ArrayList<String>()
-    values.addAll(listOf("native-asset-context-v1", Json.encodeToString(CanonicalJarRecipe.serializer(), recipe)))
-    val visited = HashSet<String>()
-    fun visit(input: String) {
-      val preparation = producers.get(input) ?: return
-      if (!visited.add(preparation.id)) return
-      values.add(Json.encodeToString(PluginPackingPreparation.serializer(), preparation))
-      preparation.inputs.forEach(::visit)
-    }
-    asset.inputs.forEach(::visit)
-    for (use in original.nativeRequirements.filter { it.occurrence.destination == asset.destination }) {
-      val occurrence = use.occurrence
-      values.addAll(listOf(occurrence.input, occurrence.channel.name, occurrence.ordinal.toString(), use.modelSignature))
-    }
-    asset.destination to nativeFingerprint(values)
-  }.toMap()
+  return SymbolicLayoutProjector(layout, project, catalogue, descriptorFacts, preparationFacts, variant, nativePolicy, cache).project()
 }
 
 private class SymbolicLayoutProjector(
@@ -99,16 +63,12 @@ private class SymbolicLayoutProjector(
   private val variant: PluginSymbolicVariant,
   private val nativePolicy: PluginSymbolicNativePolicy?,
   cache: PluginSymbolicProjectionCache,
-  private val collectNativeContext: Boolean = false,
-  private val nativeContexts: Map<String, String> = emptyMap(),
 ) {
   private val artifacts = catalogue.artifacts.associateBy { it.id }
   private val preparedRoots = catalogue.artifacts.filter { it.preparationKey != null }.groupBy { it.preparationKey }
   private val libraries = catalogue.libraries.associateBy { it.moduleName to it.libraryName }
   private val libraryFileCounts = catalogue.libraries.filter { it.id != null }.associate { requireNotNull(it.id) to it.files.size }
 
-  /** The container id of a library with one member, by that member. A native effect may read the container in place of the member. */
-  private val singleMemberLibraries = catalogue.libraries.filter { it.id != null && it.files.size == 1 }.associate { it.files.single() to requireNotNull(it.id) }
   private val frontend = cache.frontend(descriptors.frontendRoots)
   private val assembly = PluginSymbolicJarAssembly()
   private val copiedFiles = HashSet<Pair<String, String>>()
@@ -118,7 +78,6 @@ private class SymbolicLayoutProjector(
   private val declaredAssets = LinkedHashMap<String, List<PluginPackingAsset>>()
   private val omittedSlots = HashSet<String>()
   private val nativeSlots = HashMap<Triple<String, String, PluginSymbolicNativeSourceChannel>, Int>()
-  private val nativeUses = LinkedHashMap<PluginSymbolicNativeOccurrence, PluginSymbolicNativeUse>()
   private val preparedNativeUses = HashMap<String, PluginSymbolicNativeUse>()
 
   init {
@@ -138,9 +97,6 @@ private class SymbolicLayoutProjector(
   }
 
   fun project(): PluginSymbolicLayout {
-    if (nativePolicy == null && preparationFacts.nativeBindings.isNotEmpty()) {
-      gap("native-policy", "Native occurrence bindings require the selected distribution's native policy")
-    }
     if (!descriptors.isPluginXmlFinal &&
         (layout.hasRawPluginXmlPatcher || layout.hasPluginXmlPatcher || layout.hasCustomVersion ||
          variant.scramble && layout.deprecatedPostProcessor.isNotEmpty() || preparationFacts.effects.containsKey("descriptor"))) {
@@ -192,11 +148,6 @@ private class SymbolicLayoutProjector(
     }
     val preparations = preparationsById.values.toList()
     validateInputs(assets, preparations)
-    if (!collectNativeContext) {
-      for (occurrence in preparationFacts.nativeBindings.keys) {
-        if (occurrence !in nativeUses) gap("native-binding:$occurrence", "The native binding names an unknown source occurrence")
-      }
-    }
     for (slot in preparationFacts.omittedSlots) {
       if (slot !in omittedSlots) gap("omitted-slot:$slot", "The omitted slot does not name a selected layout callback")
     }
@@ -207,7 +158,6 @@ private class SymbolicLayoutProjector(
       preparations = preparations,
       preparationRoots = roots.toList(),
       gaps = gaps.values.toList(),
-      nativeRequirements = nativeUses.values.toList(),
     )
   }
 
@@ -338,7 +288,7 @@ private class SymbolicLayoutProjector(
       val identity = if (artifacts.get(input)?.kind == "directory") directoryFilterIdentity to input else Any()
       moduleSources.add(PluginSymbolicJarSource(identity) {
         val use = nativeUse(
-          input, destination, PluginSymbolicNativeSourceChannel.MODULE_OUTPUT, "module-v1", excludes,
+          input, destination, PluginSymbolicNativeSourceChannel.MODULE_OUTPUT,
           "module-filter:${module.name}".takeIf { excludes.isNotEmpty() },
         )
         val original = if (excludes.isEmpty()) sources(input, "module-v1") else filteredSources?.get(input).orEmpty()
@@ -530,7 +480,7 @@ private class SymbolicLayoutProjector(
       }
       else false
       PluginSymbolicJarSource(PluginSymbolicLibrarySourceIdentity(input, candidate), group) {
-        val use = nativeUse(input, destination, channel, "library-v1")
+        val use = nativeUse(input, destination, channel)
         applyNative(use, sources(input, "library-v1"))
       }
     }
@@ -540,8 +490,6 @@ private class SymbolicLayoutProjector(
     input: String,
     destination: String,
     channel: PluginSymbolicNativeSourceChannel,
-    filter: String,
-    excludes: List<String> = emptyList(),
     filterKey: String? = null,
   ): PluginSymbolicNativeUse? {
     val policy = nativePolicy ?: return null
@@ -557,123 +505,29 @@ private class SymbolicLayoutProjector(
       gap("native-policy:$occurrence", checkNotNull(error.message))
       return null
     }
-    val keys = listOfNotNull(artifact.preparationKey, filterKey).distinct()
-    val signature = ArrayList<String>()
-    signature.addAll(listOf("native-use-v1", destination, input, channel.name, ordinal.toString(), requirement.modelSignature, filter, excludes.size.toString()))
-    signature.addAll(excludes)
-    signature.add(artifact.fileName)
-    signature.add(nativeContexts.get(destination).orEmpty())
-    signature.add(keys.size.toString())
-    for (key in keys) {
-      val effect = preparationFacts.effects.get(key)
-      signature.add(key)
-      if (effect == null) {
-        signature.add("missing")
-        continue
-      }
-      val preparation = effect.preparation
-      signature.addAll(listOf("present", preparation.id, preparation.modelSignature, preparation.inputs.size.toString()))
-      signature.addAll(preparation.inputs)
-      signature.add(preparation.outputs.size.toString())
-      signature.addAll(preparation.outputs)
-      val contributions = effect.sourceContributions.get(input) ?: effect.sources
-      signature.add(contributions.size.toString())
-      for (source in contributions) {
-        signature.addAll(listOf(source.input, source.kind, source.filter, source.entry))
-        signature.add(source.options.size.toString())
-        signature.addAll(source.options)
-      }
-    }
-    val use = PluginSymbolicNativeUse(occurrence, requirement.handling, requirement.distributionPrefix, keys, nativeFingerprint(signature))
-    nativeUses.put(occurrence, use)
-    if (collectNativeContext) return use
-    val binding = preparationFacts.nativeBindings.get(occurrence)
-    if (requirement.handling == PluginSymbolicNativeHandling.UNTOUCHED) {
-      if (binding != null) gap("native-binding:$occurrence", "An untouched source must not have a native binding")
-    }
-    else if (requirement.handling == PluginSymbolicNativeHandling.PRESIGNED_EXTRACTION) {
-      // The reused natives jar and its tree replace the extraction, so no preparation binds this source.
+    if (requirement.handling == PluginSymbolicNativeHandling.PRESIGNED_EXTRACTION) {
+      // The reused natives jar and its tree replace the extraction, so no preparation may change this source.
+      val keys = listOfNotNull(artifact.preparationKey, filterKey).distinct()
       if (keys.isNotEmpty()) gap("native-binding:$occurrence", "A presigned native library must not have a preparation: $keys")
     }
-    else if (binding == null || binding.requirementSignature != use.modelSignature || binding.effectKey.isBlank()) {
-      gap("native-binding:$occurrence", "The source requires a native effect bound to its current occurrence and policy signature")
-    }
-    else if (!preparationFacts.effects.containsKey(binding.effectKey)) {
-      gap("native-binding:$occurrence", "The bound native effect '${binding.effectKey}' is missing")
-    }
-    return use
+    return PluginSymbolicNativeUse(occurrence, requirement.handling, requirement.distributionPrefix)
   }
 
   private fun applyNative(use: PluginSymbolicNativeUse?, original: List<JarSourceRecipe>): List<JarSourceRecipe> {
-    if (use == null || collectNativeContext) return original
-    if (use.handling == PluginSymbolicNativeHandling.UNTOUCHED) return recordNativeSources(use, original)
-    if (use.handling == PluginSymbolicNativeHandling.PRESIGNED_EXTRACTION) {
-      val occurrence = use.occurrence
-      val library = getLibNameBySourceFile(Path.of(artifacts.getValue(occurrence.input).fileName))
-      assembly.markNatives(occurrence.destination, library, checkNotNull(use.distributionPrefix)) { gap(it.key, it.detail) }
-      return recordNativeSources(use, original)
-    }
-    val occurrence = use.occurrence
-    val binding = preparationFacts.nativeBindings.get(occurrence) ?: return emptyList()
-    if (binding.requirementSignature != use.modelSignature || binding.effectKey.isBlank()) return emptyList()
-    val native = preparationFacts.effects.get(binding.effectKey) ?: return emptyList()
-    fun invalid(detail: String): List<JarSourceRecipe> {
-      gap("native-effect:$occurrence", detail)
-      return emptyList()
-    }
-    if (native.preparation.id.isBlank() || native.preparation.inputs.isEmpty() || native.preparation.outputs.isEmpty() ||
-        native.preparation.modelSignature.isBlank() || (native.preparation.inputs + native.preparation.outputs).any { it.isBlank() } ||
-        native.preparation.outputs.distinct().size != native.preparation.outputs.size ||
-        native.sources.isEmpty() || native.sourceContributions.isNotEmpty() ||
-        native.sources.any { it.kind != "prepared" || it.filter != "prepared" || it.input !in native.preparation.outputs || it.input in artifacts } ||
-        native.sources.map { it.input }.distinct().size != native.sources.size) {
-      return invalid("A native occurrence requires distinct prepared contributions from its declared effect outputs")
-    }
-    val required = LinkedHashSet<String>()
-    for (key in use.preparationKeys) {
-      val generic = preparationFacts.effects.get(key) ?: return invalid("The combined native preparation lacks '$key'")
-      val contributions = generic.sourceContributions.get(occurrence.input) ?: generic.sources
-      if (contributions.isEmpty() || contributions.any { it.input !in generic.preparation.outputs }) {
-        return invalid("The combined native preparation requires the declared source outputs of '$key'")
+    if (use == null) return original
+    when (use.handling) {
+      PluginSymbolicNativeHandling.UNTOUCHED -> return recordNativeSources(use, original)
+      PluginSymbolicNativeHandling.PRESIGNED_EXTRACTION -> {
+        val occurrence = use.occurrence
+        val library = getLibNameBySourceFile(Path.of(artifacts.getValue(occurrence.input).fileName))
+        assembly.markNatives(occurrence.destination, library, checkNotNull(use.distributionPrefix)) { gap(it.key, it.detail) }
+        return recordNativeSources(use, original)
       }
-      required.addAll(contributions.map { it.input })
-    }
-    val closure = nativeInputClosure(native.preparation, occurrence) ?: return emptyList()
-    val consumesSource = occurrence.input in closure || singleMemberLibraries.get(occurrence.input)?.let { it in closure } == true
-    if (!consumesSource || !closure.containsAll(required)) {
-      return invalid("The native effect must consume this raw input, or its library, and all preceding generic or Java-filter outputs: ${listOf(occurrence.input) + required}")
-    }
-    if (original.isEmpty()) return invalid("The native effect lacks the original source's complete preparation")
-    effects.putIfAbsent(binding.effectKey, native)
-    return recordNativeSources(use, native.sources)
-  }
-
-  private fun nativeInputClosure(preparation: PluginPackingPreparation, occurrence: PluginSymbolicNativeOccurrence): Set<String>? {
-    val producers = HashMap<String, PluginPackingPreparation>()
-    for (producer in preparationFacts.dependencies + preparationFacts.effects.values.map { it.preparation }) {
-      for (output in producer.outputs) {
-        val previous = producers.putIfAbsent(output, producer)
-        if (previous != null && previous != producer) {
-          gap("native-effect:$occurrence", "Native preparation output '$output' has conflicting producers")
-          return null
-        }
+      PluginSymbolicNativeHandling.INLINE_SIGNING -> {
+        gap("native-signing:${use.occurrence}", "Inline native signing is not supported in the dev distribution")
+        return emptyList()
       }
     }
-    val visited = HashSet<String>()
-    val visiting = HashSet<String>()
-    fun visit(input: String): Boolean {
-      if (input in visiting) return false
-      if (!visited.add(input)) return true
-      visiting.add(input)
-      for (dependency in producers.get(input)?.inputs.orEmpty()) if (!visit(dependency)) return false
-      visiting.remove(input)
-      return true
-    }
-    if (!preparation.inputs.all(::visit)) {
-      gap("native-effect:$occurrence", "The native effect has a preparation cycle")
-      return null
-    }
-    return visited
   }
 
   private fun recordNativeSources(use: PluginSymbolicNativeUse, sources: List<JarSourceRecipe>): List<JarSourceRecipe> {

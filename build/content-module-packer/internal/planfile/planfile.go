@@ -21,7 +21,6 @@ const DefaultMode uint32 = 0o644
 const (
 	moduleFilterKind = "module-filter"
 	layoutAssetsKind = "layout-assets"
-	nativeSelectKind = "native-select"
 	defaultManifest  = "single-meaningful-source"
 	libraryPrefix    = "intellij.libraries."
 )
@@ -96,10 +95,8 @@ type Preparation struct {
 	AlwaysRun      bool
 }
 
-// Operation is one preparation operation. The Go packer executes the kinds module-filter, layout-assets, and native-select.
+// Operation is one preparation operation. The Go packer executes the kinds module-filter and layout-assets.
 // A module-filter reads Input and filters it by Excludes. A layout-assets operation reads Inputs into LayoutAssets.
-// A native-select reads the native archive Input with Filter, reserves its native entries in the jar that consumes
-// its output, and writes the entries of the plan's platform into the tree that consumes it.
 type Operation struct {
 	ID           string
 	Kind         string
@@ -108,7 +105,6 @@ type Operation struct {
 	Output       string
 	Manifest     string
 	Excludes     []string
-	Filter       string
 	LayoutAssets *LayoutAssetPreparation
 }
 
@@ -392,7 +388,7 @@ func (raw *rawOperation) decode() (Operation, error) {
 	if raw.Kind != nil {
 		operation.Kind = *raw.Kind
 	}
-	if operation.Kind != moduleFilterKind && operation.Kind != layoutAssetsKind && operation.Kind != nativeSelectKind {
+	if operation.Kind != moduleFilterKind && operation.Kind != layoutAssetsKind {
 		return Operation{}, fmt.Errorf("operation %q has kind %q, which the Go packer does not execute; the plan needs a Kotlin preparation", operation.ID, operation.Kind)
 	}
 	var stated []string
@@ -402,7 +398,7 @@ func (raw *rawOperation) decode() (Operation, error) {
 			stated = append(stated, name)
 		}
 	}
-	if raw.Filter != nil && operation.Kind != nativeSelectKind {
+	if raw.Filter != nil {
 		stated = append(stated, "filter")
 	}
 	slices.Sort(stated)
@@ -413,14 +409,6 @@ func (raw *rawOperation) decode() (Operation, error) {
 		if operation.Input == nil || len(operation.Inputs) != 0 || raw.LayoutAssets != nil {
 			return Operation{}, fmt.Errorf("module-filter operation %q requires one input and no layout assets", operation.ID)
 		}
-		return operation, nil
-	}
-	if operation.Kind == nativeSelectKind {
-		if operation.Input == nil || len(operation.Inputs) != 0 || raw.LayoutAssets != nil || len(operation.Excludes) != 0 ||
-			operation.Manifest != "keep" || raw.Filter == nil || *raw.Filter != "library" {
-			return Operation{}, fmt.Errorf("native-select operation %q requires one archive input, the keep manifest, the library filter, and no excludes or layout assets", operation.ID)
-		}
-		operation.Filter = *raw.Filter
 		return operation, nil
 	}
 	if operation.Input != nil || raw.LayoutAssets == nil || raw.LayoutAssets.Format == nil || raw.LayoutAssets.Assets == nil {

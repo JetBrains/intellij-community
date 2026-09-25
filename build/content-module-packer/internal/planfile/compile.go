@@ -7,7 +7,6 @@ import (
 	"slices"
 	"strings"
 
-	"jetbrains.com/content-module-packer/internal/nativelib"
 	"jetbrains.com/content-module-packer/internal/pluginclasspath"
 	"jetbrains.com/content-module-packer/internal/pluginpack"
 )
@@ -362,7 +361,7 @@ func (c *compiler) bindOperations() error {
 			return fmt.Errorf("operation %q has an unknown manifest policy %q", operation.ID, operation.Manifest)
 		}
 		var expectedInputs []string
-		if operation.Kind == moduleFilterKind || operation.Kind == nativeSelectKind {
+		if operation.Kind == moduleFilterKind {
 			expectedInputs = []string{operation.Input.Artifact}
 		} else {
 			for _, reference := range operation.Inputs {
@@ -392,7 +391,6 @@ func (c *compiler) bindOperations() error {
 
 // validateConsumers applies the consumer rules of the Kotlin generator: a tree output has one tree asset at its
 // root, and a module-filter or entries output is a prepared jar source.
-// A native-select output has one distribution tree and one prepared jar source.
 func (c *compiler) validateConsumers(operation *Operation) error {
 	var consumers []Asset
 	for _, planned := range c.assets {
@@ -402,24 +400,6 @@ func (c *compiler) validateConsumers(operation *Operation) error {
 			}
 			consumers = append(consumers, planned.asset)
 		}
-	}
-	if operation.Kind == nativeSelectKind {
-		trees, jarSources := 0, 0
-		for _, consumer := range consumers {
-			switch {
-			case consumer.Kind == "tree" && consumer.Scope == pluginpack.DistributionScope && !consumer.ClassPath && consumer.Recipe == nil &&
-				slices.Equal(consumer.Inputs, []string{operation.Output}):
-				trees++
-			case consumer.Recipe != nil && slices.ContainsFunc(consumer.Recipe.Sources, func(source JarSource) bool {
-				return source.Kind == "prepared" && source.Filter == "prepared" && source.Input == operation.Output
-			}):
-				jarSources++
-			}
-		}
-		if len(consumers) != 2 || trees != 1 || jarSources != 1 {
-			return fmt.Errorf("native selection %q requires one distribution tree consumer and one prepared jar source", operation.ID)
-		}
-		return nil
 	}
 	if layout := operation.LayoutAssets; layout != nil {
 		if !goLayoutFormats[layout.Format] {
@@ -526,7 +506,7 @@ func validID(value string) bool {
 
 // resolveOperationInputs replaces a library ID in the inputs of every Go-executed operation with the references of
 // its member files. The plan names the version-free library; the catalogue names its files. The primary input of a
-// module-filter or native-select names one file, so a library there has one member. A layout-assets input stands for
+// module-filter names one file, so a library there has one member. A layout-assets input stands for
 // every member in catalogue order, and the sources of each layout asset follow the expanded positions. The resolved
 // copies replace the plan operations in goExecuted, so the plan file keeps its text.
 func (c *compiler) resolveOperationInputs() error {
@@ -658,15 +638,7 @@ func (c *compiler) operations() ([]pluginpack.Operation, error) {
 			if asset.NormalizeTreeModes {
 				operation.Mode = DefaultMode
 			}
-			if goOperation, executed := c.goExecuted[input]; executed && goOperation.Kind == nativeSelectKind {
-				target, err := c.nativeTarget()
-				if err != nil {
-					return nil, err
-				}
-				operation.Kind = "native-tree"
-				operation.Input = goOperation.Input
-				operation.Native = target
-			} else if executed {
+			if goOperation, executed := c.goExecuted[input]; executed {
 				layout := goOperation.LayoutAssets
 				if layout == nil || layout.Format != "tree" || layout.Root != asset.Destination {
 					return nil, fmt.Errorf("tree %q requires a layout-assets tree operation at its destination", asset.Destination)
@@ -887,24 +859,10 @@ func (c *compiler) archiveSource(recipe *JarRecipe, reference pluginpack.Referen
 	return pluginpack.Source{Kind: "archive", Input: &input, Filter: filter, Manifest: manifest}, nil
 }
 
-// nativeTarget reads the platform of the plan file from its variant. A plan with a native-select operation is never
-// neutral: the generator keeps one record per platform, so the variant is a real platform id.
-func (c *compiler) nativeTarget() (*pluginpack.NativeTarget, error) {
-	family, arch, err := nativelib.ParseVariant(c.file.Variant)
-	if err != nil {
-		return nil, fmt.Errorf("a native-select operation reads the platform of the plan file: %w", err)
-	}
-	return &pluginpack.NativeTarget{OS: string(family), Arch: string(arch)}, nil
-}
-
 // goExecutedSource is the jar source the Go packer executes in place of a Go-executed operation's prepared output.
-// A native-select becomes the native archive itself, with every native entry reserved for the tree.
 func goExecutedSource(operation *Operation) (pluginpack.Source, error) {
 	if operation.Kind == moduleFilterKind {
 		return pluginpack.Source{Kind: "archive", Input: operation.Input, Filter: "module", Excludes: operation.Excludes, Manifest: operation.Manifest}, nil
-	}
-	if operation.Kind == nativeSelectKind {
-		return pluginpack.Source{Kind: "archive", Input: operation.Input, Filter: operation.Filter, Manifest: operation.Manifest, ReserveNatives: true}, nil
 	}
 	layout := operation.LayoutAssets
 	if layout == nil || layout.Format != "entries" {

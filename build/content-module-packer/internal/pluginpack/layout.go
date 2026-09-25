@@ -51,8 +51,8 @@ func stripLayoutPath(name string, components int) (string, bool) {
 	return strings.Join(parts[components:], "/"), true
 }
 
-// layoutScratch holds the trees, entries, decoded archives, and selected natives the layout assets and the native-tree
-// operations write before the remainder copies them. It lives beside the output and is removed before the stage rename.
+// layoutScratch holds the trees, entries, and decoded archives the layout assets write before the remainder copies them.
+// It lives beside the output and is removed before the stage rename.
 type layoutScratch struct {
 	root  string
 	count int
@@ -60,7 +60,7 @@ type layoutScratch struct {
 
 func newLayoutScratch(recipe Recipe, output string) (*layoutScratch, error) {
 	hasLayout := slices.ContainsFunc(recipe.Operations, func(operation Operation) bool {
-		return operation.Layout != nil || operation.Kind == "native-tree" ||
+		return operation.Layout != nil ||
 			slices.ContainsFunc(operation.Sources, func(source Source) bool { return source.Layout != nil })
 	})
 	if !hasLayout {

@@ -8,7 +8,6 @@ go_library(
         "layout.go",
         "layout_archive.go",
         "layout_writer.go",
-        "native_select.go",
         "plan.go",
         "symlink_other.go",
         "symlink_windows.go",
@@ -19,7 +18,6 @@ go_library(
         "//build/content-module-packer/internal/filemetadata",
         "//build/content-module-packer/internal/jarpack",
         "//build/content-module-packer/internal/javaglob",
-        "//build/content-module-packer/internal/nativelib",
         "@com_github_klauspost_compress//zstd",
     ],
 )
@@ -37,11 +35,9 @@ go_test(
     ],
     args = [
         "-plugin-remainder-packer=$(rlocationpath //build/content-module-packer/plugin-remainder-packer)",
-        "-sqlite-native-jar=$(rlocationpath @lib//:org.sqlite/native-3.42.0-jb.1.jar)",
     ],
     data = [
         "//build/content-module-packer/plugin-remainder-packer",
-        "@lib//:org.sqlite/native-3.42.0-jb.1.jar",
     ] + glob(["testdata/*"]),
     embed = [":pluginpack"],
     pure = "on",
@@ -49,7 +45,6 @@ go_test(
         "//build/content-module-packer/internal/filemetadata",
         "//build/content-module-packer/internal/jarpack",
         "//build/content-module-packer/internal/javaglob",
-        "//build/content-module-packer/internal/nativelib",
         "//build/content-module-packer/internal/planfile",
         "//build/content-module-packer/internal/xxh3",
         "@com_github_klauspost_compress//zstd",

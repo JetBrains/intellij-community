@@ -20,12 +20,10 @@ import (
 	"unicode/utf16"
 
 	"jetbrains.com/content-module-packer/internal/filemetadata"
-	"jetbrains.com/content-module-packer/internal/nativelib"
 	"jetbrains.com/content-module-packer/internal/xxh3"
 )
 
 var pluginRemainderPacker = flag.String("plugin-remainder-packer", "", "The declared Go plugin remainder executable")
-var sqliteNativeJar = flag.String("sqlite-native-jar", "", "The org.sqlite:native jar the native-select parity test selects from")
 
 // The parity tests below pack a hand-written Go recipe and compare the result with the golden under testdata. A
 // golden is the materialization of every fixture by the deleted Kotlin preparer, frozen under
@@ -904,72 +902,6 @@ func TestKotlinLayoutMaterializationMatchesGoTransforms(t *testing.T) {
 				goldenRecord = jarEntryRecord(t, filepath.Join(goOutput, "lib", fixture.root), fixture.decompress)
 			}
 			golden.check(t, definition.name, goldenRecord)
-		})
-	}
-}
-
-// sqliteNativeJarPath is the declared org.sqlite:native jar, the one native archive of intellij.platform.vcs.plugin.
-func sqliteNativeJarPath(t *testing.T) string {
-	t.Helper()
-	if *sqliteNativeJar == "" {
-		t.Skip("Run the Bazel pluginpack_test target to include the declared sqlite native jar")
-	}
-	jar := *sqliteNativeJar
-	if !filepath.IsAbs(jar) {
-		jar = filepath.Join(os.Getenv("TEST_SRCDIR"), filepath.FromSlash(jar))
-	}
-	return jar
-}
-
-// nativeSelectVariants are the six dev-dist platforms, the variants the vcs plan keeps one record for.
-var nativeSelectVariants = []string{"darwin_aarch64", "darwin_x64", "linux_aarch64", "linux_x64", "windows_aarch64", "windows_x64"}
-
-// TestNativeSelectMatchesTheFrozenKotlinSelection packs the sqlite native jar of intellij.platform.vcs.plugin for every
-// platform the way the planfile package compiles a native-select operation: the jar keeps the archive with its native
-// entries reserved, and the distribution tree lib/native holds the entries of the platform. The golden is the tree
-// the Kotlin DevPluginPresignedNativeRecipeRuntime wrote and the jar entries it left, frozen from the dev-dist build of
-// each platform before the Kotlin runtime was deleted.
-func TestNativeSelectMatchesTheFrozenKotlinSelection(t *testing.T) {
-	jar := sqliteNativeJarPath(t)
-	golden := openKotlinGolden(t, "kotlin-native-select")
-	const jarDestination, treeDestination = "lib/intellij.libraries.sqlite.native.jar", "lib/native"
-	excluded := false
-	for _, variant := range nativeSelectVariants {
-		t.Run(variant, func(t *testing.T) {
-			family, arch, err := nativelib.ParseVariant(variant)
-			if err != nil {
-				t.Fatal(err)
-			}
-			native := &Reference{Artifact: "native"}
-			recipe := Recipe{Version: ScopedVersion, Plugin: "intellij.platform.vcs.plugin", LayoutSignature: "native-select-" + variant,
-				Assets: []Asset{
-					{Destination: jarDestination, Producer: "remainder"},
-					{Destination: treeDestination, Producer: "remainder", Kind: "tree", ClassPath: &excluded, Scope: DistributionScope}},
-				Operations: []Operation{
-					{Kind: "jar", Destination: jarDestination, Mode: 0o644, Options: &JarOptions{MergeEntities: true, Directories: "none"},
-						Sources: []Source{{Kind: "archive", Input: native, Filter: "library", Manifest: "keep", ReserveNatives: true}}},
-					{Kind: "native-tree", Destination: treeDestination, Scope: DistributionScope, Input: native,
-						Native: &NativeTarget{OS: string(family), Arch: string(arch)}}}}
-			output, inventory := writeExecution(t, recipe, Catalogue{Version: Version, Artifacts: []Artifact{fileArtifact("native", jar)}})
-			requireInventoryMatchesTree(t, output, inventory)
-			treeRoot := TransportDestination(ScopedVersion, DistributionScope, treeDestination)
-			var record []string
-			for _, line := range materializationRecord(t, output) {
-				if strings.HasPrefix(line, treeRoot) {
-					record = append(record, line)
-				}
-			}
-			requireRecordedPaths(t, record, []string{treeRoot})
-			if len(record) != 3 {
-				t.Fatalf("the sqlite jar holds one native per platform, the tree holds %d entries:\n%s", len(record), strings.Join(record, "\n"))
-			}
-			record = append(record, jarEntryRecord(t, filepath.Join(output, filepath.FromSlash(jarDestination)), false)...)
-			for _, line := range record {
-				if nativelib.IsNativeEntry(strings.Split(line, "\t")[0]) && strings.Contains(line, "\tentry\t") {
-					t.Fatalf("the jar kept a native entry: %s", line)
-				}
-			}
-			golden.check(t, variant, record)
 		})
 	}
 }

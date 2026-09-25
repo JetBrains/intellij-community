@@ -4,7 +4,6 @@ import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
-import org.jetbrains.intellij.build.devDist.DISTRIBUTION_ASSET_SCOPE
 import org.jetbrains.intellij.build.devDist.JarSourceRecipe
 import org.jetbrains.intellij.build.devDist.JarWriterRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
@@ -53,10 +52,6 @@ internal class DevPluginLayoutAssetPreparationTest {
         id = "layout-assets:gzip", kind = "layout-assets", inputs = listOf(DevPluginReference("dialects")), output = "layout-assets:gzip:output",
         manifest = "keep", layoutAssets = gzipXmlArchivePreparation(sources = listOf(0)),
       ),
-      DevPluginPreparationOperation(
-        id = "native-select:library", kind = "native-select", input = DevPluginReference("library"), output = "native-select:library:output",
-        manifest = "keep", filter = "library",
-      ),
     )
     assertThat(operations).allMatch(::isGoExecutedOperation)
     val plan = planPluginPacking(
@@ -71,13 +66,6 @@ internal class DevPluginLayoutAssetPreparationTest {
         PluginPackingAsset(
           destination = "lib/dialects.jar", inputs = listOf("layout-assets:gzip:output"),
           recipe = CanonicalJarRecipe(listOf(JarSourceRecipe("layout-assets:gzip:output", "prepared", "prepared")), JarWriterRecipe(manifest = "drop")),
-        ),
-        PluginPackingAsset(
-          destination = "lib/library.jar", inputs = listOf("native-select:library:output"),
-          recipe = CanonicalJarRecipe(listOf(JarSourceRecipe("native-select:library:output", "prepared", "prepared")), JarWriterRecipe(manifest = "keep")),
-        ),
-        PluginPackingAsset(
-          destination = "lib/native", inputs = listOf("native-select:library:output"), kind = "tree", classPath = false, scope = DISTRIBUTION_ASSET_SCOPE,
         ),
       ),
       preparations = operations.map { operation ->
@@ -95,11 +83,8 @@ internal class DevPluginLayoutAssetPreparationTest {
     for (operation in operations.filter { it.kind == "layout-assets" }) {
       validateDevPluginLayoutAssetConsumers(operation, plan)
     }
-    validateDevPluginNativeSelectConsumers(operations.last(), plan)
     val misplacedTree = operations[1].copy(layoutAssets = DevPluginLayoutAssetPreparation(format = "tree", root = "other", assets = treeAssets))
     assertThatThrownBy { validateDevPluginLayoutAssetConsumers(misplacedTree, plan) }.hasMessageContaining("one tree asset at 'other'")
-    assertThatThrownBy { validateDevPluginNativeSelectConsumers(operations.last().copy(output = "module-filter:module:output"), plan) }
-      .hasMessageContaining("one distribution tree consumer and one prepared jar source")
   }
 
   @Test
@@ -116,9 +101,6 @@ internal class DevPluginLayoutAssetPreparationTest {
         assets = listOf(DevPluginLayoutAsset(destination = "jre-build.txt", sources = listOf(0))),
       ),
     )
-    val nativeSelect = DevPluginPreparationOperation(
-      id = "native", kind = "native-select", input = DevPluginReference("library"), output = "native:output", manifest = "keep", filter = "library",
-    )
     val presigned = DevPluginPreparationOperation(
       id = "presigned", kind = "native-presigned", input = DevPluginReference("library"), output = "presigned:output", manifest = "keep", filter = "library",
     )
@@ -126,27 +108,11 @@ internal class DevPluginLayoutAssetPreparationTest {
     assertThat(isGoExecutedOperation(moduleFilter)).isTrue()
     assertThat(isGoExecutedOperation(gzip)).isTrue()
     assertThat(isGoExecutedOperation(file)).isFalse()
-    assertThat(isGoExecutedOperation(nativeSelect)).isTrue()
-    assertThat(readsPlatform(nativeSelect)).isTrue()
-    assertThat(listOf(moduleFilter, gzip).none(::readsPlatform)).isTrue()
     assertThat(isGoExecutedOperation(presigned)).isFalse()
     assertThatThrownBy { devPluginPreparationOperationSignature(presigned, version = 2) }
       .hasMessageContaining("No Go operation executes 'presigned' of kind 'native-presigned'")
     assertThatThrownBy { devPluginPreparationOperationSignature(file, version = 2) }
       .hasMessageContaining("No Go operation executes 'file' of kind 'layout-assets'")
-  }
-
-  @Test
-  fun `a native-select operation requires the library policy and recipe version 2`() {
-    val nativeSelect = DevPluginPreparationOperation(
-      id = "native", kind = "native-select", input = DevPluginReference("library"), output = "native:output", manifest = "keep", filter = "library",
-    )
-
-    assertThat(devPluginPreparationOperationSignature(nativeSelect, version = 2)).isNotEmpty()
-    assertThatThrownBy { devPluginPreparationOperationSignature(nativeSelect, version = 1) }.hasMessageContaining("recipe version 2")
-    for (invalid in listOf(nativeSelect.copy(filter = "module"), nativeSelect.copy(filter = ""), nativeSelect.copy(manifest = "drop"), nativeSelect.copy(excludes = listOf("a/**")))) {
-      assertThatThrownBy { devPluginPreparationOperationSignature(invalid, version = 2) }.hasMessageContaining("original library policy")
-    }
   }
 
   @Test
