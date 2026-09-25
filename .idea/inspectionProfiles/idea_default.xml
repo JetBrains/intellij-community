@@ -35,6 +35,9 @@
     </inspection_tool>
     <inspection_tool class="6825bee2-fd98-3b9b-9d79-0a40c7fe55c0" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="722cb6a3-860d-3bb9-bfa3-d5ef834939d5" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
+    <inspection_tool class="7694896a-42bd-3ba7-8a82-9abf6d86d92d" enabled="true" level="WARNING" enabled_by_default="false">
+      <scope name="Python" level="WARNING" enabled="true" />
+    </inspection_tool>
     <inspection_tool class="7707f5d4-ccb9-3cbc-83e5-4e893e49804f" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="AA_fleet" level="WARNING" enabled="true" />
     </inspection_tool>
@@ -345,6 +348,23 @@
                   <option name="_fileType" value="Properties" />
                   <option name="searchContext" value="ANY" />
                   <option name="replacement" value="…" />
+                </InspectionPattern>
+              </list>
+            </option>
+          </RegExpInspectionConfiguration>
+          <RegExpInspectionConfiguration>
+            <option name="description" value="Do not assume that the project is on the local system.&#10;Always get the eel from the `Path` or from the `Project`." />
+            <option name="name" value="Do not use localEel" />
+            <option name="problemDescriptor" value="Use the eel of the project or of the path, not localEel" />
+            <option name="suppressId" value="LocalEelUsage" />
+            <option name="uuid" value="7694896a-42bd-3ba7-8a82-9abf6d86d92d" />
+            <option name="patterns">
+              <list>
+                <InspectionPattern>
+                  <option name="regExp" value="\blocalEel\b" />
+                  <option name="_fileType" value="Kotlin" />
+                  <option name="searchContext" value="ANY" />
+                  <option name="flags" value="64" />
                 </InspectionPattern>
               </list>
             </option>

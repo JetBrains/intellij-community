@@ -117,3 +117,11 @@ val sdk = runCatching { createSdkForNewEnv(context, ref) }.getOrNull()
 val sdk = createSdkForNewEnv(context, ref)
   .getOr(PyBundle.message("sdk.configuration.path.cant.create.sdk", python)) { return it }
 ```
+
+## PyCharm must be Eel-enabled
+
+A project can be on any eel. Never assume that the project is on the local eel.
+
+* Do not use `localEel`. Get the eel from the project or from the path.
+* Use `EelApi` to run processes and to connect to the network.
+* Use NIO `Path` or `EelPath` to work with the file system.
