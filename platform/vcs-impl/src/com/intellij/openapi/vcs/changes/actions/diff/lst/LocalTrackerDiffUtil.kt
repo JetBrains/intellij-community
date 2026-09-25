@@ -329,7 +329,7 @@ object LocalTrackerDiffUtil {
     val offset = DiffGutterOperation.lineToOffset(editor, line)
     val icon = if (isExcludedFromCommit) AllIcons.Diff.GutterCheckBox else AllIcons.Diff.GutterCheckBoxSelected
     val checkboxHighlighter = editor.markupModel.addRangeHighlighter(null, offset, offset,
-                                                                     HighlighterLayer.ADDITIONAL_SYNTAX + 1,
+                                                                     HighlighterLayer.ADDITIONAL_SYNTAX,
                                                                      HighlighterTargetArea.LINES_IN_RANGE)
     var message = DiffBundle.message("action.presentation.diff.include.into.commit.text")
     val shortcut = ActionManager.getInstance().getKeyboardShortcut("Vcs.Diff.IncludeWholeChangedLinesIntoCommit")
