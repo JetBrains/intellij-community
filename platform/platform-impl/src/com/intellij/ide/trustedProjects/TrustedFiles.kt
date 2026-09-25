@@ -121,15 +121,11 @@ object TrustedFiles {
   @ApiStatus.Internal
   @JvmStatic
   fun markExternallyOpened(file: VirtualFile) {
+    if (file.isDirectory) return
     val nioPath = file.fileSystem.getNioPath(file) ?: return
-    val evicted = ExternallyOpenedFiles.getInstance().mark(nioPath)
+    ExternallyOpenedFiles.getInstance().mark(nioPath)
     for (project in ProjectManager.getInstanceIfCreated()?.openProjects ?: return) {
-      val cache = project.serviceIfCreated<TrustedFilesCache>() ?: continue
-      cache.dropVerdict(file)
-      if (evicted) {
-        // an evicted path is unmarked now: recompute its verdict and lift the safe mode from its editor
-        cache.resetVerdicts()
-      }
+      project.serviceIfCreated<TrustedFilesCache>()?.dropVerdict(file)
     }
   }
 
