@@ -36,7 +36,6 @@
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.util.diff"/>
     <module name="intellij.platform.util.ui"/>
-    <module name="intellij.platform.vcs"/>
     <module name="intellij.xml.analysis"/>
     <module name="intellij.xml.analysis.impl"/>
     <module name="intellij.xml.dom"/>
@@ -333,8 +332,6 @@
     <productivityFeaturesProvider implementation="com.intellij.featureStatistics.XmlProductivityFeatureProvider"/>
 
     <elementSignatureProvider implementation="com.intellij.codeInsight.folding.impl.XmlElementSignatureProvider"/>
-
-    <vcsSelectionProvider implementation="com.intellij.vcsUtil.XmlVcsSelectionProvider"/>
 
     <renameInputValidator implementation="com.intellij.lang.xml.XmlElementRenameValidator"/>
     <renameInputValidator implementation="com.intellij.lang.xml.XmlAttributeValueRenameValidator"/>

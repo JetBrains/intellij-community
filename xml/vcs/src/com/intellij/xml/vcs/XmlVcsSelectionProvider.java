@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcsUtil;
+package com.intellij.xml.vcs;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -12,6 +12,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.vcsUtil.VcsSelection;
+import com.intellij.vcsUtil.VcsSelectionProvider;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 

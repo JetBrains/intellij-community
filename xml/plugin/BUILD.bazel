@@ -27,6 +27,7 @@ dev_dist_plugin(
         "intellij.xml.impl",
         "intellij.xml.analysis.impl",
         "intellij.xml.langInjection",
+        "intellij.xml.vcs",
     ],
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_modules = [
@@ -52,6 +53,7 @@ dev_dist_plugin(
         "intellij.xml.structureView.impl",
         "intellij.xml.syntax",
         "intellij.xml.ui.common",
+        "intellij.xml.vcs",
     ],
     jars = {
         "lib/modules/intellij.relaxng.jar": [
@@ -90,6 +92,7 @@ dev_dist_plugin(
             "intellij.xml.impl",
             "intellij.xml.analysis.impl",
             "intellij.xml.langInjection",
+            "intellij.xml.vcs",
         ],
     },
 )

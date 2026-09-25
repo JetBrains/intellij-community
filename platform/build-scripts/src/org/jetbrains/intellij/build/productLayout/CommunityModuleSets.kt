@@ -253,6 +253,7 @@ object CommunityModuleSets {
     module("intellij.xml.analysis.impl")
     module("intellij.xml.langInjection")
     module("intellij.xml.langInjection.xpath")
+    module("intellij.xml.vcs")
   }
 
   /**

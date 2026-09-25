@@ -1994,6 +1994,7 @@ xml/plugin
 xml/relaxng
 xml/testFramework
 xml/tests
+xml/vcs
 xml/xml-analysis-api
 xml/xml-analysis-impl
 xml/xml-parser
