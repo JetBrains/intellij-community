@@ -29,6 +29,7 @@ jvm_library(
         "//platform/tracing:tracing-rt",
         "//platform/lang-api:lang",
         "//java/compiler/impl",
+        "//platform/execution",
     ],
 )
 
@@ -52,6 +53,7 @@ jvm_library(
         "//platform/tracing:tracing-rt_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//java/compiler/impl:impl_test_lib",
+        "//platform/execution:execution_test_lib",
     ],
 )
 

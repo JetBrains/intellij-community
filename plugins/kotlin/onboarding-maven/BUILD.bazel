@@ -68,6 +68,7 @@ jvm_library(
         "//plugins/kotlin/maven",
         "//platform/lang-api:lang",
         "//platform/backend/observation",
+        "//platform/execution",
     ],
 )
 
@@ -108,6 +109,7 @@ jvm_library(
         "//plugins/kotlin/maven:maven_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/backend/observation:observation_test_lib",
+        "//platform/execution:execution_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.onboarding.maven` end

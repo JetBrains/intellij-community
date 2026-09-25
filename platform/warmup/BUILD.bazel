@@ -45,6 +45,7 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core",
         "//platform/backend/observation",
         "//platform/lang-api:lang",
+        "//platform/execution",
     ],
 )
 
@@ -80,6 +81,7 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/backend/observation:observation_test_lib",
         "//platform/lang-api:lang_test_lib",
+        "//platform/execution:execution_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.warmup` end

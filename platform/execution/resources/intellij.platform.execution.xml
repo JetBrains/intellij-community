@@ -46,6 +46,7 @@
     <extensionPoint qualifiedName="com.intellij.executionTargetLanguageRuntimeType"
                     interface="com.intellij.execution.target.LanguageRuntimeType" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.analyzeStacktraceFilter" interface="com.intellij.execution.filters.Filter" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.projectTaskRunner" interface="com.intellij.task.ProjectTaskRunner" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.execution.inlineResumeCreator" interface="com.intellij.execution.InlineResumeCreator" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">

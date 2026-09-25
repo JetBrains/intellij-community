@@ -1109,3 +1109,34 @@ f:com.intellij.openapi.actionSystem.ExecutionDataKeys
 f:com.intellij.psi.search.ExecutionSearchScopes
 - <init>():V
 - s:executionScope(com.intellij.openapi.project.Project,com.intellij.execution.configurations.RunProfile):com.intellij.psi.search.GlobalSearchScope
+c:com.intellij.task.ProjectTaskContext
+- <init>(java.lang.Object,com.intellij.execution.configurations.RunConfiguration):V
+- <init>(java.lang.Object,com.intellij.execution.configurations.RunConfiguration,Z):V
+- <init>(Z):V
+Fa:com.intellij.task.ProjectTaskManager
+- sf:EMPTY_TASKS_ARRAY:com.intellij.task.ProjectTask[]
+- <init>(com.intellij.openapi.project.Project):V
+- a:createAllModulesBuildTask(Z,com.intellij.openapi.project.Project):com.intellij.task.ProjectTask
+- a:createBuildTask(Z,com.intellij.openapi.roots.ProjectModelBuildableElement[]):com.intellij.task.ProjectTask
+- createModulesBuildTask(com.intellij.openapi.module.Module,Z,Z,Z):com.intellij.task.ProjectTask
+- createModulesBuildTask(com.intellij.openapi.module.Module[],Z,Z,Z):com.intellij.task.ProjectTask
+- a:createModulesBuildTask(com.intellij.openapi.module.Module[],Z,Z,Z,Z):com.intellij.task.ProjectTask
+- a:rebuild(com.intellij.openapi.roots.ProjectModelBuildableElement[]):org.jetbrains.concurrency.Promise
+- a:run(com.intellij.task.ProjectTaskContext,com.intellij.task.ProjectTask):org.jetbrains.concurrency.Promise
+c:com.intellij.task.ProjectTaskResult
+- <init>(Z,I,I):V
+- <init>(Z,I,I,java.util.Map):V
+- anyMatch(java.util.function.BiPredicate):Z
+- getAffectedModules(java.util.function.Predicate):java.util.List
+- getBuildableElements(java.lang.Class,java.util.function.Predicate):java.util.List
+- getTasks(java.util.function.BiPredicate):java.util.List
+- getTasksState():java.util.Map
+- getWarnings():I
+- isAborted():Z
+a:com.intellij.task.ProjectTaskRunner
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- canRun(com.intellij.openapi.project.Project,com.intellij.task.ProjectTask):Z
+- canRun(com.intellij.openapi.project.Project,com.intellij.task.ProjectTask,com.intellij.task.ProjectTaskContext):Z
+- canRun(com.intellij.task.ProjectTask):Z
+- createExecutionEnvironment(com.intellij.openapi.project.Project,com.intellij.task.ExecuteRunConfigurationTask,com.intellij.execution.Executor):com.intellij.execution.runners.ExecutionEnvironment
+- run(com.intellij.openapi.project.Project,com.intellij.task.ProjectTaskContext,com.intellij.task.ProjectTask[]):org.jetbrains.concurrency.Promise

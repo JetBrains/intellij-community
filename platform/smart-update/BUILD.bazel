@@ -38,6 +38,7 @@ jvm_library(
         "//platform/platform-impl/update-checker",
         "//platform/platform-impl/ui",
         "//platform/util:util-ui",
+        "//platform/execution",
     ],
 )
 
@@ -70,6 +71,7 @@ jvm_library(
         "//platform/platform-impl/update-checker:update-checker_test_lib",
         "//platform/platform-impl/ui:ui_test_lib",
         "//platform/util:util-ui_test_lib",
+        "//platform/execution:execution_test_lib",
     ],
 )
 
