@@ -310,8 +310,9 @@ func TestNativesModeRefusesAnUnsafeNativeEntryName(t *testing.T) {
 	}
 }
 
-func TestNativesModeRefusesAnExecutableOnAWindowsHost(t *testing.T) {
-	// A Windows host records no executable bit, and the collector reads the mode from the tree.
+func TestNativesModeWritesAnExecutableOnEveryHost(t *testing.T) {
+	// NTFS stores no executable bit. The pack writes the file all the same, and the inventory records the mode FileMode
+	// states, so a Windows host packs the tree of every platform.
 	pty4j := writeZipJar(t, "pty4j-0.13.4.jar",
 		sourceEntry{name: "com/pty4j/PtyProcess.class", data: "class"},
 		sourceEntry{name: "resources/com/pty4j/native/linux/x86-64/libpty.so", data: "lib"},
@@ -319,21 +320,18 @@ func TestNativesModeRefusesAnExecutableOnAWindowsHost(t *testing.T) {
 	)
 	native := nativeSpec(t, "linux_x64", "pty4j")
 	spec := MergeSpec{Output: filepath.Join(t.TempDir(), "out.jar"), Native: native, Sources: []Source{{Path: pty4j, Filter: LibraryNameFilter, Library: true}}}
-	_, err := spec.Pack()
-	if runtime.GOOS != "windows" {
-		if err != nil {
-			t.Fatal(err)
-		}
-		if got := treeFiles(t, native.Tree); got["linux/x86-64/pty4j-unix-spawn-helper"] != 0o755 {
-			t.Errorf("tree modes are %v, want the helper executable", got)
-		}
-		return
+	if _, err := spec.Pack(); err != nil {
+		t.Fatal(err)
 	}
-	if err == nil || !strings.Contains(err.Error(), "executable native file cannot be written on a Windows host") {
-		t.Fatalf("error = %v, want the executable refused", err)
+	got := treeFiles(t, native.Tree)
+	if _, exists := got["linux/x86-64/pty4j-unix-spawn-helper"]; !exists || len(got) != 2 {
+		t.Errorf("tree holds %v, want the library and the helper", got)
 	}
-	if got := treeFiles(t, native.Tree); len(got) != 0 {
-		t.Errorf("tree holds %v, want nothing written", got)
+	if mode := native.FileMode("pty4j-unix-spawn-helper"); mode != 0o755 {
+		t.Errorf("helper mode is %o, want 0755", mode)
+	}
+	if mode := native.FileMode("libpty.so"); mode != 0o644 {
+		t.Errorf("library mode is %o, want 0644", mode)
 	}
 }
 

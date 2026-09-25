@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -191,10 +190,10 @@ func TestNativesModeInventoriesTheJarAndTheTree(t *testing.T) {
 	if err != nil || library != expected || library.Type != "file" || library.Executable || library.Size != int64(len("arm dispatch")) {
 		t.Errorf("library metadata = %#v, expected %#v, error = %v", library, expected, err)
 	}
-	if helper := byPath["native/aarch64/pty4j-unix-spawn-helper"]; runtime.GOOS != "windows" && (!helper.Executable || helper.Mode != 0o755) {
+	if helper := byPath["native/aarch64/pty4j-unix-spawn-helper"]; !helper.Executable || helper.Mode != 0o755 {
 		t.Errorf("helper metadata = %#v, want an executable of mode 0755", helper)
 	}
-	if runtime.GOOS != "windows" && library.Mode != 0o644 {
+	if library.Mode != 0o644 {
 		t.Errorf("library mode is %o, want 0644", library.Mode)
 	}
 	jar, err := filemetadata.Inspect(filepath.Join(baseDir, "out/intellij.libraries.jna.jar"), "intellij.libraries.jna.jar")

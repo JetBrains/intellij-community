@@ -9,7 +9,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"jetbrains.com/content-module-packer/internal/nativelib"
 )
@@ -41,6 +40,15 @@ type NativeSpec struct {
 // WritesTree reports whether the spec writes a tree, rather than only reserving the native entries.
 func (spec *NativeSpec) WritesTree() bool {
 	return spec != nil && spec.Tree != ""
+}
+
+// FileMode is the mode of a file the tree holds. The modes are JarPackager's: 0755 for a POSIX file without an
+// extension, which is executed directly, and 0644 for everything else.
+func (spec *NativeSpec) FileMode(fileName string) os.FileMode {
+	if nativelib.IsExecutable(spec.Family, fileName) {
+		return 0o755
+	}
+	return 0o644
 }
 
 func (spec *NativeSpec) validate(output string) error {
@@ -124,8 +132,7 @@ func (natives *nativeMerge) reserve(jar *Jar, source *Source) error {
 }
 
 // writeNativeTree writes the native entries of the target platform under the tree, after the jar is closed. The
-// selection and the layout are nativelib's; the modes are JarPackager's: 0755 for a POSIX file without an extension,
-// which is executed directly, and 0644 for everything else.
+// selection and the layout are nativelib's, and FileMode states the modes.
 func (s MergeSpec) writeNativeTree(natives *nativeMerge) error {
 	spec, sourcePath := s.Native, s.Sources[natives.index].Path
 	if err := os.MkdirAll(spec.Tree, 0o755); err != nil {
@@ -158,16 +165,7 @@ func (s MergeSpec) writeNativeTree(natives *nativeMerge) error {
 			return fmt.Errorf("%s: two native entries select %q: %s and %s", sourcePath, relativePath, previous, match.PathWithPrefix)
 		}
 		claimed[relativePath] = match.PathWithPrefix
-		mode := os.FileMode(0o644)
-		if nativelib.IsExecutable(match.Family, match.FileName()) {
-			// The tree is inventoried by mode, and a Windows host records no executable bit, so the composer would place
-			// the file non-executable.
-			if runtime.GOOS == "windows" {
-				return fmt.Errorf("%s: %s: an executable native file cannot be written on a Windows host", sourcePath, match.PathWithPrefix)
-			}
-			mode = 0o755
-		}
-		planned = append(planned, plannedNativeFile{entry: byName[match.PathWithPrefix], relativePath: relativePath, mode: mode})
+		planned = append(planned, plannedNativeFile{entry: byName[match.PathWithPrefix], relativePath: relativePath, mode: spec.FileMode(match.FileName())})
 	}
 	for _, file := range planned {
 		data, err := natives.jar.Data(file.entry)

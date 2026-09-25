@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"runtime/pprof"
@@ -341,6 +342,11 @@ func inventoryPackingOutput(spec jarpack.MergeSpec, inventory *span.Span) error 
 		}
 		entries = append(entries, root)
 		for _, item := range tree {
+			if item.Type == "file" {
+				// The inventory records the mode the pack set. POSIX reads the same bits back, and NTFS stores none.
+				item.Mode = uint32(spec.Native.FileMode(path.Base(item.RelativePath)))
+				item.Executable = item.Mode&0o111 != 0
+			}
 			item.RelativePath = base + "/" + item.RelativePath
 			entries = append(entries, item)
 			if item.Type == "file" {

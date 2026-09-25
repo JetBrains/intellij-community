@@ -335,9 +335,9 @@ def _natives(ctx):
 def _native_trees(ctx, natives, library_jars):
     """Declares the native tree of each `HOST_PLATFORMS` token, one action per platform.
 
-    One action per platform, not one for all: a consumer builds the tree of its own platform only, and the packer
-    cannot write an executable native file on a Windows host. The action packs the libraries into a scratch jar, because
-    the packer writes a tree beside a jar. The module outputs stay out, so a module edit does not rebuild the trees.
+    One action per platform, not one for all: a consumer builds the tree of its own platform only. The action packs the
+    libraries into a scratch jar, because the packer writes a tree beside a jar. The module outputs stay out, so a module
+    edit does not rebuild the trees.
     """
     trees = {}
     for platform in HOST_PLATFORMS:
