@@ -7,6 +7,7 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.SearchContext
 import com.intellij.driver.sdk.ui.UiText
 import com.intellij.driver.sdk.ui.UiText.Companion.asString
+import com.intellij.driver.sdk.ui.isWayland
 import com.intellij.driver.sdk.ui.keyboard.RemoteKeyboard
 import com.intellij.driver.sdk.ui.keyboard.WithKeyboard
 import com.intellij.driver.sdk.ui.remote.Component
@@ -22,6 +23,7 @@ import org.intellij.lang.annotations.Language
 import java.awt.Color
 import java.awt.IllegalComponentStateException
 import java.awt.Point
+import java.awt.Rectangle
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -578,5 +580,14 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     return withComponent { Color(it.getForeground().getRGB()) }
   }
 
-  fun getLocationOnScreen(): Point = component.getLocationOnScreen()
+  fun getLocationOnScreen(): Point {
+    check(!driver.isWayland) { "not supported on Wayland" }
+    return component.getLocationOnScreen()
+  }
+
+  fun getBounds(): Rectangle = component.getBounds()
+
+  fun getWidth(): Int = component.width
+
+  fun getHeight(): Int = component.height
 }

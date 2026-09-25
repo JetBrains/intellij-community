@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
@@ -161,7 +160,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
   /**
    * Check if only beginning of the file was loaded for Document.
    *
-   * @see FileUtilRt#isTooLarge
+   * @see com.intellij.openapi.vfs.limits.FileSizeLimit#isTooLargeForContentLoading
    */
   public abstract boolean isPartialPreviewOfALargeFile(@NotNull Document document);
 
@@ -196,6 +195,9 @@ public abstract class FileDocumentManager implements SavingRequestor {
     return requestWriting(document, project) ? WriteAccessStatus.WRITABLE : WriteAccessStatus.NON_WRITABLE;
   }
 
+  /**
+   * @noinspection unused -- do not delete, used by external plugins
+   */
   public static boolean fileForDocumentCheckedOutSuccessfully(@NotNull Document document, @NotNull Project project) {
     return getInstance().requestWriting(document, project);
   }
@@ -217,8 +219,8 @@ public abstract class FileDocumentManager implements SavingRequestor {
      */
     ASK,
     /**
-     * Merge the external change into the unsaved changes, keeping both. The user is never asked, not even when the two turn
-     * out to be unmergeable; the external change wins in that case.
+     * Merge the external change into the unsaved changes, keeping both. The platform saves the merge, so the writer of
+     * the file can read it back.
      */
     MERGE,
     /**

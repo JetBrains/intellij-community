@@ -60,7 +60,11 @@ c:com.intellij.diff.comparison.DiffTooBigException
 f:com.intellij.diff.comparison.MergeResolveUtil
 - sf:INSTANCE:com.intellij.diff.comparison.MergeResolveUtil
 - sf:tryGreedyResolve(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence):java.lang.CharSequence
+- sf:tryGreedyResolve(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.CancellationChecker):java.lang.CharSequence
+- bs:tryGreedyResolve$default(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.CancellationChecker,I,java.lang.Object):java.lang.CharSequence
 - sf:tryResolve(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence):java.lang.CharSequence
+- sf:tryResolve(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.CancellationChecker):java.lang.CharSequence
+- bs:tryResolve$default(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.CancellationChecker,I,java.lang.Object):java.lang.CharSequence
 f:com.intellij.diff.comparison.TrimUtil
 - sf:expand(java.lang.CharSequence,java.lang.CharSequence,I,I,I,I):com.intellij.diff.util.Range
 - sf:expand(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.util.Range):com.intellij.diff.util.Range
