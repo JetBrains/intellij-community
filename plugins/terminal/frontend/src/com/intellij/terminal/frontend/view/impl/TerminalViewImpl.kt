@@ -225,6 +225,7 @@ class TerminalViewImpl(
       encodingManager
     )
     installSessionColorSchemeUpdating(terminalInput, coroutineScope.childScope("TerminalColorSchemeUpdating"))
+    installSessionCursorStateUpdating(terminalInput, coroutineScope.childScope("TerminalCursorStateUpdating"))
 
     // Use the same instance of the listeners for both editors to report the metrics only once.
     // Usually, the cursor is painted or output received first in the output editor

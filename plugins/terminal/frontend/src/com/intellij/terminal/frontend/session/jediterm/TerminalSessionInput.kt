@@ -16,6 +16,7 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalCloseEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSetDefaultBackgroundEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSetDefaultCursorShapeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSetDefaultForegroundEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.util.closeConnectorAndStopEmulation
@@ -73,6 +74,9 @@ private suspend fun handleInputEvent(event: TerminalInputEvent, services: JediTe
     }
     is TerminalSetDefaultForegroundEvent, is TerminalSetDefaultBackgroundEvent -> {
       // JediTerm reads the default colors on demand, see TerminalDisplayImpl.
+    }
+    is TerminalSetDefaultCursorShapeEvent -> {
+      // JediTerm reports no cursor shape until a program sets one, so TerminalCursorPainter uses the settings.
     }
     is TerminalClearBufferEvent -> {
       val textBuffer = services.textBuffer

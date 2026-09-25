@@ -38,6 +38,8 @@ import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksModel
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.math.ceil
 import kotlin.time.Duration
@@ -158,6 +160,26 @@ internal class TerminalViewFixture(private val project: Project, emulatorType: T
   }
 
   /**
+   * Suspends until the session handles every input event that the view sent before this call.
+   * The session handles the input events in order, so it writes [INPUT_BARRIER] to the pty only after them.
+   * [LoopbackTtyConnector.responseHandler] is replaced while this function waits.
+   */
+  suspend fun awaitInputEventsHandled(timeout: Duration = 5.seconds) {
+    val previousHandler = connector.responseHandler
+    val written = LinkedBlockingQueue<String>()
+    connector.responseHandler = { bytes -> written.add(String(bytes, Charsets.UTF_8)) }
+    try {
+      view.sendText(INPUT_BARRIER)
+      // The poll blocks, so it must not run on the EDT.
+      val barrier = withContext(Dispatchers.IO) { written.poll(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS) }
+      assertThat(barrier).describedAs("the session never wrote the input barrier to the pty").isEqualTo(INPUT_BARRIER)
+    }
+    finally {
+      connector.responseHandler = previousHandler
+    }
+  }
+
+  /**
    * Suspends until [condition] holds for [model] (by default, the currently active output buffer), checking
    * immediately and then again after every model change. Returns `false` if [timeout] elapses first.
    */
@@ -235,6 +257,9 @@ internal class TerminalViewFixture(private val project: Project, emulatorType: T
 
     /** How long [awaitReportedSize] waits on the connector queue before it checks the overall timeout. */
     private val REPORTED_SIZE_POLL_INTERVAL: Duration = 10.milliseconds
+
+    /** The text that [awaitInputEventsHandled] sends through the view. */
+    private const val INPUT_BARRIER: String = "input barrier"
   }
 }
 

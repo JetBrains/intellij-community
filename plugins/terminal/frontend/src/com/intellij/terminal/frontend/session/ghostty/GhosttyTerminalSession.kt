@@ -3,14 +3,12 @@ package com.intellij.terminal.frontend.session.ghostty
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.emulator.CursorShape
 import com.intellij.terminal.emulator.ScreenChange
 import com.intellij.terminal.emulator.ScrollbackPullPolicy
@@ -24,7 +22,6 @@ import com.intellij.terminal.frontend.session.ObservableTtyConnector
 import com.intellij.terminal.frontend.session.TerminalShellIntegrationController
 import com.intellij.terminal.frontend.session.addWorkingDirectoryListener
 import com.intellij.util.AwaitCancellationAndInvoke
-import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
@@ -46,7 +43,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
-import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.original
@@ -60,16 +56,18 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSetDefaultBackgroundEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSetDefaultCursorShapeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSetDefaultForegroundEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
+import org.jetbrains.plugins.terminal.session.impl.dto.CursorShapeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalRgbColorDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalStateDto
+import org.jetbrains.plugins.terminal.session.impl.dto.toCursorShape
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
-import java.beans.PropertyChangeListener
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
@@ -288,11 +286,6 @@ class GhosttyTerminalSession internal constructor(
     }
     emulator.customCommandListener = TerminalCustomCommandListener(shellIntegrationController::processCustomCommand)
 
-    // Applies the IDE's cursor-shape/blink-caret settings as the emulator's defaults, and keeps
-    // them in sync with those settings for the rest of the session. Must run before the read loop
-    // below starts, so the emulator never shows Ghostty's own hardcoded defaults even briefly.
-    installDefaultCursorStateUpdating(coroutineScope.childScope("Default cursor state updating"))
-
     // Windows host is using ConPTY that has its own buffer: it stores screen lines only,
     // and when terminal size grows, it can't pull scrollback lines to the screen.
     // So, we have to use "ScrollbackPullPolicy.NEVER" in the Windows case to ensure
@@ -451,6 +444,12 @@ class GhosttyTerminalSession internal constructor(
       }
       is TerminalSetDefaultBackgroundEvent -> lock.withLock {
         if (!disposed) emulator.setDefaultBackgroundColor(event.color.toEmulatorColor())
+      }
+      is TerminalSetDefaultCursorShapeEvent -> lock.withLock {
+        if (disposed) return
+        emulator.setDefaultCursorShape(event.cursorShape.toEmulatorCursorShape())
+        emulator.setDefaultCursorBlinking(event.cursorShape.toCursorShape().isBlinking)
+        changedSinceLastProjection = true
       }
     }
   }
@@ -687,59 +686,6 @@ class GhosttyTerminalSession internal constructor(
     syncWatchdogJob = null
     syncOutputForcePaint = false
   }
-
-  /**
-   * Subscribes to the terminal's "Cursor shape" setting ([TerminalOptionsProvider]) and the
-   * editor's "Blink caret" setting ([EditorSettingsExternalizable]), and pushes their current
-   * values into [emulator] as its default cursor shape/blink.
-   */
-  private fun installDefaultCursorStateUpdating(scope: CoroutineScope) {
-    val disposable = scope.asDisposable()
-    var lastCursorShape: TerminalUiSettingsManager.CursorShape? = null
-    var lastBlinkCaret: Boolean? = null
-
-    fun TerminalUiSettingsManager.CursorShape.toEmulatorCursorShape(): CursorShape = when (this) {
-      TerminalUiSettingsManager.CursorShape.BLOCK -> CursorShape.BLOCK
-      TerminalUiSettingsManager.CursorShape.UNDERLINE -> CursorShape.UNDERLINE
-      TerminalUiSettingsManager.CursorShape.VERTICAL -> CursorShape.BAR
-    }
-
-    fun updateCursorShapeIfChangedLocked() {
-      val current = TerminalOptionsProvider.instance.cursorShape
-      if (current != lastCursorShape) {
-        lastCursorShape = current
-        emulator.setDefaultCursorShape(current.toEmulatorCursorShape())
-        changedSinceLastProjection = true
-      }
-    }
-
-    fun updateCursorBlinkIfChangedLocked() {
-      val current = EditorSettingsExternalizable.getInstance().isBlinkCaret
-      if (current != lastBlinkCaret) {
-        lastBlinkCaret = current
-        emulator.setDefaultCursorBlinking(current)
-        changedSinceLastProjection = true
-      }
-    }
-
-    TerminalOptionsProvider.instance.addListener(disposable) {
-      lock.withLock {
-        if (!disposed) updateCursorShapeIfChangedLocked()
-      }
-    }
-    EditorSettingsExternalizable.getInstance().addPropertyChangeListener(PropertyChangeListener { event ->
-      if (event.propertyName == EditorSettingsExternalizable.PropNames.PROP_IS_CARET_BLINKING) {
-        lock.withLock {
-          if (!disposed) updateCursorBlinkIfChangedLocked()
-        }
-      }
-    }, disposable)
-
-    lock.withLock {
-      updateCursorShapeIfChangedLocked()
-      updateCursorBlinkIfChangedLocked()
-    }
-  }
 }
 
 private val LOG = logger<GhosttyTerminalSession>()
@@ -762,6 +708,12 @@ private val CLEAR_BUFFER_SEQUENCE: ByteArray = "\u001B[2J\u001B[3J".encodeToByte
 private val CTRL_L_BYTE: ByteArray = byteArrayOf(0x0C)
 
 private fun TerminalRgbColorDto.toEmulatorColor(): TerminalColor.Rgb = TerminalColor.Rgb(red, green, blue)
+
+private fun CursorShapeDto.toEmulatorCursorShape(): CursorShape = when (this) {
+  CursorShapeDto.BLINK_BLOCK, CursorShapeDto.STEADY_BLOCK -> CursorShape.BLOCK
+  CursorShapeDto.BLINK_UNDERLINE, CursorShapeDto.STEADY_UNDERLINE -> CursorShape.UNDERLINE
+  CursorShapeDto.BLINK_VERTICAL_BAR, CursorShapeDto.STEADY_VERTICAL_BAR -> CursorShape.BAR
+}
 
 /** Escapes control characters (e.g. `\e` for ESC) so raw PTY output is readable in the log. */
 private fun String.escapeControlCharactersForLog(): String {

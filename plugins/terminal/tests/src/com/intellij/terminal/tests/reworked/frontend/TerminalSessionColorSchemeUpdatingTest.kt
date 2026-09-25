@@ -82,20 +82,15 @@ internal class TerminalSessionColorSchemeUpdatingTest(emulatorType: TerminalEmul
 
   /**
    * Feeds [query] to the session and returns the first reply that the session writes to the pty.
-   *
-   * The session applies the color events asynchronously. So this function first sends [INPUT_BARRIER] through the view,
-   * and waits until it reaches the pty. The session handles the input events in order, so the color events sent before are applied.
+   * The session applies the color events asynchronously, so this function first waits until it handles them.
    */
   private suspend fun TerminalViewFixture.queryColor(query: String): String? {
-    val written = LinkedBlockingQueue<String>()
-    connector.responseHandler = { bytes -> written.add(String(bytes, Charsets.UTF_8)) }
-    view.sendText(INPUT_BARRIER)
-    // The polls block, so they must not run on the EDT.
-    return withContext(Dispatchers.IO) {
-      assertThat(written.poll(AWAIT_TIMEOUT_MS, TimeUnit.MILLISECONDS)).isEqualTo(INPUT_BARRIER)
-      connector.feed(query)
-      written.poll(AWAIT_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-    }
+    awaitInputEventsHandled()
+    val replies = LinkedBlockingQueue<String>()
+    connector.responseHandler = { bytes -> replies.add(String(bytes, Charsets.UTF_8)) }
+    connector.feed(query)
+    // The poll blocks, so it must not run on the EDT.
+    return withContext(Dispatchers.IO) { replies.poll(AWAIT_TIMEOUT_MS, TimeUnit.MILLISECONDS) }
   }
 
   /**
@@ -121,8 +116,6 @@ internal class TerminalSessionColorSchemeUpdatingTest(emulatorType: TerminalEmul
   private fun osc(body: String): String = "$ESC]$body$BEL"
 
   companion object {
-    private const val INPUT_BARRIER: String = "input barrier"
-
     private const val AWAIT_TIMEOUT_MS: Long = 5_000
   }
 }
