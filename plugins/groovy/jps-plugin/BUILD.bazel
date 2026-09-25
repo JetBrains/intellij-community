@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "jps-tests_test",
+    timeout = "short",
+    tags = ["community-compiler-test"],
+    runtime_deps = [":jps-tests_test_lib"],
+)
+### skip generation section `test intellij.groovy.jps.tests`
+
 ### auto-generated section `build intellij.groovy.jps` start
 jvm_library(
     name = "jps",
@@ -137,10 +145,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.groovy.jps.tests` end
-
-### auto-generated section `test intellij.groovy.jps.tests` start
-jps_test(
-    name = "jps-tests_test",
-    runtime_deps = [":jps-tests_test_lib"],
-)
-### auto-generated section `test intellij.groovy.jps.tests` end

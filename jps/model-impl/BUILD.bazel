@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jps_test(
     name = "model-tests_test",
     timeout = "moderate",
-    tags = ["community-aggregator"],
+    tags = ["community-compiler-test"],
     runtime_deps = [":model-tests_test_lib"],
 )
 
