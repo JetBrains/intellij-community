@@ -15,6 +15,9 @@
  */
 package org.jetbrains.jps.devkit.model;
 
+import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.platform.bazel.runfiles.BazelLabel;
+import com.intellij.testFramework.common.BazelTestUtil;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsGlobal;
@@ -36,8 +39,12 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 public class JpsPluginProjectSerializationTest {
   @Test
   public void testLoadProject() {
+    var testDataRoot = BazelTestUtil.isUnderBazelTest()
+                       ? BazelTestUtil.getFileFromBazelRuntime(
+                         BazelLabel.Companion.fromString("@community//plugins/devkit/jps-plugin:testData"))
+                       : PathManagerEx.findFileUnderCommunityHome("plugins/devkit/jps-plugin/testData").toPath();
     JpsProjectData projectData =
-      JpsProjectData.loadFromTestData("plugins/devkit/jps-plugin/testData/pluginProject/pluginProject.ipr", getClass());
+      JpsProjectData.loadFromTestData(testDataRoot.resolve("pluginProject/pluginProject.ipr").toAbsolutePath().toString(), getClass());
     JpsProject project = projectData.getProject();
     JpsModule module = assertOneElement(project.getModules());
     assertEquals(JpsPluginModuleType.INSTANCE, module.getModuleType());

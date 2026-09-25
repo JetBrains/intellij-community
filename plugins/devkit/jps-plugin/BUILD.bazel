@@ -1,13 +1,28 @@
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
 jps_test(
     name = "jps-tests_test",
     timeout = "short",
+    data = [
+        ":testData",
+        BAZEL_TARGETS_JSON,
+    ],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
+    ],
     tags = ["community-compiler-test"],
     runtime_deps = [":jps-tests_test_lib"],
 )
 ### skip generation section `test intellij.devkit.jps.tests`
+
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+)
 
 ### auto-generated section `build intellij.devkit.jps` start
 jvm_library(
@@ -132,6 +147,8 @@ jvm_library(
         "//libraries/asm:asm_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/bazel-runfiles",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
         "//java/compiler/instrumentation-util",
         "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
         "//libraries/junit4",

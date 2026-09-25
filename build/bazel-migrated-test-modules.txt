@@ -19,6 +19,7 @@ intellij.devkit.debugger.tests
 intellij.devkit.gradle.tests
 intellij.devkit.i18n.tests
 intellij.devkit.java.tests
+intellij.devkit.jps.tests
 intellij.devkit.testFramework
 intellij.devkit.workspaceModel.tests
 intellij.driver.client.tests
