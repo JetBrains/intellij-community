@@ -22,6 +22,7 @@ import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunne
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunnerContext
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerPlace
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerType
+import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.service.MarkdownCommandRunnerRemoteApi
 import org.intellij.plugins.markdown.service.MarkdownFrontendRunnerRequest
 import org.intellij.plugins.markdown.service.confirmBackendProjectIsTrusted
@@ -56,7 +57,8 @@ class MarkdownFrontendRunnerFlowService(coroutineScope: CoroutineScope) {
   private fun runRequest(project: Project, request: MarkdownFrontendRunnerRequest) {
     if (project.isDisposed) return
     val editor = request.editorId.findEditorOrNull() ?: return
-    val language = request.languageId?.let { Language.findLanguageByID(it) } ?: return
+    val languageId = request.languageId ?: return
+    val language = Language.findLanguageByID(languageId) ?: CodeFenceLanguageGuesser.guessLanguageForExecution(languageId) ?: return
     val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull { it.isApplicable(language) } ?: return
     val point = request.screenPoint?.let {
       Point(it.x, it.y).also { point -> SwingUtilities.convertPointFromScreen(point, editor.contentComponent) }

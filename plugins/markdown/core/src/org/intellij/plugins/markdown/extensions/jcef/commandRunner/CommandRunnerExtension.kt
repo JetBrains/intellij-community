@@ -146,12 +146,12 @@ class CommandRunnerExtension(
 
   fun processCodeBlock(codeFenceRawContent: String, language: String): String {
     try {
-      val lang = CodeFenceLanguageGuesser.guessLanguageForInjection(language)
+      val lang = CodeFenceLanguageGuesser.guessLanguageForExecution(language)
       val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull { it.isApplicable(lang) }
       if (runner == null) return ""
 
-      val hash = MarkdownUtil.md5(codeFenceRawContent, sessionKey)
-      hash2Cmd[hash] = codeFenceRawContent
+      val hash = MarkdownUtil.md5(codeFenceRawContent, "$sessionKey:${lang?.id}")
+      hash2Cmd[hash] = if (lang?.id == "PowerShell") codeFenceRawContent else trimPrompt(codeFenceRawContent)
       val lines = codeFenceRawContent.trimEnd().lines()
       val firstLineHash = if (lines.size > 1) processLine(lines[0], false) else null
       val firstLineData = if (firstLineHash.isNullOrBlank()) "" else "data-firstLine='$firstLineHash'"
@@ -243,19 +243,18 @@ class CommandRunnerExtension(
         LOG.error("Command hash not found. Please attach .md file to error report.")
         return true
       }
-      val trimmedCmd = trimPrompt(command)
       val x = args[3].toDoubleOrNull()?.toInt() ?: 0
       val y = args[4].toDoubleOrNull()?.toInt() ?: 0
       val needsConfirmation = PreviewClickConfirmation.needsConfirmation(args.getOrNull(5))
       if (needsConfirmation) {
-        confirmThenRun(trimmedCmd) {
-          executeBlock(trimmedCmd, executorId, x, y)
+        confirmThenRun(command) {
+          executeBlock(command, executorId, x, y)
         }
         return false
       }
       if (firstLineCommand == null) {
         ApplicationManager.getApplication().invokeLater {
-          executeBlock(trimmedCmd, executorId, x, y)
+          executeBlock(command, executorId, x, y)
         }
         return false
       }
@@ -266,7 +265,7 @@ class CommandRunnerExtension(
                                              AllIcons.RunConfigurations.TestState.Run_run) {
         override fun actionPerformed(e: AnActionEvent) {
           ApplicationManager.getApplication().invokeLater {
-            executeBlock(trimmedCmd, executorId, x, y)
+            executeBlock(command, executorId, x, y)
           }
         }
       }

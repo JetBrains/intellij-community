@@ -44,5 +44,6 @@ class CodeFenceInfoStringResolveTest : LightPlatformCodeInsightTestCase() {
   private fun assertInfoStringIsResolved(infoString: String, expectedId: String?) {
     val id = resolveInfoString(infoString)
     TestCase.assertEquals(expectedId, id)
+    TestCase.assertEquals(expectedId, CodeFenceLanguageGuesser.guessLanguageForExecution(infoString)?.id?.lowercase())
   }
 }

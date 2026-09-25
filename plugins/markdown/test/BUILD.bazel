@@ -58,6 +58,7 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/lang-core",
         "//plugins/markdown/figmaAdvertiser",
+        "//plugins/sh/markdown",
         "//plugins/sh/plugin",
     ],
 )
@@ -87,6 +88,7 @@ jvm_library(
         "//plugins/jcef/plugin:plugin_test_lib",
         "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
+        "//plugins/sh/markdown:markdown_test_lib",
         "//plugins/sh/plugin:plugin_test_lib",
     ],
     deps = [

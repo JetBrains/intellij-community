@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.ExtensionTestUtil
@@ -36,16 +37,20 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunnerContext
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.getMarkdownCommandWorkingDirectoryPaths
-import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.service.MarkdownFrontendRunnerRequest
+import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.ui.preview.BrowserPipe
+import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.awt.Point
 import java.awt.event.MouseEvent
+import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TestTimeSource
@@ -56,9 +61,11 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
   private val markdownRunnerEp = ExtensionPointName.create<MarkdownRunner>("org.intellij.markdown.markdownRunner")
   private val capturingRunner = CapturingRunner()
   private lateinit var runnerDisposable: Disposable
+  private lateinit var registeredRunners: List<MarkdownRunner>
 
   override fun setUp() {
     super.setUp()
+    registeredRunners = markdownRunnerEp.extensionList
     runnerDisposable = Disposer.newDisposable()
     Disposer.register(testRootDisposable, runnerDisposable)
     ExtensionTestUtil.maskExtensions(markdownRunnerEp, listOf(capturingRunner), runnerDisposable)
@@ -86,11 +93,11 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `shell fence markers do not require a backend runner`() {
+  fun `terminal fence markers do not require a backend runner`() {
     Disposer.dispose(runnerDisposable)
     ExtensionTestUtil.maskExtensions(markdownRunnerEp, emptyList(), testRootDisposable)
 
-    for (alias in listOf("shell", "bash", "sh", "zsh")) {
+    for (alias in listOf("shell", "bash", "sh", "zsh", "powershell", "posh", "pwsh", "PowerShell")) {
       val file = myFixture.addFileToProject("foo/$alias.md", "```$alias\npwd\n```")
       myFixture.openFileInEditor(file.virtualFile)
       myFixture.doHighlighting()
@@ -100,6 +107,43 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
       val action = (marker!!.createGutterRenderer() as GutterIconRenderer).clickAction!!
       assertEquals("Run in Terminal", action.templatePresentation.text)
     }
+  }
+
+  @Test
+  fun `PowerShell block reaches the frontend intact without the language plugin`() {
+    assertNull(Language.findLanguageByID("PowerShell"))
+    capturingRunner.acceptsLanguage = registeredRunners.single { it.javaClass.simpleName == "ShMarkdownRunner" }::isApplicable
+    MarkdownSettings.getInstance(project).useFileDirectoryForCommands = true
+    val command = "\$text = @'\n# text\n\n'@\n\$env:EXAMPLE = \$text"
+    val file = myFixture.addFileToProject("foo/powershell.md", "```powershell title=demo\n$command\n```")
+    myFixture.openFileInEditor(file.virtualFile)
+
+    fireBlockMarkerAction()
+
+    assertEquals(command, capturingRunner.capturedCommand?.trim())
+  }
+
+  @Test
+  fun `preview preserves PowerShell commands and trims shell prompts`() {
+    capturingRunner.acceptsLanguage = registeredRunners.single { it.javaClass.simpleName == "ShMarkdownRunner" }::isApplicable
+    MarkdownSettings.getInstance(project).useFileDirectoryForCommands = true
+    val pipe = TestBrowserPipe()
+    val extension = createPreviewExtension(pipe)
+    val command = "\$value = 'hello' # comment"
+    val shellHtml = extension.processCodeBlock(command, "shell")
+    val powerShellHtml = extension.processCodeBlock(command, "powershell")
+    assertFalse(shellHtml == powerShellHtml)
+
+    clickPreviewBlock(pipe, powerShellHtml)
+    PlatformTestUtil.waitWithEventsDispatching("The PowerShell runner did not execute", { capturingRunner.capturedCommand != null }, 10)
+
+    assertEquals(command, capturingRunner.capturedCommand)
+    capturingRunner.capturedCommand = null
+
+    clickPreviewBlock(pipe, shellHtml)
+    PlatformTestUtil.waitWithEventsDispatching("The shell command did not execute", { capturingRunner.capturedCommand != null }, 10)
+
+    assertEquals("value = 'hello'", capturingRunner.capturedCommand)
   }
 
   @Test
@@ -361,6 +405,29 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     )
   }
 
+  private fun createPreviewExtension(pipe: BrowserPipe? = null): CommandRunnerExtension {
+    val virtualFile = myFixture.file.virtualFile
+    val component = myFixture.editor.component
+    val project = project
+    val panel = object : MarkdownHtmlPanel {
+      override fun getComponent(): JComponent = component
+      override fun getProject(): Project = project
+      override fun getVirtualFile(): VirtualFile = virtualFile
+      override fun getBrowserPipe(): BrowserPipe? = pipe
+      override fun setHtml(html: String, initialScrollOffset: Int, document: VirtualFile?) = Unit
+      override fun reloadWithOffset(offset: Int) = Unit
+      override fun addScrollListener(listener: MarkdownHtmlPanel.ScrollListener) = Unit
+      override fun removeScrollListener(listener: MarkdownHtmlPanel.ScrollListener) = Unit
+      override fun dispose() = Unit
+    }
+    return CommandRunnerExtension(panel, CommandRunnerExtension.Provider()).also { Disposer.register(testRootDisposable, it) }
+  }
+
+  private fun clickPreviewBlock(pipe: TestBrowserPipe, html: String) {
+    val command = requireNotNull(Regex("data-command='([^']+)'").find(html)).groupValues[1]
+    pipe.receive("runBlock", "$command::0:0:0")
+  }
+
   private fun fireBlockMarkerAction(
     place: String = ActionPlaces.EDITOR_GUTTER,
     editor: Editor = myFixture.editor,
@@ -391,8 +458,9 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     var capturedContext: MarkdownRunnerContext? = null
     var failNext = false
     var reuseTarget = false
+    var acceptsLanguage: (Language?) -> Boolean = { true }
 
-    override fun isApplicable(language: Language?) = true
+    override fun isApplicable(language: Language?): Boolean = acceptsLanguage(language)
 
     override fun run(command: String, project: Project, workingDirectory: String?, executor: Executor): Boolean {
       capturedDir = workingDirectory
@@ -416,5 +484,27 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     }
 
     override fun title() = "Test Runner"
+  }
+
+  private class TestBrowserPipe : BrowserPipe {
+    private val handlers = mutableMapOf<String, BrowserPipe.Handler>()
+
+    override fun send(type: String, data: String) = Unit
+
+    override fun subscribe(type: String, handler: BrowserPipe.Handler) {
+      handlers[type] = handler
+    }
+
+    override fun removeSubscription(type: String, handler: BrowserPipe.Handler) {
+      handlers.remove(type, handler)
+    }
+
+    fun receive(type: String, data: String) {
+      check(!handlers.getValue(type).processMessageReceived(data))
+    }
+
+    override fun dispose() {
+      handlers.clear()
+    }
   }
 }

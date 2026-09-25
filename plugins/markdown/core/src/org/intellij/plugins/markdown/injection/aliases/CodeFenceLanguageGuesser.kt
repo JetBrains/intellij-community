@@ -15,6 +15,17 @@ object CodeFenceLanguageGuesser {
   private const val suggestersPointName = "org.intellij.markdown.additionalFenceLanguageSuggester"
   private val suggestersExtensionPoint = ExtensionPointName.create<AdditionalFenceLanguageSuggester>(suggestersPointName)
 
+  fun guessLanguageForExecution(value: String): Language? {
+    val trimmedValue = value.trim()
+    for (provider in customProviders) {
+      val language = provider.getLanguageByInfoString(trimmedValue)
+      if (language != null) {
+        return language
+      }
+    }
+    return null
+  }
+
   /**
    * Guess IntelliJ Language from Markdown info-string.
    * It may either be lower-cased id or some of the aliases.
@@ -25,12 +36,18 @@ object CodeFenceLanguageGuesser {
    */
   @JvmStatic
   fun guessLanguageForInjection(value: String): Language? {
-    return guessLanguage(value)?.first?.takeIf { LanguageUtil.isInjectableLanguage(it) }
+    return guessLanguageWithExtensionForInjection(value)?.first
   }
 
   @JvmStatic
   fun guessLanguageWithExtensionForInjection(value: String): Pair<Language, String?>? {
-    return guessLanguage(value)?.takeIf { LanguageUtil.isInjectableLanguage(it.first) }
+    for (provider in customProviders) {
+      val language = provider.getLanguageByInfoString(value)
+      if (language != null && LanguageUtil.isInjectableLanguage(language)) {
+        return Pair(language, provider.getExtensionByInfoString(value))
+      }
+    }
+    return null
   }
 
   private fun findLanguage(value: String, registeredLanguages: Collection<Language>): Language? {
@@ -47,40 +64,17 @@ object CodeFenceLanguageGuesser {
   @ApiStatus.Internal
   fun findLanguage(value: String): Language? {
     val registeredLanguages = Language.getRegisteredLanguages()
-    val exactMatch = findLanguage(value, registeredLanguages)
-    if (exactMatch != null) {
-      return exactMatch
-    }
-    var index = value.lastIndexOf(' ')
-    while (index != -1) {
-      val nameWithoutCustomizations = value.substring(0, index)
-      val language = findLanguage(nameWithoutCustomizations, registeredLanguages)
+    var name = value.trim()
+    while (true) {
+      val language = findLanguage(name, registeredLanguages)
       if (language != null) {
         return language
       }
-      index = value.lastIndexOf(' ', startIndex = (index - 1).coerceAtLeast(0))
-    }
-    return null
-  }
-
-  /**
-   * Guess IntelliJ Language from Markdown info-string.
-   * It may either be lower-cased id or some of the aliases.
-   *
-   * Note, that returned language can be non-injectable.
-   * Consider using [guessLanguageWithExtensionForInjection]
-   *
-   * @return IntelliJ Language if it was found
-   */
-  @JvmStatic
-  private fun guessLanguage(value: String): Pair<Language, String?>? {
-    // Custom providers should handle customizations by themselves
-    for (provider in customProviders) {
-      val lang = provider.getLanguageByInfoString(value)
-      if (lang != null) {
-        return Pair(lang, provider.getExtensionByInfoString(value))
+      val index = name.indexOfLast { it.isWhitespace() }
+      if (index == -1) {
+        return null
       }
+      name = name.substring(0, index).trimEnd()
     }
-    return null
   }
 }

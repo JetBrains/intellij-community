@@ -90,14 +90,18 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
 
   private fun collectFenceText(element: MarkdownCodeFence): String? {
     val fenceElements = MarkdownCodeFence.obtainFenceContent(element, false) ?: return null
-    return trimPrompt(fenceElements.joinToString(separator = "") { it.text })
+    return fenceElements.joinToString(separator = "") { it.text }
   }
 
   private fun processBlock(lang: String, element: PsiElement): Info? {
-    val language = CodeFenceLanguageGuesser.guessLanguageForInjection(lang)
+    val language = CodeFenceLanguageGuesser.guessLanguageForExecution(lang)
     val runnerTitle = MarkdownRunner.EP_NAME.extensionList.firstOrNull { it.isApplicable(language) }?.title()
-                      ?: if (language?.id == "Shell Script") MarkdownBundle.message("markdown.runner.launch.shell") else return null
+                      ?: if (language?.id == "Shell Script" || language?.id == "PowerShell") {
+                        MarkdownBundle.message("markdown.runner.launch.shell")
+                      }
+                      else return null
     val text = (element.parent as? MarkdownCodeFence)?.let(this::collectFenceText) ?: return null
+    val command = if (language?.id == "PowerShell") text else trimPrompt(text)
     val runAction = object : AnAction({ runnerTitle }, AllIcons.RunConfigurations.TestState.Run_run) {
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -121,7 +125,7 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
           MarkdownFrontendRunnerRequest(
             projectId = project.projectId(),
             languageId = language?.id,
-            command = text,
+            command = command,
             sourceFileUrl = sourceFile.url,
             showTargetChooser = event.place == ActionPlaces.EDITOR_GUTTER_POPUP,
             offset = element.textOffset,

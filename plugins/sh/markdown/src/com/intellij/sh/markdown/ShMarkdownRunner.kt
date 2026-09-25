@@ -24,7 +24,8 @@ import org.intellij.plugins.markdown.service.confirmBackendProjectIsTrusted
 import org.intellij.plugins.markdown.util.MarkdownPluginScope
 
 internal class ShMarkdownRunner : MarkdownRunner {
-  override fun isApplicable(language: Language?): Boolean = language != null && language.`is`(ShLanguage.INSTANCE)
+  override fun isApplicable(language: Language?): Boolean =
+    language != null && (language.`is`(ShLanguage.INSTANCE) || language.id == "PowerShell")
 
   override fun run(command: String, project: Project, workingDirectory: String?, executor: Executor): Boolean {
     val terminalRunner = project.getService(ShSelectedTerminalRunner::class.java) ?: return false
