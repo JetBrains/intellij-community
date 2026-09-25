@@ -145,6 +145,7 @@ abstract class ProjectFileStorageSelector @JvmOverloads constructor(
     return ActionButton(showStoragePathAction, presentation, ActionPlaces.TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
   }
 
+  @Suppress("SplitModeApiUsage") // TODO: RIDER-143378
   private fun manageStorageFileLocation(state: PopupState<Balloon>?) {
     val balloonDisposable = Disposer.newDisposable()
     val popup = StoragePathPopup(
