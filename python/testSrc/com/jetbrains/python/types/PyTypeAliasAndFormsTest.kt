@@ -1029,6 +1029,24 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       #       └ TYPE A
               return expr.f()
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90655"])
+    fun `super() with an instance of an unknown type`() = test("""
+      class A:
+          def f(self, other):
+              expr = super(A, other)
+      #       └ TYPE Unknown
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90655"])
+    fun `super() with an instance of an unrelated type`() = test("""
+      class A:
+          def f(self):
+              expr = super(A, 42)
+      #       └ TYPE Unknown
+      """.trimIndent())
   }
 
   @Nested

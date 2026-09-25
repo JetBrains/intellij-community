@@ -827,7 +827,7 @@ object PyCallExpressionHelper {
         }
       }
     }
-    return null
+    return PyAnyType.unknown
   }
 
   private fun getSuperClassUnionType(klass: PyClass, context: TypeEvalContext?): PyType? {
