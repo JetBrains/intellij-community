@@ -975,7 +975,7 @@ class PluginDetailsPageComponent private constructor(
   private fun initializePluginSourceIdDropDownLink(infoPanel: JPanel) {
     val dropDownLink = object : DropDownLink<PluginUpdateSource?>(null, { link -> createUpdateSourcesPopup(link) }) {
       override fun itemToString(item: PluginUpdateSource?): String {
-        return item.getShortenedPresentableName()
+        return item.getShortenedPresentableNameForLabel()
       }
     }
     dropDownLink.foreground = ListPluginComponent.GRAY_COLOR
@@ -991,8 +991,12 @@ class PluginDetailsPageComponent private constructor(
     myPluginUpdateSource = dropDownLink
   }
 
-  private fun PluginUpdateSource?.getShortenedPresentableName(): @Nls(capitalization = Nls.Capitalization.Sentence) String {
+  private fun PluginUpdateSource?.getShortenedPresentableNameForLabel(): @Nls(capitalization = Nls.Capitalization.Sentence) String {
     return StringUtil.shortenTextWithEllipsis(getPresentableName(), 40, 20)
+  }
+
+  private fun PluginUpdateSource?.getShortenedPresentableNameForPopup(): @Nls(capitalization = Nls.Capitalization.Sentence) String {
+    return StringUtil.shortenTextWithEllipsis(getPresentableName(), 75, 20)
   }
 
   private fun createUpdateSourcesPopup(link: DropDownLink<PluginUpdateSource?>, onSelectionCallback: () -> Unit = {}): JBPopup {
@@ -1003,7 +1007,7 @@ class PluginDetailsPageComponent private constructor(
       }
       .setRenderer(listCellRenderer {
         val sourceId = value
-        text(sourceId.getShortenedPresentableName())
+        text(sourceId.getShortenedPresentableNameForPopup())
       })
       .setItemChosenCallback { pluginUpdateSource ->
         val pluginId = plugin?.pluginId
@@ -1483,7 +1487,7 @@ class PluginDetailsPageComponent private constructor(
   private fun setPluginUpdateSource(pluginUpdateSource: PluginUpdateSource?, component: DropDownLink<PluginUpdateSource?>?) {
     component?.apply {
       selectedItem = pluginUpdateSource
-      text = pluginUpdateSource.getShortenedPresentableName()
+      text = pluginUpdateSource.getShortenedPresentableNameForLabel()
       setToolTipText(HtmlChunk.text(pluginUpdateSource.getPresentableName()))
       accessibleContext.accessibleName = pluginUpdateSource.getPresentableName()
     }
