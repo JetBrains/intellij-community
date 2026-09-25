@@ -53,10 +53,11 @@ object AgentTelemetryFusValues {
   """.trimIndent()
 
   // Matches one numeric model component: an optional single ASCII letter on either side of dot-separated digit groups (v3, 5.4, 70b).
-  private const val MODEL_NUMBER_PATTERN = """[a-z]?[0-9]+(?:\.[0-9]+)*[a-z]?"""
+  // A digit group has at most 8 digits, which fits a date suffix such as 20250929.
+  private const val MODEL_NUMBER_PATTERN = """[a-z]?[0-9]{1,8}(?:\.[0-9]{1,8}){0,3}[a-z]?"""
 
   // Matches a mixture-of-experts size, as in mixtral-8x7b.
-  private const val MODEL_EXPERTS_PATTERN = """[0-9]+x[0-9]+[a-z]?"""
+  private const val MODEL_EXPERTS_PATTERN = """[0-9]{1,3}x[0-9]{1,4}[a-z]?"""
 
   // Matches a single-letter variant suffix, as in command-a.
   private const val MODEL_VARIANT_LETTER_PATTERN = """[a-z]"""
@@ -66,7 +67,8 @@ object AgentTelemetryFusValues {
 
   // BYOK and local models are listed alongside the hosted ones because an unlisted name collapses into UNKNOWN, which
   // merges every self-hosted setup into one bucket. A model must start with a known name, provider or alias; a compact
-  // version may follow it directly (qwen3, gpt4o), and everything after that needs separators.
+  // version may follow it directly (qwen3, gpt4o), and everything after that needs separators. At most 10 components
+  // follow the first one, so the rule bounds the length of a value.
   val modelPattern: String = """(?xi)
       (?:
         $UNKNOWN
@@ -82,11 +84,11 @@ object AgentTelemetryFusValues {
             |$MODEL_NUMBER_PATTERN
             |$MODEL_VARIANT_LETTER_PATTERN
           )
-        )*
+        ){0,10}
       )
     """.trimIndent()
 
-  const val CONTEXT_SIZE_PATTERN: String = "[0-9]+[km]|$UNKNOWN"
+  const val CONTEXT_SIZE_PATTERN: String = "[0-9]{1,4}[km]|$UNKNOWN"
 
   private val allowedModesSet = allowedModes.toSet()
   private val allowedReasoningLevelsSet = allowedReasoningLevels.toSet()
