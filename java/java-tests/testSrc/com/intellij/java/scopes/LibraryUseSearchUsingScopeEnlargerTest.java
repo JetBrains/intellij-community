@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.scopes;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.scopes;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -46,7 +46,7 @@ public class LibraryUseSearchUsingScopeEnlargerTest extends JavaCodeInsightFixtu
   protected void setUp() throws Exception {
     super.setUp();
     Disposer.register(getTestRootDisposable(), DynamicPluginTestUtilsKt.loadExtensionWithText(
-      "<useScopeEnlarger implementation=\"com.intellij.scopes.LibraryUseSearchUsingScopeEnlargerTest$LibraryUseScopeEnlarger\"/>",
+      "<useScopeEnlarger implementation=\"com.intellij.java.scopes.LibraryUseSearchUsingScopeEnlargerTest$LibraryUseScopeEnlarger\"/>",
       "com.intellij"));
     //bug? Test seems to use stale data.
     RefreshQueue.getInstance().refreshPaths(false, true, null, ContainerUtil.map(Collections.singleton(new File(getTestDataPath())), File::toPath));
