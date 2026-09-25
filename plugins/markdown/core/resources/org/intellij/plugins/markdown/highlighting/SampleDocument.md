@@ -184,6 +184,15 @@ Text with a footnote[^1] and a multiline footnote[^2].
     <footnote_def>Continuation line one.</footnote_def>
     <footnote_def>Continuation line two.</footnote_def>
 
+<hh2>Citations and inline footnotes
+--------------------------------------------------</hh2>
+
+<inline_footnote>^[This is an inline footnote.]</inline_footnote>
+
+<citation>[@doe99]</citation>
+
+<citation>[see @doe99, pp. 33-35; also @smith04, chap. 1]</citation>
+
 <hh2>Alerts
 ---------</hh2>
 

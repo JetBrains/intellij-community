@@ -49,6 +49,7 @@ public class MarkdownColorSettingsPage implements ColorSettingsPage {
     result.put("link_dest", MarkdownHighlighterColors.LINK_DESTINATION);
     result.put("link_img", MarkdownHighlighterColors.IMAGE);
     result.put("link_title", MarkdownHighlighterColors.LINK_TITLE);
+    result.put("citation", MarkdownHighlighterColors.CITATION);
 
     result.put("code_span", MarkdownHighlighterColors.CODE_SPAN);
     result.put("code_block", MarkdownHighlighterColors.CODE_BLOCK);
@@ -64,6 +65,7 @@ public class MarkdownColorSettingsPage implements ColorSettingsPage {
     result.put("dm", MarkdownHighlighterColors.DEFINITION_LIST_MARKER);
 
     result.put("footnote_def", MarkdownHighlighterColors.FOOTNOTE_DEFINITION);
+    result.put("inline_footnote", MarkdownHighlighterColors.INLINE_FOOTNOTE);
 
     result.put("alert_note", MarkdownHighlighterColors.ALERT_TITLE_NOTE);
     result.put("alert_tip", MarkdownHighlighterColors.ALERT_TITLE_TIP);
@@ -151,6 +153,7 @@ public class MarkdownColorSettingsPage implements ColorSettingsPage {
       put("markdown.editor.colors.link_label", MarkdownHighlighterColors.LINK_LABEL);
       put("markdown.editor.colors.link_destination", MarkdownHighlighterColors.LINK_DESTINATION);
       put("markdown.editor.colors.link_title", MarkdownHighlighterColors.LINK_TITLE);
+      put("markdown.editor.colors.citation", MarkdownHighlighterColors.CITATION);
 
       put("markdown.editor.colors.unordered_list", MarkdownHighlighterColors.UNORDERED_LIST);
       put("markdown.editor.colors.ordered_list", MarkdownHighlighterColors.ORDERED_LIST);
@@ -164,6 +167,7 @@ public class MarkdownColorSettingsPage implements ColorSettingsPage {
       put("markdown.editor.colors.term", MarkdownHighlighterColors.TERM);
 
       put("markdown.editor.colors.footnote_definition", MarkdownHighlighterColors.FOOTNOTE_DEFINITION);
+      put("markdown.editor.colors.inline_footnote", MarkdownHighlighterColors.INLINE_FOOTNOTE);
 
       put("markdown.editor.colors.alert.title.note", MarkdownHighlighterColors.ALERT_TITLE_NOTE);
       put("markdown.editor.colors.alert.title.tip", MarkdownHighlighterColors.ALERT_TITLE_TIP);

@@ -57,6 +57,7 @@ public final class MarkdownHighlighterColors {
   public static final TextAttributesKey LINK_DESTINATION = createTextAttributesKey("MARKDOWN_LINK_DESTINATION", STATIC_METHOD);
   public static final TextAttributesKey LINK_LABEL = createTextAttributesKey("MARKDOWN_LINK_LABEL", KEYWORD);
   public static final TextAttributesKey LINK_TITLE = createTextAttributesKey("MARKDOWN_LINK_TITLE", STRING);
+  public static final TextAttributesKey CITATION = createTextAttributesKey("MARKDOWN_CITATION", CONSTANT);
   public static final TextAttributesKey AUTO_LINK = createTextAttributesKey("MARKDOWN_AUTO_LINK", HYPERLINK_ATTRIBUTES);
 
   public static final TextAttributesKey COMMENT = createTextAttributesKey("MARKDOWN_COMMENT", LINE_COMMENT);
@@ -69,6 +70,7 @@ public final class MarkdownHighlighterColors {
   public static final TextAttributesKey FRONT_MATTER_HEADER_DELIMITER = createTextAttributesKey("MARKDOWN_FRONT_MATTER_HEADER_DELIMITER", LIST_MARKER);
 
   public static final TextAttributesKey FOOTNOTE_DEFINITION = createTextAttributesKey("MARKDOWN_FOOTNOTE_DEFINITION", CODE_BLOCK);
+  public static final TextAttributesKey INLINE_FOOTNOTE = createTextAttributesKey("MARKDOWN_INLINE_FOOTNOTE", STRING);
 
   public static final TextAttributesKey ALERT_TITLE_NOTE = createTextAttributesKey("MARKDOWN_ALERT_TITLE_NOTE", ConsoleHighlighter.BLUE);
   public static final TextAttributesKey ALERT_TITLE_TIP = createTextAttributesKey("MARKDOWN_ALERT_TITLE_TIP", ConsoleHighlighter.GREEN);

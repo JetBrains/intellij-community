@@ -26,6 +26,7 @@ import org.intellij.plugins.markdown.util.isFootnoteLabelText
 
 @Suppress("RegExpRedundantEscape")
 private val FOOTNOTE_REF_IN_TEXT = Regex("""\[\^[^\]\n\t ]+]""")
+private val CITATION_KEY_IN_LABEL = Regex("""(?:^|[\s;,])-?@[\p{L}\p{N}_][\p{L}\p{N}_:.#$%&+?<>~/\-]*""")
 
 /**
  * Style keys to be applied to [PsiElement] with the following semantics:
@@ -41,10 +42,69 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
     if (holder.isBatchMode()) return
     if (element.elementType is OuterLanguageElementType) return
 
+    annotateInlineFootnoteMarker(element, holder)
+    if (annotateShortReferenceSyntax(element, holder)) return
     if (annotateFootnoteContinuationCodeLine(element, holder)) return
 
     val keys = collectHighlightingKeys(element) ?: return
     applyAnnotations(holder, element, keys)
+  }
+
+  private fun annotateShortReferenceSyntax(element: PsiElement, holder: AnnotationHolder): Boolean {
+    val linkLabel = element.parentOfType(MarkdownElementTypes.LINK_LABEL, withSelf = true) ?: return false
+    val shortReferenceLink = linkLabel.parent?.takeIf { it.elementType == MarkdownElementTypes.SHORT_REFERENCE_LINK } ?: return false
+    val isInlineFootnote = isInlineFootnote(shortReferenceLink)
+    val highlightingKey = when {
+      isInlineFootnote -> MarkdownHighlighterColors.INLINE_FOOTNOTE
+      isCitationLabel(linkLabel.text) -> MarkdownHighlighterColors.CITATION
+      else -> return false
+    }
+
+    if (element == linkLabel) return true
+
+    val inheritedKeys = collectHighlightingKeys(element)
+    if (inheritedKeys != null) {
+      val keys = inheritedKeys.filterNot {
+        it == MarkdownHighlighterColors.LINK_LABEL || it == MarkdownHighlighterColors.REFERENCE_LINK
+      }.toSet() + highlightingKey
+      applyAnnotations(holder, element, keys)
+    }
+    return true
+  }
+
+  private fun annotateInlineFootnoteMarker(element: PsiElement, holder: AnnotationHolder) {
+    if (element.elementType != MarkdownTokenTypes.TEXT || !element.text.endsWith('^')) return
+    val shortReferenceLink = element.nextSibling?.takeIf {
+      it.elementType == MarkdownElementTypes.SHORT_REFERENCE_LINK
+    } ?: return
+    if (!isInlineFootnote(shortReferenceLink)) return
+
+    val markerStartOffset = element.textRange.endOffset - 1
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+      .textAttributes(MarkdownHighlighterColors.INLINE_FOOTNOTE)
+      .range(TextRange(markerStartOffset, markerStartOffset + 1))
+      .create()
+  }
+
+  private fun isInlineFootnote(shortReferenceLink: PsiElement): Boolean {
+    val startOffset = shortReferenceLink.textRange.startOffset
+    if (startOffset == 0) return false
+
+    val contents = shortReferenceLink.containingFile.viewProvider.contents
+    if (contents[startOffset - 1] != '^') return false
+
+    var backslashCount = 0
+    var offset = startOffset - 2
+    while (offset >= 0 && contents[offset] == '\\') {
+      backslashCount++
+      offset--
+    }
+    return backslashCount % 2 == 0
+  }
+
+  private fun isCitationLabel(text: String): Boolean {
+    val labelText = text.removePrefix("[").removeSuffix("]")
+    return CITATION_KEY_IN_LABEL.containsMatchIn(labelText)
   }
 
   private fun annotateFootnoteContinuationCodeLine(element: PsiElement, holder: AnnotationHolder): Boolean {
