@@ -71,7 +71,6 @@
   {kind: "moduleId", id: "intellij.clion.radler.core", moduleKind: "backend", apiUsagePolicy: "backendWithNonUiApiPermit"},
   {kind: "moduleId", id: "intellij.clion.radler.dfa", moduleKind: "backend", apiUsagePolicy: "backendWithNonUiApiPermit"},
   {kind: "moduleId", id: "intellij.clion.radler.featuresTrainer", moduleKind: "backend", apiUsagePolicy: "backendWithNonUiApiPermit"},
-  {kind: "moduleId", id: "intellij.clion.radler.junieExecution", moduleKind: "backend", apiUsagePolicy: "backendWithNonUiApiPermit"},
   {kind: "moduleId", id: "intellij.clion.radler.performance", moduleKind: "backend", apiUsagePolicy: "backendWithNonUiApiPermit"},
   {kind: "moduleId", id: "intellij.clion.radler.testing", moduleKind: "backend", apiUsagePolicy: "backendWithNonUiApiPermit"},
 
