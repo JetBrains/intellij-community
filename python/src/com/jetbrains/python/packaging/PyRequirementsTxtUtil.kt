@@ -228,7 +228,11 @@ private fun showSyncSettingsDialog(project: Project, settings: PyPackageRequirem
           .bindText({
                       sdkAdditionalData.requirementsPath?.toString() ?: ""
                     }, { stringPath ->
-                      sdkAdditionalData.requirementsPath = stringPath.ifBlank { null }?.toNioPathOrNull()
+                      // Goes through a modificator rather than writing to the committed data: an in-place edit leaves the
+                      // stored entity behind the bridge, which the workspace model reports as a mismatch (PY-82614).
+                      PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(
+                        project, sdk, stringPath.ifBlank { null }?.toNioPathOrNull()
+                      )
                     })
           .align(AlignX.FILL)
           .focused()

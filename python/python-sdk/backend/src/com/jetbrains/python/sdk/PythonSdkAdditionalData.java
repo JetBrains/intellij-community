@@ -351,9 +351,16 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
       String legacyRequiredTxtPath = element.getAttributeValue(ASSOCIATED_REQUIRED_TXT_PATH);
       myLegacyRequiredTxtPath = legacyRequiredTxtPath == null ? null : Path.of(legacyRequiredTxtPath);
 
+      // `save` always writes SDK_UUID, FLAVOR_ID and FLAVOR_DATA, so an entity that lacks them predates them and needs
+      // migrating. Without that, the fields would come from defaults on every load -- a fresh random UUID each launch --
+      // and the bridge would never match the stored entity, which the workspace model reports as an additional data
+      // mismatch on every save (PY-82614).
       var uuidStr = element.getAttributeValue(SDK_UUID_FIELD_NAME);
       if (uuidStr != null) {
         myUUID = UUID.fromString(uuidStr);
+      }
+      else {
+        markMigrationRequired();
       }
       var flavorId = JDOMExternalizer.readString(element, FLAVOR_ID);
       if (flavorId != null) {
@@ -364,6 +371,9 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
         else {
           myFlavorAndData = new PyFlavorAndData<>(PyFlavorData.Empty.INSTANCE, PythonSdkFlavor.UnknownFlavor.INSTANCE);
         }
+      }
+      else {
+        markMigrationRequired();
       }
     }
   }
