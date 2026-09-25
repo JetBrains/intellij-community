@@ -11,15 +11,27 @@ import com.intellij.openapi.roots.LibraryOrSdkOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.DependencyScope
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +39,9 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Ignore
@@ -449,6 +463,75 @@ class ModuleLibraryBridgeTest {
     ModuleManager.getInstance(project).modules.forEach { existingModule ->
       ModuleRootManager.getInstance(existingModule).orderEntries.filterIsInstance<LibraryOrSdkOrderEntry>().forEach { orderEntry ->
         orderEntry.getRootFiles(OrderRootType.SOURCES)
+      }
+    }
+  }
+
+  // KMT-3075: the project model replaces the module entity in one update, and the module library entity stays
+  @Test
+  fun `test module library bridge is alive after the module entity is replaced in one update`() {
+    val libraryId = addModuleWithModuleLibrary()
+    runBlocking {
+      WorkspaceModel.getInstance(project).update("replace the module entity") { builder ->
+        builder.removeEntity(builder.resolve(libraryId.moduleId())!!)
+        addModuleEntity(builder, libraryId)
+      }
+    }
+    assertModuleLibraryBridgeIsAlive(libraryId)
+  }
+
+  // KMT-3075: the module entity goes away and comes back in two updates, and the module library entity stays
+  @Test
+  fun `test module library bridge is alive after the module entity is removed and added again`() {
+    val libraryId = addModuleWithModuleLibrary()
+    runBlocking {
+      val workspaceModel = WorkspaceModel.getInstance(project)
+      workspaceModel.update("remove the module entity") { builder ->
+        builder.removeEntity(builder.resolve(libraryId.moduleId())!!)
+      }
+      workspaceModel.update("add the module entity again") { builder ->
+        addModuleEntity(builder, libraryId)
+      }
+    }
+    assertModuleLibraryBridgeIsAlive(libraryId)
+  }
+
+  private fun addModuleWithModuleLibrary(): LibraryId {
+    val moduleId = ModuleId("untitled")
+    val libraryId = LibraryId("Header Search Paths", LibraryTableId.ModuleLibraryTableId(moduleId))
+    runBlocking {
+      WorkspaceModel.getInstance(project).update("add a module with a module library") { builder ->
+        addModuleEntity(builder, libraryId)
+        builder addEntity LibraryEntity(libraryId.name, libraryId.tableId, emptyList(), AnotherSource)
+      }
+    }
+    return libraryId
+  }
+
+  private fun addModuleEntity(builder: MutableEntityStorage, libraryId: LibraryId) {
+    val moduleEntity = builder addEntity ModuleEntity(libraryId.moduleId().name, emptyList(), MySource)
+    builder.modifyModuleEntity(moduleEntity) {
+      dependencies = mutableListOf(LibraryDependency(libraryId, false, DependencyScope.COMPILE))
+    }
+  }
+
+  private fun LibraryId.moduleId(): ModuleId = (tableId as LibraryTableId.ModuleLibraryTableId).moduleId
+
+  private fun assertModuleLibraryBridgeIsAlive(libraryId: LibraryId) {
+    val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
+    val libraryBridge = snapshot.resolve(libraryId)?.let { snapshot.libraryMap.getDataByEntity(it) } as LibraryBridge?
+    assertNotNull("the library entity must be mapped to a bridge", libraryBridge)
+    assertFalse("the bridge that the project model maps must not be disposed", libraryBridge!!.isDisposed)
+
+    val module = ModuleManager.getInstance(project).findModuleByName(libraryId.moduleId().name)
+    assertNotNull(module)
+    assertSame(module, libraryBridge.module)
+    assertSame(libraryBridge, ModuleRootComponentBridge.getInstance(module!!).getModuleLibraryTable().getLibraryByName(libraryId.name))
+
+    ApplicationManager.getApplication().runReadAction {
+      OrderEnumerator.orderEntries(project).forEachLibrary { library ->
+        (library as LibraryEx).properties
+        true
       }
     }
   }

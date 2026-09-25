@@ -123,6 +123,10 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
 
       LOG.debug { "${change.newEntity.name} module initialized" }
       builder.mutableModuleMap.addMapping(change.newEntity, bridge)
+      if (builder.referrers(change.newEntity.symbolicId, LibraryEntity::class.java).any()) {
+        (ModuleRootComponentBridge.getInstance(bridge).getModuleLibraryTable() as ModuleLibraryTableBridgeImpl)
+          .takeOverModuleLibraryInstances(builder)
+      }
     }
   }
 
