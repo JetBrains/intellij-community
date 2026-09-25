@@ -95,3 +95,15 @@ interface Robot {
 
   fun getColor(component: Component, point: Point?): ColorRef
 }
+
+internal const val SMOOTH_ROBOT_FQN: String = "com.jetbrains.performancePlugin.remotedriver.robot.SmoothRobot"
+
+/**
+ * [Robot] addressed by its pre-`IdeRobot` name, for an IDE built before the split into the `IdeRobot` interface
+ * and its implementations.
+ *
+ * That IDE has no `IdeRobot` class, so a call cannot resolve its target class. `SmoothRobot` carries the same
+ * methods.
+ */
+@Remote(SMOOTH_ROBOT_FQN, plugin = REMOTE_ROBOT_MODULE_ID)
+internal interface SmoothRobot : Robot

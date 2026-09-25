@@ -23,7 +23,7 @@ class RobotProvider(private val driver: Driver) {
     get() = driver.service(RobotService::class, RdTarget.BACKEND)
 
   val defaultRobot: Robot
-    get() = defaultRobotService.robot
+    get() = defaultRobotService.compatRobot
 
   fun getRobotFor(obj: Any?): Robot {
     if (obj !is RefWrapper) {
@@ -32,8 +32,21 @@ class RobotProvider(private val driver: Driver) {
     return when (obj.getRef().rdTarget()) {
       RdTarget.FRONTEND, RdTarget.DEFAULT -> defaultRobotService
       RdTarget.BACKEND -> backendRobotService
-    }.robot
+    }.compatRobot
   }
+
+  /**
+   * The robot, addressed by a class name the IDE under test actually has.
+   *
+   * [Robot] names `IdeRobot`, which older IDEs predate — see [SmoothRobot]. The instance is the same one either
+   * way; what the ref reports as its runtime class decides which name resolves there.
+   */
+  private val RobotService.compatRobot: Robot
+    get() {
+      val robot = robot
+      if ((robot as RefWrapper).getRef().className() != SMOOTH_ROBOT_FQN) return robot
+      return driver.cast(robot, SmoothRobot::class)
+    }
 
   fun saveHierarchy(folderPath: String, fileName: String = "ui.html") = defaultRobotService.saveHierarchy(folderPath, fileName)
 }
