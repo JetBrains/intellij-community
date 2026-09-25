@@ -46,7 +46,7 @@ internal class TerminalCommandCompletionTypingListener private constructor(
   init {
     coroutineScope.launch(Dispatchers.UI) {
       terminalView.keyEventsFlow.collect {
-        if (it.awtEvent.id == KeyEvent.KEY_TYPED) {
+        if (it.awtEvent.id == KeyEvent.KEY_TYPED && it.outputModel === outputModel) {
           try {
             onCharTyped(it.cursorOffset, it.awtEvent.keyChar)
           }
