@@ -271,31 +271,45 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
     var keyHash = adjustedHash(key);
     synchronized (lock) {
       ensureOpen();
-      var oldRecordRef = findRecordRef(key, keyHash);
-      if (valueEquality != null && value != null && oldRecordRef != NO_VALUE) {
-        var oldValue = readEntry(oldRecordRef).value();
-        if (oldValue != null && valueEquality.isEqual(value, oldValue)) {
-          return;
-        }
-      }
-      if (value == null && oldRecordRef == NO_VALUE) {//skip put(key,null) if value is already null
-        return;
-      }
-      var writer = entryExternalizer.writerFor(key, value);
-      markLookupDirty();
+      var mutationStarted = new Ref<>(false);
       try {
-        var newRecordRef = entries.append(writer.recordSize(), payload -> writer.write(payload.asByteBuffer()));
-        if (value == null) {
-          if (!keyHashToRecordRefIndex.remove(keyHash, oldRecordRef)) {
-            throw new CorruptedException("The old record reference disappeared from the recordRefIndex");
+        keyHashToRecordRefIndex.lookupAndModify(keyHash, (oldRecordRef, newRecordRef) -> {
+          if (oldRecordRef != NO_VALUE) {
+            if (valueEquality != null && value != null) {
+              var oldEntry = readEntry(oldRecordRef);
+              if (!keyEquality.isEqual(key, oldEntry.key())) {
+                return true;
+              }
+              var oldValue = oldEntry.value();
+              if (oldValue != null && valueEquality.isEqual(value, oldValue)) {
+                return false; //stop: value is already in the map
+              }
+            }
+            else {
+              var candidateKey = readKey(oldRecordRef);
+              if (candidateKey == null || !keyEquality.isEqual(key, candidateKey)) {
+                return true;
+              }
+            }
           }
-        }
-        else {
-          publishHead(keyHash, oldRecordRef, newRecordRef);
-        }
+          else if (value == null) {//skip put(key,null) if value is already null
+            return false;
+          }
+
+          var writer = entryExternalizer.writerFor(key, value);
+          if (!mutationStarted.get()) {
+            markLookupDirty();
+            mutationStarted.set(true);
+          }
+          long appendedRecordRef = entries.append(writer.recordSize(), payload -> writer.write(payload.asByteBuffer()));
+          newRecordRef.set(value == null ? NO_VALUE : appendedRecordRef);
+          return false;
+        });
       }
       catch (IOException | RuntimeException | Error failure) {
-        closeAfterFailure(failure);
+        if (mutationStarted.get()) {
+          closeAfterFailure(failure);
+        }
         throw failure;
       }
     }
@@ -309,40 +323,50 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
     var writer = externalizer.writerForPatch(patch);
     synchronized (lock) {
       ensureOpen();
-      var oldHead = findRecordRef(key, keyHash);
-      if (oldHead == NO_VALUE) {
-        var headerWriter = entryExternalizer.writerForEntryHeader(key);
-        int headerSize = headerWriter.recordSize();
-        int payloadSize = Math.addExact(headerSize, writer.recordSize());
-        markLookupDirty();
-        try {
+      var mutationStarted = new Ref<>(false);
+      try {
+        keyHashToRecordRefIndex.lookupAndModify(keyHash, (oldHead, newHeadRef) -> {
+          if (oldHead != NO_VALUE) {
+            var candidateKey = readKey(oldHead);
+            if (candidateKey == null || !keyEquality.isEqual(key, candidateKey)) {
+              return true;
+            }
+
+            var head = entries.readRecord(oldHead);
+            long baseRef = head.previousRef() == NO_VALUE ? oldHead : baseEntryRef(oldHead, head);
+            int payloadSize = Math.addExact(Long.BYTES, writer.recordSize());
+            if (!mutationStarted.get()) {
+              markLookupDirty();
+              mutationStarted.set(true);
+            }
+            var newHead = entries.append(payloadSize, oldHead, payload -> {
+              payload.set(ValueLayout.JAVA_LONG_UNALIGNED, 0, baseRef);
+              writer.write(payload.asSlice(Long.BYTES).asByteBuffer());
+            });
+            newHeadRef.set(newHead);
+            return false;
+          }
+
+          var headerWriter = entryExternalizer.writerForEntryHeader(key);
+          int headerSize = headerWriter.recordSize();
+          int payloadSize = Math.addExact(headerSize, writer.recordSize());
+          if (!mutationStarted.get()) {
+            markLookupDirty();
+            mutationStarted.set(true);
+          }
           var newHead = entries.append(payloadSize, payload -> {
             headerWriter.write(payload.asSlice(0, headerSize).asByteBuffer());
             writer.write(payload.asSlice(headerSize).asByteBuffer());
           });
-          publishHead(keyHash, NO_VALUE, newHead);
-        }
-        catch (IOException | RuntimeException | Error failure) {
-          closeAfterFailure(failure);
-          throw failure;
-        }
+          newHeadRef.set(newHead);
+          return false;
+        });
       }
-      else {
-        var head = entries.readRecord(oldHead);
-        long baseRef = head.previousRef() == NO_VALUE ? oldHead : baseEntryRef(oldHead, head);
-        int payloadSize = Math.addExact(Long.BYTES, writer.recordSize());
-        markLookupDirty();
-        try {
-          var newHead = entries.append(payloadSize, oldHead, payload -> {
-            payload.set(ValueLayout.JAVA_LONG_UNALIGNED, 0, baseRef);
-            writer.write(payload.asSlice(Long.BYTES).asByteBuffer());
-          });
-          publishHead(keyHash, oldHead, newHead);
-        }
-        catch (IOException | RuntimeException | Error failure) {
+      catch (IOException | RuntimeException | Error failure) {
+        if (mutationStarted.get()) {
           closeAfterFailure(failure);
-          throw failure;
         }
+        throw failure;
       }
     }
   }
@@ -461,16 +485,22 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
       if (deleted) {
         key = entryExternalizer.read(record.payload().asByteBuffer()).key();
       }
-      int keyHash = adjustedHash(key);
-      long oldRecordRef = findRecordRef(key, keyHash);
-      heads.remove(oldRecordRef);
-      if (deleted) {
-        if (oldRecordRef != NO_VALUE) {
-          keyHashToRecordRefIndex.remove(keyHash, oldRecordRef);
+      var restoredKey = key;
+      int keyHash = adjustedHash(restoredKey);
+      var oldRecordRef = new Ref<>(NO_VALUE);
+      keyHashToRecordRefIndex.lookupAndModify(keyHash, (candidateRef, newRecordRef) -> {
+        if (candidateRef != NO_VALUE) {
+          var candidateKey = readKey(candidateRef);
+          if (candidateKey == null || !keyEquality.isEqual(restoredKey, candidateKey)) {
+            return true;
+          }
         }
-      }
-      else {
-        publishHead(keyHash, oldRecordRef, recordRef);
+        oldRecordRef.set(candidateRef);
+        newRecordRef.set(deleted ? NO_VALUE : recordRef);
+        return false;
+      });
+      heads.remove(oldRecordRef.get().longValue());
+      if (!deleted) {
         heads.put(recordRef, new HeadState(keyHash, recordRef));
       }
     });
