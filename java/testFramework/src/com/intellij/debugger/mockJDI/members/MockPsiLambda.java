@@ -166,12 +166,12 @@ public class MockPsiLambda extends MockMirror implements Method {
 
   @Override
   public ReferenceType declaringType() {
-    return myVirtualMachine.createReferenceType(myDeclaringMethod.getContainingClass());
+    return ReadAction.computeBlocking(() -> myVirtualMachine.createReferenceType(Objects.requireNonNull(myDeclaringMethod.getContainingClass())));
   }
 
   @Override
   public boolean isStatic() {
-    return myDeclaringMethod.hasModifierProperty(PsiModifier.STATIC);
+    return ReadAction.computeBlocking(() -> myDeclaringMethod.hasModifierProperty(PsiModifier.STATIC));
   }
 
   @Override
