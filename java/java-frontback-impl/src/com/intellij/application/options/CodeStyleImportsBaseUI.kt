@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options
 
 import com.intellij.java.frontback.impl.JavaFrontbackBundle
@@ -51,7 +51,7 @@ open class CodeStyleImportsBaseUI(private val packages: JComponent, private val 
             .columns(COLUMNS_TINY)
             .component
         }
-      }.resizableRow()
+      }
 
       row {
         cell(packages).align(Align.FILL)

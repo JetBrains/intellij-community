@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options
 
 import com.intellij.application.options.JavaCodeStyleImportsPanel.InnerClassItem
@@ -11,7 +11,6 @@ import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.table.TableView
-import com.intellij.util.ui.JBDimension
 import javax.swing.JCheckBox
 import javax.swing.JComponent
 
@@ -24,8 +23,8 @@ internal class JavaCodeStyleImportsUI(packages: JComponent,
 
   override fun init() {
     super.init()
-    cbInsertInnerClassImports.addChangeListener {
-      doNotInsertInnerTable.setEnabled(cbInsertInnerClassImports.isSelected)
+    cbInsertInnerClassImports.addActionListener {
+      doNotInsertInnerTable.isEnabled = cbInsertInnerClassImports.isSelected
     }
   }
 
@@ -33,13 +32,11 @@ internal class JavaCodeStyleImportsUI(packages: JComponent,
     indent {
       row {
         val decorator = ToolbarDecorator.createDecorator(doNotInsertInnerTable)
+          .setVisibleRowCount(2)
           .setAddAction(AnActionButtonRunnable { addInnerClass() })
           .setRemoveAction(AnActionButtonRunnable { removeInnerClass() }).disableUpDownActions()
         cell(decorator.createPanel())
           .align(Align.FILL)
-          .applyToComponent {
-            preferredSize = JBDimension(100, 150)
-          }
       }.resizableRow()
     }
     row {
@@ -63,7 +60,7 @@ internal class JavaCodeStyleImportsUI(packages: JComponent,
   override fun reset(settings: JavaImportsLayoutSettings) {
     super.reset(settings)
 
-    doNotInsertInnerTable.setEnabled(cbInsertInnerClassImports.model.isSelected)
+    doNotInsertInnerTable.isEnabled = cbInsertInnerClassImports.isSelected
   }
 
   private fun addInnerClass() {

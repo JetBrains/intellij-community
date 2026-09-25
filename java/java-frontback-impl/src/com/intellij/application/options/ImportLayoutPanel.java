@@ -22,7 +22,6 @@ import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +37,6 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -131,7 +129,7 @@ public abstract class ImportLayoutPanel extends JPanel {
                            IdeBundle.message("action.remove"),
                            JavaFrontbackBundle.message("import.layout.panel.up.button"),
                            JavaFrontbackBundle.message("import.layout.panel.down.button"))
-      .setPreferredSize(new Dimension(-1, JBUI.scale(180)))
+      .setVisibleRowCount(8)
       .createPanel();
 
     myCbLayoutOnDemandImportsFromSamePackageFirst =
