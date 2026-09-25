@@ -650,6 +650,11 @@ Untested: No focused test verifies Shift-selection across sections.
     `details page spacing is enabled only for the unified page`
   )
 
+- The first action in unified plugin details must show its complete focus outline.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
+    `unified details actions align their visible leading edge`
+  )
+
 - The screenshot carousel must fit inside both details insets so that its controls remain available.
   [@test] ../../testSrc/com/intellij/ide/plugins/newui/PluginImagesComponentTest.kt (
     `image width accounts for both parent insets`;

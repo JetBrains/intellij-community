@@ -357,7 +357,13 @@ internal class LegacyPluginRowFactoryTest {
         val legacyHeader = detailsHeader(legacyRoot)
         val unifiedHeader = detailsHeader(unifiedRoot)
         assertHorizontalInsets(legacyHeader, left = 20, right = 20)
-        assertHorizontalInsets(unifiedHeader, left = 16, right = 16)
+        assertThat(unifiedHeader.insets.left).isEqualTo(JBUI.scale(16) - JBUI.scale(3))
+        assertThat(unifiedHeader.insets.right).isEqualTo(JBUI.scale(16))
+        assertHorizontalInsets(unifiedHeader.components.first() as JComponent, left = 3, right = 0)
+        assertHorizontalInsets(unifiedHeader.components.last() as JComponent, left = 3, right = 0)
+        val followingRows = unifiedHeader.components.last() as JComponent
+        followingRows.components.forEach { it.isVisible = false }
+        assertThat(followingRows.isVisible).isFalse()
 
         val legacyTabs = componentsOfType(legacyRoot, JBTabbedPane::class.java).single()
         val unifiedTabs = componentsOfType(unifiedRoot, JBTabsImpl::class.java).single()
@@ -512,19 +518,24 @@ internal class LegacyPluginRowFactoryTest {
 
         layoutHeaderAction(legacyHeader, legacyActions, legacyInstall)
         layoutHeaderAction(unifiedHeader, unifiedActions, unifiedInstall)
+        val headerRows = unifiedHeader.components.first() as JComponent
+        headerRows.doLayout()
+        assertThat(headerRows.x + headerRows.components[1].x).isEqualTo(JBUI.scale(16))
+        assertThat(headerRows.x + headerRows.components[2].x).isEqualTo(JBUI.scale(16))
         assertThat(legacyInstall.x).isZero()
-        assertThat(unifiedInstall.x).isEqualTo(-JBUI.scale(3))
+        assertThat(unifiedInstall.x).isZero()
+        assertThat(unifiedActions.x).isEqualTo(JBUI.scale(16) - JBUI.scale(3))
         assertThat(unifiedActions.x + unifiedInstall.x + JBUI.scale(3)).isEqualTo(JBUI.scale(16))
 
         unifiedActions.setProgressComponent(null, JBLabel("progress"))
         unifiedActions.doLayout()
-        assertThat(unifiedInstall.x).isEqualTo(-JBUI.scale(3))
+        assertThat(unifiedInstall.x).isZero()
         unifiedActions.removeProgressComponent()
 
         val plainAction = unifiedActions.buttonComponents.filterIsInstance<JButton>()
           .first { it !is InstallOptionButton }
         layoutHeaderAction(unifiedHeader, unifiedActions, plainAction)
-        assertThat(plainAction.x).isEqualTo(-JBUI.scale(3))
+        assertThat(plainAction.x).isZero()
       }
       finally {
         legacyHost.dispose(closeSession = false)
@@ -1278,7 +1289,7 @@ internal class LegacyPluginRowFactoryTest {
 
             assertThat(actions.buttonComponents.filter(Component::isVisible)).containsExactly(updateAction)
             assertThat(updateAction.isEnabled).isFalse()
-            assertThat(updateAction.x).isEqualTo(-JBUI.scale(3))
+            assertThat(updateAction.x).isZero()
             val progressContainer = generateSequence<Component>(progress) { it.parent }.first { it.parent === actions }
             assertThat(updateAction.bounds.intersects(progressContainer.bounds)).isFalse()
           }

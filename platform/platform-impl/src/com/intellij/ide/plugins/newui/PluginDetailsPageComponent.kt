@@ -282,9 +282,7 @@ class PluginDetailsPageComponent private constructor(
   private val tracker: PluginManagerUiTracker = PluginManagerUiTracker()
 
   init {
-    nameAndButtons = BaselinePanel(12, false).apply {
-      setLeadingVisualInset(this@PluginDetailsPageComponent.layout.actionButtonLeadingVisualInset)
-    }
+    nameAndButtons = BaselinePanel(12, false)
     customizer = try {
       getPluginsViewCustomizer().getPluginDetailsCustomizer(pluginModel.getModel())
     }
@@ -441,23 +439,30 @@ class PluginDetailsPageComponent private constructor(
     panel = OpaquePanel(BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR)
 
     val topPanel = OpaquePanel(vertical(8, horGrow = ListLayout.GrowPolicy.NO_GROW), PluginManagerConfigurable.MAIN_BG_COLOR)
-    topPanel.border = createMainBorder(layout.contentHorizontalInset)
+    topPanel.border = createMainBorder(layout.contentHorizontalInset, layout.actionRowOutset)
     panel!!.add(topPanel, BorderLayout.NORTH)
 
-    topPanel.add(TagPanel(searchListener, useBadgeTags).also { tagPanel = it })
-    topPanel.add(nameComponent)
+    val rowInset = layout.actionRowOutset
+    val headerRows = if (rowInset > 0) createInsetRowsPanel(rowInset).also { topPanel.add(it) } else topPanel
+
+    headerRows.add(TagPanel(searchListener, useBadgeTags).also { tagPanel = it })
+    headerRows.add(nameComponent)
 
     val linkPanel = NonOpaquePanel(HorizontalLayout(JBUI.scale(12)))
-    topPanel.add(linkPanel)
+    headerRows.add(linkPanel)
     author = LinkPanel(linkPanel, false, false, null, null)
     homePage = LinkPanel(linkPanel, false)
 
     topPanel.add(nameAndButtons)
-    topPanel.add(mySuggestedIdeBanner, ListLayout.GrowPolicy.GROW)
+    val followingRows = if (rowInset > 0) createInsetRowsPanel(rowInset).also {
+      topPanel.add(it, ListLayout.GrowPolicy.GROW)
+    } else topPanel
+
+    followingRows.add(mySuggestedIdeBanner, ListLayout.GrowPolicy.GROW)
 
     val suggestedFeaturesComponent = SuggestedComponent()
     suggestedFeatures = suggestedFeaturesComponent
-    topPanel.add(suggestedFeaturesComponent, ListLayout.GrowPolicy.GROW)
+    followingRows.add(suggestedFeaturesComponent, ListLayout.GrowPolicy.GROW)
 
     val unknownUpdateSourceWarning = UpdateSourceBanner.createUnknownPluginUpdateSourceWarning {
       val popup = createUpdateSourcesPopup(myPluginUpdateSource!!) {
@@ -470,11 +475,11 @@ class PluginDetailsPageComponent private constructor(
       }
     }
     unknownUpdateSourceBanner = unknownUpdateSourceWarning
-    topPanel.add(unknownUpdateSourceWarning, ListLayout.GrowPolicy.GROW)
+    followingRows.add(unknownUpdateSourceWarning, ListLayout.GrowPolicy.GROW)
 
     val successBanner = UpdateSourceBanner.createSuccessfullyUpdateSourceSetting()
     updateSourceInitializedBanner = successBanner
-    topPanel.add(successBanner, ListLayout.GrowPolicy.GROW)
+    followingRows.add(successBanner, ListLayout.GrowPolicy.GROW)
 
     additionalTextLabel.foreground = ListPluginComponent.GRAY_COLOR
     additionalTextLabel.isVisible = false
@@ -488,18 +493,18 @@ class PluginDetailsPageComponent private constructor(
     createButtons()
     nameAndButtons!!.setProgressDisabledButton((if (isMarketplace) installButton?.getComponent() else if (pluginManagerCustomizer != null && updateDescriptor == null) gearButton else updateButton)!!)
 
-    topPanel.add(ErrorComponent().also { errorComponent = it }, ListLayout.GrowPolicy.GROW)
-    topPanel.add(licensePanel)
+    followingRows.add(ErrorComponent().also { errorComponent = it }, ListLayout.GrowPolicy.GROW)
+    followingRows.add(licensePanel)
     licensePanel.border = JBUI.Borders.emptyBottom(5)
-    topPanel.add(customLicensePanel)
+    followingRows.add(customLicensePanel)
     customLicensePanel.border = JBUI.Borders.emptyBottom(5)
 
     if (unavailableWithoutSubscriptionBanner != null) {
-      topPanel.add(unavailableWithoutSubscriptionBanner, ListLayout.GrowPolicy.GROW)
+      followingRows.add(unavailableWithoutSubscriptionBanner, ListLayout.GrowPolicy.GROW)
       unavailableWithoutSubscriptionBanner.isVisible = false
     }
     if (partiallyAvailableBanner != null) {
-      topPanel.add(partiallyAvailableBanner, ListLayout.GrowPolicy.GROW)
+      followingRows.add(partiallyAvailableBanner, ListLayout.GrowPolicy.GROW)
       partiallyAvailableBanner.isVisible = false
     }
 
@@ -2324,7 +2329,7 @@ internal data class PluginDetailsPageLayout(
   val overviewRightInset: Int,
   val overviewImagesRightInset: Int,
   val tabContentHorizontalInset: Int?,
-  val actionButtonLeadingVisualInset: Int,
+  val actionRowOutset: Int,
   val useNaturalInstallButtonWidth: Boolean,
   val singleRowTabs: Boolean,
 ) {
@@ -2335,7 +2340,7 @@ internal data class PluginDetailsPageLayout(
       overviewRightInset = 0,
       overviewImagesRightInset = 16,
       tabContentHorizontalInset = null,
-      actionButtonLeadingVisualInset = 0,
+      actionRowOutset = 0,
       useNaturalInstallButtonWidth = false,
       singleRowTabs = false,
     )
@@ -2345,16 +2350,29 @@ internal data class PluginDetailsPageLayout(
       overviewRightInset = 16,
       overviewImagesRightInset = 0,
       tabContentHorizontalInset = 16,
-      actionButtonLeadingVisualInset = 3,
+      actionRowOutset = 3,
       useNaturalInstallButtonWidth = true,
       singleRowTabs = true,
     )
   }
 }
 
-private fun createMainBorder(horizontalInset: Int): CustomLineBorder {
+private fun createInsetRowsPanel(inset: Int): NonOpaquePanel {
+  return object : NonOpaquePanel(vertical(8, horGrow = ListLayout.GrowPolicy.NO_GROW)) {
+    // An empty group must not add a gap below the action row.
+    override fun isVisible(): Boolean = super.isVisible() && components.any { it.isVisible }
+  }.apply {
+    border = JBUI.Borders.emptyLeft(inset)
+  }
+}
+
+private fun createMainBorder(horizontalInset: Int, actionRowOutset: Int): CustomLineBorder {
   return object : CustomLineBorder(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR, JBUI.insetsTop(1)) {
-    override fun getBorderInsets(c: Component): Insets = JBUI.insets(15, horizontalInset, 0, horizontalInset)
+    @Suppress("UseDPIAwareInsets") // values are already scaled
+    override fun getBorderInsets(c: Component): Insets {
+      val inset = JBUI.scale(horizontalInset)
+      return Insets(JBUI.scale(15), inset - JBUI.scale(actionRowOutset), 0, inset)
+    }
   }
 }
 
