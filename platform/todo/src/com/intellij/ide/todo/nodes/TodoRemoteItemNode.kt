@@ -2,6 +2,7 @@
 package com.intellij.ide.todo.nodes
 
 import com.intellij.ide.projectView.PresentationData
+import com.intellij.ide.rpc.util.TextRangeDto
 import com.intellij.ide.todo.HighlightedRegionProvider
 import com.intellij.ide.todo.TodoTreeBuilder
 import com.intellij.ide.ui.SerializableTextChunk
@@ -25,8 +26,7 @@ class TodoRemoteItemNode(
 
   data class Value(
     val file: VirtualFile,
-    val navigationOffset: Int,
-    val length: Int,
+    val range: TextRangeDto,
     val line: Int,
     val presentation: List<SerializableTextChunk>,
   )
@@ -39,7 +39,7 @@ class TodoRemoteItemNode(
     if (element !is TodoRemoteItemNode) return false
     val v = value ?: return false
     val otherValue = element.value ?: return false
-    return v.file == otherValue.file && v.navigationOffset == otherValue.navigationOffset
+    return v.file == otherValue.file && v.range.startOffset == otherValue.range.startOffset
   }
 
   override fun contains(element: Any?): Boolean {
@@ -86,7 +86,7 @@ class TodoRemoteItemNode(
 
   override fun navigate(requestFocus: Boolean) {
     val v = checkValue()
-    OpenFileDescriptor(project, v.file, v.navigationOffset).navigate(requestFocus)
+    OpenFileDescriptor(project, v.file, v.range.startOffset).navigate(requestFocus)
   }
 
   override fun getVirtualFile(): VirtualFile {
@@ -96,11 +96,11 @@ class TodoRemoteItemNode(
 
   override fun getNavigationOffset(): Int {
     val v = checkValue()
-    return v.navigationOffset
+    return v.range.startOffset
   }
 
   override fun createNavigatable(@NotNull project: Project): Navigatable {
     val v = checkValue()
-    return OpenFileDescriptor(project, v.file, v.navigationOffset)
+    return OpenFileDescriptor(project, v.file, v.range.startOffset)
   }
 }

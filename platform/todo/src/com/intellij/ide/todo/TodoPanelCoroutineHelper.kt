@@ -46,9 +46,7 @@ internal class TodoPanelCoroutineHelper(private val panel: TodoPanel) : Disposab
           val node = lastUserObject as? TodoRemoteItemNode ?: return@readAction emptyList()
           val value = node.value ?: return@readAction emptyList()
           val psiFile = PsiManager.getInstance(panel.myProject).findFile(value.file) ?: return@readAction emptyList()
-          val startOffset = value.navigationOffset
-          val endOffset = value.navigationOffset + value.length
-          listOf(UsageInfo(psiFile, startOffset, endOffset))
+          listOf(UsageInfo(psiFile, value.range.startOffset, value.range.endOffset))
         }
       } else {
         readAction {

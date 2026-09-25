@@ -52,7 +52,7 @@ class TodoRemoteFileNode(
       results.map { result ->
         TodoRemoteItemNode(
           project,
-          TodoRemoteItemNode.Value(file, result.navigationOffset, result.length, result.line, result.presentation),
+          TodoRemoteItemNode.Value(file, result.range, result.line, result.presentation),
           builder,
         )
       }
@@ -101,7 +101,7 @@ class TodoRemoteFileNode(
   fun createNavigatable(project: Project): OpenFileDescriptor {
     val file = checkValue().file
     val firstTodo = builder.getCachedRemoteTodos(file).firstOrNull()
-    val offset = firstTodo?.navigationOffset ?: 0
+    val offset = firstTodo?.range?.startOffset ?: 0
     return OpenFileDescriptor(project, file, offset)
   }
 
