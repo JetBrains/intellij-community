@@ -43,6 +43,13 @@ internal class GhosttyLayoutsTest {
   }
 
   @Test
+  fun string() {
+    val string = struct("GhosttyString")
+    assertLayoutMatches(GhosttyLayouts.STRING, string, "ptr", "len")
+    assertThat(GhosttyLayouts.STRING_OFF_LEN).isEqualTo(string.offset("len"))
+  }
+
+  @Test
   fun gridRef() {
     assertLayoutMatches(GhosttyLayouts.GRID_REF, struct("GhosttyGridRef"), "size", "node", "x", "y")
   }

@@ -64,6 +64,8 @@ import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_INVISIBLE
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_ITALIC
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_UNDERLINE
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STRING
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STRING_OFF_LEN
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_SIZE
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyMode
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyMods
@@ -461,6 +463,25 @@ internal class GhosttyTerminalEmulator(
 
   override val title: String
     get() = readTitle()
+
+  override fun setTerminfoName(name: String) {
+    ensureOpen()
+    val bytes = name.encodeToByteArray()
+    // The engine copies the name, so the memory is only needed during the call.
+    val result = try {
+      Arena.ofConfined().use { callArena ->
+        val data = callArena.allocate(bytes.size.toLong())
+        MemorySegment.copy(bytes, 0, data, C_BYTE, 0L, bytes.size)
+        val string = callArena.allocate(STRING)
+        string.set(C_PTR, 0L, data)
+        string.set(C_LONG, STRING_OFF_LEN, bytes.size.toLong())
+        LibGhosttyVt.terminalSet(terminal, GhosttyTerminalOption.TERMINFO_NAME.code, string)
+      }
+    } catch (t: Throwable) {
+      throw RuntimeException("ghostty_terminal_set(TERMINFO_NAME) failed", t)
+    }
+    require(result == GhosttyResult.SUCCESS) { "ghostty_terminal_set(TERMINFO_NAME) returned $result for '$name'" }
+  }
 
   override val progress: TerminalProgress?
     get() {

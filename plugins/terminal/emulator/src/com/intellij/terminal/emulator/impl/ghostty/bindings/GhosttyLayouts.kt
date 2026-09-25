@@ -43,6 +43,12 @@ internal object GhosttyLayouts {
     C_INT.withName("y"))
   const val POINT_COORD_OFF_Y = 4L
 
+  /** `GhosttyString`: `const uint8_t* ptr; size_t len;` (16 bytes, align 8). */
+  val STRING: MemoryLayout = MemoryLayout.structLayout(
+    C_PTR.withName("ptr"),
+    C_LONG.withName("len"))
+  const val STRING_OFF_LEN = 8L
+
   /** `GhosttyGridRef`: `size_t size; void* node; uint16 x; uint16 y;` (24 bytes, align 8). */
   val GRID_REF: MemoryLayout = MemoryLayout.structLayout(
     C_LONG.withName("size"),

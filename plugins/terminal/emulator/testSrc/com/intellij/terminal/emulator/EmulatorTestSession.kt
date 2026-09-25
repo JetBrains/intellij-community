@@ -213,6 +213,7 @@ internal class EmulatorTestSession(width: Int, height: Int, maxScrollbackBytes: 
   fun paletteColor(index: Int): TerminalColor.Rgb = emulator.paletteColor(index)
   fun setDefaultAnsiColors(colors: List<TerminalColor.Rgb>): Unit = emulator.setDefaultAnsiColors(colors)
   val title: String get() = emulator.title
+  fun setTerminfoName(name: String): Unit = emulator.setTerminfoName(name)
   val progress: TerminalProgress? get() = emulator.progress
   val foregroundColor: TerminalColor.Rgb? get() = emulator.foregroundColor
   val backgroundColor: TerminalColor.Rgb? get() = emulator.backgroundColor
@@ -285,6 +286,9 @@ internal fun esc(body: String): String = "$ESC_STR$body"
 
 /** Wraps [body] in a CSI (Control Sequence Introducer, `ESC [`) sequence. */
 internal fun csi(body: String): String = "$ESC_STR[$body"
+
+/** Wraps [body] in a DCS (Device Control String, `ESC P`) sequence closed by ST. */
+internal fun dcs(body: String): String = "${ESC_STR}P$body${OscTerminator.ST.sequence}"
 
 /** Wraps [body] in an OSC (Operating System Command, `ESC ]`) sequence closed by [terminator]. */
 internal fun osc(body: String, terminator: OscTerminator = OscTerminator.BELL): String {

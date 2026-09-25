@@ -182,6 +182,7 @@ internal enum class GhosttyTerminalOption(val code: Int) {
   DEFAULT_CURSOR_BLINK(23),
   SCROLLBACK_MAX_BYTES(27),
   PROGRESS_REPORT(30),
+  TERMINFO_NAME(37),
   RESIZE_SCROLLBACK_PULL(40),
 }
 

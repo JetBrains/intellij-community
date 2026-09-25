@@ -120,6 +120,8 @@ class GhosttyTerminalSession internal constructor(
   private val ttyConnector: TtyConnector,
   initialSize: TerminalSize,
   initialWorkingDirectory: String?,
+  /** The `TERM` of the started process, which the emulator reports for the `XTGETTCAP` query `TN`; null if not set. */
+  private val terminfoName: String?,
   private val shellIntegrationController: TerminalShellIntegrationController,
   settings: JBTerminalSystemSettingsProviderBase,
   override val coroutineScope: CoroutineScope,
@@ -296,6 +298,12 @@ class GhosttyTerminalSession internal constructor(
     }
     else ScrollbackPullPolicy.CURSOR_AT_BOTTOM
     emulator.setResizeScrollbackPullPolicy(scrollbackPullPolicy)
+
+    terminfoName?.let { name ->
+      // TERM comes from the user environment, so a name that the emulator rejects must not stop the session.
+      runCatching { emulator.setTerminfoName(name) }
+        .onFailure { LOG.warn("Failed to set the terminfo name '$name'", it) }
+    }
 
     // Read the PTY on a dedicated daemon thread rather than a coroutine in the session
     // scope (production uses a plain executor for the same reason): the blocking read()
@@ -764,6 +772,7 @@ internal fun createGhosttyTerminalSession(
     ttyConnector = observableTtyConnector,
     initialSize = TerminalSize(initialTermSize.columns, initialTermSize.rows),
     initialWorkingDirectory = options.workingDirectory,
+    terminfoName = options.envVariables["TERM"],
     shellIntegrationController = shellIntegrationController,
     settings = settings,
     coroutineScope = coroutineScope,

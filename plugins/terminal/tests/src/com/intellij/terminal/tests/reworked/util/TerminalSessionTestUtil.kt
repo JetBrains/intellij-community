@@ -131,12 +131,15 @@ object TerminalSessionTestUtil {
    * initial events with [TerminalInitialStateEvent]. Prefer the low-level session only when a test needs to
    * assert the exact order or content of specific output events; use the production session in all other
    * cases, and always when driving a real view (see `TerminalViewFixture`).
+   *
+   * [envVariables] is the environment of the process that the session reports to have started.
    */
   fun createLoopbackTerminalSession(
     project: Project,
     coroutineScope: CoroutineScope,
     emulatorType: TerminalEmulatorType? = null,
     isLowLevelSession: Boolean = false,
+    envVariables: Map<String, String> = emptyMap(),
   ): Pair<TerminalSession, LoopbackTtyConnector> {
     val connector = LoopbackTtyConnector()
     val workingDirectory = System.getProperty("user.home")
@@ -145,6 +148,7 @@ object TerminalSessionTestUtil {
       .processType(TerminalProcessType.SHELL)
       .workingDirectory(workingDirectory)
       .emulatorType(emulatorType)
+      .envVariables(envVariables)
       .build()
     val delegateScope = coroutineScope.childScope("original session")
     val delegate = createTerminalSession(project, connector, options, JBTerminalSystemSettingsProvider(), delegateScope)

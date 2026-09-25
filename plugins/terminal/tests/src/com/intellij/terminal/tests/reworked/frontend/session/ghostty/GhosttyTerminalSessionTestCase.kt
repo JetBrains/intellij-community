@@ -51,9 +51,12 @@ internal abstract class GhosttyTerminalSessionTestCase {
    * specific output events, and the low-level session reports them in their natural order (see
    * `TerminalSessionTestUtil.createLoopbackTerminalSession`'s parameter of the same name); pass `false` only
    * when the test's own point is the production, `StateAwareTerminalSession`-wrapped session's behavior.
+   *
+   * [envVariables] is the environment of the process that the session reports to have started.
    */
   protected fun runSessionTest(
     isLowLevelSession: Boolean = true,
+    envVariables: Map<String, String> = emptyMap(),
     test: suspend (session: TerminalSession, connector: LoopbackTtyConnector, collector: TerminalOutputEventCollector) -> Unit,
   ) {
     TerminalEmulatorType.Ghostty.setDefault(disposableRule.disposable)
@@ -63,7 +66,8 @@ internal abstract class GhosttyTerminalSessionTestCase {
         val (session, connector) = TerminalSessionTestUtil.createLoopbackTerminalSession(
           project = projectRule.project,
           coroutineScope = sessionScope,
-          isLowLevelSession = isLowLevelSession
+          isLowLevelSession = isLowLevelSession,
+          envVariables = envVariables,
         )
         val collector = TerminalOutputEventCollector(session, sessionScope)
         test(session, connector, collector)
@@ -83,6 +87,9 @@ internal val BELL: String = Char(7).toString()
 
 /** Wraps [body] in an OSC (Operating System Command, `ESC ]`) sequence terminated by [BELL]. */
 internal fun osc(body: String): String = Char(27) + "]" + body + BELL
+
+/** Wraps [body] in a DCS (Device Control String, `ESC P`) sequence terminated by ST (`ESC \`). */
+internal fun dcs(body: String): String = Char(27) + "P" + body + Char(27) + "\\"
 
 /** How long to wait for something that is expected to arrive before failing the test. */
 internal const val AWAIT_TIMEOUT_MS: Long = 10_000

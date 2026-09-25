@@ -95,6 +95,14 @@ interface TerminalEmulator : AutoCloseable {
   val title: String
 
   /**
+   * Sets the name of the terminfo entry that the terminal runs as, for example `xterm-256color`.
+   * The reply to the `XTGETTCAP` query `TN` reports it. Until the first call, the query gets no reply.
+   *
+   * @throws IllegalArgumentException if the backend rejects [name], for example a name longer than 128 bytes.
+   */
+  fun setTerminfoName(name: String)
+
+  /**
    * Progress the running program reports via `OSC 9;4` (`ESC ] 9 ; 4 ; <state> [; <percent>] <terminator>`),
    * or null when none is being reported — nothing was reported yet, or the program removed its previous
    * report with `OSC 9;4;0`.
