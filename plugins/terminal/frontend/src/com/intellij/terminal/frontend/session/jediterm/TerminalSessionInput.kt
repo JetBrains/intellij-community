@@ -15,9 +15,8 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalClearBufferEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCloseEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalSetDefaultBackgroundEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSetColorSchemeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSetDefaultCursorShapeEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalSetDefaultForegroundEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.util.closeConnectorAndStopEmulation
 import java.util.concurrent.CancellationException
@@ -72,7 +71,7 @@ private suspend fun handleInputEvent(event: TerminalInputEvent, services: JediTe
     is TerminalCloseEvent -> {
       terminalStarter.closeConnectorAndStopEmulation()
     }
-    is TerminalSetDefaultForegroundEvent, is TerminalSetDefaultBackgroundEvent -> {
+    is TerminalSetColorSchemeEvent -> {
       // JediTerm reads the default colors on demand, see TerminalDisplayImpl.
     }
     is TerminalSetDefaultCursorShapeEvent -> {

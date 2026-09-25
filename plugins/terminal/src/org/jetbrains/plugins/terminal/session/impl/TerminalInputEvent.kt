@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.session.impl.dto.CursorShapeDto
-import org.jetbrains.plugins.terminal.session.impl.dto.TerminalRgbColorDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalColorSchemeDto
 import java.util.concurrent.atomic.AtomicInteger
 
 @ApiStatus.Internal
@@ -70,15 +70,10 @@ class TerminalCloseEvent : TerminalInputEventBase()
 @Serializable
 class TerminalClearBufferEvent : TerminalInputEventBase()
 
-/** Sets the default foreground color. A program can query it with `OSC 10 ; ?` and override it with `OSC 10`. */
+/** Sets the default colors of the session. See [TerminalColorSchemeDto]. */
 @ApiStatus.Internal
 @Serializable
-data class TerminalSetDefaultForegroundEvent(val color: TerminalRgbColorDto) : TerminalInputEventBase()
-
-/** Sets the default background color. A program can query it with `OSC 11 ; ?` and override it with `OSC 11`. */
-@ApiStatus.Internal
-@Serializable
-data class TerminalSetDefaultBackgroundEvent(val color: TerminalRgbColorDto) : TerminalInputEventBase()
+data class TerminalSetColorSchemeEvent(val colorScheme: TerminalColorSchemeDto) : TerminalInputEventBase()
 
 /** Sets the default cursor shape. A program can override it with DECSCUSR (`CSI Ps SP q`). */
 @ApiStatus.Internal

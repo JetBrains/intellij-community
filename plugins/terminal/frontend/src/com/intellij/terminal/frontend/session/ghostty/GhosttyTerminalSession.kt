@@ -55,9 +55,8 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalSetDefaultBackgroundEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSetColorSchemeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSetDefaultCursorShapeEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalSetDefaultForegroundEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.CursorShapeDto
@@ -439,11 +438,10 @@ class GhosttyTerminalSession internal constructor(
       }
       is TerminalClearBufferEvent -> handleClearBuffer()
       is TerminalCloseEvent -> runCatching { ttyConnector.close() }
-      is TerminalSetDefaultForegroundEvent -> lock.withLock {
-        if (!disposed) emulator.setDefaultForegroundColor(event.color.toEmulatorColor())
-      }
-      is TerminalSetDefaultBackgroundEvent -> lock.withLock {
-        if (!disposed) emulator.setDefaultBackgroundColor(event.color.toEmulatorColor())
+      is TerminalSetColorSchemeEvent -> lock.withLock {
+        if (disposed) return
+        emulator.setDefaultForegroundColor(event.colorScheme.foreground.toEmulatorColor())
+        emulator.setDefaultBackgroundColor(event.colorScheme.background.toEmulatorColor())
       }
       is TerminalSetDefaultCursorShapeEvent -> lock.withLock {
         if (disposed) return

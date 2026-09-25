@@ -7,35 +7,31 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
-import org.jetbrains.plugins.terminal.session.impl.TerminalSetDefaultBackgroundEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalSetDefaultForegroundEvent
-import org.jetbrains.plugins.terminal.session.impl.dto.TerminalRgbColorDto
+import org.jetbrains.plugins.terminal.session.impl.TerminalSetColorSchemeEvent
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalColorSchemeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.toRgbColorDto
 
 /**
- * Sends the IDE terminal colors ([TerminalUi.defaultForeground] and [TerminalUi.defaultBackground]) to the session
- * as its default colors, and sends them again when the global color scheme ([EditorColorsManager.TOPIC]) changes them.
+ * Sends the terminal colors of the global color scheme ([TerminalColorSchemeDto]) to the session,
+ * and sends them again when the global color scheme ([EditorColorsManager.TOPIC]) changes them.
  */
 internal fun installSessionColorSchemeUpdating(terminalInput: TerminalInput, coroutineScope: CoroutineScope) {
-  var lastForeground: TerminalRgbColorDto? = null
-  var lastBackground: TerminalRgbColorDto? = null
+  var lastColorScheme: TerminalColorSchemeDto? = null
 
-  fun sendColorsIfChanged() {
-    val foreground = TerminalUi.defaultForeground().toRgbColorDto()
-    if (foreground != lastForeground) {
-      lastForeground = foreground
-      terminalInput.sendEvent(TerminalSetDefaultForegroundEvent(foreground))
-    }
-    val background = TerminalUi.defaultBackground().toRgbColorDto()
-    if (background != lastBackground) {
-      lastBackground = background
-      terminalInput.sendEvent(TerminalSetDefaultBackgroundEvent(background))
+  fun sendColorSchemeIfChanged() {
+    val colorScheme = TerminalColorSchemeDto(
+      foreground = TerminalUi.defaultForeground().toRgbColorDto(),
+      background = TerminalUi.defaultBackground().toRgbColorDto(),
+    )
+    if (colorScheme != lastColorScheme) {
+      lastColorScheme = colorScheme
+      terminalInput.sendEvent(TerminalSetColorSchemeEvent(colorScheme))
     }
   }
 
   ApplicationManager.getApplication().messageBus
     .connect(coroutineScope.asDisposable())
-    .subscribe(EditorColorsManager.TOPIC, EditorColorsListener { sendColorsIfChanged() })
+    .subscribe(EditorColorsManager.TOPIC, EditorColorsListener { sendColorSchemeIfChanged() })
 
-  sendColorsIfChanged()
+  sendColorSchemeIfChanged()
 }
