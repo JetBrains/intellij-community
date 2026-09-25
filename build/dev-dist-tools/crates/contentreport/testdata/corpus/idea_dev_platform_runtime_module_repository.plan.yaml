@@ -1,0 +1,6 @@
+# The packaging recipe the 'platform_runtime_module_repository' dev-distribution fragment executed, in the checked-in content-report schema (com.intellij.platform.distributionContent.FileEntry).
+# Written by DevDistRecipe; 2 outputs.
+- name: modules/module-descriptors.dat
+  kind: placed
+- name: modules/module-descriptors.jar
+  kind: placed

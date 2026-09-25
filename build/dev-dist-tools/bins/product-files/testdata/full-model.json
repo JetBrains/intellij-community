@@ -1,0 +1,104 @@
+{
+  "productCode": "IIS",
+  "buildNumber": "263.1234",
+  "productName": "Server \"Q\"\\\t\u0001\u007f ü",
+  "version": "2026.3",
+  "envVarBaseName": "IDEA_SERVER",
+  "dataDirectoryName": "IntelliJServer2026.3",
+  "svgIcon": true,
+  "productVendor": "JetBrains",
+  "majorVersionReleaseDate": "20261231",
+  "minRequiredJavaVersion": 21,
+  "customProperties": [
+    {
+      "key": "k1",
+      "value": "v\n1"
+    },
+    {
+      "key": "k2",
+      "value": ""
+    }
+  ],
+  "flavors": [
+    "server",
+    "remote"
+  ],
+  "baseFileName": "server",
+  "languageServer": true,
+  "launch": {
+    "mainClass": "com.intellij.platform.runtime.loader.IntellijLoader",
+    "bootClassPathJarNames": [],
+    "jvmArguments": {
+      "multiRoutingFileSystem": true,
+      "classLoader": "com.example.ServerClassLoader",
+      "vendorName": "JetBrains",
+      "pathsSelector": "IntelliJServer2026.3",
+      "jna": true,
+      "pty4j": true,
+      "skiko": true,
+      "runtimeModuleRepository": true,
+      "rootModule": "intellij.server.main",
+      "productMode": "backend",
+      "platformPrefix": "IntelliJServer",
+      "additional": [
+        "-Dfirst=1",
+        "-Dsecond=\"2\""
+      ],
+      "splash": true,
+      "nativeAccess": true
+    },
+    "stdioRedirectArg": "--stdio",
+    "linuxStartupWmClass": "jetbrains-server"
+  },
+  "customCommands": [
+    {
+      "commands": [
+        "qodana",
+        "inspect"
+      ],
+      "vmOptionsFilePath": {
+        "Linux": "bin/qodana.vmoptions"
+      },
+      "jvmArguments": {
+        "multiRoutingFileSystem": true,
+        "classLoader": "com.intellij.util.lang.PathClassLoader",
+        "vendorName": "JetBrains",
+        "pathsSelector": "Qodana2026.3",
+        "rootModule": "intellij.qodana"
+      },
+      "qodana": true,
+      "macJvmArguments": [
+        "-Dapple.awt.application.icon=$APP_PACKAGE/Contents/Resources/x.icns"
+      ],
+      "extraJvmArguments": [
+        "-Dextra=1"
+      ],
+      "mainClass": "com.intellij.qodana.Main",
+      "envVarBaseName": "QODANA",
+      "dataDirectoryName": "Qodana2026.3"
+    },
+    {
+      "commands": []
+    }
+  ],
+  "vmOptions": {
+    "macOS": [
+      "-Xmx4g",
+      "-Dmac=1"
+    ],
+    "Linux": [],
+    "Windows": [
+      "-Xmx4g",
+      "-Dwindows=\"1\""
+    ]
+  },
+  "ideaProperties": {
+    "languageServerBase": true,
+    "additions": [
+      "x=@@settings_dir@@/x",
+      ""
+    ],
+    "settingsDir": "IntelliJServer",
+    "suffix": ""
+  }
+}

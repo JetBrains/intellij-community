@@ -1,0 +1,89 @@
+{
+    "version": 2,
+    "plugin": "intellij.rider.plugins.fsharp",
+    "variant": "",
+    "layoutSignature": "a7f6n71axj5wb0fdvlubziq7x",
+    "assets": [
+        {
+            "destination": "lib/rider-plugins-fsharp.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.rider.plugins.fsharp",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.rider.plugins.fsharp",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.rider.plugins.fsharp.injections",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "",
+            "inputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "projectTemplates",
+            "inputs": [
+                "module-resource:0:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "inputs": [
+                "optional-local-directory:out/bundle-plugins/rider-plugins-fsharp"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "modelSignature": "2i3qltzbv3sv70vy6z4aqel23"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "optional-local-directory:out/bundle-plugins/rider-plugins-fsharp"
+                }
+            ],
+            "output": "layout-assets:resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

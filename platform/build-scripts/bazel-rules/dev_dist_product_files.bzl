@@ -1,4 +1,4 @@
-"""The launch files of a product, rendered by the Go tool `product-files` from the launch model of the product."""
+"""The launch files of a product, rendered by the tool `product-files` from the launch model of the product."""
 
 def _dev_dist_product_files_impl(ctx):
     outputs = [ctx.outputs.build_txt, ctx.outputs.idea_properties_out, ctx.outputs.vmoptions, ctx.outputs.product_info]
@@ -31,7 +31,7 @@ dev_dist_product_files = rule(
     implementation = _dev_dist_product_files_impl,
     attrs = {
         "tool": attr.label(
-            default = Label("//build/content-module-packer/product-files"),
+            default = Label("//build/dev-dist-tools/bins/product-files"),
             executable = True,
             cfg = "exec",
         ),

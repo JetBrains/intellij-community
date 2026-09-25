@@ -1,0 +1,12 @@
+# `community/MODULE.bazel` reads `Cargo.toml`, `Cargo.lock` and `.cargo/config.toml` of this package to generate `@ddt`.
+# `defs.bzl` declares the binaries of the Cargo workspace in this directory.
+
+load("//build/rust-lints:defs.bzl", "rust_lints_as_errors")
+
+# The lint policy of every crate: `[workspace.lints]` of `Cargo.toml` as `@ddt` renders it, with every clippy warning
+# an error. `dev_dist_rust_crate` passes it to each target, and the ultimate workspace `build/dev-dist-tools` too.
+rust_lints_as_errors(
+    name = "lints",
+    cargo = "@ddt//:workspace_cargo_lints",
+    visibility = ["//visibility:public"],
+)

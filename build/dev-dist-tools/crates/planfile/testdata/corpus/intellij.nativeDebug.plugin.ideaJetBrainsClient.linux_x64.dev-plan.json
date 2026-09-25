@@ -1,0 +1,274 @@
+{
+    "version": 2,
+    "plugin": "intellij.nativeDebug.plugin",
+    "variant": "linux_x64",
+    "layoutSignature": "b2kgh2bxvnglh8zmc94ontuul",
+    "assets": [
+        {
+            "module": "intellij.cidr.debugger.shared"
+        },
+        {
+            "module": "intellij.cidr.debugger.frontend"
+        },
+        {
+            "module": "intellij.cidr.debugger.profiles.shared"
+        },
+        {
+            "module": "intellij.cidr.debugger.profiles.frontend"
+        },
+        {
+            "module": "intellij.cidr.runner"
+        },
+        {
+            "module": "intellij.cidr.util.execution"
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.antlr4.runtime.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.antlr4.runtime",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-antlr4-runtime-antlr4-runtime",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.kryo2.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kryo2",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kryo2-_kryo",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kryo2-_objenesis",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/nativeDebug-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.nativeDebug.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.nativeDebug.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "bin/lldb/linux",
+            "inputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "bin",
+            "inputs": [
+                "layout-assets:resource-generator:1:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "bin/gdb/renderers",
+            "inputs": [
+                "module-resource:0:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "bin/helpers",
+            "inputs": [
+                "module-resource:1:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "bin/lldb/helpers",
+            "inputs": [
+                "module-resource:2:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "bin/lldb/renderers",
+            "inputs": [
+                "module-resource:3:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "bin/qt",
+            "inputs": [
+                "module-resource:4:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "inputs": [
+                "cidr-dependency:LLDBFrontend:linux:aarch64",
+                "cidr-dependency:LLDBFrontend:linux:x64"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "modelSignature": "5xn88l1e5s63vy3pbpzatq7vi"
+        },
+        {
+            "id": "layout-assets:resource-generator:1",
+            "inputs": [
+                "cidr-dependency:LLDB:linux:x64",
+                "cidr-dependency:gdb:linux:x64"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:1:output"
+            ],
+            "modelSignature": "bypqfbc8zwizutib5hboh58d6"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "cidr-dependency:LLDBFrontend:linux:aarch64"
+                },
+                {
+                    "artifact": "cidr-dependency:LLDBFrontend:linux:x64"
+                }
+            ],
+            "output": "layout-assets:resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "bin/lldb/linux",
+                "assets": [
+                    {
+                        "destination": "aarch64",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "includes": [
+                                "bin/LLDBFrontend"
+                            ],
+                            "executables": [
+                                "bin/LLDBFrontend"
+                            ]
+                        }
+                    },
+                    {
+                        "destination": "x64",
+                        "sources": [
+                            1
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "includes": [
+                                "bin/LLDBFrontend"
+                            ],
+                            "executables": [
+                                "bin/LLDBFrontend"
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "layout-assets:resource-generator:1",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "cidr-dependency:LLDB:linux:x64"
+                },
+                {
+                    "artifact": "cidr-dependency:gdb:linux:x64"
+                }
+            ],
+            "output": "layout-assets:resource-generator:1:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "bin",
+                "assets": [
+                    {
+                        "destination": "lldb/linux/x64",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "includes": [
+                                "!bin/LLDBFrontend"
+                            ],
+                            "executables": [
+                                "bin/*"
+                            ]
+                        }
+                    },
+                    {
+                        "destination": "gdb/linux/x64",
+                        "sources": [
+                            1
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "executables": [
+                                "bin/*"
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

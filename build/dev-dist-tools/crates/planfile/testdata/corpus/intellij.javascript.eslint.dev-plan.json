@@ -1,0 +1,40 @@
+{
+    "version": 2,
+    "plugin": "intellij.javascript.eslint",
+    "variant": "",
+    "layoutSignature": "6v4ngbdulb527tf5omowfd39z",
+    "assets": [
+        {
+            "destination": "lib/javascript-eslint.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.javascript.eslint",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.javascript.eslint",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "",
+            "inputs": [
+                "module-resource:0:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ]
+}

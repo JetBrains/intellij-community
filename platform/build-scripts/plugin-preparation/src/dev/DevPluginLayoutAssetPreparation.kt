@@ -240,7 +240,7 @@ data class DevPluginLayoutAssetPreparation(
 )
 
 /**
- * Validates one layout-assets payload at generation time. The Go packer ports these rules to `plan.go`.
+ * Validates one layout-assets payload at generation time. The packer ports these rules to `plan.rs` of the `pluginpack` crate.
  * A `gzip-xml-archive` asset requires the `entries` format.
  */
 internal fun validateDevPluginLayoutAssetPreparation(
@@ -260,7 +260,7 @@ internal fun validateDevPluginLayoutAssetPreparation(
     require(asset.hostPlatforms.isEmpty()) { "A layout asset payload must not name host platforms: ${asset.destination}" }
     if (asset.destination.isEmpty()) {
       // An entry asset writes its output root when every entry brings its own relative path: a mapped tree, an
-      // extracted archive, a gzip archive, or a copied directory. The Go packer checks the directory kind.
+      // extracted archive, a gzip archive, or a copied directory. The packer checks the directory kind.
       require(preparation.format == "tree" ||
               preparation.format == "entries" && transform?.kind in setOf("archive-tree", "gzip-xml-archive", "tree-map", null)) {
         "Only a tree, a mapped entry asset, an extracted archive, a gzip archive, or a copied directory can use its output root"

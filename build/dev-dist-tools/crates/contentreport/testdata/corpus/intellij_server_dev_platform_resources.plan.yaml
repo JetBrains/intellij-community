@@ -1,0 +1,26 @@
+# The packaging recipe the 'platform_resources' dev-distribution fragment executed, in the checked-in content-report schema (com.intellij.platform.distributionContent.FileEntry).
+# Written by DevDistRecipe; 12 outputs.
+- name: EULA.txt
+  kind: placed
+- name: bin/fsnotifier
+  kind: placed
+- name: bin/idea.properties
+  kind: placed
+- name: bin/intellij-server.vmoptions
+  kind: placed
+- name: bin/libmacscreenmenu64.dylib
+  kind: placed
+- name: bin/libnst64.dylib
+  kind: placed
+- name: bin/printenv
+  kind: placed
+- name: bin/product-info.json
+  kind: placed
+- name: bin/warmup.py
+  kind: placed
+- name: build.txt
+  kind: placed
+- name: lib/filewatcher/macOS-AArch64/libfilewatcher_jni.dylib
+  kind: placed
+- name: license/filewatcher_jni-third-party-libraries.json
+  kind: placed

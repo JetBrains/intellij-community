@@ -1,0 +1,1439 @@
+{
+    "version": 1,
+    "plugin": "language-server.plugins.kotlin",
+    "variant": "",
+    "layoutSignature": "5j9uf0v5pgy118905jocwr4ar",
+    "assets": [
+        {
+            "module": "language-server.analyzer.kotlin"
+        },
+        {
+            "destination": "lib/modules/intellij.kotlin.analysis.platform.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.analysis.platform",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:kotlin-analysis-platform-ehcache-sizeof",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.base.analysis.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.base.analysis",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.base.analysis.utils.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.base.analysis.utils",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.codeInsight.utils.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.codeInsight.utils",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.kotlin.base.analysis.platform"
+        },
+        {
+            "destination": "lib/intellij.kotlin.base.codeInsight.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.base.codeInsight",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.codeInsight.descriptions.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.codeInsight.descriptions",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.base.codeInsight.minimal.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.base.codeInsight.minimal",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.base.compilerConfiguration.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.base.compilerConfiguration",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.base.util.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.base.util",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.base.indices.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.base.indices",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.base.jps.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.base.jps",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.base.kdoc.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.base.kdoc",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.base.platforms.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.base.platforms",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.base.plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.base.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.kotlin.base.externalSystem"
+        },
+        {
+            "destination": "lib/intellij.kotlin.base.facet.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.base.facet",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.plugin.updater.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.plugin.updater",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.preferences.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.preferences",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.references.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.references",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.ide.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.ide",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.base.statistics.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.base.statistics",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.base.projectModel.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.base.projectModel",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.base.psi.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.base.psi",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.base.projectStructure.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.base.projectStructure",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.base.resources.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.base.resources",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.kotlin.base.scripting"
+        },
+        {
+            "destination": "lib/intellij.kotlin.base.serialization.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.base.serialization",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/kotlin.scripting.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "kotlin.scripting",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.kotlin.codeInsight"
+        },
+        {
+            "module": "intellij.kotlin.codeInsight.base"
+        },
+        {
+            "destination": "lib/intellij.kotlin.codeInsight.api.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.codeInsight.api",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.codeInsight.shared.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.codeInsight.shared",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.completion.api.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.completion.api",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.compilerPlugins.support.bundled.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.compilerPlugins.support.bundled",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.compilerPlugins.support.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.compilerPlugins.support",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.codeInsight.overrideImplement.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.codeInsight.overrideImplement",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.kotlin.codeInsight.fixes"
+        },
+        {
+            "module": "intellij.kotlin.codeInsight.inspections"
+        },
+        {
+            "module": "intellij.kotlin.codeInsight.intentions"
+        },
+        {
+            "module": "intellij.kotlin.codeInsight.liveTemplates"
+        },
+        {
+            "module": "intellij.kotlin.completion.impl"
+        },
+        {
+            "destination": "lib/intellij.kotlin.formatter.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.formatter",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.formatter.minimal.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.formatter.minimal",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.kotlin.highlighting"
+        },
+        {
+            "destination": "lib/intellij.kotlin.highlighting.minimal.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.highlighting.minimal",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.uast.base.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.uast.base",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.uast.idea.base.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.uast.idea.base",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.uast.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.uast",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.kotlin.uast.idea.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.uast.idea",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "kotlin.fir"
+        },
+        {
+            "destination": "lib/kotlin.fir.frontend-independent.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "kotlin.fir.frontend-independent",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.kotlin.navigation"
+        },
+        {
+            "destination": "lib/intellij.kotlin.projectConfiguration.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.projectConfiguration",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.kotlin.projectStructure"
+        },
+        {
+            "destination": "lib/intellij.kotlin.refactorings.base.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.refactorings.base",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.kotlin.refactorings"
+        },
+        {
+            "module": "intellij.kotlin.refactorings.rename"
+        },
+        {
+            "destination": "lib/intellij.kotlin.searching.base.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.searching.base",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.kotlin.searching"
+        },
+        {
+            "module": "intellij.kotlin.j2k"
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlin.gradle.plugin.idea.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlin.gradle.plugin.idea",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlin-gradle-plugin-idea-kotlin-gradle-plugin-idea",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlin.tooling.core.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlin.tooling.core",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlin-tooling-core-kotlin-tooling-core",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlin.gradle.plugin.idea.proto.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlin.gradle.plugin.idea.proto",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlin-gradle-plugin-idea-proto-kotlin-gradle-plugin-idea-proto",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.analysis.api.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.analysis.api",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-analysis-api-kotlinc-analysis-api",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.analysis.api.impl.base.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.analysis.api.impl.base",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-analysis-api-impl-base-kotlinc-analysis-api-impl-base",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.analysis.api.k2.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.analysis.api.k2",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-analysis-api-k2-kotlinc-analysis-api-k2",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.analysis.api.platform.interface.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.analysis.api.platform.interface",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-analysis-api-platform-interface-kotlinc-analysis-api-platform-interface",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.kotlin.compiler.fe10.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.kotlin.compiler.fe10",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-kotlin-compiler-fe10-kotlinc-kotlin-compiler-fe10",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.kotlin.compiler.ir.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.kotlin.compiler.ir",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-kotlin-compiler-ir-kotlinc-kotlin-compiler-ir",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.allopen.compiler.plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.allopen.compiler.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-allopen-compiler-plugin-kotlinc-allopen-compiler-plugin",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.noarg.compiler.plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.noarg.compiler.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-noarg-compiler-plugin-kotlinc-noarg-compiler-plugin",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.sam.with.receiver.compiler.plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.sam.with.receiver.compiler.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-sam-with-receiver-compiler-plugin-kotlinc-sam-with-receiver-compiler-plugin",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.lombok.compiler.plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.lombok.compiler.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-lombok-compiler-plugin-kotlinc-lombok-compiler-plugin",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.compose.compiler.plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.compose.compiler.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-compose-compiler-plugin-kotlinc-compose-compiler-plugin",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.js.plain.objects.compiler.plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.js.plain.objects.compiler.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-js-plain-objects-compiler-plugin-kotlinc-js-plain-objects-compiler-plugin",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.kotlin.dataframe.compiler.plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.kotlin.dataframe.compiler.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-kotlin-dataframe-compiler-plugin-kotlinc-kotlin-dataframe-compiler-plugin",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-kotlinx-serialization-compiler-plugin-kotlinc-kotlinx-serialization-compiler-plugin",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.scripting.compiler.plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.scripting.compiler.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-scripting-compiler-plugin-kotlinc-scripting-compiler-plugin",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.assignment.compiler.plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.assignment.compiler.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-assignment-compiler-plugin-kotlinc-assignment-compiler-plugin",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.parcelize.compiler.plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.parcelize.compiler.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-parcelize-compiler-plugin-kotlinc-parcelize-compiler-plugin",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.low.level.api.fir.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.low.level.api.fir",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-low-level-api-fir-kotlinc-low-level-api-fir",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.symbol.light.classes.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.symbol.light.classes",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-symbol-light-classes-kotlinc-symbol-light-classes",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.kotlin.compiler.fir.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.kotlin.compiler.fir",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-kotlin-compiler-fir-kotlinc-kotlin-compiler-fir",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.kotlin.jps.common.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.kotlin.jps.common",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-kotlin-jps-common-kotlinc-kotlin-jps-common",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.kotlin.scripting.common.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.kotlin.scripting.common",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-kotlin-scripting-common-kotlinc-kotlin-scripting-common",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.kotlin.scripting.compiler.impl.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.kotlin.scripting.compiler.impl",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-kotlin-scripting-compiler-impl-kotlinc-kotlin-scripting-compiler-impl",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.kotlin.script.runtime.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.kotlin.script.runtime",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-kotlin-script-runtime-kotlinc-kotlin-script-runtime",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.kotlin.scripting.jvm.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.kotlin.scripting.jvm",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-kotlin-scripting-jvm-kotlinc-kotlin-scripting-jvm",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/language-server-plugins-kotlin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:language-server.plugins.kotlin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "layout-assets:layout-patcher:0:output",
+                        "kind": "prepared",
+                        "filter": "prepared"
+                    },
+                    {
+                        "input": "language-server.plugins.kotlin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.libraries.kotlinc.kotlin.scripting.dependencies",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:kotlinc-kotlin-build-tools-api",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:kotlinc-kotlin-build-tools-cri-impl",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:kotlinc-kotlin-build-tools-impl",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:kotlinc-kotlin-gradle-statistics",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "manifest": "drop",
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/kotlinc.kotlin-scripting-dependencies.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@lib//:libraries-kotlinc-kotlin-scripting-dependencies-kotlinc-kotlin-scripting-dependencies",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlinc.kotlin.compiler.common.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.kotlin.compiler.common",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/javax-inject.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@lib//:javax-inject",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/vavr.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@lib//:vavr",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:layout-patcher:0",
+            "inputs": [
+                "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common"
+            ],
+            "outputs": [
+                "layout-assets:layout-patcher:0:output"
+            ],
+            "modelSignature": "5nwvwsnvbng4vmgyls2l3ts5k"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:layout-patcher:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common"
+                }
+            ],
+            "output": "layout-assets:layout-patcher:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "entries",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "mappings": [
+                                {
+                                    "pattern": "META-INF/extensions/**"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

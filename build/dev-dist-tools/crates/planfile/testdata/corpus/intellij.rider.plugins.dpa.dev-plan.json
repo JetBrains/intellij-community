@@ -1,0 +1,82 @@
+{
+    "version": 2,
+    "plugin": "intellij.rider.plugins.dpa",
+    "variant": "{platform}",
+    "layoutSignature": "{platform:layoutSignature}",
+    "assets": [
+        {
+            "module": "intellij.rider.plugins.dpa.cpp"
+        },
+        {
+            "module": "intellij.rider.plugins.dpa.unity"
+        },
+        {
+            "destination": "lib/dpa.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.rider.plugins.dpa",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.rider.plugins.dpa",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "",
+            "inputs": [
+                "layout-assets:platform-resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:platform-resource-generator:0",
+            "inputs": [
+                "{platform:inputs}"
+            ],
+            "outputs": [
+                "layout-assets:platform-resource-generator:0:output"
+            ],
+            "modelSignature": "{platform:modelSignature}"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:platform-resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "{platform:inputs}"
+                }
+            ],
+            "output": "layout-assets:platform-resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -1,0 +1,76 @@
+{
+    "version": 2,
+    "plugin": "intellij.rider.plugins.verse",
+    "variant": "",
+    "layoutSignature": "ap06r1f7tfta71hid96sb4hht",
+    "assets": [
+        {
+            "destination": "lib/rider-plugins-verse.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.rider.plugins.verse",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.rider.plugins.verse",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "",
+            "inputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "inputs": [
+                "optional-local-directory:out/bundle-plugins/rider-verse"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "modelSignature": "3kzw3w083x64t6ozvowum10to"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "optional-local-directory:out/bundle-plugins/rider-verse"
+                }
+            ],
+            "output": "layout-assets:resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

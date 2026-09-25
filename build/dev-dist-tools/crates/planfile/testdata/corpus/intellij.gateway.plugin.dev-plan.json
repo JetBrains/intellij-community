@@ -1,0 +1,181 @@
+{
+    "version": 2,
+    "plugin": "intellij.gateway.plugin",
+    "variant": "",
+    "layoutSignature": "bjqc5x44oq9xlqnt0sm8yu0fi",
+    "assets": [
+        {
+            "module": "intellij.gateway.core"
+        },
+        {
+            "module": "intellij.gateway.ssh"
+        },
+        {
+            "module": "intellij.gateway.core.dependencies"
+        },
+        {
+            "module": "intellij.gateway.terminal"
+        },
+        {
+            "module": "intellij.gateway.station"
+        },
+        {
+            "module": "intellij.gateway.eel"
+        },
+        {
+            "module": "intellij.gateway.daemon.bridge"
+        },
+        {
+            "destination": "lib/gateway-standalone/gateway.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.gateway",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/gateway-standalone/gateway.core.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.gateway.core",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.platform.commercial.dependencies",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/gateway-standalone/platform-resources.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.platform.resources.fileTypes",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.platform.resources.applicationInfo",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.platform.resources.en.fileTemplates",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.gateway.standalone.ssh"
+        },
+        {
+            "module": "intellij.gateway.standalone"
+        },
+        {
+            "destination": "lib/gateway-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.gateway.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.gateway.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/remote-dev-workers",
+            "inputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "resources/gateway.vmoptions",
+            "inputs": [
+                "module-resource:0:source"
+            ],
+            "mode": 493,
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "inputs": [
+                "layout-source:resource-generator:0:0"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "modelSignature": "2tfdxmmkmlaogoczzzslqadil"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "layout-source:resource-generator:0:0"
+                }
+            ],
+            "output": "layout-assets:resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "lib/remote-dev-workers",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "mappings": [
+                                {
+                                    "pattern": "bin/**",
+                                    "stripComponents": 1
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

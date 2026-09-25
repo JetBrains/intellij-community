@@ -1,0 +1,80 @@
+{
+    "version": 2,
+    "plugin": "intellij.database.artifactsBundle",
+    "variant": "",
+    "layoutSignature": "62xyso0g1cq078u04l94if5l8",
+    "assets": [
+        {
+            "destination": "lib/database-artifactsBundle.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.database.artifactsBundle",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.database.artifactsBundle",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "artifacts",
+            "inputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "inputs": [
+                "layout-source:resource-generator:0:0"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "modelSignature": "6mtsx0b9t6xgid31m6ppxi757"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "layout-source:resource-generator:0:0"
+                }
+            ],
+            "output": "layout-assets:resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "artifacts",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -1,0 +1,69 @@
+{
+    "version": 2,
+    "plugin": "intellij.prettierJS",
+    "variant": "",
+    "layoutSignature": "6zd3i6itg1mfsc5u617abiwso",
+    "assets": [
+        {
+            "module": "intellij.prettierJS.eslint"
+        },
+        {
+            "destination": "lib/prettierJS.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.prettierJS",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "module-filter:intellij.prettierJS:output",
+                        "kind": "prepared",
+                        "filter": "prepared"
+                    }
+                ],
+                "writer": {
+                    "manifest": "drop",
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "prettierLanguageService",
+            "inputs": [
+                "module-resource:0:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "module-filter:intellij.prettierJS",
+            "inputs": [
+                "intellij.prettierJS"
+            ],
+            "outputs": [
+                "module-filter:intellij.prettierJS:output"
+            ],
+            "modelSignature": "6ql480lsdhyir9nrdyhkzljcj"
+        }
+    ],
+    "operations": [
+        {
+            "id": "module-filter:intellij.prettierJS",
+            "input": {
+                "artifact": "intellij.prettierJS"
+            },
+            "output": "module-filter:intellij.prettierJS:output",
+            "manifest": "keep",
+            "excludes": [
+                "javascript/**"
+            ]
+        }
+    ]
+}

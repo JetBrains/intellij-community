@@ -1,0 +1,95 @@
+{
+    "version": 2,
+    "plugin": "intellij.serial.monitor",
+    "variant": "",
+    "layoutSignature": "a0sqb5gt40nl87uy7uq5m4twv",
+    "assets": [
+        {
+            "destination": "lib/serial-monitor.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.serial.monitor",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.serial.monitor",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/jSerialComm-2.11.4.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@ultimate_lib//:jetbrains-intellij-deps-j_serial_comm",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "bin",
+            "inputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "inputs": [
+                "layout-source:resource-generator:0:0"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "modelSignature": "3g6jhqihdrtwik2412642q1d4"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "layout-source:resource-generator:0:0"
+                }
+            ],
+            "output": "layout-assets:resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "bin",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -1,0 +1,23 @@
+[package]
+name = "content-module-packer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+# The binary is an input of every packing action, so it depends on the packer core and on nothing it does not use.
+[dependencies]
+jarpack.workspace = true
+trace.workspace = true
+tracing.workspace = true
+lexopt.workspace = true
+rayon.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+tempfile.workspace = true
+zip.workspace = true

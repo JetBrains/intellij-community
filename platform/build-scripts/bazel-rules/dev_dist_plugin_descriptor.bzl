@@ -1,8 +1,8 @@
 """Writes one plugin's patched `META-INF/plugin.xml` in an action of its own.
 
 The rule runs one action per plugin. Its declared inputs are the descriptors the patch reads. Its output is the text
-the plugin's main jar receives. Both plugin tiers read that output through `DevDistPluginDescriptorInfo`. The Go writer
-is the one producer of the text.
+the plugin's main jar receives. Both plugin tiers read that output through `DevDistPluginDescriptorInfo`. The plugin
+descriptor writer is the one producer of the text.
 
 Modelled on two neighbours, each for what it already settled. `ij_plugin` for the per-plugin grain and for the build
 number arriving as a declared file. `content_module_jar` for the provider, for the `manual` tag and for a packer named
@@ -250,8 +250,6 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
         ("--marker", stamps.markers, "repeated"),
         ("--refused-content-module", _refused_content_modules(ctx, product), "repeated"),
         ("--separate-jar", ctx.attr.separate_jar, "repeated"),
-        ("--plugin-module", ctx.attr.plugin_modules, "repeated"),
-        ("--platform-module", ctx.attr.platform_modules, "repeated"),
     ])
 
     source_file = source if source != None else source_jar
@@ -262,7 +260,7 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
         _descriptor_source_binding("build_number", ctx.attr._build_number_file.label, None, [ctx.file._build_number_file]),
     ]
 
-    # One answer per load path. The Go executor seeds the files first and puts a jar entry in only when the path is
+    # One answer per load path. The writer seeds the files first and puts a jar entry in only when the path is
     # absent. So a load path two declarations answer is refused here, where every declaration is visible.
     answered_by = {}
     for label, load_path in ctx.attr.descriptors.items():
@@ -282,13 +280,6 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
         parameters.append(("--plugin-descriptor-in-jar", jar.load_path + "=" + jar.files[0].path, "literal"))
         sources.append(_descriptor_source_binding("descriptor_jars", jar.label, jar.load_path, jar.files))
         inputs.append(jar.files[0])
-    for label, load_path in ctx.attr.platform_descriptors.items():
-        files = label.files.to_list()
-        if len(files) != 1:
-            fail("%s declares %d files, and a descriptor must name exactly one" % (label.label, len(files)), attr = "platform_descriptors")
-        parameters.append(("--platform-descriptor", load_path + "=" + files[0].path, "literal"))
-        sources.append(_descriptor_source_binding("platform_descriptors", label.label, load_path, files))
-        inputs.append(files[0])
     for library in jars.library_descriptors:
         for load_path in library.load_paths:
             if load_path in answered_by:
@@ -398,7 +389,7 @@ def _descriptor_action(ctx, request, output, tool, mnemonic, progress_message, r
     """Runs one descriptor producer.
 
     `reserialized_output`, when given, is a second output: the same descriptor with every content module embedded, in
-    the byte form a classpath writer copies. The Go executor writes it from the same request, so the classpath
+    the byte form a classpath writer copies. The writer produces it from the same request, so the classpath
     descriptor of an ordinary plugin costs no second action.
     """
     operations = (("--out", output, "formatted"),) + request.parameters
@@ -633,10 +624,6 @@ The load path is what a resolver asks the descriptor cache for. Seeding the cach
 action run with no JPS project model: `resolveElement` reads the cache before it touches a module output.""",
             allow_files = [".xml"],
         ),
-        "platform_descriptors": attr.label_keyed_string_dict(
-            doc = """The same, for the platform's search scope. No generator writes it; see `plugin_modules`.""",
-            allow_files = [".xml"],
-        ),
         "variant": attr.string(
             doc = """The layout variant, empty for a plugin whose one layout serves every platform.
 
@@ -684,16 +671,6 @@ leaf of every product states one list, and the leaf adds the list of the mode `d
         "separate_jar": attr.string_list(
             doc = "Which content module's embedded descriptor takes `separate-jar=\"true\"`. A deviation, normally empty.",
         ),
-        "plugin_modules": attr.string_list(
-            doc = """The plugin's own descriptor search scope, by JPS module name.
-
-No generator writes it. A descriptor a plugin reads is declared by label, so the scope decides nothing but the answer
-of the executor's `copyWithExtraSearchPath`, which reads one module name. Both executors keep the option, because the
-port is field for field and a scope is what the platform's own resolver takes.""",
-        ),
-        "platform_modules": attr.string_list(
-            doc = "The platform's descriptor search scope, by JPS module name. No generator writes it; see `plugin_modules`.",
-        ),
         "embed_content_modules": attr.bool(
             default = True,
             doc = "False for a layout that scrambles paths: it embeds no content module descriptor, and the assembly agrees.",
@@ -706,10 +683,10 @@ port is field for field and a scope is what the platform's own resolver takes.""
             doc = "Exactly `ij_plugin._default_ide_build_number_file`: the build number is a declared file, never a path a tool computes.",
         ),
         "_writer": attr.label(
-            doc = """The Go executor.
+            doc = """The plugin descriptor writer.
 
-ADR 0006 puts the executors in Go, and a descriptor feeds every plugin main jar, so a JVM action for it sits on the
-build's critical path.""",
+A descriptor feeds every plugin main jar. So the writer is a native executable, and no JVM action for it sits on the
+critical path of the build.""",
             default = Label("//platform/build-scripts/bazel-rules:plugin_descriptor_writer"),
             executable = True,
             cfg = "exec",

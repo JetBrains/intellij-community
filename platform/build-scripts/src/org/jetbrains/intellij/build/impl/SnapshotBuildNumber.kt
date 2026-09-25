@@ -39,8 +39,8 @@ object SnapshotBuildNumber {
  * The plugin version a build stamps: [buildNumber] with its `.SNAPSHOT` suffix replaced by a fixed number, plus `.0`
  * when the result is a nightly.
  *
- * `BuildContextImpl.pluginBuildNumber` is the one Kotlin reader. The Go patcher (`internal/stamps` of
- * `community/build/plugin-descriptor-writer`) ports this rule, and its curated cases guard the version string.
+ * `BuildContextImpl.pluginBuildNumber` is the one Kotlin reader. The descriptor writer (`stamps` of
+ * `community/build/dev-dist-tools/bins/plugin-descriptor-writer`) ports this rule, and its tests guard the version string.
  */
 internal fun computePluginBuildNumber(buildNumber: String): String {
   var value = buildNumber

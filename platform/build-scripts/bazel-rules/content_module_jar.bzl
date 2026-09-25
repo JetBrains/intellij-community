@@ -7,8 +7,8 @@ A target of its own, next to the `jvm_library` whose module it is named after - 
 attributes until the packer moved into this module, and the reason it could not be a target then was the reason the whole
 thing was wired through a flag: `jvm_library` belongs to `rules_jvm`, which may not name a label in a repository that
 consumes it, so the tool had to be pushed in from a `.bazelrc` against a default that failed at execution time. With the
-packer in `@community//build/content-module-packer` the rule can name it directly, and a rule of its own is then simply
-the better shape.
+packer in `@community//build/dev-dist-tools/bins/content-module-packer` the rule can name it directly, and a rule of its
+own is then simply the better shape.
 
 Three things the attribute form got wrong and this does not:
 

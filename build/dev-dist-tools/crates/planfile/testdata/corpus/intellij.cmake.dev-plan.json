@@ -1,0 +1,149 @@
+{
+    "version": 2,
+    "plugin": "intellij.cmake",
+    "variant": "",
+    "layoutSignature": "15v9xhnxq7dfzip1cpm7oabf",
+    "assets": [
+        {
+            "module": "intellij.cmake.json"
+        },
+        {
+            "module": "intellij.cmake.compdb"
+        },
+        {
+            "module": "intellij.cmake.core"
+        },
+        {
+            "module": "intellij.cmake.oc"
+        },
+        {
+            "destination": "lib/intellij.cmake.psi.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.cmake.psi",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.cmake.psi.spellchecker"
+        },
+        {
+            "module": "intellij.cmake.python"
+        },
+        {
+            "module": "intellij.cmake.terminal"
+        },
+        {
+            "module": "intellij.cmake.wizard"
+        },
+        {
+            "module": "intellij.cmake.ide"
+        },
+        {
+            "module": "intellij.cmake.clion"
+        },
+        {
+            "module": "intellij.cmake.mcp"
+        },
+        {
+            "module": "intellij.cmake.mcp.skills"
+        },
+        {
+            "module": "intellij.cmake.mcp.skills.agent"
+        },
+        {
+            "module": "intellij.cmake.mcp.skills.agent.frontend"
+        },
+        {
+            "module": "intellij.cmake.mcp.skills.agent.backend"
+        },
+        {
+            "module": "intellij.cmake.profiles"
+        },
+        {
+            "module": "intellij.cmake.rider"
+        },
+        {
+            "destination": "lib/cmake.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.cmake",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.cmake",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "docs",
+            "inputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "inputs": [
+                "cidr-dependency:cmake-quickdoc:any:any"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "modelSignature": "aykivv8uexzvw4xx6jtmmi24j"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "cidr-dependency:cmake-quickdoc:any:any"
+                }
+            ],
+            "output": "layout-assets:resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "docs",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "includes": [
+                                "quickdoc/**"
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

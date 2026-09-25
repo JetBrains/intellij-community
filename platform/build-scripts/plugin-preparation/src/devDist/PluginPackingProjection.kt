@@ -15,8 +15,8 @@ import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
  * holds no label of a `content_module_jar` target and no second spelling of the reuse.
  *
  * For a chain with `preparation = "none"` the file is also the contract of `plugin-remainder-packer --projection`.
- * Its Go decoder, the `planfile` package, is strict. It rejects an unknown field and a duplicate key. It rejects every
- * operation kind or transform outside the Go-executed set.
+ * Its decoder, the `planfile` crate, is strict. It rejects an unknown field and a duplicate key. It rejects every
+ * operation kind or transform outside the packer-executed set.
  */
 @ApiStatus.Internal
 @OptIn(ExperimentalSerializationApi::class)

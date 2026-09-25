@@ -1,0 +1,248 @@
+{
+    "version": 2,
+    "plugin": "intellij.go.plugin",
+    "variant": "",
+    "layoutSignature": "65irmb9l56obtkckxt51z7pv3",
+    "assets": [
+        {
+            "module": "intellij.go.template.integration"
+        },
+        {
+            "module": "intellij.go.terminal"
+        },
+        {
+            "module": "intellij.go.shell"
+        },
+        {
+            "module": "intellij.go.coverage"
+        },
+        {
+            "module": "intellij.go.database"
+        },
+        {
+            "module": "intellij.go.copyright"
+        },
+        {
+            "module": "intellij.go.watchers"
+        },
+        {
+            "module": "intellij.go.featuresTrainer"
+        },
+        {
+            "module": "intellij.go.grazie"
+        },
+        {
+            "module": "intellij.go.completionMlRanking"
+        },
+        {
+            "module": "intellij.go.sharedIndexes"
+        },
+        {
+            "module": "intellij.go.diagram"
+        },
+        {
+            "module": "intellij.go.docker"
+        },
+        {
+            "module": "intellij.go.performance"
+        },
+        {
+            "module": "intellij.go.performance.diagram"
+        },
+        {
+            "module": "intellij.go.microservices"
+        },
+        {
+            "module": "intellij.go.langInjection"
+        },
+        {
+            "module": "intellij.go.dfa"
+        },
+        {
+            "module": "intellij.go.fix"
+        },
+        {
+            "module": "intellij.go.common.frontend"
+        },
+        {
+            "module": "intellij.go.frontend.split"
+        },
+        {
+            "destination": "lib/intellij.go.frontback.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.go.frontback",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.go.impl"
+        },
+        {
+            "module": "intellij.go.vcs"
+        },
+        {
+            "module": "intellij.go.clones"
+        },
+        {
+            "module": "intellij.go.structuralsearch"
+        },
+        {
+            "module": "intellij.platform.commercial.verifier"
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.re2j.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.re2j",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-re2j-re2j",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.completion.ranking.go.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.completion.ranking.go",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-completion-ranking-go-completion-ranking-go",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/go-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.go.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.go.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.go",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.go.utils",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.go.testing",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.go.plan9",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/dlv",
+            "inputs": [
+                "layout-assets:resource-generator:1:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "license",
+            "inputs": [
+                "module-resource:0:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:1",
+            "inputs": [
+                "layout-source:resource-generator:1:0"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:1:output"
+            ],
+            "modelSignature": "5p75hlfrkxembyxlreuj33frt"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:1",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "layout-source:resource-generator:1:0"
+                }
+            ],
+            "output": "layout-assets:resource-generator:1:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "lib/dlv",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "mappings": [
+                                {
+                                    "pattern": "dlv/**",
+                                    "stripComponents": 1
+                                }
+                            ]
+                        },
+                        "mode": 493
+                    }
+                ]
+            }
+        }
+    ]
+}

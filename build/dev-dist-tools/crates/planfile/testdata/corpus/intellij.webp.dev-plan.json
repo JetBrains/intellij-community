@@ -1,0 +1,101 @@
+{
+    "version": 2,
+    "plugin": "intellij.webp",
+    "variant": "{platform}",
+    "layoutSignature": "{platform:layoutSignature}",
+    "assets": [
+        {
+            "destination": "lib/webp.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.webp",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.webp",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/libwebp.jar.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@community//plugins/webp/lib:webp-libwebp",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "{platform:destination}",
+            "inputs": [
+                "layout-assets:platform-resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:platform-resource-generator:0",
+            "inputs": [
+                "layout-source:platform-resource-generator:0:0"
+            ],
+            "outputs": [
+                "layout-assets:platform-resource-generator:0:output"
+            ],
+            "modelSignature": "{platform:modelSignature}"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:platform-resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "layout-source:platform-resource-generator:0:0"
+                }
+            ],
+            "output": "layout-assets:platform-resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "{platform:destination}",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "mappings": [
+                                {
+                                    "pattern": "{platform:pattern}",
+                                    "stripComponents": 1
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

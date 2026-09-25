@@ -1,0 +1,174 @@
+{
+    "version": 2,
+    "plugin": "intellij.rider.plugins.renderdoc",
+    "variant": "{platform}",
+    "layoutSignature": "{platform:layoutSignature}",
+    "assets": [
+        {
+            "destination": "lib/intellij.libraries.rd.client.renderdoc.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.rd.client.renderdoc",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-rd-client-renderdoc-jetbrains-rd-client-renderdoc",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-rd-client-renderdoc-jetbrains-rd-client-renderdoc-runtime-linux-aarch64",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-rd-client-renderdoc-jetbrains-rd-client-renderdoc-runtime-linux-x86_64",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-rd-client-renderdoc-jetbrains-rd-client-renderdoc-runtime-macos-aarch64",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-rd-client-renderdoc-jetbrains-rd-client-renderdoc-runtime-macos-x86_64",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-rd-client-renderdoc-jetbrains-rd-client-renderdoc-runtime-windows-aarch64",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-rd-client-renderdoc-jetbrains-rd-client-renderdoc-runtime-windows-x86_64",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/rider-plugins-renderdoc.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.rider.plugins.renderdoc",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.rider.plugins.renderdoc",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "",
+            "inputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "runtime",
+            "inputs": [
+                "layout-assets:platform-custom-asset:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "inputs": [
+                "optional-local-directory:out/bundle-plugins/rider-plugins-renderdoc"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "modelSignature": "6afe3cfoa76c5ty12wc90qaiz"
+        },
+        {
+            "id": "layout-assets:platform-custom-asset:0",
+            "inputs": [
+                "{platform:inputs}"
+            ],
+            "outputs": [
+                "layout-assets:platform-custom-asset:0:output"
+            ],
+            "modelSignature": "{platform:modelSignature}"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "optional-local-directory:out/bundle-plugins/rider-plugins-renderdoc"
+                }
+            ],
+            "output": "layout-assets:resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "layout-assets:platform-custom-asset:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "{platform:inputs}"
+                }
+            ],
+            "output": "layout-assets:platform-custom-asset:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "runtime",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "stripComponents": 1,
+                            "includes": [
+                                "runtime/**"
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

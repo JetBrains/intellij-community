@@ -1,0 +1,27 @@
+# The host platforms of the build. `.bazelrc` sets `--host_platform` to one of them on Linux and on Windows.
+# The ultimate root uses the same platforms through aliases in its own `build/native/platforms` package.
+#
+# `@platforms//host` alone does not match the toolchains that an exec-configuration action needs:
+#  - On Linux, `@llvm` links a Rust proc-macro or a Rust tool against a pinned glibc. The host platform must name that
+#    glibc version, because the default libc constraint is `unconstrained`.
+#  - On Windows, the rules_rs toolchain for `*-pc-windows-msvc` requires the `msvc` ABI. The default ABI constraint is
+#    `unconstrained`, so without this platform no Rust toolchain matches the exec configuration.
+# macOS needs no override.
+
+platform(
+    name = "local_linux",
+    constraint_values = [
+        "@llvm//constraints/libc:gnu.2.28",
+    ],
+    parents = ["@platforms//host"],
+    visibility = ["//visibility:public"],
+)
+
+platform(
+    name = "local_windows",
+    constraint_values = [
+        "@llvm//constraints/windows/abi:msvc",
+    ],
+    parents = ["@platforms//host"],
+    visibility = ["//visibility:public"],
+)

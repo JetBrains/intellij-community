@@ -1,0 +1,123 @@
+# contentreport API
+
+The Rust port of the Go package `build/internal/content`. The crate reads the executed packaging recipe of a
+dev-distribution fragment, reads a built distribution, and weighs the one against the other. The binary
+`content-report` of the ultimate workspace prints the result. The crate depends on `saphyr`, `thiserror` and `walkdir`.
+
+## File format
+
+`DevDistRecipe.kt` writes `<fragment>.plan.yaml`: two head comment lines, then one YAML document. kaml writes the
+document through `serializeContentEntries` with `encodeDefaults = false`. The document is a block list of `FileEntry`.
+
+```
+# The packaging recipe the '<fragment>' dev-distribution fragment executed, in the checked-in content-report schema (...).
+# Written by DevDistRecipe; <n> outputs.
+- name: lib/a.jar
+  modules:
+  - name: intellij.a
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//a:a.jar'
+    module: intellij.a
+    filter: unkeyed
+```
+
+An entry has `name`, `kind`, `modules`, `contentModules` and `sources`. A member has `name` only. A source has the 13
+fields of `RecipeSource`: `kind`, `label`, `path`, `file`, `module`, `prefix`, `filter`, `filterCacheKey`, `presigned`,
+`name`, `size`, `hash` and `needsCode`. An empty plan is `[]`.
+
+## The subset rule
+
+The Go reader walks any YAML tree, and it reads a field of an unexpected shape as absent. The crate reads only what
+`DevDistRecipe` writes. It refuses every other input with an error that names the file, the line and the field.
+
+`testdata/corpus/` holds the three plan files of one flag-on build of `//build:idea_air_dist`: 505 outputs and 825
+sources. The corpus has the entry keys `name`, `kind`, `modules` and `sources`, the entry kinds `jar` and `placed`, the
+source kinds `zip` and `inMemory`, and the filter `unkeyed`. The crate also accepts the rest of what the writer code
+can write, because the writer writes it for other fragments. The community schema test compares field names only and
+has no fixture.
+
+| Refused input | Go behavior | Error |
+| --- | --- | --- |
+| a plan without the two head comment lines, also a blank file | the fragment is the file stem, and no count check | `the head comment names no fragment`, `states no output count` |
+| a plan with no YAML document, or with more than one | no outputs, or the first document | `the plan holds <n> YAML documents` |
+| a root that is not a sequence, or an entry, a member or a source that is not a mapping | a scalar is a one-element list, and a non-mapping has no fields | `is <shape>, want a sequence` or `a mapping` |
+| an entry key outside the five, such as `os`, `library`, `module`, `files`, `reason` or `projectLibraries` | ignored, and `module` is the library owner | `an entry holds <key>, which DevDistRecipe does not write` |
+| a member key other than `name`, such as `size`, `reason` or `libraries` | ignored | `a member of <list> holds <key>` |
+| a source key outside the 13 | ignored | `a source holds <key>` |
+| an entry without `name` or `kind`, a member without `name`, a source without `kind` | empty, and the row `(no kind)` | `states no <key>` |
+| an entry kind other than `jar`, `link` and `placed` | a row of its own | `the entry kind <kind> is unknown` |
+| a value of the wrong type: a number or null for a string, a string for a number or a boolean, a tagged collection | absent: `""`, `0` or `false` | `<key> is <shape>, want <type>` |
+| an empty string, except the `name` of a source | absent | `<key> is an empty string` |
+| a distribution root that is not a directory | the file is indexed as `.` | `the distribution root is not a directory` |
+| a distribution file name that is not UTF-8 | indexed by its bytes | `a distribution file name is not UTF-8` |
+
+Two general rules stay by design. An unknown source kind or filter word is a blocker and not an error, so a new word
+cannot read as pure. A member name `<module>/<descriptor>` names `<module>`, because a content module name can have
+that form.
+
+## YAML: saphyr and Go yaml v4
+
+The crate loads the text into `saphyr::MarkedYaml` and interprets the tree afterwards. The Go reader interpreted a
+`yaml.Node` tree. The differences do not change the output for a file that kaml writes.
+
+| Construct | Go `yaml.Node` and the Go accessors | `saphyr` and the port |
+| --- | --- | --- |
+| a plain scalar | YAML 1.2 core schema; a boolean must be the text `true` | the core schema; `True` and `TRUE` are also `true` |
+| an empty plain value `key:` | null, read as absent | null, refused |
+| an anchor and an alias | an alias node, read as absent | a copy of the anchored node |
+| a merge key `<<` | not expanded, ignored as a key | not expanded, refused as an unknown key |
+| a tag on a scalar | a scalar tag other than `!!str` reads as absent | a non-core tag is dropped, and the scalar resolves as usual |
+| a tag on a collection | the collection, read as usual | a tagged node, refused |
+| a duplicate key | the first value | the last value |
+| a comment | not in the value | not in the value; the head comment is read from the text |
+| several documents | the first document | all documents, refused |
+| a position | none; the accessors never fail | the 1-based line of the node in each refusal |
+
+## Public items
+
+| Item | Go original | Description |
+| --- | --- | --- |
+| `struct Error` | `error` | One refusal or I/O failure. `Display` and `message(&self) -> &str` give the text. |
+| `enum EntryKind { Jar, Link, Placed }` | `ReportEntry.Kind` | The entry kind. `as_str()` gives the YAML word. |
+| `struct FileEntry { path, kind, modules, content_modules, sources }` | `ReportEntry` | One output. The member names have no `/<descriptor>` suffix. |
+| `FileEntry::primary_member(&self) -> Option<&str>` | `PrimaryMember` | The module that the jar is named for: the path when a member confirms it, then the first `modules` member, then the first `contentModules` member. |
+| `struct RecipeSource` | `RecipeSource` | One ordered source with the 13 fields. An absent string field is `None`, and so is an empty `name`. |
+| `RecipeSource::blocker(&self) -> Option<Blocker>` | `Blocker` | Why the source is not data, from its `kind` and `filter`. `None` when it is data. |
+| `enum Blocker` | `Blocker` | The nine blockers. `as_str()` and `Display` give the Go names. |
+| `struct Recipe { file, fragment, entries }` | `Recipe` | One plan. The reader refuses a plan whose head comment states another output count. |
+| `parse_recipe(&Path, &str) -> Result<Recipe, Error>` | `ParseRecipe`, `ParseReport` | Interprets one plan text. |
+| `read_recipes(&[PathBuf]) -> Result<Vec<Recipe>, Error>` | `ReadRecipes` | Reads plan files and directories of `*.plan.yaml`, sorted by the bytes of the path. A directory with no plan is an error. |
+| `struct Distribution` | `Distribution` | The file sizes of a built distribution. `root()`, `files()`, `directories()`, `lookup_from_root(&str) -> Option<u64>`. |
+| `read_distribution(&Path) -> Result<Distribution, Error>` | `ReadDistribution` | Indexes the regular files. It follows a link at the root and no link below it. |
+| `struct Weight { entries, jars, bytes, unjoined, duplicate }` | `Weight` | One row. `balances()`, `+=`, and `-` for a subgroup. |
+| `struct OutputPurity { owner, causes }` | `OutputPurity` | One output. `cause_set()` and `needs_code()`. |
+| `struct Purity` | `Purity` | The run result. The groups are `BTreeMap`s. |
+| `weigh_purity(&[Recipe], Option<&Distribution>) -> Purity` | `WeighPurity` | Classifies and weighs every output. With no distribution, every output is unjoined. |
+
+`ParseReport`, `ContentReport` and `ReportEntry.LibraryOwner` are not public items. No command reads a packaging report
+of a distribution build now, and a plan has no `module` key on an entry.
+
+## The fields that the replay reads
+
+The `replay` command of `dev-dist` reads a plan through `read_recipes`. The Go code compares an absent string field
+with `""`. The port states an absent string field as `None`, and `as_deref().unwrap_or("")` gives the Go value.
+
+| Go access | Rust access |
+| --- | --- |
+| `recipe.Fragment` | `recipe.fragment`, from the first head comment line |
+| `recipe.Entries` | `recipe.entries`. The reader checks the count against the second head comment line. |
+| `entry.Path` | `entry.path` |
+| `entry.Kind`, and `(no kind)` for an empty kind | `entry.kind.as_str()`. The reader refuses an entry without a kind. |
+| `entry.Sources` | `entry.sources`, empty for a `link` or a `placed` entry |
+| `s.Kind` | `source.kind`, a `String`. An unknown word stays. |
+| `s.Label == ""` | `source.label.is_none()` |
+| `s.Path`, `s.File`, `s.Module`, `s.Prefix`, `s.Name` | the `Option<String>` field of the same name. An empty `name` is `None`. |
+| `s.Filter` | `source.filter`. `None` when no filter ran. An unknown word, such as `tomorrow`, stays. |
+| `s.FilterCacheKey` | `source.filter_cache_key`, a `Vec<String>` |
+| `s.Presigned` | `source.presigned` |
+| `content.RecipeSource{Module: "x"}` in a test | `RecipeSource { module: Some("x".to_owned()), ..RecipeSource::default() }` |
+
+The test `reads_every_source_field_that_the_replay_reads` reads the shapes of the Go replay test plan. The reader also
+reads that complete test plan without a change.

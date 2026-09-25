@@ -1,0 +1,96 @@
+{
+    "version": 2,
+    "plugin": "intellij.angular.plugin",
+    "variant": "",
+    "layoutSignature": "2x39c8f8hzifsvohofaqs2s49",
+    "assets": [
+        {
+            "destination": "lib/modules/intellij.angular.backend.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "module-filter:intellij.angular.backend:output",
+                        "kind": "prepared",
+                        "filter": "prepared"
+                    }
+                ],
+                "writer": {
+                    "manifest": "keep",
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.angular.free"
+        },
+        {
+            "module": "intellij.angular.tslint"
+        },
+        {
+            "destination": "lib/angular-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.angular.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.angular.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "ngCli",
+            "inputs": [
+                "module-resource:0:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "angular-service",
+            "inputs": [
+                "module-resource:1:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "module-filter:intellij.angular.backend",
+            "inputs": [
+                "intellij.angular.backend"
+            ],
+            "outputs": [
+                "module-filter:intellij.angular.backend:output"
+            ],
+            "modelSignature": "4pxjk7v11z42qobfzs92fowbx"
+        }
+    ],
+    "operations": [
+        {
+            "id": "module-filter:intellij.angular.backend",
+            "input": {
+                "artifact": "intellij.angular.backend"
+            },
+            "output": "module-filter:intellij.angular.backend:output",
+            "manifest": "keep",
+            "excludes": [
+                "ngCli/**",
+                "angular-service/**"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,69 @@
+{
+    "version": 2,
+    "plugin": "intellij.nodeJS",
+    "variant": "",
+    "layoutSignature": "8x3z37h2jhzx01he5wsx9ao1l",
+    "assets": [
+        {
+            "module": "intellij.nodejs.coverage"
+        },
+        {
+            "destination": "lib/nodeJS.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.nodeJS",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "module-filter:intellij.nodeJS:output",
+                        "kind": "prepared",
+                        "filter": "prepared"
+                    }
+                ],
+                "writer": {
+                    "manifest": "drop",
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "js",
+            "inputs": [
+                "module-resource:0:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "module-filter:intellij.nodeJS",
+            "inputs": [
+                "intellij.nodeJS"
+            ],
+            "outputs": [
+                "module-filter:intellij.nodeJS:output"
+            ],
+            "modelSignature": "3eg5lrp8rsrjuhjew1th89lp1"
+        }
+    ],
+    "operations": [
+        {
+            "id": "module-filter:intellij.nodeJS",
+            "input": {
+                "artifact": "intellij.nodeJS"
+            },
+            "output": "module-filter:intellij.nodeJS:output",
+            "manifest": "keep",
+            "excludes": [
+                "js/**"
+            ]
+        }
+    ]
+}

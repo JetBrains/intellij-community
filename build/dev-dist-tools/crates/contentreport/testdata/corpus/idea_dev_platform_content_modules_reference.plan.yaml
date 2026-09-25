@@ -1,0 +1,5621 @@
+# The packaging recipe the 'platform_lib_reference' dev-distribution fragment executed, in the checked-in content-report schema (com.intellij.platform.distributionContent.FileEntry).
+# Written by DevDistRecipe; 491 outputs.
+- name: lib/ext/platform-main.jar
+  modules:
+  - name: intellij.platform.starter
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/starter:starter.jar'
+    module: intellij.platform.starter
+    filter: unkeyed
+- name: lib/external-system-rt.jar
+  modules:
+  - name: intellij.platform.externalSystem.rt
+  - name: intellij.platform.objectSerializer.annotations
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/external-system-rt:externalSystem-rt.jar'
+    module: intellij.platform.externalSystem.rt
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/object-serializer:objectSerializer-annotations.jar'
+    module: intellij.platform.objectSerializer.annotations
+    filter: unkeyed
+- name: lib/externalProcess-rt.jar
+  modules:
+  - name: intellij.platform.externalProcessAuthHelper.rt
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/external-process-auth-helper/rt:rt.jar'
+    module: intellij.platform.externalProcessAuthHelper.rt
+    filter: unkeyed
+- name: lib/fleet.andel.jar
+  modules:
+  - name: fleet.andel
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/andel:andel.jar'
+    module: fleet.andel
+    filter: unkeyed
+- name: lib/fleet.bifurcan.jar
+  modules:
+  - name: fleet.bifurcan
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/bifurcan:bifurcan.jar'
+    module: fleet.bifurcan
+    filter: unkeyed
+- name: lib/fleet.fastutil.jar
+  modules:
+  - name: fleet.fastutil
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/fastutil:fastutil.jar'
+    module: fleet.fastutil
+    filter: unkeyed
+- name: lib/fleet.kernel.jar
+  modules:
+  - name: fleet.kernel
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/kernel:kernel.jar'
+    module: fleet.kernel
+    filter: unkeyed
+- name: lib/fleet.lsp.protocol.jar
+  modules:
+  - name: fleet.lsp.protocol
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/lsp.protocol:lsp.protocol.jar'
+    module: fleet.lsp.protocol
+    filter: unkeyed
+- name: lib/fleet.multiplatform.shims.jar
+  modules:
+  - name: fleet.multiplatform.shims
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/multiplatform.shims:multiplatform.shims.jar'
+    module: fleet.multiplatform.shims
+    filter: unkeyed
+- name: lib/fleet.openmap.jar
+  modules:
+  - name: fleet.openmap
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/openmap:openmap.jar'
+    module: fleet.openmap
+    filter: unkeyed
+- name: lib/fleet.radixTrie.jar
+  modules:
+  - name: fleet.radixTrie
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/radixTrie:radixTrie.jar'
+    module: fleet.radixTrie
+    filter: unkeyed
+- name: lib/fleet.reporting.api.jar
+  modules:
+  - name: fleet.reporting.api
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/reporting/api:api.jar'
+    module: fleet.reporting.api
+    filter: unkeyed
+- name: lib/fleet.reporting.shared.jar
+  modules:
+  - name: fleet.reporting.shared
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/reporting/shared:shared.jar'
+    module: fleet.reporting.shared
+    filter: unkeyed
+- name: lib/fleet.rhizomedb.jar
+  modules:
+  - name: fleet.rhizomedb
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/rhizomedb:rhizomedb.jar'
+    module: fleet.rhizomedb
+    filter: unkeyed
+- name: lib/fleet.rhizomedb.transactor.jar
+  modules:
+  - name: fleet.rhizomedb.transactor
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/rhizomedb.transactor:rhizomedb.transactor.jar'
+    module: fleet.rhizomedb.transactor
+    filter: unkeyed
+- name: lib/fleet.rhizomedb.transactor.rebase.jar
+  modules:
+  - name: fleet.rhizomedb.transactor.rebase
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/rhizomedb.transactor.rebase:rhizomedb.transactor.rebase.jar'
+    module: fleet.rhizomedb.transactor.rebase
+    filter: unkeyed
+- name: lib/fleet.rpc.jar
+  modules:
+  - name: fleet.rpc
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/rpc:rpc.jar'
+    module: fleet.rpc
+    filter: unkeyed
+- name: lib/fleet.rpc.server.jar
+  modules:
+  - name: fleet.rpc.server
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/rpc.server:rpc.server.jar'
+    module: fleet.rpc.server
+    filter: unkeyed
+- name: lib/fleet.util.codepoints.jar
+  modules:
+  - name: fleet.util.codepoints
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/util/codepoints:codepoints.jar'
+    module: fleet.util.codepoints
+    filter: unkeyed
+- name: lib/fleet.util.core.jar
+  modules:
+  - name: fleet.util.core
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/util/core:core.jar'
+    module: fleet.util.core
+    filter: unkeyed
+- name: lib/fleet.util.logging.api.jar
+  modules:
+  - name: fleet.util.logging.api
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/util/logging/api:api.jar'
+    module: fleet.util.logging.api
+    filter: unkeyed
+- name: lib/fleet.util.serialization.jar
+  modules:
+  - name: fleet.util.serialization
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//fleet/util/serialization:serialization.jar'
+    module: fleet.util.serialization
+    filter: unkeyed
+- name: lib/forms_rt.jar
+  modules:
+  - name: intellij.java.guiForms.rt
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/forms_rt:java-guiForms-rt.jar'
+    module: intellij.java.guiForms.rt
+    filter: unkeyed
+- name: lib/frontend-split/frontend-split-customization.jar
+  modules:
+  - name: intellij.idea.frontend.split.customization
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//idea-ultimate/frontend/split/customization:customization.jar'
+    module: intellij.idea.frontend.split.customization
+    filter: unkeyed
+- name: lib/frontend-split/frontend-split.jar
+  modules:
+  - name: intellij.idea.frontend.split
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//idea-ultimate/frontend/split:split.jar'
+    module: intellij.idea.frontend.split
+    filter: unkeyed
+- name: lib/idea_rt.jar
+  modules:
+  - name: intellij.java.rt
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//java/java-runtime:rt.jar'
+    module: intellij.java.rt
+    filter: unkeyed
+- name: lib/intellij.emojipicker.jar
+  modules:
+  - name: intellij.emojipicker
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//plugins/emojipicker:emojipicker.jar'
+    module: intellij.emojipicker
+    filter: unkeyed
+- name: lib/intellij.execution.process.elevation.jar
+  modules:
+  - name: intellij.execution.process.elevation
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/execution-process-elevation:execution-process-elevation.jar'
+    module: intellij.execution.process.elevation
+    filter: unkeyed
+- name: lib/intellij.execution.process.mediator.client.jar
+  modules:
+  - name: intellij.execution.process.mediator.client
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/execution-process-mediator/client:client.jar'
+    module: intellij.execution.process.mediator.client
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:execution-process-mediator-client-grpc-inprocess'
+    filter: unkeyed
+- name: lib/intellij.execution.process.mediator.common.jar
+  modules:
+  - name: intellij.execution.process.mediator.common
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/execution-process-mediator/common:common.jar'
+    module: intellij.execution.process.mediator.common
+    filter: unkeyed
+- name: lib/intellij.execution.process.mediator.daemon.jar
+  modules:
+  - name: intellij.execution.process.mediator.daemon
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/execution-process-mediator/daemon:daemon.jar'
+    module: intellij.execution.process.mediator.daemon
+    filter: unkeyed
+- name: lib/intellij.ide.startup.importSettings.jar
+  modules:
+  - name: intellij.ide.startup.importSettings
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//plugins/ide-startup/importSettings:importSettings.jar'
+    module: intellij.ide.startup.importSettings
+    filter: unkeyed
+- name: lib/intellij.idea.customization.base.jar
+  modules:
+  - name: intellij.idea.customization.base
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//idea/customization/base:base.jar'
+    module: intellij.idea.customization.base
+    filter: unkeyed
+- name: lib/intellij.idea.ultimate.customization.jar
+  modules:
+  - name: intellij.idea.ultimate.customization
+  kind: jar
+  sources:
+  - kind: inMemory
+    name: idea/ApplicationInfo.xml
+    size: 1027
+    needsCode: true
+  - kind: inMemory
+    name: META-INF/plugin.xml
+    size: 1348616
+    needsCode: true
+  - kind: zip
+    label: '@@//ultimate/ultimate-resources:idea-ultimate-customization.jar'
+    module: intellij.idea.ultimate.customization
+    filter: unkeyed
+- name: lib/intellij.idea.ultimate.ide.customization.jar
+  modules:
+  - name: intellij.idea.ultimate.ide.customization
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//ultimate/ultimate-resources/ide-customization:idea-ultimate-ide-customization.jar'
+    module: intellij.idea.ultimate.ide.customization
+    filter: unkeyed
+- name: lib/intellij.java.ide.newUiOnboarding.jar
+  modules:
+  - name: intellij.java.ide.newUiOnboarding
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//java/ide-resources/newUiOnboarding:newUiOnboarding.jar'
+    module: intellij.java.ide.newUiOnboarding
+    filter: unkeyed
+- name: lib/intellij.java.ide.resources.jar
+  modules:
+  - name: intellij.java.ide.resources
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//java/ide-resources:ide-resources.jar'
+    module: intellij.java.ide.resources
+    filter: unkeyed
+- name: lib/intellij.jsp.base.jar
+  modules:
+  - name: intellij.jsp.base
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//java/jsp-base-openapi:jsp-base.jar'
+    module: intellij.jsp.base
+    filter: unkeyed
+- name: lib/intellij.libraries.aalto.xml.jar
+  modules:
+  - name: intellij.libraries.aalto.xml
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/aalto-xml:aalto-xml.jar'
+    module: intellij.libraries.aalto.xml
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-aalto-xml-aalto-xml'
+    file: aalto-xml-1.4.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-aalto-xml-aalto-xml'
+    file: stax2-api-4.3.0.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.asm.jar
+  modules:
+  - name: intellij.libraries.asm
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/asm:asm.jar'
+    module: intellij.libraries.asm
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-asm-asm'
+    filter: unkeyed
+- name: lib/intellij.libraries.asm.tools.jar
+  modules:
+  - name: intellij.libraries.asm.tools
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/asm-tools:asm-tools.jar'
+    module: intellij.libraries.asm.tools
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-asm-tools-asm-tools'
+    file: asm-analysis-9.10.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-asm-tools-asm-tools'
+    file: asm-tree-9.10.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-asm-tools-asm-tools'
+    file: asm-9.10.1.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.automaton.jar
+  modules:
+  - name: intellij.libraries.automaton
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/automaton:automaton.jar'
+    module: intellij.libraries.automaton
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-automaton-automaton'
+    filter: unkeyed
+- name: lib/intellij.libraries.batik.jar
+  modules:
+  - name: intellij.libraries.batik
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/batik:batik.jar'
+    module: intellij.libraries.batik
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-batik-batik-transcoder'
+    file: batik-transcoder-1.16.0-35.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-batik-batik-transcoder'
+    file: batik-awt-util-1.16.0-35.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-batik-batik-transcoder'
+    file: xmlgraphics-commons-2.8.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-batik-batik-transcoder'
+    file: batik-bridge-1.16.0-35.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-batik-batik-transcoder'
+    file: batik-anim-1.16.0-35.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-batik-batik-transcoder'
+    file: batik-parser-1.16.0-35.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-batik-batik-transcoder'
+    file: batik-svg-dom-1.16.0-35.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-batik-batik-transcoder'
+    file: batik-dom-1.16.0-35.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-batik-batik-transcoder'
+    file: batik-css-1.16.0-35.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-batik-batik-transcoder'
+    file: batik-ext-1.16.0-35.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-batik-batik-transcoder'
+    file: batik-gvt-1.16.0-35.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-batik-batik-transcoder'
+    file: batik-svggen-1.16.0-35.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-batik-batik-transcoder'
+    file: batik-util-1.16.0-35.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-batik-batik-transcoder'
+    file: batik-constants-1.16.0-35.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-batik-batik-transcoder'
+    file: batik-xml-1.16.0-35.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-batik-xml-apis-ext'
+    filter: unkeyed
+- name: lib/intellij.libraries.blockmap.jar
+  modules:
+  - name: intellij.libraries.blockmap
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/blockmap:blockmap.jar'
+    module: intellij.libraries.blockmap
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-blockmap-blockmap'
+    filter: unkeyed
+- name: lib/intellij.libraries.bouncy.castle.pgp.jar
+  modules:
+  - name: intellij.libraries.bouncy.castle.pgp
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/bouncy-castle-pgp:bouncy-castle-pgp.jar'
+    module: intellij.libraries.bouncy.castle.pgp
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-bouncy-castle-pgp-bouncy-castle-pgp'
+    filter: unkeyed
+- name: lib/intellij.libraries.bouncy.castle.provider.jar
+  modules:
+  - name: intellij.libraries.bouncy.castle.provider
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/bouncy-castle-provider:bouncy-castle-provider.jar'
+    module: intellij.libraries.bouncy.castle.provider
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-bouncy-castle-provider-bouncy-castle-provider'
+    file: bcpkix-jdk18on-1.86.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-bouncy-castle-provider-bouncy-castle-provider'
+    file: bcutil-jdk18on-1.86.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-bouncy-castle-provider-bouncy-castle-provider'
+    file: bcprov-jdk18on-1.86.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.caffeine.jar
+  modules:
+  - name: intellij.libraries.caffeine
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/caffeine:caffeine.jar'
+    module: intellij.libraries.caffeine
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-caffeine-caffeine'
+    file: caffeine-3.3.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-caffeine-caffeine'
+    file: jspecify-1.0.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-caffeine-caffeine'
+    file: error_prone_annotations-2.50.0.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.cglib.jar
+  modules:
+  - name: intellij.libraries.cglib
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/libraries/cglib:cglib.jar'
+    module: intellij.libraries.cglib
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-cglib-cglib'
+    filter: unkeyed
+- name: lib/intellij.libraries.classgraph.jar
+  modules:
+  - name: intellij.libraries.classgraph
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/classgraph:classgraph.jar'
+    module: intellij.libraries.classgraph
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-classgraph-classgraph'
+    filter: unkeyed
+- name: lib/intellij.libraries.cli.parser.jar
+  modules:
+  - name: intellij.libraries.cli.parser
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/cli-parser:cli-parser.jar'
+    module: intellij.libraries.cli.parser
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-cli-parser-cli-parser'
+    filter: unkeyed
+- name: lib/intellij.libraries.coil.jar
+  modules:
+  - name: intellij.libraries.coil
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/coil:coil.jar'
+    module: intellij.libraries.coil
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-coil-io-coil-kt-coil3-network-ktor3-jvm'
+    file: coil-network-ktor3-jvm-3.2.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-coil-io-coil-kt-coil3-network-ktor3-jvm'
+    file: coil-network-core-jvm-3.2.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-coil-io-coil-kt-coil3-svg-jvm'
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-coil-io-coil-kt-coil3-compose-jvm'
+    file: coil-compose-jvm-3.2.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-coil-io-coil-kt-coil3-compose-jvm'
+    file: coil-jvm-3.2.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-coil-io-coil-kt-coil3-compose-jvm'
+    file: coil-core-jvm-3.2.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-coil-io-coil-kt-coil3-compose-jvm'
+    file: okio-jvm-3.11.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-coil-io-coil-kt-coil3-compose-jvm'
+    file: coil-compose-core-jvm-3.2.0.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.commons.cli.jar
+  modules:
+  - name: intellij.libraries.commons.cli
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/commons/cli:cli.jar'
+    module: intellij.libraries.commons.cli
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-commons-cli-commons-cli'
+    filter: unkeyed
+- name: lib/intellij.libraries.commons.codec.jar
+  modules:
+  - name: intellij.libraries.commons.codec
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/commons/codec:codec.jar'
+    module: intellij.libraries.commons.codec
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-commons-codec-commons-codec'
+    filter: unkeyed
+- name: lib/intellij.libraries.commons.compress.jar
+  modules:
+  - name: intellij.libraries.commons.compress
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/commons/compress:compress.jar'
+    module: intellij.libraries.commons.compress
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-commons-compress-commons-compress'
+    filter: unkeyed
+- name: lib/intellij.libraries.commons.imaging.jar
+  modules:
+  - name: intellij.libraries.commons.imaging
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/commons/imaging:imaging.jar'
+    module: intellij.libraries.commons.imaging
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-commons-imaging-commons-imaging'
+    filter: unkeyed
+- name: lib/intellij.libraries.commons.io.jar
+  modules:
+  - name: intellij.libraries.commons.io
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/commons/io:io.jar'
+    module: intellij.libraries.commons.io
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-commons-io-commons-io'
+    filter: unkeyed
+- name: lib/intellij.libraries.commons.lang3.jar
+  modules:
+  - name: intellij.libraries.commons.lang3
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/commons/lang3:lang3.jar'
+    module: intellij.libraries.commons.lang3
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-commons-lang3-commons-lang3'
+    filter: unkeyed
+- name: lib/intellij.libraries.commons.logging.jar
+  modules:
+  - name: intellij.libraries.commons.logging
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/commons/logging:logging.jar'
+    module: intellij.libraries.commons.logging
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-commons-logging-commons-logging'
+    filter: unkeyed
+- name: lib/intellij.libraries.commons.text.jar
+  modules:
+  - name: intellij.libraries.commons.text
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/commons/text:text.jar'
+    module: intellij.libraries.commons.text
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-commons-text-commons-text'
+    filter: unkeyed
+- name: lib/intellij.libraries.compose.foundation.desktop.jar
+  modules:
+  - name: intellij.libraries.compose.foundation.desktop
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/compose-foundation-desktop:compose-foundation-desktop.jar'
+    module: intellij.libraries.compose.foundation.desktop
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-foundation-desktop-compose-foundation-desktop'
+    file: foundation-desktop-1.12.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-foundation-desktop-compose-foundation-desktop'
+    file: animation-desktop-1.12.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-foundation-desktop-compose-foundation-desktop'
+    file: animation-core-desktop-1.12.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-foundation-desktop-compose-foundation-desktop'
+    file: ui-geometry-desktop-1.12.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-foundation-desktop-compose-foundation-desktop'
+    file: ui-graphics-desktop-1.12.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-foundation-desktop-compose-foundation-desktop'
+    file: foundation-layout-desktop-1.12.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-foundation-desktop-compose-foundation-desktop'
+    file: ui-unit-desktop-1.12.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-foundation-desktop-compose-foundation-desktop'
+    file: ui-desktop-1.12.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-foundation-desktop-compose-foundation-desktop'
+    file: lifecycle-viewmodel-compose-desktop-2.11.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-foundation-desktop-compose-foundation-desktop'
+    file: lifecycle-viewmodel-desktop-2.11.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-foundation-desktop-compose-foundation-desktop'
+    file: lifecycle-runtime-compose-desktop-2.11.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-foundation-desktop-compose-foundation-desktop'
+    file: lifecycle-viewmodel-savedstate-desktop-2.11.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-foundation-desktop-compose-foundation-desktop'
+    file: ui-text-desktop-1.12.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-foundation-desktop-compose-foundation-desktop'
+    file: ui-util-desktop-1.12.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-foundation-desktop-compose-foundation-desktop'
+    file: atomicfu-jvm-0.28.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-desktop'
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-compose-desktop'
+    filter: unkeyed
+- name: lib/intellij.libraries.compose.runtime.desktop.jar
+  modules:
+  - name: intellij.libraries.compose.runtime.desktop
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/compose-runtime-desktop:compose-runtime-desktop.jar'
+    module: intellij.libraries.compose.runtime.desktop
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-runtime-desktop-androidx-compose-runtime-desktop'
+    file: runtime-desktop-1.12.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-runtime-desktop-androidx-compose-runtime-desktop'
+    file: collection-jvm-1.5.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-runtime-desktop-androidx-compose-runtime-desktop'
+    file: annotation-jvm-1.9.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-runtime-desktop-androidx-compose-runtime-desktop'
+    file: runtime-annotation-jvm-1.12.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop'
+    file: runtime-saveable-desktop-1.12.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop'
+    file: savedstate-compose-desktop-1.3.2.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop'
+    file: savedstate-desktop-1.3.2.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop'
+    file: lifecycle-runtime-compose-desktop-2.9.4.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop'
+    file: lifecycle-runtime-desktop-2.9.4.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop'
+    file: lifecycle-common-jvm-2.9.4.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop'
+    file: core-common-2.2.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop'
+    file: annotation-1.1.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-runtime-desktop-androidx-compose-runtime-retain-desktop'
+    filter: unkeyed
+- name: lib/intellij.libraries.compose.swing.jar
+  modules:
+  - name: intellij.libraries.compose.swing
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/compose-swing-ui:compose-swing.jar'
+    module: intellij.libraries.compose.swing
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui'
+    file: swing-ui-0.1.0-alpha05.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui'
+    file: kotlinx-coroutines-swing-1.9.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui'
+    file: tracing-desktop-2.0.0.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.download.pgp.verifier.jar
+  modules:
+  - name: intellij.libraries.download.pgp.verifier
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/download-pgp-verifier:download-pgp-verifier.jar'
+    module: intellij.libraries.download.pgp.verifier
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-download-pgp-verifier-download-pgp-verifier'
+    filter: unkeyed
+- name: lib/intellij.libraries.eclipse.lsp4j.debug.jar
+  modules:
+  - name: intellij.libraries.eclipse.lsp4j.debug
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/lsp4j/debug:debug.jar'
+    module: intellij.libraries.eclipse.lsp4j.debug
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-eclipse-lsp4j-debug-eclipse-lsp4j-debug'
+    filter: unkeyed
+- name: lib/intellij.libraries.eclipse.lsp4j.jar
+  modules:
+  - name: intellij.libraries.eclipse.lsp4j
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/lsp4j:lsp4j.jar'
+    module: intellij.libraries.eclipse.lsp4j
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-eclipse-lsp4j-eclipse-lsp4j'
+    filter: unkeyed
+- name: lib/intellij.libraries.eclipse.lsp4j.jsonrpc.debug.jar
+  modules:
+  - name: intellij.libraries.eclipse.lsp4j.jsonrpc.debug
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/lsp4j/jsonrpc-debug:libraries-eclipse-lsp4j-jsonrpc-debug.jar'
+    module: intellij.libraries.eclipse.lsp4j.jsonrpc.debug
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-eclipse-lsp4j-jsonrpc-debug-eclipse-lsp4j-jsonrpc-debug'
+    filter: unkeyed
+- name: lib/intellij.libraries.eclipse.lsp4j.jsonrpc.jar
+  modules:
+  - name: intellij.libraries.eclipse.lsp4j.jsonrpc
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/lsp4j/jsonrpc:jsonrpc.jar'
+    module: intellij.libraries.eclipse.lsp4j.jsonrpc
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-eclipse-lsp4j-jsonrpc-eclipse-lsp4j-jsonrpc'
+    filter: unkeyed
+- name: lib/intellij.libraries.fastutil.jar
+  modules:
+  - name: intellij.libraries.fastutil
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/fastutil:fastutil.jar'
+    module: intellij.libraries.fastutil
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-fastutil-fastutil-min'
+    filter: unkeyed
+- name: lib/intellij.libraries.fus.ap.validation.jar
+  modules:
+  - name: intellij.libraries.fus.ap.validation
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/fus-ap-validation:fus-ap-validation.jar'
+    module: intellij.libraries.fus.ap.validation
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-fus-ap-validation-com-jetbrains-fus-reporting-ap-validation-all'
+    filter: unkeyed
+- name: lib/intellij.libraries.grpc.jar
+  modules:
+  - name: intellij.libraries.grpc
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/grpc:grpc.jar'
+    module: intellij.libraries.grpc
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-grpc-grpc-core'
+    file: grpc-core-1.73.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-grpc-grpc-core'
+    file: grpc-api-1.73.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-grpc-grpc-core'
+    file: annotations-4.1.1.4.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-grpc-grpc-core'
+    file: animal-sniffer-annotations-1.24.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-grpc-grpc-core'
+    file: perfmark-api-0.27.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-grpc-grpc-core'
+    file: grpc-context-1.73.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-grpc-grpc-stub'
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-grpc-grpc-kotlin-stub'
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-grpc-grpc-protobuf'
+    file: grpc-protobuf-1.73.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-grpc-grpc-protobuf'
+    file: proto-google-common-protos-2.51.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-grpc-grpc-protobuf'
+    file: grpc-protobuf-lite-1.73.0.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.grpc.netty.shaded.jar
+  modules:
+  - name: intellij.libraries.grpc.netty.shaded
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/grpc-netty-shaded:grpc-netty-shaded.jar'
+    module: intellij.libraries.grpc.netty.shaded
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-grpc-netty-shaded-grpc-netty-shaded'
+    file: grpc-netty-shaded-1.73.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-grpc-netty-shaded-grpc-netty-shaded'
+    file: grpc-util-1.73.0.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.gson.jar
+  modules:
+  - name: intellij.libraries.gson
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/gson:gson.jar'
+    module: intellij.libraries.gson
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-gson-gson'
+    filter: unkeyed
+- name: lib/intellij.libraries.guava.jar
+  modules:
+  - name: intellij.libraries.guava
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/guava:guava.jar'
+    module: intellij.libraries.guava
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-guava-_guava'
+    file: guava-33.7.1-jre.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-guava-_guava'
+    file: failureaccess-1.0.3.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.hash4j.jar
+  modules:
+  - name: intellij.libraries.hash4j
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/hash4j:hash4j.jar'
+    module: intellij.libraries.hash4j
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-hash4j-hash4j'
+    filter: unkeyed
+- name: lib/intellij.libraries.hdr.histogram.jar
+  modules:
+  - name: intellij.libraries.hdr.histogram
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/hdr-histogram:hdr-histogram.jar'
+    module: intellij.libraries.hdr.histogram
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-hdr-histogram-_hdr_histogram'
+    filter: unkeyed
+- name: lib/intellij.libraries.http.client.jar
+  modules:
+  - name: intellij.libraries.http.client
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/http-client:http-client.jar'
+    module: intellij.libraries.http.client
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-http-client-http-client'
+    file: httpmime-4.5.14.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-http-client-http-client'
+    file: httpclient-4.5.14.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-http-client-http-client'
+    file: httpcore-4.4.16.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.imgscalr.jar
+  modules:
+  - name: intellij.libraries.imgscalr
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/imgscalr:imgscalr.jar'
+    module: intellij.libraries.imgscalr
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-imgscalr-imgscalr'
+    filter: unkeyed
+- name: lib/intellij.libraries.ini4j.jar
+  modules:
+  - name: intellij.libraries.ini4j
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/ini4j:ini4j.jar'
+    module: intellij.libraries.ini4j
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ini4j-ini4j'
+    filter: unkeyed
+- name: lib/intellij.libraries.ion.jar
+  modules:
+  - name: intellij.libraries.ion
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/ion:ion.jar'
+    module: intellij.libraries.ion
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ion-ion'
+    filter: unkeyed
+- name: lib/intellij.libraries.jackson.annotations.jar
+  modules:
+  - name: intellij.libraries.jackson.annotations
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jackson/annotations:annotations.jar'
+    module: intellij.libraries.jackson.annotations
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jackson-annotations-jackson-annotations'
+    filter: unkeyed
+- name: lib/intellij.libraries.jackson.databind.jar
+  modules:
+  - name: intellij.libraries.jackson.databind
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jackson/databind:databind.jar'
+    module: intellij.libraries.jackson.databind
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jackson-databind-jackson-databind'
+    filter: unkeyed
+- name: lib/intellij.libraries.jackson.dataformat.toml.jar
+  modules:
+  - name: intellij.libraries.jackson.dataformat.toml
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jackson/dataformat-toml:libraries-jackson-dataformat-toml.jar'
+    module: intellij.libraries.jackson.dataformat.toml
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jackson-dataformat-toml-jackson-dataformat-toml'
+    filter: unkeyed
+- name: lib/intellij.libraries.jackson.dataformat.xml.jar
+  modules:
+  - name: intellij.libraries.jackson.dataformat.xml
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jackson/dataformat-xml:libraries-jackson-dataformat-xml.jar'
+    module: intellij.libraries.jackson.dataformat.xml
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jackson-dataformat-xml-jackson-dataformat-xml'
+    filter: unkeyed
+- name: lib/intellij.libraries.jackson.dataformat.yaml.jar
+  modules:
+  - name: intellij.libraries.jackson.dataformat.yaml
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jackson/dataformat-yaml:libraries-jackson-dataformat-yaml.jar'
+    module: intellij.libraries.jackson.dataformat.yaml
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jackson-dataformat-yaml-jackson-dataformat-yaml'
+    filter: unkeyed
+- name: lib/intellij.libraries.jackson.datatype.jdk8.jar
+  modules:
+  - name: intellij.libraries.jackson.datatype.jdk8
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jackson/datatype-jdk8:libraries-jackson-datatype-jdk8.jar'
+    module: intellij.libraries.jackson.datatype.jdk8
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jackson-datatype-jdk8-jackson-datatype-jdk8'
+    filter: unkeyed
+- name: lib/intellij.libraries.jackson.datatype.jsr310.jar
+  modules:
+  - name: intellij.libraries.jackson.datatype.jsr310
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jackson/datatype-jsr310:libraries-jackson-datatype-jsr310.jar'
+    module: intellij.libraries.jackson.datatype.jsr310
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jackson-datatype-jsr310-jackson-datatype-jsr310'
+    filter: unkeyed
+- name: lib/intellij.libraries.jackson.jar
+  modules:
+  - name: intellij.libraries.jackson
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jackson/jackson:jackson.jar'
+    module: intellij.libraries.jackson
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jackson-jackson'
+    filter: unkeyed
+- name: lib/intellij.libraries.jackson.jr.objects.jar
+  modules:
+  - name: intellij.libraries.jackson.jr.objects
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jackson/jr-objects:libraries-jackson-jr-objects.jar'
+    module: intellij.libraries.jackson.jr.objects
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jackson-jr-objects-jackson-jr-objects'
+    filter: unkeyed
+- name: lib/intellij.libraries.jackson.module.kotlin.jar
+  modules:
+  - name: intellij.libraries.jackson.module.kotlin
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin.jar'
+    module: intellij.libraries.jackson.module.kotlin
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jackson-module-kotlin-jackson-module-kotlin'
+    filter: unkeyed
+- name: lib/intellij.libraries.jackson3.databind.jar
+  modules:
+  - name: intellij.libraries.jackson3.databind
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jackson3/databind:databind.jar'
+    module: intellij.libraries.jackson3.databind
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jackson3-databind-jackson3-databind'
+    filter: unkeyed
+- name: lib/intellij.libraries.jackson3.dataformat.toml.jar
+  modules:
+  - name: intellij.libraries.jackson3.dataformat.toml
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jackson3/dataformat-toml:libraries-jackson3-dataformat-toml.jar'
+    module: intellij.libraries.jackson3.dataformat.toml
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jackson3-dataformat-toml-jackson3-dataformat-toml'
+    filter: unkeyed
+- name: lib/intellij.libraries.jackson3.dataformat.yaml.jar
+  modules:
+  - name: intellij.libraries.jackson3.dataformat.yaml
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jackson3/dataformat-yaml:libraries-jackson3-dataformat-yaml.jar'
+    module: intellij.libraries.jackson3.dataformat.yaml
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jackson3-dataformat-yaml-jackson3-dataformat-yaml'
+    filter: unkeyed
+- name: lib/intellij.libraries.jackson3.jar
+  modules:
+  - name: intellij.libraries.jackson3
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jackson3/jackson:libraries-jackson3.jar'
+    module: intellij.libraries.jackson3
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jackson3-jackson3'
+    filter: unkeyed
+- name: lib/intellij.libraries.jackson3.jr.objects.jar
+  modules:
+  - name: intellij.libraries.jackson3.jr.objects
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jackson3/jr-objects:libraries-jackson3-jr-objects.jar'
+    module: intellij.libraries.jackson3.jr.objects
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jackson3-jr-objects-jackson3-jr-objects'
+    filter: unkeyed
+- name: lib/intellij.libraries.jackson3.module.kotlin.jar
+  modules:
+  - name: intellij.libraries.jackson3.module.kotlin
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin.jar'
+    module: intellij.libraries.jackson3.module.kotlin
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jackson3-module-kotlin-jackson3-module-kotlin'
+    filter: unkeyed
+- name: lib/intellij.libraries.java.compatibility.jar
+  modules:
+  - name: intellij.libraries.java.compatibility
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/java-compatibility:java-compatibility.jar'
+    module: intellij.libraries.java.compatibility
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-java-compatibility-java-compatibility'
+    filter: unkeyed
+- name: lib/intellij.libraries.java.websocket.jar
+  modules:
+  - name: intellij.libraries.java.websocket
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/java-websocket:java-websocket.jar'
+    module: intellij.libraries.java.websocket
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-java-websocket-_java-_web_socket'
+    filter: unkeyed
+- name: lib/intellij.libraries.javax.activation.jar
+  modules:
+  - name: intellij.libraries.javax.activation
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/javax/activation:activation.jar'
+    module: intellij.libraries.javax.activation
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-javax-activation-javax-activation'
+    filter: unkeyed
+- name: lib/intellij.libraries.javax.annotation.jar
+  modules:
+  - name: intellij.libraries.javax.annotation
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/javax/annotation:annotation.jar'
+    module: intellij.libraries.javax.annotation
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-javax-annotation-javax-annotation-api'
+    filter: unkeyed
+- name: lib/intellij.libraries.jaxb.jar
+  modules:
+  - name: intellij.libraries.jaxb
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jaxb:jaxb.jar'
+    module: intellij.libraries.jaxb
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jaxb-jaxb-api'
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jaxb-jaxb-runtime'
+    file: jaxb-runtime-2.3.9.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jaxb-jaxb-runtime'
+    file: txw2-2.3.9.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jaxb-jaxb-runtime'
+    file: istack-commons-runtime-3.0.12.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jaxb-jaxb-runtime'
+    file: jakarta.activation-1.2.2.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.jaxen.jar
+  modules:
+  - name: intellij.libraries.jaxen
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jaxen:jaxen.jar'
+    module: intellij.libraries.jaxen
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jaxen-_jaxen'
+    filter: unkeyed
+- name: lib/intellij.libraries.jbr.jar
+  modules:
+  - name: intellij.libraries.jbr
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jbr:jbr.jar'
+    module: intellij.libraries.jbr
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jbr-jbr-api'
+    filter: unkeyed
+- name: lib/intellij.libraries.jcip.jar
+  modules:
+  - name: intellij.libraries.jcip
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jcip:jcip.jar'
+    module: intellij.libraries.jcip
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jcip-jcip'
+    filter: unkeyed
+- name: lib/intellij.libraries.jediterm.core.jar
+  modules:
+  - name: intellij.libraries.jediterm.core
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jediterm-core:jediterm-core.jar'
+    module: intellij.libraries.jediterm.core
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jediterm-core-jediterm-core'
+    filter: unkeyed
+- name: lib/intellij.libraries.jediterm.ui.jar
+  modules:
+  - name: intellij.libraries.jediterm.ui
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jediterm-ui:jediterm-ui.jar'
+    module: intellij.libraries.jediterm.ui
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jediterm-ui-jediterm-ui'
+    filter: unkeyed
+- name: lib/intellij.libraries.jetbrains.annotations.jar
+  modules:
+  - name: intellij.libraries.jetbrains.annotations
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jetbrains/annotations:annotations.jar'
+    module: intellij.libraries.jetbrains.annotations
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jetbrains-annotations-jetbrains-annotations'
+    filter: unkeyed
+- name: lib/intellij.libraries.jettison.jar
+  modules:
+  - name: intellij.libraries.jettison
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jettison:jettison.jar'
+    module: intellij.libraries.jettison
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jettison-jettison'
+    filter: unkeyed
+- name: lib/intellij.libraries.jgit.jar
+  modules:
+  - name: intellij.libraries.jgit
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jgit:jgit.jar'
+    module: intellij.libraries.jgit
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jgit-jetbrains-intellij-deps-eclipse-jgit'
+    file: org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jgit-jetbrains-intellij-deps-eclipse-jgit'
+    file: JavaEWAH-1.2.3.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.jgoodies.binding.jar
+  modules:
+  - name: intellij.libraries.jgoodies.binding
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//libraries/jgoodies/binding:binding.jar'
+    module: intellij.libraries.jgoodies.binding
+    filter: unkeyed
+  - kind: zip
+    label: '@@ultimate_lib+//:libraries-jgoodies-binding-jgoodies-binding'
+    filter: unkeyed
+- name: lib/intellij.libraries.jgoodies.common.jar
+  modules:
+  - name: intellij.libraries.jgoodies.common
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jgoodies/common:common.jar'
+    module: intellij.libraries.jgoodies.common
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jgoodies-common-jgoodies-common'
+    filter: unkeyed
+- name: lib/intellij.libraries.jgoodies.forms.jar
+  modules:
+  - name: intellij.libraries.jgoodies.forms
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jgoodies/forms:forms.jar'
+    module: intellij.libraries.jgoodies.forms
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jgoodies-forms-jgoodies-forms'
+    filter: unkeyed
+- name: lib/intellij.libraries.jsch.agent.proxy.jar
+  modules:
+  - name: intellij.libraries.jsch.agent.proxy
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jsch-agent-proxy:jsch-agent-proxy.jar'
+    module: intellij.libraries.jsch.agent.proxy
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jsch-agent-proxy-jsch-agent-proxy'
+    file: jsch.agentproxy.sshagent-0.0.9.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jsch-agent-proxy-jsch-agent-proxy'
+    file: jsch.agentproxy.core-0.0.9.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.jsonpath.jar
+  modules:
+  - name: intellij.libraries.jsonpath
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jsonpath:jsonpath.jar'
+    module: intellij.libraries.jsonpath
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jsonpath-jsonpath'
+    file: json-path-3.0.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jsonpath-jsonpath'
+    file: json-smart-2.6.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jsonpath-jsonpath'
+    file: accessors-smart-2.6.0.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.jsoup.jar
+  modules:
+  - name: intellij.libraries.jsoup
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jsoup:jsoup.jar'
+    module: intellij.libraries.jsoup
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jsoup-jsoup'
+    filter: unkeyed
+- name: lib/intellij.libraries.jspecify.jar
+  modules:
+  - name: intellij.libraries.jspecify
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jspecify:jspecify.jar'
+    module: intellij.libraries.jspecify
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-caffeine-caffeine'
+    file: jspecify-1.0.1.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.jsvg.jar
+  modules:
+  - name: intellij.libraries.jsvg
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jsvg:jsvg.jar'
+    module: intellij.libraries.jsvg
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jsvg-jsvg'
+    filter: unkeyed
+- name: lib/intellij.libraries.jvm.native.trusted.roots.jar
+  modules:
+  - name: intellij.libraries.jvm.native.trusted.roots
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jvm-native-trusted-roots:jvm-native-trusted-roots.jar'
+    module: intellij.libraries.jvm.native.trusted.roots
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jvm-native-trusted-roots-jvm-native-trusted-roots'
+    filter: unkeyed
+- name: lib/intellij.libraries.jzlib.jar
+  modules:
+  - name: intellij.libraries.jzlib
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/jzlib:jzlib.jar'
+    module: intellij.libraries.jzlib
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-jzlib-jzlib'
+    filter: unkeyed
+- name: lib/intellij.libraries.kotlin.logging.jar
+  modules:
+  - name: intellij.libraries.kotlin.logging
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/kotlin/logging:logging.jar'
+    module: intellij.libraries.kotlin.logging
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-kotlin-logging-io-github-oshai-kotlin-logging-jvm'
+    filter: unkeyed
+- name: lib/intellij.libraries.kotlin.metadata.jar
+  modules:
+  - name: intellij.libraries.kotlin.metadata
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/kotlin/metadata:metadata.jar'
+    module: intellij.libraries.kotlin.metadata
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-kotlin-metadata-kotlin-metadata'
+    filter: unkeyed
+- name: lib/intellij.libraries.kotlin.reflect.jar
+  modules:
+  - name: intellij.libraries.kotlin.reflect
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/kotlin/reflect:reflect.jar'
+    module: intellij.libraries.kotlin.reflect
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-kotlin-reflect-kotlin-reflect'
+    filter: unkeyed
+- name: lib/intellij.libraries.kotlinx.collections.immutable.jar
+  modules:
+  - name: intellij.libraries.kotlinx.collections.immutable
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable.jar'
+    module: intellij.libraries.kotlinx.collections.immutable
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-kotlinx-collections-immutable-kotlinx-collections-immutable'
+    filter: unkeyed
+- name: lib/intellij.libraries.kotlinx.coroutines.core.jar
+  modules:
+  - name: intellij.libraries.kotlinx.coroutines.core
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/kotlinx/coroutines/core:core.jar'
+    module: intellij.libraries.kotlinx.coroutines.core
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-kotlinx-coroutines-core-kotlinx-coroutines-core'
+    filter: unkeyed
+- name: lib/intellij.libraries.kotlinx.coroutines.debug.jar
+  modules:
+  - name: intellij.libraries.kotlinx.coroutines.debug
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/kotlinx/coroutines/debug:debug.jar'
+    module: intellij.libraries.kotlinx.coroutines.debug
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-kotlinx-coroutines-debug-kotlinx-coroutines-debug'
+    filter: unkeyed
+- name: lib/intellij.libraries.kotlinx.coroutines.guava.jar
+  modules:
+  - name: intellij.libraries.kotlinx.coroutines.guava
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/kotlinx/coroutines/guava:guava.jar'
+    module: intellij.libraries.kotlinx.coroutines.guava
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-kotlinx-coroutines-guava-kotlinx-coroutines-guava'
+    filter: unkeyed
+- name: lib/intellij.libraries.kotlinx.coroutines.slf4j.jar
+  modules:
+  - name: intellij.libraries.kotlinx.coroutines.slf4j
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/kotlinx/coroutines/slf4j:slf4j.jar'
+    module: intellij.libraries.kotlinx.coroutines.slf4j
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-kotlinx-coroutines-slf4j-kotlinx-coroutines-slf4j'
+    filter: unkeyed
+- name: lib/intellij.libraries.kotlinx.datetime.jar
+  modules:
+  - name: intellij.libraries.kotlinx.datetime
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/kotlinx/datetime:datetime.jar'
+    module: intellij.libraries.kotlinx.datetime
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-kotlinx-datetime-kotlinx-datetime-jvm'
+    filter: unkeyed
+- name: lib/intellij.libraries.kotlinx.html.jar
+  modules:
+  - name: intellij.libraries.kotlinx.html
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/kotlinx/html:html.jar'
+    module: intellij.libraries.kotlinx.html
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-kotlinx-html-kotlinx-html-jvm'
+    filter: unkeyed
+- name: lib/intellij.libraries.kotlinx.io.jar
+  modules:
+  - name: intellij.libraries.kotlinx.io
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/io:io.jar'
+    module: intellij.libraries.kotlinx.io
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-kotlinx-io-kotlinx-io-core'
+    file: kotlinx-io-core-jvm-0.9.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-kotlinx-io-kotlinx-io-core'
+    file: kotlinx-io-bytestring-jvm-0.9.1.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.kotlinx.serialization.cbor.jar
+  modules:
+  - name: intellij.libraries.kotlinx.serialization.cbor
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/kotlinx/serialization/cbor:cbor.jar'
+    module: intellij.libraries.kotlinx.serialization.cbor
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-kotlinx-serialization-cbor-kotlinx-serialization-cbor'
+    filter: unkeyed
+- name: lib/intellij.libraries.kotlinx.serialization.core.jar
+  modules:
+  - name: intellij.libraries.kotlinx.serialization.core
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/kotlinx/serialization/core:core.jar'
+    module: intellij.libraries.kotlinx.serialization.core
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-kotlinx-serialization-core-kotlinx-serialization-core'
+    filter: unkeyed
+- name: lib/intellij.libraries.kotlinx.serialization.json.io.jar
+  modules:
+  - name: intellij.libraries.kotlinx.serialization.json.io
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/kotlinx/serialization/json-io:libraries-kotlinx-serialization-json-io.jar'
+    module: intellij.libraries.kotlinx.serialization.json.io
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-kotlinx-serialization-json-io-kotlinx-serialization-json-io'
+    filter: unkeyed
+- name: lib/intellij.libraries.kotlinx.serialization.json.jar
+  modules:
+  - name: intellij.libraries.kotlinx.serialization.json
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/kotlinx/serialization/json:json.jar'
+    module: intellij.libraries.kotlinx.serialization.json
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-kotlinx-serialization-json-kotlinx-serialization-json'
+    filter: unkeyed
+- name: lib/intellij.libraries.kotlinx.serialization.protobuf.jar
+  modules:
+  - name: intellij.libraries.kotlinx.serialization.protobuf
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/kotlinx/serialization/protobuf:protobuf.jar'
+    module: intellij.libraries.kotlinx.serialization.protobuf
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-kotlinx-serialization-protobuf-kotlinx-serialization-protobuf'
+    filter: unkeyed
+- name: lib/intellij.libraries.kryo5.jar
+  modules:
+  - name: intellij.libraries.kryo5
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/kryo5:kryo5.jar'
+    module: intellij.libraries.kryo5
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-kryo5-kryo'
+    filter: unkeyed
+- name: lib/intellij.libraries.ktor.client.cio.jar
+  modules:
+  - name: intellij.libraries.ktor.client.cio
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/ktor/client-cio:libraries-ktor-client-cio.jar'
+    module: intellij.libraries.ktor.client.cio
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-client-cio-ktor-client-cio-internal'
+    filter: unkeyed
+- name: lib/intellij.libraries.ktor.client.jar
+  modules:
+  - name: intellij.libraries.ktor.client
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/ktor/client:client.jar'
+    module: intellij.libraries.ktor.client
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-client-ktor-client-core'
+    file: ktor-client-core-jvm-3.6.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-client-ktor-client-core'
+    file: ktor-http-jvm-3.6.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-client-ktor-client-core'
+    file: ktor-http-cio-jvm-3.6.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-client-ktor-client-core'
+    file: ktor-events-jvm-3.6.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-client-ktor-client-core'
+    file: ktor-websocket-serialization-jvm-3.6.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-client-ktor-client-core'
+    file: ktor-serialization-jvm-3.6.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-client-ktor-client-core'
+    file: ktor-websockets-jvm-3.6.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-client-ktor-client-core'
+    file: ktor-sse-jvm-3.6.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-client-ktor-client-java'
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-client-ktor-client-encoding'
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-client-ktor-client-content-negotiation'
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-client-ktor-serialization-kotlinx-json'
+    file: ktor-serialization-kotlinx-json-jvm-3.6.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-client-ktor-serialization-kotlinx-json'
+    file: ktor-serialization-kotlinx-jvm-3.6.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-client-ktor-serialization-kotlinx-json'
+    file: ktor-openapi-schema-jvm-3.6.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-client-ktor-client-auth'
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-client-ktor-client-logging'
+    filter: unkeyed
+- name: lib/intellij.libraries.ktor.io.jar
+  modules:
+  - name: intellij.libraries.ktor.io
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/ktor/io:io.jar'
+    module: intellij.libraries.ktor.io
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-io-ktor-io'
+    filter: unkeyed
+- name: lib/intellij.libraries.ktor.network.tls.jar
+  modules:
+  - name: intellij.libraries.ktor.network.tls
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/ktor/network-tls:libraries-ktor-network-tls.jar'
+    module: intellij.libraries.ktor.network.tls
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-network-tls-ktor-network-tls'
+    file: ktor-network-tls-jvm-3.6.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-network-tls-ktor-network-tls'
+    file: ktor-network-jvm-3.6.0.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.ktor.server.cio.jar
+  modules:
+  - name: intellij.libraries.ktor.server.cio
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/ktor/server-cio:libraries-ktor-server-cio.jar'
+    module: intellij.libraries.ktor.server.cio
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-server-cio-ktor-server-cio-internal'
+    file: ktor-server-cio-jvm-3.6.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-server-cio-ktor-server-cio-internal'
+    file: ktor-server-core-jvm-3.6.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-server-cio-ktor-server-cio-internal'
+    file: config-1.4.9.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.ktor.utils.jar
+  modules:
+  - name: intellij.libraries.ktor.utils
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/ktor/utils:utils.jar'
+    module: intellij.libraries.ktor.utils
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-ktor-utils-ktor-utils'
+    filter: unkeyed
+- name: lib/intellij.libraries.log4j.to.slf4j.jar
+  modules:
+  - name: intellij.libraries.log4j.to.slf4j
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/log4j-to-slf4j:log4j-to-slf4j.jar'
+    module: intellij.libraries.log4j.to.slf4j
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-log4j-to-slf4j-apache-logging-log4j-to-slf4j'
+    file: log4j-to-slf4j-2.26.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-log4j-to-slf4j-apache-logging-log4j-to-slf4j'
+    file: log4j-api-2.26.1.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.lucene.common.jar
+  modules:
+  - name: intellij.libraries.lucene.common
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/lucene.common:lucene.common.jar'
+    module: intellij.libraries.lucene.common
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-lucene-common-lucene-analysis-common'
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-lucene-common-lucene-core'
+    filter: unkeyed
+- name: lib/intellij.libraries.lz4.jar
+  modules:
+  - name: intellij.libraries.lz4
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/lz4:lz4.jar'
+    module: intellij.libraries.lz4
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-lz4-lz4-java'
+    filter: unkeyed
+- name: lib/intellij.libraries.markdown.jar
+  modules:
+  - name: intellij.libraries.markdown
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/markdown:markdown.jar'
+    module: intellij.libraries.markdown
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-markdown-jetbrains-markdown'
+    filter: unkeyed
+- name: lib/intellij.libraries.microba.jar
+  modules:
+  - name: intellij.libraries.microba
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/microba:microba.jar'
+    module: intellij.libraries.microba
+    filter: unkeyed
+- name: lib/intellij.libraries.miglayout.swing.jar
+  modules:
+  - name: intellij.libraries.miglayout.swing
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/miglayout-swing:miglayout-swing.jar'
+    module: intellij.libraries.miglayout.swing
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-miglayout-swing-miglayout-swing'
+    file: miglayout-swing-11.4.3.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-miglayout-swing-miglayout-swing'
+    file: miglayout-core-11.4.3.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.mvstore.jar
+  modules:
+  - name: intellij.libraries.mvstore
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/mvstore:mvstore.jar'
+    module: intellij.libraries.mvstore
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-mvstore-mvstore'
+    filter: unkeyed
+- name: lib/intellij.libraries.netty.buffer.jar
+  modules:
+  - name: intellij.libraries.netty.buffer
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/netty/buffer:buffer.jar'
+    module: intellij.libraries.netty.buffer
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-netty-buffer-netty-buffer'
+    file: netty-buffer-4.2.18.Final.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-netty-buffer-netty-buffer'
+    file: netty-common-4.2.18.Final.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.netty.codec.compression.jar
+  modules:
+  - name: intellij.libraries.netty.codec.compression
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/netty/codec-compression:libraries-netty-codec-compression.jar'
+    module: intellij.libraries.netty.codec.compression
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-netty-codec-compression-netty-codec-compression'
+    filter: unkeyed
+- name: lib/intellij.libraries.netty.codec.http.jar
+  modules:
+  - name: intellij.libraries.netty.codec.http
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/netty/codec-http:libraries-netty-codec-http.jar'
+    module: intellij.libraries.netty.codec.http
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-netty-codec-http-netty-codec-http'
+    file: netty-codec-http2-4.2.18.Final.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-netty-codec-http-netty-codec-http'
+    file: netty-transport-4.2.18.Final.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-netty-codec-http-netty-codec-http'
+    file: netty-resolver-4.2.18.Final.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-netty-codec-http-netty-codec-http'
+    file: netty-codec-base-4.2.18.Final.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-netty-codec-http-netty-codec-http'
+    file: netty-handler-4.2.18.Final.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-netty-codec-http-netty-codec-http'
+    file: netty-transport-native-unix-common-4.2.18.Final.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-netty-codec-http-netty-codec-http'
+    file: netty-codec-http-4.2.18.Final.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.netty.codec.protobuf.jar
+  modules:
+  - name: intellij.libraries.netty.codec.protobuf
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/netty/codec-protobuf:libraries-netty-codec-protobuf.jar'
+    module: intellij.libraries.netty.codec.protobuf
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-netty-codec-protobuf-netty-codec-protobuf'
+    filter: unkeyed
+- name: lib/intellij.libraries.netty.handler.proxy.jar
+  modules:
+  - name: intellij.libraries.netty.handler.proxy
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/netty/handler-proxy:libraries-netty-handler-proxy.jar'
+    module: intellij.libraries.netty.handler.proxy
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-netty-handler-proxy-netty-handler-proxy'
+    file: netty-handler-proxy-4.2.18.Final.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-netty-handler-proxy-netty-handler-proxy'
+    file: netty-codec-socks-4.2.18.Final.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.opencsv.jar
+  modules:
+  - name: intellij.libraries.opencsv
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/opencsv:opencsv.jar'
+    module: intellij.libraries.opencsv
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-opencsv-opencsv'
+    file: opencsv-5.12.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-opencsv-opencsv'
+    file: commons-beanutils-1.11.0.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.opentelemetry.exporter.otlp.common.jar
+  modules:
+  - name: intellij.libraries.opentelemetry.exporter.otlp.common
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/opentelemetry-exporter-otlp-common:opentelemetry-exporter-otlp-common.jar'
+    module: intellij.libraries.opentelemetry.exporter.otlp.common
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-opentelemetry-exporter-otlp-common-opentelemetry-exporter-otlp-common'
+    file: opentelemetry-exporter-otlp-common-1.66.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-opentelemetry-exporter-otlp-common-opentelemetry-exporter-otlp-common'
+    file: opentelemetry-exporter-common-1.66.0.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.opentelemetry.exporter.sender.jdk.jar
+  modules:
+  - name: intellij.libraries.opentelemetry.exporter.sender.jdk
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/opentelemetry-exporter-sender-jdk:opentelemetry-exporter-sender-jdk.jar'
+    module: intellij.libraries.opentelemetry.exporter.sender.jdk
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-opentelemetry-exporter-sender-jdk-opentelemetry-exporter-sender-jdk'
+    filter: unkeyed
+- name: lib/intellij.libraries.opentelemetry.extension.kotlin.jar
+  modules:
+  - name: intellij.libraries.opentelemetry.extension.kotlin
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin.jar'
+    module: intellij.libraries.opentelemetry.extension.kotlin
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-opentelemetry-extension-kotlin-opentelemetry-extension-kotlin'
+    filter: unkeyed
+- name: lib/intellij.libraries.opentelemetry.jar
+  modules:
+  - name: intellij.libraries.opentelemetry
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/opentelemetry:opentelemetry.jar'
+    module: intellij.libraries.opentelemetry
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-opentelemetry-opentelemetry'
+    file: opentelemetry-sdk-1.66.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-opentelemetry-opentelemetry'
+    file: opentelemetry-api-1.66.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-opentelemetry-opentelemetry'
+    file: opentelemetry-context-1.66.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-opentelemetry-opentelemetry'
+    file: opentelemetry-common-1.66.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-opentelemetry-opentelemetry'
+    file: opentelemetry-sdk-common-1.66.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-opentelemetry-opentelemetry'
+    file: opentelemetry-sdk-trace-1.66.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-opentelemetry-opentelemetry'
+    file: opentelemetry-sdk-metrics-1.66.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-opentelemetry-opentelemetry'
+    file: opentelemetry-sdk-logs-1.66.0.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.opentelemetry.sdk.autoconfigure.spi.jar
+  modules:
+  - name: intellij.libraries.opentelemetry.sdk.autoconfigure.spi
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/opentelemetry-sdk-autoconfigure-spi:opentelemetry-sdk-autoconfigure-spi.jar'
+    module: intellij.libraries.opentelemetry.sdk.autoconfigure.spi
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-opentelemetry-sdk-autoconfigure-spi-opentelemetry-sdk-autoconfigure-spi'
+    filter: unkeyed
+- name: lib/intellij.libraries.opentelemetry.semconv.jar
+  modules:
+  - name: intellij.libraries.opentelemetry.semconv
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/opentelemetry-semconv:opentelemetry-semconv.jar'
+    module: intellij.libraries.opentelemetry.semconv
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-opentelemetry-semconv-opentelemetry-semconv'
+    filter: unkeyed
+- name: lib/intellij.libraries.oro.matcher.jar
+  modules:
+  - name: intellij.libraries.oro.matcher
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/oro-matcher:oro-matcher.jar'
+    module: intellij.libraries.oro.matcher
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-oro-matcher-_oro_matcher'
+    filter: unkeyed
+- name: lib/intellij.libraries.protobuf.jar
+  modules:
+  - name: intellij.libraries.protobuf
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/protobuf:protobuf.jar'
+    module: intellij.libraries.protobuf
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-protobuf-protobuf'
+    filter: unkeyed
+- name: lib/intellij.libraries.protobuf.java.util.jar
+  modules:
+  - name: intellij.libraries.protobuf.java.util
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/protobuf-java-util:protobuf-java-util.jar'
+    module: intellij.libraries.protobuf.java.util
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-protobuf-java-util-google-protobuf-java-util'
+    filter: unkeyed
+- name: lib/intellij.libraries.protobuf.kotlin.jar
+  modules:
+  - name: intellij.libraries.protobuf.kotlin
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/protobuf-kotlin:protobuf-kotlin.jar'
+    module: intellij.libraries.protobuf.kotlin
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-protobuf-kotlin-google-protobuf-kotlin'
+    filter: unkeyed
+- name: lib/intellij.libraries.proxy.vole.jar
+  modules:
+  - name: intellij.libraries.proxy.vole
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/proxy-vole:proxy-vole.jar'
+    module: intellij.libraries.proxy.vole
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-proxy-vole-proxy-vole'
+    file: proxy-vole-2.0.2.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-proxy-vole-proxy-vole'
+    file: delight-rhino-sandbox-0.2.5.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.rd.core.jar
+  modules:
+  - name: intellij.libraries.rd.core
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/rd/core:core.jar'
+    module: intellij.libraries.rd.core
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-rd-core-rd-core'
+    filter: unkeyed
+- name: lib/intellij.libraries.rd.framework.jar
+  modules:
+  - name: intellij.libraries.rd.framework
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/rd/framework:framework.jar'
+    module: intellij.libraries.rd.framework
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-rd-framework-rd-framework'
+    filter: unkeyed
+- name: lib/intellij.libraries.rd.swing.jar
+  modules:
+  - name: intellij.libraries.rd.swing
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/rd/swing:swing.jar'
+    module: intellij.libraries.rd.swing
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-rd-swing-rd-swing'
+    filter: unkeyed
+- name: lib/intellij.libraries.rd.text.jar
+  modules:
+  - name: intellij.libraries.rd.text
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/rd/text:text.jar'
+    module: intellij.libraries.rd.text
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-rd-text-rd-text'
+    filter: unkeyed
+- name: lib/intellij.libraries.rhino.jar
+  modules:
+  - name: intellij.libraries.rhino
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/rhino:rhino.jar'
+    module: intellij.libraries.rhino
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-rhino-rhino'
+    filter: unkeyed
+- name: lib/intellij.libraries.semver.jar
+  modules:
+  - name: intellij.libraries.semver
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/semver:semver.jar'
+    module: intellij.libraries.semver
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-semver-io-github-z4kn4fein-semver-jvm'
+    filter: unkeyed
+- name: lib/intellij.libraries.snakeyaml.engine.jar
+  modules:
+  - name: intellij.libraries.snakeyaml.engine
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/snakeyaml-engine:snakeyaml-engine.jar'
+    module: intellij.libraries.snakeyaml.engine
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-snakeyaml-engine-snakeyaml-engine'
+    filter: unkeyed
+- name: lib/intellij.libraries.snakeyaml.jar
+  modules:
+  - name: intellij.libraries.snakeyaml
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/snakeyaml:snakeyaml.jar'
+    module: intellij.libraries.snakeyaml
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-snakeyaml-snakeyaml'
+    filter: unkeyed
+- name: lib/intellij.libraries.sqlite.jar
+  modules:
+  - name: intellij.libraries.sqlite
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/sqlite:sqlite.jar'
+    module: intellij.libraries.sqlite
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-sqlite-sqlite'
+    filter: unkeyed
+- name: lib/intellij.libraries.squareup.okio.jvm.jar
+  modules:
+  - name: intellij.libraries.squareup.okio.jvm
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/okio:squareup-okio-jvm.jar'
+    module: intellij.libraries.squareup.okio.jvm
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-squareup-okio-jvm-squareup-okio-jvm'
+    filter: unkeyed
+- name: lib/intellij.libraries.sshj.jar
+  modules:
+  - name: intellij.libraries.sshj
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/sshj:sshj.jar'
+    module: intellij.libraries.sshj
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-sshj-_s_s_h_j'
+    file: sshj-0.38.0-idea2.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-sshj-_s_s_h_j'
+    file: asn-one-0.6.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-sshj-_s_s_h_j'
+    file: eddsa-0.3.0.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.stream.jar
+  modules:
+  - name: intellij.libraries.stream
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/stream:stream.jar'
+    module: intellij.libraries.stream
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-stream-_stream_ex'
+    filter: unkeyed
+- name: lib/intellij.libraries.swingx.jar
+  modules:
+  - name: intellij.libraries.swingx
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/swingx:swingx.jar'
+    module: intellij.libraries.swingx
+    filter: unkeyed
+- name: lib/intellij.libraries.teamcity.service.messages.jar
+  modules:
+  - name: intellij.libraries.teamcity.service.messages
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/teamcity/service-messages:libraries-teamcity-service-messages.jar'
+    module: intellij.libraries.teamcity.service.messages
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-teamcity-service-messages-tc_service_messages'
+    filter: unkeyed
+- name: lib/intellij.libraries.velocity.jar
+  modules:
+  - name: intellij.libraries.velocity
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/velocity:velocity.jar'
+    module: intellij.libraries.velocity
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-velocity-_velocity'
+    filter: unkeyed
+- name: lib/intellij.libraries.winp.jar
+  modules:
+  - name: intellij.libraries.winp
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/winp:winp.jar'
+    module: intellij.libraries.winp
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-winp-winp'
+    filter: unkeyed
+- name: lib/intellij.libraries.xmlbeans.jar
+  modules:
+  - name: intellij.libraries.xmlbeans
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/xmlbeans:xmlbeans.jar'
+    module: intellij.libraries.xmlbeans
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-xmlbeans-_xml_beans'
+    filter: unkeyed
+- name: lib/intellij.libraries.xstream.jar
+  modules:
+  - name: intellij.libraries.xstream
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/xstream:xstream.jar'
+    module: intellij.libraries.xstream
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-xstream-xstream'
+    file: xstream-1.4.21.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-xstream-xstream'
+    file: mxparser-1.2.2.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-xstream-xstream'
+    file: xmlpull-1.1.3.1.jar
+    filter: unkeyed
+- name: lib/intellij.libraries.xtext.xbase.jar
+  modules:
+  - name: intellij.libraries.xtext.xbase
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/xtext-xbase:xtext-xbase.jar'
+    module: intellij.libraries.xtext.xbase
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-xtext-xbase-xtext-xbase'
+    filter: unkeyed
+- name: lib/intellij.libraries.xz.jar
+  modules:
+  - name: intellij.libraries.xz
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/xz:xz.jar'
+    module: intellij.libraries.xz
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-xz-xz'
+    filter: unkeyed
+- name: lib/intellij.libraries.zip.signer.jar
+  modules:
+  - name: intellij.libraries.zip.signer
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//libraries/zip-signer:zip-signer.jar'
+    module: intellij.libraries.zip.signer
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:libraries-zip-signer-zip-signer'
+    filter: unkeyed
+- name: lib/intellij.platform.analysis.impl.jar
+  modules:
+  - name: intellij.platform.analysis.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/analysis-impl:analysis-impl.jar'
+    module: intellij.platform.analysis.impl
+    filter: unkeyed
+- name: lib/intellij.platform.analysis.jar
+  modules:
+  - name: intellij.platform.analysis
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/analysis-api:analysis.jar'
+    module: intellij.platform.analysis
+    filter: unkeyed
+- name: lib/intellij.platform.backend.jar
+  modules:
+  - name: intellij.platform.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/backend:backend.jar'
+    module: intellij.platform.backend
+    filter: unkeyed
+- name: lib/intellij.platform.backend.observation.jar
+  modules:
+  - name: intellij.platform.backend.observation
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/backend/observation:observation.jar'
+    module: intellij.platform.backend.observation
+    filter: unkeyed
+- name: lib/intellij.platform.backend.workspace.impl.jar
+  modules:
+  - name: intellij.platform.backend.workspace.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/backend/workspace.impl:workspace.impl.jar'
+    module: intellij.platform.backend.workspace.impl
+    filter: unkeyed
+- name: lib/intellij.platform.backend.workspace.jar
+  modules:
+  - name: intellij.platform.backend.workspace
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/backend/workspace:workspace.jar'
+    module: intellij.platform.backend.workspace
+    filter: unkeyed
+- name: lib/intellij.platform.bazel.runfiles.jar
+  modules:
+  - name: intellij.platform.bazel.runfiles
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/bazel-runfiles:bazel-runfiles.jar'
+    module: intellij.platform.bazel.runfiles
+    filter: unkeyed
+- name: lib/intellij.platform.bootstrap.jar
+  modules:
+  - name: intellij.platform.bootstrap
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/bootstrap:bootstrap.jar'
+    module: intellij.platform.bootstrap
+    filter: unkeyed
+- name: lib/intellij.platform.buildData.jar
+  modules:
+  - name: intellij.platform.buildData
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/buildData:buildData.jar'
+    module: intellij.platform.buildData
+    filter: unkeyed
+- name: lib/intellij.platform.buildScripts.concurrency.jar
+  modules:
+  - name: intellij.platform.buildScripts.concurrency
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/build-scripts/concurrency:concurrency.jar'
+    module: intellij.platform.buildScripts.concurrency
+    filter: unkeyed
+- name: lib/intellij.platform.buildScripts.downloader.jar
+  modules:
+  - name: intellij.platform.buildScripts.downloader
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/build-scripts/downloader:downloader.jar'
+    module: intellij.platform.buildScripts.downloader
+    filter: unkeyed
+- name: lib/intellij.platform.buildView.backend.jar
+  modules:
+  - name: intellij.platform.buildView.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/buildView/backend:backend.jar'
+    module: intellij.platform.buildView.backend
+    filter: unkeyed
+- name: lib/intellij.platform.buildView.frontend.jar
+  modules:
+  - name: intellij.platform.buildView.frontend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/buildView/frontend:frontend.jar'
+    module: intellij.platform.buildView.frontend
+    filter: unkeyed
+- name: lib/intellij.platform.buildView.jar
+  modules:
+  - name: intellij.platform.buildView
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/buildView:buildView.jar'
+    module: intellij.platform.buildView
+    filter: unkeyed
+- name: lib/intellij.platform.builtInServer.impl.jar
+  modules:
+  - name: intellij.platform.builtInServer.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/built-in-server:builtInServer-impl.jar'
+    module: intellij.platform.builtInServer.impl
+    filter: unkeyed
+- name: lib/intellij.platform.builtInServer.jar
+  modules:
+  - name: intellij.platform.builtInServer
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/built-in-server-api:builtInServer.jar'
+    module: intellij.platform.builtInServer
+    filter: unkeyed
+- name: lib/intellij.platform.codeStyle.impl.jar
+  modules:
+  - name: intellij.platform.codeStyle.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/code-style-impl:codeStyle-impl.jar'
+    module: intellij.platform.codeStyle.impl
+    filter: unkeyed
+- name: lib/intellij.platform.codeStyle.jar
+  modules:
+  - name: intellij.platform.codeStyle
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/code-style-api:codeStyle.jar'
+    module: intellij.platform.codeStyle
+    filter: unkeyed
+- name: lib/intellij.platform.collaborationTools.auth.base.jar
+  modules:
+  - name: intellij.platform.collaborationTools.auth.base
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/collaboration-tools/auth-base:collaborationTools-auth-base.jar'
+    module: intellij.platform.collaborationTools.auth.base
+    filter: unkeyed
+- name: lib/intellij.platform.collaborationTools.auth.jar
+  modules:
+  - name: intellij.platform.collaborationTools.auth
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/collaboration-tools/auth:auth.jar'
+    module: intellij.platform.collaborationTools.auth
+    filter: unkeyed
+- name: lib/intellij.platform.collaborationTools.jar
+  modules:
+  - name: intellij.platform.collaborationTools
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/collaboration-tools:collaboration-tools.jar'
+    module: intellij.platform.collaborationTools
+    filter: unkeyed
+- name: lib/intellij.platform.collaborationTools.shared.jar
+  modules:
+  - name: intellij.platform.collaborationTools.shared
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/collaboration-tools/shared:shared.jar'
+    module: intellij.platform.collaborationTools.shared
+    filter: unkeyed
+- name: lib/intellij.platform.commercial.dependencies.jar
+  modules:
+  - name: intellij.platform.commercial.dependencies
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/dependencies:dependencies.jar'
+    module: intellij.platform.commercial.dependencies
+    filter: unkeyed
+- name: lib/intellij.platform.commercial.jar
+  modules:
+  - name: intellij.platform.commercial
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//ultimate/platform-ultimate:commercial.jar'
+    module: intellij.platform.commercial
+    filter: unkeyed
+- name: lib/intellij.platform.completion.backend.jar
+  modules:
+  - name: intellij.platform.completion.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/completion/backend:backend.jar'
+    module: intellij.platform.completion.backend
+    filter: unkeyed
+- name: lib/intellij.platform.completion.common.jar
+  modules:
+  - name: intellij.platform.completion.common
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/completion/common:common.jar'
+    module: intellij.platform.completion.common
+    filter: unkeyed
+- name: lib/intellij.platform.completion.frontend.jar
+  modules:
+  - name: intellij.platform.completion.frontend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/completion/frontend:frontend.jar'
+    module: intellij.platform.completion.frontend
+    filter: unkeyed
+- name: lib/intellij.platform.compose.jar
+  modules:
+  - name: intellij.platform.compose
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/compose:compose.jar'
+    module: intellij.platform.compose
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:jetbrains-compose-components-ui-tooling-preview-desktop'
+    filter: unkeyed
+- name: lib/intellij.platform.compose.markdown.jar
+  modules:
+  - name: intellij.platform.compose.markdown
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/compose/markdown:markdown.jar'
+    module: intellij.platform.compose.markdown
+    filter: unkeyed
+- name: lib/intellij.platform.compose.swing.jar
+  modules:
+  - name: intellij.platform.compose.swing
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/compose/swing-ui:swing.jar'
+    module: intellij.platform.compose.swing
+    filter: unkeyed
+- name: lib/intellij.platform.concurrency.jar
+  modules:
+  - name: intellij.platform.concurrency
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/util/concurrency:concurrency.jar'
+    module: intellij.platform.concurrency
+    filter: unkeyed
+- name: lib/intellij.platform.configurationStore.impl.jar
+  modules:
+  - name: intellij.platform.configurationStore.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/configuration-store-impl:configurationStore-impl.jar'
+    module: intellij.platform.configurationStore.impl
+    filter: unkeyed
+- name: lib/intellij.platform.core.impl.jar
+  modules:
+  - name: intellij.platform.core.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/core-impl:core-impl.jar'
+    module: intellij.platform.core.impl
+    filter: unkeyed
+- name: lib/intellij.platform.core.jar
+  modules:
+  - name: intellij.platform.core
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/core-api:core.jar'
+    module: intellij.platform.core
+    filter: unkeyed
+- name: lib/intellij.platform.core.ui.jar
+  modules:
+  - name: intellij.platform.core.ui
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/core-ui:core-ui.jar'
+    module: intellij.platform.core.ui
+    filter: unkeyed
+- name: lib/intellij.platform.coverage.agent.jar
+  modules:
+  - name: intellij.platform.coverage.agent
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent.jar'
+    module: intellij.platform.coverage.agent
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:platform-coverage-agent-intellij-coverage'
+    filter: unkeyed
+- name: lib/intellij.platform.coverage.jar
+  modules:
+  - name: intellij.platform.coverage
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//plugins/coverage-common:coverage.jar'
+    module: intellij.platform.coverage
+    filter: unkeyed
+- name: lib/intellij.platform.credentialStore.impl.jar
+  modules:
+  - name: intellij.platform.credentialStore.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/credential-store-impl:credentialStore-impl.jar'
+    module: intellij.platform.credentialStore.impl
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:platform-credential_store-impl-dbus-java'
+    file: dbus-java-transport-native-unixsocket-4.2.1.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:platform-credential_store-impl-dbus-java'
+    file: dbus-java-core-4.2.1.jar
+    filter: unkeyed
+- name: lib/intellij.platform.credentialStore.jar
+  modules:
+  - name: intellij.platform.credentialStore
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/credential-store:credential-store.jar'
+    module: intellij.platform.credentialStore
+    filter: unkeyed
+- name: lib/intellij.platform.credentialStore.ui.jar
+  modules:
+  - name: intellij.platform.credentialStore.ui
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/credential-store-ui:credentialStore-ui.jar'
+    module: intellij.platform.credentialStore.ui
+    filter: unkeyed
+- name: lib/intellij.platform.cs.jar
+  modules:
+  - name: intellij.libraries.licenseDecoder
+  - name: intellij.libraries.licenseServerApi
+  - name: intellij.platform.commercial.license
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//libraries/license-decoder:license-decoder.jar'
+    module: intellij.libraries.licenseDecoder
+    filter: unkeyed
+  - kind: zip
+    label: '@@//libraries/license-server-api:license-server-api.jar'
+    module: intellij.libraries.licenseServerApi
+    filter: unkeyed
+  - kind: zip
+    label: '@@//licenseCommon:commercial-license.jar'
+    module: intellij.platform.commercial.license
+    filter: unkeyed
+  - kind: zip
+    label: '@@ultimate_lib+//:libraries-license_decoder-_license_decoder'
+    filter: unkeyed
+  - kind: zip
+    label: '@@ultimate_lib+//:libraries-license_server_api-_license_server_a_p_i'
+    filter: unkeyed
+- name: lib/intellij.platform.customization.min.jar
+  modules:
+  - name: intellij.platform.customization.min
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//idea/customization/min:min.jar'
+    module: intellij.platform.customization.min
+    filter: unkeyed
+- name: lib/intellij.platform.dap.jar
+  modules:
+  - name: intellij.platform.dap
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/dap:dap.jar'
+    module: intellij.platform.dap
+    filter: unkeyed
+- name: lib/intellij.platform.dap.protocol.jar
+  modules:
+  - name: intellij.platform.dap.protocol
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/dap/protocol:protocol.jar'
+    module: intellij.platform.dap.protocol
+    filter: unkeyed
+- name: lib/intellij.platform.debugger.impl.backend.jar
+  modules:
+  - name: intellij.platform.debugger.impl.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/xdebugger-impl/backend:backend.jar'
+    module: intellij.platform.debugger.impl.backend
+    filter: unkeyed
+- name: lib/intellij.platform.debugger.impl.dashboard.jar
+  modules:
+  - name: intellij.platform.debugger.impl.dashboard
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/xdebugger-impl/dashboard:dashboard.jar'
+    module: intellij.platform.debugger.impl.dashboard
+    filter: unkeyed
+- name: lib/intellij.platform.debugger.impl.frontend.jar
+  modules:
+  - name: intellij.platform.debugger.impl.frontend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/xdebugger-impl/frontend:frontend.jar'
+    module: intellij.platform.debugger.impl.frontend
+    filter: unkeyed
+- name: lib/intellij.platform.debugger.impl.jar
+  modules:
+  - name: intellij.platform.debugger.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/xdebugger-impl:debugger-impl.jar'
+    module: intellij.platform.debugger.impl
+    filter: unkeyed
+- name: lib/intellij.platform.debugger.impl.rpc.jar
+  modules:
+  - name: intellij.platform.debugger.impl.rpc
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/xdebugger-impl/rpc:rpc.jar'
+    module: intellij.platform.debugger.impl.rpc
+    filter: unkeyed
+- name: lib/intellij.platform.debugger.impl.shared.jar
+  modules:
+  - name: intellij.platform.debugger.impl.shared
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/xdebugger-impl/shared:shared.jar'
+    module: intellij.platform.debugger.impl.shared
+    filter: unkeyed
+- name: lib/intellij.platform.debugger.impl.ui.jar
+  modules:
+  - name: intellij.platform.debugger.impl.ui
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/xdebugger-impl/ui:ui.jar'
+    module: intellij.platform.debugger.impl.ui
+    filter: unkeyed
+- name: lib/intellij.platform.debugger.jar
+  modules:
+  - name: intellij.platform.debugger
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/xdebugger-api:debugger.jar'
+    module: intellij.platform.debugger
+    filter: unkeyed
+- name: lib/intellij.platform.debugger.parallelStacks.jar
+  modules:
+  - name: intellij.platform.debugger.parallelStacks
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/debugger/parallelStacks:parallelStacks.jar'
+    module: intellij.platform.debugger.parallelStacks
+    filter: unkeyed
+- name: lib/intellij.platform.diagnostic.errorAutoReport.backend.jar
+  modules:
+  - name: intellij.platform.diagnostic.errorAutoReport.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/diagnostic.errorAutoReport/backend:backend.jar'
+    module: intellij.platform.diagnostic.errorAutoReport.backend
+    filter: unkeyed
+- name: lib/intellij.platform.diagnostic.errorAutoReport.frontend.jar
+  modules:
+  - name: intellij.platform.diagnostic.errorAutoReport.frontend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/diagnostic.errorAutoReport/frontend:frontend.jar'
+    module: intellij.platform.diagnostic.errorAutoReport.frontend
+    filter: unkeyed
+- name: lib/intellij.platform.diagnostic.errorAutoReport.shared.jar
+  modules:
+  - name: intellij.platform.diagnostic.errorAutoReport.shared
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/diagnostic.errorAutoReport/shared:shared.jar'
+    module: intellij.platform.diagnostic.errorAutoReport.shared
+    filter: unkeyed
+- name: lib/intellij.platform.diagnostic.freezeAnalyzer.jar
+  modules:
+  - name: intellij.platform.diagnostic.freezeAnalyzer
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/diagnostic/freezeAnalyzer:freezeAnalyzer.jar'
+    module: intellij.platform.diagnostic.freezeAnalyzer
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:diogen-analysis'
+    file: diogen-analysis-1.0.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:diogen-analysis'
+    file: aho-corasick-double-array-trie-1.2.3.jar
+    filter: unkeyed
+- name: lib/intellij.platform.diagnostic.startUpPerformanceReporter.jar
+  modules:
+  - name: intellij.platform.diagnostic.startUpPerformanceReporter
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/diagnostic/startUpPerformanceReporter:startUpPerformanceReporter.jar'
+    module: intellij.platform.diagnostic.startUpPerformanceReporter
+    filter: unkeyed
+- name: lib/intellij.platform.diagnostic.telemetry.agent.extension.jar
+  modules:
+  - name: intellij.platform.diagnostic.telemetry.agent.extension
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/diagnostic/telemetry/agent-extension:diagnostic-telemetry-agent-extension.jar'
+    module: intellij.platform.diagnostic.telemetry.agent.extension
+    filter: unkeyed
+- name: lib/intellij.platform.diagnostic.telemetry.exporters.jar
+  modules:
+  - name: intellij.platform.diagnostic.telemetry.exporters
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/diagnostic/telemetry.exporters:telemetry.exporters.jar'
+    module: intellij.platform.diagnostic.telemetry.exporters
+    filter: unkeyed
+- name: lib/intellij.platform.diagnostic.telemetry.impl.jar
+  modules:
+  - name: intellij.platform.diagnostic.telemetry.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/diagnostic/telemetry-impl:telemetry-impl.jar'
+    module: intellij.platform.diagnostic.telemetry.impl
+    filter: unkeyed
+- name: lib/intellij.platform.diagnostic.telemetry.jar
+  modules:
+  - name: intellij.platform.diagnostic.telemetry
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/diagnostic/telemetry:telemetry.jar'
+    module: intellij.platform.diagnostic.telemetry
+    filter: unkeyed
+- name: lib/intellij.platform.diff.impl.jar
+  modules:
+  - name: intellij.platform.diff.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/diff-impl:diff-impl.jar'
+    module: intellij.platform.diff.impl
+    filter: unkeyed
+- name: lib/intellij.platform.diff.jar
+  modules:
+  - name: intellij.platform.diff
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/diff-api:diff.jar'
+    module: intellij.platform.diff
+    filter: unkeyed
+- name: lib/intellij.platform.discoverability.jar
+  modules:
+  - name: intellij.platform.discoverability
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/discoverability:discoverability.jar'
+    module: intellij.platform.discoverability
+    filter: unkeyed
+- name: lib/intellij.platform.duplicates.analysis.jar
+  modules:
+  - name: intellij.platform.duplicates.analysis
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/duplicates-analysis:duplicates-analysis.jar'
+    module: intellij.platform.duplicates.analysis
+    filter: unkeyed
+- name: lib/intellij.platform.duplicates.jar
+  modules:
+  - name: intellij.platform.duplicates
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/duplicates:duplicates.jar'
+    module: intellij.platform.duplicates
+    filter: unkeyed
+- name: lib/intellij.platform.duplicatesDetector.jar
+  modules:
+  - name: intellij.platform.duplicatesDetector
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//duplicatedetector:duplicatesDetector.jar'
+    module: intellij.platform.duplicatesDetector
+    filter: unkeyed
+- name: lib/intellij.platform.editor.backend.jar
+  modules:
+  - name: intellij.platform.editor.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/editor/backend:backend.jar'
+    module: intellij.platform.editor.backend
+    filter: unkeyed
+- name: lib/intellij.platform.editor.ex.jar
+  modules:
+  - name: intellij.platform.editor.ex
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/editor-ui-ex:editor-ex.jar'
+    module: intellij.platform.editor.ex
+    filter: unkeyed
+- name: lib/intellij.platform.editor.frontend.jar
+  modules:
+  - name: intellij.platform.editor.frontend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/editor/frontend:frontend.jar'
+    module: intellij.platform.editor.frontend
+    filter: unkeyed
+- name: lib/intellij.platform.editor.jar
+  modules:
+  - name: intellij.platform.editor
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/editor/shared:editor.jar'
+    module: intellij.platform.editor
+    filter: unkeyed
+- name: lib/intellij.platform.editor.ui.jar
+  modules:
+  - name: intellij.platform.editor.ui
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/editor-ui-api:editor-ui.jar'
+    module: intellij.platform.editor.ui
+    filter: unkeyed
+- name: lib/intellij.platform.eel.impl.base.jar
+  modules:
+  - name: intellij.platform.eel.impl.base
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/eel-impl-base:eel-impl-base.jar'
+    module: intellij.platform.eel.impl.base
+    filter: unkeyed
+- name: lib/intellij.platform.eel.impl.jar
+  modules:
+  - name: intellij.platform.eel.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/eel-impl:eel-impl.jar'
+    module: intellij.platform.eel.impl
+    filter: unkeyed
+- name: lib/intellij.platform.eel.nioFs.impl.jar
+  modules:
+  - name: intellij.platform.eel.nioFs.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/eel-nioFs-impl:eel-nioFs-impl.jar'
+    module: intellij.platform.eel.nioFs.impl
+    filter: unkeyed
+- name: lib/intellij.platform.eel.provider.jar
+  modules:
+  - name: intellij.platform.eel.provider
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/eel-provider:eel-provider.jar'
+    module: intellij.platform.eel.provider
+    filter: unkeyed
+- name: lib/intellij.platform.eel.tcp.jar
+  modules:
+  - name: intellij.platform.eel.tcp
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/eel-tcp:eel-tcp.jar'
+    module: intellij.platform.eel.tcp
+    filter: unkeyed
+- name: lib/intellij.platform.execution.impl.backend.jar
+  modules:
+  - name: intellij.platform.execution.impl.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/execution-impl/backend:backend.jar'
+    module: intellij.platform.execution.impl.backend
+    filter: unkeyed
+- name: lib/intellij.platform.execution.impl.frontend.jar
+  modules:
+  - name: intellij.platform.execution.impl.frontend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/execution-impl/frontend:frontend.jar'
+    module: intellij.platform.execution.impl.frontend
+    filter: unkeyed
+- name: lib/intellij.platform.execution.impl.jar
+  modules:
+  - name: intellij.platform.execution.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/execution-impl:execution-impl.jar'
+    module: intellij.platform.execution.impl
+    filter: unkeyed
+- name: lib/intellij.platform.execution.jar
+  modules:
+  - name: intellij.platform.execution
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/execution:execution.jar'
+    module: intellij.platform.execution
+    filter: unkeyed
+- name: lib/intellij.platform.experiment.jar
+  modules:
+  - name: intellij.platform.experiment
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/experiment:experiment.jar'
+    module: intellij.platform.experiment
+    filter: unkeyed
+- name: lib/intellij.platform.externalProcessAuthHelper.jar
+  modules:
+  - name: intellij.platform.externalProcessAuthHelper
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/external-process-auth-helper:external-process-auth-helper.jar'
+    module: intellij.platform.externalProcessAuthHelper
+    filter: unkeyed
+- name: lib/intellij.platform.externalSystem.dependencyUpdater.jar
+  modules:
+  - name: intellij.platform.externalSystem.dependencyUpdater
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/external-system-api/dependency-updater:dependency-updater.jar'
+    module: intellij.platform.externalSystem.dependencyUpdater
+    filter: unkeyed
+- name: lib/intellij.platform.externalSystem.impl.jar
+  modules:
+  - name: intellij.platform.externalSystem.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/external-system-impl:externalSystem-impl.jar'
+    module: intellij.platform.externalSystem.impl
+    filter: unkeyed
+- name: lib/intellij.platform.externalSystem.jar
+  modules:
+  - name: intellij.platform.externalSystem
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/external-system-api:externalSystem.jar'
+    module: intellij.platform.externalSystem
+    filter: unkeyed
+- name: lib/intellij.platform.feedback.jar
+  modules:
+  - name: intellij.platform.feedback
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/feedback:feedback.jar'
+    module: intellij.platform.feedback
+    filter: unkeyed
+- name: lib/intellij.platform.find.backend.jar
+  modules:
+  - name: intellij.platform.find.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/find/backend:backend.jar'
+    module: intellij.platform.find.backend
+    filter: unkeyed
+- name: lib/intellij.platform.find.jar
+  modules:
+  - name: intellij.platform.find
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/find:find.jar'
+    module: intellij.platform.find
+    filter: unkeyed
+- name: lib/intellij.platform.foldings.jar
+  modules:
+  - name: intellij.platform.foldings
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/foldings:foldings.jar'
+    module: intellij.platform.foldings
+    filter: unkeyed
+- name: lib/intellij.platform.frontend.jar
+  modules:
+  - name: intellij.platform.frontend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-frontend:frontend.jar'
+    module: intellij.platform.frontend
+    filter: unkeyed
+- name: lib/intellij.platform.graph.impl.jar
+  modules:
+  - name: intellij.platform.graph.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//plugins/graph:graph-impl.jar'
+    module: intellij.platform.graph.impl
+    filter: unkeyed
+- name: lib/intellij.platform.graph.jar
+  modules:
+  - name: intellij.platform.graph
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//plugins/graph:graph.jar'
+    module: intellij.platform.graph
+    filter: unkeyed
+- name: lib/intellij.platform.icons.api.jar
+  modules:
+  - name: intellij.platform.icons.api
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/icons-api:icons-api.jar'
+    module: intellij.platform.icons.api
+    filter: unkeyed
+- name: lib/intellij.platform.icons.api.rendering.jar
+  modules:
+  - name: intellij.platform.icons.api.rendering
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/icons-api/rendering:rendering.jar'
+    module: intellij.platform.icons.api.rendering
+    filter: unkeyed
+- name: lib/intellij.platform.icons.impl.intellij.jar
+  modules:
+  - name: intellij.platform.icons.impl.intellij
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/icons-impl/intellij:intellij.jar'
+    module: intellij.platform.icons.impl.intellij
+    filter: unkeyed
+- name: lib/intellij.platform.icons.impl.jar
+  modules:
+  - name: intellij.platform.icons.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/icons-impl:icons-impl.jar'
+    module: intellij.platform.icons.impl
+    filter: unkeyed
+- name: lib/intellij.platform.icons.jar
+  modules:
+  - name: intellij.platform.icons
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/icons:icons.jar'
+    module: intellij.platform.icons
+    filter: unkeyed
+- name: lib/intellij.platform.ide.bootstrap.eel.jar
+  modules:
+  - name: intellij.platform.ide.bootstrap.eel
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-impl/bootstrap/eel:eel.jar'
+    module: intellij.platform.ide.bootstrap.eel
+    filter: unkeyed
+- name: lib/intellij.platform.ide.bootstrap.jar
+  modules:
+  - name: intellij.platform.ide.bootstrap
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-impl/bootstrap:bootstrap.jar'
+    module: intellij.platform.ide.bootstrap
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:googlecode-plist-dd'
+    filter: unkeyed
+- name: lib/intellij.platform.ide.bootstrap.kernel.jar
+  modules:
+  - name: intellij.platform.ide.bootstrap.kernel
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-impl/bootstrap/kernel:kernel.jar'
+    module: intellij.platform.ide.bootstrap.kernel
+    filter: unkeyed
+- name: lib/intellij.platform.ide.codeinsight.inline.jar
+  modules:
+  - name: intellij.platform.ide.codeinsight.inline
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline.jar'
+    module: intellij.platform.ide.codeinsight.inline
+    filter: unkeyed
+- name: lib/intellij.platform.ide.concurrency.jar
+  modules:
+  - name: intellij.platform.ide.concurrency
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-impl/concurrency:concurrency.jar'
+    module: intellij.platform.ide.concurrency
+    filter: unkeyed
+- name: lib/intellij.platform.ide.core.impl.jar
+  modules:
+  - name: intellij.platform.ide.core.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/ide-core-impl:ide-core-impl.jar'
+    module: intellij.platform.ide.core.impl
+    filter: unkeyed
+- name: lib/intellij.platform.ide.core.jar
+  modules:
+  - name: intellij.platform.ide.core
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/ide-core:ide-core.jar'
+    module: intellij.platform.ide.core
+    filter: unkeyed
+- name: lib/intellij.platform.ide.core.plugins.jar
+  modules:
+  - name: intellij.platform.ide.core.plugins
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/ide-core/plugins:plugins.jar'
+    module: intellij.platform.ide.core.plugins
+    filter: unkeyed
+- name: lib/intellij.platform.ide.designer.jar
+  modules:
+  - name: intellij.platform.ide.designer
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-impl/designer:designer.jar'
+    module: intellij.platform.ide.designer
+    filter: unkeyed
+- name: lib/intellij.platform.ide.favoritesTreeView.jar
+  modules:
+  - name: intellij.platform.ide.favoritesTreeView
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/favoritesTreeView:favoritesTreeView.jar'
+    module: intellij.platform.ide.favoritesTreeView
+    filter: unkeyed
+- name: lib/intellij.platform.ide.impl.jar
+  modules:
+  - name: intellij.platform.ide.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-impl:ide-impl.jar'
+    module: intellij.platform.ide.impl
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:diogen-analysis'
+    file: diogen-analysis-1.0.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:diogen-analysis'
+    file: aho-corasick-double-array-trie-1.2.3.jar
+    filter: unkeyed
+- name: lib/intellij.platform.ide.impl.wsl.jar
+  modules:
+  - name: intellij.platform.ide.impl.wsl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-impl/eel:ide-impl-wsl.jar'
+    module: intellij.platform.ide.impl.wsl
+    filter: unkeyed
+- name: lib/intellij.platform.ide.initialConfigImport.jar
+  modules:
+  - name: intellij.platform.ide.initialConfigImport
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-impl/initial-config-import:initial-config-import.jar'
+    module: intellij.platform.ide.initialConfigImport
+    filter: unkeyed
+- name: lib/intellij.platform.ide.internal.backend.jar
+  modules:
+  - name: intellij.platform.ide.internal.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-impl/internal/ide.internal.backend:ide.internal.backend.jar'
+    module: intellij.platform.ide.internal.backend
+    filter: unkeyed
+- name: lib/intellij.platform.ide.internal.jar
+  modules:
+  - name: intellij.platform.ide.internal
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-impl/internal:internal.jar'
+    module: intellij.platform.ide.internal
+    filter: unkeyed
+- name: lib/intellij.platform.ide.jar
+  modules:
+  - name: intellij.platform.ide
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-api:ide.jar'
+    module: intellij.platform.ide
+    filter: unkeyed
+- name: lib/intellij.platform.ide.newUiOnboarding.jar
+  modules:
+  - name: intellij.platform.ide.newUiOnboarding
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/new-ui-onboarding:new-ui-onboarding.jar'
+    module: intellij.platform.ide.newUiOnboarding
+    filter: unkeyed
+- name: lib/intellij.platform.ide.newUsersOnboarding.jar
+  modules:
+  - name: intellij.platform.ide.newUsersOnboarding
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/new-users-onboarding:new-users-onboarding.jar'
+    module: intellij.platform.ide.newUsersOnboarding
+    filter: unkeyed
+- name: lib/intellij.platform.ide.nonModalWelcomeScreen.backend.jar
+  modules:
+  - name: intellij.platform.ide.nonModalWelcomeScreen.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/non-modal-welcome-screen/backend:backend.jar'
+    module: intellij.platform.ide.nonModalWelcomeScreen.backend
+    filter: unkeyed
+- name: lib/intellij.platform.ide.nonModalWelcomeScreen.frontend.jar
+  modules:
+  - name: intellij.platform.ide.nonModalWelcomeScreen.frontend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/non-modal-welcome-screen/frontend:frontend.jar'
+    module: intellij.platform.ide.nonModalWelcomeScreen.frontend
+    filter: unkeyed
+- name: lib/intellij.platform.ide.nonModalWelcomeScreen.jar
+  modules:
+  - name: intellij.platform.ide.nonModalWelcomeScreen
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/non-modal-welcome-screen:non-modal-welcome-screen.jar'
+    module: intellij.platform.ide.nonModalWelcomeScreen
+    filter: unkeyed
+- name: lib/intellij.platform.ide.nonModalWelcomeScreen.terminal.jar
+  modules:
+  - name: intellij.platform.ide.nonModalWelcomeScreen.terminal
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/non-modal-welcome-screen/terminal:terminal.jar'
+    module: intellij.platform.ide.nonModalWelcomeScreen.terminal
+    filter: unkeyed
+- name: lib/intellij.platform.ide.observable.jar
+  modules:
+  - name: intellij.platform.ide.observable
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/observable:observable.jar'
+    module: intellij.platform.ide.observable
+    filter: unkeyed
+- name: lib/intellij.platform.ide.osCertificates.jar
+  modules:
+  - name: intellij.platform.ide.osCertificates
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-impl/os-certificates:os-certificates.jar'
+    module: intellij.platform.ide.osCertificates
+    filter: unkeyed
+- name: lib/intellij.platform.ide.pluginSignatureVerifier.jar
+  modules:
+  - name: intellij.platform.ide.pluginSignatureVerifier
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-impl/plugin-signature-verifier:plugin-signature-verifier.jar'
+    module: intellij.platform.ide.pluginSignatureVerifier
+    filter: unkeyed
+- name: lib/intellij.platform.ide.progress.jar
+  modules:
+  - name: intellij.platform.ide.progress
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/progress/shared:ide-progress.jar'
+    module: intellij.platform.ide.progress
+    filter: unkeyed
+- name: lib/intellij.platform.ide.recentProjects.jar
+  modules:
+  - name: intellij.platform.ide.recentProjects
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-impl/recentProjects:recentProjects.jar'
+    module: intellij.platform.ide.recentProjects
+    filter: unkeyed
+- name: lib/intellij.platform.ide.remote.jar
+  modules:
+  - name: intellij.platform.ide.remote
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-impl/remote:remote.jar'
+    module: intellij.platform.ide.remote
+    filter: unkeyed
+- name: lib/intellij.platform.ide.rpc.jar
+  modules:
+  - name: intellij.platform.ide.rpc
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-impl/rpc:rpc.jar'
+    module: intellij.platform.ide.rpc
+    filter: unkeyed
+- name: lib/intellij.platform.ide.ui.jar
+  modules:
+  - name: intellij.platform.ide.ui
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-impl/ui:ui.jar'
+    module: intellij.platform.ide.ui
+    filter: unkeyed
+- name: lib/intellij.platform.ide.updateChecker.jar
+  modules:
+  - name: intellij.platform.ide.updateChecker
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-impl/update-checker:update-checker.jar'
+    module: intellij.platform.ide.updateChecker
+    filter: unkeyed
+- name: lib/intellij.platform.ide.util.io.impl.jar
+  modules:
+  - name: intellij.platform.ide.util.io.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-util-io-impl:ide-util-io-impl.jar'
+    module: intellij.platform.ide.util.io.impl
+    filter: unkeyed
+- name: lib/intellij.platform.ide.util.io.native.jar
+  modules:
+  - name: intellij.platform.ide.util.io.native
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-util-io-native:ide-util-io-native.jar'
+    module: intellij.platform.ide.util.io.native
+    filter: unkeyed
+- name: lib/intellij.platform.ide.util.netty.jar
+  modules:
+  - name: intellij.platform.ide.util.netty
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-util-netty:ide-util-netty.jar'
+    module: intellij.platform.ide.util.netty
+    filter: unkeyed
+- name: lib/intellij.platform.identifiers.highlighting.backend.jar
+  modules:
+  - name: intellij.platform.identifiers.highlighting.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//remote-dev/identifiers/backend:backend.jar'
+    module: intellij.platform.identifiers.highlighting.backend
+    filter: unkeyed
+- name: lib/intellij.platform.identifiers.highlighting.shared.jar
+  modules:
+  - name: intellij.platform.identifiers.highlighting.shared
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//remote-dev/identifiers/shared:shared.jar'
+    module: intellij.platform.identifiers.highlighting.shared
+    filter: unkeyed
+- name: lib/intellij.platform.ijent.community.buildConstants.jar
+  modules:
+  - name: intellij.platform.ijent.community.buildConstants
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/ijent/buildConstants:buildConstants.jar'
+    module: intellij.platform.ijent.community.buildConstants
+    filter: unkeyed
+- name: lib/intellij.platform.ijent.community.impl.jar
+  modules:
+  - name: intellij.platform.ijent.community.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/ijent/impl:impl.jar'
+    module: intellij.platform.ijent.community.impl
+    filter: unkeyed
+- name: lib/intellij.platform.ijent.community.ui.jar
+  modules:
+  - name: intellij.platform.ijent.community.ui
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/ijent/ui:ui.jar'
+    module: intellij.platform.ijent.community.ui
+    filter: unkeyed
+- name: lib/intellij.platform.ijent.execFileProvider.jar
+  modules:
+  - name: intellij.platform.ijent.execFileProvider
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/ijent/execFileProvider:execFileProvider.jar'
+    module: intellij.platform.ijent.execFileProvider
+    filter: unkeyed
+- name: lib/intellij.platform.ijent.impl.jar
+  modules:
+  - name: intellij.platform.ijent.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/ijent/impl:impl.jar'
+    module: intellij.platform.ijent.impl
+    filter: unkeyed
+- name: lib/intellij.platform.ijent.jar
+  modules:
+  - name: intellij.platform.ijent
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/ijent:ijent.jar'
+    module: intellij.platform.ijent
+    filter: unkeyed
+- name: lib/intellij.platform.ijent.wsl.jar
+  modules:
+  - name: intellij.platform.ijent.wsl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/ijent/wsl:wsl.jar'
+    module: intellij.platform.ijent.wsl
+    filter: unkeyed
+- name: lib/intellij.platform.indexing.impl.backend.jar
+  modules:
+  - name: intellij.platform.indexing.impl.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/indexing-impl/backend:backend.jar'
+    module: intellij.platform.indexing.impl.backend
+    filter: unkeyed
+- name: lib/intellij.platform.indexing.impl.jar
+  modules:
+  - name: intellij.platform.indexing.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/indexing-impl:indexing-impl.jar'
+    module: intellij.platform.indexing.impl
+    filter: unkeyed
+- name: lib/intellij.platform.indexing.jar
+  modules:
+  - name: intellij.platform.indexing
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/indexing-api:indexing.jar'
+    module: intellij.platform.indexing
+    filter: unkeyed
+- name: lib/intellij.platform.inline.completion.jar
+  modules:
+  - name: intellij.platform.inline.completion
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/inline-completion/shared:inline-completion.jar'
+    module: intellij.platform.inline.completion
+    filter: unkeyed
+- name: lib/intellij.platform.inspect.jar
+  modules:
+  - name: intellij.platform.inspect
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/inspect:inspect.jar'
+    module: intellij.platform.inspect
+    filter: unkeyed
+- name: lib/intellij.platform.instanceContainer.jar
+  modules:
+  - name: intellij.platform.instanceContainer
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/instanceContainer:instanceContainer.jar'
+    module: intellij.platform.instanceContainer
+    filter: unkeyed
+- name: lib/intellij.platform.jbr.jar
+  modules:
+  - name: intellij.platform.jbr
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/jbr:jbr.jar'
+    module: intellij.platform.jbr
+    filter: unkeyed
+- name: lib/intellij.platform.jewel.foundation.jar
+  modules:
+  - name: intellij.platform.jewel.foundation
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/jewel/foundation:foundation.jar'
+    module: intellij.platform.jewel.foundation
+    filter: unkeyed
+- name: lib/intellij.platform.jewel.ideLafBridge.jar
+  modules:
+  - name: intellij.platform.jewel.ideLafBridge
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/jewel/ide-laf-bridge:ide-laf-bridge.jar'
+    module: intellij.platform.jewel.ideLafBridge
+    filter: unkeyed
+- name: lib/intellij.platform.jewel.markdown.core.jar
+  modules:
+  - name: intellij.platform.jewel.markdown.core
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/jewel/markdown/core:core.jar'
+    module: intellij.platform.jewel.markdown.core
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:platform-jewel-markdown-core-org-commonmark-commonmark'
+    filter: unkeyed
+- name: lib/intellij.platform.jewel.markdown.extensions.autolink.jar
+  modules:
+  - name: intellij.platform.jewel.markdown.extensions.autolink
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/jewel/markdown/extensions/autolink:autolink.jar'
+    module: intellij.platform.jewel.markdown.extensions.autolink
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:platform-jewel-markdown-extensions-autolink-commonmark-ext-autolink'
+    file: commonmark-ext-autolink-0.24.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:platform-jewel-markdown-extensions-autolink-commonmark-ext-autolink'
+    file: autolink-0.11.0.jar
+    filter: unkeyed
+- name: lib/intellij.platform.jewel.markdown.extensions.frontMatter.jar
+  modules:
+  - name: intellij.platform.jewel.markdown.extensions.frontMatter
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/jewel/markdown/extensions/front-matter:front-matter.jar'
+    module: intellij.platform.jewel.markdown.extensions.frontMatter
+    filter: unkeyed
+- name: lib/intellij.platform.jewel.markdown.extensions.gfmAlerts.jar
+  modules:
+  - name: intellij.platform.jewel.markdown.extensions.gfmAlerts
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/jewel/markdown/extensions/gfm-alerts:gfm-alerts.jar'
+    module: intellij.platform.jewel.markdown.extensions.gfmAlerts
+    filter: unkeyed
+- name: lib/intellij.platform.jewel.markdown.extensions.gfmStrikethrough.jar
+  modules:
+  - name: intellij.platform.jewel.markdown.extensions.gfmStrikethrough
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/jewel/markdown/extensions/gfm-strikethrough:gfm-strikethrough.jar'
+    module: intellij.platform.jewel.markdown.extensions.gfmStrikethrough
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:platform-jewel-markdown-extensions-gfm_strikethrough-commonmark-ext-gfm-strikethrough'
+    filter: unkeyed
+- name: lib/intellij.platform.jewel.markdown.extensions.gfmTables.jar
+  modules:
+  - name: intellij.platform.jewel.markdown.extensions.gfmTables
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/jewel/markdown/extensions/gfm-tables:gfm-tables.jar'
+    module: intellij.platform.jewel.markdown.extensions.gfmTables
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:platform-jewel-markdown-extensions-gfm_tables-commonmark-ext-gfm-tables'
+    filter: unkeyed
+- name: lib/intellij.platform.jewel.markdown.extensions.images.jar
+  modules:
+  - name: intellij.platform.jewel.markdown.extensions.images
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/jewel/markdown/extensions/images:images.jar'
+    module: intellij.platform.jewel.markdown.extensions.images
+    filter: unkeyed
+- name: lib/intellij.platform.jewel.markdown.ideLafBridgeStyling.jar
+  modules:
+  - name: intellij.platform.jewel.markdown.ideLafBridgeStyling
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/jewel/markdown/ide-laf-bridge-styling:ide-laf-bridge-styling.jar'
+    module: intellij.platform.jewel.markdown.ideLafBridgeStyling
+    filter: unkeyed
+- name: lib/intellij.platform.jewel.ui.jar
+  modules:
+  - name: intellij.platform.jewel.ui
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/jewel/ui:ui.jar'
+    module: intellij.platform.jewel.ui
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:platform-jewel-ui-org-jetbrains-compose-components-components-resources'
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop'
+    filter: unkeyed
+- name: lib/intellij.platform.kernel.backend.jar
+  modules:
+  - name: intellij.platform.kernel.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/kernel/backend:backend.jar'
+    module: intellij.platform.kernel.backend
+    filter: unkeyed
+- name: lib/intellij.platform.kernel.impl.jar
+  modules:
+  - name: intellij.platform.kernel.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/kernel/intellij.platform.kernel.impl:impl.jar'
+    module: intellij.platform.kernel.impl
+    filter: unkeyed
+- name: lib/intellij.platform.kernel.jar
+  modules:
+  - name: intellij.platform.kernel
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/kernel/shared:kernel.jar'
+    module: intellij.platform.kernel
+    filter: unkeyed
+- name: lib/intellij.platform.klogger.jar
+  modules:
+  - name: intellij.platform.klogger
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/kernel/klogger:klogger.jar'
+    module: intellij.platform.klogger
+    filter: unkeyed
+- name: lib/intellij.platform.lang.core.jar
+  modules:
+  - name: intellij.platform.lang.core
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/lang-core:lang-core.jar'
+    module: intellij.platform.lang.core
+    filter: unkeyed
+- name: lib/intellij.platform.lang.impl.backend.jar
+  modules:
+  - name: intellij.platform.lang.impl.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/lang-impl/backend:backend.jar'
+    module: intellij.platform.lang.impl.backend
+    filter: unkeyed
+- name: lib/intellij.platform.lang.impl.jar
+  modules:
+  - name: intellij.platform.lang.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/lang-impl:lang-impl.jar'
+    module: intellij.platform.lang.impl
+    filter: unkeyed
+- name: lib/intellij.platform.lang.jar
+  modules:
+  - name: intellij.platform.lang
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/lang-api:lang.jar'
+    module: intellij.platform.lang
+    filter: unkeyed
+- name: lib/intellij.platform.langInjection.backend.jar
+  modules:
+  - name: intellij.platform.langInjection.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//plugins/IntelliLang/backend:backend.jar'
+    module: intellij.platform.langInjection.backend
+    filter: unkeyed
+- name: lib/intellij.platform.langInjection.jar
+  modules:
+  - name: intellij.platform.langInjection
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//plugins/IntelliLang:langInjection.jar'
+    module: intellij.platform.langInjection
+    filter: unkeyed
+- name: lib/intellij.platform.locking.impl.jar
+  modules:
+  - name: intellij.platform.locking.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/locking-impl:locking-impl.jar'
+    module: intellij.platform.locking.impl
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:jetbrains-intellij-deps-rwmutex-idea'
+    filter: unkeyed
+- name: lib/intellij.platform.lsp.impl.jar
+  modules:
+  - name: intellij.platform.lsp.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/lsp-impl:lsp-impl.jar'
+    module: intellij.platform.lsp.impl
+    filter: unkeyed
+- name: lib/intellij.platform.lsp.impl.structureView.jar
+  modules:
+  - name: intellij.platform.lsp.impl.structureView
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/lsp-impl/structureView:structureView.jar'
+    module: intellij.platform.lsp.impl.structureView
+    filter: unkeyed
+- name: lib/intellij.platform.lsp.jar
+  modules:
+  - name: intellij.platform.lsp
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/lsp:lsp.jar'
+    module: intellij.platform.lsp
+    filter: unkeyed
+- name: lib/intellij.platform.lvcs.impl.jar
+  modules:
+  - name: intellij.platform.lvcs.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/lvcs-impl:lvcs-impl.jar'
+    module: intellij.platform.lvcs.impl
+    filter: unkeyed
+- name: lib/intellij.platform.lvcs.jar
+  modules:
+  - name: intellij.platform.lvcs
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/lvcs-api:lvcs.jar'
+    module: intellij.platform.lvcs
+    filter: unkeyed
+- name: lib/intellij.platform.macro.jar
+  modules:
+  - name: intellij.platform.macro
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/macro:macro.jar'
+    module: intellij.platform.macro
+    filter: unkeyed
+- name: lib/intellij.platform.managed.cache.backend.jar
+  modules:
+  - name: intellij.platform.managed.cache.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/managed-cache/managed.cache.backend:managed.cache.backend.jar'
+    module: intellij.platform.managed.cache.backend
+    filter: unkeyed
+- name: lib/intellij.platform.managed.cache.jar
+  modules:
+  - name: intellij.platform.managed.cache
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/managed-cache/managed.cache:managed.cache.jar'
+    module: intellij.platform.managed.cache
+    filter: unkeyed
+- name: lib/intellij.platform.markdown.utils.jar
+  modules:
+  - name: intellij.platform.markdown.utils
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/markdown-utils:markdown-utils.jar'
+    module: intellij.platform.markdown.utils
+    filter: unkeyed
+- name: lib/intellij.platform.ml.impl.jar
+  modules:
+  - name: intellij.platform.ml.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/ml-impl:ml-impl.jar'
+    module: intellij.platform.ml.impl
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:ngram-slp'
+    filter: unkeyed
+- name: lib/intellij.platform.ml.jar
+  modules:
+  - name: intellij.platform.ml
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/ml-api:ml.jar'
+    module: intellij.platform.ml
+    filter: unkeyed
+- name: lib/intellij.platform.monolith.jar
+  modules:
+  - name: intellij.platform.monolith
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/monolith:monolith.jar'
+    module: intellij.platform.monolith
+    filter: unkeyed
+- name: lib/intellij.platform.objectSerializer.jar
+  modules:
+  - name: intellij.platform.objectSerializer
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/object-serializer:object-serializer.jar'
+    module: intellij.platform.objectSerializer
+    filter: unkeyed
+- name: lib/intellij.platform.pasta.jar
+  modules:
+  - name: intellij.platform.pasta
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/kernel/pasta:pasta.jar'
+    module: intellij.platform.pasta
+    filter: unkeyed
+- name: lib/intellij.platform.pluginManager.backend.jar
+  modules:
+  - name: intellij.platform.pluginManager.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/pluginManager/backend:backend.jar'
+    module: intellij.platform.pluginManager.backend
+    filter: unkeyed
+- name: lib/intellij.platform.pluginManager.frontend.jar
+  modules:
+  - name: intellij.platform.pluginManager.frontend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/pluginManager/frontend:frontend.jar'
+    module: intellij.platform.pluginManager.frontend
+    filter: unkeyed
+- name: lib/intellij.platform.pluginManager.shared.base.jar
+  modules:
+  - name: intellij.platform.pluginManager.shared.base
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/pluginManager/shared.base:shared.base.jar'
+    module: intellij.platform.pluginManager.shared.base
+    filter: unkeyed
+- name: lib/intellij.platform.pluginManager.shared.jar
+  modules:
+  - name: intellij.platform.pluginManager.shared
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/pluginManager/shared:shared.jar'
+    module: intellij.platform.pluginManager.shared
+    filter: unkeyed
+- name: lib/intellij.platform.pluginSystem.parser.impl.jar
+  modules:
+  - name: intellij.platform.pluginSystem.parser.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/pluginSystem/parser/impl:impl.jar'
+    module: intellij.platform.pluginSystem.parser.impl
+    filter: unkeyed
+- name: lib/intellij.platform.polySymbols.backend.jar
+  modules:
+  - name: intellij.platform.polySymbols.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/polySymbols/backend:backend.jar'
+    module: intellij.platform.polySymbols.backend
+    filter: unkeyed
+- name: lib/intellij.platform.polySymbols.jar
+  modules:
+  - name: intellij.platform.polySymbols
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/polySymbols:polySymbols.jar'
+    module: intellij.platform.polySymbols
+    filter: unkeyed
+- name: lib/intellij.platform.polySymbols.web.jar
+  modules:
+  - name: intellij.platform.polySymbols.web
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/polySymbols-web:polySymbols-web.jar'
+    module: intellij.platform.polySymbols.web
+    filter: unkeyed
+- name: lib/intellij.platform.pratt.jar
+  modules:
+  - name: intellij.platform.pratt
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/pratt:pratt.jar'
+    module: intellij.platform.pratt
+    filter: unkeyed
+- name: lib/intellij.platform.progress.backend.jar
+  modules:
+  - name: intellij.platform.progress.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/progress/backend:backend.jar'
+    module: intellij.platform.progress.backend
+    filter: unkeyed
+- name: lib/intellij.platform.project.backend.jar
+  modules:
+  - name: intellij.platform.project.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/project/backend:backend.jar'
+    module: intellij.platform.project.backend
+    filter: unkeyed
+- name: lib/intellij.platform.project.jar
+  modules:
+  - name: intellij.platform.project
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/project/shared:project.jar'
+    module: intellij.platform.project
+    filter: unkeyed
+- name: lib/intellij.platform.projectFrame.jar
+  modules:
+  - name: intellij.platform.projectFrame
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/project-frame:project-frame.jar'
+    module: intellij.platform.projectFrame
+    filter: unkeyed
+- name: lib/intellij.platform.projectModel.impl.jar
+  modules:
+  - name: intellij.platform.projectModel.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/projectModel-impl:projectModel-impl.jar'
+    module: intellij.platform.projectModel.impl
+    filter: unkeyed
+- name: lib/intellij.platform.projectModel.jar
+  modules:
+  - name: intellij.platform.projectModel
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/projectModel-api:projectModel.jar'
+    module: intellij.platform.projectModel
+    filter: unkeyed
+- name: lib/intellij.platform.projectView.backend.jar
+  modules:
+  - name: intellij.platform.projectView.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/projectView/backend:backend.jar'
+    module: intellij.platform.projectView.backend
+    filter: unkeyed
+- name: lib/intellij.platform.projectView.frontend.jar
+  modules:
+  - name: intellij.platform.projectView.frontend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/projectView/frontend:frontend.jar'
+    module: intellij.platform.projectView.frontend
+    filter: unkeyed
+- name: lib/intellij.platform.projectView.jar
+  modules:
+  - name: intellij.platform.projectView
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/projectView/shared:projectView.jar'
+    module: intellij.platform.projectView
+    filter: unkeyed
+- name: lib/intellij.platform.rd.community.jar
+  modules:
+  - name: intellij.platform.rd.community
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/rd-platform-community:rd-community.jar'
+    module: intellij.platform.rd.community
+    filter: unkeyed
+- name: lib/intellij.platform.refactoring.jar
+  modules:
+  - name: intellij.platform.refactoring
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/refactoring:refactoring.jar'
+    module: intellij.platform.refactoring
+    filter: unkeyed
+- name: lib/intellij.platform.registry.cloud.jar
+  modules:
+  - name: intellij.platform.registry.cloud
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/cloud-registry:registry-cloud.jar'
+    module: intellij.platform.registry.cloud
+    filter: unkeyed
+- name: lib/intellij.platform.remote.core.jar
+  modules:
+  - name: intellij.platform.remote.core
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/remote-core:remote-core.jar'
+    module: intellij.platform.remote.core
+    filter: unkeyed
+- name: lib/intellij.platform.remoteServers.agent.rt.jar
+  modules:
+  - name: intellij.platform.remoteServers.agent.rt
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/remote-servers/agent-rt:remoteServers-agent-rt.jar'
+    module: intellij.platform.remoteServers.agent.rt
+    filter: unkeyed
+- name: lib/intellij.platform.remoteServers.impl.jar
+  modules:
+  - name: intellij.platform.remoteServers.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/remote-servers/impl:impl.jar'
+    module: intellij.platform.remoteServers.impl
+    filter: unkeyed
+- name: lib/intellij.platform.remoteServers.jar
+  modules:
+  - name: intellij.platform.remoteServers
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/remote-servers/api:remoteServers.jar'
+    module: intellij.platform.remoteServers
+    filter: unkeyed
+- name: lib/intellij.platform.resources.applicationInfo.jar
+  modules:
+  - name: intellij.platform.resources.applicationInfo
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-resources-application-info:resources-applicationInfo.jar'
+    module: intellij.platform.resources.applicationInfo
+    filter: unkeyed
+- name: lib/intellij.platform.resources.en.fileTemplates.jar
+  modules:
+  - name: intellij.platform.resources.en.fileTemplates
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-resources-en-file-templates:resources-en-fileTemplates.jar'
+    module: intellij.platform.resources.en.fileTemplates
+    filter: unkeyed
+- name: lib/intellij.platform.resources.en.jar
+  modules:
+  - name: intellij.platform.resources.en
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-resources-en:resources-en.jar'
+    module: intellij.platform.resources.en
+    filter: unkeyed
+- name: lib/intellij.platform.resources.fileTypes.jar
+  modules:
+  - name: intellij.platform.resources.fileTypes
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-resources-file-types:resources-fileTypes.jar'
+    module: intellij.platform.resources.fileTypes
+    filter: unkeyed
+- name: lib/intellij.platform.resources.jar
+  modules:
+  - name: intellij.platform.resources
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-resources:resources.jar'
+    module: intellij.platform.resources
+    filter: unkeyed
+- name: lib/intellij.platform.rpc.backend.jar
+  modules:
+  - name: intellij.platform.rpc.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/kernel/rpc.backend:rpc.backend.jar'
+    module: intellij.platform.rpc.backend
+    filter: unkeyed
+- name: lib/intellij.platform.rpc.jar
+  modules:
+  - name: intellij.platform.rpc
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/kernel/rpc:rpc.jar'
+    module: intellij.platform.rpc
+    filter: unkeyed
+- name: lib/intellij.platform.rpc.lite.jar
+  modules:
+  - name: intellij.platform.rpc.lite
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/kernel/rpc.lite:rpc.lite.jar'
+    module: intellij.platform.rpc.lite
+    filter: unkeyed
+- name: lib/intellij.platform.rpc.topics.backend.jar
+  modules:
+  - name: intellij.platform.rpc.topics.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/remote-topics/backend:backend.jar'
+    module: intellij.platform.rpc.topics.backend
+    filter: unkeyed
+- name: lib/intellij.platform.rpc.topics.frontend.jar
+  modules:
+  - name: intellij.platform.rpc.topics.frontend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/remote-topics/frontend:frontend.jar'
+    module: intellij.platform.rpc.topics.frontend
+    filter: unkeyed
+- name: lib/intellij.platform.rpc.topics.jar
+  modules:
+  - name: intellij.platform.rpc.topics
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/remote-topics/shared:rpc-topics.jar'
+    module: intellij.platform.rpc.topics
+    filter: unkeyed
+- name: lib/intellij.platform.runtime.product.jar
+  modules:
+  - name: intellij.platform.runtime.product
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/runtime/product:product.jar'
+    module: intellij.platform.runtime.product
+    filter: unkeyed
+- name: lib/intellij.platform.scopes.backend.jar
+  modules:
+  - name: intellij.platform.scopes.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/scopes/backend:backend.jar'
+    module: intellij.platform.scopes.backend
+    filter: unkeyed
+- name: lib/intellij.platform.scopes.jar
+  modules:
+  - name: intellij.platform.scopes
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/scopes:scopes.jar'
+    module: intellij.platform.scopes
+    filter: unkeyed
+- name: lib/intellij.platform.scriptDebugger.backend.jar
+  modules:
+  - name: intellij.platform.scriptDebugger.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/script-debugger/backend:backend.jar'
+    module: intellij.platform.scriptDebugger.backend
+    filter: unkeyed
+- name: lib/intellij.platform.scriptDebugger.protocolReaderRuntime.jar
+  modules:
+  - name: intellij.platform.scriptDebugger.protocolReaderRuntime
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/script-debugger/protocol/protocol-reader-runtime:protocol-reader-runtime.jar'
+    module: intellij.platform.scriptDebugger.protocolReaderRuntime
+    filter: unkeyed
+- name: lib/intellij.platform.scriptDebugger.ui.jar
+  modules:
+  - name: intellij.platform.scriptDebugger.ui
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/script-debugger/debugger-ui:scriptDebugger-ui.jar'
+    module: intellij.platform.scriptDebugger.ui
+    filter: unkeyed
+- name: lib/intellij.platform.searchEverywhere.backend.jar
+  modules:
+  - name: intellij.platform.searchEverywhere.backend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/searchEverywhere/backend:backend.jar'
+    module: intellij.platform.searchEverywhere.backend
+    filter: unkeyed
+- name: lib/intellij.platform.searchEverywhere.frontend.jar
+  modules:
+  - name: intellij.platform.searchEverywhere.frontend
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/searchEverywhere/frontend:frontend.jar'
+    module: intellij.platform.searchEverywhere.frontend
+    filter: unkeyed
+- name: lib/intellij.platform.searchEverywhere.jar
+  modules:
+  - name: intellij.platform.searchEverywhere
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/searchEverywhere/shared:searchEverywhere.jar'
+    module: intellij.platform.searchEverywhere
+    filter: unkeyed
+- name: lib/intellij.platform.serviceContainer.jar
+  modules:
+  - name: intellij.platform.serviceContainer
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/service-container:service-container.jar'
+    module: intellij.platform.serviceContainer
+    filter: unkeyed
+- name: lib/intellij.platform.settings.jar
+  modules:
+  - name: intellij.platform.settings
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/settings:settings.jar'
+    module: intellij.platform.settings
+    filter: unkeyed
+- name: lib/intellij.platform.settings.local.jar
+  modules:
+  - name: intellij.platform.settings.local
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/settings-local:settings-local.jar'
+    module: intellij.platform.settings.local
+    filter: unkeyed
+- name: lib/intellij.platform.split.protocol.jar
+  modules:
+  - name: intellij.platform.split.protocol
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//remote-dev/cwm-model-generated:split-protocol.jar'
+    module: intellij.platform.split.protocol
+    filter: unkeyed
+- name: lib/intellij.platform.statistics.config.jar
+  modules:
+  - name: intellij.platform.statistics.config
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/statistics/config:config.jar'
+    module: intellij.platform.statistics.config
+    filter: unkeyed
+- name: lib/intellij.platform.statistics.jar
+  modules:
+  - name: intellij.platform.statistics
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/statistics:statistics.jar'
+    module: intellij.platform.statistics
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:com-jetbrains-fus-reporting-fus-api'
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:jetbrains-fus-reporting-api-jvm'
+    filter: unkeyed
+- name: lib/intellij.platform.statistics.uploader.jar
+  modules:
+  - name: intellij.platform.statistics.uploader
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/statistics/uploader:uploader.jar'
+    module: intellij.platform.statistics.uploader
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:com-jetbrains-fus-reporting-fus-api'
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:jetbrains-fus-reporting-api-jvm'
+    filter: unkeyed
+- name: lib/intellij.platform.syntax.extensions.jar
+  modules:
+  - name: intellij.platform.syntax.extensions
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/syntax/syntax-extensions:extensions.jar'
+    module: intellij.platform.syntax.extensions
+    filter: unkeyed
+- name: lib/intellij.platform.syntax.i18n.jar
+  modules:
+  - name: intellij.platform.syntax.i18n
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/syntax/syntax-i18n:i18n.jar'
+    module: intellij.platform.syntax.i18n
+    filter: unkeyed
+- name: lib/intellij.platform.syntax.jar
+  modules:
+  - name: intellij.platform.syntax
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/syntax/syntax-api:syntax.jar'
+    module: intellij.platform.syntax
+    filter: unkeyed
+- name: lib/intellij.platform.syntax.psi.jar
+  modules:
+  - name: intellij.platform.syntax.psi
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/syntax/syntax-psi:psi.jar'
+    module: intellij.platform.syntax.psi
+    filter: unkeyed
+- name: lib/intellij.platform.syntax.tree.jar
+  modules:
+  - name: intellij.platform.syntax.tree
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/syntax/syntax-tree:tree.jar'
+    module: intellij.platform.syntax.tree
+    filter: unkeyed
+- name: lib/intellij.platform.syntax.util.jar
+  modules:
+  - name: intellij.platform.syntax.util
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/syntax/syntax-util:util.jar'
+    module: intellij.platform.syntax.util
+    filter: unkeyed
+- name: lib/intellij.platform.testIntegration.jar
+  modules:
+  - name: intellij.platform.testIntegration
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/testIntegration:testIntegration.jar'
+    module: intellij.platform.testIntegration
+    filter: unkeyed
+- name: lib/intellij.platform.testIntegration.ui.jar
+  modules:
+  - name: intellij.platform.testIntegration.ui
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/testIntegration-ui:testIntegration-ui.jar'
+    module: intellij.platform.testIntegration.ui
+    filter: unkeyed
+- name: lib/intellij.platform.threadDumpParser.jar
+  modules:
+  - name: intellij.platform.threadDumpParser
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/threadDumpParser:threadDumpParser.jar'
+    module: intellij.platform.threadDumpParser
+    filter: unkeyed
+- name: lib/intellij.platform.trace.consent.jar
+  modules:
+  - name: intellij.platform.trace.consent
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/trace-consent:trace-consent.jar'
+    module: intellij.platform.trace.consent
+    filter: unkeyed
+  - kind: zip
+    label: '@@ultimate_lib+//:jetbrains-jcp-trace-consent-storage-client'
+    file: jcp-trace-consent-storage-client-1.3.0.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@ultimate_lib+//:jetbrains-jcp-trace-consent-storage-client'
+    file: jcp-sdk-http-client-runtime-jvm-9.1.3.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@ultimate_lib+//:jetbrains-jcp-trace-consent-storage-client'
+    file: jcp-sdk-http-shared-runtime-jvm-9.1.3.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@ultimate_lib+//:jetbrains-jcp-trace-consent-storage-client'
+    file: kotlin-logging-jvm-7.0.14.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@ultimate_lib+//:jetbrains-jcp-trace-consent-storage-client'
+    file: jcp-sdk-json-jvm-9.1.3.jar
+    filter: unkeyed
+- name: lib/intellij.platform.trialPromotion.common.jar
+  modules:
+  - name: intellij.platform.trialPromotion.common
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/trialPromotion/common:common.jar'
+    module: intellij.platform.trialPromotion.common
+    filter: unkeyed
+- name: lib/intellij.platform.trialPromotion.idesWithFreeTier.jar
+  modules:
+  - name: intellij.platform.trialPromotion.idesWithFreeTier
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/trialPromotion/idesWithFreeTier:idesWithFreeTier.jar'
+    module: intellij.platform.trialPromotion.idesWithFreeTier
+    filter: unkeyed
+- name: lib/intellij.platform.trialPromotion.idesWithFreeTier.jcef.jar
+  modules:
+  - name: intellij.platform.trialPromotion.idesWithFreeTier.jcef
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/trialPromotion/idesWithFreeTier/jcef:jcef.jar'
+    module: intellij.platform.trialPromotion.idesWithFreeTier.jcef
+    filter: unkeyed
+- name: lib/intellij.platform.usageView.impl.jar
+  modules:
+  - name: intellij.platform.usageView.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/usageView-impl:usageView-impl.jar'
+    module: intellij.platform.usageView.impl
+    filter: unkeyed
+- name: lib/intellij.platform.usageView.jar
+  modules:
+  - name: intellij.platform.usageView
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/usageView:usageView.jar'
+    module: intellij.platform.usageView
+    filter: unkeyed
+- name: lib/intellij.platform.util.annotations.jar
+  modules:
+  - name: intellij.platform.util.annotations
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/util/annotations:annotations.jar'
+    module: intellij.platform.util.annotations
+    filter: unkeyed
+- name: lib/intellij.platform.util.commonsLangV2Shim.jar
+  modules:
+  - name: intellij.platform.util.commonsLangV2Shim
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/util/commons-lang-v2-shim:commons-lang-v2-shim.jar'
+    module: intellij.platform.util.commonsLangV2Shim
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:platform-util-commons_lang_v2_shim-commons-collections'
+    filter: unkeyed
+- name: lib/intellij.platform.util.coroutines.jar
+  modules:
+  - name: intellij.platform.util.coroutines
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/util/coroutines:coroutines.jar'
+    module: intellij.platform.util.coroutines
+    filter: unkeyed
+- name: lib/intellij.platform.util.diff.jar
+  modules:
+  - name: intellij.platform.util.diff
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/util/diff:diff.jar'
+    module: intellij.platform.util.diff
+    filter: unkeyed
+- name: lib/intellij.platform.util.ex.jar
+  modules:
+  - name: intellij.platform.util.ex
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/util-ex:util-ex.jar'
+    module: intellij.platform.util.ex
+    filter: unkeyed
+- name: lib/intellij.platform.util.http.jar
+  modules:
+  - name: intellij.platform.util.http
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/util/http:http.jar'
+    module: intellij.platform.util.http
+    filter: unkeyed
+- name: lib/intellij.platform.util.io.storages.jar
+  modules:
+  - name: intellij.platform.util.io.storages
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/util/storages:storages.jar'
+    module: intellij.platform.util.io.storages
+    filter: unkeyed
+- name: lib/intellij.platform.util.progress.jar
+  modules:
+  - name: intellij.platform.util.progress
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/util/progress:progress.jar'
+    module: intellij.platform.util.progress
+    filter: unkeyed
+- name: lib/intellij.platform.util.text.matching.jar
+  modules:
+  - name: intellij.platform.util.text.matching
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/util/text-matching:text-matching.jar'
+    module: intellij.platform.util.text.matching
+    filter: unkeyed
+- name: lib/intellij.platform.util.ui.jar
+  modules:
+  - name: intellij.platform.util.ui
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/util:util-ui.jar'
+    module: intellij.platform.util.ui
+    filter: unkeyed
+- name: lib/intellij.platform.vcs.core.jar
+  modules:
+  - name: intellij.platform.vcs.core
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/vcs-api/vcs-api-core:vcs-core.jar'
+    module: intellij.platform.vcs.core
+    filter: unkeyed
+- name: lib/intellij.platform.vcs.dvcs.impl.shared.jar
+  modules:
+  - name: intellij.platform.vcs.dvcs.impl.shared
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/dvcs-impl/shared:shared.jar'
+    module: intellij.platform.vcs.dvcs.impl.shared
+    filter: unkeyed
+- name: lib/intellij.platform.vcs.impl.shared.jar
+  modules:
+  - name: intellij.platform.vcs.impl.shared
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/vcs-impl/shared:shared.jar'
+    module: intellij.platform.vcs.impl.shared
+    filter: unkeyed
+- name: lib/intellij.platform.vcs.shared.jar
+  modules:
+  - name: intellij.platform.vcs.shared
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/vcs-api/shared:shared.jar'
+    module: intellij.platform.vcs.shared
+    filter: unkeyed
+- name: lib/intellij.platform.warmup.jar
+  modules:
+  - name: intellij.platform.warmup
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/warmup:warmup.jar'
+    module: intellij.platform.warmup
+    filter: unkeyed
+- name: lib/intellij.platform.webide.impl.jar
+  modules:
+  - name: intellij.platform.webide.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//webcore/impl:impl.jar'
+    module: intellij.platform.webide.impl
+    filter: unkeyed
+- name: lib/intellij.platform.webide.jar
+  modules:
+  - name: intellij.platform.webide
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//webcore:webide.jar'
+    module: intellij.platform.webide
+    filter: unkeyed
+- name: lib/intellij.platform.welcomeScreen.impl.jar
+  modules:
+  - name: intellij.platform.welcomeScreen.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/welcome-screen-impl:welcomeScreen-impl.jar'
+    module: intellij.platform.welcomeScreen.impl
+    filter: unkeyed
+- name: lib/intellij.platform.welcomeScreen.jar
+  modules:
+  - name: intellij.platform.welcomeScreen
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/welcome-screen:welcome-screen.jar'
+    module: intellij.platform.welcomeScreen
+    filter: unkeyed
+- name: lib/intellij.platform.workspace.jps.jar
+  modules:
+  - name: intellij.platform.workspace.jps
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/workspace/jps:jps.jar'
+    module: intellij.platform.workspace.jps
+    filter: unkeyed
+- name: lib/intellij.platform.workspace.storage.jar
+  modules:
+  - name: intellij.platform.workspace.storage
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/workspace/storage:storage.jar'
+    module: intellij.platform.workspace.storage
+    filter: unkeyed
+- name: lib/intellij.platform.wsl.impl.jar
+  modules:
+  - name: intellij.platform.wsl.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/wsl-impl:wsl-impl.jar'
+    module: intellij.platform.wsl.impl
+    filter: unkeyed
+- name: lib/intellij.profiler.common.jar
+  modules:
+  - name: intellij.profiler.common
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//plugins/profiler/common:common.jar'
+    module: intellij.profiler.common
+    filter: unkeyed
+- name: lib/intellij.profiler.ultimate.ideaAsyncProfiler.jar
+  modules:
+  - name: intellij.profiler.ultimate.ideaAsyncProfiler
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//plugins/profiler/ultimate/idea-async-profiler:idea-async-profiler.jar'
+    module: intellij.profiler.ultimate.ideaAsyncProfiler
+    filter: unkeyed
+- name: lib/intellij.rd.client.base.jar
+  modules:
+  - name: intellij.rd.client.base
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//remote-dev/rd-client/base:base.jar'
+    module: intellij.rd.client.base
+    filter: unkeyed
+- name: lib/intellij.rd.client.debugger.jar
+  modules:
+  - name: intellij.rd.client.debugger
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//remote-dev/rd-client/debugger:debugger.jar'
+    module: intellij.rd.client.debugger
+    filter: unkeyed
+- name: lib/intellij.rd.client.internal.jar
+  modules:
+  - name: intellij.rd.client.internal
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//remote-dev/rd-client/rd.client.internal:rd.client.internal.jar'
+    module: intellij.rd.client.internal
+    filter: unkeyed
+- name: lib/intellij.rd.client.jar
+  modules:
+  - name: intellij.rd.client
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//remote-dev/rd-client:rd-client.jar'
+    module: intellij.rd.client
+    filter: unkeyed
+- name: lib/intellij.rd.ide.model.generated.jar
+  modules:
+  - name: intellij.rd.ide.model.generated
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//remote-dev/rd-ide-model-generated:rd-ide-model-generated.jar'
+    module: intellij.rd.ide.model.generated
+    filter: unkeyed
+- name: lib/intellij.rd.platform.jar
+  modules:
+  - name: intellij.rd.platform
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//remote-dev/rd-platform:rd-platform.jar'
+    module: intellij.rd.platform
+    filter: unkeyed
+- name: lib/intellij.rd.ui.jar
+  modules:
+  - name: intellij.rd.ui
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//remote-dev/rd-ui:rd-ui.jar'
+    module: intellij.rd.ui
+    filter: unkeyed
+- name: lib/intellij.regexp.jar
+  modules:
+  - name: intellij.regexp
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//RegExpSupport:regexp.jar'
+    module: intellij.regexp
+    filter: unkeyed
+- name: lib/intellij.remoteDev.util.jar
+  modules:
+  - name: intellij.remoteDev.util
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/remoteDev-util:remoteDev-util.jar'
+    module: intellij.remoteDev.util
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:rd-gen'
+    filter: unkeyed
+- name: lib/intellij.rml.dfa.impl.jar
+  modules:
+  - name: intellij.rml.dfa.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//CIDR/rml-dfa/impl:impl.jar'
+    module: intellij.rml.dfa.impl
+    filter: unkeyed
+- name: lib/intellij.rml.dfa.jar
+  modules:
+  - name: intellij.rml.dfa
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//CIDR/rml-dfa:rml-dfa.jar'
+    module: intellij.rml.dfa
+    filter: unkeyed
+- name: lib/intellij.settingsSync.core.jar
+  modules:
+  - name: intellij.settingsSync.core
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/settings-sync-core:settingsSync-core.jar'
+    module: intellij.settingsSync.core
+    filter: unkeyed
+- name: lib/intellij.spellchecker.jar
+  modules:
+  - name: intellij.spellchecker
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//spellchecker:spellchecker.jar'
+    module: intellij.spellchecker
+    filter: unkeyed
+- name: lib/intellij.spellchecker.vcs.jar
+  modules:
+  - name: intellij.spellchecker.vcs
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//spellchecker/vcs:vcs.jar'
+    module: intellij.spellchecker.vcs
+    filter: unkeyed
+- name: lib/intellij.spellchecker.xml.jar
+  modules:
+  - name: intellij.spellchecker.xml
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//spellchecker/xml:xml.jar'
+    module: intellij.spellchecker.xml
+    filter: unkeyed
+- name: lib/intellij.xml.duplicates.analysis.jar
+  modules:
+  - name: intellij.xml.duplicates.analysis
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/duplicates-xml-analysis:xml-duplicates-analysis.jar'
+    module: intellij.xml.duplicates.analysis
+    filter: unkeyed
+- name: lib/intellij.xml.duplicates.jar
+  modules:
+  - name: intellij.xml.duplicates
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/duplicates-xml:xml-duplicates.jar'
+    module: intellij.xml.duplicates
+    filter: unkeyed
+- name: lib/intellij.xml.duplicatesDetection.jar
+  modules:
+  - name: intellij.xml.duplicatesDetection
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@//platform/duplicates-detection-xml:xml-duplicatesDetection.jar'
+    module: intellij.xml.duplicatesDetection
+    filter: unkeyed
+- name: lib/intellij.xml.xmlbeans.jar
+  modules:
+  - name: intellij.xml.xmlbeans
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//xml/xmlbeans:xmlbeans.jar'
+    module: intellij.xml.xmlbeans
+    filter: unkeyed
+- name: lib/jetbrains.intellij.deps.java.atk.wrapper.linux.jar
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@lib+//:jetbrains-intellij-deps-java-atk-wrapper-linux'
+    filter: unkeyed
+- name: lib/jps-model.jar
+  modules:
+  - name: intellij.platform.jps.model
+  - name: intellij.platform.jps.model.serialization
+  - name: intellij.platform.jps.model.impl
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//jps/model-api:model.jar'
+    module: intellij.platform.jps.model
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//jps/model-serialization:model-serialization.jar'
+    module: intellij.platform.jps.model.serialization
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//jps/model-impl:model-impl.jar'
+    module: intellij.platform.jps.model.impl
+    filter: unkeyed
+- name: lib/nio-fs.jar
+  modules:
+  - name: intellij.platform.core.nio.fs
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/core-nio-fs:core-nio-fs.jar'
+    module: intellij.platform.core.nio.fs
+    filter: unkeyed
+- name: lib/platform-loader.jar
+  modules:
+  - name: intellij.platform.util.rt.java8
+  - name: intellij.platform.util.classLoader
+  - name: intellij.platform.util.zip
+  - name: intellij.platform.boot
+  - name: intellij.platform.runtime.repository
+  - name: intellij.platform.runtime.loader
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/util/rt-java8:rt-java8.jar'
+    module: intellij.platform.util.rt.java8
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/util-class-loader:util-classLoader.jar'
+    module: intellij.platform.util.classLoader
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/util/zip:zip.jar'
+    module: intellij.platform.util.zip
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/boot:boot.jar'
+    module: intellij.platform.boot
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/runtime/repository:repository.jar'
+    module: intellij.platform.runtime.repository
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/runtime/loader:loader.jar'
+    module: intellij.platform.runtime.loader
+    filter: unkeyed
+- name: lib/product-backend.jar
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@ultimate_lib+//:y_files'
+    file: y.jar
+    filter: unkeyed
+  - kind: zip
+    label: '@@ultimate_lib+//:y_files'
+    file: ysvg.jar
+    filter: unkeyed
+- name: lib/swingx.jar
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@lib+//:libraries-swingx-swingx'
+    filter: unkeyed
+- name: lib/trove.jar
+  modules:
+  - name: intellij.platform.util.trove
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/util/trove:trove.jar'
+    module: intellij.platform.util.trove
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:platform-util-trove-trove'
+    filter: unkeyed
+- name: lib/util-8.jar
+  modules:
+  - name: intellij.platform.util.jdom
+  - name: intellij.platform.util.xmlDom
+  - name: intellij.platform.tracing.rt
+  - name: intellij.platform.util.base
+  - name: intellij.platform.util.base.multiplatform
+  - name: intellij.platform.diagnostic
+  - name: intellij.platform.diagnostic.telemetry.rt
+  - name: intellij.platform.util
+  - name: intellij.platform.util.multiplatform
+  - name: intellij.platform.bootstrap.coroutine
+  - name: intellij.platform.eel
+  - name: intellij.platform.eel.nioFs
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/util/jdom:jdom.jar'
+    module: intellij.platform.util.jdom
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/util/xmlDom:xmlDom.jar'
+    module: intellij.platform.util.xmlDom
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/tracing:tracing-rt.jar'
+    module: intellij.platform.tracing.rt
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/util/base:base.jar'
+    module: intellij.platform.util.base
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/util/base/multiplatform:multiplatform.jar'
+    module: intellij.platform.util.base.multiplatform
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/diagnostic:diagnostic.jar'
+    module: intellij.platform.diagnostic
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/diagnostic/telemetry/rt:rt.jar'
+    module: intellij.platform.diagnostic.telemetry.rt
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/util:util.jar'
+    module: intellij.platform.util
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/util/multiplatform:multiplatform.jar'
+    module: intellij.platform.util.multiplatform
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/bootstrap/coroutine:coroutine.jar'
+    module: intellij.platform.bootstrap.coroutine
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/eel:eel.jar'
+    module: intellij.platform.eel
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/eel-nioFs:eel-nioFs.jar'
+    module: intellij.platform.eel.nioFs
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:log4_j'
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:kotlin-stdlib'
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:slf4j-api'
+    filter: unkeyed
+  - kind: zip
+    label: '@@lib+//:slf4j-jdk14'
+    filter: unkeyed
+- name: lib/util.jar
+  modules:
+  - name: intellij.platform.ide.util.io
+  - name: intellij.platform.extensions
+  - name: intellij.platform.util.nanoxml
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/platform-util-io:ide-util-io.jar'
+    module: intellij.platform.ide.util.io
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/extensions:extensions.jar'
+    module: intellij.platform.extensions
+    filter: unkeyed
+  - kind: zip
+    label: '@@community+//platform/util/nanoxml:nanoxml.jar'
+    module: intellij.platform.util.nanoxml
+    filter: unkeyed
+- name: lib/util_rt.jar
+  modules:
+  - name: intellij.platform.util.rt
+  kind: jar
+  sources:
+  - kind: zip
+    label: '@@community+//platform/util-rt:util-rt.jar'
+    module: intellij.platform.util.rt
+    filter: unkeyed

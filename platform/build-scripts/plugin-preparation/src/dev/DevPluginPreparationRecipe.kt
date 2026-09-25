@@ -16,7 +16,7 @@ private val preparationRecipeJson = Json { encodeDefaults = true }
 @ApiStatus.Internal
 const val DEV_PLUGIN_PREPARATION_FORMAT: Int = 2
 
-/** The `operations` of a plan file. The Go remainder packer executes every operation; no Kotlin action runs. */
+/** The `operations` of a plan file. The remainder packer executes every operation; no Kotlin action runs. */
 @ApiStatus.Internal
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
@@ -65,19 +65,19 @@ data class DevPluginPreparationOperation(
   )
 }
 
-/** The layout-assets transforms the Go remainder packer executes, with the plain copy of a `null` transform. */
+/** The layout-assets transforms the remainder packer executes, with the plain copy of a `null` transform. */
 @ApiStatus.Internal
 val GO_LAYOUT_TRANSFORMS: Set<String> = java.util.Set.of("archive-tree", "gzip-xml-archive", "tree-map")
 
 /**
- * The one statement of what the Go remainder packer executes from a plan file. A `module-filter` operation and a
+ * The one statement of what the remainder packer executes from a plan file. A `module-filter` operation and a
  * `layout-assets` operation in every layout format (`tree`, `entries`) with every transform in [GO_LAYOUT_TRANSFORMS]
- * are Go-executed. [devPluginPreparationOperationSignature] refuses every
+ * are packer-executed. [devPluginPreparationOperationSignature] refuses every
  * other operation, so a plan file never holds one. The chain of a complex plugin declares no preparation target, and
- * the Go packer reads the plan file directly.
+ * the packer reads the plan file directly.
  */
 @ApiStatus.Internal
-fun isGoExecutedOperation(operation: DevPluginPreparationOperation): Boolean {
+fun isPackerExecutedOperation(operation: DevPluginPreparationOperation): Boolean {
   if (operation.kind == "module-filter") return true
   if (operation.kind != "layout-assets") return false
   val layoutAssets = requireNotNull(operation.layoutAssets) { "A layout-assets operation requires layout assets" }
@@ -122,7 +122,7 @@ fun validateDevPluginLayoutAssetConsumers(operation: DevPluginPreparationOperati
 }
 
 private fun validatePreparationOperation(operation: DevPluginPreparationOperation, version: Int) {
-  require(isGoExecutedOperation(operation)) { "No Go operation executes '${operation.id}' of kind '${operation.kind}'" }
+  require(isPackerExecutedOperation(operation)) { "No packer operation executes '${operation.id}' of kind '${operation.kind}'" }
   require(operation.kind == "layout-assets" || operation.layoutAssets == null) { "Only a layout-assets operation may declare layout assets" }
   require(operation.manifest in setOf("keep", "drop", "coverage-agent", "rewrite-boot-class-path")) {
     "Unknown preparation manifest policy '${operation.manifest}'"

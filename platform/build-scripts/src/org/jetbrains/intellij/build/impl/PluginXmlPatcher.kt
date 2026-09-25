@@ -47,7 +47,7 @@ fun getCompatiblePlatformVersionRange(compatibleBuildRange: CompatibleBuildRange
 /**
  * Every fact [applyPluginDescriptorPatch] needs, as data.
  *
- * The assembly builds this request from the product layout. The Go patcher of `dev_dist_plugin_descriptor` is a port of
+ * The assembly builds this request from the product layout. The descriptor writer of `dev_dist_plugin_descriptor` is a port of
  * the same patch. It reads a generated plan, with no JPS project model and no product layout. So the type holds no
  * build context, no plugin layout and no platform layout, and the body cannot reach one through it.
  */
@@ -72,7 +72,7 @@ internal class PluginDescriptorPatchRequest(
 /**
  * Applies the descriptor patch and returns the text the plugin's main jar receives.
  *
- * This body has one caller, the assembly. The Go patcher of `dev_dist_plugin_descriptor` is a port of it and produces
+ * This body has one caller, the assembly. The descriptor writer of `dev_dist_plugin_descriptor` is a port of it and produces
  * the same text for the dev distribution.
  *
  * @param embedContentModules the content-module stage. It is not data: it runs over the element this body parsed, and

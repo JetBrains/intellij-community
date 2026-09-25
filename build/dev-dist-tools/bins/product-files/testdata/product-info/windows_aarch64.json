@@ -1,0 +1,51 @@
+{
+  "name": "IntelliJ IDEA",
+  "version": "2026.3",
+  "versionSuffix": "EAP",
+  "buildNumber": "263.SNAPSHOT",
+  "productCode": "IU",
+  "envVarBaseName": "IDEA",
+  "dataDirectoryName": "IntelliJIdea2026.3",
+  "svgIconPath": "bin/idea.svg",
+  "productVendor": "JetBrains",
+  "majorVersionReleaseDate": "20260101",
+  "minRequiredJavaVersion": 25,
+  "launch": [
+    {
+      "os": "Windows",
+      "arch": "aarch64",
+      "launcherPath": "bin/idea64.exe",
+      "javaExecutablePath": "jbr/bin/java.exe",
+      "vmOptionsFilePath": "bin/idea64.exe.vmoptions",
+      "bootClassPathJarNames": [
+        "platform-loader.jar"
+      ],
+      "additionalJvmArguments": [
+        "-Xbootclasspath/a:%IDE_HOME%\\lib\\nio-fs.jar",
+        "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
+        "-Didea.vendor.name=JetBrains",
+        "-Didea.paths.selector=IntelliJIdea2026.3",
+        "-Dio.netty.allocator.type=pooled",
+        "-Daether.connector.resumeDownloads=false",
+        "-Dcompose.swing.render.on.graphics=true",
+        "--enable-native-access=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED"
+      ],
+      "mainClass": "com.intellij.idea.Main",
+      "customCommands": [
+        {
+          "commands": [
+            "stdioMcpServer"
+          ],
+          "vmOptionsFilePath": "bin/mcp-server.vmoptions",
+          "bootClassPathJarNames": [
+            "platform-loader.jar",
+            "../plugins/mcpserver-plugin/lib/intellij.mcpserver.stdio.jar"
+          ],
+          "mainClass": "com.intellij.mcpserver.stdio.McpStdioRunnerKt"
+        }
+      ]
+    }
+  ]
+}

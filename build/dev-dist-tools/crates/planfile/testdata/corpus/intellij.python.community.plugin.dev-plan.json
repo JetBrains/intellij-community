@@ -1,0 +1,498 @@
+{
+    "version": 2,
+    "plugin": "intellij.python.community.plugin",
+    "variant": "",
+    "layoutSignature": "insmix68hnuoxrqnu938828l",
+    "assets": [
+        {
+            "module": "intellij.python.community.common"
+        },
+        {
+            "module": "intellij.python.parser"
+        },
+        {
+            "module": "intellij.python.ast"
+        },
+        {
+            "module": "intellij.python.syntax.core"
+        },
+        {
+            "module": "intellij.python.syntax"
+        },
+        {
+            "module": "intellij.python.processOutput.common"
+        },
+        {
+            "module": "intellij.python.processOutput.frontend"
+        },
+        {
+            "module": "intellij.python.community.plugin.frontend"
+        },
+        {
+            "module": "intellij.python.pytools.common"
+        },
+        {
+            "module": "intellij.python.pytools.backend"
+        },
+        {
+            "module": "intellij.python.pytools.frontend"
+        },
+        {
+            "module": "intellij.python.community.impl.conda.common"
+        },
+        {
+            "module": "intellij.python.community.impl.conda.frontend"
+        },
+        {
+            "module": "intellij.python.community.impl.pipenv.common"
+        },
+        {
+            "module": "intellij.python.community.impl.pipenv.frontend"
+        },
+        {
+            "module": "intellij.python.hatch.common"
+        },
+        {
+            "module": "intellij.python.hatch.frontend"
+        },
+        {
+            "module": "intellij.python.community.impl.poetry.frontend"
+        },
+        {
+            "module": "intellij.python.uv.frontend"
+        },
+        {
+            "module": "intellij.python.venv.common"
+        },
+        {
+            "module": "intellij.python.venv.frontend"
+        },
+        {
+            "module": "intellij.python.black.common"
+        },
+        {
+            "module": "intellij.python.black.frontend"
+        },
+        {
+            "module": "intellij.python.lsp.core.common"
+        },
+        {
+            "module": "intellij.python.lsp.core.frontend"
+        },
+        {
+            "module": "intellij.python.pyright.common"
+        },
+        {
+            "module": "intellij.python.pyright.frontend"
+        },
+        {
+            "module": "intellij.python.pyrefly.common"
+        },
+        {
+            "module": "intellij.python.pyrefly.frontend"
+        },
+        {
+            "module": "intellij.python.ruff.common"
+        },
+        {
+            "module": "intellij.python.ruff.frontend"
+        },
+        {
+            "module": "intellij.python.ty.common"
+        },
+        {
+            "module": "intellij.python.ty.frontend"
+        },
+        {
+            "module": "intellij.python.psi"
+        },
+        {
+            "module": "intellij.python.psi.impl"
+        },
+        {
+            "module": "intellij.python.sdk.common"
+        },
+        {
+            "module": "intellij.python.sdk.backend"
+        },
+        {
+            "module": "intellij.python.sdk.frontend"
+        },
+        {
+            "module": "intellij.python.pyproject"
+        },
+        {
+            "module": "intellij.python.sdkConfigurator.backend"
+        },
+        {
+            "module": "intellij.python.community.impl.poetry.common"
+        },
+        {
+            "module": "intellij.python.community.impl.poetry.backend"
+        },
+        {
+            "module": "intellij.python.uv.common"
+        },
+        {
+            "module": "intellij.python.uv.backend"
+        },
+        {
+            "module": "intellij.python.community.impl.pipenv"
+        },
+        {
+            "module": "intellij.python.community.impl.conda"
+        },
+        {
+            "module": "intellij.python.community.core.impl"
+        },
+        {
+            "module": "intellij.python.community.helpersLocator"
+        },
+        {
+            "module": "intellij.python.community"
+        },
+        {
+            "destination": "lib/modules/intellij.python.community.impl.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.python.community.impl",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:python-community-impl-ml-completion-prev-exprs-models",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:python-community-impl-completion-ranking-python-with-full-line",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.python.community.impl.jcef"
+        },
+        {
+            "module": "intellij.python.community.execService"
+        },
+        {
+            "module": "intellij.python.community.execService.python"
+        },
+        {
+            "module": "intellij.python.community.impl.installer"
+        },
+        {
+            "module": "intellij.python.pydev"
+        },
+        {
+            "module": "intellij.python.venv"
+        },
+        {
+            "module": "intellij.python.hatch"
+        },
+        {
+            "module": "intellij.python.packaging"
+        },
+        {
+            "module": "intellij.python.requirements.common"
+        },
+        {
+            "module": "intellij.python.requirements.backend"
+        },
+        {
+            "module": "intellij.python.community.services.shared"
+        },
+        {
+            "module": "intellij.python.community.services.internal.impl"
+        },
+        {
+            "module": "intellij.python.community.services.systemPython"
+        },
+        {
+            "module": "intellij.python.community.aliasProvider"
+        },
+        {
+            "module": "intellij.python.externalIndex"
+        },
+        {
+            "module": "intellij.python.community.plugin.minor"
+        },
+        {
+            "module": "intellij.python.community.plugin.minorRider"
+        },
+        {
+            "module": "intellij.python.community.communityOnly"
+        },
+        {
+            "destination": "lib/python-ce.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.python.community.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.python.community.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.commandInterface",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.python.community.impl.huggingFace"
+        },
+        {
+            "module": "intellij.python.community.plugin.impl"
+        },
+        {
+            "module": "intellij.python.community.plugin.java"
+        },
+        {
+            "module": "intellij.python.copyright"
+        },
+        {
+            "module": "intellij.python.featuresTrainer"
+        },
+        {
+            "module": "intellij.python.grazie"
+        },
+        {
+            "module": "intellij.python.langInjection"
+        },
+        {
+            "module": "intellij.python.markdown"
+        },
+        {
+            "module": "intellij.python.minimap"
+        },
+        {
+            "module": "intellij.python.mcp"
+        },
+        {
+            "destination": "lib/modules/intellij.python.ml.features.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.python.ml.features",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:python-ml-features-jetbrains-ml-models-python-imports-ranking-model",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.python.terminal.shared"
+        },
+        {
+            "module": "intellij.python.terminal.backend"
+        },
+        {
+            "module": "intellij.python.terminal.frontend"
+        },
+        {
+            "module": "intellij.python.black"
+        },
+        {
+            "module": "intellij.python.lsp.core"
+        },
+        {
+            "module": "intellij.python.lsp.impl.frontend"
+        },
+        {
+            "module": "intellij.python.typeEngine"
+        },
+        {
+            "module": "intellij.python.typeEngine.common"
+        },
+        {
+            "module": "intellij.python.typeEngine.frontend"
+        },
+        {
+            "module": "intellij.python.ty"
+        },
+        {
+            "module": "intellij.python.ruff"
+        },
+        {
+            "module": "intellij.python.pyrefly"
+        },
+        {
+            "module": "intellij.python.pyright"
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.jsr305.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.jsr305",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-jsr305-jsr305",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.libthrift.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.libthrift",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-libthrift-libthrift",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.mlapi.catboost.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.mlapi.catboost",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-mlapi-catboost-jetbrains-mlapi-catboost",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-mlapi-catboost-jetbrains-mlapi-catboost-shadow-need-slf4j",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.tuweni.toml.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.tuweni.toml",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-tuweni-toml-tuweni-toml",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "helpers",
+            "inputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "inputs": [
+                "module-resource:resource-generator:0:0:source"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "modelSignature": "6k5tqyuzgno8tob86xk6wznyx"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "module-resource:resource-generator:0:0:source"
+                }
+            ],
+            "output": "layout-assets:resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "helpers",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "tree-map",
+                            "mappings": [
+                                {}
+                            ],
+                            "excludes": [
+                                "{setup.py,conftest.py}",
+                                "**/{setup.py,conftest.py}"
+                            ],
+                            "directoryExcludes": [
+                                "{tests,.idea}",
+                                "**/{tests,.idea}",
+                                "pydev/pydev_test*",
+                                "**/pydev/pydev_test*"
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -1,0 +1,308 @@
+{
+    "version": 2,
+    "plugin": "intellij.cidr.debugger.plugin",
+    "variant": "darwin_x64",
+    "layoutSignature": "8m8dy44qekbm8mbidazvkxzdi",
+    "assets": [
+        {
+            "module": "intellij.cidr.debugger.backend"
+        },
+        {
+            "module": "intellij.cidr.debugger.shared"
+        },
+        {
+            "module": "intellij.cidr.debugger.core"
+        },
+        {
+            "module": "intellij.cidr.debugger.dap"
+        },
+        {
+            "module": "intellij.cidr.debugger.frontend"
+        },
+        {
+            "module": "intellij.cidr.debugger.mcp"
+        },
+        {
+            "module": "intellij.cidr.debugger.profiles.shared"
+        },
+        {
+            "module": "intellij.cidr.debugger.profiles.backend"
+        },
+        {
+            "module": "intellij.cidr.debugger.profiles.frontend"
+        },
+        {
+            "module": "intellij.cidr.util.execution"
+        },
+        {
+            "module": "intellij.cidr.runner"
+        },
+        {
+            "module": "intellij.cidr.debugger.plugin.core"
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.antlr4.runtime.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.antlr4.runtime",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-antlr4-runtime-antlr4-runtime",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.kryo2.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kryo2",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kryo2-_kryo",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kryo2-_objenesis",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.objenesis.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.objenesis",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-objenesis-_objenesis",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/cidr-debugger-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.cidr.debugger.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.cidr.debugger.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "bin",
+            "inputs": [
+                "layout-assets:platform-custom-asset:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "bin/helpers",
+            "inputs": [
+                "module-resource:0:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "bin/lldb/helpers",
+            "inputs": [
+                "module-resource:1:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "bin/lldb/renderers",
+            "inputs": [
+                "module-resource:2:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:platform-custom-asset:0",
+            "inputs": [
+                "cidr-dependency:LLDB:mac:aarch64",
+                "cidr-dependency:LLDB:mac:x64",
+                "cidr-dependency:gdb:mac:aarch64",
+                "cidr-dependency:gdb:mac:x64",
+                "cidr-dependency:LLDBFrontend:mac:aarch64",
+                "cidr-dependency:LLDBFrontend:mac:x64"
+            ],
+            "outputs": [
+                "layout-assets:platform-custom-asset:0:output"
+            ],
+            "modelSignature": "9gfz09fhzs9452e50dpoh4uq9"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:platform-custom-asset:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "cidr-dependency:LLDB:mac:aarch64"
+                },
+                {
+                    "artifact": "cidr-dependency:LLDB:mac:x64"
+                },
+                {
+                    "artifact": "cidr-dependency:gdb:mac:aarch64"
+                },
+                {
+                    "artifact": "cidr-dependency:gdb:mac:x64"
+                },
+                {
+                    "artifact": "cidr-dependency:LLDBFrontend:mac:aarch64"
+                },
+                {
+                    "artifact": "cidr-dependency:LLDBFrontend:mac:x64"
+                }
+            ],
+            "output": "layout-assets:platform-custom-asset:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "bin",
+                "assets": [
+                    {
+                        "destination": "lldb/mac/aarch64",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "includes": [
+                                "!LLDBFrontend"
+                            ],
+                            "executables": [
+                                "LLDB.framework/Resources/darwin-debug",
+                                "LLDB.framework/Resources/debugserver",
+                                "LLDB.framework/Resources/lldb",
+                                "LLDB.framework/Resources/lldb-argdumper",
+                                "Python.framework/Resources/Python.app/Contents/MacOS/Python"
+                            ]
+                        }
+                    },
+                    {
+                        "destination": "lldb/mac/x64",
+                        "sources": [
+                            1
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "includes": [
+                                "!LLDBFrontend"
+                            ],
+                            "executables": [
+                                "LLDB.framework/Resources/darwin-debug",
+                                "LLDB.framework/Resources/debugserver",
+                                "LLDB.framework/Resources/lldb",
+                                "LLDB.framework/Resources/lldb-argdumper",
+                                "Python.framework/Resources/Python.app/Contents/MacOS/Python"
+                            ]
+                        }
+                    },
+                    {
+                        "destination": "gdb/mac/aarch64",
+                        "sources": [
+                            2
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "executables": [
+                                "bin/*"
+                            ]
+                        }
+                    },
+                    {
+                        "destination": "gdb/mac/x64",
+                        "sources": [
+                            3
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "executables": [
+                                "bin/*"
+                            ]
+                        }
+                    },
+                    {
+                        "destination": "lldb/mac/aarch64",
+                        "sources": [
+                            4
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "includes": [
+                                "LLDBFrontend"
+                            ],
+                            "executables": [
+                                "LLDBFrontend"
+                            ]
+                        }
+                    },
+                    {
+                        "destination": "lldb/mac/x64",
+                        "sources": [
+                            5
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "includes": [
+                                "LLDBFrontend"
+                            ],
+                            "executables": [
+                                "LLDBFrontend"
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

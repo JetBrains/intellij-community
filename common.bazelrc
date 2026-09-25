@@ -257,6 +257,15 @@ common --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
 # output base, so without a cache it packs every jar again. See ADR 0019 for the measurements.
 common --modify_execution_info=PackContentModuleJar=+no-remote-cache
 
+# The host platform of rules_rs proc-macros and Rust tools. Each root resolves the label in its own main repository:
+# community defines the platforms in `build/native/platforms`, and the ultimate root aliases them at the same path.
+common:linux --host_platform=//build/native/platforms:local_linux
+common:windows --host_platform=//build/native/platforms:local_windows
+
+# Rust warnings are errors. The flag applies to the target configuration only, and rules_rust caps the lints of
+# third-party crates.
+build --@rules_rust//rust/settings:extra_rustc_flags=-Dwarnings
+
 # C/C++ warnings are errors. Each external dependency disables exactly the diagnostics it emits.
 build --copt=-Werror
 build --per_file_copt=external/[+]http_archive[+]dmg_hfsplus/@-Wno-alloc-size,-Wno-sometimes-uninitialized,-Wno-uninitialized,-Wno-unused-but-set-variable,-Wno-unused-variable

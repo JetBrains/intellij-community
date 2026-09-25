@@ -12,8 +12,8 @@ import org.jetbrains.intellij.build.devDist.planPluginPacking
 import org.junit.jupiter.api.Test
 
 /**
- * The generation-time rules of a layout-assets operation and of its consumers in the plan. The Go packer executes every
- * operation; the executor cases of every transform live in `layout_test.go`.
+ * The generation-time rules of a layout-assets operation and of its consumers in the plan. The packer executes every
+ * operation; the executor cases of every transform live in `tests/layout.rs` of the `pluginpack` crate.
  */
 internal class DevPluginLayoutAssetPreparationTest {
   @Test
@@ -37,7 +37,7 @@ internal class DevPluginLayoutAssetPreparationTest {
   }
 
   @Test
-  fun `every Go-executed operation binds its consumers in the plan`() {
+  fun `every packer-executed operation binds its consumers in the plan`() {
     val treeAssets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0), transform = DevPluginLayoutAssetTransform.archiveTree(stripComponents = 1)))
     val operations = listOf(
       DevPluginPreparationOperation(
@@ -53,7 +53,7 @@ internal class DevPluginLayoutAssetPreparationTest {
         manifest = "keep", layoutAssets = gzipXmlArchivePreparation(sources = listOf(0)),
       ),
     )
-    assertThat(operations).allMatch(::isGoExecutedOperation)
+    assertThat(operations).allMatch(::isPackerExecutedOperation)
     val plan = planPluginPacking(
       plugin = "test.plugin",
       variant = "linux_x64",
@@ -88,7 +88,7 @@ internal class DevPluginLayoutAssetPreparationTest {
   }
 
   @Test
-  fun `every operation of a plan file is Go-executed`() {
+  fun `every operation of a plan file is packer-executed`() {
     val moduleFilter = DevPluginPreparationOperation(id = "filter", input = DevPluginReference("module"), output = "filtered", manifest = "keep")
     val gzip = DevPluginPreparationOperation(
       id = "gzip", kind = "layout-assets", inputs = listOf(DevPluginReference("jar")), output = "gzip:output", manifest = "keep",
@@ -105,14 +105,14 @@ internal class DevPluginLayoutAssetPreparationTest {
       id = "presigned", kind = "native-presigned", input = DevPluginReference("library"), output = "presigned:output", manifest = "keep", filter = "library",
     )
 
-    assertThat(isGoExecutedOperation(moduleFilter)).isTrue()
-    assertThat(isGoExecutedOperation(gzip)).isTrue()
-    assertThat(isGoExecutedOperation(file)).isFalse()
-    assertThat(isGoExecutedOperation(presigned)).isFalse()
+    assertThat(isPackerExecutedOperation(moduleFilter)).isTrue()
+    assertThat(isPackerExecutedOperation(gzip)).isTrue()
+    assertThat(isPackerExecutedOperation(file)).isFalse()
+    assertThat(isPackerExecutedOperation(presigned)).isFalse()
     assertThatThrownBy { devPluginPreparationOperationSignature(presigned, version = 2) }
-      .hasMessageContaining("No Go operation executes 'presigned' of kind 'native-presigned'")
+      .hasMessageContaining("No packer operation executes 'presigned' of kind 'native-presigned'")
     assertThatThrownBy { devPluginPreparationOperationSignature(file, version = 2) }
-      .hasMessageContaining("No Go operation executes 'file' of kind 'layout-assets'")
+      .hasMessageContaining("No packer operation executes 'file' of kind 'layout-assets'")
   }
 
   @Test

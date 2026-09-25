@@ -1,0 +1,79 @@
+{
+    "version": 2,
+    "plugin": "intellij.rider.plugins.dotCover",
+    "variant": "{platform}",
+    "layoutSignature": "{platform:layoutSignature}",
+    "assets": [
+        {
+            "module": "intellij.rider.plugins.dotCover.mcp"
+        },
+        {
+            "destination": "lib/dotCover.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.rider.plugins.dotCover",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.rider.plugins.dotCover",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "",
+            "inputs": [
+                "layout-assets:platform-resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:platform-resource-generator:0",
+            "inputs": [
+                "{platform:inputs}"
+            ],
+            "outputs": [
+                "layout-assets:platform-resource-generator:0:output"
+            ],
+            "modelSignature": "{platform:modelSignature}"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:platform-resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "{platform:inputs}"
+                }
+            ],
+            "output": "layout-assets:platform-resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

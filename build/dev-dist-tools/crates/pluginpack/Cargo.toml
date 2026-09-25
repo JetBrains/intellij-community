@@ -1,0 +1,31 @@
+[package]
+name = "pluginpack"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+filemeta.workspace = true
+flate2.workspace = true
+fscopy.workspace = true
+jarpack.workspace = true
+javaglob.workspace = true
+planfile.workspace = true
+ruzstd.workspace = true
+same-file.workspace = true
+tar.workspace = true
+tempfile.workspace = true
+thiserror.workspace = true
+walkdir.workspace = true
+zip.workspace = true
+
+[dev-dependencies]
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+xxhash-rust.workspace = true

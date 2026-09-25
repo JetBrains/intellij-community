@@ -1,0 +1,3 @@
+load("//build/dev-dist-tools:defs.bzl", "dev_dist_rust_crate")
+
+dev_dist_rust_crate(name = "trace")

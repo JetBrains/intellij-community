@@ -1,0 +1,151 @@
+{
+    "version": 2,
+    "plugin": "intellij.cidr.clangd",
+    "variant": "linux_x64",
+    "layoutSignature": "dlews6tagj9kuoeq19qv5hfdp",
+    "assets": [
+        {
+            "module": "intellij.cidr.clangd.core"
+        },
+        {
+            "module": "intellij.cidr.clangd.jcef"
+        },
+        {
+            "module": "intellij.cidr.clangd.legacyBridge"
+        },
+        {
+            "module": "intellij.cidr.clangd.novaBridge"
+        },
+        {
+            "module": "intellij.cidr.clangd.schema"
+        },
+        {
+            "module": "intellij.cidr.clangd.clangFormat"
+        },
+        {
+            "module": "intellij.cidr.clangd.toolwindow"
+        },
+        {
+            "destination": "lib/cidr-clangd.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.cidr.clangd",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.cidr.clangd",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "bin/clang/linux/x64",
+            "inputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "docs",
+            "inputs": [
+                "layout-assets:resource-generator:1:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "inputs": [
+                "cidr-dependency:clang:linux:x64"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "modelSignature": "5a5by8skksxzn132xhxtdhpu8"
+        },
+        {
+            "id": "layout-assets:resource-generator:1",
+            "inputs": [
+                "cidr-dependency:clang-clangTidyDoc:any:any"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:1:output"
+            ],
+            "modelSignature": "5pz833n6f6wzax8pqa7npljjr"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "cidr-dependency:clang:linux:x64"
+                }
+            ],
+            "output": "layout-assets:resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "bin/clang/linux/x64",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "executables": [
+                                "bin/*"
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "layout-assets:resource-generator:1",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "cidr-dependency:clang-clangTidyDoc:any:any"
+                }
+            ],
+            "output": "layout-assets:resource-generator:1:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "docs",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "includes": [
+                                "clangTidyDoc/**"
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

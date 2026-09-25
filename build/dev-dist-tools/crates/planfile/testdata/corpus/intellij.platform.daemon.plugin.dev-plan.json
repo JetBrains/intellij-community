@@ -1,0 +1,208 @@
+{
+    "version": 1,
+    "plugin": "intellij.platform.daemon.plugin",
+    "variant": "{platform}",
+    "layoutSignature": "{platform:layoutSignature}",
+    "assets": [
+        {
+            "destination": "lib/modules/intellij.libraries.daemon.client.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.daemon.client",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-daemon-client-jetbrains-app-daemon-client",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-daemon-client-jetbrains-daemon-client-health",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-daemon-client-jetbrains-app-daemon-endpoints-runtime-shared",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:com.jetbrains.app.daemon/daemon-client-ssh-0.9.8913.jar",
+                        "kind": "archive",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:com.jetbrains.app.daemon/daemon-openssh-0.9.8913.jar",
+                        "kind": "archive",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:com.jetbrains.app/app-ssh-util-0.9.8913.jar",
+                        "kind": "archive",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:com.jetbrains.app/app-ssh-0.9.8913.jar",
+                        "kind": "archive",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-daemon-client-jetbrains-app-daemon-endpoints-runtime-client",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-daemon-client-jetbrains-app-daemon-endpoints-intellij-shared",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-daemon-client-jetbrains-app-daemon-endpoints-intellij-client",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-daemon-client-jetbrains-app-daemon-endpoints-system-shared",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-daemon-client-jetbrains-app-daemon-endpoints-system-client",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-daemon-client-jetbrains-app-daemon-endpoints-ssh-shared",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-daemon-client-jetbrains-app-daemon-endpoints-ssh-client",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-daemon-client-jetbrains-app-daemon-endpoints-ijent-shared",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-daemon-client-jetbrains-app-daemon-endpoints-ijent-client",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-daemon-client-jetbrains-app-daemon-endpoints-authn-shared",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-daemon-client-jetbrains-app-daemon-endpoints-authn-client",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-daemon-client-jetbrains-app-daemon-endpoints-remdev-shared",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-daemon-client-jetbrains-app-daemon-endpoints-remdev-client",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-daemon-client-jetbrains-app-daemon-endpoints-workspaces-shared",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-daemon-client-jetbrains-app-daemon-endpoints-workspaces-client",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.toolbox.remote.dev.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.toolbox.remote.dev",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-toolbox-remote-dev-jetbrains-toolbox-remote-dev-api",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.platform.daemon.client"
+        },
+        {
+            "module": "intellij.platform.daemon.connection"
+        },
+        {
+            "module": "intellij.platform.daemon.connection.ssh.prompts"
+        },
+        {
+            "module": "intellij.platform.daemon.frontend.split"
+        },
+        {
+            "module": "intellij.platform.daemon.light"
+        },
+        {
+            "module": "intellij.platform.daemon.workspaces"
+        },
+        {
+            "module": "intellij.platform.daemon.statistics"
+        },
+        {
+            "module": "intellij.platform.daemon.plugins"
+        },
+        {
+            "destination": "lib/platform-daemon-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.platform.daemon.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.platform.daemon.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "{platform:destination}",
+            "inputs": [
+                "layout-source:resource-generator:0:0"
+            ],
+            "classPath": false
+        }
+    ]
+}

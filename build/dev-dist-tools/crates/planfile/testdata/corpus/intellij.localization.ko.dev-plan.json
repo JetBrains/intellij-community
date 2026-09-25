@@ -1,0 +1,115 @@
+{
+    "version": 1,
+    "plugin": "intellij.localization.ko",
+    "variant": "",
+    "layoutSignature": "enjdj43jsq5ygssbq8uptsnd6",
+    "assets": [
+        {
+            "destination": "lib/localization-ko.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.localization.ko",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.localization.ko",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "layout-assets:custom-asset:0:output",
+                        "kind": "prepared",
+                        "filter": "prepared"
+                    }
+                ],
+                "writer": {
+                    "manifest": "drop",
+                    "mergeEntities": true
+                }
+            }
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:custom-asset:0",
+            "inputs": [
+                "localization:properties/ko",
+                "localization:inspections_intentions/ko"
+            ],
+            "outputs": [
+                "layout-assets:custom-asset:0:output"
+            ],
+            "modelSignature": "dbvp1q10xjn0rufu69uy9fjoh"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:custom-asset:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "localization:properties/ko"
+                },
+                {
+                    "artifact": "localization:inspections_intentions/ko"
+                }
+            ],
+            "output": "layout-assets:custom-asset:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "entries",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "tree-map",
+                            "mappings": [
+                                {
+                                    "pattern": "*.properties",
+                                    "destination": "messages"
+                                },
+                                {}
+                            ]
+                        }
+                    },
+                    {
+                        "destination": "",
+                        "sources": [
+                            1
+                        ],
+                        "transform": {
+                            "kind": "tree-map",
+                            "mappings": [
+                                {
+                                    "pattern": "*/fileTemplates/**",
+                                    "stripComponents": 1
+                                },
+                                {
+                                    "pattern": "*/inspectionDescriptions/**",
+                                    "stripComponents": 1
+                                },
+                                {
+                                    "pattern": "*/intentionDescriptions/**",
+                                    "stripComponents": 1
+                                },
+                                {
+                                    "pattern": "*/postfixTemplates/**",
+                                    "stripComponents": 1
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

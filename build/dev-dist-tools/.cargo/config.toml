@@ -1,0 +1,3 @@
+# Keep cargo output out of the checkout. `out/` is ignored by git and by Bazel in both checkout layouts.
+[build]
+target-dir = "../../out/cargo-target/dev-dist-tools"

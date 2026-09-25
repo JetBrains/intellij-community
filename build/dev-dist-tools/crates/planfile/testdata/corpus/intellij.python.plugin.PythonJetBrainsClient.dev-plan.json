@@ -1,0 +1,41 @@
+{
+    "version": 1,
+    "plugin": "intellij.python.plugin",
+    "variant": "",
+    "layoutSignature": "2bffu1kghnxd4wbfu5l9348e6",
+    "assets": [
+        {
+            "module": "intellij.python.frontend.base"
+        },
+        {
+            "module": "intellij.python.frontend"
+        },
+        {
+            "module": "intellij.scientific.py.tables.split.common"
+        },
+        {
+            "destination": "lib/python.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.python.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.python.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        }
+    ]
+}

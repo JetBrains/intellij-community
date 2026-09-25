@@ -1,0 +1,471 @@
+{
+    "version": 1,
+    "plugin": "intellij.lambda.test.plugin",
+    "variant": "",
+    "layoutSignature": "b10nnhd7be1lrc3ay0t2f3t2k",
+    "assets": [
+        {
+            "destination": "lib/modules/intellij.libraries.allure.java.commons.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.allure.java.commons",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-allure-java-commons-io-qameta-allure-java-commons",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.libraries.byte.buddy"
+        },
+        {
+            "destination": "lib/byte-buddy.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@lib//:libraries-byte-buddy-byte-buddy",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.hamcrest.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.hamcrest",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-hamcrest-hamcrest",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.junit4.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.junit4",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-junit4-_j_unit4",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.junit5.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.junit5",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-junit5-_j_unit5",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.junit5.jupiter.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.junit5.jupiter",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-junit5-jupiter-_j_unit5_jupiter",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.junit5.launcher.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.junit5.launcher",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-junit5-launcher-_j_unit5_launcher",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.junit5.params.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.junit5.params",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-junit5-params-_j_unit5_params",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.junit5.pioneer.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.junit5.pioneer",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-junit5-pioneer-_j_unit5_pioneer",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.junit5.vintage.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.junit5.vintage",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-junit5-vintage-_j_unit5_vintage",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.kodein.di.jvm.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kodein.di.jvm",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kodein-di-jvm-kodein-di-jvm",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.kotlinTest.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinTest",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlin_test-kotlin-test",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.codeowners.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.codeowners",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:codeowners-jetbrains-patronus-codeowners-lib-ownership",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.codeowners.monorepo.resolver"
+        },
+        {
+            "module": "intellij.codeowners.runtime.resolver"
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.jetcheck.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.jetcheck",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-jetcheck-jet_check",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.kaml.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kaml",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kaml-kaml",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.platform.testFramework"
+        },
+        {
+            "module": "intellij.platform.testFramework.common"
+        },
+        {
+            "module": "intellij.platform.testFramework.core"
+        },
+        {
+            "module": "intellij.platform.testFramework.impl"
+        },
+        {
+            "module": "intellij.platform.testFramework.teamCity"
+        },
+        {
+            "module": "intellij.platform.testFramework.junit5"
+        },
+        {
+            "module": "intellij.platform.testFramework.junit5.codeInsight"
+        },
+        {
+            "destination": "lib/modules/intellij.platform.testFramework.junit5.eel.tests.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.platform.testFramework.junit5.eel.tests",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true,
+                    "directoryEntries": true
+                }
+            }
+        },
+        {
+            "module": "intellij.platform.testFramework.junit5.projectStructure"
+        },
+        {
+            "destination": "lib/modules/intellij.platform.testFramework.junit5.tests.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.platform.testFramework.junit5.tests",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true,
+                    "directoryEntries": true
+                }
+            }
+        },
+        {
+            "module": "intellij.java.rt"
+        },
+        {
+            "module": "intellij.lambda.testFramework"
+        },
+        {
+            "module": "intellij.tools.ide.starter"
+        },
+        {
+            "module": "intellij.tools.ide.starter.driver"
+        },
+        {
+            "module": "intellij.tools.ide.util.common"
+        },
+        {
+            "module": "intellij.tools.testsBootstrap"
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.assertj.core.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.assertj.core",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-assertj-core-assert_j",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.opentest4j.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.opentest4j",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-opentest4j-opentest4j",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.qodana.sarif.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.qodana.sarif",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-qodana-sarif-qodana-sarif",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/lambda-test-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.lambda.test.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.lambda.test.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true,
+                    "directoryEntries": true
+                }
+            }
+        }
+    ]
+}

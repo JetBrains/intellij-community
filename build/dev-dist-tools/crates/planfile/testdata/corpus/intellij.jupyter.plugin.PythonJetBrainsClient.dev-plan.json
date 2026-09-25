@@ -1,0 +1,306 @@
+{
+    "version": 2,
+    "plugin": "intellij.jupyter.plugin",
+    "variant": "",
+    "layoutSignature": "6vi3kr5utq06wztcychui1xmr",
+    "assets": [
+        {
+            "module": "intellij.jupyter.psi"
+        },
+        {
+            "module": "intellij.jupyter.core"
+        },
+        {
+            "module": "intellij.jupyter.bookmarks"
+        },
+        {
+            "module": "intellij.jupyter.convert"
+        },
+        {
+            "module": "intellij.jupyter.completion"
+        },
+        {
+            "module": "intellij.jupyter.execution"
+        },
+        {
+            "module": "intellij.jupyter.mcp"
+        },
+        {
+            "module": "intellij.jupyter.tables"
+        },
+        {
+            "module": "intellij.jupyter.lsp"
+        },
+        {
+            "module": "intellij.jupyter.split.common"
+        },
+        {
+            "module": "intellij.jupyter.split.frontend"
+        },
+        {
+            "module": "intellij.jupyter.split.frontend.py"
+        },
+        {
+            "module": "intellij.jupyter.py.showAsImage.common"
+        },
+        {
+            "module": "intellij.jupyter.py.showAsImage.frontend"
+        },
+        {
+            "module": "intellij.jupyter.py.completion.ml.ranking"
+        },
+        {
+            "module": "intellij.dataspell.jupyter.sql.frontend"
+        },
+        {
+            "module": "intellij.dataspell.jupyter.sql.common"
+        },
+        {
+            "destination": "lib/modules/intellij.jupyter.execution.libraries.zmqProtocol.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.jupyter.execution.libraries.zmqProtocol",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:jupyter-execution-libraries-zmq_protocol-jetbrains-kotlinx-kotlin-jupyter-zmq-protocol",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.fluent.hc.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.fluent.hc",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-fluent-hc-fluent-hc",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.libraries.jlatexmath"
+        },
+        {
+            "destination": "lib/jupyter-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.jupyter.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.jupyter.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/de.rototor.pdfbox-graphics2d-3.0.5.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@ultimate_lib//:jupyter-convert-de-rototor-pdfbox-graphics2d-3-0-5",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/jlatexmath.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@ultimate_lib//:libraries-jlatexmath-jlatexmath",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/apache.pdfbox3.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@ultimate_lib//:apache-pdfbox3",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/apache.xmpbox3.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@ultimate_lib//:apache-xmpbox3",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/openhtmltopdf-pdfbox-1.1.86.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@ultimate_lib//:io-github-openhtmltopdf-openhtmltopdf-pdfbox",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/icu4j-77.1.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@ultimate_lib//:com.ibm.icu/icu4j-77.1.jar",
+                        "kind": "archive",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/openhtmltopdf-core-1.1.86.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@ultimate_lib//:io.github.openhtmltopdf/openhtmltopdf-core-1.1.86.jar",
+                        "kind": "archive",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/openhtmltopdf-rtl-support-1.1.86.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@ultimate_lib//:io.github.openhtmltopdf/openhtmltopdf-rtl-support-1.1.86.jar",
+                        "kind": "archive",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/openhtmltopdf-svg-support-1.1.86.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@ultimate_lib//:io-github-openhtmltopdf-openhtmltopdf-svg-support",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "jupyter-web",
+            "inputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "inputs": [
+                "jupyter-frontend:jupyter_frontend_8388dc772e39289a127330db712a0b91dae72bc69df797955c7cd071e5c531c6"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "modelSignature": "6zpl46vvoybrmets61ltsi9wr"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "jupyter-frontend:jupyter_frontend_8388dc772e39289a127330db712a0b91dae72bc69df797955c7cd071e5c531c6"
+                }
+            ],
+            "output": "layout-assets:resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "jupyter-web",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

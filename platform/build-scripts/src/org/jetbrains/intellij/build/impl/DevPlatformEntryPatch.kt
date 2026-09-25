@@ -57,7 +57,7 @@ sealed interface DevPlatformEntryPatch {
  * A layout patcher that states the platform entries it writes, see [DevPlatformEntryPatch].
  *
  * The plan generator reads [devPlatformEntryPatches] from the platform layout of a split product. So the dev
- * distribution packs the patched jars with Go instead of with the `platform_lib` fragment.
+ * distribution packs the patched jars with the packer instead of with the `platform_lib` fragment.
  */
 @ApiStatus.Internal
 interface DevPlatformPatchOwner {

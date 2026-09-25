@@ -1,0 +1,62 @@
+{
+    "version": 3,
+    "plugin": "intellij.profiler.asyncOne.plugin",
+    "variant": "{platform}",
+    "layoutSignature": "{platform:layoutSignature}",
+    "assets": [
+        {
+            "destination": "lib/modules/intellij.profiler.asyncOne.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.profiler.asyncOne",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:profiler-async_one-async-profiler",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true,
+                    "nativeLib": "async-profiler"
+                }
+            }
+        },
+        {
+            "destination": "lib/async-profiler",
+            "inputs": [
+                "native-tree:intellij.profiler.asyncOne"
+            ],
+            "kind": "tree",
+            "classPath": false,
+            "scope": "distribution"
+        },
+        {
+            "destination": "lib/profiler-asyncOne-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.profiler.asyncOne.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.profiler.asyncOne.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        }
+    ]
+}

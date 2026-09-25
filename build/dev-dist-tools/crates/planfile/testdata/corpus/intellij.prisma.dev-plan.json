@@ -1,0 +1,66 @@
+{
+    "version": 2,
+    "plugin": "intellij.prisma",
+    "variant": "",
+    "layoutSignature": "1pnfinfmcb9ybbh69acesy3u7",
+    "assets": [
+        {
+            "destination": "lib/prisma.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.prisma",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "module-filter:intellij.prisma:output",
+                        "kind": "prepared",
+                        "filter": "prepared"
+                    }
+                ],
+                "writer": {
+                    "manifest": "drop",
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "language-server",
+            "inputs": [
+                "module-resource:0:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "module-filter:intellij.prisma",
+            "inputs": [
+                "intellij.prisma"
+            ],
+            "outputs": [
+                "module-filter:intellij.prisma:output"
+            ],
+            "modelSignature": "6pc0u0um3q8x2l3qlsy3skt12"
+        }
+    ],
+    "operations": [
+        {
+            "id": "module-filter:intellij.prisma",
+            "input": {
+                "artifact": "intellij.prisma"
+            },
+            "output": "module-filter:intellij.prisma:output",
+            "manifest": "keep",
+            "excludes": [
+                "language-server/**"
+            ]
+        }
+    ]
+}

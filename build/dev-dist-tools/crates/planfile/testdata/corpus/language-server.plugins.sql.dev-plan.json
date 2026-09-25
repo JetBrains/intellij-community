@@ -1,0 +1,473 @@
+{
+    "version": 1,
+    "plugin": "language-server.plugins.sql",
+    "variant": "",
+    "layoutSignature": "dicz3etmwjqt2u01sauyvtk1v",
+    "assets": [
+        {
+            "module": "intellij.database"
+        },
+        {
+            "module": "intellij.database.core.impl"
+        },
+        {
+            "destination": "lib/modules/intellij.database.jdbcConsole.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.database.jdbcConsole",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:database-jdbc_console-intellij-desktop-actions",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.database.jdbcConsole.shim.impl"
+        },
+        {
+            "module": "intellij.database.jdbcConsole.shim"
+        },
+        {
+            "module": "intellij.database.sql"
+        },
+        {
+            "module": "intellij.database.sql.backend.core"
+        },
+        {
+            "module": "intellij.database.sql.common.core"
+        },
+        {
+            "module": "intellij.database.sql.common.impl"
+        },
+        {
+            "module": "intellij.database.sql.core.impl"
+        },
+        {
+            "module": "intellij.database.sql.core.impl.ex"
+        },
+        {
+            "module": "intellij.database.util"
+        },
+        {
+            "module": "intellij.platform.ssh"
+        },
+        {
+            "module": "intellij.platform.ssh.core"
+        },
+        {
+            "module": "intellij.platform.ssh.ui"
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.jsch.agent.proxy.sshj.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.jsch.agent.proxy.sshj",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-jsch-agent-proxy-sshj-jsch-agent-proxy-sshj",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.kotlin.logging.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlin.logging",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlin-logging-io-github-oshai-kotlin-logging-jvm",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.jts.io.common.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.jts.io.common",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-jts-io-common-jts-io-common",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.proj4j.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.proj4j",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-proj4j-proj4j",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-proj4j-proj4j-epsg",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.database.dialects.mysqlbase.impl"
+        },
+        {
+            "module": "intellij.database.dialects.mssql.impl"
+        },
+        {
+            "module": "intellij.database.dialects.base"
+        },
+        {
+            "module": "intellij.database.dialects.sql92"
+        },
+        {
+            "module": "intellij.database.dialects.generic"
+        },
+        {
+            "module": "intellij.database.dialects.bigquery"
+        },
+        {
+            "module": "intellij.database.dialects.cassandra"
+        },
+        {
+            "module": "intellij.database.dialects.clickhouse"
+        },
+        {
+            "module": "intellij.database.dialects.cockroach"
+        },
+        {
+            "module": "intellij.database.dialects.couchbase"
+        },
+        {
+            "module": "intellij.database.dialects.db2"
+        },
+        {
+            "module": "intellij.database.dialects.derby"
+        },
+        {
+            "module": "intellij.database.dialects.duckdb"
+        },
+        {
+            "module": "intellij.database.dialects.exasol"
+        },
+        {
+            "module": "intellij.database.dialects.greenplum"
+        },
+        {
+            "module": "intellij.database.dialects.h2"
+        },
+        {
+            "module": "intellij.database.dialects.hivebase"
+        },
+        {
+            "module": "intellij.database.dialects.hive"
+        },
+        {
+            "module": "intellij.database.dialects.hsql"
+        },
+        {
+            "module": "intellij.database.dialects.postgresbase"
+        },
+        {
+            "module": "intellij.database.dialects.postgres"
+        },
+        {
+            "module": "intellij.database.dialects.postgresgreenplumbase"
+        },
+        {
+            "module": "intellij.database.dialects.sqlite"
+        },
+        {
+            "module": "intellij.database.dialects.mysql"
+        },
+        {
+            "module": "intellij.database.dialects.mysqlbase"
+        },
+        {
+            "module": "intellij.database.dialects.maria"
+        },
+        {
+            "module": "intellij.database.dialects.mssql"
+        },
+        {
+            "module": "intellij.database.dialects.oracle"
+        },
+        {
+            "module": "intellij.database.dialects.redis"
+        },
+        {
+            "module": "intellij.database.dialects.redis.backend"
+        },
+        {
+            "module": "intellij.database.dialects.redshift"
+        },
+        {
+            "module": "intellij.database.dialects.mongo"
+        },
+        {
+            "module": "intellij.database.dialects.mongo.sql"
+        },
+        {
+            "module": "intellij.database.dialects.snowflake"
+        },
+        {
+            "module": "intellij.database.dialects.spark"
+        },
+        {
+            "module": "intellij.database.dialects.sybase"
+        },
+        {
+            "module": "intellij.database.dialects.vertica"
+        },
+        {
+            "module": "intellij.database.dialects.dynamo"
+        },
+        {
+            "destination": "lib/language-server-plugins-sql.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:language-server.plugins.sql",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "language-server.plugins.sql",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.database.dialects",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.database.dialects.core",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.database.dialects.duckdb.minicat",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.database.dialects.maria.minicat",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.database.dialects.mssql.minicat",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.database.dialects.mysql.minicat",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.database.dialects.oracle.minicat",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.database.dialects.postgres.minicat",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.database.dialects.sybase.minicat",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "layout-assets:custom-asset:0:output",
+                        "kind": "prepared",
+                        "filter": "prepared"
+                    }
+                ],
+                "writer": {
+                    "manifest": "drop",
+                    "mergeEntities": true
+                }
+            }
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:custom-asset:0",
+            "inputs": [
+                "@ultimate_lib//:database-dialects-cassandra-cassandra-minicat",
+                "@ultimate_lib//:database-dialects-clickhouse-clickhouse-minicat",
+                "@ultimate_lib//:database-dialects-cockroach-cockroach-minicat",
+                "@ultimate_lib//:database-dialects-db2-db2-minicat",
+                "@ultimate_lib//:database-dialects-derby-derby-minicat",
+                "@ultimate_lib//:database-dialects-duckdb-minicat-duckdb-minicat",
+                "@ultimate_lib//:database-dialects-exasol-exasol-minicat",
+                "@ultimate_lib//:database-dialects-greenplum-greenplum-minicat",
+                "@ultimate_lib//:database-dialects-h2-h2-minicat",
+                "@ultimate_lib//:database-dialects-hsql-hsql-minicat",
+                "@ultimate_lib//:database-dialects-maria-minicat-maria-minicat",
+                "@ultimate_lib//:database-dialects-mssql-minicat-mssql-minicat",
+                "@ultimate_lib//:database-dialects-mysql-minicat-mysql-minicat",
+                "@ultimate_lib//:database-dialects-oracle-minicat-oracle-minicat",
+                "@ultimate_lib//:database-dialects-postgres-minicat-postgres-minicat",
+                "@ultimate_lib//:database-dialects-redshift-redshift-minicat",
+                "@ultimate_lib//:database-dialects-snowflake-snowflake-minicat",
+                "@ultimate_lib//:database-dialects-sybase-minicat-sybase-minicat",
+                "@ultimate_lib//:database-dialects-vertica-vertica-minicat"
+            ],
+            "outputs": [
+                "layout-assets:custom-asset:0:output"
+            ],
+            "modelSignature": "aaxy0hjch75refxoh3hk8mxji"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:custom-asset:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-cassandra-cassandra-minicat"
+                },
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-clickhouse-clickhouse-minicat"
+                },
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-cockroach-cockroach-minicat"
+                },
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-db2-db2-minicat"
+                },
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-derby-derby-minicat"
+                },
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-duckdb-minicat-duckdb-minicat"
+                },
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-exasol-exasol-minicat"
+                },
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-greenplum-greenplum-minicat"
+                },
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-h2-h2-minicat"
+                },
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-hsql-hsql-minicat"
+                },
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-maria-minicat-maria-minicat"
+                },
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-mssql-minicat-mssql-minicat"
+                },
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-mysql-minicat-mysql-minicat"
+                },
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-oracle-minicat-oracle-minicat"
+                },
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-postgres-minicat-postgres-minicat"
+                },
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-redshift-redshift-minicat"
+                },
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-snowflake-snowflake-minicat"
+                },
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-sybase-minicat-sybase-minicat"
+                },
+                {
+                    "artifact": "@ultimate_lib//:database-dialects-vertica-vertica-minicat"
+                }
+            ],
+            "output": "layout-assets:custom-asset:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "entries",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0,
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            6,
+                            7,
+                            8,
+                            9,
+                            10,
+                            11,
+                            12,
+                            13,
+                            14,
+                            15,
+                            16,
+                            17,
+                            18
+                        ],
+                        "transform": {
+                            "kind": "gzip-xml-archive"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

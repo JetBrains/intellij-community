@@ -1,0 +1,6 @@
+--add-opens=java.base/java.lang=ALL-UNNAMED
+--add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED
+--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED
+--add-opens=java.desktop/com.apple.eawt=ALL-UNNAMED
+--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED
+--add-opens=java.desktop/com.sun.java.swing.plaf.gtk=ALL-UNNAMED

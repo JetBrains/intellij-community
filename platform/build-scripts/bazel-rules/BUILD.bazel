@@ -36,41 +36,41 @@ bool_flag(
     visibility = ["//visibility:public"],
 )
 
-# The Go tools of the dev distribution, one binary each for all products. A rule attribute names these targets with
-# `cfg = "exec"`, never the `go_binary` itself. See `dev_dist_tool`.
+# The tools of the dev distribution, one binary each for all products. A rule attribute names these targets with
+# `cfg = "exec"`, never the `rust_binary` itself. See `dev_dist_tool`.
 dev_dist_tool(
     name = "content_module_packer",
-    tool = "//build/content-module-packer",
+    tool = "//build/dev-dist-tools/bins/content-module-packer",
     visibility = ["//visibility:public"],
 )
 
 dev_dist_tool(
     name = "dev_dist_collector",
-    tool = "//build/content-module-packer/dev-dist-collector",
+    tool = "//build/dev-dist-tools/bins/dev-dist-collector",
     visibility = ["//visibility:public"],
 )
 
 dev_dist_tool(
     name = "dev_dist_composer",
-    tool = "//build/content-module-packer/dev-dist-composer",
+    tool = "//build/dev-dist-tools/bins/dev-dist-composer",
     visibility = ["//visibility:public"],
 )
 
 dev_dist_tool(
     name = "plugin_descriptor_writer",
-    tool = "//build/plugin-descriptor-writer",
+    tool = "//build/dev-dist-tools/bins/plugin-descriptor-writer",
     visibility = ["//visibility:public"],
 )
 
 dev_dist_tool(
     name = "plugin_remainder_packer",
-    tool = "//build/content-module-packer/plugin-remainder-packer",
+    tool = "//build/dev-dist-tools/bins/plugin-remainder-packer",
     visibility = ["//visibility:public"],
 )
 
 dev_dist_tool(
     name = "runtime_layout",
-    tool = "//build/content-module-packer/runtime-layout",
+    tool = "//build/dev-dist-tools/bins/runtime-layout",
     visibility = ["//visibility:public"],
 )
 
@@ -80,7 +80,7 @@ test_suite(
     name = "bazel_rules_tests",
     tests = [
         ":dev_dist_content_tests",
-        "//build/plugin-descriptor-writer:descriptor_rule_tests",
+        "//build/dev-dist-tools/bins/plugin-descriptor-writer:descriptor_rule_tests",
         "//platform/build-scripts/bazel-rules/dev-plugin-remainder-tests:dev_plugin_remainder_tests",
         "//platform/build-scripts/bazel-rules/dev-plugin-tests:dev_plugin_tests",
         "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests:ij-plugin-packager-tests",

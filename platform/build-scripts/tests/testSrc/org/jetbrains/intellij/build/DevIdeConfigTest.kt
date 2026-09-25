@@ -11,7 +11,7 @@ import java.nio.file.Path
 import kotlin.io.path.createDirectories
 
 /**
- * The Go composer writes the config file, and `PreBuiltDevMain` and the IDE Starter runner read it. The fixtures here
+ * The composer writes the config file, and `PreBuiltDevMain` and the IDE Starter runner read it. The fixtures here
  * state the format that the composer writes, and the reader must accept exactly that.
  */
 class DevIdeConfigTest {
@@ -101,7 +101,7 @@ class DevIdeConfigTest {
       .hasMessageContaining("RUNFILES_MANIFEST_FILE")
   }
 
-  /** A config file as `writeDevIdeConfig` of the Go composer writes it: four keys, each on its own line. */
+  /** A config file as `write_dev_ide_config` of the composer writes it: four keys, each on its own line. */
   private fun composedConfig(homePath: String, platformPrefix: String = "idea", additionalModules: String): String {
     return "home.path=$homePath\n" +
            "main.class.name=com.intellij.idea.Main\n" +

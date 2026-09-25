@@ -1,0 +1,32 @@
+{
+    "version": 1,
+    "plugin": "intellij.wsl.remoteSdk",
+    "variant": "{platform}",
+    "layoutSignature": "{platform:layoutSignature}",
+    "assets": [
+        {
+            "destination": "lib/wsl-remoteSdk.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.wsl.remoteSdk",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.wsl.remoteSdk",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        }
+    ]
+}

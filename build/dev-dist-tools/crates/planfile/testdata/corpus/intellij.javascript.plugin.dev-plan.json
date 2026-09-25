@@ -1,0 +1,303 @@
+{
+    "version": 2,
+    "plugin": "intellij.javascript.plugin",
+    "variant": "",
+    "layoutSignature": "9kblgvxmrqped282n09dslqqi",
+    "assets": [
+        {
+            "module": "intellij.javascript.testing"
+        },
+        {
+            "module": "intellij.javascript.backend"
+        },
+        {
+            "module": "intellij.javascript.backend.scriptDebugger"
+        },
+        {
+            "module": "intellij.javascript.backend.spellchecker"
+        },
+        {
+            "module": "intellij.javascript.backend.diagrams"
+        },
+        {
+            "module": "intellij.javascript.backend.regexp"
+        },
+        {
+            "module": "intellij.javascript.backend.css"
+        },
+        {
+            "module": "intellij.javascript.devkit"
+        },
+        {
+            "module": "intellij.javascript.emmet"
+        },
+        {
+            "module": "intellij.javascript.sharedIndexes"
+        },
+        {
+            "module": "intellij.javascript.sharedIndexes.generator"
+        },
+        {
+            "module": "intellij.javascript.sh"
+        },
+        {
+            "module": "intellij.javascript.java"
+        },
+        {
+            "module": "intellij.javascript.copyright"
+        },
+        {
+            "module": "intellij.javascript.newProject"
+        },
+        {
+            "module": "intellij.javascript.newProject.jcef"
+        },
+        {
+            "module": "intellij.javascript.terminal.shared"
+        },
+        {
+            "module": "intellij.javascript.terminal.backend"
+        },
+        {
+            "module": "intellij.javascript.terminal.frontend"
+        },
+        {
+            "module": "intellij.javascript.mcpServer"
+        },
+        {
+            "module": "intellij.javascript.coverage"
+        },
+        {
+            "module": "intellij.javascript.completion.ml"
+        },
+        {
+            "module": "intellij.javascript.featuresTrainer"
+        },
+        {
+            "module": "intellij.javascript.langInjection"
+        },
+        {
+            "module": "intellij.javascript.fileWatcher"
+        },
+        {
+            "module": "intellij.javascript.git4idea"
+        },
+        {
+            "module": "intellij.javascript.grazie"
+        },
+        {
+            "module": "intellij.javascript.duplicatesDetection"
+        },
+        {
+            "module": "intellij.javascript.markdown"
+        },
+        {
+            "module": "intellij.javascript.storybook"
+        },
+        {
+            "module": "intellij.javascript.performanceTesting"
+        },
+        {
+            "module": "intellij.javascript.profiler"
+        },
+        {
+            "module": "intellij.javascript.ultimate"
+        },
+        {
+            "module": "intellij.javascript.ultimate.css"
+        },
+        {
+            "module": "intellij.javascript.ideaUltimate"
+        },
+        {
+            "module": "intellij.javascript.ideaUltimate.css"
+        },
+        {
+            "module": "intellij.javascript.structureView"
+        },
+        {
+            "module": "intellij.javascript.common"
+        },
+        {
+            "module": "intellij.javascript.common.css"
+        },
+        {
+            "module": "intellij.javascript.parser"
+        },
+        {
+            "module": "intellij.javascript.psi.impl"
+        },
+        {
+            "module": "intellij.javascript.analysis.impl"
+        },
+        {
+            "module": "intellij.javascript.web"
+        },
+        {
+            "module": "intellij.javascript.codeinsight"
+        },
+        {
+            "module": "intellij.javascript.frontend.split"
+        },
+        {
+            "module": "intellij.aqua.runners.js.core"
+        },
+        {
+            "module": "intellij.aqua.runners.cypress"
+        },
+        {
+            "module": "intellij.aqua.runners.playwright.js"
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.completion.ranking.js.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.completion.ranking.js",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-completion-ranking-js-completion-ranking-js",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.completion.ranking.typescript.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.completion.ranking.typescript",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-completion-ranking-typescript-completion-ranking-typescript",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.semver4j.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.semver4j",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-semver4j-semver4j",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.platform.commercial.verifier"
+        },
+        {
+            "destination": "lib/javascript-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.javascript.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.javascript.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "",
+            "inputs": [
+                "resource-tree-overlay:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "resource-tree-overlay:0",
+            "inputs": [
+                "module-resource:0:source",
+                "module-resource:1:source",
+                "module-resource:2:source"
+            ],
+            "outputs": [
+                "resource-tree-overlay:0:output"
+            ],
+            "modelSignature": "6ade3om6g11trqidbe69ud4jl"
+        }
+    ],
+    "operations": [
+        {
+            "id": "resource-tree-overlay:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "module-resource:0:source"
+                },
+                {
+                    "artifact": "module-resource:1:source"
+                },
+                {
+                    "artifact": "module-resource:2:source"
+                }
+            ],
+            "output": "resource-tree-overlay:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ]
+                    },
+                    {
+                        "destination": "",
+                        "sources": [
+                            1
+                        ]
+                    },
+                    {
+                        "destination": "",
+                        "sources": [
+                            2
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

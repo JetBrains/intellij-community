@@ -1,0 +1,113 @@
+{
+    "version": 2,
+    "plugin": "intellij.vuejs.plugin",
+    "variant": "",
+    "layoutSignature": "7bbav8o6ibixpnui17cqhnhg8",
+    "assets": [
+        {
+            "module": "intellij.vuejs.prettier"
+        },
+        {
+            "module": "intellij.vuejs.copyright"
+        },
+        {
+            "module": "intellij.vuejs.debugger"
+        },
+        {
+            "module": "intellij.vuejs.markdown"
+        },
+        {
+            "module": "intellij.vuejs.free"
+        },
+        {
+            "module": "intellij.vuejs.common"
+        },
+        {
+            "destination": "lib/modules/intellij.vuejs.backend.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "module-filter:intellij.vuejs.backend:output",
+                        "kind": "prepared",
+                        "filter": "prepared"
+                    }
+                ],
+                "writer": {
+                    "manifest": "keep",
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.vuejs.eslint"
+        },
+        {
+            "module": "intellij.vuejs.webpack"
+        },
+        {
+            "destination": "lib/vuejs-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.vuejs.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.vuejs.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "vue-language-tools",
+            "inputs": [
+                "module-resource:0:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "vue-service",
+            "inputs": [
+                "module-resource:1:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "module-filter:intellij.vuejs.backend",
+            "inputs": [
+                "intellij.vuejs.backend"
+            ],
+            "outputs": [
+                "module-filter:intellij.vuejs.backend:output"
+            ],
+            "modelSignature": "ck6xyi8gzjipw19ixx6di8l1v"
+        }
+    ],
+    "operations": [
+        {
+            "id": "module-filter:intellij.vuejs.backend",
+            "input": {
+                "artifact": "intellij.vuejs.backend"
+            },
+            "output": "module-filter:intellij.vuejs.backend:output",
+            "manifest": "keep",
+            "excludes": [
+                "vue-service/**"
+            ]
+        }
+    ]
+}

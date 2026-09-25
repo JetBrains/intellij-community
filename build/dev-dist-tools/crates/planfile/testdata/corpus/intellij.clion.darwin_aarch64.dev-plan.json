@@ -1,0 +1,270 @@
+{
+    "version": 2,
+    "plugin": "intellij.clion",
+    "variant": "darwin_aarch64",
+    "layoutSignature": "annmucx8sw22yja5d1e7gj6rt",
+    "assets": [
+        {
+            "module": "intellij.cidr.apinotes"
+        },
+        {
+            "module": "intellij.cidr.copyright"
+        },
+        {
+            "module": "intellij.cidr.clangFormat.common"
+        },
+        {
+            "module": "intellij.cidr.clangFormat.schema"
+        },
+        {
+            "module": "intellij.cidr.asm"
+        },
+        {
+            "module": "intellij.cidr.asm.debugger"
+        },
+        {
+            "module": "intellij.cidr.translateCode"
+        },
+        {
+            "module": "intellij.cidr.lang.base"
+        },
+        {
+            "module": "intellij.cidr.lang.base.icons"
+        },
+        {
+            "module": "intellij.cidr.psi.base"
+        },
+        {
+            "module": "intellij.cidr.projectModel"
+        },
+        {
+            "module": "intellij.cidr.execution"
+        },
+        {
+            "module": "intellij.cidr.workspaceModel"
+        },
+        {
+            "module": "intellij.cidr.util"
+        },
+        {
+            "module": "intellij.cidr.util.serializer"
+        },
+        {
+            "module": "intellij.cidr.util.ui"
+        },
+        {
+            "module": "intellij.clion.externalSystem"
+        },
+        {
+            "module": "intellij.clion.externalSystem.ide"
+        },
+        {
+            "module": "intellij.clion.core"
+        },
+        {
+            "module": "intellij.clion.java"
+        },
+        {
+            "module": "intellij.clion.oc"
+        },
+        {
+            "module": "intellij.clion.toolchains"
+        },
+        {
+            "module": "intellij.clion.toolchains.debugger"
+        },
+        {
+            "module": "intellij.clion.profiles"
+        },
+        {
+            "module": "intellij.clion.profiles.frontend"
+        },
+        {
+            "module": "intellij.clion.profiles.backend"
+        },
+        {
+            "module": "intellij.clion.execution"
+        },
+        {
+            "module": "intellij.cidr.profiling"
+        },
+        {
+            "module": "intellij.clion.profiling"
+        },
+        {
+            "module": "intellij.profiler.clion"
+        },
+        {
+            "module": "intellij.clion.featuresTrainer"
+        },
+        {
+            "module": "intellij.clion.dfa"
+        },
+        {
+            "module": "intellij.clion.dfa.bridge"
+        },
+        {
+            "module": "intellij.clion.newUiOnboarding"
+        },
+        {
+            "module": "intellij.cidr.coverage"
+        },
+        {
+            "module": "intellij.clion.coverage"
+        },
+        {
+            "module": "intellij.clion.headless"
+        },
+        {
+            "module": "intellij.clion.mcp"
+        },
+        {
+            "module": "intellij.clion.util"
+        },
+        {
+            "module": "intellij.clion.openfolder"
+        },
+        {
+            "module": "intellij.clion.openfolder.json"
+        },
+        {
+            "module": "intellij.clion.openfolder.nova"
+        },
+        {
+            "module": "intellij.clion.webDeployment"
+        },
+        {
+            "module": "intellij.clion.webDeployment.remoteRun"
+        },
+        {
+            "module": "intellij.clion.projectStatus"
+        },
+        {
+            "module": "intellij.clion.docker"
+        },
+        {
+            "destination": "lib/modules/intellij.platform.ssh.nio.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.platform.ssh.nio",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:platform-ssh-nio-ssh-nio-fs",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/clion.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.clion",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.clion",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "bin",
+            "inputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "inputs": [
+                "cidr-dependency:ninja:mac:aarch64",
+                "cidr-dependency:osx-starter:mac:aarch64",
+                "cidr-dependency:cmake:mac:aarch64"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "modelSignature": "d5pf0w9tn26gi8qwvxvrz5cbk"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "cidr-dependency:ninja:mac:aarch64"
+                },
+                {
+                    "artifact": "cidr-dependency:osx-starter:mac:aarch64"
+                },
+                {
+                    "artifact": "cidr-dependency:cmake:mac:aarch64"
+                }
+            ],
+            "output": "layout-assets:resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "bin",
+                "assets": [
+                    {
+                        "destination": "ninja/mac/aarch64",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "executables": [
+                                "ninja"
+                            ]
+                        }
+                    },
+                    {
+                        "destination": "profiler/mac/aarch64",
+                        "sources": [
+                            1
+                        ],
+                        "transform": {
+                            "kind": "archive-tree"
+                        }
+                    },
+                    {
+                        "destination": "cmake/mac/aarch64",
+                        "sources": [
+                            2
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "executables": [
+                                "bin/*"
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

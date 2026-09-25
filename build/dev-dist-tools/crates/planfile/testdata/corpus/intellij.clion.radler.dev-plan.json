@@ -1,0 +1,149 @@
+{
+    "version": 1,
+    "plugin": "intellij.clion.radler",
+    "variant": "{platform}",
+    "layoutSignature": "{platform:layoutSignature}",
+    "assets": [
+        {
+            "module": "intellij.rider.rdclient.xml"
+        },
+        {
+            "module": "intellij.rider.rdclient.dotnet"
+        },
+        {
+            "module": "intellij.rider.rdclient.dotnet.startup"
+        },
+        {
+            "module": "intellij.rider.rdclient.languages"
+        },
+        {
+            "module": "intellij.rider.cpp.core.languages"
+        },
+        {
+            "module": "intellij.rider.cpp.core"
+        },
+        {
+            "module": "intellij.rider.model.generated"
+        },
+        {
+            "module": "intellij.resharper.cpp.lexer"
+        },
+        {
+            "module": "intellij.resharper.assist"
+        },
+        {
+            "module": "intellij.resharper.cpp.assist"
+        },
+        {
+            "module": "intellij.rider.icons"
+        },
+        {
+            "module": "intellij.rider.cpp.injection"
+        },
+        {
+            "module": "intellij.rider.rdclient.dotnet.backend.split"
+        },
+        {
+            "module": "intellij.rider.rdclient.dotnet.spellchecker"
+        },
+        {
+            "module": "intellij.rider.rdclient.dotnet.grazie"
+        },
+        {
+            "module": "intellij.rider.rdclient.dotnet.usageStatistics"
+        },
+        {
+            "module": "intellij.rider.cpp.core.spellchecker"
+        },
+        {
+            "module": "intellij.rider.cpp.core.grazie"
+        },
+        {
+            "module": "intellij.rider.cpp.core.cmake"
+        },
+        {
+            "module": "intellij.rider.cpp.core.projectModel"
+        },
+        {
+            "module": "intellij.clion.radler.clangFormat"
+        },
+        {
+            "module": "intellij.clion.radler.icons"
+        },
+        {
+            "module": "intellij.clion.radler.core"
+        },
+        {
+            "module": "intellij.clion.radler.backend.split"
+        },
+        {
+            "module": "intellij.clion.radler.common"
+        },
+        {
+            "module": "intellij.clion.radler.frontend.split"
+        },
+        {
+            "module": "intellij.clion.radler.dfa"
+        },
+        {
+            "module": "intellij.clion.radler.featuresTrainer"
+        },
+        {
+            "module": "intellij.clion.radler.ide"
+        },
+        {
+            "module": "intellij.clion.radler.mcp"
+        },
+        {
+            "module": "intellij.rider.plugins.rdclient.performance"
+        },
+        {
+            "module": "intellij.clion.radler.performance"
+        },
+        {
+            "module": "intellij.clion.radler.testing"
+        },
+        {
+            "module": "intellij.rider.plugins.cpp.debugger"
+        },
+        {
+            "module": "intellij.clion.runFile"
+        },
+        {
+            "module": "intellij.clion.runFile.valgrind"
+        },
+        {
+            "module": "intellij.clion.runFile.profiler"
+        },
+        {
+            "module": "intellij.clion.runFile.nova"
+        },
+        {
+            "module": "intellij.clion.radler.junieExecution"
+        },
+        {
+            "destination": "lib/clion-radler.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.clion.radler",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.clion.radler",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        }
+    ]
+}

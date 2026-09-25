@@ -1,0 +1,67 @@
+{
+    "version": 3,
+    "plugin": "intellij.skiko.plugin",
+    "variant": "{platform}",
+    "layoutSignature": "{platform:layoutSignature}",
+    "assets": [
+        {
+            "destination": "lib/modules/intellij.libraries.skiko.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.skiko",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-skiko-jetbrains-skiko-awt-compose",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true,
+                    "nativeLib": "skiko-awt-runtime-all"
+                }
+            }
+        },
+        {
+            "destination": "lib/skiko-awt-runtime-all",
+            "inputs": [
+                "native-tree:intellij.libraries.skiko"
+            ],
+            "kind": "tree",
+            "classPath": false,
+            "scope": "distribution"
+        },
+        {
+            "destination": "lib/skiko-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.skiko.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.skiko.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        }
+    ]
+}

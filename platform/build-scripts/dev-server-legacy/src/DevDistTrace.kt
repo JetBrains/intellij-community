@@ -15,7 +15,7 @@ import java.nio.file.Path
  * behave exactly as it did before it could be.
  *
  * Reuse metadata needed by adjacent file operations for span attributes. Gate extra work that serves only tracing.
- * The Go sourced collector counts source bytes during collection and inventory. The composer counts bytes beside
+ * The collector counts source bytes during collection and inventory. The composer counts bytes beside
  * file copies. The jar packer collects extra file statistics only when tracing is enabled.
  */
 internal const val TRACE_FILE_OPTION: String = "--trace-file"

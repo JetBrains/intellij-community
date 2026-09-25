@@ -104,9 +104,9 @@ class PluginPackingProjectionEncodingTest {
     assertThat(decoded.copy(operations = emptyList())).isEqualTo(projection)
   }
 
-  /** The Go mirror of the layout signature pins the same constant in `kotlin_preparation_test.go`. */
+  /** The packer mirror of the layout signature pins the same constant in `tests/kotlin.rs` of the `pluginpack` crate. */
   @Test
-  fun `the layout signature of the filtered projection is what the Go mirror pins`() {
+  fun `the layout signature of the filtered projection is what the packer mirror pins`() {
     val signature = pluginPackingLayoutSignature(
       plugin = "filtered-plugin",
       variant = "linux",

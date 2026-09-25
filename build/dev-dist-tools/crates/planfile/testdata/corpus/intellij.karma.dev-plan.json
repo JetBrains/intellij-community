@@ -1,0 +1,72 @@
+{
+    "version": 2,
+    "plugin": "intellij.karma",
+    "variant": "",
+    "layoutSignature": "8c1dqdsxeytuy48wpli0vf2ct",
+    "assets": [
+        {
+            "module": "intellij.javascript.karma.coverage"
+        },
+        {
+            "module": "intellij.javascript.karma.debug"
+        },
+        {
+            "destination": "lib/karma.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.karma",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "module-filter:intellij.karma:output",
+                        "kind": "prepared",
+                        "filter": "prepared"
+                    }
+                ],
+                "writer": {
+                    "manifest": "drop",
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "js_reporter",
+            "inputs": [
+                "module-resource:0:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "module-filter:intellij.karma",
+            "inputs": [
+                "intellij.karma"
+            ],
+            "outputs": [
+                "module-filter:intellij.karma:output"
+            ],
+            "modelSignature": "e2xi0obgogr4he21prg74u6vg"
+        }
+    ],
+    "operations": [
+        {
+            "id": "module-filter:intellij.karma",
+            "input": {
+                "artifact": "intellij.karma"
+            },
+            "output": "module-filter:intellij.karma:output",
+            "manifest": "keep",
+            "excludes": [
+                "js_reporter/**"
+            ]
+        }
+    ]
+}

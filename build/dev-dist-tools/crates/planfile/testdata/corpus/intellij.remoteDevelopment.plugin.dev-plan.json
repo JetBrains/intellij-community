@@ -1,0 +1,451 @@
+{
+    "version": 1,
+    "plugin": "intellij.remoteDevelopment.plugin",
+    "variant": "",
+    "layoutSignature": "7h04ft9xa3iacgd5demaxavnj",
+    "assets": [
+        {
+            "module": "intellij.platform.kernel.backend.split"
+        },
+        {
+            "module": "intellij.platform.navbar.backend.split"
+        },
+        {
+            "module": "intellij.platform.rpc.split"
+        },
+        {
+            "module": "intellij.platform.plugins.backend.split"
+        },
+        {
+            "module": "intellij.platform.plugins.shared.split"
+        },
+        {
+            "destination": "lib/remdev-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.remoteDevelopment.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.remoteDevelopment.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.platform.inline.completion.split",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.platform.project.frontend.split",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.platform.progress.frontend.split",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.platform.kernel.frontend.split",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.platform.inline.completion.frontend.split",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.platform.inline.completion.backend.split"
+        },
+        {
+            "module": "intellij.platform.completion.common.split"
+        },
+        {
+            "module": "intellij.platform.completion.backend.split"
+        },
+        {
+            "module": "intellij.platform.buildView.split"
+        },
+        {
+            "module": "intellij.platform.credentialStore.common"
+        },
+        {
+            "module": "intellij.platform.credentialStore.backend.split"
+        },
+        {
+            "module": "intellij.platform.split.connection"
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.codeWithMe.lobby.server.api.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.codeWithMe.lobby.server.api",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-code_with_me-lobby-server-api-lobby-server-api",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.ice4j.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.ice4j",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-ice4j-ice4j",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.jitsi.utils.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.jitsi.utils",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-jitsi-utils-jitsi-utils",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.jnaerator.runtime.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.jnaerator.runtime",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-jnaerator-runtime-jnaerator-runtime",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.jstun.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.jstun",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-jstun-jstun",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.quiche.jna.stubs.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.quiche.jna.stubs",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-quiche-jna-stubs-quiche-jna-stubs",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.platform.split.connection.devSources"
+        },
+        {
+            "module": "intellij.platform.frontend.split.devSources"
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.tls.channel.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.tls.channel",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-tls-channel-tls-channel",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.platform.split"
+        },
+        {
+            "module": "intellij.platform.split.jcef"
+        },
+        {
+            "module": "intellij.platform.split.statistics"
+        },
+        {
+            "module": "intellij.platform.backend.split"
+        },
+        {
+            "module": "intellij.platform.backend.split.jcef"
+        },
+        {
+            "module": "intellij.platform.remoteController.backend"
+        },
+        {
+            "module": "intellij.platform.remoteController.cli"
+        },
+        {
+            "module": "intellij.platform.remoteController"
+        },
+        {
+            "module": "intellij.platform.split.connection.base"
+        },
+        {
+            "module": "intellij.platform.undo.split"
+        },
+        {
+            "module": "intellij.rd.eel"
+        },
+        {
+            "module": "intellij.rd.eel.frontend"
+        },
+        {
+            "module": "intellij.rd.eel.backend"
+        },
+        {
+            "module": "intellij.platform.frontend.split.base"
+        },
+        {
+            "module": "intellij.platform.kernel.base.frontend.split"
+        },
+        {
+            "module": "intellij.platform.frontend.split"
+        },
+        {
+            "module": "intellij.platform.frontend.split.jcef"
+        },
+        {
+            "module": "intellij.platform.frontend.split.startup"
+        },
+        {
+            "module": "intellij.platform.execution.frontend.split"
+        },
+        {
+            "module": "intellij.platform.searchEverywhere.frontend.split"
+        },
+        {
+            "module": "intellij.platform.plugins.frontend.split.base"
+        },
+        {
+            "module": "intellij.platform.plugins.frontend.split"
+        },
+        {
+            "module": "intellij.platform.identifiers.highlighting.frontend.split"
+        },
+        {
+            "module": "intellij.platform.completion.frontend.split"
+        },
+        {
+            "module": "intellij.xml.frontend.split"
+        },
+        {
+            "module": "intellij.platform.credentialStore.frontend.split"
+        },
+        {
+            "module": "intellij.platform.frontend.split.connection"
+        },
+        {
+            "module": "intellij.execution.process.elevation.backend.split"
+        },
+        {
+            "destination": "lib/frontend-split/frontend-split.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "cwm-frontend:embedded-product-descriptor",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/JetBrainsClientPlugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "cwm-frontend:client-application-info",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "idea/JetBrainsClientApplicationInfo.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.frontend.split.customization",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/frontend-split/remote-dev-icons.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "layout-assets:layout-patcher:1:output",
+                        "kind": "prepared",
+                        "filter": "prepared"
+                    },
+                    {
+                        "input": "intellij.remoteDev.icons",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "manifest": "keep",
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "jre-build.txt",
+            "inputs": [
+                "layout-source:resource-generator:0:0"
+            ],
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:layout-patcher:1",
+            "inputs": [
+                "cwm-frontend:branding"
+            ],
+            "outputs": [
+                "layout-assets:layout-patcher:1:output"
+            ],
+            "modelSignature": "2qfjnsyl4pzve4o6ypimn8nhp"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:layout-patcher:1",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "cwm-frontend:branding",
+                    "path": "product_16_frontend.svg"
+                },
+                {
+                    "artifact": "cwm-frontend:branding",
+                    "path": "product_frontend.svg"
+                },
+                {
+                    "artifact": "cwm-frontend:branding",
+                    "path": "product_16_frontend_EAP.svg"
+                },
+                {
+                    "artifact": "cwm-frontend:branding",
+                    "path": "product_frontend_EAP.svg"
+                }
+            ],
+            "output": "layout-assets:layout-patcher:1:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "entries",
+                "assets": [
+                    {
+                        "destination": "JetBrainsClient_16.svg",
+                        "sources": [
+                            0
+                        ]
+                    },
+                    {
+                        "destination": "JetBrainsClient_64.svg",
+                        "sources": [
+                            1
+                        ]
+                    },
+                    {
+                        "destination": "JetBrainsClient_16_EAP.svg",
+                        "sources": [
+                            2
+                        ]
+                    },
+                    {
+                        "destination": "JetBrainsClient_64_EAP.svg",
+                        "sources": [
+                            3
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -1,0 +1,255 @@
+{
+    "version": 2,
+    "plugin": "intellij.groovy",
+    "variant": "",
+    "layoutSignature": "1lk0wjl1wges2yy1w6lt2mowf",
+    "assets": [
+        {
+            "destination": "lib/Groovy.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.groovy",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.groovy",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.groovy.duplicates",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.groovy.duplicatesDetection",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.groovy.git",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "module-filter:intellij.groovy.psi:output",
+                        "kind": "prepared",
+                        "filter": "prepared"
+                    }
+                ],
+                "writer": {
+                    "manifest": "drop",
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.groovy.ant"
+        },
+        {
+            "module": "intellij.groovy.copyright"
+        },
+        {
+            "module": "intellij.groovy.byteCodeViewer"
+        },
+        {
+            "module": "intellij.groovy.langInjection"
+        },
+        {
+            "module": "intellij.groovy.structuralSearch"
+        },
+        {
+            "module": "intellij.groovy.spock"
+        },
+        {
+            "destination": "lib/intellij.libraries.hamcrest.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.hamcrest",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-hamcrest-hamcrest",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.junit4.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.junit4",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-junit4-_j_unit4",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.opentest4j.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.opentest4j",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-opentest4j-opentest4j",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/groovy-jps.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.groovy.jps",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/groovy-rt.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.groovy.rt",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/groovy-spock-rt.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.groovy.spock.rt",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/groovy-rt-class-loader.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.groovy.rt.classLoader",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/groovy-constants-rt.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.groovy.constants.rt",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/standardDsls",
+            "inputs": [
+                "module-resource:0:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "lib/agent/gragent.jar",
+            "inputs": [
+                "module-resource:1:source"
+            ],
+            "mode": 493,
+            "classPath": false
+        },
+        {
+            "destination": "lib",
+            "inputs": [
+                "module-resource:2:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "module-filter:intellij.groovy.psi",
+            "inputs": [
+                "intellij.groovy.psi"
+            ],
+            "outputs": [
+                "module-filter:intellij.groovy.psi:output"
+            ],
+            "modelSignature": "3zsbcmnfq5ijjs4ux5lgvxs3u"
+        }
+    ],
+    "operations": [
+        {
+            "id": "module-filter:intellij.groovy.psi",
+            "input": {
+                "artifact": "intellij.groovy.psi"
+            },
+            "output": "module-filter:intellij.groovy.psi:output",
+            "manifest": "keep",
+            "excludes": [
+                "standardDsls/**"
+            ]
+        }
+    ]
+}

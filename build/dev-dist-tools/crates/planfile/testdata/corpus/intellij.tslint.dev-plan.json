@@ -1,0 +1,66 @@
+{
+    "version": 2,
+    "plugin": "intellij.tslint",
+    "variant": "",
+    "layoutSignature": "6k4flzh3bfno1f3bcq6swkn6d",
+    "assets": [
+        {
+            "destination": "lib/tslint.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.tslint",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "module-filter:intellij.tslint:output",
+                        "kind": "prepared",
+                        "filter": "prepared"
+                    }
+                ],
+                "writer": {
+                    "manifest": "drop",
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "js",
+            "inputs": [
+                "module-resource:0:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "module-filter:intellij.tslint",
+            "inputs": [
+                "intellij.tslint"
+            ],
+            "outputs": [
+                "module-filter:intellij.tslint:output"
+            ],
+            "modelSignature": "cecxjb8czi4hifyv2ea639yt1"
+        }
+    ],
+    "operations": [
+        {
+            "id": "module-filter:intellij.tslint",
+            "input": {
+                "artifact": "intellij.tslint"
+            },
+            "output": "module-filter:intellij.tslint:output",
+            "manifest": "keep",
+            "excludes": [
+                "js/**"
+            ]
+        }
+    ]
+}

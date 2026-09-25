@@ -1,0 +1,140 @@
+{
+    "version": 2,
+    "plugin": "intellij.clion",
+    "variant": "linux_aarch64",
+    "layoutSignature": "avhhhjuclfe3cwajv9ztk022f",
+    "assets": [
+        {
+            "module": "intellij.cidr.asm"
+        },
+        {
+            "module": "intellij.cidr.translateCode"
+        },
+        {
+            "module": "intellij.cidr.lang.base.icons"
+        },
+        {
+            "module": "intellij.cidr.psi.base"
+        },
+        {
+            "module": "intellij.cidr.util.ui"
+        },
+        {
+            "module": "intellij.clion.profiles"
+        },
+        {
+            "module": "intellij.clion.profiles.frontend"
+        },
+        {
+            "destination": "lib/modules/intellij.platform.ssh.nio.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.platform.ssh.nio",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:platform-ssh-nio-ssh-nio-fs",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/clion.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.clion",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.clion",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "bin",
+            "inputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "inputs": [
+                "cidr-dependency:ninja:linux:aarch64",
+                "cidr-dependency:cmake:linux:aarch64"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "modelSignature": "42o9fku4urio0c4llhp21jt6k"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "cidr-dependency:ninja:linux:aarch64"
+                },
+                {
+                    "artifact": "cidr-dependency:cmake:linux:aarch64"
+                }
+            ],
+            "output": "layout-assets:resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "bin",
+                "assets": [
+                    {
+                        "destination": "ninja/linux/aarch64",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "executables": [
+                                "ninja"
+                            ]
+                        }
+                    },
+                    {
+                        "destination": "cmake/linux/aarch64",
+                        "sources": [
+                            1
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "executables": [
+                                "bin/*"
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

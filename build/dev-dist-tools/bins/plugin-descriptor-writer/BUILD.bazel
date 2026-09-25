@@ -1,0 +1,197 @@
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+load("@rules_java//java:defs.bzl", "java_import")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")
+load("@rules_pkg//pkg:pkg.bzl", "pkg_zip")
+load("//build/dev-dist-tools:defs.bzl", "dev_dist_rust_crate")
+load("//platform/build-scripts/bazel-rules:dev_dist_embedded_product_descriptor.bzl", "dev_dist_embedded_product_descriptor")
+load("//platform/build-scripts/bazel-rules:dev_dist_frontend_application_info.bzl", "dev_dist_frontend_application_info")
+load("//platform/build-scripts/bazel-rules:dev_dist_product_descriptor.bzl", "dev_dist_product_application_info", "dev_dist_product_descriptor")
+load(":descriptor_rules_test.bzl", "descriptor_action_test")
+
+dev_dist_rust_crate(name = "plugin-descriptor-writer")
+
+pkg_zip(
+    name = "unrelated_descriptors_jar",
+    testonly = True,
+    srcs = ["testdata/embedded_product/simple.xml"],
+    out = "unrelated-descriptors.jar",
+)
+
+pkg_files(
+    name = "embedded_descriptor_entries",
+    testonly = True,
+    srcs = [
+        "testdata/embedded_product/META-INF/nested.xml",
+        "testdata/embedded_product/intellij.embedded.jar.xml",
+    ],
+    strip_prefix = strip_prefix.from_pkg("testdata/embedded_product"),
+)
+
+pkg_zip(
+    name = "embedded_descriptors_jar",
+    testonly = True,
+    srcs = [":embedded_descriptor_entries"],
+    out = "embedded-descriptors.jar",
+)
+
+java_import(
+    name = "embedded_descriptor_library",
+    testonly = True,
+    jars = [
+        ":unrelated_descriptors_jar",
+        ":embedded_descriptors_jar",
+    ],
+)
+
+[filegroup(
+    name = name + "_descriptor",
+    testonly = True,
+    srcs = ["testdata/embedded_product/module.xml"],
+) for name in [
+    "existing",
+    "fragment",
+    "notSeparate",
+    "file",
+]]
+
+dev_dist_embedded_product_descriptor(
+    testonly = True,
+    descriptors = {
+        ":existing_descriptor": "intellij.embedded.existing.xml",
+        ":fragment_descriptor": "intellij.embedded.fragment.xml",
+        ":notSeparate_descriptor": "intellij.embedded.notSeparate.xml",
+        ":file_descriptor": "intellij.embedded.file.xml",
+        "testdata/embedded_product/content.xml": "META-INF/content.xml",
+        "testdata/embedded_product/module-extensions.xml": "META-INF/module-extensions.xml",
+        "testdata/embedded_product/no-package.xml": "intellij.embedded.noPackage.xml",
+    },
+    library_descriptors = {
+        ":embedded_descriptor_library": "META-INF/nested.xml intellij.embedded.jar.xml",
+    },
+    main_module = "embedded",
+    modules = [
+        "intellij.embedded",
+        "intellij.embedded.file",
+    ],
+    separate_jar = [
+        "intellij.embedded.existing",
+        "intellij.embedded.noPackage",
+        "intellij.embedded/fragment",
+        "intellij.embedded.jar",
+        "intellij.embedded.file",
+    ],
+    source = "testdata/embedded_product/source.xml",
+)
+
+diff_test(
+    name = "embedded_product_rule_test",
+    file1 = ":embedded_dev_embedded_product_descriptor",
+    file2 = "testdata/embedded_product/expected.xml",
+)
+
+descriptor_action_test(
+    name = "embedded_product_action_test",
+    mnemonic = "DevDistEmbeddedProductDescriptor",
+    mode = "--embedded-product",
+    target_under_test = ":embedded_dev_embedded_product_descriptor",
+)
+
+dev_dist_frontend_application_info(
+    testonly = True,
+    build_number = "testdata/application_info/build.txt",
+    client_application_info = "testdata/application_info/client.xml",
+    main_module = "client_default",
+    product_application_info = "testdata/application_info/product.xml",
+)
+
+diff_test(
+    name = "application_info_default_rule_test",
+    file1 = ":client_default_dev_frontend_application_info",
+    file2 = "testdata/application_info/default.expected.xml",
+)
+
+descriptor_action_test(
+    name = "application_info_action_test",
+    mnemonic = "DevDistFrontendApplicationInfo",
+    mode = "--application-info",
+    target_under_test = ":client_default_dev_frontend_application_info",
+)
+
+# The same fixture as `product_descriptor_matches_kotlin`, so the rule and the unit test compare one expected file.
+dev_dist_product_descriptor(
+    name = "product_descriptor",
+    testonly = True,
+    descriptors = {
+        "testdata/product_descriptor/%s.xml" % module: "%s.xml" % module
+        for module in [
+            "intellij.libraries.blockmap",
+            "intellij.libraries.sqlite",
+            "intellij.platform.debugger",
+            "intellij.platform.debugger.content",
+            "intellij.platform.ide.osCertificates",
+        ]
+    },
+    main_module = "intellij.pycharm.community",
+    refused_content_modules = ["intellij.fixture.refused"],
+    source = "testdata/product_descriptor/source.xml",
+)
+
+diff_test(
+    name = "product_descriptor_rule_test",
+    file1 = ":product_descriptor",
+    file2 = "testdata/product_descriptor/expected.xml",
+)
+
+diff_test(
+    name = "product_descriptor_prefix_rule_test",
+    file1 = ":product_descriptor.plugin-classpath-prefix",
+    file2 = "testdata/product_descriptor/plugin-classpath-prefix.expected",
+)
+
+descriptor_action_test(
+    name = "product_descriptor_action_test",
+    extra_output_suffixes = [
+        ".plugin-classpath-prefix",
+        ".classpath.xml",
+    ],
+    mnemonic = "DevDistProductDescriptor",
+    mode = "--product-descriptor",
+    target_under_test = ":product_descriptor",
+)
+
+dev_dist_product_application_info(
+    name = "product_application_info",
+    testonly = True,
+    build_number = "testdata/stamp_application_info/build.txt",
+    product_code = "IC",
+    source = "testdata/stamp_application_info/idea-community.xml",
+)
+
+diff_test(
+    name = "product_application_info_rule_test",
+    file1 = ":product_application_info",
+    file2 = "testdata/stamp_application_info/idea-community.expected.xml",
+)
+
+descriptor_action_test(
+    name = "product_application_info_action_test",
+    mnemonic = "DevDistProductApplicationInfo",
+    mode = "--stamp-application-info",
+    target_under_test = ":product_application_info",
+)
+
+test_suite(
+    name = "descriptor_rule_tests",
+    tests = [
+        ":application_info_action_test",
+        ":application_info_default_rule_test",
+        ":embedded_product_action_test",
+        ":embedded_product_rule_test",
+        ":product_application_info_action_test",
+        ":product_application_info_rule_test",
+        ":product_descriptor_action_test",
+        ":product_descriptor_prefix_rule_test",
+        ":product_descriptor_rule_test",
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,6 @@
+load("//build/dev-dist-tools:defs.bzl", "dev_dist_rust_crate")
+
+dev_dist_rust_crate(
+    name = "javaglob",
+    test_data = ["//build/dev-dist-tools/crates/planfile:planfile_testdata"],
+)

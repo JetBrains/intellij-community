@@ -1,0 +1,123 @@
+{
+    "version": 2,
+    "plugin": "intellij.jcef.plugin",
+    "variant": "{platform}",
+    "layoutSignature": "{platform:layoutSignature}",
+    "assets": [
+        {
+            "destination": "lib/modules/intellij.libraries.jcef.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.jcef",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-jcef-jcef",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.platform.ui.jcef"
+        },
+        {
+            "module": "intellij.platform.ide.impl.jcef"
+        },
+        {
+            "module": "intellij.platform.ide.newUiOnboarding.jcef"
+        },
+        {
+            "module": "intellij.jcef.frontend"
+        },
+        {
+            "module": "intellij.internal.jcef"
+        },
+        {
+            "destination": "lib/jcef-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.jcef.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.jcef.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "jcef",
+            "inputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "inputs": [
+                "layout-source:resource-generator:0:0"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "modelSignature": "548n8ltjw4ht48j91rziuwsx0"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "layout-source:resource-generator:0:0"
+                }
+            ],
+            "output": "layout-assets:resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "jcef",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "stripComponents": 1,
+                            "mappings": [
+                                {
+                                    "pattern": "jcef/**",
+                                    "stripComponents": 1
+                                },
+                                {}
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

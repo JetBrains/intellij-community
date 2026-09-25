@@ -385,7 +385,7 @@ _derived_remainder_test = analysistest.make(
 )
 
 def _remainder_from_plan_test_impl(ctx):
-    """A chain packs the remainder from the plan file in one Go action. The action reads the plan file, the input
+    """A chain packs the remainder from the plan file in one action. The action reads the plan file, the input
     catalogue, the classpath descriptor and every catalogue artifact. It writes the remainder, the inventory, the
     asset table and the classpath record, and the provider hands all four to the component."""
     env = analysistest.begin(ctx)
@@ -1010,7 +1010,7 @@ def dev_plugin_remainder_test_suite(name):
         content_jar = ":" + content_jar,
     )
 
-    # A chain over a plan file with a module-filter operation. The Go packer executes the operation in the remainder
+    # A chain over a plan file with a module-filter operation. The packer executes the operation in the remainder
     # action. The same action writes the asset table and the classpath record the component reads.
     plan_chain = name + "_plan_chain"
     dev_dist_complex_plugin_variant(

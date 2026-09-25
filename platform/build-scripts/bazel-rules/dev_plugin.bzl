@@ -29,7 +29,7 @@ DevDistRuntimeLayoutInfo = provider(
     doc = """The layout part of one plugin component: which modules and libraries each of its jars merges.
 
     The runtime module repository of a product reads the parts of its plugins, see `runtime-layout` in
-    `community/build/content-module-packer`. A simple plugin writes its part at analysis. A complex plugin derives it
+    `community/build/dev-dist-tools/bins`. A simple plugin writes its part at analysis. A complex plugin derives it
     from its resolved plan file.""",
     fields = {
         "part": "The part `File`, in the part format of `runtime-layout`.",

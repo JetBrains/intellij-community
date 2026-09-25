@@ -1,0 +1,21 @@
+[package]
+name = "project-model-tree"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+fscopy.workspace = true
+trace.workspace = true
+tracing.workspace = true
+lexopt.workspace = true
+anyhow.workspace = true
+rayon.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

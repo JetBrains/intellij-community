@@ -1,0 +1,71 @@
+{
+  "kind": "platform",
+  "platformPrefix": "idea",
+  "os": "linux",
+  "arch": "x64",
+  "additionalModules": [],
+  "mainClass": null,
+  "coreClassPath": [],
+  "entries": [
+    {
+      "relativePath": "lib/vector-0.jar",
+      "type": "component-file",
+      "hash": 3244421341483603138,
+      "source": "inputs/vector-0.jar"
+    },
+    {
+      "relativePath": "lib/vector-1.jar",
+      "type": "component-file",
+      "hash": -2399747073602280719,
+      "source": "inputs/vector-1.jar"
+    },
+    {
+      "relativePath": "lib/vector-240.jar",
+      "type": "component-file",
+      "hash": 2788469911834355041,
+      "source": "inputs/vector-240.jar"
+    },
+    {
+      "relativePath": "lib/vector-241.jar",
+      "type": "component-file",
+      "hash": -4155630063455057979,
+      "source": "inputs/vector-241.jar"
+    },
+    {
+      "relativePath": "lib/vector-262143.jar",
+      "type": "component-file",
+      "hash": 9078738661776034622,
+      "source": "inputs/vector-262143.jar"
+    },
+    {
+      "relativePath": "lib/vector-262144.jar",
+      "type": "component-file",
+      "hash": -1692254647099917537,
+      "source": "inputs/vector-262144.jar"
+    },
+    {
+      "relativePath": "lib/vector-262145.jar",
+      "type": "component-file",
+      "hash": -2541306581069977202,
+      "source": "inputs/vector-262145.jar"
+    },
+    {
+      "relativePath": "lib/vector-3.jar",
+      "type": "component-file",
+      "hash": -737883702129266468,
+      "source": "inputs/vector-3.jar"
+    },
+    {
+      "relativePath": "lib/vector-524288.jar",
+      "type": "component-file",
+      "hash": 3157545227256347297,
+      "source": "inputs/vector-524288.jar"
+    },
+    {
+      "relativePath": "lib/vector-524301.jar",
+      "type": "component-file",
+      "hash": 8144707773225287728,
+      "source": "inputs/vector-524301.jar"
+    }
+  ]
+}

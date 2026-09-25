@@ -9,7 +9,7 @@ import java.nio.ByteBuffer
 /**
  * The signature of what [build] puts into the stream: a 128-bit `xxh3` hash in base 36.
  * A signature is a staleness guard that readers compare as an opaque string.
- * The Go parity test mirrors this function in `kotlin_preparation_test.go`.
+ * The parity test mirrors this function in `tests/kotlin.rs` of the `pluginpack` crate.
  */
 @ApiStatus.Internal
 fun devDistSignature(build: HashStream128.() -> Unit): String {

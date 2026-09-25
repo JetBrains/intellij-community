@@ -1,0 +1,294 @@
+{
+    "version": 1,
+    "plugin": "intellij.remoteDevelopment.plugin",
+    "variant": "",
+    "layoutSignature": "4vb4d5tl581p9les6e5m61w9k",
+    "assets": [
+        {
+            "module": "intellij.platform.rpc.split"
+        },
+        {
+            "module": "intellij.platform.plugins.shared.split"
+        },
+        {
+            "destination": "lib/remdev-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.remoteDevelopment.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.remoteDevelopment.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.platform.inline.completion.split",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.platform.project.frontend.split",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.platform.progress.frontend.split",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.platform.kernel.frontend.split",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.platform.inline.completion.frontend.split",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.platform.completion.common.split"
+        },
+        {
+            "module": "intellij.platform.buildView.split"
+        },
+        {
+            "module": "intellij.platform.credentialStore.common"
+        },
+        {
+            "module": "intellij.platform.split.connection"
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.codeWithMe.lobby.server.api.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.codeWithMe.lobby.server.api",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-code_with_me-lobby-server-api-lobby-server-api",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.ice4j.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.ice4j",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-ice4j-ice4j",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.jitsi.utils.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.jitsi.utils",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-jitsi-utils-jitsi-utils",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.jnaerator.runtime.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.jnaerator.runtime",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-jnaerator-runtime-jnaerator-runtime",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.jstun.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.jstun",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-jstun-jstun",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.quiche.jna.stubs.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.quiche.jna.stubs",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-quiche-jna-stubs-quiche-jna-stubs",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.platform.split.connection.devSources"
+        },
+        {
+            "module": "intellij.platform.frontend.split.devSources"
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.tls.channel.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.tls.channel",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-tls-channel-tls-channel",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.platform.split"
+        },
+        {
+            "module": "intellij.platform.split.jcef"
+        },
+        {
+            "module": "intellij.platform.split.statistics"
+        },
+        {
+            "module": "intellij.platform.remoteController"
+        },
+        {
+            "module": "intellij.platform.split.connection.base"
+        },
+        {
+            "module": "intellij.platform.undo.split"
+        },
+        {
+            "module": "intellij.rd.eel"
+        },
+        {
+            "module": "intellij.rd.eel.frontend"
+        },
+        {
+            "module": "intellij.platform.frontend.split.base"
+        },
+        {
+            "module": "intellij.platform.kernel.base.frontend.split"
+        },
+        {
+            "module": "intellij.platform.frontend.split"
+        },
+        {
+            "module": "intellij.platform.frontend.split.jcef"
+        },
+        {
+            "module": "intellij.platform.frontend.split.startup"
+        },
+        {
+            "module": "intellij.platform.execution.frontend.split"
+        },
+        {
+            "module": "intellij.platform.searchEverywhere.frontend.split"
+        },
+        {
+            "module": "intellij.platform.plugins.frontend.split.base"
+        },
+        {
+            "module": "intellij.platform.plugins.frontend.split"
+        },
+        {
+            "module": "intellij.platform.identifiers.highlighting.frontend.split"
+        },
+        {
+            "module": "intellij.platform.completion.frontend.split"
+        },
+        {
+            "module": "intellij.xml.frontend.split"
+        },
+        {
+            "module": "intellij.platform.credentialStore.frontend.split"
+        },
+        {
+            "module": "intellij.platform.frontend.split.connection"
+        },
+        {
+            "destination": "jre-build.txt",
+            "inputs": [
+                "layout-source:resource-generator:0:0"
+            ],
+            "classPath": false
+        }
+    ]
+}

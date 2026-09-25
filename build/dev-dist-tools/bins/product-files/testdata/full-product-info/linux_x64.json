@@ -1,0 +1,96 @@
+{
+  "name": "Server \"Q\"\\\t\u0001 ü",
+  "version": "2026.3",
+  "buildNumber": "263.1234",
+  "productCode": "IIS",
+  "envVarBaseName": "IDEA_SERVER",
+  "dataDirectoryName": "IntelliJServer2026.3",
+  "svgIconPath": "bin/server.svg",
+  "productVendor": "JetBrains",
+  "majorVersionReleaseDate": "20261231",
+  "minRequiredJavaVersion": 21,
+  "launch": [
+    {
+      "os": "Linux",
+      "arch": "amd64",
+      "launcherPath": "bin/server",
+      "javaExecutablePath": "jbr/bin/java",
+      "vmOptionsFilePath": "bin/server.vmoptions",
+      "startupWmClass": "jetbrains-server",
+      "additionalJvmArguments": [
+        "-Xbootclasspath/a:$IDE_HOME/lib/nio-fs.jar",
+        "-Djava.system.class.loader=com.example.ServerClassLoader",
+        "-Didea.vendor.name=JetBrains",
+        "-Didea.paths.selector=IntelliJServer2026.3",
+        "-Djna.boot.library.path=$IDE_HOME/lib/jna/amd64",
+        "-Djna.nosys=true",
+        "-Djna.noclasspath=true",
+        "-Dpty4j.preferred.native.folder=$IDE_HOME/lib/pty4j",
+        "-Dio.netty.allocator.type=pooled",
+        "-Dskiko.library.path=$IDE_HOME/lib/skiko-awt-runtime-all",
+        "-Dintellij.platform.runtime.repository.path=$IDE_HOME/modules/module-descriptors.dat",
+        "-Dintellij.platform.root.module=intellij.server.main",
+        "-Dintellij.platform.product.mode=backend",
+        "-Didea.platform.prefix=IntelliJServer",
+        "-Dfirst=1",
+        "-Dsecond=\"2\"",
+        "-Dsplash=true",
+        "-Daether.connector.resumeDownloads=false",
+        "-Dcompose.swing.render.on.graphics=true",
+        "--enable-native-access=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED",
+        "--add-opens=java.desktop/com.sun.java.swing.plaf.gtk=ALL-UNNAMED"
+      ],
+      "mainClass": "com.intellij.platform.runtime.loader.IntellijLoader",
+      "stdioRedirectArg": "--stdio",
+      "customCommands": [
+        {
+          "commands": [
+            "qodana",
+            "inspect"
+          ],
+          "vmOptionsFilePath": "bin/qodana.vmoptions",
+          "additionalJvmArguments": [
+            "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
+            "-Didea.vendor.name=JetBrains",
+            "-Didea.paths.selector=Qodana2026.3",
+            "-Dio.netty.allocator.type=pooled",
+            "-Dintellij.platform.root.module=intellij.qodana",
+            "-Dintellij.platform.product.mode=",
+            "-Daether.connector.resumeDownloads=false",
+            "-Dcompose.swing.render.on.graphics=true",
+            "--add-opens=java.base/java.lang=ALL-UNNAMED",
+            "--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED",
+            "--add-opens=java.desktop/com.sun.java.swing.plaf.gtk=ALL-UNNAMED",
+            "-Dextra=1"
+          ],
+          "mainClass": "com.intellij.qodana.Main",
+          "envVarBaseName": "QODANA",
+          "dataDirectoryName": "Qodana2026.3"
+        },
+        {
+          "commands": []
+        }
+      ]
+    }
+  ],
+  "customProperties": [
+    {
+      "key": "k1",
+      "value": "v\n1"
+    },
+    {
+      "key": "k2",
+      "value": ""
+    }
+  ],
+  "flavors": [
+    {
+      "id": "server"
+    },
+    {
+      "id": "remote"
+    }
+  ]
+}

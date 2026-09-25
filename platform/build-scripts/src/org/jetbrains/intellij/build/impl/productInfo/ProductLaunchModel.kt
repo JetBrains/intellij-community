@@ -37,7 +37,7 @@ import java.nio.file.Files
  * `bin/product-info.json` of a distribution state, for every OS and architecture.
  *
  * It needs no build context. [computeProductLaunchModel] derives it. The dev distribution plan generator writes the
- * model of each split product as JSON, and the Go tool `product-files` renders the four files of one OS and
+ * model of each split product as JSON, and the tool `product-files` renders the four files of one OS and
  * architecture from it. They must be the files that the production writers write, byte for byte.
  */
 @ApiStatus.Internal
@@ -362,7 +362,7 @@ private val launchModelJson = Json {
   encodeDefaults = false
 }
 
-/** The JSON the plan generator writes and the Go renderer reads. */
+/** The JSON the plan generator writes and the `product-files` renderer reads. */
 @ApiStatus.Internal
 fun encodeProductLaunchModel(model: ProductLaunchModel): String = launchModelJson.encodeToString(ProductLaunchModel.serializer(), model) + "\n"
 

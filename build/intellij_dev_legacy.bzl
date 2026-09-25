@@ -1,6 +1,6 @@
 """The legacy launch macros: they assemble the product in the launching JVM through the build scripts.
 
-A Bazel dev distribution and the Go launcher in `intellij_dev.bzl` replace them. These stay for the community
+A Bazel dev distribution and the launcher in `intellij_dev.bzl` replace them. These stay for the community
 launchers and the dev-mode tests that still run `DevMainKt` or `JUnitDevMainKt`.
 """
 

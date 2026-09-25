@@ -1,6 +1,6 @@
 """Composes a dev-mode IDE distribution from components, and declares the reference fragments of the gates.
 
-A component names the files it places, and the Go composer copies them into the distribution. A reference fragment
+A component names the files it places, and the composer copies them into the distribution. A reference fragment
 runs the Kotlin assembler, which produces the same files a second time, so a gate can compare the two producers. No
 distribution composes a reference.
 
@@ -47,8 +47,9 @@ def _add_input_entry(ctx, entries, origins, logical_key, files, source, origin):
     is keyed by the container target that groups its jars (`DevDistContentInfo.library_jars` in `dev_dist_content.bzl`) and a
     multi-jar library has several, in an order the packer depends on. The manifest still holds one line per file, which
     is what keeps `wc -l` counting files for `dev_dist_unused_inputs_test.bzl`. The origin sidecar stays one line per
-    *key* and is read as a lookup rather than positionally (`tallyOrigins` in `//build/dev-dist` keeps the manifest as
-    a list of pairs and the origins as a `Map`), so a repeated key resolves to the one origin it was recorded under.
+    *key* and is read as a lookup rather than positionally (`tally_origins` in `//build/dev-dist-tools/bins/dev-dist`
+    keeps the manifest as a list of pairs and the origins as a `HashMap`), so a repeated key resolves to the one origin
+    it was recorded under.
 
     [origin] is written to a sidecar only, never to the manifest: it answers "which half of the declaration asked for
     this key", which is what turns `.unused-inputs` from a count into an attributable measurement.
@@ -199,8 +200,12 @@ _LOCAL_DISK_CACHE_ONLY = {
 # starts as many as `--jobs` allows. The memory of a JVM tool is its `-Xmx` in `build/BUILD.bazel` plus the JVM's own
 # overhead and, on Windows, the launcher's `jar` helper. Keep the two sides in step.
 def _small_tool_resources(_os, _inputs):
-    """The Go composer and the Go project model tree tool. The composer peaks near 105 MiB on the largest local launch."""
+    """The project model tree tool."""
     return {"cpu": 1, "memory": 256}
+
+def _composer_resources(_os, _inputs):
+    """The composer clones the files of an export on a pool of four threads."""
+    return {"cpu": 4, "memory": 256}
 
 def _assembler_resources(_os, _inputs):
     """The fragment assembler: `-Xmx8g`, G1 with a few worker threads."""
@@ -805,7 +810,7 @@ def _compose(ctx, fragment_targets):
         # Composed distributions are large and intended for local consumption. Until a producer and delivery policy
         # exist, the local disk cache is the only intended cache.
         execution_requirements = {"no-remote-cache": "1"},
-        resource_set = _small_tool_resources,
+        resource_set = _composer_resources,
         mnemonic = "IntellijDevLaunchMetadata" if local_launch else "IntellijDevDistCompose",
         progress_message = "Composing dev launch metadata %s" % ctx.label if local_launch else "Composing dev distribution %s" % ctx.label,
     )

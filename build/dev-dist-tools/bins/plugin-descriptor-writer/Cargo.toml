@@ -1,0 +1,23 @@
+[package]
+name = "plugin-descriptor-writer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+quick-xml.workspace = true
+zip.workspace = true
+# `zip` reads a deflated entry through `flate2` with no default features. This dependency selects the default backend.
+flate2.workspace = true
+memmap2.workspace = true
+lexopt.workspace = true
+fscopy.workspace = true
+anyhow.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

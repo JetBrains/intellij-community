@@ -1,0 +1,115 @@
+{
+    "version": 1,
+    "plugin": "intellij.cidr.debugger.plugin",
+    "variant": "",
+    "layoutSignature": "8wjc8iu55rueus8sz6xls7puq",
+    "assets": [
+        {
+            "module": "intellij.cidr.debugger.shared"
+        },
+        {
+            "module": "intellij.cidr.debugger.frontend"
+        },
+        {
+            "module": "intellij.cidr.debugger.profiles.shared"
+        },
+        {
+            "module": "intellij.cidr.debugger.profiles.frontend"
+        },
+        {
+            "module": "intellij.cidr.util.execution"
+        },
+        {
+            "module": "intellij.cidr.runner"
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.antlr4.runtime.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.antlr4.runtime",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-antlr4-runtime-antlr4-runtime",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.kryo2.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kryo2",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kryo2-_kryo",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kryo2-_objenesis",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.objenesis.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.objenesis",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-objenesis-_objenesis",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/cidr-debugger-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.cidr.debugger.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.cidr.debugger.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,535 @@
+#![allow(
+    clippy::cast_possible_truncation,
+    clippy::unreadable_literal,
+    reason = "the byte pattern is the index modulo 256, and the hash values are copied from the Kotlin output"
+)]
+
+use std::collections::BTreeMap;
+use std::fs;
+
+use super::*;
+
+fn links(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {
+    pairs.iter().map(|(name, target)| (name.to_string(), target.to_string())).collect()
+}
+
+fn directory(relative_path: &str, mode: u32) -> Entry {
+    Entry {
+        relative_path: relative_path.to_owned(),
+        entry_type: EntryType::Directory,
+        mode,
+        ..Entry::default()
+    }
+}
+
+fn error_text<T: std::fmt::Debug>(result: Result<T, Error>) -> String {
+    result.unwrap_err().to_string()
+}
+
+#[cfg(unix)]
+fn symlink(target: &str, link: &std::path::Path) {
+    std::os::unix::fs::symlink(target, link).unwrap();
+}
+
+#[test]
+fn directory_metadata_has_no_hash_and_allows_children() {
+    let entries = vec![directory("resources", 0o750), directory("resources/empty", 0o700)];
+    let temporary = tempfile::tempdir().unwrap();
+    let metadata = temporary.path().join("metadata.json");
+    write(&metadata, &entries).unwrap();
+    let data = fs::read_to_string(&metadata).unwrap();
+    assert!(!data.contains("\"hash\""), "directory metadata has a hash: {data}");
+    assert_eq!(read(&metadata).unwrap(), entries);
+
+    for changed in [
+        Entry {
+            hash: 1,
+            ..directory("resources", 0o750)
+        },
+        Entry {
+            size: 1,
+            ..directory("resources", 0o750)
+        },
+        Entry {
+            executable: true,
+            ..directory("resources", 0o750)
+        },
+        Entry {
+            symlink_target: "other".to_owned(),
+            ..directory("resources", 0o750)
+        },
+    ] {
+        assert!(merge([&changed]).is_err(), "accepted invalid directory: {changed:?}");
+    }
+    for child in [
+        directory("Resources/child", 0o755),
+        Entry {
+            relative_path: "resources".to_owned(),
+            mode: 0o644,
+            ..Entry::default()
+        },
+    ] {
+        assert!(
+            merge(entries.iter().chain([&child])).is_err(),
+            "accepted conflicting directory: {child:?}"
+        );
+    }
+
+    // The Go reader refused the key `hash` on a directory, also with the value `null`.
+    for hash in ["0", "null"] {
+        let changed = data.replacen("\"type\":\"directory\"", &format!("\"type\":\"directory\",\"hash\":{hash}"), 1);
+        fs::write(&metadata, changed).unwrap();
+        let message = error_text(read(&metadata));
+        assert!(message.contains("directory metadata must not have a hash"), "{hash}: {message}");
+    }
+}
+
+#[test]
+fn kotlin_hash_vectors() {
+    let temporary = tempfile::tempdir().unwrap();
+    for (size, expected) in [
+        (0usize, 3244421341483603138i64),
+        (1, -2399747073602280719),
+        (3, -737883702129266468),
+        (240, 2788469911834355041),
+        (241, -4155630063455057979),
+        (262143, 9078738661776034622),
+        (262144, -1692254647099917537),
+        (262145, -2541306581069977202),
+        (524288, 3157545227256347297),
+        (524301, 8144707773225287728),
+    ] {
+        let data: Vec<u8> = (0..size).map(|index| (index * 31 + 7) as u8).collect();
+        let source = temporary.path().join(format!("input-{size}.jar"));
+        fs::write(&source, data).unwrap();
+        assert_eq!(hash_file(&source).unwrap(), expected, "size {size}");
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn inventory_and_merge_without_payload() {
+    let temporary = tempfile::tempdir().unwrap();
+    let root = temporary.path().join("payload");
+    fs::create_dir_all(root.join("nested")).unwrap();
+    fs::write(root.join("tool"), "tool bytes").unwrap();
+    fs::set_permissions(root.join("tool"), std::os::unix::fs::PermissionsExt::from_mode(0o755)).unwrap();
+    symlink("../tool", &root.join("nested/link"));
+
+    let entries = inventory(&root).unwrap();
+    assert_eq!(entries.len(), 3, "{entries:?}");
+    assert_eq!(entries[0].entry_type, EntryType::Directory, "{entries:?}");
+    assert_eq!(entries[1].entry_type, EntryType::Symlink, "{entries:?}");
+    assert_eq!(entries[1].symlink_target, "../tool", "{entries:?}");
+    assert!(entries[2].executable, "{entries:?}");
+    assert_eq!(entries[2].mode, 0o755, "{entries:?}");
+
+    let metadata = temporary.path().join("files.json");
+    write(&metadata, &entries).unwrap();
+    fs::remove_dir_all(&root).unwrap();
+    let read_entries = read(&metadata).unwrap();
+    assert_eq!(read_entries, entries);
+    assert_eq!(merge(read_entries.iter().chain(&entries)).unwrap(), entries);
+}
+
+#[test]
+fn metadata_rejects_conflicts_and_unsafe_paths() {
+    let entry = Entry {
+        relative_path: "lib/a.jar".to_owned(),
+        hash: 42,
+        size: 100,
+        mode: 0o644,
+        ..Entry::default()
+    };
+    for other in [
+        Entry { hash: 43, ..entry.clone() },
+        Entry {
+            size: 101,
+            ..entry.clone()
+        },
+        Entry {
+            mode: 0o600,
+            ..entry.clone()
+        },
+        Entry {
+            relative_path: "lib/a.jar/child".to_owned(),
+            ..entry.clone()
+        },
+    ] {
+        let message = error_text(merge([&entry, &other]));
+        assert!(message.contains("conflicting"), "conflict accepted for {other:?}: {message}");
+    }
+    for name in [
+        "",
+        "/lib/a.jar",
+        "../a.jar",
+        "lib/../a.jar",
+        "lib/./a.jar",
+        "lib//a.jar",
+        "C:/a.jar",
+        "lib\\a.jar",
+        "lib/a.jar/",
+        "lib/\0",
+    ] {
+        assert!(validate_path(name).is_err(), "unsafe path accepted: {name:?}");
+    }
+}
+
+#[test]
+fn read_rejects_invalid_metadata() {
+    let temporary = tempfile::tempdir().unwrap();
+    let texts: [&[u8]; 9] = [
+        br#"{"version":2,"entries":[]}"#,
+        br#"{"version":1,"entries":null}"#,
+        br#"{"version":1,"entries":[],"extra":true}"#,
+        br#"{"version":1,"entries":[]} {}"#,
+        br#"{"version":1,"entries":[{"relativePath":"a.jar","type":"file"}]}"#,
+        br#"{"version":1,"entries":[{"relativePath":"a.jar","type":"file","hash":1,"size":-1,"mode":420,"executable":false}]}"#,
+        br#"{"version":1,"entries":[{"relativePath":"a.jar","type":"file","hash":1,"size":1,"mode":493,"executable":false}]}"#,
+        br#"{"version":1,"entries":[{"relativePath":"a.jar","type":"unknown","hash":1,"size":1,"mode":420,"executable":false}]}"#,
+        b"{\"version\":1,\"entries\":[],\"bad\":\"\xff\"}",
+    ];
+    for (index, text) in texts.iter().enumerate() {
+        let source = temporary.path().join(format!("metadata-{index}.json"));
+        fs::write(&source, text).unwrap();
+        assert!(
+            read(&source).is_err(),
+            "invalid metadata accepted: {}",
+            String::from_utf8_lossy(text)
+        );
+    }
+}
+
+#[test]
+fn read_rejects_wrong_types_and_null_fields() {
+    let temporary = tempfile::tempdir().unwrap();
+    let valid = r#"{"relativePath":"a.jar","type":"file","hash":1,"size":1,"mode":420,"executable":false}"#;
+    for (index, entry) in [
+        valid.replace("\"hash\":1", "\"hash\":null"),
+        valid.replace("\"size\":1", "\"size\":\"1\""),
+        valid.replace("\"mode\":420", "\"mode\":4.5"),
+        valid.replace("\"executable\":false", "\"executable\":0"),
+        valid.replace("\"type\":\"file\"", "\"type\":null"),
+        valid.replace("\"hash\":1", "\"hash\":1,\"unknown\":1"),
+        "null".to_owned(),
+        "[]".to_owned(),
+    ]
+    .iter()
+    .enumerate()
+    {
+        let source = temporary.path().join(format!("metadata-{index}.json"));
+        fs::write(&source, format!(r#"{{"version":1,"entries":[{entry}]}}"#)).unwrap();
+        assert!(read(&source).is_err(), "invalid entry accepted: {entry}");
+    }
+    let source = temporary.path().join("valid.json");
+    fs::write(&source, format!("{{\"version\":1,\"entries\":[{valid}]}}\n\n")).unwrap();
+    assert_eq!(read(&source).unwrap().len(), 1);
+}
+
+#[cfg(unix)]
+#[test]
+fn inventory_rejects_escaping_links_and_special_roots() {
+    for target in ["../outside", "/outside", "C:/outside", "nested\\outside"] {
+        let root = tempfile::tempdir().unwrap();
+        symlink(target, &root.path().join("link"));
+        assert!(inventory(root.path()).is_err(), "unsafe link accepted: {target}");
+    }
+    let root = tempfile::tempdir().unwrap();
+    let other = tempfile::tempdir().unwrap();
+    let link = other.path().join("linked-root");
+    symlink(root.path().to_str().unwrap(), &link);
+    assert!(inventory(&link).is_err(), "accepted a symbolic link as the declared directory");
+}
+
+#[test]
+fn validate_links_refuses_chains_and_unsafe_links() {
+    for (name, pairs, message) in [
+        (
+            "root alias chain",
+            &[("current", "."), ("escape", "current/../outside")][..],
+            "unsupported symbolic link chain",
+        ),
+        (
+            "case alias chain",
+            &[("current", "."), ("escape", "CURRENT/../outside")],
+            "unsupported symbolic link chain",
+        ),
+        (
+            "nested alias chain",
+            &[("nested/current", ".."), ("nested/escape", "current/../outside")],
+            "unsupported symbolic link chain",
+        ),
+        (
+            "safe chain",
+            &[("first", "second"), ("second", "third"), ("third", "missing-file")],
+            "unsupported symbolic link chain",
+        ),
+        ("cycle", &[("a", "b/../file"), ("b", "a")], "unsupported symbolic link chain"),
+        ("self cycle", &[("a", "a/../file")], "unsupported symbolic link chain"),
+        (
+            "nested cycle",
+            &[("a", "nested/b/../file"), ("nested/b", "../a")],
+            "unsupported symbolic link chain",
+        ),
+        (
+            "case alias cycle",
+            &[("a", "B/../file"), ("b", "A")],
+            "unsupported symbolic link chain",
+        ),
+        ("escaping target", &[("nested/a", "../../outside")], "escapes"),
+        ("absolute target", &[("a", "/outside")], "invalid"),
+        ("escaping destination", &[("../a", "inside")], "invalid"),
+        ("link parent collision", &[("a", "inside"), ("a/b", "file")], "conflicting"),
+        ("case alias collision", &[("a", "inside"), ("A", "inside")], "conflicting"),
+        ("case alias parent collision", &[("a", "inside"), ("A/b", "file")], "conflicting"),
+        ("non-ASCII destination", &[("caf\u{e9}", ".")], "unsupported character"),
+        ("non-ASCII target", &[("a", "cafe\u{301}")], "unsupported character"),
+        ("ampersand destination", &[("a&b", "inside")], "unsupported character"),
+        ("angle bracket target", &[("a", "<inside>")], "unsupported character"),
+    ] {
+        let result = validate_links(&links(pairs));
+        let text = format!("{result:?}");
+        assert!(
+            result.is_err() && text.contains(message),
+            "{name}: {pairs:?} gave {text}, want {message}"
+        );
+    }
+}
+
+/// The test uses the shapes of the links in the payloads of the repository. An npm `.bin` directory has relative file
+/// links with `..` segments. The macOS JCEF archive has a directory link with a `./` prefix.
+#[test]
+fn validate_links_accepts_the_real_link_shapes_without_file_system_access() {
+    for pairs in [
+        &[][..],
+        &[("current", ".")],
+        &[
+            ("node_modules/.bin/acorn", "../acorn/bin/acorn"),
+            ("node_modules/.bin/rimraf", "../rimraf/bin.js"),
+        ],
+        &[(
+            "Frameworks/Chromium Embedded Framework.framework",
+            "./cef_server.app/Contents/Frameworks/Chromium Embedded Framework.framework",
+        )],
+        &[("current", "directory/nested"), ("safe", "current-other/../inside")],
+        &[("alias", "./modules/../modules/separate.jar")],
+        &[("first", "missing-file"), ("second", "missing-file")],
+    ] {
+        if let Err(error) = validate_links(&links(pairs)) {
+            panic!("safe links {pairs:?}: {error}");
+        }
+    }
+}
+
+/// Checks that each entry point refuses the link target. The Go composer also refused a target with an empty segment.
+fn assert_empty_segment_is_refused(target: &str) {
+    let message = error_text(validate_links(&links(&[("lib/alias", target)])));
+    assert!(message.contains("has an empty segment"), "validate_links {target:?}: {message}");
+    let entry = Entry {
+        relative_path: "lib/alias".to_owned(),
+        entry_type: EntryType::Symlink,
+        symlink_target: target.to_owned(),
+        hash: hash_symlink_target(target),
+        ..Entry::default()
+    };
+    let message = error_text(merge([&entry]));
+    assert!(message.contains("has an empty segment"), "merge {target:?}: {message}");
+    #[cfg(unix)]
+    {
+        let temporary = tempfile::tempdir().unwrap();
+        let link = temporary.path().join("alias");
+        symlink(target, &link);
+        let message = error_text(inspect(&link, "lib/alias"));
+        assert!(message.contains("has an empty segment"), "inspect {target:?}: {message}");
+    }
+}
+
+#[test]
+fn a_link_target_with_a_trailing_slash_is_refused() {
+    assert_empty_segment_is_refused("payload/");
+}
+
+#[test]
+fn a_link_target_with_a_repeated_slash_is_refused() {
+    assert_empty_segment_is_refused("lib//payload");
+}
+
+#[cfg(unix)]
+#[test]
+fn link_graphs_are_validated_across_metadata_boundaries() {
+    for (name, pairs) in [
+        ("chain", &[("current", "."), ("escape", "current/../outside")][..]),
+        ("case chain", &[("current", "."), ("escape", "CURRENT/../outside")]),
+        ("cycle", &[("a", "b/../file"), ("b", "a")]),
+        ("case cycle", &[("a", "B/../file"), ("b", "A")]),
+    ] {
+        let payload = tempfile::tempdir().unwrap();
+        let metadata = tempfile::tempdir().unwrap();
+        let mut groups = Vec::new();
+        let mut combined = Vec::new();
+        for (relative_path, target) in pairs {
+            let source = payload.path().join(relative_path);
+            symlink(target, &source);
+            let entry = inspect(&source, relative_path).unwrap();
+            let group = vec![entry.clone()];
+            write(&metadata.path().join(format!("{relative_path}.json")), &group)
+                .unwrap_or_else(|error| panic!("{name}: the isolated link must be valid: {error}"));
+            groups.push(group);
+            combined.push(entry);
+        }
+        assert!(
+            inventory(payload.path()).is_err(),
+            "{name}: inventory accepted an unsafe link graph"
+        );
+        let payload_path = payload.path().to_path_buf();
+        drop(payload);
+        assert!(!payload_path.exists());
+        for group in &groups {
+            let source = metadata.path().join(format!("{}.json", group[0].relative_path));
+            if let Err(error) = read(&source) {
+                panic!("{name}: reading the isolated link requires no payload: {error}");
+            }
+        }
+        assert!(
+            merge(groups.iter().flatten()).is_err(),
+            "{name}: merging accepted an unsafe link graph"
+        );
+
+        let destination = metadata.path().join("combined.json");
+        fs::write(&destination, "unchanged").unwrap();
+        assert!(
+            write(&destination, &combined).is_err(),
+            "{name}: writing accepted an unsafe link graph"
+        );
+        assert_eq!(
+            fs::read_to_string(&destination).unwrap(),
+            "unchanged",
+            "{name}: a rejected graph changed the output"
+        );
+
+        fs::write(&destination, json::encode(&combined)).unwrap();
+        assert!(read(&destination).is_err(), "{name}: reading accepted an unsafe link graph");
+    }
+}
+
+#[test]
+fn path_identity_lowercases_ascii_and_refuses_other_text() {
+    assert_eq!(path_identity("Lib/A.JAR").unwrap(), "lib/a.jar");
+    assert_eq!(path_identity("lib/a.jar").unwrap(), "lib/a.jar");
+    for name in ["CAFE\u{301}", "\u{212a}", "Stra\u{df}e", "a&b", "a<b", "a>b"] {
+        let message = error_text(path_identity(name));
+        assert!(message.contains("unsupported character"), "{name:?}: {message}");
+    }
+}
+
+#[test]
+fn clean_link_target_keeps_a_relative_target_relative() {
+    for (target, expected) in [
+        ("./tool", "tool"),
+        (
+            "./cef_server.app/Contents/Frameworks/Chromium Embedded Framework.framework",
+            "cef_server.app/Contents/Frameworks/Chromium Embedded Framework.framework",
+        ),
+        ("lib//payload/", "lib/payload"),
+        ("lib/../lib/./native.jar", "lib/../lib/native.jar"),
+        ("../alias/../tool", "../alias/../tool"),
+        ("../sibling", "../sibling"),
+        (".", "."),
+        ("./", "."),
+        ("", ""),
+        ("/absolute//./target/", "/absolute//./target/"),
+    ] {
+        assert_eq!(clean_link_target(target), expected, "clean_link_target({target:?})");
+    }
+}
+
+/// No payload name in the repository is outside ASCII or holds `<`, `>` or `&`. Each operation names such a path in
+/// its error.
+#[cfg(unix)]
+#[test]
+fn metadata_refuses_names_outside_the_supported_text() {
+    for name in ["caf\u{e9}", "cafe\u{301}", "\u{65e5}\u{672c}\u{8a9e}", "a&b", "a<b", "a>b"] {
+        let message = error_text(validate_path(name));
+        assert!(message.contains("unsupported character"), "{name:?}: {message}");
+
+        let payload = tempfile::tempdir().unwrap();
+        fs::write(payload.path().join(name), "bytes").unwrap();
+        let message = error_text(inventory(payload.path()));
+        assert!(
+            message.contains("unsupported character") && message.contains(&format!("{name:?}")),
+            "{name:?}: {message}"
+        );
+
+        let entry = Entry {
+            relative_path: name.to_owned(),
+            hash: 1,
+            size: 1,
+            mode: 0o644,
+            ..Entry::default()
+        };
+        let destination = payload.path().join("metadata.json");
+        assert!(
+            write(&destination, std::slice::from_ref(&entry)).is_err(),
+            "{name:?}: write accepted"
+        );
+        assert!(!destination.exists(), "{name:?}: a refused write created the file");
+
+        fs::write(&destination, json::encode(&[entry])).unwrap();
+        let message = error_text(read(&destination));
+        assert!(message.contains("unsupported character"), "{name:?}: {message}");
+    }
+}
+
+/// The expectation is the output of the Go `filemetadata.Write`. It shows the field order, no `hash` for a directory
+/// and no empty `symlinkTarget`. It also shows the escapes of `"`, the tab and the other control characters.
+#[test]
+fn write_produces_the_bytes_of_the_go_writer() {
+    let target = "../a b/\"q\"\t\u{1}\u{7f}.txt";
+    let entries = vec![
+        directory("a b", 0o755),
+        Entry {
+            relative_path: "a b/\"q\"\t\u{1}\u{7f}.txt".to_owned(),
+            hash: -42,
+            size: 3,
+            mode: 0o755,
+            executable: true,
+            ..Entry::default()
+        },
+        Entry {
+            relative_path: "lib/link".to_owned(),
+            entry_type: EntryType::Symlink,
+            hash: hash_symlink_target(target),
+            symlink_target: target.to_owned(),
+            ..Entry::default()
+        },
+        directory("lib", 0o750),
+    ];
+    let temporary = tempfile::tempdir().unwrap();
+    let destination = temporary.path().join("nested/metadata.json");
+    write(&destination, &entries).unwrap();
+    // The output of the Go writer for the same entries.
+    let expected = concat!(
+        r#"{"version":1,"entries":["#,
+        r#"{"relativePath":"a b","type":"directory","size":0,"mode":493,"executable":false},"#,
+        "{\"relativePath\":\"a b/\\\"q\\\"\\t\\u0001\u{7f}.txt\",\"type\":\"file\",\"hash\":-42,\"size\":3,\"mode\":493,\"executable\":true},",
+        r#"{"relativePath":"lib","type":"directory","size":0,"mode":488,"executable":false},"#,
+        "{\"relativePath\":\"lib/link\",\"type\":\"symlink\",\"hash\":4604895238634484768,\"size\":0,\"mode\":0,\"executable\":false,\"symlinkTarget\":\"../a b/\\\"q\\\"\\t\\u0001\u{7f}.txt\"}",
+        "]}\n"
+    );
+    assert_eq!(fs::read_to_string(&destination).unwrap(), expected);
+    let mut sorted = entries;
+    sorted.sort_by(|first, second| first.relative_path.cmp(&second.relative_path));
+    assert_eq!(read(&destination).unwrap(), sorted);
+}
+
+#[test]
+fn inspect_names_a_missing_file() {
+    let temporary = tempfile::tempdir().unwrap();
+    let error = inspect(&temporary.path().join("missing"), "missing").unwrap_err();
+    assert!(
+        matches!(&error, Error::Io { error, .. } if error.kind() == std::io::ErrorKind::NotFound),
+        "{error:?}"
+    );
+    assert!(error.to_string().contains("missing"), "{error}");
+    inspect(temporary.path(), "../escape").unwrap_err();
+}

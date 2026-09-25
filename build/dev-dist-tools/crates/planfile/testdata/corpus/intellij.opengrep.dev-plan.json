@@ -1,0 +1,298 @@
+{
+    "version": 2,
+    "plugin": "intellij.opengrep",
+    "variant": "",
+    "layoutSignature": "bb16ml6h4p44l172ytxyn9b8q",
+    "assets": [
+        {
+            "destination": "lib/intellij.opengrep.common.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.opengrep.common",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.opengrep.taint.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.opengrep.taint",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.opengrep.inspections.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.opengrep.inspections",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.opengrep.lsp"
+        },
+        {
+            "module": "intellij.opengrep.qodana"
+        },
+        {
+            "module": "intellij.opengrep.pqc"
+        },
+        {
+            "module": "intellij.opengrep.pqc.java"
+        },
+        {
+            "module": "intellij.opengrep.pqc.kotlin"
+        },
+        {
+            "destination": "lib/intellij.libraries.external.symbols.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.external.symbols",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-external-symbols-external-symbols",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-external-symbols-io-github-bonede-tree-sitter-0-25-3",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-external-symbols-io-github-bonede-tree-sitter-typescript-0-23-2",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.flexmark.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.flexmark",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-flexmark-flexmark",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij.libraries.jsonSchemaValidator.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.jsonSchemaValidator",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-json_schema_validator-json-schema-validator-jetbrains",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.kotlinx.cli.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinx.cli",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@ultimate_lib//:libraries-kotlinx-cli-kotlinx-cli",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/opengrep.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.opengrep",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.opengrep",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/opengrep-native",
+            "inputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "inputs": [
+                "layout-source:resource-generator:0:0",
+                "layout-source:resource-generator:0:1",
+                "layout-source:resource-generator:0:2",
+                "layout-source:resource-generator:0:3",
+                "layout-source:resource-generator:0:4",
+                "layout-source:resource-generator:0:5",
+                "layout-source:resource-generator:0:6"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "modelSignature": "4atgqvj2qtc8dtm4eknw4878y"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "layout-source:resource-generator:0:0"
+                },
+                {
+                    "artifact": "layout-source:resource-generator:0:1"
+                },
+                {
+                    "artifact": "layout-source:resource-generator:0:2"
+                },
+                {
+                    "artifact": "layout-source:resource-generator:0:3"
+                },
+                {
+                    "artifact": "layout-source:resource-generator:0:4"
+                },
+                {
+                    "artifact": "layout-source:resource-generator:0:5"
+                },
+                {
+                    "artifact": "layout-source:resource-generator:0:6"
+                }
+            ],
+            "output": "layout-assets:resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "lib/opengrep-native",
+                "assets": [
+                    {
+                        "destination": "opengrep_manylinux_x86",
+                        "sources": [
+                            0
+                        ],
+                        "mode": 493
+                    },
+                    {
+                        "destination": "opengrep_manylinux_aarch64",
+                        "sources": [
+                            1
+                        ],
+                        "mode": 493
+                    },
+                    {
+                        "destination": "opengrep_osx_x86",
+                        "sources": [
+                            2
+                        ],
+                        "mode": 493
+                    },
+                    {
+                        "destination": "opengrep_osx_arm64",
+                        "sources": [
+                            3
+                        ],
+                        "mode": 493
+                    },
+                    {
+                        "destination": "opengrep_windows_x86.exe",
+                        "sources": [
+                            4
+                        ],
+                        "mode": 420
+                    },
+                    {
+                        "destination": "rules",
+                        "sources": [
+                            5
+                        ],
+                        "transform": {
+                            "kind": "archive-tree"
+                        }
+                    },
+                    {
+                        "destination": "rules-pqc",
+                        "sources": [
+                            6
+                        ],
+                        "transform": {
+                            "kind": "archive-tree"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

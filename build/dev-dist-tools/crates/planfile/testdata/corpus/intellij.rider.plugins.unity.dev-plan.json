@@ -1,0 +1,108 @@
+{
+    "version": 2,
+    "plugin": "intellij.rider.plugins.unity",
+    "variant": "",
+    "layoutSignature": "awa01ecfp0s3yatwxwi13molo",
+    "assets": [
+        {
+            "module": "intellij.rider.plugins.unity.common"
+        },
+        {
+            "module": "intellij.rider.plugins.unity.frontend"
+        },
+        {
+            "module": "intellij.rider.plugins.unity.backend"
+        },
+        {
+            "module": "intellij.rider.plugins.unity.model"
+        },
+        {
+            "module": "intellij.rider.plugins.unity.profiler.mcp"
+        },
+        {
+            "module": "intellij.rider.plugins.unity.yaml"
+        },
+        {
+            "module": "intellij.rider.plugins.unity.css"
+        },
+        {
+            "module": "intellij.rider.plugins.unity.javascript"
+        },
+        {
+            "destination": "lib/rider-plugins-unity.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.rider.plugins.unity",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.rider.plugins.unity",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "",
+            "inputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "com/jetbrains/rider/plugins/unity/spellchecker/unity.dic",
+            "inputs": [
+                "module-resource:0:source"
+            ],
+            "mode": 493,
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "inputs": [
+                "optional-local-directory:out/bundle-plugins/rider-unity"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:0:output"
+            ],
+            "modelSignature": "3nc8pp4m40hnan6xg9vvv9dev"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "optional-local-directory:out/bundle-plugins/rider-unity"
+                }
+            ],
+            "output": "layout-assets:resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

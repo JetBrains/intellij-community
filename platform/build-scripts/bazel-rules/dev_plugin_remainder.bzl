@@ -459,7 +459,7 @@ def _library_members(ctx, identifier, target, artifacts, libraries, members_by_p
     """Registers the member jars of one library container and returns their artifact IDs in merge order.
 
     `library_entries()` expands the container the way `content_module_jar` does, so a complex plugin merges the same
-    jars in the same order. A member ID is `<library ID>/<jar basename>`: the plan file never states it, and the Go
+    jars in the same order. A member ID is `<library ID>/<jar basename>`: the plan file never states it, and the
     packer reads it from the catalogue only. Two libraries can share a jar. The jar is one artifact then, under the ID
     of the library that named it first, and both member lists name that ID.
     """
@@ -734,7 +734,7 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
 
 dev_plugin_remainder_from_plan = rule(
     implementation = _dev_plugin_remainder_from_plan_impl,
-    doc = """Packs the remainder of one complex plugin in one Go action.
+    doc = """Packs the remainder of one complex plugin in one action.
 
 The packer reads the plan file and the input catalogue in its `--projection` mode. It derives the recipe, runs the
 operations, packs the remainder, and writes the asset table and the plugin classpath record. No recipe and no
@@ -1088,7 +1088,7 @@ def dev_dist_complex_plugin_variant(
     `dev_dist_complex_plugin` derives these arguments; this form is for a test that pins one of them. A chain is four
     `manual` targets: `<name>_graph`, `<name>_catalogue`, `<name>_remainder` and `<name>_component`. Only the consumer
     of the component states the product, so no target of the chain builds on its own. The `<name>_remainder` is a
-    `dev_plugin_remainder_from_plan`. Its Go action executes the operations from the plan file.
+    `dev_plugin_remainder_from_plan`. Its action executes the operations from the plan file.
     `DEV_DIST_PLUGIN_COMPONENTS` names the component. The macro merges the declarations only. The actions and their
     cache policies stay separate.
 

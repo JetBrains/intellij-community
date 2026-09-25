@@ -1,0 +1,244 @@
+{
+    "version": 2,
+    "plugin": "intellij.rustrover.plugin",
+    "variant": "linux_aarch64",
+    "layoutSignature": "7dh1big7edykz5m5wkhg9omp",
+    "assets": [
+        {
+            "destination": "lib/intellij.rustrover.common.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.rustrover.common",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.rustrover.core"
+        },
+        {
+            "module": "intellij.rustrover.frontend"
+        },
+        {
+            "module": "intellij.rustrover.frontend.split"
+        },
+        {
+            "module": "intellij.rustrover.idea"
+        },
+        {
+            "module": "intellij.rustrover.debugger"
+        },
+        {
+            "module": "intellij.rustrover.debugger.shared"
+        },
+        {
+            "module": "intellij.rustrover.debugger.frontend"
+        },
+        {
+            "module": "intellij.rustrover.debugger.runners"
+        },
+        {
+            "module": "intellij.rustrover.profiler"
+        },
+        {
+            "module": "intellij.rustrover.valgrind"
+        },
+        {
+            "module": "intellij.rustrover.clion"
+        },
+        {
+            "module": "intellij.rustrover.nativeDebug"
+        },
+        {
+            "module": "intellij.rustrover.nativeDebug.idea"
+        },
+        {
+            "module": "intellij.rustrover.nativeDebug.rustrover"
+        },
+        {
+            "module": "intellij.rustrover.copyright"
+        },
+        {
+            "module": "intellij.rustrover.minimap"
+        },
+        {
+            "module": "intellij.rustrover.duplicates"
+        },
+        {
+            "module": "intellij.rustrover.structuralsearch"
+        },
+        {
+            "module": "intellij.rustrover.coverage"
+        },
+        {
+            "module": "intellij.rustrover.problemsView"
+        },
+        {
+            "module": "intellij.rustrover.performancePlugin"
+        },
+        {
+            "module": "intellij.rustrover.grazie"
+        },
+        {
+            "module": "intellij.rustrover.js"
+        },
+        {
+            "module": "intellij.rustrover.ml-completion"
+        },
+        {
+            "module": "intellij.rustrover.terminal"
+        },
+        {
+            "module": "intellij.rustrover.rustrover-only"
+        },
+        {
+            "module": "intellij.rustrover.sql"
+        },
+        {
+            "module": "intellij.rustrover.mcp"
+        },
+        {
+            "module": "intellij.rustrover.monolith"
+        },
+        {
+            "module": "intellij.rustrover.webLibraries"
+        },
+        {
+            "module": "intellij.rustrover.backend.split"
+        },
+        {
+            "module": "intellij.rustrover.terminal.frontend"
+        },
+        {
+            "module": "intellij.rustrover.terminal.backend"
+        },
+        {
+            "module": "intellij.rustrover.terminal.shared"
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.completion.ranking.rust.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.completion.ranking.rust",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-completion-ranking-rust-completion-ranking-rust",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/intellij-rust.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.rustrover.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.rustrover.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.rustrover.intellijLang",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.rustrover.localisationBundles",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "bin/linux/aarch64",
+            "inputs": [
+                "layout-assets:resource-generator:1:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "prettyPrinters",
+            "inputs": [
+                "module-resource:0:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:resource-generator:1",
+            "inputs": [
+                "rust-native-helper"
+            ],
+            "outputs": [
+                "layout-assets:resource-generator:1:output"
+            ],
+            "modelSignature": "3sq0yv3u6e1bnvdaosc4i3654"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:resource-generator:1",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "rust-native-helper"
+                }
+            ],
+            "output": "layout-assets:resource-generator:1:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "bin/linux/aarch64",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "mappings": [
+                                {
+                                    "pattern": "linux/aarch64/**",
+                                    "stripComponents": 2
+                                }
+                            ],
+                            "executables": [
+                                "linux/aarch64/intellij-rust-native-helper"
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
