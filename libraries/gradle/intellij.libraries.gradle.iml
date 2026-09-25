@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="Gradle" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps:gradle-api:9.8.0-rc-2">
+        <properties maven-id="org.jetbrains.intellij.deps:gradle-api:9.8.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.8.0-rc-2/gradle-api-9.8.0-rc-2.jar">
-              <sha256sum>7a2743a60fabefc30fd25eb3cd8c6b3d2d28e4103c7052433bf53e3c2177eb2a</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.8.0/gradle-api-9.8.0.jar">
+              <sha256sum>b44e7600f7b5350327049d75c6a1502e62fdeeeab9e21e44575f133e6a7a887a</sha256sum>
             </artifact>
           </verification>
         </properties>
@@ -20,11 +20,11 @@
           <root url="file://$MODULE_DIR$/../../plugins/gradle/anno" />
         </ANNOTATIONS>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.8.0-rc-2/gradle-api-9.8.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.8.0/gradle-api-9.8.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.8.0-rc-2/gradle-api-9.8.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.8.0/gradle-api-9.8.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
