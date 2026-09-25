@@ -24,7 +24,7 @@ KaLibraryModule:
 
 KaSourceModule:
   description: Sources of common
-  targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
+  targetPlatform: JS/JVM (1.8)/Native (general)/Wasm (JS)/Wasm (WASI)
   name: common
   sourceModuleKind: PRODUCTION
   stableModuleName: <common>
@@ -37,7 +37,7 @@ KaSourceModule:
 
 KaSourceModule:
   description: Sources of common
-  targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
+  targetPlatform: JS/JVM (1.8)/Native (general)/Wasm (JS)/Wasm (WASI)
   name: common
   sourceModuleKind: TEST
   stableModuleName: <common>

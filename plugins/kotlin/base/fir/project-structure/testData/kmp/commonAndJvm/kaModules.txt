@@ -12,7 +12,7 @@ KaLibraryModule:
 
 KaLibraryModule:
   description: SDK
-  targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
+  targetPlatform: JS/JVM (1.8)/Native (general)/Wasm (JS)/Wasm (WASI)
   libraryName: SDK
   isSdk: true
   regularDependencies:
@@ -48,7 +48,7 @@ KaLibraryModule:
 
 KaLibraryModule:
   description: Library org.jetbrains.kotlin:kotlin-stdlib:commonMain:<kgp_version>
-  targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
+  targetPlatform: JS/JVM (1.8)/Native (general)/Wasm (JS)/Wasm (WASI)
   libraryName: org.jetbrains.kotlin:kotlin-stdlib:commonMain:<kgp_version>
   isSdk: false
   regularDependencies:
@@ -72,7 +72,7 @@ KaLibraryModule:
 
 KaLibraryModule:
   description: Library org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0
-  targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
+  targetPlatform: JS/JVM (1.8)/Native (general)/Wasm (JS)/Wasm (WASI)
   libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0
   isSdk: false
   regularDependencies:
