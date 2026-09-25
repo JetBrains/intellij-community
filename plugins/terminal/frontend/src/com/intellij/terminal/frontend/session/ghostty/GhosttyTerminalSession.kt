@@ -456,6 +456,7 @@ class GhosttyTerminalSession internal constructor(
       if (disposed) return
       emulator.setDefaultForegroundColor(colorScheme.foreground.toEmulatorColor())
       emulator.setDefaultBackgroundColor(colorScheme.background.toEmulatorColor())
+      emulator.setDefaultAnsiColors(colorScheme.ansiColors.map { it.toEmulatorColor() })
       // Last, because it can send the color scheme report (mode 2031), after which the program queries the new colors.
       emulator.setColorScheme(if (colorScheme.isDark) ColorScheme.DARK else ColorScheme.LIGHT)
       responses = takeResponsesLocked()

@@ -3,7 +3,9 @@ package com.intellij.terminal.tests.reworked.frontend
 
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.BlockTerminalColors
 import com.intellij.terminal.tests.reworked.util.BEL
@@ -18,14 +20,16 @@ import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.awt.Color
+import java.awt.Font
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
 /**
  * [com.intellij.terminal.frontend.view.impl.TerminalViewImpl] sends the terminal colors of the global color scheme
- * ([BlockTerminalColors.DEFAULT_FOREGROUND] and [BlockTerminalColors.DEFAULT_BACKGROUND]) to the session as its default colors,
- * and sends them again when the global color scheme changes.
- * A program reads them with the color queries `OSC 10 ; ?` and `OSC 11 ; ?`, and asks if they are dark with `CSI ? 996 n`.
+ * ([BlockTerminalColors.DEFAULT_FOREGROUND], [BlockTerminalColors.DEFAULT_BACKGROUND], and [BlockTerminalColors.KEYS])
+ * to the session as its default colors, and sends them again when the global color scheme changes.
+ * A program reads them with the color queries `OSC 10 ; ?`, `OSC 11 ; ?`, and `OSC 4 ; n ; ?`,
+ * and asks if they are dark with `CSI ? 996 n`.
  * While a program enables the color scheme reports (mode 2031), each change sends a report `CSI ? 997 ; Ps n`.
  *
  * Ghostty-only: JediTerm reads the default colors on demand and ignores a program override.
@@ -124,6 +128,48 @@ internal class TerminalSessionColorSchemeUpdatingTest(emulatorType: TerminalEmul
     }
   }
 
+  @Test
+  fun `ANSI color queries report the foreground of the terminal ANSI colors of the global color scheme`() {
+    setGlobalSchemeColorsForTest(
+      foreground = Color(0x10, 0x0F, 0x0E),
+      background = Color(0x01, 0x02, 0x03),
+      ansiColors = mapOf(BlockTerminalColors.RED to textAttributes(foreground = Color(0xC0, 0x10, 0x20), background = Color(0xD0, 0x30, 0x40))),
+    )
+
+    doTest { fixture ->
+      assertThat(fixture.queryColor(osc("4;1;?")))
+        .describedAs("the IDE draws the text of ANSI red with its foreground")
+        .isEqualTo(osc("4;1;rgb:c0c0/1010/2020"))
+    }
+  }
+
+  @Test
+  fun `a change of a terminal ANSI color mid-session updates the reply and sends the color scheme report`() {
+    setGlobalSchemeColorsForTest(
+      foreground = Color(0x10, 0x0F, 0x0E),
+      background = Color(0x01, 0x02, 0x03),
+      ansiColors = mapOf(BlockTerminalColors.RED to textAttributes(foreground = Color(0xC0, 0x10, 0x20), background = Color(0xD0, 0x30, 0x40))),
+    )
+
+    doTest { fixture ->
+      // The reply proves that the session enabled the color scheme reports (mode 2031) before the change below.
+      assertThat(fixture.queryColor(csi("?2031h") + osc("4;1;?"))).isEqualTo(osc("4;1;rgb:c0c0/1010/2020"))
+
+      assertThat(fixture.awaitInputEventsHandled {
+        setGlobalSchemeColorsForTest(
+          foreground = Color(0x10, 0x0F, 0x0E),
+          background = Color(0x01, 0x02, 0x03),
+          ansiColors = mapOf(
+            BlockTerminalColors.RED to textAttributes(foreground = Color(0xA0, 0x20, 0x30), background = Color(0xD0, 0x30, 0x40)),
+          ),
+        )
+      })
+        .describedAs("a change of an ANSI color only: the program must query the new colors")
+        .containsExactly(csi("?997;1n"))
+      assertThat(fixture.queryColor(osc("4;1;?"))).isEqualTo(osc("4;1;rgb:a0a0/2020/3030"))
+    }
+  }
+
   /**
    * Feeds [query] to the session and returns the first reply that the session writes to the pty.
    * The session applies the color events asynchronously, so this function first waits until it handles them.
@@ -139,15 +185,21 @@ internal class TerminalSessionColorSchemeUpdatingTest(emulatorType: TerminalEmul
 
   /**
    * Makes a copy of the global color scheme with the given terminal colors the global scheme, until the end of the test.
+   * [ansiColors] maps a key of [BlockTerminalColors.KEYS] to its attributes.
    * The scheme switch is synchronous, so the view gets [EditorColorsManager.TOPIC] before this function returns.
    */
-  private fun setGlobalSchemeColorsForTest(foreground: Color, background: Color) {
+  private fun setGlobalSchemeColorsForTest(
+    foreground: Color,
+    background: Color,
+    ansiColors: Map<TextAttributesKey, TextAttributes> = emptyMap(),
+  ) {
     val manager = EditorColorsManager.getInstance() as EditorColorsManagerImpl
     val originalScheme = manager.globalScheme
     val scheme = (originalScheme.clone() as EditorColorsScheme).apply {
       name = "TerminalColorSchemeUpdatingTest #${++testSchemeCount}"
       setColor(BlockTerminalColors.DEFAULT_FOREGROUND, foreground)
       setColor(BlockTerminalColors.DEFAULT_BACKGROUND, background)
+      ansiColors.forEach { (key, attributes) -> setAttributes(key, attributes) }
     }
     manager.addColorScheme(scheme)
     runInEdtAndWait { manager.setGlobalScheme(scheme, processChangeSynchronously = true) }
@@ -160,6 +212,9 @@ internal class TerminalSessionColorSchemeUpdatingTest(emulatorType: TerminalEmul
   private fun osc(body: String): String = "$ESC]$body$BEL"
 
   private fun csi(body: String): String = "$ESC[$body"
+
+  private fun textAttributes(foreground: Color, background: Color): TextAttributes =
+    TextAttributes(foreground, background, null, null, Font.PLAIN)
 
   companion object {
     private const val AWAIT_TIMEOUT_MS: Long = 5_000

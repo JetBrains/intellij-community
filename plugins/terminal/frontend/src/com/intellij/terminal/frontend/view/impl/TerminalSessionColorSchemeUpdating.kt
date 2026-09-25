@@ -6,7 +6,10 @@ import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.ui.ColorUtil
 import com.intellij.util.asDisposable
+import com.jediterm.terminal.TerminalColor
+import com.jediterm.terminal.ui.AwtTransformers
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
 import org.jetbrains.plugins.terminal.session.impl.TerminalSetColorSchemeEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalColorSchemeDto
@@ -17,6 +20,8 @@ import org.jetbrains.plugins.terminal.session.impl.dto.toRgbColorDto
  * and sends them again when the global color scheme ([EditorColorsManager.TOPIC]) changes them.
  */
 internal fun installSessionColorSchemeUpdating(terminalInput: TerminalInput, coroutineScope: CoroutineScope) {
+  // The output model draws the ANSI colors with the same palette.
+  val palette = BlockTerminalColorPalette()
   var lastColorScheme: TerminalColorSchemeDto? = null
 
   fun sendColorSchemeIfChanged() {
@@ -25,6 +30,7 @@ internal fun installSessionColorSchemeUpdating(terminalInput: TerminalInput, cor
       foreground = TerminalUi.defaultForeground().toRgbColorDto(),
       background = background.toRgbColorDto(),
       isDark = ColorUtil.isDark(background),
+      ansiColors = (0 until 16).map { AwtTransformers.toAwtColor(palette.getForeground(TerminalColor(it)))!!.toRgbColorDto() },
     )
     if (colorScheme != lastColorScheme) {
       lastColorScheme = colorScheme

@@ -208,8 +208,9 @@ internal class GhosttyTerminalEmulator(
   private val scratchFalse: MemorySegment = arena.allocate(1L)
 
   // The live 256-color palette, cached in Kotlin as packed 0xRRGGBB so lookups never touch native
-  // memory. [scratchPalette] is only the staging buffer for the single bulk read done by
-  // ensurePaletteLoaded when [paletteDirty] (set by every write, which may carry OSC 4 / 104).
+  // memory. [scratchPalette] is only the staging buffer for the bulk read done by ensurePaletteLoaded
+  // when [paletteDirty] (set by every write, which may carry OSC 4 / 104, and by setDefaultAnsiColors),
+  // and for the bulk write done by setDefaultAnsiColors.
   private val scratchPalette: MemorySegment = arena.allocate(256L * 3)
   private val paletteCache = IntArray(256)
   private var paletteDirty = true
@@ -506,6 +507,31 @@ internal class GhosttyTerminalEmulator(
     return paletteRgb(index)
   }
 
+  override fun setDefaultAnsiColors(colors: List<TerminalColor.Rgb>) {
+    require(colors.size == 16) { "there must be 16 ANSI colors, was ${colors.size}" }
+    ensureOpen()
+    try {
+      // The engine takes all 256 slots, so start from its default palette to keep slots 16..255.
+      val read = LibGhosttyVt.terminalGet(terminal, GhosttyTerminalData.COLOR_PALETTE_DEFAULT.code, scratchPalette)
+      if (read != GhosttyResult.SUCCESS) {
+        throw IllegalStateException("ghostty_terminal_get(COLOR_PALETTE_DEFAULT) returned $read")
+      }
+      colors.forEachIndexed { index, color ->
+        val offset = index.toLong() * 3L
+        scratchPalette.set(C_BYTE, offset, color.red.toByte())
+        scratchPalette.set(C_BYTE, offset + 1L, color.green.toByte())
+        scratchPalette.set(C_BYTE, offset + 2L, color.blue.toByte())
+      }
+      val r = LibGhosttyVt.terminalSet(terminal, GhosttyTerminalOption.COLOR_PALETTE.code, scratchPalette)
+      if (r != GhosttyResult.SUCCESS) {
+        throw IllegalStateException("ghostty_terminal_set(COLOR_PALETTE) returned $r")
+      }
+    } catch (t: Throwable) {
+      throw RuntimeException("setting the default ANSI colors failed", t)
+    }
+    paletteDirty = true
+  }
+
   override val usingAlternateScreen: Boolean
     get() = terminalGetU16(GhosttyTerminalData.ACTIVE_SCREEN) == 1
 
@@ -553,7 +579,7 @@ internal class GhosttyTerminalEmulator(
    * slices must see what the slices before it changed.
    */
   private fun writeToVt(data: ByteArray, offset: Int, length: Int) {
-    paletteDirty = true // only a write (OSC 4 / 104 / RIS) may change palette
+    paletteDirty = true // a write may change the palette (OSC 4 / 104 / RIS)
 
     // Feed [scratchWrite]-sized chunks.
     // An empty write still reaches the engine.

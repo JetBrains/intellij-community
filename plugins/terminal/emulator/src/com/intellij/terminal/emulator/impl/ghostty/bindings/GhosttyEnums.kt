@@ -122,6 +122,7 @@ internal enum class GhosttyTerminalData(val code: Int) {
   COLOR_FOREGROUND(18),
   COLOR_BACKGROUND(19),
   COLOR_PALETTE(21),
+  COLOR_PALETTE_DEFAULT(25),
   /** Reads a `GhosttyTerminalModeConfig`; the caller must set `mode` before the call. */
   MODE(37),
 }
@@ -176,6 +177,7 @@ internal enum class GhosttyTerminalOption(val code: Int) {
   COLOR_SCHEME(7),
   COLOR_FOREGROUND(11),
   COLOR_BACKGROUND(12),
+  COLOR_PALETTE(14),
   DEFAULT_CURSOR_STYLE(22),
   DEFAULT_CURSOR_BLINK(23),
   SCROLLBACK_MAX_BYTES(27),

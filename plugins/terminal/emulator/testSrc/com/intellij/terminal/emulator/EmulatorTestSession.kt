@@ -211,6 +211,7 @@ internal class EmulatorTestSession(width: Int, height: Int, maxScrollbackBytes: 
   fun setDefaultCursorBlinking(blinking: Boolean): Unit = emulator.setDefaultCursorBlinking(blinking)
   fun setResizeScrollbackPullPolicy(policy: ScrollbackPullPolicy): Unit = emulator.setResizeScrollbackPullPolicy(policy)
   fun paletteColor(index: Int): TerminalColor.Rgb = emulator.paletteColor(index)
+  fun setDefaultAnsiColors(colors: List<TerminalColor.Rgb>): Unit = emulator.setDefaultAnsiColors(colors)
   val title: String get() = emulator.title
   val progress: TerminalProgress? get() = emulator.progress
   val foregroundColor: TerminalColor.Rgb? get() = emulator.foregroundColor

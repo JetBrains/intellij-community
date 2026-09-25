@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test
  * Tests for [TerminalEmulator.paletteColor]: the 256-entry palette accessor. It reports the live
  * palette (default xterm values, plus any program `OSC 4` overrides / `OSC 104` resets) and is the
  * palette against which extended [TerminalColor.IndexedExtended] colors resolve to [TerminalColor.Rgb].
+ * The embedder sets the defaults of the ANSI slots `0..15` with [TerminalEmulator.setDefaultAnsiColors].
  */
 class PaletteTest {
 
@@ -61,8 +62,47 @@ class PaletteTest {
   }
 
   @Test
+  fun embedderDefaultAnsiColorsAreReported() = session(4, 1) { session ->
+    session.setDefaultAnsiColors(ansiColors(0x10))
+
+    assertThat(session.paletteColor(0)).isEqualTo(TerminalColor.Rgb(0x10, 0x20, 0x30))
+    assertThat(session.paletteColor(15)).isEqualTo(TerminalColor.Rgb(0x1F, 0x2F, 0x3F))
+    // The extended slots keep the xterm defaults.
+    assertThat(session.paletteColor(16)).isEqualTo(TerminalColor.Rgb(0, 0, 0))
+    assertThat(session.paletteColor(231)).isEqualTo(TerminalColor.Rgb(255, 255, 255))
+
+    session.write(osc("4;1;?"))
+    session.assertResponses(osc("4;1;rgb:1111/2121/3131"))
+  }
+
+  /**
+   * A program override has priority over the embedder default, also over a default set after the override.
+   * After the program resets the override (OSC 104), the slot reports the latest embedder default.
+   */
+  @Test
+  fun programOverrideOfAnsiSlotHasPriorityOverEmbedderDefault() = session(4, 1) { session ->
+    session.setDefaultAnsiColors(ansiColors(0x10))
+    session.write(osc("4;1;#aabbcc"))
+    session.setDefaultAnsiColors(ansiColors(0x40))
+    assertThat(session.paletteColor(1)).isEqualTo(TerminalColor.Rgb(0xAA, 0xBB, 0xCC))
+    assertThat(session.paletteColor(2)).isEqualTo(TerminalColor.Rgb(0x42, 0x52, 0x62))
+
+    session.write(osc("104;1"))
+    assertThat(session.paletteColor(1)).isEqualTo(TerminalColor.Rgb(0x41, 0x51, 0x61))
+  }
+
+  @Test
+  fun rejectsWrongAnsiColorCount() = session(4, 1) { session ->
+    assertThatThrownBy { session.setDefaultAnsiColors(ansiColors(0x10).dropLast(1)) }.isInstanceOf(IllegalArgumentException::class.java)
+  }
+
+  @Test
   fun rejectsOutOfRangeIndex() = session(4, 1) { session ->
     assertThatThrownBy { session.paletteColor(-1) }.isInstanceOf(IllegalArgumentException::class.java)
     assertThatThrownBy { session.paletteColor(256) }.isInstanceOf(IllegalArgumentException::class.java)
   }
+
+  /** 16 ANSI colors; slot `n` is `(base + n, base + 0x10 + n, base + 0x20 + n)`. */
+  private fun ansiColors(base: Int): List<TerminalColor.Rgb> =
+    (0 until 16).map { TerminalColor.Rgb(base + it, base + 0x10 + it, base + 0x20 + it) }
 }

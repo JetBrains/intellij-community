@@ -144,6 +144,15 @@ interface TerminalEmulator : AutoCloseable {
    */
   fun paletteColor(index: Int): TerminalColor.Rgb
 
+  /**
+   * Sets the embedder default colors of the ANSI palette slots `0..15`, in slot order. Slots `16..255` keep their defaults.
+   * [paletteColor] and the reply to `OSC 4 ; n ; ?` report them.
+   * A program override (`OSC 4`) has priority until the program resets it (`OSC 104`).
+   *
+   * @throws IllegalArgumentException if [colors] does not have exactly 16 entries.
+   */
+  fun setDefaultAnsiColors(colors: List<TerminalColor.Rgb>)
+
   /** True when the alternate screen buffer is active (e.g. a full-screen TUI). */
   val usingAlternateScreen: Boolean
 
