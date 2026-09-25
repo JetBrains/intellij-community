@@ -1,7 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.todo;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.ide.todo;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.todo.AllTodosTreeBuilder;
+import com.intellij.ide.todo.CurrentFileTodosTreeBuilder;
+import com.intellij.ide.todo.TodoTreeBuilder;
+import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.ui.Queryable;

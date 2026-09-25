@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.util.gotoByName;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.ide.gotoByName;
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
@@ -7,9 +7,13 @@ import com.intellij.ide.ui.OptionsSearchTopHitProvider;
 import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
+import com.intellij.ide.util.gotoByName.ActionSearchUtilKt;
+import com.intellij.ide.util.gotoByName.GotoActionAliasMatcher;
+import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper;
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue;
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValueType;
+import com.intellij.ide.util.gotoByName.MatchMode;
 import com.intellij.java.navigation.ChooseByNameTest;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.Disposable;

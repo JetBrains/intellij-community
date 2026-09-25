@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.fileTemplates.impl
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.ide.fileTemplates.impl
 
 import com.intellij.ide.fileTemplates.CreateFromTemplateHandler
 import com.intellij.ide.fileTemplates.DefaultCreateFromTemplateHandler
@@ -7,6 +7,9 @@ import com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.FileTemplateUtil
 import com.intellij.ide.fileTemplates.JavaTemplateUtil
+import com.intellij.ide.fileTemplates.impl.CustomFileTemplate
+import com.intellij.ide.fileTemplates.impl.FTManager
+import com.intellij.ide.fileTemplates.impl.FileTemplateBase
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.Disposable
@@ -21,10 +24,8 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.JavaProjectTestCase
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.registerExtension
 import com.intellij.util.io.delete
-import junit.framework.TestCase
 import org.assertj.core.api.Assertions
 import java.io.File
 import java.io.FileReader
@@ -78,7 +79,7 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
         val properties = Properties()
         properties.load(FileReader(propFile))
         properties[FileTemplateManager.PROJECT_NAME_VARIABLE] = project.name
-        UsefulTestCase.LOG.debug(resultFile.name)
+        LOG.debug(resultFile.name)
         doTestTemplate(inputText, properties, outputText)
       }
     }
@@ -134,7 +135,7 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     ApplicationManager.getApplication().messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginLoaded(PluginNode(PluginId.getId("survive.template.plugin")))
     ApplicationManager.getApplication().messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(PluginNode(PluginId.getId("survive.template.plugin")))
     val t = templateManager.getTemplate(template.qualifiedName)
-    TestCase.assertNotSame(template, t)
+    assertNotSame(template, t)
     assertEquals(fileName, t.fileName)
   }
 
@@ -252,7 +253,7 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
       val name = FTManager.encodeFileName("test", "ext.has.dots")
       val file = createTempFile(name, "test")
       FileUtil.loadFile(File(file.absolutePath), StandardCharsets.UTF_8)
-      UsefulTestCase.LOG.debug("File loaded: " + file.absolutePath)
+      LOG.debug("File loaded: " + file.absolutePath)
       val dir = File(file.parent)
       val files = dir.listFiles()
       assertNotNull(files)
@@ -265,7 +266,7 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
           return true
         }
       }
-      UsefulTestCase.LOG.debug("No matching file found, locale: " + Locale.getDefault().displayName)
+      LOG.debug("No matching file found, locale: " + Locale.getDefault().displayName)
     }
     catch (ignored: IOException) {
     }
