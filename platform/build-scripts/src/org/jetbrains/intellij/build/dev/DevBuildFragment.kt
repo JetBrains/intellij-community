@@ -14,7 +14,7 @@ import org.jetbrains.intellij.build.impl.ModuleItem
  */
 @ApiStatus.Internal
 data class DevBuildFragment(
-  /** Identifies the fragment in its component manifest and in diagnostics; `platform_lib_reference`, `platform_runtime_module_repository_reference`. */
+  /** Identifies the fragment in diagnostics; `platform_lib_reference`, `platform_runtime_module_repository_reference`. */
   @JvmField val name: String,
   /** The `lib/` jars this fragment owns, or `null` if it owns none. */
   @JvmField val platform: PlatformJarSelector?,
