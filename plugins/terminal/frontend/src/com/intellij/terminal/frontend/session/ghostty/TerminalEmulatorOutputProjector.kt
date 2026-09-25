@@ -12,6 +12,7 @@ import com.intellij.terminal.emulator.TerminalRow
 import com.intellij.terminal.emulator.Underline
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.CursorShapeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.MouseFormatDto
@@ -232,7 +233,7 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
 
     return TerminalContentUpdatedEvent(
       text = text.toString(),
-      styles = styleRuns.map { StyleRangeDto(it.start.toLong(), it.end.toLong(), toTextStyleDto(it.value), ignoreContrastAdjustment = false) },
+      styles = styleRuns.map { toStyleRangeDto(it, text) },
       startLineLogicalIndex = startLogical,
       cursorLogicalLineIndex = cursorLine,
       cursorColumnIndex = column,
@@ -333,6 +334,18 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
     else {
       runs.add(Run(start, end, value))
     }
+  }
+
+  private fun toStyleRangeDto(run: Run<CellStyle>, text: CharSequence): StyleRangeDto {
+    val ignoreContrastAdjustment = (run.start until run.end).any {
+      TerminalUiUtils.shouldIgnoreContrastAdjustment(text[it])
+    }
+    return StyleRangeDto(
+      startOffset = run.start.toLong(),
+      endOffset = run.end.toLong(),
+      style = toTextStyleDto(run.value),
+      ignoreContrastAdjustment = ignoreContrastAdjustment
+    )
   }
 
   private fun toTextStyleDto(style: CellStyle): TextStyleDto {

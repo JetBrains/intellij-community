@@ -464,6 +464,16 @@ internal class TerminalSessionOutputEventsTest(emulatorType: TerminalEmulatorTyp
     assertThat(event.styles.map { it.style.foreground?.colorIndex }).contains(1, 2)
   }
 
+  @Test
+  fun `a Powerline or box glyph turns off the contrast adjustment of its style range`() = runSessionTest { _, connector, collector ->
+    // Red "RED", then a green Powerline separator (U+E0B0), then two yellow box glyphs (U+2500).
+    connector.feed("${ESC}[31mRED${ESC}[32m\uE0B0${ESC}[33m\u2500\u2500${ESC}[0m")
+
+    val event = collector.awaitEvent<TerminalContentUpdatedEvent> { it.text.contains("RED\uE0B0\u2500\u2500") }
+    assertThat(event.styles.map { event.text.substring(it.startOffset.toInt(), it.endOffset.toInt()) to it.ignoreContrastAdjustment })
+      .containsExactly("RED" to false, "\uE0B0" to true, "\u2500\u2500" to true)
+  }
+
   // ---------------------------------------------------------------------------
   // Resize (driven via the input channel)
   // ---------------------------------------------------------------------------
