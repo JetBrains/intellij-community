@@ -46,7 +46,7 @@ import kotlin.metadata.jvm.JvmMethodSignature
 import kotlin.metadata.jvm.KotlinClassMetadata
 import kotlin.metadata.jvm.getterSignature
 
-class KotlinClassRenderer : ClassRenderer() {
+open class KotlinClassRenderer : ClassRenderer() {
     init {
         setIsApplicableChecker(Function { type: Type? ->
             if (type is ReferenceType && type !is ArrayType && !type.canBeRenderedBetterByPlatformRenderers()) {
