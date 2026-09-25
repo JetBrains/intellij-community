@@ -147,6 +147,7 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
       }
       completionList = CompletionListCapabilities().apply {
         itemDefaults = listOf("commitCharacters", "editRange", "insertTextFormat", "insertTextMode", "data")
+        applyKindSupport = true
       }
     }
     hover = HoverCapabilities().apply {

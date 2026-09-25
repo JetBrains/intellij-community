@@ -14,6 +14,7 @@ import com.intellij.platform.lsp.common.FakeLspServerSupportProvider
 import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
+import com.intellij.platform.lsp.impl.features.completion.LspCompletionObject
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntilAssertSucceeds
@@ -22,15 +23,20 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.eclipse.lsp4j.ApplyKind
+import org.eclipse.lsp4j.CompletionApplyKind
 import org.eclipse.lsp4j.CompletionItem
-import org.eclipse.lsp4j.CompletionList
+import org.eclipse.lsp4j.CompletionItemDefaults
 import org.eclipse.lsp4j.CompletionItemKind
 import org.eclipse.lsp4j.CompletionItemLabelDetails
 import org.eclipse.lsp4j.CompletionItemTag
+import org.eclipse.lsp4j.CompletionList
 import org.eclipse.lsp4j.CompletionOptions
+import org.eclipse.lsp4j.InsertReplaceRange
 import org.eclipse.lsp4j.InsertTextFormat
 import org.eclipse.lsp4j.InsertTextMode
 import org.eclipse.lsp4j.Position
@@ -553,6 +559,228 @@ internal class LspCompletionTest {
         codeInsightFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR)
         codeInsightFixture.checkResult("import { importedSymbol } from 'module'\nimportedSymbol<caret>")
       }
+    }
+  }
+
+  @Nested
+  inner class ItemDefaults {
+    @Test
+    fun `default editRange is applied with textEditText or label`(): Unit = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "hel<caret>").virtualFile
+      val serverSession = configureServerSession(project, virtualFile)
+
+      serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
+        Either.forRight(CompletionList(false, listOf(
+          CompletionItem("hello").apply { insertText = "ignoredInsertText" },
+          CompletionItem("help").apply { textEditText = "helper" },
+          CompletionItem("helium").apply {
+            textEdit = Either.forLeft(TextEdit(Range(Position(0, 0), Position(0, 3)), "heliumOwnEdit"))
+          },
+        )).apply {
+          itemDefaults = CompletionItemDefaults().apply {
+            editRange = Either.forLeft(Range(Position(0, 0), Position(0, 3)))
+          }
+        })
+      }
+
+      val lookupElements = codeInsightFixture.completeBasic()
+      serverSession.awaitExpected()
+
+      assertNotNull(lookupElements)
+      assertEquals(setOf("hello", "helper", "heliumOwnEdit"), lookupElements!!.map { it.lookupString }.toSet())
+    }
+
+    @Test
+    fun `default insert-replace editRange is applied`(): Unit = timeoutRunBlocking {
+      val insertRange = Range(Position(0, 0), Position(0, 3))
+      val replaceRange = Range(Position(0, 0), Position(0, 5))
+      val items = completeAndGetItems(
+        "hel<caret>lo",
+        CompletionList(false, listOf(CompletionItem("hello"))).apply {
+          itemDefaults = CompletionItemDefaults().apply {
+            editRange = Either.forRight(InsertReplaceRange().apply {
+              insert = insertRange
+              replace = replaceRange
+            })
+          }
+        }
+      )
+
+      val textEdit = items["hello"]!!.textEdit!!.right!!
+      assertEquals("hello", textEdit.newText)
+      assertEquals(insertRange, textEdit.insert)
+      assertEquals(replaceRange, textEdit.replace)
+    }
+
+    @Test
+    fun `default Snippet insertTextFormat is applied on insertion`(): Unit = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
+      val serverSession = configureServerSession(project, virtualFile)
+
+      serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
+        Either.forRight(CompletionList(false, listOf(
+          CompletionItem("foo").apply { insertText = $$"foo($0)" },
+        )).apply {
+          itemDefaults = CompletionItemDefaults().apply { insertTextFormat = InsertTextFormat.Snippet }
+        })
+      }
+
+      assertNotNull(codeInsightFixture.completeBasic())
+      serverSession.awaitExpected()
+
+      withContext(Dispatchers.EDT) {
+        codeInsightFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR)
+        codeInsightFixture.checkResult("foo(<caret>)")
+      }
+    }
+
+    @Test
+    fun `default insertTextFormat and insertTextMode are applied only to items without own values`(): Unit = timeoutRunBlocking {
+      val items = completeAndGetItems(
+        "<caret>",
+        CompletionList(false, listOf(
+          CompletionItem("withoutOwnValues"),
+          CompletionItem("withOwnValues").apply {
+            insertTextFormat = InsertTextFormat.PlainText
+            insertTextMode = InsertTextMode.AsIs
+          },
+        )).apply {
+          itemDefaults = CompletionItemDefaults().apply {
+            insertTextFormat = InsertTextFormat.Snippet
+            insertTextMode = InsertTextMode.AdjustIndentation
+          }
+        }
+      )
+
+      assertEquals(InsertTextFormat.Snippet, items["withoutOwnValues"]!!.insertTextFormat)
+      assertEquals(InsertTextMode.AdjustIndentation, items["withoutOwnValues"]!!.insertTextMode)
+      assertEquals(InsertTextFormat.PlainText, items["withOwnValues"]!!.insertTextFormat)
+      assertEquals(InsertTextMode.AsIs, items["withOwnValues"]!!.insertTextMode)
+    }
+
+    @Test
+    fun `commitCharacters and data are replaced if applyKind is not specified`(): Unit = timeoutRunBlocking {
+      checkReplaceApplyKind(applyKind = null)
+    }
+
+    @Test
+    fun `commitCharacters and data are replaced if applyKind is Replace`(): Unit = timeoutRunBlocking {
+      checkReplaceApplyKind(CompletionApplyKind().apply {
+        commitCharacters = ApplyKind.Replace
+        data = ApplyKind.Replace
+      })
+    }
+
+    private suspend fun CoroutineScope.checkReplaceApplyKind(applyKind: CompletionApplyKind?) {
+      val items = completeAndGetItems(
+        "<caret>",
+        CompletionList(false, listOf(
+          CompletionItem("withoutOwnValues"),
+          CompletionItem("withOwnValues").apply {
+            commitCharacters = listOf(";")
+            data = mapOf("b" to 2)
+          },
+          CompletionItem("withEmptyValues").apply {
+            commitCharacters = emptyList()
+            data = linkedMapOf<String, Any>() // not emptyMap(): lsp4j message validator fails on kotlin.collections.EmptyMap
+          },
+        )).apply {
+          itemDefaults = CompletionItemDefaults().apply {
+            commitCharacters = listOf(".", "(")
+            data = mapOf("a" to 1)
+          }
+          this.applyKind = applyKind
+        }
+      )
+
+      assertEquals(listOf(".", "("), items["withoutOwnValues"]!!.commitCharacters)
+      assertEquals("""{"a":1}""", items["withoutOwnValues"]!!.data?.toString())
+      assertEquals(listOf(";"), items["withOwnValues"]!!.commitCharacters)
+      assertEquals("""{"b":2}""", items["withOwnValues"]!!.data?.toString())
+      assertEquals(emptyList<String>(), items["withEmptyValues"]!!.commitCharacters)
+      assertEquals("{}", items["withEmptyValues"]!!.data?.toString())
+    }
+
+    @Test
+    fun `commitCharacters are united if applyKind is Merge`(): Unit = timeoutRunBlocking {
+      val items = completeAndGetItems(
+        "<caret>",
+        CompletionList(false, listOf(
+          CompletionItem("withoutOwnValues"),
+          CompletionItem("withOwnValues").apply { commitCharacters = listOf("(", ";") },
+          CompletionItem("withEmptyValues").apply { commitCharacters = emptyList() },
+        )).apply {
+          itemDefaults = CompletionItemDefaults().apply { commitCharacters = listOf(".", "(") }
+          applyKind = CompletionApplyKind().apply { commitCharacters = ApplyKind.Merge }
+        }
+      )
+
+      assertEquals(listOf(".", "("), items["withoutOwnValues"]!!.commitCharacters)
+      assertEquals(listOf(".", "(", ";"), items["withOwnValues"]!!.commitCharacters)
+      assertEquals(listOf(".", "("), items["withEmptyValues"]!!.commitCharacters)
+    }
+
+    @Test
+    fun `data is shallow-merged if applyKind is Merge`(): Unit = timeoutRunBlocking {
+      val items = completeAndGetItems(
+        "<caret>",
+        CompletionList(false, listOf(
+          CompletionItem("withoutOwnValues"),
+          CompletionItem("withOwnValues").apply { data = mapOf("b" to mapOf("y" to 2), "c" to 3) },
+          CompletionItem("withNonObjectValues").apply { data = "string-data" },
+        )).apply {
+          itemDefaults = CompletionItemDefaults().apply { data = mapOf("a" to 1, "b" to mapOf("x" to 1)) }
+          applyKind = CompletionApplyKind().apply { data = ApplyKind.Merge }
+        }
+      )
+
+      assertEquals("""{"a":1,"b":{"x":1}}""", items["withoutOwnValues"]!!.data?.toString())
+      assertEquals("""{"a":1,"b":{"y":2},"c":3}""", items["withOwnValues"]!!.data?.toString())
+      assertEquals("\"string-data\"", items["withNonObjectValues"]!!.data?.toString())
+    }
+
+    @Test
+    fun `merged data is sent in completionItem resolve request`(): Unit = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
+      val serverSession = configureServerSession(project, virtualFile)
+
+      serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
+        Either.forRight(CompletionList(false, listOf(
+          CompletionItem("myItem").apply { data = mapOf("id" to 42) },
+        )).apply {
+          itemDefaults = CompletionItemDefaults().apply { data = mapOf("session" to "s1", "id" to 0) }
+          applyKind = CompletionApplyKind().apply { data = ApplyKind.Merge }
+        })
+      }
+
+      serverSession.expectRequest(serverSession.COMPLETION_ITEM_RESOLVE, { it.data?.toString() == """{"session":"s1","id":42}""" }) {
+        CompletionItem("myItem").apply { detail = "Resolved detail" }
+      }
+
+      val element = codeInsightFixture.completeBasic()!!.single()
+      val presentation = LookupElementPresentation()
+      @Suppress("UNCHECKED_CAST")
+      (element.expensiveRenderer as LookupElementRenderer<LookupElement>).renderElement(element, presentation)
+      serverSession.awaitExpected()
+
+      assertEquals("Resolved detail", presentation.typeText)
+    }
+
+    private suspend fun CoroutineScope.completeAndGetItems(
+      documentText: String,
+      serverResponse: CompletionList,
+    ): Map<String, CompletionItem> {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", documentText).virtualFile
+      val serverSession = configureServerSession(project, virtualFile)
+      serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
+        Either.forRight(serverResponse)
+      }
+
+      val lookupElements = codeInsightFixture.completeBasic()
+      serverSession.awaitExpected()
+
+      assertNotNull(lookupElements)
+      return lookupElements!!.map { (it.`object` as LspCompletionObject).completionItem }.associateBy { it.label }
     }
   }
 

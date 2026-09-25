@@ -1,7 +1,11 @@
 package com.intellij.platform.lsp.impl.features.completion
 
+import com.google.gson.JsonNull
+import com.google.gson.JsonObject
 import com.intellij.openapi.editor.Document
 import com.intellij.platform.lsp.impl.LspClientImpl
+import org.eclipse.lsp4j.ApplyKind
+import org.eclipse.lsp4j.CompletionApplyKind
 import org.eclipse.lsp4j.CompletionContext
 import org.eclipse.lsp4j.CompletionItem
 import org.eclipse.lsp4j.CompletionItemDefaults
@@ -29,7 +33,7 @@ internal fun Either<List<CompletionItem>, CompletionList>.toCompletionList(): Co
   { CompletionList(false, it) },
   { completionList ->
     completionList.itemDefaults?.let { itemDefaults ->
-      completionList.items.forEach { item -> applyItemDefaults(item, itemDefaults) }
+      completionList.items.forEach { item -> applyItemDefaults(item, itemDefaults, completionList.applyKind) }
     }
     completionList
   }
@@ -41,8 +45,11 @@ private fun getTypedChar(document: Document, offset: Int): String? =
 private fun isCompletionTriggerCharacter(lspClient: LspClientImpl, typedChar: String): Boolean =
   lspClient.serverCapabilities?.completionProvider?.triggerCharacters?.contains(typedChar) == true
 
-private fun applyItemDefaults(item: CompletionItem, itemDefaults: CompletionItemDefaults) {
-  if (item.commitCharacters == null) item.commitCharacters = itemDefaults.commitCharacters
+private fun applyItemDefaults(item: CompletionItem, itemDefaults: CompletionItemDefaults, applyKind: CompletionApplyKind?) {
+  item.commitCharacters = when (applyKind?.commitCharacters) {
+    ApplyKind.Merge -> mergeCommitCharacters(item.commitCharacters, itemDefaults.commitCharacters)
+    else -> item.commitCharacters ?: itemDefaults.commitCharacters
+  }
   val defaultEditRange = itemDefaults.editRange
   if (item.textEdit == null && defaultEditRange != null) {
     val textEditText = Objects.requireNonNullElse(item.textEditText, item.label)
@@ -56,5 +63,27 @@ private fun applyItemDefaults(item: CompletionItem, itemDefaults: CompletionItem
   }
   if (item.insertTextFormat == null) item.insertTextFormat = itemDefaults.insertTextFormat
   if (item.insertTextMode == null) item.insertTextMode = itemDefaults.insertTextMode
-  if (item.data == null) item.data = itemDefaults.data
+  item.data = when (applyKind?.data) {
+    ApplyKind.Merge -> mergeData(item.data, itemDefaults.data)
+    else -> if (isNullData(item.data)) itemDefaults.data else item.data
+  }
 }
+
+private fun mergeCommitCharacters(itemCommitCharacters: List<String>?, defaultCommitCharacters: List<String>?): List<String>? = when {
+  itemCommitCharacters == null -> defaultCommitCharacters
+  defaultCommitCharacters == null -> itemCommitCharacters
+  else -> (defaultCommitCharacters + itemCommitCharacters).distinct()
+}
+
+/**
+ * Shallow merge: top-level properties of [itemData] overwrite the same-named properties of [defaultData], nested values aren't merged.
+ */
+private fun mergeData(itemData: Any?, defaultData: Any?): Any? = when {
+  isNullData(itemData) -> defaultData
+  itemData is JsonObject && defaultData is JsonObject -> defaultData.deepCopy().apply {
+    itemData.entrySet().forEach { (key, value) -> add(key, value) }
+  }
+  else -> itemData
+}
+
+private fun isNullData(data: Any?): Boolean = data == null || data is JsonNull
