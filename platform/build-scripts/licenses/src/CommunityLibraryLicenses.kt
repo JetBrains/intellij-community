@@ -1513,6 +1513,7 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     jetbrainsLibrary("jshell-frontend"),
     jetbrainsLibrary("jvm-native-trusted-roots"),
     jetbrainsLibrary("kotlin-gradle-plugin-idea"),
+    jetbrainsLibrary("kotlin-gradle-plugin-idea-browser-debug"),
     jetbrainsLibrary("kotlin-gradle-plugin-idea-proto"),
     jetbrainsLibrary("kotlin-script-runtime"),
     jetbrainsLibrary("kotlin-test"),

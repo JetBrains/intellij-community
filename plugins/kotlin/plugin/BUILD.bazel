@@ -144,6 +144,7 @@ dev_dist_plugin(
         "intellij.kotlin.base.statistics",
         "intellij.libraries.kotlin.gradle.plugin.idea",
         "intellij.libraries.kotlin.gradle.plugin.idea.proto",
+        "intellij.libraries.kotlin.gradle.plugin.idea.browser.debug",
         "intellij.kotlin.codeInsight.vcs",
         "intellij.libraries.kotlinc.analysis.api",
         "intellij.libraries.kotlinc.analysis.api.impl.base",
