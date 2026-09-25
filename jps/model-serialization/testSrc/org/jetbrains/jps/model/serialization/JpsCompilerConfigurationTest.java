@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.Map;
 
 import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
+import static org.jetbrains.jps.model.serialization.JpsModelFromTestData.getSerializationTestDataPath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -23,12 +24,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class JpsCompilerConfigurationTest {
   @Test
   public void testLoadFromIpr() {
-    doTest("jps/model-serialization/testData/compilerConfiguration/compilerConfiguration.ipr");
+    doTest(getSerializationTestDataPath("compilerConfiguration/compilerConfiguration.ipr"));
   }
 
   @Test
   public void testLoadFromDirectory() {
-    doTest("jps/model-serialization/testData/compilerConfigurationDir");
+    doTest(getSerializationTestDataPath("compilerConfigurationDir"));
   }
 
   private void doTest(final String path) {
@@ -78,9 +79,9 @@ public class JpsCompilerConfigurationTest {
 
   @Test
   public void testMergeDataFromExternalDirectory() {
-    JpsProjectData projectData = JpsProjectData.loadFromTestData("jps/model-serialization/testData/projectWithExternalStorage/project",
-                                                                 getClass(),
-                                                                 "jps/model-serialization/testData/projectWithExternalStorage/external_build_system");
+    JpsProjectData projectData = JpsProjectData.loadFromTestData(
+      getSerializationTestDataPath("projectWithExternalStorage/project"), getClass(),
+      getSerializationTestDataPath("projectWithExternalStorage/external_build_system"));
     JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(projectData.getProject());
     assertNotNull(configuration);
     assertEquals("1.8", configuration.getByteCodeTargetLevel("externalStorage.java8.main"));

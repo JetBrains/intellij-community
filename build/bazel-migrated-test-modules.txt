@@ -129,6 +129,7 @@ intellij.platform.jewel.markdown.extensions.gfmTables.tests
 intellij.platform.jewel.markdown.extensions.images.tests
 intellij.platform.jewel.ui.tests
 intellij.platform.jps.build.tests
+intellij.platform.jps.model.serialization.tests
 intellij.platform.jps.model.tests
 intellij.platform.lang.tests
 intellij.platform.langInjection.tests

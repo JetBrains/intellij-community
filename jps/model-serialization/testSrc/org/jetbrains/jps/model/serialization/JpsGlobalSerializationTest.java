@@ -10,11 +10,12 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
+import static org.jetbrains.jps.model.serialization.JpsModelFromTestData.getSerializationTestDataPath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class JpsGlobalSerializationTest {
-  private static final String OPTIONS_DIR = "jps/model-serialization/testData/config/options";
+  private static final String OPTIONS_DIR = getSerializationTestDataPath("config/options");
 
   @Test
   public void testLoadSdksAndGlobalLibraries() {
