@@ -46,5 +46,6 @@
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.CodeInsightToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.RefactoringToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.DiagnosticsToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.IdeScriptToolset" />
   </extensions>
 </idea-plugin>
