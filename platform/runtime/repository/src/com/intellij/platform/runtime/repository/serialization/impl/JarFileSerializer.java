@@ -5,6 +5,7 @@ import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import com.intellij.platform.runtime.repository.RuntimePluginHeader;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData;
+import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization.JarEntryConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
@@ -96,6 +98,24 @@ public final class JarFileSerializer {
                                int generatorVersion)
     throws IOException, XMLStreamException {
     Files.createDirectories(jarFile.getParent());
+    try (JarOutputStream jarOutput = new JarOutputStream(new BufferedOutputStream(Files.newOutputStream(jarFile)))) {
+      writeEntries(descriptors, pluginHeaders, bootstrapModuleName, generatorVersion, (name, content) -> {
+        jarOutput.putNextEntry(newEntry(name));
+        jarOutput.write(content);
+        jarOutput.closeEntry();
+      });
+    }
+  }
+
+  /**
+   * Gives the entries of the JAR file to {@code consumer}. The manifest comes first, because {@link JarInputStream} finds it only there.
+   */
+  public static void writeEntries(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors,
+                                  @NotNull Collection<RuntimePluginHeader> pluginHeaders,
+                                  @Nullable String bootstrapModuleName,
+                                  int generatorVersion,
+                                  @NotNull JarEntryConsumer consumer)
+    throws IOException, XMLStreamException {
     Manifest manifest = new Manifest();
     Attributes attributes = manifest.getMainAttributes();
     attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
@@ -107,27 +127,23 @@ public final class JarFileSerializer {
       Collection<String> bootstrapClasspath = CachedClasspathComputation.computeBootstrapClasspath(descriptors, bootstrapModuleName);
       attributes.put(BOOTSTRAP_CLASSPATH_ATTRIBUTE_NAME, String.join(" ", bootstrapClasspath));
     }
-    try (JarOutputStream jarOutput = new JarOutputStream(new BufferedOutputStream(Files.newOutputStream(jarFile)))) {
-      jarOutput.putNextEntry(newEntry(JarFile.MANIFEST_NAME));
-      manifest.write(jarOutput);
-      jarOutput.closeEntry();
-      XMLOutputFactory factory = XMLOutputFactory.newDefaultFactory();
-      for (RawRuntimeModuleDescriptor descriptor : descriptors) {
-        String moduleName = descriptor.getModuleId().getName();
-        String namespace = descriptor.getModuleId().getNamespace();
-        String fileName = namespace.equals(RuntimeModuleId.DEFAULT_NAMESPACE) ? moduleName : moduleName + "_" + namespace;
-        jarOutput.putNextEntry(newEntry(fileName + ".xml"));
-        PrintWriter output = new PrintWriter(jarOutput, false, StandardCharsets.UTF_8);
-        ModuleXmlSerializer.writeModuleXml(descriptor, output, factory);
-        jarOutput.closeEntry();
-      }
-      for (RuntimePluginHeader pluginHeader : pluginHeaders) {
-        String moduleName = pluginHeader.getPluginDescriptorModuleId().getName();
-        jarOutput.putNextEntry(newEntry("plugins/" + moduleName + ".xml"));
-        PrintWriter output = new PrintWriter(jarOutput, false, StandardCharsets.UTF_8);
-        PluginHeaderXmlSerializer.writePluginHeaderXml(pluginHeader, output, factory);
-        jarOutput.closeEntry();
-      }
+    var buffer = new ByteArrayOutputStream();
+    manifest.write(buffer);
+    consumer.accept(JarFile.MANIFEST_NAME, buffer.toByteArray());
+    XMLOutputFactory factory = XMLOutputFactory.newDefaultFactory();
+    for (RawRuntimeModuleDescriptor descriptor : descriptors) {
+      String moduleName = descriptor.getModuleId().getName();
+      String namespace = descriptor.getModuleId().getNamespace();
+      String fileName = namespace.equals(RuntimeModuleId.DEFAULT_NAMESPACE) ? moduleName : moduleName + "_" + namespace;
+      buffer.reset();
+      ModuleXmlSerializer.writeModuleXml(descriptor, new PrintWriter(buffer, false, StandardCharsets.UTF_8), factory);
+      consumer.accept(fileName + ".xml", buffer.toByteArray());
+    }
+    for (RuntimePluginHeader pluginHeader : pluginHeaders) {
+      String moduleName = pluginHeader.getPluginDescriptorModuleId().getName();
+      buffer.reset();
+      PluginHeaderXmlSerializer.writePluginHeaderXml(pluginHeader, new PrintWriter(buffer, false, StandardCharsets.UTF_8), factory);
+      consumer.accept("plugins/" + moduleName + ".xml", buffer.toByteArray());
     }
   }
 
