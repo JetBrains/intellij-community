@@ -97,7 +97,7 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
 
   /**
    * Map[segmentIndex -> HashMapSegmentLayout]
-   * Segments are quite light, but there are queried very frequently -- and there are not too many of them.
+   * Segments are quite light, but queried very frequently -- and there are not too many of them.
    * So cache them instead of allocating a new instance each time.
    */
   private final transient Int2ObjectMap<HashMapSegmentLayout> segmentsCache = new Int2ObjectOpenHashMap<>();
@@ -176,6 +176,7 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
   @Override
   public boolean put(int key,
                      long value) throws IOException {
+    checkNotClosed();
     HashMapSegmentLayout segment = segmentForKey(key);
 
     return putAndSplitSegmentIfNeeded(segment, key, value);
@@ -183,6 +184,7 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
 
   public boolean has(int key,
                      long value) throws IOException {
+    checkNotClosed();
     HashMapSegmentLayout segment = segmentForKey(key);
 
     return hashMapAlgo.has(segment, key, value);
@@ -191,14 +193,43 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
   @Override
   public long lookup(int key,
                      @NotNull ValueAcceptor valuesAcceptor) throws IOException {
+    checkNotClosed();
     HashMapSegmentLayout segment = segmentForKey(key);
 
     return hashMapAlgo.lookup(segment, key, valuesAcceptor);
   }
 
+  /// This implementation applies each requested change before it processes the next value.
+  /// It keeps completed changes if a later processor call throws an exception.
+  @Override
+  public boolean lookupAndModify(int key,
+                                 @NotNull ValueProcessor processor) throws IOException {
+    checkNotClosed();
+    HashMapSegmentLayout segment = segmentForKey(key);
+    int sizeBefore = segment.aliveEntriesCount();
+    boolean processedAll;
+    try {
+      processedAll = hashMapAlgo.lookupAndModify(segment, key, (oldValue, newValueRef) -> {
+        boolean shouldContinue = processor.process(oldValue, newValueRef);
+        if (newValueRef.get() != oldValue) {
+          markModified();
+        }
+        return shouldContinue;
+      });
+    }
+    finally {
+      size += segment.aliveEntriesCount() - sizeBefore;
+    }
+    if (hashMapAlgo.needsSplit(segment)) {
+      splitAndRearrangeEntries(segment);
+    }
+    return processedAll;
+  }
+
   @Override
   public boolean remove(int key,
                         long value) throws IOException {
+    checkNotClosed();
     HashMapSegmentLayout segment = segmentForKey(key);
 
     boolean removed = hashMapAlgo.remove(segment, key, value);
@@ -213,6 +244,7 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
   public boolean replace(int key,
                          long oldValue,
                          long newValue) throws IOException {
+    checkNotClosed();
     HashMapSegmentLayout segment = segmentForKey(key);
 
     int sizeBefore = segment.aliveEntriesCount();
@@ -277,6 +309,7 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
 
   @Override
   public void flush() throws IOException {
+    checkNotClosed();
     flushStorage(MARK_SAFELY_CLOSED_ON_FLUSH);
   }
 
@@ -333,6 +366,8 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
 
   //=============== implementation ============================================================
 
+  /// Each public operation that requires open storage must call this method first.
+  /// Other methods must not call it.
   private void checkNotClosed() throws IOException {
     if (!storage.isOpen()) {
       throw new ClosedStorageException("Storage [" + storage + "] is closed");
@@ -367,8 +402,6 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
   }
 
   private HashMapSegmentLayout segmentForKey(int key) throws IOException {
-    checkNotClosed();
-
     int hash = hash(key);
     int segmentIndex = header.segmentIndexByHash(hash);
 
@@ -984,6 +1017,93 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
       return NO_VALUE;
     }
 
+    public boolean lookupAndModify(@NotNull HashTableData table,
+                                   int key,
+                                   ValueProcessor processor) throws IOException {
+      checkNotNoValue("key", key);
+      int capacity = capacity(table);
+      int startIndex = Math.abs(hash(key) % capacity);
+      int firstTombstoneIndex = -1;
+      int emptySlotIndex = -1;
+      int firstRemovedSlotIndex = -1;
+      var newValueRef = new MutableLongRef(NO_VALUE);
+      boolean processedAllStoredValues = true;
+      for (int probe = 0; probe < capacity; probe++) {
+        int slotIndex = (startIndex + probe) % capacity;
+        int slotKey = table.entryKey(slotIndex);
+        if (slotKey == key) {
+          long slotValue = table.entryValue(slotIndex);
+          assert slotValue != NO_VALUE : "value(table[" + slotIndex + "]) = " + NO_VALUE + " (NO_VALUE), " +
+                                         "while key(table[" + slotIndex + "]) = " + key;
+          newValueRef.set(slotValue);
+          boolean shouldContinue = processor.process(slotValue, newValueRef);
+          long newValue = newValueRef.get();
+          if (newValue != slotValue) {
+            if (newValue == NO_VALUE) {
+              markEntryAsDeleted(table, slotIndex);
+              if (firstRemovedSlotIndex == -1) {
+                firstRemovedSlotIndex = slotIndex;
+              }
+            }
+            else {
+              table.updateEntry(slotIndex, key, newValue);
+            }
+          }
+          if (!shouldContinue) {
+            processedAllStoredValues = false;
+            break;
+          }
+        }
+        else if (slotKey == NO_VALUE) {
+          long slotValue = table.entryValue(slotIndex);
+          if (slotValue == NO_VALUE) {
+            emptySlotIndex = slotIndex;
+            break;
+          }
+          if (firstTombstoneIndex == -1) {
+            firstTombstoneIndex = slotIndex;
+          }
+        }
+      }
+
+      //last step: give processor a chance to insert a new record
+      boolean processedAll = false;
+      long valueToInsert = NO_VALUE;
+      if (processedAllStoredValues) {
+        newValueRef.set(NO_VALUE);
+        processedAll = processor.process(NO_VALUE, newValueRef);
+        valueToInsert = newValueRef.get();
+      }
+
+      int insertionIndex = -1;
+      if (valueToInsert != NO_VALUE) {
+        if (emptySlotIndex != -1) {
+          insertionIndex = firstTombstoneIndex != -1 ? firstTombstoneIndex : emptySlotIndex;
+        }
+        else if (aliveValues(table) == 0) {
+          for (int slotIndex = 0; slotIndex < capacity; slotIndex++) {
+            table.updateEntry(slotIndex, NO_VALUE, NO_VALUE);
+          }
+          insertionIndex = startIndex;
+        }
+        else if (firstTombstoneIndex != -1) {
+          insertionIndex = firstTombstoneIndex;
+        }
+        else if (firstRemovedSlotIndex != -1) {
+          insertionIndex = firstRemovedSlotIndex;
+        }
+        else {
+          throw new AssertionError("Table is full: all " + capacity + " items are occupied, table: " + table);
+        }
+      }
+
+      if (insertionIndex != -1) {
+        table.updateEntry(insertionIndex, key, valueToInsert);
+        incrementAliveValues(table);
+      }
+      return processedAll;
+    }
+
     public boolean has(@NotNull HashTableData table,
                        int key,
                        long value) {
@@ -1232,6 +1352,7 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
         throw new IllegalArgumentException(paramName + " can't be = " + NO_VALUE + " -- it is special value used as NO_VALUE");
       }
     }
+
   }
 
 }

@@ -214,12 +214,11 @@ class PatchableDurableMapOverBlocksTest {
   fun failedIndexPublicationClosesTheMapAndReplaysTheCommittedPatch() {
     BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
       val store = database.openStore("map", 1)
-      val index = openRecordRefIndex(store)
-      val codec = SetCodec()
-      openMap(store, index, codec).use { map ->
+      val index = FailingRecordRefIndex(openRecordRefIndex(store))
+      openMap(store, index).use { map ->
         map.put("key", setOf(1))
         map.force()
-        codec.beforeWrite = { index.closeKeepingDirty() }
+        index.failNextModification = true
         assertThrows(IOException::class.java) { map.patchValue("key", listOf(-1, 2)) }
         assertTrue(map.isClosed, "A failed publication must prevent further writes through this instance")
       }
@@ -368,6 +367,23 @@ class PatchableDurableMapOverBlocksTest {
     override fun close() = clear()
 
     override fun closeKeepingDirty() = clear()
+  }
+
+  private class FailingRecordRefIndex(
+    private val delegate: RecordRefIndex,
+  ) : RecordRefIndex by delegate {
+    var failNextModification = false
+
+    override fun lookupAndModify(key: Int, processor: IntToMultiLongMap.ValueProcessor): Boolean {
+      return delegate.lookupAndModify(key) { oldValue, newValueRef ->
+        val shouldContinue = processor.process(oldValue, newValueRef)
+        if (failNextModification && newValueRef.get() != oldValue) {
+          failNextModification = false
+          throw IOException("Simulated index update failure")
+        }
+        shouldContinue
+      }
+    }
   }
 
   private fun records(store: BlocksStore): RecordStorageOverBlocks = RecordStorageOverBlocks.open(DurableMapBlockCatalog.open(store), BLOCK_SIZE)

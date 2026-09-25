@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 /// Keeps an `int -> long*` mapping in memory.
 /// The owner must serialize operations because this implementation is a first non-persistent prototype.
@@ -65,6 +66,59 @@ public final class InMemoryIntToMultiLongMap implements IntToMultiLongMap {
       }
     }
     return NO_VALUE;
+  }
+
+  /// This implementation discards all requested changes if the processor throws an exception.
+  @Override
+  public boolean lookupAndModify(int key, @NotNull ValueProcessor processor) throws IOException {
+    record Modification(int index, long newValue) { }
+    var values = valuesByKey.get(key);
+    var modifications = new ArrayList<Modification>();
+    var newValueRef = new MutableLongRef(NO_VALUE);
+    boolean processedAllStoredValues = true;
+    if (values != null) {
+      for (var index = 0; index < values.size(); index++) {
+        long oldValue = values.getLong(index);
+        newValueRef.set(oldValue);
+        boolean shouldContinue = processor.process(oldValue, newValueRef);
+        long newValue = newValueRef.get();
+        if (newValue != oldValue) {
+          modifications.add(new Modification(index, newValue));
+        }
+        if (!shouldContinue) {
+          processedAllStoredValues = false;
+          break;
+        }
+      }
+    }
+
+    boolean processedAll = false;
+    long valueToInsert = NO_VALUE;
+    if (processedAllStoredValues) {
+      newValueRef.set(NO_VALUE);
+      processedAll = processor.process(NO_VALUE, newValueRef);
+      valueToInsert = newValueRef.get();
+    }
+
+    for (var index = modifications.size() - 1; index >= 0; index--) {
+      var modification = modifications.get(index);
+      if (modification.newValue() == NO_VALUE) {
+        values.removeLong(modification.index());
+        size--;
+      }
+      else {
+        values.set(modification.index(), modification.newValue());
+      }
+    }
+    if (values != null && values.isEmpty()) {
+      valuesByKey.remove(key);
+    }
+    if (valueToInsert != NO_VALUE) {
+      requireValue(valueToInsert);
+      valuesByKey.computeIfAbsent(key, _ -> new LongArrayList()).add(valueToInsert);
+      size++;
+    }
+    return processedAll;
   }
 
   @Override

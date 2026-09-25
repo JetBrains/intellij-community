@@ -5,6 +5,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 /// Maps each `int` key to a **set of unique** `long` values.
 /// Thread-safety and durability depend on the implementation.
@@ -32,6 +33,64 @@ public interface IntToMultiLongMap {
   /// @return the first value for the key accepted by valueAcceptor, or [NO_VALUE] if no value was accepted
   long lookup(int key, @NotNull ValueAcceptor valueAcceptor) throws IOException;
 
+  /// Passes each value for the key -- to the processor: the processor can replace or remove each value, or insert a new value,
+  /// at the end.
+  ///
+  /// Low-level primitive: allows to do _all_ kinds of modifications for `(set values per given key)` -- in place, in just one
+  /// lookup -- which is the main reason to have it. But the cost is: it has quite convoluted semantics.
+  ///
+  /// The method initializes `newValueRef` with `oldValue` before each call: a `true` result continues the lookup, a `false`
+  /// stops the lookup. The result does not control whether the method applies the requested change.
+  ///
+  /// If the processor does not stop the lookup until all stored values are scanned, the method calls it once with [NO_VALUE].
+  /// This call can insert a value.
+  ///
+  /// The processor must keep all non-zero values unique for the key.
+  ///
+  /// If the processor throws an exception, it is up to implementation: keep or discard already completed changes. Implementation
+  /// should state its choice in method's documentation.
+  ///
+  /// @return `true` if the processor accepted all stored values and [NO_VALUE]
+  default boolean lookupAndModify(int key, @NotNull ValueProcessor processor) throws IOException {
+    record Modification(long oldValue, long newValue) { }
+    var modifications = new ArrayList<Modification>();
+    var newValueRef = new MutableLongRef(NO_VALUE);
+    long stoppedAt = lookup(key, oldValue -> {
+      newValueRef.set(oldValue);
+      boolean shouldContinue = processor.process(oldValue, newValueRef);
+      long newValue = newValueRef.get();
+      if (newValue != oldValue) {
+        modifications.add(new Modification(oldValue, newValue));
+      }
+      return !shouldContinue;
+    });
+    boolean processedAll = stoppedAt == NO_VALUE;
+    if (processedAll) {
+      long oldValue = NO_VALUE;
+      newValueRef.set(oldValue);
+      processedAll = processor.process(oldValue, newValueRef);
+      long newValue = newValueRef.get();
+      if (newValue != oldValue) {
+        modifications.add(new Modification(oldValue, newValue));
+      }
+    }
+
+    for (var modification : modifications) {
+      long oldValue = modification.oldValue();
+      long newValue = modification.newValue();
+      if (oldValue == NO_VALUE) {
+        put(key, newValue);
+      }
+      else if (newValue == NO_VALUE) {
+        remove(key, oldValue);
+      }
+      else {
+        replace(key, oldValue, newValue);
+      }
+    }
+    return processedAll;
+  }
+
   /// Removes the key-value mapping, if it exists
   ///
   /// @return `true` if the mapping existed, and removed, `false` if there is no `(key, value)` pair in the map
@@ -56,6 +115,27 @@ public interface IntToMultiLongMap {
   @FunctionalInterface
   interface ValueAcceptor {
     boolean accept(long value) throws IOException;
+  }
+
+  @FunctionalInterface
+  interface ValueProcessor {
+    boolean process(long oldValue, @NotNull MutableLongRef newValueRef) throws IOException;
+  }
+
+  final class MutableLongRef {
+    private long value;
+
+    public MutableLongRef(long value) {
+      this.value = value;
+    }
+
+    public long get() {
+      return value;
+    }
+
+    public void set(long value) {
+      this.value = value;
+    }
   }
 
   /// Processes a key-value mapping

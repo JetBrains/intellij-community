@@ -3,7 +3,9 @@ package com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap;
 
 import com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntMap;
 import com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntMapTestBase;
+import com.intellij.platform.util.io.storages.intmultimaps.IntToMultiLongMapTestBase;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
+import com.intellij.util.io.ClosedStorageException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -15,6 +17,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.platform.util.io.storages.intmultimaps.IntToMultiLongMap.NO_VALUE;
 import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64.DEFAULT_SEGMENT_SIZE;
 import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64.DEFAULT_STORAGE_PAGE_SIZE;
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
@@ -25,6 +28,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ExtendibleHashMapInt32ToInt64Test extends DurableIntToMultiIntMapTestBase<ExtendibleHashMapInt32ToInt64Test.Int32View> {
   private static final int ENTRIES_TO_FORCE_SPLITS = 4_000;
+
+  @TempDir Path tempDir;
 
   ExtendibleHashMapInt32ToInt64Test() {
     super(/*entriesCountToTest: */4_000_000);
@@ -57,6 +62,111 @@ class ExtendibleHashMapInt32ToInt64Test extends DurableIntToMultiIntMapTestBase<
       assertEquals(1, map.size());
       assertTrue(map.remove(42, secondValue));
       assertTrue(map.isEmpty());
+    }
+    finally {
+      map.closeAndClean();
+    }
+  }
+
+  @Test
+  void lookupAndModifySupportsAllValueTransitions(@TempDir @NotNull Path tempDir) throws Exception {
+    var map = open(tempDir.resolve("map.map"));
+    try {
+      IntToMultiLongMapTestBase.assertLookupAndModifyContract(map);
+    }
+    finally {
+      map.closeAndClean();
+    }
+  }
+
+  @Test
+  void lookupAndModifyAppliesAllChangesBeforeProcessorStops(@TempDir @NotNull Path tempDir) throws Exception {
+    var map = open(tempDir.resolve("map.map"));
+    try {
+      IntToMultiLongMapTestBase.assertLookupAndModifyAppliesAllChangesBeforeProcessorStops(map);
+    }
+    finally {
+      map.closeAndClean();
+    }
+  }
+
+  @Test
+  void lookupAndModifyKeepsCompletedChangesWhenProcessorThrows(@TempDir @NotNull Path tempDir) throws Exception {
+    var storagePath = tempDir.resolve("map.map");
+    var map = open(storagePath);
+    var firstValue = new long[]{NO_VALUE};
+    try {
+      map.put(1, 10);
+      map.put(1, 20);
+
+      var mapToModify = map;
+      assertThrows(IOException.class, () -> mapToModify.lookupAndModify(1, (oldValue, newValueRef) -> {
+        if (firstValue[0] == NO_VALUE) {
+          firstValue[0] = oldValue;
+          newValueRef.set(NO_VALUE);
+          return true;
+        }
+        throw new IOException("Test exception");
+      }));
+
+      assertEquals(NO_VALUE, map.lookup(1, value -> value == firstValue[0]));
+      assertEquals(1, map.size());
+
+      map.close();
+      map = open(storagePath);
+      assertEquals(NO_VALUE, map.lookup(1, value -> value == firstValue[0]));
+      assertEquals(1, map.size());
+    }
+    finally {
+      map.closeAndClean();
+    }
+  }
+
+  @Test
+  void lookupAndModifyKeepsSizeAfterSegmentSplits() throws IOException {
+    var storagePath = tempDir.resolve("map.map");
+    var map = open(storagePath);
+    try {
+      for (int i = 1; i <= ENTRIES_TO_FORCE_SPLITS; i++) {
+        long value = valueForKey(i);
+        assertTrue(map.lookupAndModify(i, (oldValue, newValueRef) -> {
+          if (oldValue == NO_VALUE) {
+            newValueRef.set(value);
+          }
+          return true;
+        }));
+        assertEquals(i, map.size(), "Each inserted mapping must increase the size");
+      }
+
+      map.close();
+      map = open(storagePath);
+      assertEquals(ENTRIES_TO_FORCE_SPLITS, map.size(), "The size must remain correct after reopening");
+      for (int key = 1; key <= ENTRIES_TO_FORCE_SPLITS; key++) {
+        long expectedValue = valueForKey(key);
+        assertEquals(expectedValue, map.lookup(key, value -> value == expectedValue));
+      }
+    }
+    finally {
+      map.closeAndClean();
+    }
+  }
+
+  @Test
+  void operationsThatRequireOpenStorageRejectClosedMap(@TempDir @NotNull Path tempDir) throws Exception {
+    var map = open(tempDir.resolve("map.map"));
+    try {
+      map.close();
+
+      assertThrows(ClosedStorageException.class, () -> map.put(1, 1));
+      assertThrows(ClosedStorageException.class, () -> map.has(1, 1));
+      assertThrows(ClosedStorageException.class, () -> map.lookup(1, _ -> false));
+      assertThrows(ClosedStorageException.class, () -> map.lookupAndModify(1, (_, _) -> false));
+      assertThrows(ClosedStorageException.class, () -> map.remove(1, 1));
+      assertThrows(ClosedStorageException.class, () -> map.replace(1, 1, 2));
+      assertThrows(ClosedStorageException.class, () -> map.forEach((_, _) -> true));
+      assertThrows(ClosedStorageException.class, map::clear);
+      assertThrows(ClosedStorageException.class, map::flush);
+      assertThrows(ClosedStorageException.class, map::markDirty);
     }
     finally {
       map.closeAndClean();

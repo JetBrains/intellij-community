@@ -38,6 +38,82 @@ public abstract class IntToMultiLongMapTestBase {
   }
 
   @Test
+  public void lookupAndModifySupportsAllValueTransitions() throws Exception {
+    assertLookupAndModifyContract(map);
+  }
+
+  @Test
+  public void lookupAndModifyAppliesAllChangesBeforeProcessorStops() throws Exception {
+    assertLookupAndModifyAppliesAllChangesBeforeProcessorStops(map);
+  }
+
+  public static void assertLookupAndModifyAppliesAllChangesBeforeProcessorStops(@NotNull IntToMultiLongMap map) throws Exception {
+    map.put(1, 10);
+    map.put(1, 20);
+    map.put(1, 30);
+    var modifiedValues = new HashSet<Long>();
+
+    boolean processedAll = map.lookupAndModify(1, (oldValue, newValueRef) -> {
+      modifiedValues.add(oldValue);
+      newValueRef.set(oldValue + 100);
+      return modifiedValues.size() < 2;
+    });
+
+    assertFalse(processedAll);
+    assertEquals(2, modifiedValues.size());
+    for (long oldValue : modifiedValues) {
+      assertEquals(NO_VALUE, map.lookup(1, value -> value == oldValue));
+      assertEquals(oldValue + 100, map.lookup(1, value -> value == oldValue + 100));
+    }
+    assertEquals(3, map.size());
+  }
+
+  public static void assertLookupAndModifyContract(@NotNull IntToMultiLongMap map) throws Exception {
+    map.put(1, 10);
+    map.put(1, 20);
+    map.put(1, 30);
+
+    boolean processedAll = map.lookupAndModify(1, (oldValue, newValueRef) -> {
+      if (oldValue == 10) {
+        newValueRef.set(11);
+      }
+      else if (oldValue == 20) {
+        newValueRef.set(NO_VALUE);
+      }
+      else if (oldValue == NO_VALUE) {
+        newValueRef.set(40);
+      }
+      return true;
+    });
+    assertTrue(processedAll);
+    assertEquals(NO_VALUE, map.lookup(1, value -> value == 10));
+    assertEquals(11, map.lookup(1, value -> value == 11));
+    assertEquals(NO_VALUE, map.lookup(1, value -> value == 20));
+    assertEquals(30, map.lookup(1, value -> value == 30));
+    assertEquals(40, map.lookup(1, value -> value == 40));
+
+    boolean stopped = map.lookupAndModify(1, (oldValue, newValueRef) -> {
+      if (oldValue != 30) {
+        return true;
+      }
+      newValueRef.set(31);
+      return false;
+    });
+    assertFalse(stopped);
+    assertEquals(NO_VALUE, map.lookup(1, value -> value == 30));
+    assertEquals(31, map.lookup(1, value -> value == 31));
+
+    boolean insertedAndStopped = map.lookupAndModify(2, (oldValue, newValueRef) -> {
+      assertEquals(NO_VALUE, oldValue, "The processor must receive NO_VALUE for a missing key");
+      newValueRef.set(50);
+      return false;
+    });
+    assertFalse(insertedAndStopped, "The result only reports whether the processor requested more values");
+    assertEquals(50, map.lookup(2, value -> value == 50));
+    assertEquals(4, map.size());
+  }
+
+  @Test
   public void replacesAndRemovesOnlyTheSpecifiedPair() throws Exception {
     map.put(1, 10);
     map.put(1, 20);

@@ -1,9 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.platform.util.io.storages.intmultimaps.IntToMultiLongMap;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMap;
+import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64;
+import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapStorageOverMMappedFile;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.io.AbstractIntToIntBtree;
 import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.io.IntToIntBtree;
@@ -11,6 +15,7 @@ import com.intellij.util.io.IntToIntBtreeLockFree;
 import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -33,9 +38,13 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static com.intellij.platform.util.io.storages.intmultimaps.IntToMultiLongMap.NO_VALUE;
+import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64.DEFAULT_SEGMENT_SIZE;
+import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64.DEFAULT_STORAGE_PAGE_SIZE;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -156,12 +165,62 @@ public class IntToIntMapsBenchmark {
     }
   }
 
+  @State(Scope.Benchmark)
+  public static class ExtendibleHashMap64Context {
+
+    public File file;
+
+    public ExtendibleHashMapInt32ToInt64 map;
+
+    public int[] generatedKeys;
+
+    @Setup
+    public void setup() throws Exception {
+      file = FileUtil.createTempFile("ExtendibleHashMapInt32ToInt64", "tst", /*deleteOnExit: */ true);
+      map = MMappedFileStorageFactory.withDefaults()
+        .pageSize(DEFAULT_STORAGE_PAGE_SIZE)
+        .wrapStorageSafely(
+          file.toPath(),
+          mappedStorage -> new ExtendibleHashMapInt32ToInt64(
+            new ExtendibleHashMapStorageOverMMappedFile(mappedStorage, DEFAULT_SEGMENT_SIZE)
+          )
+        );
+
+      Int2IntMap generatedKeyValues = generateKeyValues(TOTAL_KEYS);
+      for (Map.Entry<Integer, Integer> e : generatedKeyValues.int2IntEntrySet()) {
+        map.put(e.getKey(), e.getValue());
+      }
+      generatedKeys = generatedKeyValues.keySet().toIntArray();
+    }
+
+    @TearDown
+    public void tearDown() throws Exception {
+      if (map != null) {
+        map.close();
+      }
+      if (file != null) {
+        file.delete();
+      }
+    }
+  }
+
   private static Int2IntOpenHashMap generateKeyValues(int keysCount) {
-    final Int2IntOpenHashMap keyValues = new Int2IntOpenHashMap(keysCount);
-    final ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    //noinspection SSBasedInspection
+    Int2IntOpenHashMap keyValues = new Int2IntOpenHashMap(keysCount);
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
     for (int i = 0; i < keysCount; i++) {
-      final int key = rnd.nextInt();
-      final int value = rnd.nextInt();
+      int key;
+      do {
+        key = rnd.nextInt();
+      }
+      while (key == 0);
+
+      int value;
+      do {
+        value = rnd.nextInt();
+      }
+      while (value == 0);
+
       keyValues.put(key, value);
     }
     return keyValues;
@@ -193,7 +252,7 @@ public class IntToIntMapsBenchmark {
     for (int i = 0; i < SAMPLES; i++) {
       int index = rnd.nextInt(keys.length);
       int key = keys[index];
-      bTree.put(key, key);
+      bTree.put(key, key + index);
     }
   }
 
@@ -222,12 +281,127 @@ public class IntToIntMapsBenchmark {
     for (int i = 0; i < SAMPLES; i++) {
       int index = rnd.nextInt(keys.length);
       int key = keys[index];
-      map.put(key, key);
+      map.replace(key, key, key + index);  //multimap.put will grow map
     }
   }
 
 
-  public static void main(String[] args) throws RunnerException {
+  @Benchmark
+  @OperationsPerInvocation(SAMPLES)
+  public void lookupRandomExistentKey_EMap64(ExtendibleHashMap64Context context) throws IOException {
+    int[] keys = context.generatedKeys;
+    ExtendibleHashMapInt32ToInt64 map = context.map;
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+
+    for (int i = 0; i < SAMPLES; i++) {
+      int index = rnd.nextInt(keys.length);
+      int key = keys[index];
+      map.lookup(key, _ -> true);
+    }
+  }
+
+  @Benchmark
+  @OperationsPerInvocation(SAMPLES)
+  public void updateRandomExistingKey_EMap64(ExtendibleHashMap64Context context) throws IOException {
+    int[] keys = context.generatedKeys;
+    ExtendibleHashMapInt32ToInt64 map = context.map;
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+
+    for (int i = 0; i < SAMPLES; i++) {
+      int index = rnd.nextInt(keys.length);
+      int key = keys[index];
+      map.replace(key, key, key + index);  //multimap.put will grow map
+    }
+  }
+
+  @Benchmark
+  @OperationsPerInvocation(SAMPLES)
+  public void lookupAndModifyRandomExistingKey_EMap64(ExtendibleHashMap64Context context) throws IOException {
+    int[] keys = context.generatedKeys;
+    ExtendibleHashMapInt32ToInt64 map = context.map;
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+
+    for (int i = 0; i < SAMPLES; i++) {
+      int index = rnd.nextInt(keys.length);
+      int key = keys[index];
+      map.lookupAndModify(key, (oldValue, newValueRef) -> {
+        if (oldValue == NO_VALUE) {
+          //insertion: insert only a minor fraction
+          if (index % 1024 != 0) {
+            return false;
+          }
+          newValueRef.set(key);
+        }
+        else {
+          newValueRef.set(oldValue + 1);
+        }
+        return true;
+      });
+    }
+  }
+
+  @Benchmark
+  @OperationsPerInvocation(SAMPLES)
+  public void lookupAndModifyUnoptimizedRandomExistingKey_EMap64(ExtendibleHashMap64Context context) throws IOException {
+    record Modification(long oldValue, long newValue) { }
+    int[] keys = context.generatedKeys;
+    ExtendibleHashMapInt32ToInt64 map = context.map;
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+
+    for (int i = 0; i < SAMPLES; i++) {
+      int index = rnd.nextInt(keys.length);
+      int key = keys[index];
+      IntToMultiLongMap.ValueProcessor processor = (oldValue, newValueRef) -> {
+        if (oldValue == NO_VALUE) {
+          //insertion: insert only a minor fraction
+          if ((index % 1024) != 42) {
+            return false;
+          }
+          newValueRef.set(key);
+        }
+        else {
+          newValueRef.set(oldValue + 1);
+        }
+        return true;
+      };
+      var modifications = new ArrayList<Modification>();
+      var newValueRef = new IntToMultiLongMap.MutableLongRef(NO_VALUE);
+      long stoppedAt = map.lookup(key, oldValue -> {
+        newValueRef.set(oldValue);
+        boolean shouldContinue = processor.process(oldValue, newValueRef);
+        long newValue = newValueRef.get();
+        if (newValue != oldValue) {
+          modifications.add(new Modification(oldValue, newValue));
+        }
+        return !shouldContinue;
+      });
+      if (stoppedAt == NO_VALUE) {
+        newValueRef.set(NO_VALUE);
+        processor.process(NO_VALUE, newValueRef);
+        long newValue = newValueRef.get();
+        if (newValue != NO_VALUE) {
+          modifications.add(new Modification(NO_VALUE, newValue));
+        }
+      }
+
+      for (var modification : modifications) {
+        long oldValue = modification.oldValue();
+        long newValue = modification.newValue();
+        if (oldValue == NO_VALUE) {
+          map.put(key, newValue);
+        }
+        else if (newValue == NO_VALUE) {
+          map.remove(key, oldValue);
+        }
+        else {
+          map.replace(key, oldValue, newValue);
+        }
+      }
+    }
+  }
+
+
+  static void main(String[] args) throws RunnerException {
     final Options opt = new OptionsBuilder()
       .mode(Mode.SampleTime)
       .include(IntToIntMapsBenchmark.class.getSimpleName() + ".*")
