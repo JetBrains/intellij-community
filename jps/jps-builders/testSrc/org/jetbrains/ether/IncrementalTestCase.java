@@ -4,6 +4,8 @@ package org.jetbrains.ether;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.bazel.runfiles.BazelLabel;
+import com.intellij.testFramework.common.BazelTestUtil;
 import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
@@ -63,6 +65,10 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   }
 
   protected File getTestDataDirectory() {
+    if (BazelTestUtil.isUnderBazelTest()) {
+      var label = BazelLabel.Companion.fromString("@community//java/java-tests:testData");
+      return BazelTestUtil.getFileFromBazelRuntime(label).resolve("compileServer/incremental/" + groupName + "/" + getProjectName()).toFile();
+    }
     return new File(PathManagerEx.getTestDataPath(getClass()), "compileServer/incremental/" + groupName + "/" + getProjectName());
   }
 

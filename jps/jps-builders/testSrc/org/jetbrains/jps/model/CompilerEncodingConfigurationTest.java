@@ -1,7 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model;
 
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.platform.bazel.runfiles.BazelLabel;
+import com.intellij.testFramework.common.BazelTestUtil;
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl;
 import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetRegistryImpl;
@@ -41,7 +44,11 @@ public class CompilerEncodingConfigurationTest {
 
   @Test
   public void test() {
-    JpsProjectData projectData = JpsProjectData.loadFromTestData("jps/jps-builders/testData/compilerEncoding/compilerEncoding.ipr", getClass());
+    var testDataRoot = BazelTestUtil.isUnderBazelTest()
+                       ? BazelTestUtil.getFileFromBazelRuntime(BazelLabel.Companion.fromString("@community//jps/jps-builders:testData"))
+                       : PathManagerEx.findFileUnderCommunityHome("jps/jps-builders/testData").toPath();
+    var projectPath = testDataRoot.resolve("compilerEncoding/compilerEncoding.ipr").toAbsolutePath().toString();
+    JpsProjectData projectData = JpsProjectData.loadFromTestData(projectPath, getClass());
     JpsModel model = projectData.getProject().getModel();
     BuildTargetRegistryImpl targetRegistry = new BuildTargetRegistryImpl(model);
     ModuleExcludeIndex index = new ModuleExcludeIndexImpl(model);

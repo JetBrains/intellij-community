@@ -4,6 +4,8 @@ package org.jetbrains.jps.dependency.java;
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.platform.bazel.runfiles.BazelLabel;
+import com.intellij.testFramework.common.BazelTestUtil;
 import junit.framework.TestCase;
 import org.jetbrains.jps.util.Iterators;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -24,7 +26,13 @@ public class JvmClassNodeBuilderTest extends TestCase {
   private final File myWorkDir;
 
   public JvmClassNodeBuilderTest() {
-    myWorkDir = new File(PathManagerEx.getTestDataPath(getClass()) + File.separator  + "compileServer" + File.separator + "dependency");
+    if (BazelTestUtil.isUnderBazelTest()) {
+      var label = BazelLabel.Companion.fromString("@community//java/java-tests:testData");
+      myWorkDir = BazelTestUtil.getFileFromBazelRuntime(label).resolve("compileServer/dependency").toFile();
+    }
+    else {
+      myWorkDir = new File(PathManagerEx.getTestDataPath(getClass()), "compileServer/dependency");
+    }
   }
 
   public void testClassParsing() throws IOException {
