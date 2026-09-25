@@ -38,6 +38,7 @@ intellij.html.tools.tests
 intellij.ide.startup.importSettings.tests
 intellij.idea.community.build.tasks.tests
 intellij.idea.community.main.tests
+intellij.java.compiler.heavy.tests
 intellij.java.compiler.tests
 intellij.idea.tools.launch.tests
 intellij.java.byteCodeViewer.tests
