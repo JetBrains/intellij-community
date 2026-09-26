@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.python.community.execService.Args
@@ -9,6 +9,7 @@ import com.jetbrains.python.packaging.common.PythonPackage
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
+import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import io.github.z4kn4fein.semver.Version
 import org.jetbrains.annotations.ApiStatus
@@ -16,6 +17,7 @@ import java.nio.file.Path
 
 @ApiStatus.Internal
 internal interface UvCli<P : PathHolder> {
+  val fileSystem: FileSystem<P>
   /**
    * [workingDir] is the directory uv runs in. It is `null` for a command that needs none, such as a query of the uv
    * Python list. It must be absolute, because a relative path names no directory on the machine that runs uv.

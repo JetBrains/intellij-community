@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.services.systemPython
 
 import com.intellij.openapi.application.ApplicationManager
@@ -33,7 +33,12 @@ interface SystemPythonService {
    * The result of this function might be cached. Use [forceRefresh] to reload it forcibly.
    * @return system pythons installed on OS sorted by type, then by lang.level: in order from highest (hence, the first one is usually the best one)
    */
-  suspend fun findSystemPythons(eelApi: EelApi = localEel, forceRefresh: Boolean = false): List<SystemPython>
+  suspend fun findSystemPythons(eelApi: EelApi, forceRefresh: Boolean = false): List<SystemPython>
+
+  @Suppress("LocalEelUsage")
+  @Deprecated("Provide eel",
+              ReplaceWith("findSystemPythons(localEel)", "com.intellij.platform.eel.provider.localEel"))
+  suspend fun findSystemPythons(): List<SystemPython> = findSystemPythons(localEel)
 
   /**
    * When user provides a path to the python binary, use this method to the [SystemPython].
@@ -44,7 +49,7 @@ interface SystemPythonService {
   /**
    * @return tool to install python on OS If [eelApi] supports python installation
    */
-  fun getInstaller(eelApi: EelApi = localEel): PythonInstallerService?
+  fun getInstaller(eelApi: EelApi): PythonInstallerService?
 }
 
 /**

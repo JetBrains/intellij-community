@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.platform.eel.EelApi
@@ -9,7 +9,7 @@ import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.uv.impl.createUvLowLevelLocal
+import com.jetbrains.python.sdk.uv.impl.createUvLowLevelOnEel
 import com.jetbrains.python.sdk.uv.impl.hasUvExecutableLocal
 
 internal class UvSystemPythonProvider : SystemPythonProvider {
@@ -20,7 +20,7 @@ internal class UvSystemPythonProvider : SystemPythonProvider {
     }
 
     // The Python list of uv does not depend on a directory, so this runs with none.
-    val uv = createUvLowLevelLocal(cwd = null).getOr { return it }
+    val uv = createUvLowLevelOnEel(eelApi).getOr { return it }
     return uv.listUvPythons()
   }
 

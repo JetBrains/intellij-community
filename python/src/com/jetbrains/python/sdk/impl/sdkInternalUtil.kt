@@ -8,6 +8,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.entities
@@ -19,9 +21,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.io.path.pathString
 
-internal fun getBasePythonsPaths(): List<@NlsSafe String> =
+internal fun getBasePythonsPaths(eelDescriptor: EelDescriptor): List<@NlsSafe String> =
   pyMayBeModalBlocking(ModalTaskOwner.guess()) {
-    SystemPythonService().findSystemPythons().map { withContext(Dispatchers.IO) { it.pythonBinary.toRealPath() }.pathString }.sorted()
+    val eel = eelDescriptor.toEelApi()
+    SystemPythonService().findSystemPythons(eel).map { withContext(Dispatchers.IO) { it.pythonBinary.toRealPath() }.pathString }.sorted()
   }
 
 

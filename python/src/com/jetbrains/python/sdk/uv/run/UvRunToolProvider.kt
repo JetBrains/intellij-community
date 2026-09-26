@@ -59,7 +59,7 @@ internal class UvRunToolProvider : PySdkRunToolProvider<UvSdkFlavorData, UvSdkFl
     scriptPath: Path,
   ): PyRunToolParameters {
     val uvCli = createUvCli(uvPath, fileSystem)
-    val uv = createUvLowLevel(scriptPath.parent, uvCli, fileSystem, venvPath = null)
+    val uv = createUvLowLevel(scriptPath.parent, uvCli)
     val environment = uv.syncScript(scriptPath).getOrThrow()
 
     return PyRunToolParameters(

@@ -35,5 +35,6 @@
     <orderEntry type="module" module-name="intellij.python.community.services.systemPython" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
+    <orderEntry type="module" module-name="intellij.platform.eel" />
   </component>
 </module>

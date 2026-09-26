@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.systemPython.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
@@ -28,7 +29,7 @@ class EnvProviderTest {
 
   @Test
   fun testPythonProvider(@PythonBinaryPath python: PythonBinary): Unit = timeoutRunBlocking {
-    val systemPythons = SystemPythonService().findSystemPythons()
+    val systemPythons = SystemPythonService().findSystemPythons(localEel)
     val systemPythonBinaries = systemPythons.map { it.pythonBinary }
     assertThat("No env python registered", systemPythonBinaries, Matchers.hasItem(python))
 
@@ -50,7 +51,7 @@ class EnvProviderTest {
     val ui = PyToolUIInfo("myui")
     val provider = InlineTestProvider(setOf(venvPython), ui)
     ApplicationManager.getApplication().registerExtension(SystemPythonProvider.EP, provider, disposable)
-    val python = SystemPythonService().findSystemPythons(forceRefresh = true).first { it.pythonBinary == venvPython }
+    val python = SystemPythonService().findSystemPythons(localEel, forceRefresh = true).first { it.pythonBinary == venvPython }
     assertTrue(ui == python.ui, "Wrong UI")
   }
 

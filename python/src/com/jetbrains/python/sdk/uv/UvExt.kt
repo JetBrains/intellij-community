@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.execution.target.FullPathOnTarget
@@ -9,10 +9,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pytools.resolveExecutable
+import com.intellij.python.uv.backend.UvPyTool
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -26,10 +27,8 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.TargetFileSystem
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pySdkAdditionalData
-import com.jetbrains.python.sdk.uv.impl.validateAndCreateUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
-import com.intellij.python.pytools.resolveExecutable
-import com.intellij.python.uv.backend.UvPyTool
+import com.jetbrains.python.sdk.uv.impl.validateAndCreateUvCli
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import io.github.z4kn4fein.semver.Version
@@ -47,7 +46,7 @@ internal val Sdk.uvUsePackageManagement: Boolean
 /**
  * Execution context for UV SDK operations.
  * Consolidates all PathHolder type-specific data needed to execute UV commands.
- * 
+ *
  * Use [getUvExecutionContext] to create an instance from an SDK.
  */
 internal sealed interface UvExecutionContext<P : PathHolder> {
@@ -71,7 +70,7 @@ internal sealed interface UvExecutionContext<P : PathHolder> {
   ) : UvExecutionContext<PathHolder.Target>
 
   suspend fun createUvCli(): PyResult<UvLowLevel<P>> = validateAndCreateUvCli(uvPath, fileSystem).mapSuccess { uvCli ->
-    createUvLowLevel(workingDir, uvCli, fileSystem, venvPath)
+    createUvLowLevel(workingDir, uvCli, venvPath)
   }
 }
 
@@ -138,7 +137,7 @@ private class MyService(val coroutineScope: CoroutineScope)
 /**
  * Creates a [UvExecutionContext] from an SDK.
  * This factory consolidates all PathHolder casts in one place for SDK consumption code.
- * 
+ *
  * @param project Optional project for fallback working directory
  * @return UvExecutionContext if the SDK is a valid UV SDK, null otherwise
  */
@@ -150,7 +149,7 @@ internal suspend fun setupNewUvSdkAndEnv(uvExecutable: Path, workingDir: Path, v
     uvExecutable = PathHolder.Eel(uvExecutable),
     workingDir = workingDir,
     venvPath = null,
-    fileSystem = EelFileSystem(localEel),
+    fileSystem = EelFileSystem(uvExecutable.getEelDescriptor().toEelApi()),
     version = version,
     errorSink = errorSink,
   )
@@ -173,7 +172,7 @@ internal suspend fun <P : PathHolder> setupNewUvSdkAndEnv(
   val shouldInitProject = !workingDir.resolve(PY_PROJECT_TOML).exists()
   val normalizedUvExecutablePath = fileSystem.normalizePathToRemote(uvExecutable)
 
-  val uv = createUvLowLevel(workingDir, validateAndCreateUvCli(normalizedUvExecutablePath, fileSystem).getOr { return it }, fileSystem, venvPath)
+  val uv = createUvLowLevel(workingDir, validateAndCreateUvCli(normalizedUvExecutablePath, fileSystem).getOr { return it }, venvPath)
   val pythonBinary = withProgressText(PyBundle.message("python.sdk.progress.uv.creating")) {
     uv.initializeEnvironment(shouldInitProject, version, clearExisting = overrideExistingEnv, inheritSitePackages = inheritSitePackages)
   }.getOr { return it }
@@ -208,7 +207,7 @@ internal suspend fun setupExistingEnvAndSdk(
     pythonBinary = PathHolder.Eel(pythonBinary),
     uvPath = PathHolder.Eel(uvPath),
     workingDir = envWorkingDir,
-    fileSystem = EelFileSystem(localEel),
+    fileSystem = EelFileSystem(pythonBinary.getEelDescriptor().toEelApi()),
     usePip = usePip
   )
 

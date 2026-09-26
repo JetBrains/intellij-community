@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.sdk.inspections.InterpreterSettingsQuickFix
@@ -61,7 +62,7 @@ object PythonLessonsUtil {
     val interpreterVersions = CompletableFuture<List<String>>()
     ApplicationManager.getApplication().executeOnPooledThread {
       val versions = runBlockingCancellable {
-        SystemPythonService().findSystemPythons().map { it.pythonInfo.languageLevel }.distinct().map { it.toString() }
+        SystemPythonService().findSystemPythons(localEel).map { it.pythonInfo.languageLevel }.distinct().map { it.toString() }
       }
       interpreterVersions.complete(versions)
     }

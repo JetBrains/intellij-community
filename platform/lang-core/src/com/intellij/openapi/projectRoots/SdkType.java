@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,8 +55,10 @@ public abstract class SdkType implements SdkTypeId {
    * Sometimes a project is not located on the same file system where the IDE is running, and in this case
    * the IDE needs to install SDK that is accessible to the project
    */
-  @Deprecated
-  public abstract @Nullable String suggestHomePath();
+  @Deprecated(forRemoval = true)
+  protected @Nullable String suggestHomePath() {
+    throw new AssertionError("Do not call this method, call the one with path instead");
+  }
 
   /**
    * Returns a recommended starting path for a file chooser (where SDKs of this type are usually may be found),

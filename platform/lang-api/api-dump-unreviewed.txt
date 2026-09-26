@@ -2862,7 +2862,6 @@ f:com.intellij.openapi.projectRoots.impl.UnknownSdkType
 - isValidSdkHome(java.lang.String):Z
 - loadAdditionalData(org.jdom.Element):com.intellij.openapi.projectRoots.SdkAdditionalData
 - saveAdditionalData(com.intellij.openapi.projectRoots.SdkAdditionalData,org.jdom.Element):V
-- suggestHomePath():java.lang.String
 - suggestSdkName(java.lang.String,java.lang.String):java.lang.String
 c:com.intellij.openapi.projectRoots.ui.PathEditor
 - sf:INVALID_COLOR:java.awt.Color

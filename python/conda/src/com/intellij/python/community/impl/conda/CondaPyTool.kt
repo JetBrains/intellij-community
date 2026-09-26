@@ -66,8 +66,8 @@ private object CondaPyToolManager : PyToolManager {
       CondaInstallManager.installLatest(project = null)
     }
     val cache = PyExecutableCache.getInstance()
-    cache.invalidate(localEel.descriptor, tool)
-    return cache.get(localEel.descriptor, tool)?.let { PyResult.success(it) }
+    cache.invalidate(eel.descriptor, tool)
+    return cache.get(eel.descriptor, tool)?.let { PyResult.success(it) }
            ?: PyResult.localizedError(PyCondaBundle.message("python.conda.install.not.detected"))
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.projectCreation
 
 import com.intellij.openapi.application.edtWriteAction
@@ -13,6 +13,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.getPythonInfo
@@ -87,6 +90,7 @@ suspend fun createVenvAndSdk(
       is SystemPythonRequirements.Explicit -> systemPythonRequirements.systemPython
       is SystemPythonRequirements.ByVersionSpecifier -> {
         getSystemPython(
+          eelDescriptor = moduleOrProject.project.getEelDescriptor(),
           confirmInstallation = systemPythonRequirements.confirmInstallation,
           pythonService = systemPythonRequirements.systemPythonService,
           versionSpecifiers = systemPythonRequirements.versionSpecifiers,
@@ -148,14 +152,16 @@ internal suspend fun getSystemPython(
   confirmInstallation: suspend () -> Boolean,
   pythonService: SystemPythonService,
   versionSpecifiers: PyVersionSpecifiers = PyVersionSpecifiers.ANY_SUPPORTED,
+  eelDescriptor: EelDescriptor,
 ): Result<SystemPython, MessageError> {
+  val eel = eelDescriptor.toEelApi()
   // First, find the latest python according to strategy
-  var systemPythonBinary = pythonService.findSystemPythons(forceRefresh = true).findMatchingPython(versionSpecifiers)
+  var systemPythonBinary = pythonService.findSystemPythons(eel, forceRefresh = true).findMatchingPython(versionSpecifiers)
 
   // No python found?
   if (systemPythonBinary == null) {
     // Install it
-    val installer = pythonService.getInstaller()
+    val installer = pythonService.getInstaller(eel)
                     ?: return PyResult.localizedError(PyBundle.message("project.error.install.not.supported"))
     if (confirmInstallation()) {
       // Install
@@ -167,7 +173,7 @@ internal suspend fun getSystemPython(
         }
         is Result.Success -> {
           // Find the latest python again, after installation
-          systemPythonBinary = pythonService.findSystemPythons(forceRefresh = true).findMatchingPython(versionSpecifiers)
+          systemPythonBinary = pythonService.findSystemPythons(eel, forceRefresh = true).findMatchingPython(versionSpecifiers)
         }
       }
     }
