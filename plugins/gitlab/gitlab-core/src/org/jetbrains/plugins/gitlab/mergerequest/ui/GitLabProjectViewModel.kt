@@ -58,8 +58,7 @@ class GitLabProjectViewModel(
     GitLabRepositoryAndAccountSelectorViewModel(
       project, this, projectsManager, accountManager,
       onSelected = { mapping, account ->
-        connectionManager.openConnection(mapping, account)
-        preferences.selectedUrlAndAccountId = mapping.remote.url to account.id
+        connect(mapping, account)
       }
     ).apply {
       // Make sure the first found selected repo and account will be selected
@@ -102,7 +101,16 @@ class GitLabProjectViewModel(
    */
   internal suspend fun loginIfPossible() {
     if (!Registry.`is`("vcs.gitlab.connect.silently", true)) return
+    // Skip once connected
+    if (connectionManager.connectionState.value != null) return
     selectorVm.first()?.submitSelection()
+  }
+
+  private suspend fun connect(mapping: GitLabProjectMapping, account: GitLabAccount) {
+    val current = connectionManager.connectionState.value
+    if (current != null && current.repo.repository == mapping.repository && current.account == account) return
+    connectionManager.openConnection(mapping, account)
+    project.service<GitLabMergeRequestsPreferences>().selectedUrlAndAccountId = mapping.remote.url to account.id
   }
 
   fun activate() {
