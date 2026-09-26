@@ -350,17 +350,18 @@ func TestCustomPathContentModules(t *testing.T) {
 	}
 }
 
-// A jar with the module libraries of a placed content module follows that module in the content pass. A jar with the
-// module libraries of the main module starts the layout pass, so a reused jar with a later `<content>` index goes
-// before it.
-func TestModuleLibraryJarsFollowTheirPass(t *testing.T) {
+// A jar of project libraries starts the layout pass, so a reused jar goes before it. The generator makes each project
+// library a module of the plugin header, so this order is in the bytes of the repository. A jar of module libraries
+// does not end the content pass: the embedded content module after it keeps its place before the reused jar.
+func TestProjectLibraryJarStartsTheLayoutPass(t *testing.T) {
 	p := &part{Version: partVersion, DescriptorModule: "p.main", Directory: "plugins/p", Order: pluginOrder, Descriptor: "plugin.xml", Jars: []partJar{
 		{Destination: "lib/modules/p.content.jar", Members: modules("p.content")},
-		{Destination: "lib/p.jar", Members: modules("p.main", "p.other")},
 		{Destination: "lib/b.jar", Members: []member{{Library: "@lib//:p-main-b"}}},
+		{Destination: "lib/p.embedded.jar", Members: modules("p.embedded")},
+		{Destination: "lib/alpha.jar", Members: []member{{Library: "@lib//:alpha"}}},
 		{Destination: "lib/modules/p.reused.jar", Members: modules("p.reused"), Reused: true},
 	}}
-	content := []contentModule{{name: "p.content"}, {name: "p.reused"}}
+	content := []contentModule{{name: "p.content"}, {name: "p.embedded", loading: "embedded"}, {name: "p.reused"}}
 	result, err := assemble([]assembledPart{{part: p, content: content}}, testIndex(t))
 	if err != nil {
 		t.Fatal(err)
@@ -369,7 +370,7 @@ func TestModuleLibraryJarsFollowTheirPass(t *testing.T) {
 	for _, e := range result.Plugins[0].Entries {
 		actual = append(actual, e.Kind+":"+e.Name)
 	}
-	expected := []string{"module:p.content", "module:p.reused", "module:p.main", "module:p.other", "moduleLibrary:p.main"}
+	expected := []string{"module:p.content", "moduleLibrary:p.main", "module:p.embedded", "module:p.reused", "projectLibrary:alpha"}
 	if !reflect.DeepEqual(actual, expected) {
 		t.Fatalf("entries:\n  actual   %q\n  expected %q", actual, expected)
 	}

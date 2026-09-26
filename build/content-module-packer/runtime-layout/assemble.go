@@ -156,9 +156,10 @@ func orderAssets(p *part, content []contentModule, libraries *libraryIndex) ([]a
 //
 // The content pass creates its jars first, each at the first content module it places, so their `<content>` indices
 // grow. The first jar that breaks this is the first jar of the layout pass, and every later jar belongs to that pass
-// too. A jar that holds only the module libraries of one module is created when that module is packed: in the content
-// pass for a module it places, in the layout pass for any other module. A jar of project libraries belongs to the
-// layout pass.
+// too. A jar with a project library and no module starts the layout pass, as `computeProjectLibrariesSources` creates
+// it after every module. A jar with module libraries only does not end the content pass, because the module that owns
+// them can be a content module. It stays behind the jar before it: the generator reads a module library entry by its
+// owner and not by its place.
 func pluginAssetOrder(p *part, content []contentModule, contentIndex map[string]int, resolved [][]resolvedLibrary) ([]int, error) {
 	mainJar := ""
 	for _, jar := range p.Jars {
@@ -190,8 +191,6 @@ func pluginAssetOrder(p *part, content []contentModule, contentIndex map[string]
 	var contentPass []group
 	var layoutPass []int
 	var reused []group
-	// The `<content>` index of each module that the content pass places in a jar before the current one.
-	placedModules := make(map[string]int)
 	last := -1
 	inLayoutPass := false
 	for index, jar := range p.Jars {
@@ -204,22 +203,15 @@ func pluginAssetOrder(p *part, content []contentModule, contentIndex map[string]
 			continue
 		}
 		hasModule := slices.ContainsFunc(jar.Members, func(m member) bool { return m.Module != "" })
-		if !inLayoutPass && !hasModule {
-			if key, placed := placedModules[moduleLibraryOwner(resolved[index])]; placed {
-				contentPass = append(contentPass, group{key: key, jars: []int{index}})
-				continue
-			}
-			inLayoutPass = true
+		moduleLibrariesOnly := !hasModule && !slices.ContainsFunc(resolved[index], func(library resolvedLibrary) bool { return library.library.kind != moduleLibraryKind })
+		if !inLayoutPass && moduleLibrariesOnly && len(contentPass) != 0 {
+			contentPass[len(contentPass)-1].jars = append(contentPass[len(contentPass)-1].jars, index)
+			continue
 		}
 		if !inLayoutPass {
 			if key := firstPlaced(jar); key > last {
 				last = key
 				contentPass = append(contentPass, group{key: key, jars: []int{index}})
-				for _, m := range jar.Members {
-					if position, isContent := contentIndex[m.Module]; m.Module != "" && isContent && placedByContent(content[position], strings.TrimPrefix(jar.Destination, "lib/"), mainJar) {
-						placedModules[m.Module] = position
-					}
-				}
 				continue
 			}
 			inLayoutPass = true
@@ -244,17 +236,4 @@ func placedByContent(module contentModule, relativeOutputFile, mainJar string) b
 	}
 	return relativeOutputFile == "modules/"+module.name+".jar" || relativeOutputFile == mainJar ||
 		(mainJar != "" && relativeOutputFile == strings.TrimSuffix(mainJar, ".jar")+"-frontend.jar")
-}
-
-// moduleLibraryOwner returns the module whose module libraries a library-only jar holds, or empty when the jar holds a
-// project library or the libraries of several modules.
-func moduleLibraryOwner(libraries []resolvedLibrary) string {
-	owner := ""
-	for _, library := range libraries {
-		if library.library.kind != moduleLibraryKind || (owner != "" && owner != library.library.name) {
-			return ""
-		}
-		owner = library.library.name
-	}
-	return owner
 }
