@@ -725,7 +725,11 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
         progress_message = "Deriving the runtime layout part of %{label} from its plan file",
     )
     return _remainder_providers(ctx, ctx.attr.graph, execution_version, directory, metadata, assets, classpath, independent_artifacts, content) + [
-        DevDistRuntimeLayoutInfo(part = runtime_layout, descriptor = classpath_descriptor),
+        DevDistRuntimeLayoutInfo(
+            part = runtime_layout,
+            descriptor = classpath_descriptor,
+            descriptor_module = descriptor_target[DevDistPluginDescriptorInfo].plugin_main_module,
+        ),
     ]
 
 dev_plugin_remainder_from_plan = rule(

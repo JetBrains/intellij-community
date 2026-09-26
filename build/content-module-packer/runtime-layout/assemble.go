@@ -159,8 +159,10 @@ func orderAssets(p *part, content []contentModule, libraries *libraryIndex) ([]a
 	return assets, nil
 }
 
-// orderByJarOrder orders the jars of a layout part by its jar order file. The file and the part must name the same
-// jars: a jar that one of them lacks has no producer or no place.
+// orderByJarOrder orders the jars of a layout part by its jar order file, which names the jars of the platform layout.
+// A jar of the file that the part lacks has no producer, and fails the assembly. A jar of the part that the file lacks
+// is not in the platform layout, and the part leaves it out: a platform payload packs the jar of every module it holds,
+// and a frontend holds modules that its platform layout does not place.
 func orderByJarOrder(p *part) ([]int, error) {
 	data, err := os.ReadFile(p.JarOrder)
 	if err != nil {
@@ -186,9 +188,6 @@ func orderByJarOrder(p *part) ([]int, error) {
 	}
 	if len(unknown) != 0 {
 		return nil, fmt.Errorf("the jar order %s names jars that the part does not pack: %s", p.JarOrder, strings.Join(unknown, ", "))
-	}
-	if len(byDestination) != 0 {
-		return nil, fmt.Errorf("the jar order %s does not name the packed jars %s", p.JarOrder, strings.Join(sortedKeys(byDestination), ", "))
 	}
 	return order, nil
 }
@@ -236,11 +235,11 @@ func pluginAssetOrder(p *part, content []contentModule, contentIndex map[string]
 	inLayoutPass := false
 	for index, jar := range p.Jars {
 		if jar.Reused {
-			key := firstPlaced(jar)
-			if key < 0 {
-				return nil, fmt.Errorf("the reused jar %s holds no content module of the descriptor at its content module path", jar.Destination)
+			// A reused jar whose module the descriptor does not declare is left out: the descriptor refused the module,
+			// and the generator would otherwise make it an EMBEDDED module of the plugin.
+			if key := firstPlaced(jar); key >= 0 {
+				reused = append(reused, group{key: key, jars: []int{index}})
 			}
-			reused = append(reused, group{key: key, jars: []int{index}})
 			continue
 		}
 		hasModule := slices.ContainsFunc(jar.Members, func(m member) bool { return m.Module != "" })

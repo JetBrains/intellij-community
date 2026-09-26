@@ -34,6 +34,7 @@ DevDistRuntimeLayoutInfo = provider(
     fields = {
         "part": "The part `File`, in the part format of `runtime-layout`.",
         "descriptor": "The classpath descriptor whose `<content>` order the part follows. The part names it by its path.",
+        "descriptor_module": "The JPS module whose resources hold the descriptor, the module the part names the plugin by.",
     },
 )
 
@@ -427,7 +428,7 @@ def _dev_plugin_impl(ctx):
     payload = depset([entry.jar for entry in packed] + copied_files)
     return [
         DefaultInfo(files = depset([manifest, classpath]), runfiles = ctx.runfiles(transitive_files = payload)),
-        DevDistRuntimeLayoutInfo(part = runtime_layout, descriptor = classpath_descriptor),
+        DevDistRuntimeLayoutInfo(part = runtime_layout, descriptor = classpath_descriptor, descriptor_module = main_module),
         # The raw content, published beside the packed component: `dev_dist_plugin_content` unions it per product for
         # the fragment that lays the plugin out without packing it.
         inputs.content,

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -344,9 +345,13 @@ func TestCustomPathContentModules(t *testing.T) {
 	if actual := entryModules(result.Plugins[0]); !reflect.DeepEqual(actual, expected) {
 		t.Fatalf("module order:\n  actual   %q\n  expected %q", actual, expected)
 	}
-	p.Jars[0].Destination = "lib/late.jar"
-	if _, err := assemble([]assembledPart{{part: p, content: content}}, testIndex(t)); err == nil || !strings.Contains(err.Error(), "no content module of the descriptor") {
-		t.Fatalf("a reused jar at a custom path was accepted: %v", err)
+	// A reused jar of a module that the descriptor refused is left out.
+	result, err = assemble([]assembledPart{{part: p, content: content[:4]}}, testIndex(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if actual := entryModules(result.Plugins[0]); slices.Contains(actual, "p.late") {
+		t.Fatalf("a refused reused jar was kept: %q", actual)
 	}
 }
 
@@ -376,7 +381,8 @@ func TestProjectLibraryJarStartsTheLayoutPass(t *testing.T) {
 	}
 }
 
-// A platform part orders its jars by its jar order file. A jar that the file or the part lacks fails the assembly.
+// A platform part orders its jars by its jar order file. A jar that the part lacks fails the assembly, and a jar that
+// the file lacks is left out, because it is not in the platform layout.
 func TestPlatformJarOrder(t *testing.T) {
 	order := writeFile(t, "idea.platform-jars.txt", "nio-fs.jar\nutil.jar\next/platform-main.jar\n")
 	p := &part{Version: partVersion, DescriptorModule: "intellij.idea.customization", Order: layoutOrder, JarOrder: order, Jars: []partJar{
@@ -400,9 +406,12 @@ func TestPlatformJarOrder(t *testing.T) {
 		!strings.Contains(err.Error(), "does not pack: extra.jar") {
 		t.Fatalf("an unknown jar was accepted: %v", err)
 	}
-	p.JarOrder = writeFile(t, "missing.platform-jars.txt", "nio-fs.jar\nutil.jar\n")
-	if _, err := assemble([]assembledPart{{part: p}}, testIndex(t)); err == nil ||
-		!strings.Contains(err.Error(), "does not name the packed jars ext/platform-main.jar") {
-		t.Fatalf("an unordered jar was accepted: %v", err)
+	p.JarOrder = writeFile(t, "partial.platform-jars.txt", "util.jar\nnio-fs.jar\n")
+	result, err = assemble([]assembledPart{{part: p}}, testIndex(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if actual := entryModules(result.Plugins[0]); !reflect.DeepEqual(actual, []string{"intellij.platform.util", "intellij.platform.util.base", "intellij.platform.core.nio.fs"}) {
+		t.Fatalf("a jar outside the order was kept: %q", actual)
 	}
 }

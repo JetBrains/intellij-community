@@ -8,6 +8,7 @@ load(":content_module_jar_test.bzl", "content_module_jar_test_suite")
 load(":dev_dist_content.bzl", "DevDistContentInfo", "DevDistPlatformPayloadInfo", "dev_dist_platform_payload", "dev_dist_plugin_content")
 load(":dev_dist_plugin.bzl", "dev_dist_plugin")
 load(":dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor_target_name", "dev_dist_product_info")
+load(":dev_dist_runtime_module_repository.bzl", "dev_dist_runtime_module_repository")
 load(
     ":intellij_dev_dist.bzl",
     "IntellijDevBuildInputsInfo",
@@ -334,6 +335,49 @@ _fragment_test = analysistest.make(
         "build_inputs": attr.label(mandatory = True, providers = [IntellijDevBuildInputsInfo]),
     },
     config_settings = {_TRACE_SPANS: False},
+)
+
+def _runtime_module_repository_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    actions = analysistest.target_actions(env)
+    payload = ctx.attr.payload[DevDistPlatformPayloadInfo]
+
+    # The core plugin part, written at analysis from the payload: every packed jar under `lib/`, and the jar order file
+    # that the assembly orders them by.
+    parts = [action for action in actions if action.mnemonic == "FileWrite" and action.outputs.to_list()[0].basename.endswith(".platform.runtime-layout.json")]
+    asserts.equals(env, 1, len(parts))
+    part = json.decode(parts[0].content)
+    asserts.equals(env, ["test.core", "", "layout", ctx.file.jar_order.path], [part[key] for key in ["descriptorModule", "directory", "order", "jarOrder"]])
+    asserts.equals(env, ["lib/" + entry.destination for entry in payload.layout], [jar["destination"] for jar in part["jars"]])
+    asserts.equals(env, [{"module": module} for module in payload.layout[0].member_modules], [member for member in part["jars"][0]["members"] if "module" in member])
+
+    # The assembly reads the part, the jar order and bazel-targets.json. The generator reads the layout, the project model
+    # tree and the core descriptor, and writes the two predeclared files.
+    assemblies = [action for action in actions if action.mnemonic == "DevDistRuntimeLayout"]
+    asserts.equals(env, 1, len(assemblies))
+    layout = target[OutputGroupInfo].runtime_module_repository_layout.to_list()
+    asserts.equals(env, 1, len(layout))
+    if assemblies:
+        asserts.true(env, "--part=" + parts[0].outputs.to_list()[0].path in assemblies[0].argv)
+        asserts.true(env, ctx.file.jar_order in assemblies[0].inputs.to_list())
+        asserts.equals(env, layout, assemblies[0].outputs.to_list())
+    generators = [action for action in actions if action.mnemonic == "DevDistRuntimeModuleRepository"]
+    asserts.equals(env, 1, len(generators))
+    if generators:
+        asserts.equals(env, ["module-descriptors.dat", "module-descriptors.jar"], [file.basename for file in generators[0].outputs.to_list()])
+        for file in layout + [ctx.file.core_descriptor]:
+            asserts.true(env, file in generators[0].inputs.to_list(), file.path)
+        asserts.equals(env, generators[0].outputs.to_list(), target[DefaultInfo].files.to_list())
+    return analysistest.end(env)
+
+_runtime_module_repository_test = analysistest.make(
+    _runtime_module_repository_test_impl,
+    attrs = {
+        "payload": attr.label(mandatory = True, providers = [DevDistPlatformPayloadInfo]),
+        "jar_order": attr.label(mandatory = True, allow_single_file = True),
+        "core_descriptor": attr.label(mandatory = True, allow_single_file = True),
+    },
 )
 
 def _fake_component_impl(ctx):
@@ -697,6 +741,29 @@ def dev_dist_content_test_suite(name):
         preloaded_manifests = [":" + fixture + ".data"],
         tags = ["manual"],
     )
+    repository_files = [name + "_repository_order.txt", name + "_repository_core.xml", name + "_repository_targets.json"]
+    for file in repository_files:
+        native.genrule(name = file + "_file", outs = [file], cmd = "echo '{}' > $@", tags = ["manual"])
+    repository = name + "_runtime_module_repository"
+    dev_dist_runtime_module_repository(
+        name = repository,
+        platform_payload = ":" + payload,
+        core_module = "test.core",
+        core_descriptor = ":" + repository_files[1],
+        jar_order = ":" + repository_files[0],
+        project_model_tree = ":" + fixture,
+        bazel_targets_json = ":" + repository_files[2],
+        tags = ["manual"],
+    )
+    tests.append(repository + "_test")
+    _runtime_module_repository_test(
+        name = tests[-1],
+        target_under_test = ":" + repository,
+        payload = ":" + payload,
+        jar_order = ":" + repository_files[0],
+        core_descriptor = ":" + repository_files[1],
+    )
+
     tests.append(fragment + "_test")
     _fragment_test(
         name = tests[-1],
