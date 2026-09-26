@@ -14,7 +14,8 @@ import (
 // `prepared` source whose `module-filter` operation reads a module. A `library` source is a member with the files that
 // the catalogue lists for it. An `archive` source is a member with its one catalogue file: the plan names a single jar
 // of a library by the label of that jar. A `file` source, such as the patched descriptor, and a `layout-assets` output
-// merge no module. The plan file keeps the ID of a library, which is the label of its container.
+// merge no module. The plan file keeps the ID of a library, which is the label of its container. Any other source
+// fails, so that a new kind of source cannot silently leave a jar out of the repository.
 //
 // A reused content module jar is not in the catalogue, because its own target packs it. independentLibraries states
 // the libraries of such jars, by label.
@@ -39,8 +40,10 @@ func partFromPlan(plan *planfile.File, catalogue *pluginpack.Catalogue, independ
 	for _, library := range independentLibraries {
 		independentFiles[normalizeLabel(library.Library)] = library.Jars
 	}
+	operationKinds := make(map[string]string, len(plan.Operations))
 	filteredModules := make(map[string]string)
 	for _, operation := range plan.Operations {
+		operationKinds[operation.Output] = operation.Kind
 		if operation.Kind == "module-filter" && operation.Input != nil {
 			filteredModules[operation.Output] = operation.Input.Artifact
 		}
@@ -57,8 +60,16 @@ func partFromPlan(plan *planfile.File, catalogue *pluginpack.Catalogue, independ
 			case "module":
 				members = append(members, member{Module: source.Input})
 			case "prepared":
-				if module, found := filteredModules[source.Input]; found {
+				switch operationKinds[source.Input] {
+				case "module-filter":
+					module, found := filteredModules[source.Input]
+					if !found {
+						return nil, fmt.Errorf("%s merges the module filter output %s, which reads no module", planAsset.Destination, source.Input)
+					}
 					members = append(members, member{Module: module})
+				case "layout-assets":
+				default:
+					return nil, fmt.Errorf("%s merges the prepared source %s, which no module-filter or layout-assets operation writes", planAsset.Destination, source.Input)
 				}
 			case "library":
 				files, found := libraryFiles[source.Input]
@@ -75,6 +86,9 @@ func partFromPlan(plan *planfile.File, catalogue *pluginpack.Catalogue, independ
 					return nil, fmt.Errorf("%s merges the archive %s, which the catalogue does not list", planAsset.Destination, source.Input)
 				}
 				members = append(members, member{Library: source.Input, Jars: []string{root}})
+			case "file":
+			default:
+				return nil, fmt.Errorf("%s merges the %s source %s, which the runtime layout does not read", planAsset.Destination, source.Kind, source.Input)
 			}
 		}
 		if len(members) == 0 {

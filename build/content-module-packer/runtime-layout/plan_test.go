@@ -39,7 +39,9 @@ const testPlan = `{
     {"id": "module-filter:p.main", "inputs": ["p.main"], "outputs": ["module-filter:p.main:output"], "modelSignature": "m"}
   ],
   "operations": [
-    {"id": "module-filter:p.main", "input": {"artifact": "p.main"}, "output": "module-filter:p.main:output", "manifest": "keep", "excludes": ["js/**"]}
+    {"id": "module-filter:p.main", "input": {"artifact": "p.main"}, "output": "module-filter:p.main:output", "manifest": "keep", "excludes": ["js/**"]},
+    {"id": "layout-assets:0", "kind": "layout-assets", "inputs": [{"artifact": "p.main"}], "output": "layout-assets:0:output", "manifest": "keep",
+      "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "gzip-xml-archive"}}]}}
   ]
 }`
 
@@ -95,6 +97,8 @@ func TestPlanPartRefusals(t *testing.T) {
 	}{
 		{strings.Replace(testPlan, `"@lib//:a", "kind": "library"`, `"@lib//:unknown", "kind": "library"`, 1), "neither the catalogue nor a reused jar"},
 		{strings.Replace(testPlan, `"@lib//:a/a2.jar", "kind": "archive"`, `"@lib//:a/unknown.jar", "kind": "archive"`, 1), "which the catalogue does not list"},
+		{strings.Replace(testPlan, `"@lib//:a/a2.jar", "kind": "archive"`, `"@lib//:a/a2.jar", "kind": "unknown"`, 1), "the unknown source @lib//:a/a2.jar, which the runtime layout does not read"},
+		{strings.Replace(testPlan, `"layout-assets:0:output", "kind": "prepared"`, `"other:0:output", "kind": "prepared"`, 1), "which no module-filter or layout-assets operation writes"},
 		{strings.Replace(testPlan, `{"destination": "lib/p.jar",`, `{"scope": "distribution", "destination": "lib/p.jar",`, 1), "distribution scope"},
 		{strings.Replace(testPlan, `{"destination": "lib/p.jar",`, `{"destination": "p.jar",`, 1), "not under lib/"},
 	} {
