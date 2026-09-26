@@ -588,21 +588,33 @@ abstract class PyCodeInsightTestCase {
 
     val actualText = PyTestAssertionInliner.generateActualText(expectedText, expectedAssertions, actualAssertions)
     if (expectedText != actualText) {
-      val counterparts = findCounterparts(expectedAssertions, actualAssertions)
-      val mismatchingAssertions = counterparts.entries.filter { (actual, expected) -> actual.content != expected.content }
-      if (mismatchingAssertions.size == 1 && mismatchingAssertions.single().value.content.isNotBlank()) {
-        val (actual, expected) = mismatchingAssertions.single()
-        val idx = expectedText.indexOf(expected.content, expected.assertionOffsetStart)
-        val actualTextCandidate = if (idx < 0) null else expectedText.replaceRange(idx, idx + expected.content.length, actual.content)
-        if (actualText == actualTextCandidate) {
-          Assertions.assertEquals(expected.toString(), actual.toString())
-          return duration
-        }
-      }
-      Assertions.assertEquals(expectedText, actualText)
+      // Compare the whole fixture, so that the IDE can find the test literal and apply the diff to it.
+      val message = describeSingleMismatch(expectedText, actualText, expectedAssertions, actualAssertions)
+      Assertions.assertEquals(expectedText, actualText, message)
     }
 
     return duration
+  }
+
+  /**
+   * Returns a message such as `expected <[3:0] TYPE int> but was <[3:0] TYPE str>`.
+   * Returns null when the fixtures differ in more than the non-blank content of one assertion.
+   */
+  private fun describeSingleMismatch(
+    expectedText: String,
+    actualText: String,
+    expectedAssertions: List<PyTestAssertion>,
+    actualAssertions: List<PyTestAssertion>,
+  ): String? {
+    val counterparts = findCounterparts(expectedAssertions, actualAssertions)
+    val (actual, expected) = counterparts.entries
+                               .filter { (actual, expected) -> actual.content != expected.content }
+                               .singleOrNull() ?: return null
+    if (expected.content.isBlank()) return null
+    val idx = expectedText.indexOf(expected.content, expected.assertionOffsetStart)
+    if (idx < 0) return null
+    if (actualText != expectedText.replaceRange(idx, idx + expected.content.length, actual.content)) return null
+    return "expected <${expected.toString().trim()}> but was <${actual.toString().trim()}>"
   }
 
   private fun computeAssertions(
