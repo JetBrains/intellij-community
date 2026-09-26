@@ -293,11 +293,6 @@ f:org.intellij.plugins.intelliLang.inject.config.ui.LanguagePanel
 - setLanguage(java.lang.String):V
 - setPrefix(java.lang.String):V
 - setSuffix(java.lang.String):V
-f:org.intellij.plugins.intelliLang.inject.config.ui.ValueRegExpAnnotator
-- com.intellij.lang.annotation.Annotator
-- sf:KEY:com.intellij.openapi.util.Key
-- <init>():V
-- annotate(com.intellij.psi.PsiElement,com.intellij.lang.annotation.AnnotationHolder):V
 f:org.intellij.plugins.intelliLang.references.LanguageInjectionUtil
 - sf:INSTANCE:org.intellij.plugins.intelliLang.references.LanguageInjectionUtil
 f:org.intellij.plugins.intelliLang.references.LanguageInjectionUtilKt

@@ -22,7 +22,6 @@
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.ui"/>
-    <module name="intellij.regexp"/>
     <module name="intellij.xml.parser"/>
   </dependencies>
   <!-- endregion -->
@@ -50,6 +49,8 @@
 
     <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter"/>
     <daemon.highlightInfoFilter implementation="org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter"/>
+    <!--suppress SplitModeXmlApiUsage Lightweight check of the Value-Pattern field in injection settings; works on either side. -->
+    <annotator language="RegExp" implementationClass="org.intellij.plugins.intelliLang.inject.config.ui.ValuePatternAnnotator"/>
 
     <applicationService serviceInterface="com.intellij.psi.impl.source.tree.injected.FallbackInjectionPerformer"
                         serviceImplementation="org.intellij.plugins.intelliLang.inject.DefaultLanguageInjectionPerformer"/>

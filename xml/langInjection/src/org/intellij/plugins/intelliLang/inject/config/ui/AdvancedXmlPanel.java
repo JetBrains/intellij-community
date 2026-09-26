@@ -23,7 +23,6 @@ import com.intellij.ui.LanguageTextField;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
-import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection;
 import org.intellij.plugins.intelliLang.inject.config.XPathSupportProxy;
@@ -51,13 +50,7 @@ public class AdvancedXmlPanel extends AbstractInjectionPanel<AbstractTagInjectio
   public AdvancedXmlPanel(Project project, AbstractTagInjection injection) {
     super(injection, project);
     {
-      myValuePattern = new LanguageTextField(RegExpLanguage.INSTANCE, myProject, myOrigInjection.getValuePattern(),
-                                             new LanguageTextField.SimpleDocumentCreator() {
-                                               @Override
-                                               public void customizePsiFile(PsiFile psiFile) {
-                                                 psiFile.putCopyableUserData(ValueRegExpAnnotator.KEY, Boolean.TRUE);
-                                               }
-                                             });
+      myValuePattern = ValuePatternField.create(myProject, myOrigInjection.getValuePattern());
 
       // don't even bother to look up the language when xpath-evaluation isn't possible
       final XPathSupportProxy proxy = XPathSupportProxy.getInstance();
