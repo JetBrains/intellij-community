@@ -881,13 +881,10 @@ def _dev_plugin_component_impl(ctx):
         ctx.attr.remainder[DevDistRuntimeLayoutInfo],
         IntellijDevFragmentInfo(
             name = ctx.attr.component_name,
-            home = None,
             payload = payload,
             manifest = manifest,
             plugin_classpath_part = classpath,
             plugin_classpath_prefix = None,
-            inputs_manifest = None,
-            unused_inputs = None,
         ),
         OutputGroupInfo(
             dev_dist_plugin_outputs = depset([manifest, classpath], transitive = [payload]),

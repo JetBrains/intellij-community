@@ -434,13 +434,10 @@ def _dev_plugin_impl(ctx):
         inputs.content,
         IntellijDevFragmentInfo(
             name = main_module,
-            home = None,
             payload = payload,
             manifest = manifest,
             plugin_classpath_part = classpath,
             plugin_classpath_prefix = None,
-            inputs_manifest = None,
-            unused_inputs = None,
         ),
         OutputGroupInfo(
             dev_dist_plugin_outputs = depset([manifest, classpath], transitive = [payload]),

@@ -113,7 +113,6 @@ def _dev_plugin_test_impl(ctx):
     asserts.true(env, "--kind=" + _MAIN_MODULE in collect.argv)
     asserts.equals(env, [], [argument for argument in collect.argv if argument.startswith("--os=") or argument.startswith("--arch=")])
     asserts.equals(env, _MAIN_MODULE, fragment.name)
-    asserts.equals(env, None, fragment.home)
     asserts.equals(env, [fragment.plugin_classpath_part], groups.dev_dist_plugin_classpath.to_list())
     asserts.equals(env, 3, len(groups.file_metadata.to_list()))
     asserts.equals(env, 3 if ctx.attr.spans else 0, len(groups.trace_spans.to_list()))

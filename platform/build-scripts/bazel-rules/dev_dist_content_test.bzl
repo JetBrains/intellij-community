@@ -13,6 +13,7 @@ load(
     ":intellij_dev_dist.bzl",
     "IntellijDevBuildInputsInfo",
     "IntellijDevFragmentInfo",
+    "IntellijDevReferenceInfo",
     "IntellijProjectModelTreeInfo",
     "intellij_dev_build_inputs",
     "intellij_dev_fragment",
@@ -308,7 +309,7 @@ _tool_fixture = rule(
 def _fragment_test_impl(ctx):
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
-    fragment = target[IntellijDevFragmentInfo]
+    fragment = target[IntellijDevReferenceInfo]
     inputs = ctx.attr.build_inputs[IntellijDevBuildInputsInfo]
     actions = [action for action in analysistest.target_actions(env) if action.mnemonic.startswith("IntellijDev")]
     asserts.equals(env, 1, len(actions))
@@ -323,9 +324,10 @@ def _fragment_test_impl(ctx):
         asserts.true(env, layout[0] in action.outputs.to_list())
         asserts.true(env, "--runtime-module-repository-layout=" + layout[0].path in action.argv)
 
-    # A fragment builds no plugin, so it declares no plugin output: the packed plugin components own that group.
+    # A reference builds no plugin, so it declares no plugin output: the packed plugin components own that group. It
+    # publishes no component provider, so no distribution can compose it.
     asserts.false(env, hasattr(target[OutputGroupInfo], "dev_dist_plugin_outputs"))
-    asserts.equals(env, None, fragment.plugin_classpath_part)
+    asserts.false(env, IntellijDevFragmentInfo in target)
     asserts.equals(env, [fragment.home, fragment.manifest], target[DefaultInfo].files.to_list())
     return analysistest.end(env)
 
@@ -392,13 +394,10 @@ def _fake_component_impl(ctx):
         OutputGroupInfo(dev_dist_plugin_outputs = depset([plugin_output])),
         IntellijDevFragmentInfo(
             name = ctx.attr.component_name,
-            home = None,
             payload = depset([payload]),
             manifest = manifest,
             plugin_classpath_part = None,
             plugin_classpath_prefix = None,
-            inputs_manifest = None,
-            unused_inputs = None,
         ),
     ]
 
@@ -437,7 +436,6 @@ def _packed_component_test_impl(ctx):
     if actions:
         for file in payload:
             asserts.false(env, file in actions[0].inputs.to_list())
-    asserts.equals(env, None, component.home)
     asserts.equals(env, sorted([component.manifest] + payload), sorted(target[DefaultInfo].files.to_list()))
 
     # The tree is in the payload beside its jar, so the composer places it. Both files the collector reads name it as a

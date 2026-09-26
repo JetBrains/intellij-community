@@ -179,13 +179,22 @@ intellij_dev_build_inputs = rule(
 )
 
 IntellijDevFragmentInfo = provider(
+    doc = "A component that a distribution composes. Its manifest names each file where it already is.",
+    fields = {
+        "name": "The component name, which is also the `kind` of its manifest.",
+        "manifest": "The component manifest.",
+        "payload": "The already-existing files the manifest names, or None; the composer stages them.",
+        "plugin_classpath_part": "This component's plugin-classpath records, or None if it built no plugin.",
+        "plugin_classpath_prefix": "The plugin-classpath prefix, or None if another component produces it.",
+    },
+)
+
+IntellijDevReferenceInfo = provider(
+    doc = "A reference fragment, the second producer of a gate. No distribution composes it.",
     fields = {
         "name": "The fragment name, which is also the `kind` of its manifest.",
-        "home": "The fragment tree, or None for a component whose manifest names files that already exist.",
+        "home": "The fragment tree.",
         "manifest": "The fragment manifest.",
-        "payload": "The already-existing files a `home`-less component's manifest names, or None; the composer stages them.",
-        "plugin_classpath_part": "This fragment's plugin-classpath records, or None if it built no plugin.",
-        "plugin_classpath_prefix": "The plugin-classpath prefix, or None if another component produces it.",
         "inputs_manifest": "The label-to-path manifest of the fragment's declared Bazel inputs.",
         "unused_inputs": "The declared inputs the assembly never resolved - declared minus these is what it used.",
     },
@@ -510,26 +519,21 @@ def _fragment_impl(ctx):
             dev_dist_plans = _plans_output_group([plan], []),
             runtime_module_repository_layout = depset([runtime_module_repository_layout] if runtime_module_repository_layout else []),
         ),
-        IntellijDevFragmentInfo(
+        IntellijDevReferenceInfo(
             name = ctx.attr.fragment_name,
             home = home,
-            payload = None,
             manifest = component_manifest,
-            plugin_classpath_part = None,
-            plugin_classpath_prefix = None,
             inputs_manifest = bazel_inputs_manifest,
             unused_inputs = unused_inputs,
         ),
     ]
 
 intellij_dev_fragment = rule(
-    doc = """One independently cacheable slice of a dev distribution.
+    doc = """A reference fragment: files of a dev distribution that the Kotlin assembler packs a second time for a gate.
 
-    What the fragment owns is a selector over names, not a file list. `platform = "only"` owns the `lib/` jars that a
-    generated jar-name set names. `runtime_module_repository` owns `modules/`, the runtime module repository. No fragment writes `bin` and the product metadata: a consuming repository
-    renders them with `dev_dist_product_files` and places them with a component. No fragment owns a plugin directory:
-    the packed plugin components do, and the composer checks that the components of one distribution partition it
-    exactly.
+    It publishes `IntellijDevReferenceInfo`, so no distribution can compose it. What the fragment owns is a selector
+    over names, not a file list. `platform = "only"` owns the `lib/` jars that a generated jar-name set names.
+    `runtime_module_repository` owns `modules/`, the runtime module repository.
     """,
     implementation = _fragment_impl,
     attrs = {
@@ -589,13 +593,10 @@ def _collect_component(ctx, files, collection_args, inputs, mnemonic, progress_m
         OutputGroupInfo(trace_spans = _spans_output_group([spans], [])),
         IntellijDevFragmentInfo(
             name = ctx.attr.component_name,
-            home = None,
             payload = depset(files),
             manifest = component_manifest,
             plugin_classpath_part = None,
             plugin_classpath_prefix = plugin_classpath_prefix,
-            inputs_manifest = None,
-            unused_inputs = None,
         ),
     ]
 
@@ -766,10 +767,7 @@ def _add_source_bindings(args, fragment, anchor):
             "members": [member.tree_relative_path for member in expander.expand(source)] if source.is_directory else [],
         })
 
-    sources = depset(
-        direct = [fragment.home] if fragment.home else [],
-        transitive = [fragment.payload] if fragment.payload else [],
-    )
+    sources = fragment.payload if fragment.payload else depset()
     args.add_all(sources, map_each = _binding_input, expand_directories = True)
     args.add_all(sources, map_each = source_binding, expand_directories = False, allow_closure = True)
 
@@ -789,10 +787,7 @@ def _compose(ctx, fragment_targets):
     ide_config = ctx.actions.declare_file(ctx.label.name + ".ide.config")
     fingerprint = ctx.actions.declare_file(ctx.label.name + ".fingerprint")
     fragments = [target[IntellijDevFragmentInfo] for target in fragment_targets]
-    component_files = depset(
-        direct = [fragment.home for fragment in fragments if fragment.home],
-        transitive = [fragment.payload for fragment in fragments if fragment.payload],
-    )
+    component_files = depset(transitive = [fragment.payload for fragment in fragments if fragment.payload])
     runtime_files = component_files if local_launch else depset()
 
     prefixes = [fragment.plugin_classpath_prefix for fragment in fragments if fragment.plugin_classpath_prefix]
@@ -818,9 +813,7 @@ def _compose(ctx, fragment_targets):
             "additionalModules": ctx.attr.additional_modules,
             "components": [
                 {
-                    # None for a component that declares no tree: its manifest names each file where it already is, and
-                    # the composer copies from there.
-                    "root": fragment.home.path if fragment.home else None,
+                    # The manifest names each file where it already is, and the composer copies from there.
                     "manifest": fragment.manifest.path,
                     "pluginClasspathPart": fragment.plugin_classpath_part.path if fragment.plugin_classpath_part else None,
                 }
@@ -842,9 +835,7 @@ def _compose(ctx, fragment_targets):
     ctx.actions.run(
         inputs = depset(
             direct = [composition_spec] + ([source_bindings] if source_bindings else []) +
-                     [fragment.manifest for fragment in fragments] +
-                     ([fragment.home for fragment in fragments if fragment.home] if not local_launch else []) +
-                     parts + prefixes,
+                     [fragment.manifest for fragment in fragments] + parts + prefixes,
             transitive = [fragment.payload for fragment in fragments if fragment.payload] if not local_launch else [],
         ),
         outputs = [home, ide_config, fingerprint] + ([spans] if spans else []),
