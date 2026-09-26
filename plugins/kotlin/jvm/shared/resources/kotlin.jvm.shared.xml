@@ -49,6 +49,7 @@
     <module name="intellij.platform.lvcs.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.testRunner"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs.core"/>
@@ -95,7 +96,7 @@
 
     <compiler.task execute="BEFORE" implementation="org.jetbrains.kotlin.idea.jvm.shared.internal.makeBackup.MakeBackupCompileTask"/>
 
-    <testDiffProvider language="kotlin" implementationClass="com.intellij.execution.testframework.JvmTestDiffProvider"/>
+    <testDiffProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.jvm.shared.testIntegration.KotlinTestDiffProvider"/>
 
       <notificationGroup id="Configure Kotlin in Project" displayType="STICKY_BALLOON" isLogByDefault="true"
                          bundle="messages.KotlinJvmBundle" key="notification.group.configure.kotlin.in.project"/>

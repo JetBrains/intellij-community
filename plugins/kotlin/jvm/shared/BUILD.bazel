@@ -107,6 +107,7 @@ jvm_library(
         "//platform/execution",
         "//platform/statistics",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+        "//platform/testRunner",
     ],
 )
 
@@ -186,6 +187,7 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
+        "//platform/testRunner:testRunner_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.jvm.shared` end

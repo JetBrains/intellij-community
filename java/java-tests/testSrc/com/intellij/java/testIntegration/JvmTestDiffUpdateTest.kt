@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
@@ -26,6 +27,9 @@ import com.intellij.util.asSafely
 abstract class JvmTestDiffUpdateTest : JavaCodeInsightFixtureTestCase() {
   override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
     moduleBuilder.addLibrary("junit4", *ArrayUtilRt.toStringArray(JavaSdkUtil.getJUnit4JarPaths()))
+    // The Jupiter assert takes the message as the last argument, so the fixtures need the Jupiter API too.
+    moduleBuilder.addLibrary("junit6", *ArrayUtilRt.toStringArray(
+      IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit6", "JUnit6").classesPaths))
   }
 
   private fun createDiffRequest(
@@ -35,13 +39,15 @@ abstract class JvmTestDiffUpdateTest : JavaCodeInsightFixtureTestCase() {
     expected: String,
     actual: String,
     stackTrace: String,
-    fileExt: String
+    fileExt: String,
+    /** Overrides the location URL, for a test whose class is not the file's top-level one. */
+    location: String? = null,
   ): SimpleDiffRequest {
     myFixture.configureByText("$testClass.$fileExt", before)
     val root = SMRootTestProxy()
     val configuration = MockRuntimeConfiguration(project)
     root.testConsoleProperties = SMTRunnerConsoleProperties(configuration, "framework", DefaultRunExecutor())
-    val testProxy = SMTestProxy(testName, false, "java:test://$testClass/$testName").apply {
+    val testProxy = SMTestProxy(testName, false, location ?: "java:test://$testClass/$testName").apply {
       locator = JavaTestLocator.INSTANCE
       setTestFailed("fail", stackTrace, true)
     }
@@ -80,8 +86,9 @@ abstract class JvmTestDiffUpdateTest : JavaCodeInsightFixtureTestCase() {
     expected: String,
     actual: String,
     stackTrace: String,
-    fileExt: String
-  ) = checkChangeDiff(before, after, testClass, testName, expected, actual, stackTrace, fileExt) { document ->
+    fileExt: String,
+    location: String? = null,
+  ) = checkChangeDiff(before, after, testClass, testName, expected, actual, stackTrace, fileExt, location) { document ->
     document.replaceString(0, document.textLength, actual)
   }
 
@@ -94,9 +101,10 @@ abstract class JvmTestDiffUpdateTest : JavaCodeInsightFixtureTestCase() {
     actual: String,
     stackTrace: String,
     fileExt: String,
+    location: String? = null,
     change: (Document) -> Unit
   ) {
-    val request = createDiffRequest(before, testClass, testName, expected, actual, stackTrace, fileExt)
+    val request = createDiffRequest(before, testClass, testName, expected, actual, stackTrace, fileExt, location)
     val document = getDiffDocument(request)
     WriteCommandAction.runWriteCommandAction(myFixture.project, Runnable { change(document) })
     assertEquals(after, myFixture.file.text)

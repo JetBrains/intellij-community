@@ -857,7 +857,112 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
     """.trimIndent())
   }
 
+  fun `test accept parameter reference diff with frames below the test method`() {
+    checkAcceptFullDiff("""
+      import org.junit.Assert;
+      import org.junit.Test;
+
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+          doTest("expected");
+        }
+
+        private static void doTest(String expected) {
+          Assert.assertEquals(expected, "actual");
+        }
+      }
+    """.trimIndent(), """
+      import org.junit.Assert;
+      import org.junit.Test;
+
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+          doTest("actual");
+        }
+
+        private static void doTest(String expected) {
+          Assert.assertEquals(expected, "actual");
+        }
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", RUNNER_FRAMES_BELOW.format("""
+      at MyJUnitTest.doTest(MyJUnitTest.java:11)
+      at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+    """.trimIndent()))
+  }
+
+  // The precise tracking ends at `data.trim()`, so the search compares the literal arguments of the frames above the runner.
+  fun `test accept string literal diff found using value search with frames below the test method`() {
+    checkAcceptFullDiff("""
+      import org.junit.Assert;
+      import org.junit.Test;
+
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+          doTest("expected");
+        }
+
+        private static void doTest(String data) {
+          String expected = data.trim();
+          Assert.assertEquals(expected, "actual");
+        }
+      }
+    """.trimIndent(), """
+      import org.junit.Assert;
+      import org.junit.Test;
+
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+          doTest("actual");
+        }
+
+        private static void doTest(String data) {
+          String expected = data.trim();
+          Assert.assertEquals(expected, "actual");
+        }
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", RUNNER_FRAMES_BELOW.format("""
+      at MyJUnitTest.doTest(MyJUnitTest.java:12)
+      at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+    """.trimIndent()))
+  }
+
+  fun `test no diff on duplicate expected literal with frames below the test method`() {
+    checkHasNoDiff("""
+      import org.junit.Assert;
+      import org.junit.Test;
+
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+          doTest("expected", "expected");
+        }
+
+        private static void doTest(String data, String other) {
+          String expected = data.trim();
+          Assert.assertEquals(expected, "actual");
+        }
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", RUNNER_FRAMES_BELOW.format("""
+      at MyJUnitTest.doTest(MyJUnitTest.java:12)
+      at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+    """.trimIndent()))
+  }
+
   companion object {
     private const val fileExt = "java"
+
+    /** Holds a stack trace with the frames of the test runner below the frames that `%s` holds. */
+    private val RUNNER_FRAMES_BELOW = """
+      at org.junit.Assert.assertEquals(Assert.java:117)
+      at org.junit.Assert.assertEquals(Assert.java:146)
+      %s
+      at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+      at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+      at org.junit.runners.model.FrameworkMethod${'$'}1.runReflectiveCall(FrameworkMethod.java:59)
+    """.trimIndent()
   }
 }
