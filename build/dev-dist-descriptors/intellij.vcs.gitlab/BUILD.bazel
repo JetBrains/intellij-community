@@ -36,7 +36,7 @@ dev_dist_plugin_descriptor(
     },
     refused_content_modules = [
         "intellij.vcs.gitlab.ultimate.features.shared",
-        "intellij.vcs.gitlab.ultimate.features",
+        "intellij.vcs.gitlab.ultimate.features.backend",
         "intellij.vcs.gitlab.ultimate.features.frontend",
         "intellij.vcs.gitlab.ultimate.features.frontend.split",
         "intellij.vcs.gitlab.ultimate.ci.sh",
