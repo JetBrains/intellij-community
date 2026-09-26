@@ -173,15 +173,17 @@ class StatusBarActionManager(coroutineScope: CoroutineScope) {
   }
 
   init {
+    // create the action manager outside the listener, so that its first load is not counted as a slow listener
+    val actionManager = ActionManager.getInstance()
     StatusBarWidgetFactory.EP_NAME.point.addExtensionPointListener(
       coroutineScope, true, object : ExtensionPointListener<StatusBarWidgetFactory> {
         override fun extensionAdded(extension: StatusBarWidgetFactory, pluginDescriptor: PluginDescriptor) {
           if (extension.isConfigurable) { // avoid creating actions in 'Settings | Keymap' for implementation-detail widgets
             val actionId = getToggleActionId(extension)
 
-            val oldAction = ActionManager.getInstance().getAction(actionId)
+            val oldAction = actionManager.getAction(actionId)
             if (oldAction == null) {
-              ActionManager.getInstance().registerAction(actionId, ToggleWidgetAction(extension))
+              actionManager.registerAction(actionId, ToggleWidgetAction(extension))
             }
             else {
               logger<StatusBarWidgetFactory>().debug("Skip $actionId - already registered as $oldAction");
@@ -191,8 +193,8 @@ class StatusBarActionManager(coroutineScope: CoroutineScope) {
 
         override fun extensionRemoved(extension: StatusBarWidgetFactory, pluginDescriptor: PluginDescriptor) {
           val actionId = getToggleActionId(extension)
-          if (ActionManager.getInstance().getAction(actionId) is ToggleWidgetAction) {
-            ActionManager.getInstance().unregisterAction(actionId)
+          if (actionManager.getAction(actionId) is ToggleWidgetAction) {
+            actionManager.unregisterAction(actionId)
           }
         }
       })
