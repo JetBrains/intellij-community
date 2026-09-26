@@ -11,9 +11,8 @@ import (
 
 const compositionSpecVersion = 1
 
-// compositionComponent is the Kotlin DevBuildCompositionComponent. A nil Root is a component that owns no tree.
+// compositionComponent is the Kotlin DevBuildCompositionComponent. Its manifest names each file where it already is.
 type compositionComponent struct {
-	Root                *string
 	Manifest            string
 	PluginClasspathPart *string
 }
@@ -73,14 +72,11 @@ func decodeCompositionSpec(data []byte) (*compositionSpec, error) {
 	}
 	for _, item := range items {
 		component, err := decodeJSONObject(item, "org.jetbrains.intellij.build.dev.DevBuildCompositionComponent",
-			"root", "manifest", "pluginClasspathPart")
+			"manifest", "pluginClasspathPart")
 		if err != nil {
 			return nil, err
 		}
 		var value compositionComponent
-		if value.Root, err = component.optionalString("root", false); err != nil {
-			return nil, err
-		}
 		if value.Manifest, err = component.string("manifest"); err != nil {
 			return nil, err
 		}

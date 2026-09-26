@@ -56,29 +56,23 @@ func writeLocalLayout(components []devBuildComponent, target string, sourceRunfi
 			}
 			var runfile *string
 			if entry.Type != "directory" && entry.SymlinkTarget != nil {
-				if component.root == "" && (entry.Source != nil || entry.Type != "symlink") {
+				if entry.Source != nil || entry.Type != "symlink" {
 					return fmt.Errorf("Dev-build component must declare the symbolic link '%s' without a file source", name)
 				}
 				if err := checkDevBuildDistributionLink(name, *entry.SymlinkTarget); err != nil {
 					return err
 				}
 			} else if entry.Type != "directory" {
-				source := component.root
-				if source == "" {
-					if entry.Source == nil {
-						return fmt.Errorf("Dev-build component entry '%s' has no source", name)
-					}
-					var err error
-					if source, err = javaPath(*entry.Source); err != nil {
-						return err
-					}
+				if entry.Source == nil {
+					return fmt.Errorf("Dev-build component entry '%s' has no source", name)
+				}
+				source, err := javaPath(*entry.Source)
+				if err != nil {
+					return err
 				}
 				resolved, err := resolveSourceRunfile(source, sourceRunfiles, sourceDirectoryRunfiles, name)
 				if err != nil {
 					return err
-				}
-				if component.root != "" {
-					resolved += "/" + name
 				}
 				runfile = &resolved
 			}

@@ -156,14 +156,9 @@ func composeDevDistribution(options *commandLineOptions, tracer *span.Tracer, ro
 		if err != nil {
 			return err
 		}
-		// A component with no tree resolves the paths of its entries against the working directory. That is the
-		// execution root where its action staged them, so nothing becomes absolute here for it.
+		// A component resolves the paths of its entries against the working directory. That is the execution root
+		// where its action staged them, so nothing becomes absolute here for it.
 		value := devBuildComponent{manifest: manifest}
-		if component.Root != nil {
-			if value.root, err = absolutePath(*component.Root); err != nil {
-				return err
-			}
-		}
 		if component.PluginClasspathPart != nil {
 			if value.pluginClasspathPart, err = absolutePath(*component.PluginClasspathPart); err != nil {
 				return err

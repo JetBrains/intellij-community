@@ -83,12 +83,18 @@ func tempDir(test *testing.T) string {
 	return directory
 }
 
-// component creates a tree with one file whose content is the name of the tree.
-func component(test *testing.T, directory, name, relativeFile string) string {
+// sourcedComponent writes one file whose content is name, and adds it to manifest as the source of relativeFile.
+func sourcedComponent(test *testing.T, directory, name, relativeFile string, manifest *componentManifest) devBuildComponent {
 	test.Helper()
-	root := filepath.Join(directory, name)
-	writeTestFile(test, filepath.Join(root, filepath.FromSlash(relativeFile)), name)
-	return root
+	source := filepath.Join(directory, name, filepath.FromSlash(relativeFile))
+	writeTestFile(test, source, name)
+	manifest.Entries = append(manifest.Entries, sourcedEntry(relativeFile, source))
+	return devBuildComponent{manifest: manifest}
+}
+
+func withPluginClasspathPart(component devBuildComponent, part string) devBuildComponent {
+	component.pluginClasspathPart = part
+	return component
 }
 
 func requireError(test *testing.T, err error, message string) {
@@ -134,26 +140,7 @@ func withDirectoryRunfiles(directory, runfile string) composeOptions {
 	return composeOptions{sourceDirectoryRunfiles: runfiles}
 }
 
-func TestComponentMergeOwnsBytesIndependentlyOfItsSource(test *testing.T) {
-	directory := tempDir(test)
-	source := filepath.Join(directory, "source")
-	sourceFile := filepath.Join(source, "lib/file.txt")
-	writeTestFile(test, sourceFile, "before")
-	target := filepath.Join(directory, "target")
-	if _, err := mergeTree(source, target, nil); err != nil {
-		test.Fatal(err)
-	}
-	writeTestFile(test, sourceFile, "after")
-	copied := filepath.Join(target, "lib/file.txt")
-	if readTestFile(test, copied) != "before" {
-		test.Fatal("the merge shares the bytes of its source")
-	}
-	if info, err := os.Lstat(copied); err != nil || info.Mode()&os.ModeSymlink != 0 {
-		test.Fatalf("copied file = %v, error = %v", info, err)
-	}
-}
-
-func TestComponentMergePreservesFileAttributes(test *testing.T) {
+func TestComposerPreservesTheModificationTimeOfASourcedFile(test *testing.T) {
 	directory := tempDir(test)
 	sourceFile := filepath.Join(directory, "source/bin/tool")
 	writeTestFile(test, sourceFile, "tool")
@@ -161,11 +148,8 @@ func TestComponentMergePreservesFileAttributes(test *testing.T) {
 	if err := os.Chtimes(sourceFile, modified, modified); err != nil {
 		test.Fatal(err)
 	}
-	if err := os.Chmod(sourceFile, 0o700); err != nil {
-		test.Fatal(err)
-	}
 	target := filepath.Join(directory, "target")
-	if _, err := mergeTree(filepath.Join(directory, "source"), target, nil); err != nil {
+	if _, err := compose([]devBuildComponent{{manifest: withEntries(testManifest("plugin"), sourcedEntry("bin/tool", sourceFile))}}, target); err != nil {
 		test.Fatal(err)
 	}
 	copied := filepath.Join(target, "bin/tool")
@@ -173,108 +157,22 @@ func TestComponentMergePreservesFileAttributes(test *testing.T) {
 	if err != nil || readTestFile(test, copied) != "tool" || !info.ModTime().Equal(modified) {
 		test.Fatalf("copied file = %v, error = %v", info, err)
 	}
-	requirePermissions(test, copied, 0o700)
 }
 
-func TestComponentMergeRejectsDuplicatePathsEvenWhenBytesMatch(test *testing.T) {
+func TestComposerRecreatesAManifestDeclaredJcefFrameworkSymlink(test *testing.T) {
 	directory := tempDir(test)
-	for _, name := range []string{"first", "second"} {
-		writeTestFile(test, filepath.Join(directory, name, "lib/ijent/binary"), "same bytes")
-	}
+	framework := filepath.Join(directory, "staged/Chromium Embedded Framework")
+	writeTestFile(test, framework, "framework")
+	versions := "plugins/jcef/jcef/Frameworks/Chromium Embedded Framework.framework/Versions"
+	relativeLink := versions + "/Current"
+	manifest := withEntries(testManifest("plugins_jcef"), sourcedEntry(versions+"/A/Chromium Embedded Framework", framework), linkEntry(relativeLink, "A"))
 	target := filepath.Join(directory, "target")
-	if _, err := mergeTree(filepath.Join(directory, "first"), target, nil); err != nil {
-		test.Fatal(err)
-	}
-	_, err := mergeTree(filepath.Join(directory, "second"), target, nil)
-	requireError(test, err, "both provide 'lib/ijent/binary'")
-}
-
-func TestComponentMergeFollowsAnUndeclaredSandboxStagingSymlink(test *testing.T) {
-	directory := tempDir(test)
-	stagedBytes := filepath.Join(directory, "bazel-out/fragment/file.jar")
-	writeTestFile(test, stagedBytes, "jar bytes")
-	source := filepath.Join(directory, "sandbox/component")
-	if err := os.MkdirAll(filepath.Join(source, "lib"), 0o755); err != nil {
-		test.Fatal(err)
-	}
-	if err := os.Symlink(stagedBytes, filepath.Join(source, "lib/file.jar")); err != nil {
-		test.Fatal(err)
-	}
-	target := filepath.Join(directory, "target")
-	merged, err := mergeTree(source, target, nil)
-	if err != nil || merged.fileCount != 1 || merged.byteCount != int64(len("jar bytes")) {
-		test.Fatalf("merged = %+v, error = %v", merged, err)
-	}
-	if err := os.Remove(stagedBytes); err != nil {
-		test.Fatal(err)
-	}
-	copied := filepath.Join(target, "lib/file.jar")
-	if info, err := os.Lstat(copied); err != nil || info.Mode()&os.ModeSymlink != 0 || readTestFile(test, copied) != "jar bytes" {
-		test.Fatalf("copied file = %v, error = %v", info, err)
-	}
-}
-
-func TestComponentMergeAcceptsAnEmptyTreeStagedAsASymbolicLink(test *testing.T) {
-	directory := tempDir(test)
-	tree := filepath.Join(directory, "bazel-out/fragment.home")
-	if err := os.MkdirAll(tree, 0o755); err != nil {
-		test.Fatal(err)
-	}
-	source := filepath.Join(directory, "sandbox/fragment.home")
-	if err := os.MkdirAll(filepath.Dir(source), 0o755); err != nil {
-		test.Fatal(err)
-	}
-	if err := os.Symlink(tree, source); err != nil {
-		test.Fatal(err)
-	}
-	target := filepath.Join(directory, "target")
-	if err := os.MkdirAll(target, 0o755); err != nil {
-		test.Fatal(err)
-	}
-	if _, err := mergeTree(source, target, nil); err != nil {
-		test.Fatal(err)
-	}
-	if entries, err := os.ReadDir(target); err != nil || len(entries) != 0 {
-		test.Fatalf("target entries = %v, error = %v", entries, err)
-	}
-}
-
-func TestComposerRecreatesOnlyAManifestDeclaredJcefFrameworkSymlink(test *testing.T) {
-	directory := tempDir(test)
-	source := filepath.Join(directory, "jcef-component")
-	versions := filepath.Join(source, "plugins/jcef/jcef/Frameworks/Chromium Embedded Framework.framework/Versions")
-	writeTestFile(test, filepath.Join(versions, "A/Chromium Embedded Framework"), "framework")
-	if err := os.Symlink("A", filepath.Join(versions, "Current")); err != nil {
-		test.Fatal(err)
-	}
-	relativeLink := "plugins/jcef/jcef/Frameworks/Chromium Embedded Framework.framework/Versions/Current"
-	manifest := withEntries(testManifest("plugins_jcef"), linkEntry(relativeLink, "A"))
-	target := filepath.Join(directory, "target")
-	if _, err := compose([]devBuildComponent{{root: source, manifest: manifest}}, target); err != nil {
+	if _, err := compose([]devBuildComponent{{manifest: manifest}}, target); err != nil {
 		test.Fatal(err)
 	}
 	requireLink(test, filepath.Join(target, relativeLink), "A")
 	if readTestFile(test, filepath.Join(target, relativeLink, "Chromium Embedded Framework")) != "framework" {
 		test.Fatal("the framework link does not reach the framework")
-	}
-}
-
-func TestComposerRecreatesAManifestDirectorySymlinkMaterializedByBazel(test *testing.T) {
-	directory := tempDir(test)
-	source := filepath.Join(directory, "jcef-component")
-	frameworks := filepath.Join(source, "plugins/jcef/jcef/Frameworks")
-	stagedLinkDirectory := filepath.Join(frameworks, "Chromium Embedded Framework.framework")
-	writeTestFile(test, filepath.Join(stagedLinkDirectory, "Versions/A/Chromium Embedded Framework"), "framework")
-	relativeLink := "plugins/jcef/jcef/Frameworks/Chromium Embedded Framework.framework"
-	manifest := withEntries(testManifest("plugins_jcef"), linkEntry(relativeLink, "jcef.framework"))
-	target := filepath.Join(directory, "target")
-	if _, err := compose([]devBuildComponent{{root: source, manifest: manifest}}, target); err != nil {
-		test.Fatal(err)
-	}
-	requireLink(test, filepath.Join(target, relativeLink), "jcef.framework")
-	requireAbsent(test, filepath.Join(target, relativeLink, "Versions"))
-	if _, err := os.Stat(filepath.Join(stagedLinkDirectory, "Versions/A/Chromium Embedded Framework")); err != nil {
-		test.Fatal(err)
 	}
 }
 
@@ -284,13 +182,14 @@ func TestComposerPlacesRuntimeModuleRepositoryFilesAtTheDistributionRoot(test *t
 	writeTestFile(test, filepath.Join(repositoryRoot, "modules/module-descriptors.dat"), "repository-dat-changed")
 	writeTestFile(test, filepath.Join(repositoryRoot, "modules/module-descriptors.jar"), "repository-jar")
 	repository := withEntries(testManifest("platform_runtime_module_repository"),
-		fileEntry("modules/module-descriptors.dat"), fileEntry("modules/module-descriptors.jar"))
+		sourcedEntry("modules/module-descriptors.dat", filepath.Join(repositoryRoot, "modules/module-descriptors.dat")),
+		sourcedEntry("modules/module-descriptors.jar", filepath.Join(repositoryRoot, "modules/module-descriptors.jar")))
 	platformLib := testManifest("platform_lib")
 	platformLib.CoreClassPath = []string{"lib/platform.jar"}
 	target := filepath.Join(directory, "target")
 	result, err := compose([]devBuildComponent{
-		{root: component(test, directory, "platform-lib", "lib/platform.jar"), manifest: platformLib},
-		{root: repositoryRoot, manifest: repository},
+		sourcedComponent(test, directory, "platform-lib", "lib/platform.jar", platformLib),
+		{manifest: repository},
 	}, target)
 	if err != nil {
 		test.Fatal(err)
@@ -315,10 +214,10 @@ func TestComposerAcceptsOrderedPlatformLayersAndPlugins(test *testing.T) {
 	extra.CoreClassPath = []string{"plugins/extra/lib/extra.jar"}
 	extra.AdditionalModules = []string{"intellij.shared", "intellij.extra"}
 	components := []devBuildComponent{
-		{root: component(test, directory, "platform-lib", "lib/platform.jar"), manifest: platformLib},
-		{root: component(test, directory, "platform-resources", "bin/idea.properties"), manifest: testManifest("platform_resources")},
-		{root: component(test, directory, "plugins", "plugins/sample/lib/sample.jar"), manifest: plugins},
-		{root: component(test, directory, "extra-plugins", "plugins/extra/lib/extra.jar"), manifest: extra},
+		sourcedComponent(test, directory, "platform-lib", "lib/platform.jar", platformLib),
+		sourcedComponent(test, directory, "platform-resources", "bin/idea.properties", testManifest("platform_resources")),
+		sourcedComponent(test, directory, "plugins", "plugins/sample/lib/sample.jar", plugins),
+		sourcedComponent(test, directory, "extra-plugins", "plugins/extra/lib/extra.jar", extra),
 	}
 	result, err := composeComponents(components, filepath.Join(directory, "target"), composeOptions{
 		additionalModules: []string{"intellij.sample", "intellij.shared", "intellij.extra"},
@@ -346,7 +245,7 @@ func TestComposerPutsTheLeadingCoreClasspathJarsFirst(test *testing.T) {
 	directory := tempDir(test)
 	manifest := testManifest("platform_core")
 	manifest.CoreClassPath = []string{"lib/app-backend.jar", "lib/util.jar", "lib/platform-loader.jar", "lib/util-8.jar"}
-	result, err := compose([]devBuildComponent{{root: component(test, directory, "platform", "lib/util.jar"), manifest: manifest}},
+	result, err := compose([]devBuildComponent{sourcedComponent(test, directory, "platform", "lib/util.jar", manifest)},
 		filepath.Join(directory, "target"))
 	if err != nil {
 		test.Fatal(err)
@@ -369,8 +268,8 @@ func TestComposerBuildsPluginClasspathFromThePrefixAndEveryComponentsRecords(tes
 	writeTestBytes(test, remainingPart, []byte{20, 21})
 	target := filepath.Join(directory, "target")
 	_, err := composeComponents([]devBuildComponent{
-		{root: component(test, directory, "air", "plugins/air-plugin/lib/air.jar"), manifest: air, pluginClasspathPart: airPart},
-		{root: component(test, directory, "remaining", "plugins/git/lib/git.jar"), manifest: remaining, pluginClasspathPart: remainingPart},
+		withPluginClasspathPart(sourcedComponent(test, directory, "air", "plugins/air-plugin/lib/air.jar", air), airPart),
+		withPluginClasspathPart(sourcedComponent(test, directory, "remaining", "plugins/git/lib/git.jar", remaining), remainingPart),
 	}, target, composeOptions{pluginClasspathPrefix: prefix})
 	if err != nil {
 		test.Fatal(err)
@@ -388,7 +287,7 @@ func TestComposerRejectsPluginRecordsWithoutAPrefix(test *testing.T) {
 	part := filepath.Join(directory, "air.part")
 	writeTestBytes(test, part, []byte{10})
 	_, err := compose([]devBuildComponent{
-		{root: component(test, directory, "air", "plugins/air-plugin/lib/air.jar"), manifest: air, pluginClasspathPart: part},
+		withPluginClasspathPart(sourcedComponent(test, directory, "air", "plugins/air-plugin/lib/air.jar", air), part),
 	}, filepath.Join(directory, "target"))
 	requireError(test, err, "plugin-classpath prefix is required")
 }
@@ -398,7 +297,7 @@ func TestComposerRejectsAPositivePluginCountWithoutRecordsBeforeWritingOutput(te
 	air := testManifest("plugins_air")
 	air.PluginCount = 1
 	target := filepath.Join(directory, "target")
-	_, err := compose([]devBuildComponent{{root: component(test, directory, "air", "plugins/air-plugin/lib/air.jar"), manifest: air}}, target)
+	_, err := compose([]devBuildComponent{sourcedComponent(test, directory, "air", "plugins/air-plugin/lib/air.jar", air)}, target)
 	requireError(test, err, "plugins_air (1)")
 	requireAbsent(test, target)
 }
@@ -408,8 +307,8 @@ func TestComposerTakesTheMainClassFromAComponentThatDeclaresOne(test *testing.T)
 	jars := testManifest("platform_jars")
 	jars.MainClass = nil
 	composed, err := compose([]devBuildComponent{
-		{root: component(test, directory, "jars", "lib/packed.jar"), manifest: jars},
-		{root: component(test, directory, "core", "lib/platform.jar"), manifest: testManifest("platform_core")},
+		sourcedComponent(test, directory, "jars", "lib/packed.jar", jars),
+		sourcedComponent(test, directory, "core", "lib/platform.jar", testManifest("platform_core")),
 	}, filepath.Join(directory, "target"))
 	if err != nil || composed.mainClass != "com.intellij.idea.Main" {
 		test.Fatalf("composed = %+v, error = %v", composed, err)
@@ -451,8 +350,8 @@ func TestComposerRejectsInconsistentCompositionsBeforeWritingOutput(test *testin
 		{[]*componentManifest{testManifest("platform_core"), negative}, nil, "report a negative plugin count: plugins_negative (-1)"},
 	} {
 		var components []devBuildComponent
-		for index, manifest := range invalid.manifests {
-			components = append(components, devBuildComponent{root: component(test, directory, strconv.Itoa(index), "lib/file.jar"), manifest: manifest})
+		for _, manifest := range invalid.manifests {
+			components = append(components, devBuildComponent{manifest: manifest})
 		}
 		target := filepath.Join(directory, "target")
 		_, err := composeComponents(components, target, composeOptions{expectedFragments: invalid.expectedFragments})
@@ -466,20 +365,20 @@ func TestComposerTakesThePlatformFromTheFirstComponentThatNamesOne(test *testing
 	neutral := testManifest("plugins_json")
 	neutral.OS, neutral.Arch, neutral.MainClass = "", "", nil
 	linux := testManifest("platform_core")
-	mac := testManifest("platform_core")
-	mac.OS, mac.Arch = "mac", "aarch64"
 	target := filepath.Join(directory, "target")
 	if _, err := compose([]devBuildComponent{
-		{root: component(test, directory, "json", "plugins/json/lib/json.jar"), manifest: neutral},
-		{root: component(test, directory, "platform", "lib/platform.jar"), manifest: linux},
+		sourcedComponent(test, directory, "json", "plugins/json/lib/json.jar", neutral),
+		sourcedComponent(test, directory, "platform", "lib/platform.jar", linux),
 	}, target); err != nil {
 		test.Fatal(err)
 	}
+	mac := *linux
+	mac.OS, mac.Arch = "mac", "aarch64"
 	if _, err := os.Stat(filepath.Join(target, "plugins/json/lib/json.jar")); err != nil {
 		test.Fatal(err)
 	}
 	// The launch metadata hashes the platform of the distribution, not the empty one of the neutral component.
-	if mustFingerprint(test, neutral, linux) == mustFingerprint(test, neutral, mac) {
+	if mustFingerprint(test, neutral, linux) == mustFingerprint(test, neutral, &mac) {
 		test.Fatal("the fingerprint ignores the platform")
 	}
 }
@@ -488,7 +387,7 @@ func TestComposerAcceptsACompositionOfNeutralComponentsOnly(test *testing.T) {
 	directory := tempDir(test)
 	neutral := testManifest("plugins_json")
 	neutral.OS, neutral.Arch = "", ""
-	composed, err := compose([]devBuildComponent{{root: component(test, directory, "json", "plugins/json/lib/json.jar"), manifest: neutral}},
+	composed, err := compose([]devBuildComponent{sourcedComponent(test, directory, "json", "plugins/json/lib/json.jar", neutral)},
 		filepath.Join(directory, "target"))
 	if err != nil || composed.platformPrefix != "idea" {
 		test.Fatalf("composed = %+v, error = %v", composed, err)
@@ -503,8 +402,8 @@ func TestComposerDeclaresABundledModuleThatNoComponentAssembled(test *testing.T)
 	additional.AdditionalModules = []string{"intellij.bridge.plugin"}
 	manifests := []*componentManifest{testManifest("plugins_air"), additional}
 	result, err := composeComponents([]devBuildComponent{
-		{root: component(test, directory, "plugins-air", "plugins/air/lib/air.jar"), manifest: manifests[0]},
-		{root: component(test, directory, "plugins-additional", "plugins/bridge/lib/bridge.jar"), manifest: manifests[1]},
+		sourcedComponent(test, directory, "plugins-air", "plugins/air/lib/air.jar", manifests[0]),
+		sourcedComponent(test, directory, "plugins-additional", "plugins/bridge/lib/bridge.jar", manifests[1]),
 	}, filepath.Join(directory, "target"), composeOptions{additionalModules: []string{"intellij.air.plugin", "intellij.bridge.plugin"}})
 	if err != nil {
 		test.Fatal(err)
@@ -523,7 +422,7 @@ func TestComposerRejectsAComponentThatAssembledAnUndeclaredModule(test *testing.
 	additional := testManifest("plugins_additional")
 	additional.AdditionalModules = []string{"intellij.devkit"}
 	_, err := composeComponents([]devBuildComponent{
-		{root: component(test, directory, "plugins-additional", "plugins/devkit/lib/devkit.jar"), manifest: additional},
+		sourcedComponent(test, directory, "plugins-additional", "plugins/devkit/lib/devkit.jar", additional),
 	}, filepath.Join(directory, "target"), composeOptions{additionalModules: []string{"intellij.air.plugin"}})
 	requireError(test, err, "does not declare: [intellij.devkit]\n  declared: [intellij.air.plugin]\n  assembled: [intellij.devkit]")
 }
@@ -620,24 +519,6 @@ func TestComposerPreservesExactModesWithoutModifyingSharedSources(test *testing.
 	}
 	requirePermissions(test, filepath.Join(target, file.RelativePath), 0o750)
 	requirePermissions(test, source, 0o400)
-}
-
-func TestRootedComponentsApplyDeclaredExactModesToCopiedFiles(test *testing.T) {
-	directory := tempDir(test)
-	root := filepath.Join(directory, "component")
-	source := filepath.Join(root, "bin/tool")
-	writeTestFile(test, source, "tool")
-	if err := os.Chmod(source, 0o600); err != nil {
-		test.Fatal(err)
-	}
-	file := fileEntry("bin/tool")
-	file.Executable, file.Mode = true, pointer(int64(0o700))
-	target := filepath.Join(directory, "target")
-	if _, err := compose([]devBuildComponent{{root: root, manifest: withEntries(testManifest("plugin"), file)}}, target); err != nil {
-		test.Fatal(err)
-	}
-	requirePermissions(test, filepath.Join(target, "bin/tool"), 0o700)
-	requirePermissions(test, source, 0o600)
 }
 
 func TestComposerCreatesAManifestOnlyLinkWhenTheStagedSourceIsARealDirectory(test *testing.T) {
@@ -792,39 +673,15 @@ func TestComposerFailsInsteadOfChangingAManifestOnlyLinkTarget(test *testing.T) 
 	}
 }
 
-func TestComposerRejectsAPathATreeLessAndATreeComponentBothProvide(test *testing.T) {
+func TestComposerRejectsAPathTwoComponentsBothProvide(test *testing.T) {
 	directory := tempDir(test)
 	source := filepath.Join(directory, "packed.jar")
 	writeTestFile(test, source, "packed bytes")
 	_, err := compose([]devBuildComponent{
-		{root: component(test, directory, "platform", "lib/packed.jar"), manifest: testManifest("platform_lib")},
+		sourcedComponent(test, directory, "platform", "lib/packed.jar", testManifest("platform_lib")),
 		{manifest: withEntries(testManifest("platform_packed_content_modules"), sourcedEntry("lib/packed.jar", source))},
 	}, filepath.Join(directory, "target"))
 	requireError(test, err, "both provide 'lib/packed.jar'")
-}
-
-func TestComposerRejectsATreeLinkThatTheTreeLacks(test *testing.T) {
-	directory := tempDir(test)
-	root := component(test, directory, "platform", "lib/app.jar")
-	manifest := withEntries(testManifest("platform"), linkEntry("lib/current", "app.jar"))
-	_, err := compose([]devBuildComponent{{root: root, manifest: manifest}}, filepath.Join(directory, "target"))
-	requireError(test, err, "declares symbolic links absent from "+root+": lib/current")
-}
-
-func TestComposerCopiesAnUndeclaredDirectoryLinkAsAnEmptyDirectory(test *testing.T) {
-	directory := tempDir(test)
-	root := component(test, directory, "platform", "lib/versions/A/file")
-	if err := os.Symlink("versions/A", filepath.Join(root, "lib/current")); err != nil {
-		test.Fatal(err)
-	}
-	target := filepath.Join(directory, "target")
-	if _, err := compose([]devBuildComponent{{root: root, manifest: testManifest("platform")}}, target); err != nil {
-		test.Fatal(err)
-	}
-	// Java `Files.copy` of a directory creates an empty directory.
-	if entries, err := os.ReadDir(filepath.Join(target, "lib/current")); err != nil || len(entries) != 0 {
-		test.Fatalf("entries = %v, error = %v", entries, err)
-	}
 }
 
 func TestComposerAppliesDirectoryModesDeepestFirst(test *testing.T) {

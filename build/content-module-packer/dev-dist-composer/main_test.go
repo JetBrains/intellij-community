@@ -15,8 +15,8 @@ func cliArgs(extra ...string) []string {
 	}, extra...)
 }
 
-// writeCLIFixture writes a tree component, a component without a tree, and the plugin classpath inputs. The paths are
-// relative to the working directory, as Bazel gives them to an action.
+// writeCLIFixture writes two components, the sources their manifests name, and the plugin classpath inputs. The paths
+// are relative to the working directory, as Bazel gives them to an action.
 func writeCLIFixture(test *testing.T, localLaunch bool) {
 	test.Helper()
 	writeTestFile(test, "fragments/core/lib/util.jar", "util")
@@ -26,18 +26,20 @@ func writeCLIFixture(test *testing.T, localLaunch bool) {
 	writeTestBytes(test, "fragments/plugins.part", []byte{7})
 	writeTestFile(test, "fragments/core.json", `{"kind":"platform_core","platformPrefix":"idea","os":"linux","arch":"x64",`+
 		`"additionalModules":[],"mainClass":"com.intellij.idea.Main","coreClassPath":["lib/util.jar","lib/app.jar"],"entries":[`+
-		`{"relativePath":"bin/idea.properties","type":"component-file","hash":1},{"relativePath":"lib/util.jar","type":"component-file","hash":2}]}`)
+		`{"relativePath":"bin/idea.properties","type":"component-file","hash":1,"source":"fragments/core/bin/idea.properties"},`+
+		`{"relativePath":"lib/util.jar","type":"component-file","hash":2,"source":"fragments/core/lib/util.jar"}]}`)
 	writeTestFile(test, "fragments/plugins.json", `{"kind":"plugins","platformPrefix":"idea","os":"","arch":"",`+
 		`"additionalModules":["intellij.packed"],"mainClass":null,"coreClassPath":[],"pluginCount":1,"entries":[`+
 		`{"relativePath":"plugins/packed/lib/packed.jar","type":"component-file","hash":3,"source":"inputs/packed.jar"}]}`)
 	sourceRunfiles := "null"
 	if localLaunch {
-		sourceRunfiles = `{"fragments/core":"_main/fragments/core","inputs/packed.jar":"_main/inputs/packed.jar"}`
+		sourceRunfiles = `{"fragments/core/bin/idea.properties":"_main/fragments/core/bin/idea.properties",` +
+			`"fragments/core/lib/util.jar":"_main/fragments/core/lib/util.jar","inputs/packed.jar":"_main/inputs/packed.jar"}`
 	}
 	writeTestFile(test, "composition.json", `{"version":1,"expectedFragments":["platform_core","plugins"],`+
 		`"additionalModules":["intellij.packed","intellij.bundled"],"components":[`+
-		`{"root":"fragments/core","manifest":"fragments/core.json","pluginClasspathPart":null},`+
-		`{"root":null,"manifest":"fragments/plugins.json","pluginClasspathPart":"fragments/plugins.part"}],`+
+		`{"manifest":"fragments/core.json","pluginClasspathPart":null},`+
+		`{"manifest":"fragments/plugins.json","pluginClasspathPart":"fragments/plugins.part"}],`+
 		`"pluginClasspathPrefix":"fragments/prefix.bin","sourceRunfiles":`+sourceRunfiles+`,"sourceDirectoryRunfiles":{},"sourceBindings":null}`)
 }
 

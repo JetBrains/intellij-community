@@ -20,8 +20,8 @@ func TestCompositionSpecDecodesItsVersionedContract(test *testing.T) {
   "expectedFragments": ["platform_core", "intellij.java.plugin"],
   "additionalModules": ["intellij.air.plugin"],
   "components": [
-    {"root": "core", "manifest": "core.json"},
-    {"root": "plugins", "manifest": "plugins.json", "pluginClasspathPart": "plugins.part"}
+    {"manifest": "core.json"},
+    {"manifest": "plugins.json", "pluginClasspathPart": "plugins.part"}
   ],
   "pluginClasspathPrefix": "prefix.bin"
 }`))
@@ -33,21 +33,21 @@ func TestCompositionSpecDecodesItsVersionedContract(test *testing.T) {
 		spec.SourceRunfiles != nil || len(spec.SourceDirectoryRunfiles.keys) != 0 || spec.SourceBindings != nil {
 		test.Fatalf("spec = %+v", spec)
 	}
-	if len(spec.Components) != 2 || *spec.Components[0].Root != "core" || spec.Components[0].Manifest != "core.json" ||
+	if len(spec.Components) != 2 || spec.Components[0].Manifest != "core.json" ||
 		spec.Components[0].PluginClasspathPart != nil || *spec.Components[1].PluginClasspathPart != "plugins.part" {
 		test.Fatalf("components = %+v", spec.Components)
 	}
 }
 
-// Starlark `json.encode` writes a null for an absent tree and an absent map, and the spec keeps the key order.
+// Starlark `json.encode` writes a null for an absent file and an absent map, and the spec keeps the key order.
 func TestCompositionSpecDecodesTheStarlarkShape(test *testing.T) {
 	spec, err := readCompositionSpec(writeSpec(test, `{"version":1,"expectedFragments":["a"],"additionalModules":[],`+
-		`"components":[{"root":null,"manifest":"a.json","pluginClasspathPart":null}],"pluginClasspathPrefix":null,`+
+		`"components":[{"manifest":"a.json","pluginClasspathPart":null}],"pluginClasspathPrefix":null,`+
 		`"sourceRunfiles":{"b":"_main/b","a":"_main/a","b":"_main/b2"},"sourceDirectoryRunfiles":{},"sourceBindings":null}`))
 	if err != nil {
 		test.Fatal(err)
 	}
-	if spec.Components[0].Root != nil || spec.PluginClasspathPrefix != nil || !slices.Equal(spec.SourceRunfiles.keys, []string{"b", "a"}) ||
+	if spec.Components[0].PluginClasspathPart != nil || spec.PluginClasspathPrefix != nil || !slices.Equal(spec.SourceRunfiles.keys, []string{"b", "a"}) ||
 		spec.SourceRunfiles.values["b"] != "_main/b2" {
 		test.Fatalf("spec = %+v, source runfiles = %+v", spec, spec.SourceRunfiles)
 	}
@@ -58,13 +58,14 @@ func TestCompositionSpecRejectsInvalidContent(test *testing.T) {
 		content string
 		message string
 	}{
-		{`{"version": 2, "expectedFragments": ["platform_core"], "components": [{"root": "core", "manifest": "core.json"}]}`,
+		{`{"version": 2, "expectedFragments": ["platform_core"], "components": [{"manifest": "core.json"}]}`,
 			"Unsupported dev-build composition spec version 2 in "},
 		{`{"expectedFragments": [], "components": []}`, "has no components"},
 		{`{"components": [{"manifest": "core.json"}]}`, "Field 'expectedFragments' is required"},
 		{`{"expectedFragments": [], "components": [{"manifest": "core.json"}], "extra": 1}`, "unknown key 'extra'"},
 		{`{"expectedFragments": [], "Components": [{"manifest": "core.json"}]}`, "unknown key 'Components'"},
-		{`{"expectedFragments": [], "components": [{"root": "core"}]}`, "Field 'manifest' is required"},
+		{`{"expectedFragments": [], "components": [{"pluginClasspathPart": "core.part"}]}`, "Field 'manifest' is required"},
+		{`{"expectedFragments": [], "components": [{"root": "core", "manifest": "core.json"}]}`, "unknown key 'root'"},
 		{`{"expectedFragments": null, "components": [{"manifest": "core.json"}]}`, "non-nullable property 'expectedFragments'"},
 		{`{"expectedFragments": [], "additionalModules": null, "components": [{"manifest": "core.json"}]}`, "non-nullable"},
 		{`{"expectedFragments": [], "sourceDirectoryRunfiles": null, "components": [{"manifest": "core.json"}]}`, "non-nullable"},
