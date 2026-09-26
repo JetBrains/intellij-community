@@ -1,13 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
+import com.intellij.ide.ui.ColorBlindness
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.JBColor
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.python.documentation.PyDocumentationLink
+import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyType
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 
@@ -24,15 +30,17 @@ internal object PyTypeDiffGrid {
   enum class Kind { DELIM, VALUE, MISMATCH }
 
   /**
-   * How a row's mismatched cells are emphasized. A two-type diff distinguishes the provided value from the
-   * expected one — like an editor diff, the provided (top) row's incompatible parts are shown in red and the
-   * expected (bottom) row's in green, each over a subtle matching background so they stand out. Displays without
-   * that two-sided meaning (the overload report) use [PLAIN]: a bare red foreground and no background.
+   * Which side of the comparison a row shows. Like an editor diff, a [PROVIDED] row's incompatible cells are red
+   * and an [EXPECTED] row's are green, each over a subtle matching background so they stand out. Every consumer
+   * tags each of its rows with a side (see [Row]), so all displays — the two-row structural diff and the overload
+   * report's argument-vs-candidate rows — colour their mismatches identically.
    */
-  enum class MismatchStyle { PLAIN, PROVIDED, EXPECTED }
+  enum class Side { PROVIDED, EXPECTED }
 
-  /** A styled run of text inside a cell, used to color individual union members separately. */
-  class Segment(@NlsSafe val text: String, val kind: Kind)
+  /** A styled run of text inside a cell, used to color individual union members separately. [link], when set, is a
+   *  navigable `#element/…` href wrapped around this run. [rich], when set, is the platform's highlighted + linked
+   *  rendering of a non-mismatched value run, used verbatim in place of [text]. */
+  class Segment(@NlsSafe val text: String, val kind: Kind, @NlsSafe val link: String? = null, val rich: HtmlChunk? = null)
 
   /**
    * One cell of the grid. [text] is the styled main content (or, when [segments] is non-null, the cell renders
@@ -46,12 +54,16 @@ internal object PyTypeDiffGrid {
     val alignRight: Boolean = false,
     @NlsSafe val suffix: String = "",
     val segments: List<Segment>? = null,
+    @NlsSafe val link: String? = null,
+    val rich: HtmlChunk? = null,
   )
 
   /** A structural delimiter such as `(`, `[`, `, ` or ` -> ` — rendered muted. */
   fun delim(@NlsSafe text: String): Cell = Cell(text, Kind.DELIM)
 
-  /** A type/parameter value — rendered in red when [mismatch], otherwise in the default code color. */
+  /** A NON-type value cell — a parameter name, a `= ...` default, a `keyword=`: plain text, red when [mismatch],
+   *  but NEVER a syntax colour or navigable link. A type must go through [typeValue] instead, which is the only way
+   *  to attach a link + the platform's highlighted rendering — so a type can never be shown as a bare string. */
   fun value(@NlsSafe text: String, mismatch: Boolean, alignRight: Boolean = false, @NlsSafe suffix: String = ""): Cell =
     Cell(text, if (mismatch) Kind.MISMATCH else Kind.VALUE, alignRight, suffix)
 
@@ -59,33 +71,55 @@ internal object PyTypeDiffGrid {
   fun segmented(segments: List<Segment>, alignRight: Boolean = false, @NlsSafe suffix: String = ""): Cell =
     Cell("", Kind.VALUE, alignRight, suffix, segments)
 
+  /** A NON-type segment run; a type member must go through [typeSegment] to carry its colour + link. */
   fun segment(@NlsSafe text: String, mismatch: Boolean): Segment = Segment(text, if (mismatch) Kind.MISMATCH else Kind.VALUE)
   fun segmentDelim(@NlsSafe text: String): Segment = Segment(text, Kind.DELIM)
 
+  /** Turns a [type] (shown as [name]) into a value cell — THE single place every consumer (the structural diff and
+   *  the overload report) turns a type into a cell, so type names render identically everywhere: red when [mismatch],
+   *  otherwise the platform's highlighted, navigable rendering. Requiring the [type] here (rather than a bare name)
+   *  is what guarantees every rendered type gets its colour + link. */
+  fun typeValue(type: PyType?, @NlsSafe name: String, mismatch: Boolean, alignRight: Boolean = false, @NlsSafe suffix: String = ""): Cell =
+    Cell(name, if (mismatch) Kind.MISMATCH else Kind.VALUE, alignRight, suffix, link = elementLink(type), rich = richType(type, name, mismatch))
+
+  /** Like [typeValue] but for one run inside a cell (a single union member). */
+  fun typeSegment(type: PyType?, @NlsSafe name: String, mismatch: Boolean): Segment =
+    Segment(name, if (mismatch) Kind.MISMATCH else Kind.VALUE, elementLink(type), richType(type, name, mismatch))
+
+  /** The platform's highlighted + linked rendering of [type] shown as [name], for a non-[mismatch] value (a
+   *  mismatched value keeps the diff's own red/green, which must win over the syntax colour). */
+  private fun richType(type: PyType?, @NlsSafe name: String, mismatch: Boolean): HtmlChunk? =
+    if (mismatch) null else PyDocumentationLink.toTypeTooltipLink(type, name)
+
+  /** A navigable `#element/<fqn>` href to [type]'s class declaration (resolved by the platform ElementLinkHandler
+   *  purely by qualified name), or null for a non-class type. */
+  private fun elementLink(type: PyType?): String? =
+    (type as? PyClassType)?.pyClass?.qualifiedName?.let { PyDocumentationLink.TOOLTIP_ELEMENT_LINK_PREFIX + it }
+
   /** Returns a copy of [cell] with [suffix] appended to its current suffix (used to attach a trailing comma). */
   fun withSuffix(cell: Cell, @NlsSafe suffix: String): Cell =
-    Cell(cell.text, cell.kind, cell.alignRight, cell.suffix + suffix, cell.segments)
+    Cell(cell.text, cell.kind, cell.alignRight, cell.suffix + suffix, cell.segments, cell.link, cell.rich)
 
   private val EMPTY: Cell = Cell("", Kind.DELIM)
 
   private fun width(cell: Cell): Int =
     (cell.segments?.sumOf { it.text.length } ?: cell.text.length) + cell.suffix.length
 
+  /** One labeled row of the grid: its [label] (e.g. `Expected:`; "" to continue under the previous row's label),
+   *  the aligned [cells] of the line, and which [side] of the comparison it shows. Bundling the side WITH the cells
+   *  is what keeps every consumer's colouring correct — a row can't be rendered without saying which side it is. */
+  class Row(@Nls val label: String, val cells: List<Cell>, val side: Side)
+
   /**
-   * Builds the tooltip HTML: an optional [headline] chunk above a grid of [rows] (each a list of cells; rows may
-   * differ in length and are padded on the right). Each row is prefixed with its [labels] entry (e.g. `Expected:`)
-   * in a leading table column, so the reader can tell the rows apart. Pass [HtmlChunk.empty] for no headline.
+   * Builds the tooltip HTML: an optional [headline] chunk above a grid of [rows]. Each [Row] carries its own label
+   * (shown in a leading table column so the reader can tell the rows apart) and its [Side] (which colours its
+   * mismatches); rows may differ in cell count and are padded on the right. Pass [HtmlChunk.empty] for no headline.
    */
   @NlsContexts.Tooltip
-  fun tooltip(
-    headline: HtmlChunk,
-    rows: List<List<Cell>>,
-    labels: List<@Nls String>,
-    mismatchStyles: List<MismatchStyle> = emptyList(),
-  ): @NlsContexts.Tooltip String {
-    val widths = columnWidths(rows)
+  fun tooltip(headline: HtmlChunk, rows: List<Row>): @NlsContexts.Tooltip String {
+    val widths = columnWidths(rows.map { it.cells })
     // A <table> is a block element, so the headline sits on its own line above the aligned rows.
-    return HtmlBuilder().append(headline).append(labeledTable(rows, widths, labels, mismatchStyles)).wrapWith("html").toString()
+    return HtmlBuilder().append(headline).append(labeledTable(rows, widths)).wrapWith("html").toString()
   }
 
   private fun columnWidths(rows: List<List<Cell>>): IntArray {
@@ -94,7 +128,7 @@ internal object PyTypeDiffGrid {
   }
 
   /** One row rendered as a single monospace `<code>` line, each cell padded to its column width. */
-  private fun line(row: List<Cell>, widths: IntArray, mismatchStyle: MismatchStyle): HtmlChunk {
+  private fun line(row: List<Cell>, widths: IntArray, side: Side): HtmlChunk {
     val builder = HtmlBuilder()
     for (i in widths.indices) {
       val cell = row.getOrNull(i) ?: EMPTY
@@ -103,13 +137,13 @@ internal object PyTypeDiffGrid {
       // parameter, name, type or default). Paint the column position it would occupy with the mismatch background
       // so the missing component is visible rather than an invisible empty cell, keeping any trailing separator muted.
       if (cell.kind == Kind.MISMATCH && cell.text.isEmpty() && cell.segments == null) {
-        builder.append(missingBlock(padCount, mismatchStyle))
-        if (cell.suffix.isNotEmpty()) builder.append(styledText(cell.suffix, Kind.DELIM, mismatchStyle))
+        builder.append(missingBlock(padCount, side))
+        if (cell.suffix.isNotEmpty()) builder.append(styledText(cell.suffix, Kind.DELIM, side, null, null))
         continue
       }
       val pad = if (padCount == 0) HtmlChunk.empty() else HtmlChunk.nbsp(padCount)
-      if (cell.alignRight) builder.append(pad).append(styled(cell, mismatchStyle))
-      else builder.append(styled(cell, mismatchStyle)).append(pad)
+      if (cell.alignRight) builder.append(pad).append(styled(cell, side))
+      else builder.append(styled(cell, side)).append(pad)
     }
     return builder.toFragment().wrapWith(HtmlChunk.tag("code").style(CODE_LINE_STYLE))
   }
@@ -119,59 +153,64 @@ internal object PyTypeDiffGrid {
   // stylesheet's `code { overflow-wrap: anywhere; }`, which would otherwise break the row to fit the tooltip width.
   private const val CODE_LINE_STYLE = "white-space: nowrap; overflow-wrap: normal;"
 
-  private fun labeledTable(rows: List<List<Cell>>, widths: IntArray, labels: List<@Nls String>, mismatchStyles: List<MismatchStyle>): HtmlChunk {
+  private fun labeledTable(rows: List<Row>, widths: IntArray): HtmlChunk {
     val table = HtmlBuilder()
-    rows.forEachIndexed { i, row ->
+    rows.forEach { row ->
       table.append(HtmlChunk.tag("tr").children(
-        HtmlChunk.tag("td").style(labelStyle).addText(labels.getOrElse(i) { "" }),
-        HtmlChunk.tag("td").child(line(row, widths, mismatchStyles.getOrElse(i) { MismatchStyle.PLAIN })),
+        HtmlChunk.tag("td").style(labelStyle).addText(row.label),
+        HtmlChunk.tag("td").child(line(row.cells, widths, row.side)),
       ))
     }
     return table.toFragment().wrapWith("table")
   }
 
-  private fun styled(cell: Cell, mismatchStyle: MismatchStyle): HtmlChunk {
+  private fun styled(cell: Cell, side: Side): HtmlChunk {
     val main = if (cell.segments != null) {
       val builder = HtmlBuilder()
-      cell.segments.forEach { builder.append(styledText(it.text, it.kind, mismatchStyle)) }
+      cell.segments.forEach { builder.append(styledText(it.text, it.kind, side, it.link, it.rich)) }
       builder.toFragment()
     }
     else {
-      styledText(cell.text, cell.kind, mismatchStyle)
+      styledText(cell.text, cell.kind, side, cell.link, cell.rich)
     }
     if (cell.suffix.isEmpty()) return main
-    return HtmlBuilder().append(main).append(styledText(cell.suffix, Kind.DELIM, mismatchStyle)).toFragment()
+    return HtmlBuilder().append(main).append(styledText(cell.suffix, Kind.DELIM, side, null, null)).toFragment()
   }
 
-  private fun styledText(@NlsSafe text: String, kind: Kind, mismatchStyle: MismatchStyle): HtmlChunk {
-    val chunk = HtmlChunk.text(text)
-    return when (kind) {
-      Kind.DELIM -> chunk.wrapWith(HtmlChunk.span().style(mutedStyle))
-      Kind.VALUE -> chunk
-      Kind.MISMATCH -> chunk.wrapWith(HtmlChunk.span().style(mismatchCss(mismatchStyle)))
+  private fun styledText(@NlsSafe text: String, kind: Kind, side: Side, link: String?, rich: HtmlChunk?): HtmlChunk {
+    // A non-mismatched value uses the platform's highlighted + linked rendering when supplied (`None` in the keyword
+    // colour, a builtin in the builtin colour, carrying its own `#element/…` link), returned verbatim. A mismatched
+    // value keeps the diff's own red/green, which must win over any syntax colour.
+    if (kind == Kind.VALUE && rich != null) return rich
+    val styled = when (kind) {
+      Kind.DELIM -> HtmlChunk.text(text).wrapWith(HtmlChunk.span().style(mutedStyle))
+      Kind.VALUE -> HtmlChunk.text(text)
+      Kind.MISMATCH -> HtmlChunk.text(text).wrapWith(HtmlChunk.span().style(mismatchCss(side)))
     }
+    // A navigable `#element/…` link to the type's declaration (resolved by the platform ElementLinkHandler purely by
+    // qualified name); the diff keeps its own red/green/muted colour inside the link rather than the link colour.
+    return if (link == null) styled else HtmlChunk.tag("a").attr("href", link).child(styled)
   }
 
   /** A background-only block [width] columns wide in the row's mismatch color, marking the position a component
    *  would occupy on the side that is missing it (a missing parameter, name, type or default). */
-  private fun missingBlock(width: Int, mismatchStyle: MismatchStyle): HtmlChunk {
+  private fun missingBlock(width: Int, side: Side): HtmlChunk {
     if (width <= 0) return HtmlChunk.empty()
-    return HtmlChunk.nbsp(width).wrapWith(HtmlChunk.span().style(missingCss(mismatchStyle)))
+    return HtmlChunk.nbsp(width).wrapWith(HtmlChunk.span().style(missingCss(side)))
   }
 
   /** The CSS for a mismatched cell: a red foreground for a provided value, green for an expected one, each over a
-   *  subtle matching background — except [MismatchStyle.PLAIN], which is the bare red foreground with no background. */
-  private fun mismatchCss(mismatchStyle: MismatchStyle): String = when (mismatchStyle) {
-    MismatchStyle.PLAIN -> foreground(errorForeground)
-    MismatchStyle.PROVIDED -> foreground(errorForeground) + tint(errorForeground)
-    MismatchStyle.EXPECTED -> foreground(successForeground) + tint(successForeground)
+   *  subtle matching background. */
+  private fun mismatchCss(side: Side): String = when (side) {
+    Side.PROVIDED -> foreground(errorForeground) + tint(errorForeground)
+    Side.EXPECTED -> foreground(successForeground) + tint(successForeground)
   }
 
   /** The background tint for a missing position — the same soft band a mismatched cell uses, shown on its own
    *  (there is no text) so the gap reads as red on the provided side and green on the expected side. */
-  private fun missingCss(mismatchStyle: MismatchStyle): String = when (mismatchStyle) {
-    MismatchStyle.PLAIN, MismatchStyle.PROVIDED -> tint(errorForeground)
-    MismatchStyle.EXPECTED -> tint(successForeground)
+  private fun missingCss(side: Side): String = when (side) {
+    Side.PROVIDED -> tint(errorForeground)
+    Side.EXPECTED -> tint(successForeground)
   }
 
   private fun foreground(color: Color): String = "color: " + ColorUtil.toHtmlColor(color) + ";"
@@ -184,8 +223,24 @@ internal object PyTypeDiffGrid {
   /** How much of the tooltip background to mix into a highlight color for its soft background tint. */
   private const val HIGHLIGHT_BACKGROUND_BLEND = 0.82
 
-  private val errorForeground: Color get() = NamedColorUtil.getErrorForeground()
-  private val successForeground: Color get() = UIUtil.getLabelSuccessForeground()
+  // Like an editor diff, the provided side is red and the expected side green — but red+green is exactly the pair
+  // red-green colour-vision deficiency (protanopia/deuteranopia) can't separate, and the platform's daltonization
+  // filter only corrects painted components/icons, not the colours we emit in HTML tooltips. So when the IDE's
+  // colour-blindness setting is one of those, switch to an orange/blue pair that stays distinguishable.
+  private val redGreenColorBlind: Boolean
+    get() {
+      val blindness = UISettings.getInstance().colorBlindness
+      return blindness == ColorBlindness.protanopia || blindness == ColorBlindness.deuteranopia
+    }
+
+  private val errorForeground: Color
+    get() = if (redGreenColorBlind) CVD_PROVIDED else NamedColorUtil.getErrorForeground()
+  private val successForeground: Color
+    get() = if (redGreenColorBlind) CVD_EXPECTED else UIUtil.getLabelSuccessForeground()
+
+  // The colour-blind-safe replacements for red/green: orange (provided) and blue (expected), with light/dark variants.
+  private val CVD_PROVIDED: Color = JBColor(Color(0xB5570C), Color(0xCC7832))
+  private val CVD_EXPECTED: Color = JBColor(Color(0x256BB0), Color(0x4F9DF5))
 
   private val mutedStyle: String get() = "color: " + ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground()) + ";"
   // Row labels keep the default foreground color (not muted) so they read as headings, not greyed-out text.

@@ -36,12 +36,7 @@ func mustReadPlan(t *testing.T, text string) *File {
 
 // plan wraps assets and the optional sections into one neutral plan file text.
 func plan(version int, assets string, sections ...string) string {
-	return variantPlan(version, "", assets, sections...)
-}
-
-// variantPlan is plan for one platform record, the shape a plan with a native-select operation has.
-func variantPlan(version int, variant, assets string, sections ...string) string {
-	text := `{"version": ` + itoa(version) + `, "plugin": "demo", "variant": "` + variant + `", "layoutSignature": "signature", "assets": [` + assets + `]`
+	text := `{"version": ` + itoa(version) + `, "plugin": "demo", "variant": "", "layoutSignature": "signature", "assets": [` + assets + `]`
 	for _, section := range sections {
 		text += ", " + section
 	}
@@ -114,16 +109,13 @@ func TestReadRefusesMalformedForms(t *testing.T) {
 		"a Kotlin operation kind":             plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "native-archive", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "filter": "library"}]`),
 		"a callback operation kind":           plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "library-layout-patches", "output": "o", "manifest": "keep", "libraryLayout": {"any": 1}}]`),
 		"a module-filter with a native field": plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "filter": "library"}]`),
-		"a native-select without filter":      plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "native-select", "input": {"artifact": "a"}, "output": "o", "manifest": "keep"}]`),
-		"a native-select with the module filter": plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "native-select", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "filter": "module"}]`),
-		"a native-select with the drop manifest": plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "native-select", "input": {"artifact": "a"}, "output": "o", "manifest": "drop", "filter": "library"}]`),
-		"a native-select with excludes":         plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "native-select", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "filter": "library", "excludes": ["x"]}]`),
-		"a native-select with a mode":           plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "native-select", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "filter": "library", "mode": 420}]`),
 		"a module-filter without input":       plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "output": "o", "manifest": "keep"}]`),
 		"a layout-assets with a primary input": plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "layout-assets", "input": {"artifact": "a"}, "output": "o", "manifest": "keep",
 			"layoutAssets": {"format": "tree", "assets": []}}]`),
 		"a layout-assets with the drop manifest": plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "layout-assets", "output": "o", "manifest": "drop",
 			"layoutAssets": {"format": "tree", "assets": []}}]`),
+		"a layout asset with an inline text": plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "layout-assets", "output": "o", "manifest": "keep",
+			"layoutAssets": {"format": "file", "root": "x.txt", "assets": [{"destination": "x.txt", "transform": {"kind": "inline-text", "text": "1"}}]}}]`),
 		"a preparation without signature": plan(1, `{"module": "m"}`, `"preparations": [{"id": "p", "inputs": [], "outputs": ["o"]}]`),
 		"a duplicate key":                 `{"version": 1, "version": 1, "plugin": "demo", "variant": "", "layoutSignature": "s", "assets": []}`,
 	} {
@@ -135,67 +127,6 @@ func TestReadRefusesMalformedForms(t *testing.T) {
 	}
 	if _, err := readPlan(t, plan(1, `{"module": "m"}`, `"operations": [{"id": "n", "kind": "native-presigned", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "filter": "library"}]`)); err == nil || !strings.Contains(err.Error(), "does not execute") {
 		t.Fatalf("a Kotlin kind needs a clear refusal: %v", err)
-	}
-	file := mustReadPlan(t, plan(1, `{"module": "m"}`, nativeSelectOperations))
-	if operation := file.Operations[0]; operation.Kind != nativeSelectKind || operation.Input.Artifact != "native" || operation.Filter != "library" || operation.Manifest != "keep" {
-		t.Fatalf("a native-select operation: %+v", operation)
-	}
-}
-
-// nativeSelectSections are the preparation and operation sections of the vcs plan: one native archive, selected by platform.
-const nativeSelectOperations = `"operations": [{"id": "select", "kind": "native-select", "input": {"artifact": "native"}, "output": "select:output", "manifest": "keep", "filter": "library"}]`
-
-const nativeSelectSections = `"preparations": [{"id": "select", "inputs": ["native"], "outputs": ["select:output"], "modelSignature": "n"}], ` + nativeSelectOperations
-
-const nativeSelectJar = `{"destination": "lib/sqlite.jar", "recipe": {"sources": [{"input": "demo.sqlite", "kind": "module", "filter": "module-v1"},
-	{"input": "select:output", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "keep", "mergeEntities": true}}}`
-
-const nativeSelectTree = `{"destination": "lib/native", "inputs": ["select:output"], "kind": "tree", "classPath": false, "scope": "distribution"}`
-
-// distributionFile keeps a plan at version 3 when a refusal case leaves out the distribution tree.
-const distributionFile = `{"destination": "bin/run", "inputs": ["run"], "mode": 493, "classPath": false, "scope": "distribution"}`
-
-// TestDeriveCompilesNativeSelectFromTheVariant pins the shape the vcs plan takes: the jar keeps the archive with its
-// natives reserved, and the distribution tree selects the natives of the platform the variant names.
-func TestDeriveCompilesNativeSelectFromTheVariant(t *testing.T) {
-	inputs := catalogue(fileArtifact("demo.sqlite"), fileArtifact("native"))
-	for variant, target := range map[string]pluginpack.NativeTarget{
-		"darwin_aarch64": {OS: "darwin", Arch: "aarch64"}, "linux_x64": {OS: "linux", Arch: "x64"}, "windows_aarch64": {OS: "windows", Arch: "aarch64"},
-	} {
-		t.Run(variant, func(t *testing.T) {
-			derivation := mustDerive(t, variantPlan(3, variant, nativeSelectJar+", "+nativeSelectTree, nativeSelectSections), inputs, 3)
-			native := &pluginpack.Reference{Artifact: "native"}
-			want := []pluginpack.Operation{
-				{Kind: "jar", Destination: "lib/sqlite.jar", Mode: DefaultMode, Options: &pluginpack.JarOptions{MergeEntities: true, Directories: "none"}, Sources: []pluginpack.Source{
-					{Kind: "archive", Input: &pluginpack.Reference{Artifact: "demo.sqlite"}, Filter: "module", Manifest: "keep"},
-					{Kind: "archive", Input: native, Filter: "library", Manifest: "keep", ReserveNatives: true}}},
-				{Kind: "native-tree", Destination: "lib/native", Scope: pluginpack.DistributionScope, Input: native, Native: &target},
-			}
-			if got, expected := mustJSON(t, derivation.Recipe.Operations), mustJSON(t, want); got != expected {
-				t.Fatalf("operations differ:\n%s\n%s", got, expected)
-			}
-		})
-	}
-	withRun := catalogue(fileArtifact("demo.sqlite"), fileArtifact("native"), fileArtifact("run"))
-	const consumers = "requires one distribution tree consumer and one prepared jar source"
-	for name, scenario := range map[string]struct {
-		text    string
-		inputs  pluginpack.Catalogue
-		message string
-	}{
-		"a neutral plan":          {plan(3, nativeSelectJar+", "+nativeSelectTree, nativeSelectSections), inputs, "unknown native target variant"},
-		"a placeholder variant":   {variantPlan(3, "{platform}", nativeSelectJar+", "+nativeSelectTree, nativeSelectSections), inputs, "unknown native target variant"},
-		"an unknown architecture": {variantPlan(3, "linux_arm64", nativeSelectJar+", "+nativeSelectTree, nativeSelectSections), inputs, "unknown native target variant"},
-		"a jar without the tree":  {variantPlan(3, "linux_x64", nativeSelectJar+", "+distributionFile, nativeSelectSections), withRun, consumers},
-		"a tree without the jar":  {variantPlan(3, "linux_x64", nativeSelectTree, nativeSelectSections), catalogue(fileArtifact("native")), consumers},
-		"a plugin-scoped tree": {variantPlan(3, "linux_x64", nativeSelectJar+`, {"destination": "lib/native", "inputs": ["select:output"], "kind": "tree", "classPath": false}, `+distributionFile, nativeSelectSections),
-			withRun, consumers},
-	} {
-		t.Run(name, func(t *testing.T) {
-			if _, err := derive(t, scenario.text, scenario.inputs, 3); err == nil || !strings.Contains(err.Error(), scenario.message) {
-				t.Fatalf("expected %q, got %v", scenario.message, err)
-			}
-		})
 	}
 }
 
@@ -221,6 +152,36 @@ const rtRecipe = `{"sources": [{"input": "demo.rt", "kind": "module", "filter": 
 // TestDeriveMatchesOwnershipByRecipeAndMode pins the reuse rule: the chain names the reused modules, and the asset
 // whose recipe and mode are the plain module jar of one is independent, under the module name. A jar at another
 // destination with the same recipe is independent too. A jar at another mode, or with another writer, is remainder.
+// A content_module_jar target packs the module output first and then the library containers. An asset of that shape is
+// the reused jar; any other source kind, a prepared source, another writer or another mode keeps it in the remainder.
+func TestDeriveReusesAModuleJarThatMergesLibraries(t *testing.T) {
+	library := `{"input": "@lib//:demo-lib", "kind": "library", "filter": "library-v1"}`
+	module := `{"input": "demo.rt", "kind": "module", "filter": "module-v1"}`
+	derivation, err := derive(t, plan(1,
+		`{"destination": "lib/modules/demo.rt.jar", "recipe": {"sources": [`+module+`, `+library+`], "writer": {"mergeEntities": true}}}, `+
+			`{"destination": "lib/rt-first.jar", "recipe": {"sources": [`+library+`, `+module+`], "writer": {"mergeEntities": true}}}, `+
+			`{"destination": "lib/rt-kept.jar", "recipe": {"sources": [`+module+`, `+library+`], "writer": {"manifest": "keep", "mergeEntities": true}}}`),
+		reusedLibraryCatalogue(), 1, "demo.rt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []pluginpack.Asset{
+		{Destination: "lib/modules/demo.rt.jar", Producer: "independent", Artifact: "demo.rt"},
+		{Destination: "lib/rt-first.jar", Producer: "remainder"},
+		{Destination: "lib/rt-kept.jar", Producer: "remainder"},
+	}
+	if !reflect.DeepEqual(derivation.Assets, want) {
+		t.Fatalf("asset rows: %+v", derivation.Assets)
+	}
+}
+
+// reusedLibraryCatalogue holds the module `demo.rt` and the one-jar library container `@lib//:demo-lib`.
+func reusedLibraryCatalogue() pluginpack.Catalogue {
+	inputs := catalogue(fileArtifact("demo.rt"), fileArtifact("@lib//:demo-lib/a.jar"))
+	inputs.Libraries = []pluginpack.Library{{ID: "@lib//:demo-lib", Files: []pluginpack.Reference{{Artifact: "@lib//:demo-lib/a.jar"}}}}
+	return inputs
+}
+
 func TestDeriveMatchesOwnershipByRecipeAndMode(t *testing.T) {
 	derivation, err := derive(t, plan(1, `{"module": "demo.content"}, {"destination": "lib/rt.jar", "recipe": `+rtRecipe+`},
 		{"destination": "lib/rt-exec.jar", "recipe": `+rtRecipe+`, "mode": 493}, {"destination": "lib/rt-explicit.jar", "inputs": ["demo.rt"], "recipe": `+rtRecipe+`},
@@ -247,8 +208,8 @@ func TestDeriveMatchesOwnershipByRecipeAndMode(t *testing.T) {
 		modules []string
 		message string
 	}{
-		"a module at another mode":  {`{"destination": "lib/rt.jar", "recipe": ` + rtRecipe + `, "mode": 493}`, []string{"demo.rt"}, `independent module "demo.rt" matches no plain module jar asset`},
-		"a module without an asset": {`{"module": "demo.content"}`, []string{"demo.rt"}, `independent module "demo.rt" matches no plain module jar asset`},
+		"a module at another mode":  {`{"destination": "lib/rt.jar", "recipe": ` + rtRecipe + `, "mode": 493}`, []string{"demo.rt"}, `independent module "demo.rt" matches no module jar asset`},
+		"a module without an asset": {`{"module": "demo.content"}`, []string{"demo.rt"}, `independent module "demo.rt" matches no module jar asset`},
 		"a module named twice":      {`{"module": "demo.content"}`, []string{"demo.content", "demo.content"}, `independent module "demo.content" is named twice`},
 		"an empty module":           {`{"module": "demo.content"}`, []string{""}, "an independent module requires a name"},
 	} {
@@ -408,15 +369,12 @@ func TestDeriveCompilesEveryOperationKind(t *testing.T) {
 			"excludes": ["*.pyc", "**/*.pyc"], "directoryExcludes": ["tests", "**/tests"]}}]}}`
 	gzip := `{"id": "gzip", "kind": "layout-assets", "inputs": [{"artifact": "dialects"}], "output": "gzip:output", "manifest": "keep",
 		"layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "gzip-xml-archive"}}]}}`
-	file := `{"id": "file", "kind": "layout-assets", "output": "file:output", "manifest": "keep",
-		"layoutAssets": {"format": "file", "root": "jbr/jre-build.txt", "assets": [{"destination": "jbr/jre-build.txt", "transform": {"kind": "inline-text", "text": "21.0.7"}}]}}`
 	derivation := mustDerive(t, plan(2,
 		`{"destination": "lib/main.jar", "recipe": {"sources": [{"input": "filtered", "kind": "prepared", "filter": "prepared"},
 			{"input": "descriptor", "kind": "file", "filter": "none", "entry": "META-INF/plugin.xml", "options": ["patch"]}], "writer": {"manifest": "drop", "directoryEntries": true}}},
 		{"destination": "lib/l10n.jar", "recipe": {"sources": [{"input": "entries:output", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "keep"}}},
 		{"destination": "lib/dialects.jar", "recipe": {"sources": [{"input": "gzip:output", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "drop"}}},
 		{"destination": "payload", "inputs": ["tree:output"], "kind": "tree", "classPath": false, "normalizeTreeModes": true},
-		{"destination": "jbr/jre-build.txt", "inputs": ["file:output"], "classPath": false},
 		{"destination": "lib/standardDsls", "inputs": ["dsls"], "kind": "tree", "classPath": false},
 		{"destination": "bin/tool", "inputs": ["native"], "mode": 493},
 		{"destination": "bin/current", "inputs": [], "symlinkTarget": "./tool"},
@@ -424,9 +382,8 @@ func TestDeriveCompilesEveryOperationKind(t *testing.T) {
 		`"preparations": [{"id": "filter", "inputs": ["raw"], "outputs": ["filtered"], "modelSignature": "x"},
 			{"id": "tree", "inputs": ["archive"], "outputs": ["tree:output"], "modelSignature": "y"},
 			{"id": "entries", "inputs": ["properties"], "outputs": ["entries:output"], "modelSignature": "z"},
-			{"id": "gzip", "inputs": ["dialects"], "outputs": ["gzip:output"], "modelSignature": "g"},
-			{"id": "file", "inputs": [], "outputs": ["file:output"], "modelSignature": "f"}]`,
-		`"operations": [{"id": "filter", "input": {"artifact": "raw"}, "output": "filtered", "manifest": "keep", "excludes": ["drop/**"]}, `+tree+`, `+entries+`, `+gzip+`, `+file+`]`), inputs, 2)
+			{"id": "gzip", "inputs": ["dialects"], "outputs": ["gzip:output"], "modelSignature": "g"}]`,
+		`"operations": [{"id": "filter", "input": {"artifact": "raw"}, "output": "filtered", "manifest": "keep", "excludes": ["drop/**"]}, `+tree+`, `+entries+`, `+gzip+`]`), inputs, 2)
 	want := []pluginpack.Operation{
 		{Kind: "jar", Destination: "lib/main.jar", Mode: DefaultMode, Options: &pluginpack.JarOptions{Directories: "all"}, Sources: []pluginpack.Source{
 			{Kind: "archive", Input: &pluginpack.Reference{Artifact: "raw"}, Filter: "module", Excludes: []string{"drop/**"}, Manifest: "keep"},
@@ -440,8 +397,6 @@ func TestDeriveCompilesEveryOperationKind(t *testing.T) {
 				Transform: &pluginpack.LayoutTransform{Kind: "gzip-xml-archive"}}}}}}},
 		{Kind: "layout-tree", Destination: "payload", Mode: DefaultMode, Layout: &pluginpack.LayoutAssets{Inputs: []pluginpack.Reference{{Artifact: "archive"}},
 			Assets: []pluginpack.LayoutAsset{{Sources: []int{0}, Transform: &pluginpack.LayoutTransform{Kind: "archive-tree", StripComponents: 1}}}}},
-		{Kind: "layout-file", Destination: "jbr/jre-build.txt", Mode: DefaultMode, Layout: &pluginpack.LayoutAssets{
-			Assets: []pluginpack.LayoutAsset{{Destination: "jbr/jre-build.txt", Transform: &pluginpack.LayoutTransform{Kind: "inline-text", Text: "21.0.7"}}}}},
 		{Kind: "copy-tree", Destination: "lib/standardDsls", Input: &pluginpack.Reference{Artifact: "dsls"}},
 		{Kind: "copy", Destination: "bin/tool", Input: &pluginpack.Reference{Artifact: "native"}, Mode: 0o755},
 		{Kind: "symlink", Destination: "bin/current", Target: "./tool"},
@@ -453,7 +408,6 @@ func TestDeriveCompilesEveryOperationKind(t *testing.T) {
 	rows := []pluginpack.Asset{
 		{Destination: "lib/main.jar", Producer: "remainder"}, {Destination: "lib/l10n.jar", Producer: "remainder"}, {Destination: "lib/dialects.jar", Producer: "remainder"},
 		{Destination: "payload", Producer: "remainder", Kind: "tree", ClassPath: &excluded, NormalizeTreeModes: true},
-		{Destination: "jbr/jre-build.txt", Producer: "remainder", ClassPath: &excluded},
 		{Destination: "lib/standardDsls", Producer: "remainder", Kind: "tree", ClassPath: &excluded},
 		{Destination: "bin/tool", Producer: "remainder"}, {Destination: "bin/current", Producer: "remainder"},
 		{Destination: "lib/empty", Producer: "remainder", Kind: "directory"},
@@ -492,16 +446,16 @@ func TestDeriveRefusesWhatTheGoPackerDoesNotExecute(t *testing.T) {
 		inputs  pluginpack.Catalogue
 		message string
 	}{
-		"a layout file with another root": {plan(1, `{"destination": "lib/other.txt", "inputs": ["layout:output"], "classPath": false}`,
+		"a layout file": {plan(1, `{"destination": "lib/x.txt", "inputs": ["layout:output"], "classPath": false}`,
 			`"preparations": [{"id": "layout", "inputs": ["source"], "outputs": ["layout:output"], "modelSignature": "x"}],
 			"operations": [{"id": "layout", "kind": "layout-assets", "inputs": [{"artifact": "source"}], "output": "layout:output", "manifest": "keep",
 				"layoutAssets": {"format": "file", "root": "lib/x.txt", "assets": [{"destination": "lib/x.txt", "sources": [0]}]}}]`),
-			catalogue(fileArtifact("source")), "requires one file asset"},
-		"a layout file in a jar": {plan(1, `{"destination": "lib/x.jar", "recipe": {"sources": [{"input": "layout:output", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "drop"}}}`,
-			`"preparations": [{"id": "layout", "inputs": ["source"], "outputs": ["layout:output"], "modelSignature": "x"}],
-			"operations": [{"id": "layout", "kind": "layout-assets", "inputs": [{"artifact": "source"}], "output": "layout:output", "manifest": "keep",
-				"layoutAssets": {"format": "file", "root": "lib/x.txt", "assets": [{"destination": "lib/x.txt", "sources": [0]}]}}]`),
-			catalogue(fileArtifact("source")), "requires one file asset"},
+			catalogue(fileArtifact("source")), `layout format "file", which the Go packer does not execute`},
+		"an inline-text transform": {plan(1, `{"destination": "lib/x.jar", "recipe": {"sources": [{"input": "layout:output", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "drop"}}}`,
+			`"preparations": [{"id": "layout", "inputs": [], "outputs": ["layout:output"], "modelSignature": "x"}],
+			"operations": [{"id": "layout", "kind": "layout-assets", "output": "layout:output", "manifest": "keep",
+				"layoutAssets": {"format": "entries", "assets": [{"destination": "x.txt", "transform": {"kind": "inline-text"}}]}}]`),
+			catalogue(), `layout transform "inline-text", which the Go packer does not execute`},
 		"an unknown layout transform": {plan(1, `{"destination": "lib/x.jar", "recipe": {"sources": [{"input": "layout:output", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "drop"}}}`,
 			`"preparations": [{"id": "layout", "inputs": ["source"], "outputs": ["layout:output"], "modelSignature": "x"}],
 			"operations": [{"id": "layout", "kind": "layout-assets", "inputs": [{"artifact": "source"}], "output": "layout:output", "manifest": "keep",

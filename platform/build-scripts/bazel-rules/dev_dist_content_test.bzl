@@ -26,7 +26,7 @@ _ZIPPER = attr.label(default = "@bazel_tools//tools/zip:zipper", executable = Tr
 # Materializes an empty tree artifact. A shell action needs bash, which a Windows build agent does not have, so the
 # tree is an empty archive that the zipper extracts.
 def _empty_tree(ctx, tree):
-    archive = ctx.actions.declare_file(ctx.label.name + ".empty.zip")
+    archive = ctx.actions.declare_file(tree.short_path.rpartition("/")[0].rpartition("/")[2] + ".empty.zip")
     ctx.actions.write(archive, _EMPTY_JAR)
     ctx.actions.run(
         executable = ctx.executable._zipper,
@@ -79,6 +79,17 @@ def _fake_packed_impl(ctx):
             label = str(ctx.attr.library.label),
             jars = tuple(ctx.attr.library[JavaInfo].transitive_runtime_jars.to_list()),
         ))
+
+    # A jar with natives has a tree per platform, each with the metadata of its own action. Two platforms are enough to
+    # show that the payload takes the tree of its own one.
+    native_trees = {}
+    if ctx.attr.native_lib_dir:
+        for platform in _FAKE_NATIVE_PLATFORMS:
+            tree = ctx.actions.declare_directory(ctx.label.name + ".native_" + platform + "/native")
+            _empty_tree(ctx, tree)
+            tree_metadata = ctx.actions.declare_file(ctx.label.name + ".native_" + platform + ".metadata.json")
+            ctx.actions.write(tree_metadata, "{}")
+            native_trees[platform] = struct(tree = tree, metadata = tree_metadata)
     return [
         DefaultInfo(files = depset([jar])),
         ContentModuleJarInfo(
@@ -89,30 +100,31 @@ def _fake_packed_impl(ctx):
             member_jars = tuple(member.all_output_jars),
             member_modules = (member.module_name,),
             library_jars = tuple(libraries),
+            native_lib_dir = ctx.attr.native_lib_dir,
+            native_trees = native_trees,
         ),
     ]
+
+_FAKE_NATIVE_PLATFORMS = ["darwin_aarch64", "linux_x64"]
 
 _fake_packed = rule(
     implementation = _fake_packed_impl,
     attrs = {
         "library": attr.label(providers = [JavaInfo]),
         "member": attr.label(mandatory = True, providers = [_KtJvmInfo]),
+        "native_lib_dir": attr.string(),
+        "_zipper": _ZIPPER,
     },
 )
 
-# A platform jar that names a subdirectory of `lib/`, or that writes a native tree beside itself. A content module jar
-# does neither.
+# A platform jar that names a subdirectory of `lib/`. A content module jar does not.
 def _fake_platform_jar_impl(ctx):
     jar = ctx.actions.declare_file(ctx.label.name + ".jar")
     metadata = ctx.actions.declare_file(ctx.label.name + ".metadata.json")
     ctx.actions.write(jar, _EMPTY_JAR)
     ctx.actions.write(metadata, "{}")
-    native_tree = None
-    if ctx.attr.native_lib_dir:
-        native_tree = ctx.actions.declare_directory(ctx.label.name + "/native")
-        _empty_tree(ctx, native_tree)
     return [
-        DefaultInfo(files = depset([jar] + ([native_tree] if native_tree else []))),
+        DefaultInfo(files = depset([jar])),
         DevDistPlatformJarInfo(
             jar = jar,
             metadata = metadata,
@@ -120,18 +132,12 @@ def _fake_platform_jar_impl(ctx):
             member_jars = (),
             member_modules = (),
             library_jars = (),
-            native_tree = native_tree,
-            native_lib_dir = ctx.attr.native_lib_dir,
         ),
     ]
 
 _fake_platform_jar = rule(
     implementation = _fake_platform_jar_impl,
-    attrs = {
-        "destination": attr.string(mandatory = True),
-        "native_lib_dir": attr.string(),
-        "_zipper": _ZIPPER,
-    },
+    attrs = {"destination": attr.string(mandatory = True)},
 )
 
 # A plugin component as `dev_dist_plugin_content` sees it: the raw module jars of its members and one library container.
@@ -204,33 +210,34 @@ def _platform_payload_test_impl(ctx):
     reference = target[DevDistContentInfo]
     packed = ctx.attr.packed[ContentModuleJarInfo]
     nested = ctx.attr.nested[DevDistPlatformJarInfo]
-    natives = ctx.attr.natives[DevDistPlatformJarInfo]
+    natives = ctx.attr.natives[ContentModuleJarInfo]
+    native = natives.native_trees[_PAYLOAD_PLATFORM]
 
     # The destination, not the file name: this is the set the owning fragment must not pack, and a nested jar whose
     # base name reached it would leave both producers writing the same jar to two places.
     asserts.equals(env, sorted([packed.relative_path, nested.relative_path, natives.relative_path]), payload.packed_jar_names)
 
-    # Jars only, because the byte gate reads this set. The native tree travels in the jar's record. A jar without one
-    # says so with `None` and an empty directory. A content module jar is one, and its provider has no such field.
+    # Jars only, because the byte gate reads this set. The native tree of the payload's platform travels in the jar's
+    # record, with its own metadata. A jar without one says so with `None` and an empty directory.
     asserts.equals(env, [packed.jar, nested.jar, natives.jar], payload.packed_jars.to_list())
     records = {record.jar: record for record in payload.packed_metadata.to_list()}
     asserts.equals(
         env,
-        struct(jar = packed.jar, metadata = packed.metadata, relative_path = packed.relative_path, native_tree = None, native_lib_dir = ""),
+        struct(jar = packed.jar, metadata = packed.metadata, relative_path = packed.relative_path, native_tree = None, native_metadata = None, native_lib_dir = ""),
         records[packed.jar],
     )
     asserts.equals(
         env,
-        struct(jar = nested.jar, metadata = nested.metadata, relative_path = nested.relative_path, native_tree = None, native_lib_dir = ""),
+        struct(jar = nested.jar, metadata = nested.metadata, relative_path = nested.relative_path, native_tree = None, native_metadata = None, native_lib_dir = ""),
         records[nested.jar],
     )
     asserts.equals(
         env,
-        struct(jar = natives.jar, metadata = natives.metadata, relative_path = natives.relative_path, native_tree = natives.native_tree, native_lib_dir = natives.native_lib_dir),
+        struct(jar = natives.jar, metadata = natives.metadata, relative_path = natives.relative_path, native_tree = native.tree, native_metadata = native.metadata, native_lib_dir = natives.native_lib_dir),
         records[natives.jar],
     )
     asserts.equals(env, sorted(ctx.attr.expected_declared_modules), sorted(payload.declared_modules.to_list()))
-    asserts.equals(env, list(packed.member_jars), reference.module_jars.to_list())
+    asserts.equals(env, list(packed.member_jars) + list(natives.member_jars), reference.module_jars.to_list())
     asserts.equals(env, list(packed.library_jars), reference.library_jars.to_list())
     return analysistest.end(env)
 
@@ -240,9 +247,12 @@ _platform_payload_test = analysistest.make(
         "expected_declared_modules": attr.string_list(mandatory = True),
         "packed": attr.label(mandatory = True, providers = [ContentModuleJarInfo]),
         "nested": attr.label(mandatory = True, providers = [DevDistPlatformJarInfo]),
-        "natives": attr.label(mandatory = True, providers = [DevDistPlatformJarInfo]),
+        "natives": attr.label(mandatory = True, providers = [ContentModuleJarInfo]),
     },
 )
+
+# The platform the test payloads are for.
+_PAYLOAD_PLATFORM = "linux_x64"
 
 def _build_inputs_test_impl(ctx):
     env = analysistest.begin(ctx)
@@ -360,7 +370,8 @@ def _packed_component_test_impl(ctx):
     target = analysistest.target_under_test(env)
     component = target[IntellijDevFragmentInfo]
     payload = component.payload.to_list()
-    natives = ctx.attr.natives[DevDistPlatformJarInfo]
+    natives = ctx.attr.natives[ContentModuleJarInfo]
+    native = natives.native_trees[_PAYLOAD_PLATFORM]
     actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "IntellijDevPackedJars"]
     asserts.equals(env, 1, len(actions))
     if actions:
@@ -370,9 +381,11 @@ def _packed_component_test_impl(ctx):
     asserts.equals(env, sorted([component.manifest] + payload), sorted(target[DefaultInfo].files.to_list()))
 
     # The tree is in the payload beside its jar, so the composer places it. Both files the collector reads name it as a
-    # `tree`: the destinations under `lib/<native_lib_dir>/`, the catalogue under the tree's own name. A jar entry has
-    # no `tree` key. Both files are sorted by source.
-    asserts.true(env, natives.native_tree in payload)
+    # `tree`: the destinations under `lib/<native_lib_dir>/`, the catalogue under the tree's own name and with the
+    # metadata of the tree action. A jar entry has no `tree` key. Both files are sorted by source. The tree of the other
+    # platform stays out.
+    asserts.true(env, native.tree in payload)
+    asserts.false(env, [file for file in payload if file.path.endswith(".native_darwin_aarch64/native")])
     written = {
         action.outputs.to_list()[0].basename: json.decode(action.content)
         for action in analysistest.target_actions(env)
@@ -381,9 +394,10 @@ def _packed_component_test_impl(ctx):
     destinations = written[target.label.name + ".jars.json"]
     catalogue = written[target.label.name + ".metadata-catalogue.json"]
     asserts.true(env, {"source": natives.jar.path, "relativePath": natives.relative_path} in destinations)
-    asserts.true(env, {"source": natives.native_tree.path, "relativePath": natives.native_lib_dir, "tree": True} in destinations)
+    asserts.true(env, {"source": native.tree.path, "relativePath": natives.native_lib_dir, "tree": True} in destinations)
     asserts.true(env, {"source": natives.jar.path, "metadata": natives.metadata.path, "relativePath": natives.jar.basename} in catalogue)
-    asserts.true(env, {"source": natives.native_tree.path, "metadata": natives.metadata.path, "relativePath": "native", "tree": True} in catalogue)
+    asserts.true(env, {"source": native.tree.path, "metadata": native.metadata.path, "relativePath": "native", "tree": True} in catalogue)
+    asserts.true(env, native.metadata in actions[0].inputs.to_list())
     for entries in [destinations, catalogue]:
         asserts.equals(env, len(payload), len(entries))
         asserts.equals(env, sorted([entry["source"] for entry in entries]), [entry["source"] for entry in entries])
@@ -391,7 +405,7 @@ def _packed_component_test_impl(ctx):
 
 _packed_component_test = analysistest.make(
     _packed_component_test_impl,
-    attrs = {"natives": attr.label(mandatory = True, providers = [DevDistPlatformJarInfo])},
+    attrs = {"natives": attr.label(mandatory = True, providers = [ContentModuleJarInfo])},
     config_settings = {_TRACE_SPANS: False},
 )
 
@@ -533,13 +547,16 @@ def dev_dist_content_test_suite(name):
     _fake_packed(name = packed, member = ":" + packed_owner, library = ":" + library)
     nested = name + "_nested"
     _fake_platform_jar(name = nested, destination = "ext/nested.jar")
+    natives_owner = name + "_natives_owner"
+    _fake_module(name = natives_owner, module_name = "test.natives")
     natives = name + "_natives"
-    _fake_platform_jar(name = natives, destination = "natives.jar", native_lib_dir = "jna")
+    _fake_packed(name = natives, member = ":" + natives_owner, native_lib_dir = "jna")
     payload = name + "_payload"
     dev_dist_platform_payload(
         name = payload,
-        modules = [":" + packed_owner, ":" + raw_owner],
+        modules = [":" + packed_owner, ":" + raw_owner, ":" + natives_owner],
         packed = [":" + packed, ":" + nested, ":" + natives],
+        native_platform = _PAYLOAD_PLATFORM,
     )
     tests.append(name + "_platform_payload_test")
     _platform_payload_test(
@@ -554,20 +571,28 @@ def dev_dist_content_test_suite(name):
     # One owner per `lib/<dir>/`: two trees in one directory are refused where both jars are still named.
     duplicate_natives = [name + "_duplicate_natives_first", name + "_duplicate_natives_second"]
     for duplicate in duplicate_natives:
-        _fake_platform_jar(name = duplicate, destination = duplicate + ".jar", native_lib_dir = "shared")
-    duplicate_payload = name + "_duplicate_natives_payload"
-    dev_dist_platform_payload(
-        name = duplicate_payload,
-        modules = [":" + raw_owner],
-        packed = [":" + duplicate for duplicate in duplicate_natives],
-        tags = ["manual"],
-    )
-    tests.append(duplicate_payload + "_test")
-    _expected_failure_test(
-        name = tests[-1],
-        target_under_test = ":" + duplicate_payload,
-        expected_message = "lib/shared/ receives the native tree of both",
-    )
+        _fake_packed(name = duplicate, member = ":" + natives_owner, native_lib_dir = "shared")
+
+    # A payload with natives needs its platform, and a jar needs a tree of that platform.
+    for case, packed_jars, native_platform, expected_message in [
+        ("duplicate_natives", duplicate_natives, _PAYLOAD_PLATFORM, "lib/shared/ receives the native tree of both"),
+        ("no_platform", [natives], "", "so the payload needs native_platform"),
+        ("unknown_platform", [natives], "windows_x64", "has no native tree for 'windows_x64'"),
+    ]:
+        failing_payload = name + "_" + case + "_payload"
+        dev_dist_platform_payload(
+            name = failing_payload,
+            modules = [":" + raw_owner],
+            packed = [":" + jar for jar in packed_jars],
+            native_platform = native_platform,
+            tags = ["manual"],
+        )
+        tests.append(failing_payload + "_test")
+        _expected_failure_test(
+            name = tests[-1],
+            target_under_test = ":" + failing_payload,
+            expected_message = expected_message,
+        )
 
     # The union of the bundled plugins' raw content. `plugins` go through the product transition, `deps` come as they
     # are, and both land in one provider. A target without `DevDistContentInfo` is refused at the attribute.

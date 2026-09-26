@@ -11,5 +11,6 @@
     <module name="intellij.platform.debugger.impl.ui"/>
     <module name="intellij.platform.debugger"/>
     <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.debugger.impl.dashboard"/>
   </content>
 </idea-plugin>

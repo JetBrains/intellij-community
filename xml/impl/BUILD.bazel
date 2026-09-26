@@ -28,11 +28,7 @@ jvm_library(
         "//xml/xml-ui-common:ui-common",
         "//xml/xml-analysis-impl:analysis-impl",
     ],
-    runtime_deps = [
-        # do not sort,
-        "//platform/backend",
-        "//platform/vcs-impl",
-    ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -49,7 +45,6 @@ jvm_library(
         "//platform/lang-impl",
         "//platform/execution-impl",
         "//platform/icons",
-        "//platform/vcs-api:vcs",
         "//xml/xml-parser:parser",
         "//platform/refactoring",
         "//platform/indexing-impl",
@@ -121,7 +116,6 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/execution-impl:execution-impl_test_lib",
         "//platform/icons:icons_test_lib",
-        "//platform/vcs-api:vcs_test_lib",
         "//xml/xml-parser:parser_test_lib",
         "//platform/refactoring:refactoring_test_lib",
         "//platform/indexing-impl:indexing-impl_test_lib",
@@ -156,7 +150,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/util:util-ui_test_lib",
-        "//platform/vcs-impl:vcs-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.xml.impl` end

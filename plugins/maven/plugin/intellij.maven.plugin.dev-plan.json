@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.maven.plugin",
     "variant": "",
-    "layoutSignature": "4u1sp4akqif9y7ioz5q3kbzv1",
+    "layoutSignature": "7ezs3zo5bnxh02e3byalrond7",
     "assets": [
         {
             "destination": "lib/intellij.maven.model.jar",
@@ -365,17 +365,18 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "f0jofcdnnci0hvknayv0bs6yq"
+            "modelSignature": "5cihu15nbbpo4cwyliz1o8siw"
         },
         {
             "id": "layout-assets:resource-generator:1",
             "inputs": [
-                "layout-source:resource-generator:1:0"
+                "layout-source:resource-generator:1:0",
+                "layout-source:resource-generator:1:1"
             ],
             "outputs": [
                 "layout-assets:resource-generator:1:output"
             ],
-            "modelSignature": "cvx4e8gr0psk61lfc6vx7wb0t"
+            "modelSignature": "3mpxykhigirs4o82e2hqnlyz7"
         },
         {
             "id": "layout-assets:resource-generator:2",
@@ -385,7 +386,7 @@
             "outputs": [
                 "layout-assets:resource-generator:2:output"
             ],
-            "modelSignature": "epi21rm6ryqe5llz2861xelsg"
+            "modelSignature": "3njm9wbzqzcgsowakrmtdskq5"
         }
     ],
     "operations": [
@@ -394,8 +395,7 @@
             "kind": "layout-assets",
             "inputs": [
                 {
-                    "artifact": "layout-source:resource-generator:0:0",
-                    "path": "apache-maven-3.9.16-bin.zip"
+                    "artifact": "layout-source:resource-generator:0:0"
                 }
             ],
             "output": "layout-assets:resource-generator:0:output",
@@ -422,36 +422,10 @@
             "kind": "layout-assets",
             "inputs": [
                 {
-                    "artifact": "layout-source:resource-generator:1:0",
-                    "path": "archetype-common-2.2.jar"
+                    "artifact": "layout-source:resource-generator:1:0"
                 },
                 {
-                    "artifact": "layout-source:resource-generator:1:0",
-                    "path": "archetype-catalog-2.2.jar"
-                },
-                {
-                    "artifact": "layout-source:resource-generator:1:0",
-                    "path": "archetype-descriptor-2.2.jar"
-                },
-                {
-                    "artifact": "layout-source:resource-generator:1:0",
-                    "path": "maven-dependency-tree-1.2.jar"
-                },
-                {
-                    "artifact": "layout-source:resource-generator:1:0",
-                    "path": "nexus-indexer-3.0.4.jar"
-                },
-                {
-                    "artifact": "layout-source:resource-generator:1:0",
-                    "path": "nexus-indexer-artifact-1.0.1.jar"
-                },
-                {
-                    "artifact": "layout-source:resource-generator:1:0",
-                    "path": "lucene-core-2.4.1.jar"
-                },
-                {
-                    "artifact": "layout-source:resource-generator:1:0",
-                    "path": "jackson-core-2.16.0.jar"
+                    "artifact": "layout-source:resource-generator:1:1"
                 }
             ],
             "output": "layout-assets:resource-generator:1:output",
@@ -461,59 +435,17 @@
                 "root": "lib/intellij.maven.server3",
                 "assets": [
                     {
-                        "destination": "archetype-common-2.2.jar",
+                        "destination": "",
                         "sources": [
-                            0
-                        ],
-                        "mode": 420
-                    },
-                    {
-                        "destination": "archetype-catalog-2.2.jar",
-                        "sources": [
+                            0,
                             1
                         ],
-                        "mode": 420
-                    },
-                    {
-                        "destination": "archetype-descriptor-2.2.jar",
-                        "sources": [
-                            2
-                        ],
-                        "mode": 420
-                    },
-                    {
-                        "destination": "maven-dependency-tree-1.2.jar",
-                        "sources": [
-                            3
-                        ],
-                        "mode": 420
-                    },
-                    {
-                        "destination": "nexus-indexer-3.0.4.jar",
-                        "sources": [
-                            4
-                        ],
-                        "mode": 420
-                    },
-                    {
-                        "destination": "nexus-indexer-artifact-1.0.1.jar",
-                        "sources": [
-                            5
-                        ],
-                        "mode": 420
-                    },
-                    {
-                        "destination": "lucene-core-2.4.1.jar",
-                        "sources": [
-                            6
-                        ],
-                        "mode": 420
-                    },
-                    {
-                        "destination": "jackson-core-2.16.0.jar",
-                        "sources": [
-                            7
-                        ],
+                        "transform": {
+                            "kind": "tree-map",
+                            "mappings": [
+                                {}
+                            ]
+                        },
                         "mode": 420
                     }
                 ]
@@ -541,9 +473,7 @@
                         "transform": {
                             "kind": "tree-map",
                             "mappings": [
-                                {
-                                    "pattern": "jackson-core-*.jar"
-                                }
+                                {}
                             ]
                         },
                         "mode": 420

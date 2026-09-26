@@ -555,6 +555,42 @@ class MessageBusTest : MessageBusOwner {
   }
 
   @Test
+  fun throwingLoggerLeavesNoJobForNextPublish() {
+    val child = MessageBusFactoryImpl().createMessageBus(this, bus)
+    child.connect().subscribe(TOPIC1, object : T1Listener {
+      override fun t11() {
+        throw IllegalStateException("handler failure")
+      }
+    })
+    child.connect().subscribe(TOPIC1, T1Handler("child"))
+    bus.connect().subscribe(TOPIC2, T2Handler("root"))
+
+    val firstFailure = AtomicReference<Throwable?>()
+    val errors = ArrayList<String>()
+    // the queue is thread-local, and the test logger rethrows only outside the test thread, as on the EDT
+    val thread = Thread {
+      LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {}) {
+        firstFailure.set(runCatching { child.syncPublisher(TOPIC1).t11() }.exceptionOrNull())
+      }
+      Disposer.dispose(child)
+      LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
+        override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
+          errors.add(message)
+          return emptySet()
+        }
+      }) {
+        bus.syncPublisher(TOPIC2).t21()
+      }
+    }
+    thread.start()
+    thread.join()
+
+    assertThat(firstFailure.get()).isInstanceOf(AssertionError::class.java)
+    assertThat(errors).isEmpty()
+    assertEvents("root:t21")
+  }
+
+  @Test
   fun twoHandlersBothDisconnecting() {
     val disposable = Disposer.newCheckedDisposable()
     repeat(2) {

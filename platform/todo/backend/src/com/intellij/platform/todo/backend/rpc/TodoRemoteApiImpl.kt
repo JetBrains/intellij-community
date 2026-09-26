@@ -10,6 +10,7 @@ import com.intellij.ide.todo.rpc.TodoFilesWatchRequest
 import com.intellij.ide.todo.rpc.TodoRemoteApi
 import com.intellij.ide.todo.model.toSearchScope
 import com.intellij.ide.todo.rpc.toTodoFilter
+import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.Disposable
@@ -102,16 +103,8 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     val psiManager = PsiManager.getInstance(project)
     trySend(TodoEvent.AllItemsRemoved)
     when (scope) {
-      is TodoScope.CurrentFile -> {
-        val virtualFile = scope.fileId.virtualFile()
-        if (virtualFile != null && virtualFile.isValid) {
-          val psiFile = psiManager.findFile(virtualFile)
-          if (psiFile != null) {
-            val result = buildTodoFileResult(project, psiFile, virtualFile, filter)
-            if (result != null) trySend(TodoEvent.ItemUpserted(result))
-          }
-        }
-      }
+      is TodoScope.CurrentFile -> sendTodoFileResult(project, psiManager, scope.fileId, filter)
+      is TodoScope.ChangeList -> scope.fileIds.forEach { sendTodoFileResult(project, psiManager, it, filter) }
       is TodoScope.Project -> {
         PsiTodoSearchHelper.getInstance(project).processFilesWithTodoItems { psiFile ->
           val virtualFile = psiFile.virtualFile ?: return@processFilesWithTodoItems true
@@ -135,6 +128,14 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
       }
     }
     trySend(TodoEvent.ScanFinished)
+  }
+
+  private fun ProducerScope<TodoEvent>.sendTodoFileResult(project: Project, psiManager: PsiManager, fileId: VirtualFileId, filter: TodoFilter?, ) {
+    val virtualFile = fileId.virtualFile() ?: return
+    if (!virtualFile.isValid) return
+    val psiFile = psiManager.findFile(virtualFile) ?: return
+    val result = buildTodoFileResult(project, psiFile, virtualFile, filter) ?: return
+    trySend(TodoEvent.ItemUpserted(result))
   }
 
   private suspend fun ProducerScope<TodoEvent>.scheduleFileChanges(project: Project, file: VirtualFile, filter: TodoFilter?) {

@@ -19,6 +19,9 @@ sealed interface TodoScope {
   data class CurrentFile(val fileId: VirtualFileId) : TodoScope
 
   @Serializable
+  data class ChangeList(val fileIds: List<VirtualFileId>) : TodoScope
+
+  @Serializable
   data class NamedScope(val scopeId: @NonNls String) : TodoScope
 }
 

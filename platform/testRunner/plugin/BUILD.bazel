@@ -8,6 +8,7 @@ dev_dist_plugin(
         "intellij.platform.testRunner",
         "intellij.platform.smRunner",
         "intellij.platform.smRunner.vcs",
+        "intellij.platform.smRunner.dashboard",
     ],
     main_module = "intellij.platform.testRunner.plugin",
 )

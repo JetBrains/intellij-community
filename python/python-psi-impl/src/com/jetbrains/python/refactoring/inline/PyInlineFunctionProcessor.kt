@@ -513,6 +513,11 @@ class PyInlineFunctionProcessor(
   override fun getCommandName() = PyPsiBundle.message("refactoring.inline.function.command.name", myFunction.name)
   override fun getRefactoringId() = PyInlineFunctionHandler.Helper.REFACTORING_ID
 
+  override fun getElementsToWrite(descriptor: UsageViewDescriptor): Collection<PsiElement> {
+    // A kept declaration does not change, so its file can be a read-only or a library file.
+    return if (myRemoveDeclaration) super.getElementsToWrite(descriptor) else emptyList()
+  }
+
   override fun createUsageViewDescriptor(usages: Array<out UsageInfo>) = object : UsageViewDescriptor {
     override fun getElements(): Array<PsiElement> = arrayOf(myFunction)
     override fun getProcessedElementsHeader(): String = PyPsiBundle.message("refactoring.inline.function.function.to.inline")

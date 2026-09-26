@@ -30,6 +30,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.Messages
@@ -89,6 +90,9 @@ class PluginDownloader private constructor(
   }
 
   fun withDownloadService(downloadService: MarketplacePluginDownloadService?): PluginDownloader {
+    if (myDownloadService != null) {
+      thisLogger().error(RuntimeException("Overwriting existing muDownloadService $myDownloadService"))
+    }
     return PluginDownloader(myModel, myPluginUrl, myBuildNumber, myErrorsConsumer, downloadService)
   }
 

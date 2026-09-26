@@ -18,6 +18,7 @@ import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
@@ -119,7 +120,9 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
 
         withContext(Dispatchers.IO) {
           PySkeletonUtil.getSitePackagesDirectory(sdk)?.refresh(true, true)
-          sdk.associatedModuleDir?.refresh(true, false)
+          // `Pipfile.lock` may not be there yet, and a plain refresh never looks for a name VFS has not seen — see
+          // the note on `PythonPackageManagerAction`'s own refresh, which this mirrors (PY-92487).
+          sdk.associatedModuleDir?.let { VfsUtil.markDirtyAndRefresh(true, false, true, it) }
         }
       }
     }

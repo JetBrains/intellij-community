@@ -172,15 +172,6 @@ private fun loadingSection(): EvoTreeSection =
     PySdkFrontendBundle.message("evo.sdk.status.bar.popup.node.loading"), State.LOADING)))
 
 /**
- * A leaf whose action decides for itself whether it applies: [EvoActionPopupStep] runs the action's own `update()`
- * against the popup's data context before the list is shown, and drops the row when the action reports itself
- * invisible. Used for the package-manager rows, which are shared platform actions gated on the project's dependency
- * file — unlike the widget's own inline actions, each of which is built for exactly the row it sits on and needs no
- * update. Its presentation is a private copy, since a shared action's template must not be written to.
- */
-class EvoTreeActionLeafElement(action: AnAction) : EvoTreeLeafElement(action, action.templatePresentation.clone())
-
-/**
  * A row that folds part of the list away or unfolds it, rather than naming an environment.
  *
  * Drawn quieter and smaller than the rows it controls, so a list is read as environments with a control under them

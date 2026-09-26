@@ -42,4 +42,11 @@ open class TodoViewChangesSupport {
   interface Listener {
     fun setVisible(value: Boolean)
   }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): TodoViewChangesSupport =
+      TodoViewChangesSupportFactory.EP_NAME.findFirstSafe { it.isAvailable() }?.create(project)
+      ?: TodoViewChangesSupport()
+  }
 }

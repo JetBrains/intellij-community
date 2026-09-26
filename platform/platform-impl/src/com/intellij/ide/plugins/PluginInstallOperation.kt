@@ -27,7 +27,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.createRepository
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.Ref
@@ -124,8 +124,8 @@ class PluginInstallOperation(
   val installedDependentPlugins: Set<PluginInstallCallbackData>
     get() = myDependant
 
-  internal val dependentPluginUpdateSourceIds: Map<PluginId, PluginUpdateSourceId>
-    field: MutableMap<PluginId, PluginUpdateSourceId> = HashMap()
+  internal val dependentPluginUpdateSources: Map<PluginId, PluginUpdateSource>
+    field: MutableMap<PluginId, PluginUpdateSource> = HashMap()
 
   val isShownErrors: Boolean
     get() = myShownErrors
@@ -276,7 +276,7 @@ class PluginInstallOperation(
         }
       }
       myDependant.add(PluginInstallCallbackData(downloader.getFilePath(), descriptor, !allowNoRestart))
-      dependentPluginUpdateSourceIds[downloader.id] = createRepository(downloader.uiModel)
+      dependentPluginUpdateSources[downloader.id] = createRepository(downloader.uiModel)
       val node = pluginNode.getDescriptor()
       if (node is PluginNode) {
         node.status = PluginNode.Status.DOWNLOADED

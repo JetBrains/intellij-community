@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.productLayout
 
+import org.jetbrains.intellij.build.productLayout.CommunityModuleSets.ideCommon
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.coreLang
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcBackend
 import org.jetbrains.intellij.build.productLayout.LibraryModuleSets.librariesGrpc
@@ -177,6 +178,7 @@ object CommunityModuleSets {
     module("intellij.platform.debugger.impl.ui")
     module("intellij.platform.debugger")
     module("intellij.platform.debugger.impl")
+    module("intellij.platform.debugger.impl.dashboard")
   }
 
   // endregion
@@ -253,6 +255,7 @@ object CommunityModuleSets {
     module("intellij.xml.analysis.impl")
     module("intellij.xml.langInjection")
     module("intellij.xml.langInjection.xpath")
+    module("intellij.xml.vcs")
   }
 
   /**
@@ -292,10 +295,10 @@ object CommunityModuleSets {
   /**
    * Compose UI modules.
    * `intellij.libraries.compose.runtime.desktop` depends on the jspecify annotations.
+   * Skiko is content of the bundled plugin `intellij.skiko.plugin`, because its native renderer binds to one classloader per JVM.
    */
   fun compose(): ModuleSet = moduleSet("compose") {
     module("intellij.libraries.jspecify")
-    module("intellij.libraries.skiko")
     module("intellij.libraries.coil")
     module("intellij.libraries.compose.swing")
     module("intellij.platform.compose")

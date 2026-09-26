@@ -131,7 +131,7 @@ class PluginCertificateManager :
     myCertificates.clear()
     myCertificates.addAll(original)
     myDetailsPanel.removeAll()
-    myDetailsPanel.add(myEmptyPanel, CertificateConfigurable.EMPTY_PANEL)
+    myDetailsPanel.add(myEmptyPanel, EMPTY_PANEL)
 
     // fill lower panel with cards
     for (certificate in original) {

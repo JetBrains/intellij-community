@@ -1,8 +1,5 @@
 # kotlin-layout: the Kotlin preparer's materialization, golden-2026-09-13, recorded by pluginpack_test -record-kotlin-goldens.
 # fixture	path	kind (directory, file, symlink, or a jar entry when the jar order follows the host)	mode	sha256 or link target
-a layout file copies one file at the declared mode	bin	directory	0755	-
-a layout file copies one file at the declared mode	bin/jre-build.txt	file	0644	39a069e3150946ba678d8e2b3ec2c338b8204584bdede5158fc823962d9a5b5a
-a layout file holds inline text	jre-build.txt	file	0644	39a069e3150946ba678d8e2b3ec2c338b8204584bdede5158fc823962d9a5b5a
 archive-tree from a tar.gz keeps modes, a link, and an empty directory	payload	directory	0755	-
 archive-tree from a tar.gz keeps modes, a link, and an empty directory	payload/bin	directory	0755	-
 archive-tree from a tar.gz keeps modes, a link, and an empty directory	payload/bin/current	symlink	-	tool
@@ -17,12 +14,11 @@ gzip-xml-archive entries hold the XML of each archive in central-directory order
 gzip-xml-archive entries hold the XML of each archive in central-directory order	resources/dialects/alpha.xml.gzip	entry	-	294f0e86b9c8db0973be57b7b83ae32624a63a22b18825a7dc981f04f50ba346
 gzip-xml-archive entries hold the XML of each archive in central-directory order	resources/dialects/zeta.xml.gzip	entry	-	a6766c01ff9c87420e13db4ea1458ad286bb6a25980f3b9af433e128b0ed4d72
 gzip-xml-archive entries hold the XML of each archive in central-directory order	resources/shared.xml.gzip	entry	-	62f0c001c4b0c41e0d2a45227b99cb02628f1c60961a619d1ebbeb18b7c66a12
-inline text and plain file copies inside a tree	jbr	directory	0755	-
-inline text and plain file copies inside a tree	jbr/bin	directory	0755	-
-inline text and plain file copies inside a tree	jbr/bin/launcher	file	0755	ec9a6e9fe278eb1a471fbab6f40367d8548078b651d9c71581c57c2a6ca379e0
-inline text and plain file copies inside a tree	jbr/jre-build.txt	file	0644	39a069e3150946ba678d8e2b3ec2c338b8204584bdede5158fc823962d9a5b5a
-inline text and plain file copies inside a tree	jbr/lib	directory	0755	-
-inline text and plain file copies inside a tree	jbr/lib/tool.jar	file	0644	7c9bbe5ec9b3fb774e8fa0f54247e93c34ddf8e5d16fe3073420de0ae81a262d
+plain file copies inside a tree	jbr	directory	0755	-
+plain file copies inside a tree	jbr/bin	directory	0755	-
+plain file copies inside a tree	jbr/bin/launcher	file	0755	ec9a6e9fe278eb1a471fbab6f40367d8548078b651d9c71581c57c2a6ca379e0
+plain file copies inside a tree	jbr/lib	directory	0755	-
+plain file copies inside a tree	jbr/lib/tool.jar	file	0644	7c9bbe5ec9b3fb774e8fa0f54247e93c34ddf8e5d16fe3073420de0ae81a262d
 plain overlay of two trees keeps the first claim and a relative link	overlay	directory	0755	-
 plain overlay of two trees keeps the first claim and a relative link	overlay/a.txt	file	0644	ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb
 plain overlay of two trees keeps the first claim and a relative link	overlay/b.txt	file	0644	3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d

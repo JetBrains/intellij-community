@@ -3070,12 +3070,6 @@ c:com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler
 - sendText(java.lang.String):V
 - setProcessHandler(com.intellij.execution.process.ProcessHandler):V
 - value(com.intellij.execution.console.LanguageConsoleView):Z
-a:com.intellij.execution.dashboard.actions.ExecutorAction
-- p:<init>(java.lang.String,java.lang.String,javax.swing.Icon):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- pa:getExecutor():com.intellij.execution.Executor
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-- pa:update(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 c:com.intellij.execution.filters.TextConsoleBuilderImpl
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):V
 - addFilter(com.intellij.execution.filters.Filter):V
@@ -8381,10 +8375,6 @@ f:com.intellij.util.indexing.FindSymbolParameters
 - withScope(com.intellij.psi.search.GlobalSearchScope):com.intellij.util.indexing.FindSymbolParameters
 - s:wrap(java.lang.String,com.intellij.openapi.project.Project,Z):com.intellij.util.indexing.FindSymbolParameters
 - s:wrap(java.lang.String,com.intellij.psi.search.GlobalSearchScope):com.intellij.util.indexing.FindSymbolParameters
-f:com.intellij.util.indexing.UnindexedFilesUpdater
-- s:getAvailablePhysicalCoresNumber():I
-- s:getMaxNumberOfIndexingThreads():I
-- s:getNumberOfScanningThreads():I
 c:com.intellij.util.textCompletion.TextCompletionContributor
 - <init>():V
 - fillCompletionVariants(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionResultSet):V

@@ -4,7 +4,7 @@ package com.jetbrains.python.sdk.poetry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.EelApi
 import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyDependencyGroup
@@ -14,8 +14,6 @@ import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pytools.resolveExecutable
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
-import com.jetbrains.python.packaging.packageRequirements.packagesUnavailable
-import com.jetbrains.python.packaging.packageRequirements.cachedDependencyTree
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PyDependencyGroupName
@@ -32,7 +30,9 @@ import com.jetbrains.python.packaging.packageRequirements.PackageCollectionPacka
 import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
 import com.jetbrains.python.packaging.packageRequirements.TreeParser
+import com.jetbrains.python.packaging.packageRequirements.cachedDependencyTree
 import com.jetbrains.python.packaging.packageRequirements.collectAllNames
+import com.jetbrains.python.packaging.packageRequirements.packagesUnavailable
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.poetry.POETRY_LOCK
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
@@ -53,9 +53,10 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
   override val workspaceSupport: PythonWorkspaceSupport = PoetryWorkspaceSupport(project, sdk)
   override val installedPackagesIncludeTransitive: Boolean = true
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
-  override val cliSpecs: List<PythonManagerCliSpec> = listOf(
-    PythonManagerCliSpec("poetry", { PoetryPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))?.path })
+  override fun getCliSpecs(eelApi: EelApi): List<PythonManagerCliSpec> = listOf(
+    PythonManagerCliSpec("poetry", { PoetryPyTool.getInstance().resolveExecutable(EelFileSystem(eelApi))?.path })
   )
+
   override val treeProvider = cachedDependencyTree(
     lockFileName = POETRY_LOCK.value,
     dependencyFiles = { resolveDependencyFilesTree() },

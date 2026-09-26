@@ -292,31 +292,3 @@ func (writer *layoutEntriesWriter) file(name string, content []byte, _ uint32) e
 func (writer *layoutEntriesWriter) symlink(name, _ string) error {
 	return fmt.Errorf("a jar layout asset cannot contain the symbolic link %q", name)
 }
-
-// layoutFileWriter writes the one file of a layout-file operation. A directory and a link fail.
-type layoutFileWriter struct {
-	path    string
-	written bool
-}
-
-func (writer *layoutFileWriter) directory(name string, _ uint32) error {
-	return fmt.Errorf("a layout file cannot be the directory %q", name)
-}
-
-func (writer *layoutFileWriter) file(name string, content []byte, mode uint32) error {
-	if err := validateRelativePath(name); err != nil {
-		return err
-	}
-	if writer.written {
-		return fmt.Errorf("a layout file writes one file, not %q", name)
-	}
-	writer.written = true
-	if err := os.WriteFile(writer.path, content, 0o600); err != nil {
-		return err
-	}
-	return os.Chmod(writer.path, os.FileMode(modeOr(mode, 0o644)))
-}
-
-func (writer *layoutFileWriter) symlink(name, _ string) error {
-	return fmt.Errorf("a layout file cannot be the symbolic link %q", name)
-}

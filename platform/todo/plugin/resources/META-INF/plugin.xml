@@ -13,5 +13,6 @@
     <module name="intellij.platform.todo"/>
     <module name="intellij.platform.todo.backend"/>
     <module name="intellij.platform.vcs.impl.lang.todo"/>
+    <module name="intellij.platform.vcs.impl.lang.todo.frontend"/>
   </content>
 </idea-plugin>

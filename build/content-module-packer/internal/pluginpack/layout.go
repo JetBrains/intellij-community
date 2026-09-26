@@ -14,9 +14,9 @@ import (
 	"jetbrains.com/content-module-packer/internal/javaglob"
 )
 
-// layoutTransforms names the transform kinds this packer executes: archive-tree, gzip-xml-archive, inline-text, and
-// tree-map. A plain copy needs no transform. Plan refuses every other kind.
-var layoutTransforms = map[string]bool{"archive-tree": true, "gzip-xml-archive": true, "inline-text": true, "tree-map": true}
+// layoutTransforms names the transform kinds this packer executes: archive-tree, gzip-xml-archive, and tree-map.
+// A plain copy needs no transform. Plan refuses every other kind.
+var layoutTransforms = map[string]bool{"archive-tree": true, "gzip-xml-archive": true, "tree-map": true}
 
 func mappingPattern(mapping LayoutMapping) string {
 	if mapping.Pattern == "" {
@@ -51,8 +51,8 @@ func stripLayoutPath(name string, components int) (string, bool) {
 	return strings.Join(parts[components:], "/"), true
 }
 
-// layoutScratch holds the trees, entries, decoded archives, and selected natives the layout assets and the native-tree
-// operations write before the remainder copies them. It lives beside the output and is removed before the stage rename.
+// layoutScratch holds the trees, entries, and decoded archives the layout assets write before the remainder copies them.
+// It lives beside the output and is removed before the stage rename.
 type layoutScratch struct {
 	root  string
 	count int
@@ -60,7 +60,7 @@ type layoutScratch struct {
 
 func newLayoutScratch(recipe Recipe, output string) (*layoutScratch, error) {
 	hasLayout := slices.ContainsFunc(recipe.Operations, func(operation Operation) bool {
-		return operation.Layout != nil || operation.Kind == "native-tree" ||
+		return operation.Layout != nil ||
 			slices.ContainsFunc(operation.Sources, func(source Source) bool { return source.Layout != nil })
 	})
 	if !hasLayout {
@@ -140,27 +140,6 @@ func (executor *layoutExecutor) tree(operation Operation) ([]resolvedOperation, 
 	return resolveDirectoryTree(operation, root)
 }
 
-// file writes the one layout asset of a layout-file operation into a scratch file and resolves it like a copy.
-func (executor *layoutExecutor) file(operation Operation) (resolvedOperation, error) {
-	root, err := executor.scratch.directory("file")
-	if err != nil {
-		return resolvedOperation{}, err
-	}
-	writer := &layoutFileWriter{path: filepath.Join(root, "file")}
-	if err := executor.execute(operation.Layout, writer); err != nil {
-		return resolvedOperation{}, err
-	}
-	if !writer.written {
-		return resolvedOperation{}, fmt.Errorf("layout file %q wrote no file", operation.Destination)
-	}
-	info, err := os.Stat(writer.path)
-	if err != nil {
-		return resolvedOperation{}, err
-	}
-	copied := Operation{Kind: "copy", Destination: operation.Destination, Scope: operation.Scope, Mode: operation.Mode}
-	return resolvedOperation{operation: copied, input: writer.path, sourceInfo: info}, nil
-}
-
 // entries writes the file entries of a layout source and returns one single-file jar source per entry.
 func (executor *layoutExecutor) entries(source Source) ([]jarpack.Source, error) {
 	root, err := executor.scratch.directory("entries")
@@ -200,8 +179,6 @@ func (executor *layoutExecutor) execute(layout *LayoutAssets, writer layoutWrite
 			err = executor.extractArchive(inputs[0], asset, writer)
 		case "gzip-xml-archive":
 			err = executor.gzipXMLArchives(inputs, asset, writer)
-		case "inline-text":
-			err = writer.file(asset.Destination, []byte(asset.Transform.Text), modeOr(asset.Mode, 0o644))
 		case "tree-map":
 			err = executor.mapTrees(inputs, asset, writer)
 		default:

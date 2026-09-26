@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl.tests" scope="RUNTIME" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.concurrency" />
 </module>

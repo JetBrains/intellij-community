@@ -11,6 +11,8 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.UtilKt;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -70,9 +72,10 @@ final class ProgressIndicatorUtilService implements Disposable {
   }
 
   private void cancelActionsToBeCancelledBeforeWrite() {
-    for (Runnable cancellation : myWriteActionCancellations) {
+    UtilKt.forEachGuaranteed(myWriteActionCancellations, (Runnable cancellation) -> {
       cancellation.run();
-    }
+      return Unit.INSTANCE;
+    });
   }
 
   boolean runActionAndCancelBeforeWrite(@NotNull Runnable cancellation, @NotNull Runnable action) {

@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
+import java.nio.file.AccessDeniedException
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.pathString
@@ -29,6 +30,12 @@ private val LOG = fileLogger()
  *
  * Catches [IOException] alone, which is what the delete declares. Anything else is not an outcome this knows how to
  * report, so it travels on.
+ *
+ * An [AccessDeniedException] is told apart from the rest, because it means something a different message can act on —
+ * `evolution.error.env.in.use`. On Windows a running process's own executable cannot be deleted at all, so an
+ * interpreter that is still running takes its whole environment with it: everything around `python.exe` goes, and the
+ * directory then refuses to. The platform's delete already retries, clears the read-only attribute and runs a GC before
+ * giving up (`FileUtilRt.doDelete`), so reaching here is not a transient lock to retry — it is a live handle.
  */
 @ApiStatus.Internal
 suspend fun deleteEnvDir(dir: Path): PyResult<Unit> = withContext(Dispatchers.IO) {
@@ -40,6 +47,10 @@ suspend fun deleteEnvDir(dir: Path): PyResult<Unit> = withContext(Dispatchers.IO
   }
   try {
     EelFileUtils.deleteRecursively(dir)
+  }
+  catch (e: AccessDeniedException) {
+    LOG.warn("Evo: the environment at $dir is held open, so it was not deleted", e)
+    return@withContext PyResult.localizedError(PySdkBundle.message("evolution.error.env.in.use", dir.pathString))
   }
   catch (e: IOException) {
     LOG.warn("Evo: failed to delete the environment at $dir", e)

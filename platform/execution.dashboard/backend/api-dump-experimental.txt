@@ -1,0 +1,3 @@
+*:com.intellij.execution.dashboard.RunDashboardChecker
+- a:countUniqueConfigurations(com.intellij.openapi.project.Project):I
+- a:getTypeId():java.lang.String

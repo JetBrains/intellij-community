@@ -47,6 +47,16 @@ abstract class WelcomeScreenFeatureUI {
   open val contentOrder: Int get() = 0
 
   /**
+   * States a feature that answers to no feature handler, so the tab asks it for its section unconditionally.
+   *
+   * A feature normally shows up only while a `WelcomeScreenFeatureFrontend` or a `WelcomeScreenFeatureBackend`
+   * supplies its [featureKey]. A section that is decoration rather than an entry point - a banner, say - has no such
+   * handler, and states this instead. Compare `WelcomeRightTabContentProvider.FeatureButtonModelWithBackend
+   * .isAlwaysAvailable`, which says the same for a button.
+   */
+  open val isAlwaysAvailable: Boolean get() = false
+
+  /**
    * The section this feature contributes under the feature grid, or `null` for a feature that states a button only.
    *
    * Called off the EDT, so an implementation owns the hop to the EDT that its own Swing construction needs. The tab

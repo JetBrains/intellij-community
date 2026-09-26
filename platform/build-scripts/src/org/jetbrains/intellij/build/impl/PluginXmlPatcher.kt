@@ -227,7 +227,7 @@ internal fun isIncludePluginsInBuiltinCustomRepository(context: BuildContext): B
 private val DEV_BUILD_SCHEME: Regex = Regex("^${SnapshotBuildNumber.BASE.replace(".", "\\.")}\\.(SNAPSHOT|[0-9]+)$")
 
 private fun getPluginVersion(plugin: PluginLayout, descriptorContent: String, context: BuildContext): PluginVersionEvaluatorResult {
-  val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlSupplier = { descriptorContent }, ideBuildVersion = context.pluginBuildNumber, context = context)
+  val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlSupplier = { descriptorContent }, context = context)
   validatePluginDescriptorVersion(plugin, pluginVersion.pluginVersion)
   return pluginVersion
 }

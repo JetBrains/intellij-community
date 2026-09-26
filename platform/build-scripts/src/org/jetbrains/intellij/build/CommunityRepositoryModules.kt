@@ -788,7 +788,6 @@ fun groovyPlugin(additionalModules: List<String> = emptyList(), addition: ((Plug
   }
 }
 
-private const val MAVEN_DOWNLOADS_LABEL: String = "@dev_launch_maven//:files"
 
 private fun webpLayoutAssetSpec(os: OsFamily, arch: JvmArchitecture): DevPluginLayoutAssetSpec {
   return DevPluginLayoutAssetSpec(
@@ -853,15 +852,7 @@ private fun jcefLayoutAssetSpec(os: OsFamily, arch: JvmArchitecture): DevPluginL
 
 private fun mavenDistributionLayoutAssetSpec(): DevPluginLayoutAssetSpec {
   return DevPluginLayoutAssetSpec(
-    sources = listOf(
-      DevPluginLayoutAssetSource.BazelTarget(
-        label = MAVEN_DOWNLOADS_LABEL,
-        kind = "archive",
-        fileName = "apache-maven-\${bundledMavenVersion}-bin.zip",
-        prefix = "",
-      ),
-      DevPluginLayoutAssetSource.DependencyProperty("bundledMavenVersion"),
-    ),
+    sources = listOf(downloadArchive("@dev_launch_maven//:files", "apache-maven-bin.zip")),
     assets = listOf(DevPluginLayoutAsset(
       destination = "lib/maven3",
       sources = listOf(0),
@@ -873,13 +864,13 @@ private fun mavenDistributionLayoutAssetSpec(): DevPluginLayoutAssetSpec {
 private fun maven3LibrariesLayoutAssetSpec(): DevPluginLayoutAssetSpec {
   return DevPluginLayoutAssetSpec(
     sources = listOf(
-      mavenDownloadsDirectory(),
-      DevPluginLayoutAssetSource.DependencyProperty("bundledMaven3Libraries", format = "maven-coordinates"),
-      DevPluginLayoutAssetSource.DependencyProperty("bundledMavenTelemetryLibraries", format = "maven-coordinates"),
+      mavenLibrariesDirectory("@dev_launch_maven3_libraries//:files", "maven3-libraries"),
+      mavenLibrariesDirectory("@dev_launch_maven_telemetry_libraries//:files", "maven-telemetry-libraries"),
     ),
     assets = listOf(DevPluginLayoutAsset(
       destination = "lib/intellij.maven.server3",
-      sources = listOf(1, 2),
+      sources = listOf(0, 1),
+      transform = DevPluginLayoutAssetTransform.treeMap(listOf(DevPluginLayoutAssetMapping())),
       mode = 420,
     )),
   )
@@ -887,25 +878,19 @@ private fun maven3LibrariesLayoutAssetSpec(): DevPluginLayoutAssetSpec {
 
 private fun maven4LibrariesLayoutAssetSpec(): DevPluginLayoutAssetSpec {
   return DevPluginLayoutAssetSpec(
-    sources = listOf(mavenDownloadsDirectory()),
+    sources = listOf(mavenLibrariesDirectory("@dev_launch_maven_telemetry_libraries//:files", "maven-telemetry-libraries")),
     assets = listOf(DevPluginLayoutAsset(
       destination = "lib/intellij.maven.server4",
       sources = listOf(0),
-      transform = DevPluginLayoutAssetTransform.treeMap(
-        listOf(DevPluginLayoutAssetMapping(pattern = "jackson-core-*.jar")),
-      ),
+      transform = DevPluginLayoutAssetTransform.treeMap(listOf(DevPluginLayoutAssetMapping())),
       mode = 420,
     )),
   )
 }
 
-private fun mavenDownloadsDirectory(): DevPluginLayoutAssetSource.BazelTarget {
-  return DevPluginLayoutAssetSource.BazelTarget(
-    label = MAVEN_DOWNLOADS_LABEL,
-    kind = "directory",
-    fileName = "maven-downloads",
-    prefix = "",
-  )
+/** The jars of one `dev_launch_*` Maven repository, as a tree. The repository holds nothing else, so a layout names no versioned jar. */
+private fun mavenLibrariesDirectory(label: String, fileName: String): DevPluginLayoutAssetSource.BazelTarget {
+  return DevPluginLayoutAssetSource.BazelTarget(label = label, kind = "directory", fileName = fileName, prefix = "")
 }
 
 private fun downloadArchive(label: String, fileName: String): DevPluginLayoutAssetSource.BazelTarget {

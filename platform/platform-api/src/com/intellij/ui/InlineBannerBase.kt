@@ -10,6 +10,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Graphics
 import javax.swing.JEditorPane
 import javax.swing.JPanel
@@ -80,13 +81,18 @@ abstract class InlineBannerBase(
   }
 
   @ApiStatus.Internal
-  protected open fun fillBanner(g: Graphics) {
+  protected fun drawBackground(g: Graphics, fillColor: Color?, borderColor: Color?) {
     val config = GraphicsUtil.setupAAPainting(g)
     val cornerRadius = JBUI.scale(16)
-    g.color = background
+    g.color = fillColor
     g.fillRoundRect(0, 0, width, height, cornerRadius, cornerRadius)
-    g.color = status.border
+    g.color = borderColor
     g.drawRoundRect(0, 0, width - 1, height - 1, cornerRadius, cornerRadius)
     config.restore()
+  }
+
+  @ApiStatus.Internal
+  protected open fun fillBanner(g: Graphics) {
+    drawBackground(g, background, status.border)
   }
 }

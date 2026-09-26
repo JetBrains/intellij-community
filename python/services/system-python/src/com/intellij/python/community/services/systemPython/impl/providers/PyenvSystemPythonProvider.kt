@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.services.systemPython.impl.providers
 
 import com.intellij.openapi.diagnostic.Logger
@@ -20,10 +20,6 @@ internal class PyenvSystemPythonProvider : SystemPythonProvider {
   private val LOGGER: Logger = Logger.getInstance(PyenvSystemPythonProvider::class.java)
 
   override suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>> {
-    if (useLegacyPythonProvider()) {
-      return PyResult.success(emptySet())
-    }
-
     val pythons = withContext(Dispatchers.IO) {
       try {
         val env = eelApi.exec.fetchLoginShellEnvVariables()

@@ -354,9 +354,12 @@ def _project_model_tree_impl(ctx):
         outputs = [tree] + ([spans] if spans else []),
         executable = ctx.executable.materializer,
         arguments = [args],
-        # No execution requirements: this one is hermetic. It reads its manifest and the execroot-relative sources that
-        # manifest names, writes only under its output directory, and consults no environment variable, no home
-        # directory and no network - so it may be sandboxed, and both caches may keep it.
+        # Hermetic. It reads its manifest and the execroot-relative sources that manifest names, writes only under its
+        # output directory, and consults no environment variable, no home directory and no network, so it may be
+        # sandboxed and the disk cache may keep it. The remote cache may not. The output is tens of thousands of small
+        # files, every model edit re-keys it, and every consumer is a fragment that runs locally. A remote hit would
+        # download the whole tree to save a few seconds of local copying.
+        execution_requirements = {"no-remote-cache": "1"},
         resource_set = _small_tool_resources,
         mnemonic = "IntellijProjectModelTree",
         progress_message = "Materializing the project model tree %s" % ctx.label,
@@ -372,12 +375,14 @@ def _project_model_tree_impl(ctx):
 intellij_project_model_tree = rule(
     doc = """The checkout-shaped JPS project model tree that dev-distribution fragments read.
 
-    One tree per product and target platform, shared by every fragment of it. A fragment used to build its own, and at
-    7 432 file copies that cost as much as the assembly itself - affordable once, not once per fragment.
+    A consuming repository can declare one tree for many products and share it with every fragment of those products.
+    A fragment used to build its own, and at 7 432 file copies that cost as much as the assembly itself - affordable
+    once, not once per fragment.
 
     It carries the union of what the fragments need, so a file only one of them reads (the OS natives of the resources
-    fragment, say) now invalidates all of them. Those change far less often than the model does, and the model was
-    already invalidating every fragment: project files are inputs no fragment can prune, unlike the module jars.
+    fragment, or the branding of one product, say) invalidates all of them. Those change far less often than the model
+    does, and the model was already invalidating every fragment: project files are inputs no fragment can prune, unlike
+    the module jars.
     """,
     implementation = _project_model_tree_impl,
     attrs = {
@@ -602,11 +607,12 @@ def _packed_sources(record):
     """The files one packed record places: the jar, and the native tree beside it when the jar has one.
 
     A jar entry keeps the shape it had before a tree could stand beside one, with no `tree` key. A tree entry says
-    `tree`, because the collector and the composer place a directory by its members.
+    `tree`, because the collector and the composer place a directory by its members. The tree's inventory is in the
+    metadata of the action that wrote it, not in the jar's.
     """
-    sources = [struct(file = record.jar, tree = False)]
+    sources = [struct(file = record.jar, tree = False, metadata = record.metadata)]
     if record.native_tree:
-        sources.append(struct(file = record.native_tree, tree = True))
+        sources.append(struct(file = record.native_tree, tree = True, metadata = record.native_metadata))
     return sources
 
 def _metadata_catalogue(ctx, records):
@@ -615,16 +621,16 @@ def _metadata_catalogue(ctx, records):
     for record in records:
         for source in _packed_sources(record):
             previous = by_source.get(source.file.path)
-            if previous != None and previous.metadata != record.metadata:
+            if previous != None and previous.metadata != source.metadata:
                 fail("%s: conflicting metadata for %s" % (ctx.label, source.file.path))
-            by_source[source.file.path] = struct(file = source.file, metadata = record.metadata, tree = source.tree)
+            by_source[source.file.path] = struct(file = source.file, metadata = source.metadata, tree = source.tree)
     ctx.actions.write(catalogue, json.encode([
         {
             "source": source,
             "metadata": by_source[source].metadata.path,
             # The source's own base name, and not the destination the jar declares. This is the key of the packing
             # action's inventory, which `content-module-packer` writes under the output's base name. For the tree that
-            # is `native`, and its inventory shares the jar's metadata file.
+            # is `native`.
             "relativePath": by_source[source].file.basename,
         } | ({"tree": True} if by_source[source].tree else {})
         for source in sorted(by_source.keys())
@@ -667,7 +673,7 @@ def _packed_jars_component_impl(ctx):
             # collector, which reads the metadata and nothing else.
             files = jars + trees,
             collection_args = [args],
-            inputs = [catalogue, jar_list] + [record.metadata for record in records],
+            inputs = [catalogue, jar_list] + [source.metadata for record in records for source in _packed_sources(record)],
             mnemonic = "IntellijDevPackedJars",
             progress_message = "Naming %d packed %s jars and %d native trees for %%{label}" % (len(jars), ctx.attr.platform_prefix, len(trees)),
         )
@@ -707,7 +713,7 @@ def _packed_jars_component_impl(ctx):
 intellij_dev_packed_jars_component = rule(
     doc = """Collect packed platform jars or explicitly placed files into a distribution component.
 
-    Set platform_payload to collect its packed jars at lib/<filename>, and the native tree of a platform jar at
+    Set platform_payload to collect its packed jars at lib/<filename>, and the native tree of a content module jar at
     lib/<native_lib_dir>/. Alternatively, set files and executable_files to map source labels to distribution paths;
     the composer gives a file of executable_files the executable bit. The modes cannot be combined. The action reads
     only these sources and writes one manifest. The composer copies the files directly from their sources.

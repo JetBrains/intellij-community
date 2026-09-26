@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR
+import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
@@ -248,7 +249,14 @@ class PyProtocolInspection : PyInspection() {
           val elementName = if (element is PsiNameIdentifierOwner) element.name else return@forEach
 
           if (!PyTypeChecker.match(expectedMember.type, it.type, myTypeEvalContext)) {
-            registerProblem(place, PyPsiBundle.problemMessage("INSP.protocol.element.type.incompatible.with.protocol", elementName, CodifiedParam.ofReference(protocol.pyClass)))
+            val actualType = it.type
+            val message = PyPsiBundle.problemMessage("INSP.protocol.element.type.incompatible.with.protocol", elementName, CodifiedParam.ofReference(protocol.pyClass))
+            // The aligned diff (for structural members) with the assignability breakdown appended below it on-the-fly.
+            val diff = PyTypeDiff.diffTooltip(expectedMember.type, actualType, myTypeEvalContext)
+            val enriched = if (diff != null) message.copy(tooltip = diff) else message
+            registerProblemWithTooltip(place, enriched, GENERIC_ERROR_OR_WARNING) {
+              PyTypeCheckerInspectionProblemRegistrar.breakdownTooltip(enriched, expectedMember.type, actualType, myTypeEvalContext, place)
+            }
           }
           else if (expectedMember.isWritable && !it.isWritable || expectedMember.isDeletable && !it.isDeletable) {
             registerProblem(place, PyPsiBundle.problemMessage("INSP.protocol.element.type.not.writable", elementName, CodifiedParam.ofReference(protocol.pyClass)))

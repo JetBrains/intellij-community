@@ -1,0 +1,73 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.grid.structureview` start
+content_module_jar(module = ":structureview")
+### auto-generated section `dev intellij.grid.structureview` end
+
+### auto-generated section `build intellij.grid.structureview` start
+jvm_library(
+    name = "structureview",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grid.structureview",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//grid/core-impl",
+        "//grid/impl",
+        "//platform/util/concurrency",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/structure-view-impl:structureView",
+    ],
+)
+
+jvm_library(
+    name = "structureview_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grid.structureview",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":structureview",
+        "//grid/core-impl:core-impl_test_lib",
+        "//grid/impl:impl_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/structure-view-impl:structureView_test_lib",
+    ],
+)
+### auto-generated section `build intellij.grid.structureview` end
+
+### auto-generated section `iml intellij.grid.structureview` start
+exports_files(
+    [
+        "intellij.grid.structureview.iml",
+        "resources/intellij.grid.structureview.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.grid.structureview` end

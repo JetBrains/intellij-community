@@ -50,7 +50,7 @@ enum class PluginSymbolicNativeHandling {
  * A requirement at one original source position, not an executable preparation or a native entry inventory.
  * Only [PluginSymbolicNativeHandling.UNTOUCHED] proves that native handling cannot change the source.
  * Other results require Kotlin preparation to apply filters, duplicate precedence, and byte-dependent decisions.
- * Different occurrences of one [inputId] can require different preparations. Bind them by source occurrence, not raw input alone.
+ * Different occurrences of one [inputId] can have different requirements. Key them by source occurrence, not raw input alone.
  * [modelSignature] identifies this selection policy, not signing inputs or the prepared output bytes.
  */
 @ApiStatus.Internal

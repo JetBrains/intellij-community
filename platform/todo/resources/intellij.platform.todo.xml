@@ -34,6 +34,12 @@
   <!-- endregion -->
   <resource-bundle>messages.TodoBundle</resource-bundle>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.todoViewChangesSupportFactory"
+                    interface="com.intellij.ide.todo.TodoViewChangesSupportFactory"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <registryKey
       key="todo.toolwindow.split"
@@ -59,7 +65,6 @@
 
     <toolWindow id="TODO" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowTodo"
                 factoryClass="com.intellij.ide.todo.TodoToolWindowFactory" canCloseContents="true"/>
-    <projectService serviceImplementation="com.intellij.ide.todo.TodoViewChangesSupport" open="true"/>
     <projectSettings service="com.intellij.ide.todo.TodoView"/>
 
     <rdct.remoteSettingProvider implementation="com.intellij.ide.todo.settings.TodoRemoteSettingsInfoProvider"/>

@@ -8,6 +8,7 @@ import com.jetbrains.python.psi.PyDoubleStarExpression;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyKeyValueExpression;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
 import com.jetbrains.python.psi.types.PyLiteralType;
@@ -30,7 +31,7 @@ public class PyDictCompExpressionImpl extends PyComprehensionElementImpl impleme
     final var cache = PyBuiltinCache.getInstance(this);
     final var dictionary = cache.getDictType();
     if (dictionary == null) {
-      return null;
+      return PyAnyType.getUnknown();
     }
     // PEP 798: {**d for d in dicts} — key/value types come from the unpacked mapping
     if (resultExpr instanceof PyDoubleStarExpression doubleStarExpression) {

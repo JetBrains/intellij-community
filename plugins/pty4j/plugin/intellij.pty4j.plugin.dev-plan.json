@@ -5,32 +5,6 @@
     "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
-            "destination": "lib/modules/intellij.libraries.jna.jar",
-            "recipe": {
-                "sources": [
-                    {
-                        "input": "intellij.libraries.jna",
-                        "kind": "module",
-                        "filter": "module-v1"
-                    },
-                    {
-                        "input": "@lib//:net.java.dev.jna/jna-platform-5.19.1.jar",
-                        "kind": "archive",
-                        "filter": "library-v1"
-                    },
-                    {
-                        "input": "native-select:c8993745404a01a7de270806:output",
-                        "kind": "prepared",
-                        "filter": "prepared"
-                    }
-                ],
-                "writer": {
-                    "manifest": "drop",
-                    "mergeEntities": true
-                }
-            }
-        },
-        {
             "destination": "lib/modules/intellij.libraries.pty4j.jar",
             "recipe": {
                 "sources": [
@@ -40,16 +14,25 @@
                         "filter": "module-v1"
                     },
                     {
-                        "input": "native-select:128c84449b8d6c2ab6b3f032:output",
-                        "kind": "prepared",
-                        "filter": "prepared"
+                        "input": "@lib//:libraries-pty4j-pty4j",
+                        "kind": "library",
+                        "filter": "library-v1"
                     }
                 ],
                 "writer": {
-                    "manifest": "keep",
-                    "mergeEntities": true
+                    "mergeEntities": true,
+                    "nativeLib": "pty4j"
                 }
             }
+        },
+        {
+            "destination": "lib/pty4j",
+            "inputs": [
+                "native-tree:intellij.libraries.pty4j"
+            ],
+            "kind": "tree",
+            "classPath": false,
+            "scope": "distribution"
         },
         {
             "destination": "lib/pty4j-plugin.jar",
@@ -74,68 +57,6 @@
                     "mergeEntities": true
                 }
             }
-        },
-        {
-            "destination": "lib/jna",
-            "inputs": [
-                "native-select:c8993745404a01a7de270806:output"
-            ],
-            "kind": "tree",
-            "classPath": false,
-            "scope": "distribution"
-        },
-        {
-            "destination": "lib/pty4j",
-            "inputs": [
-                "native-select:128c84449b8d6c2ab6b3f032:output"
-            ],
-            "kind": "tree",
-            "classPath": false,
-            "scope": "distribution"
-        }
-    ],
-    "preparations": [
-        {
-            "id": "native-select:c8993745404a01a7de270806",
-            "inputs": [
-                "@lib//:net.java.dev.jna/jna-5.19.1.jar"
-            ],
-            "outputs": [
-                "native-select:c8993745404a01a7de270806:output"
-            ],
-            "modelSignature": "9b963xy2rywd369q7ntd5sex1"
-        },
-        {
-            "id": "native-select:128c84449b8d6c2ab6b3f032",
-            "inputs": [
-                "@lib//:libraries-pty4j-pty4j"
-            ],
-            "outputs": [
-                "native-select:128c84449b8d6c2ab6b3f032:output"
-            ],
-            "modelSignature": "3av6twz0u4bute28mqdi4suzm"
-        }
-    ],
-    "operations": [
-        {
-            "id": "native-select:c8993745404a01a7de270806",
-            "kind": "native-select",
-            "input": {
-                "artifact": "@lib//:net.java.dev.jna/jna-5.19.1.jar"
-            },
-            "output": "native-select:c8993745404a01a7de270806:output",
-            "manifest": "keep",
-            "filter": "library"
-        },
-        {
-            "id": "native-select:128c84449b8d6c2ab6b3f032",
-            "kind": "native-select",
-            "input": {
-                "artifact": "@lib//:libraries-pty4j-pty4j"
-            },
-            "output": "native-select:128c84449b8d6c2ab6b3f032:output",
-            "manifest": "keep",
-            "filter": "library"
         }
     ]
 }

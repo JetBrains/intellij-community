@@ -13,6 +13,8 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 @ApiStatus.Internal
 interface ChangeListsApi : RemoteApi<Unit> {
+  suspend fun hasActiveVcss(projectId: ProjectId): Flow<Boolean>
+
   suspend fun areChangeListsEnabled(projectId: ProjectId): Flow<Boolean>
 
   suspend fun getChangeListManagerState(projectId: ProjectId): Flow<ChangeListManagerState>

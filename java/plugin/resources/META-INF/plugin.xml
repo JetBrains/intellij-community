@@ -97,6 +97,7 @@
     <module name="intellij.java.debugger.impl.backend"/>
     <module name="intellij.java.execution.impl.frontend"/>
     <module name="intellij.java.execution.impl.backend"/>
+    <module name="intellij.java.execution.impl.dashboard"/>
     <module name="intellij.java.ultimate.icons" loading="optional"/>
     <module name="intellij.java.langInjection"/>
     <module name="intellij.java.langInjection.jps"/>

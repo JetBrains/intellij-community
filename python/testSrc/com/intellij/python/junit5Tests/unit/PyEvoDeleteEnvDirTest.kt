@@ -9,8 +9,12 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.DisabledOnOs
+import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermissions
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.io.path.div
@@ -61,5 +65,34 @@ class PyEvoDeleteEnvDirTest {
   @Test
   fun `a directory that is not there is refused rather than reported as deleted`(@TempDir tmp: Path) = runTest {
     assertInstanceOf(Result.Failure::class.java, deleteEnvDir(tmp / "gone"))
+  }
+
+  /**
+   * An environment the OS will not let go of is reported as in use, not as a bare failure (PY-92488).
+   *
+   * The real case is Windows, where a running interpreter's own `python.exe` cannot be deleted while the process
+   * lives. That cannot be staged here, so the same refusal is produced the one way POSIX offers: a directory the
+   * walker may not write to. What this pins is the classification — that an `AccessDeniedException` reaches the user
+   * as its own message — and the message is what tells them there is something to stop.
+   */
+  @Test
+  @DisabledOnOs(OS.WINDOWS, disabledReason = "Staged via POSIX directory permissions, which Windows does not honour")
+  fun `an environment that cannot be deleted is reported as in use`(@TempDir tmp: Path) = runTest {
+    val env = venvAt(tmp / "env")
+    val sealed = (env / "bin")
+    val original = Files.getPosixFilePermissions(sealed)
+    // Read and execute, so the walk still enters the directory and finds the interpreter — it is the unlink of the
+    // entry inside that is refused, which is the shape of the Windows failure.
+    Files.setPosixFilePermissions(sealed, PosixFilePermissions.fromString("r-xr-xr-x"))
+    try {
+      val result = deleteEnvDir(env)
+      assertInstanceOf(Result.Failure::class.java, result)
+      val message = (result as Result.Failure).error.message
+      assertTrue(message.contains("in use"), "expected the environment to be reported as in use, got: $message")
+      assertTrue(env.exists(), "a refused delete must leave the environment standing")
+    }
+    finally {
+      Files.setPosixFilePermissions(sealed, original)
+    }
   }
 }

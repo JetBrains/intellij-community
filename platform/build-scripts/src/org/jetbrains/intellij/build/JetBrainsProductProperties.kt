@@ -14,7 +14,6 @@ import com.jetbrains.plugin.structure.base.problems.InvalidPluginName
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
-import com.jetbrains.plugin.structure.intellij.problems.IdeBuildComponentsOutOfRange
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.ProhibitedModuleExposed
 import com.jetbrains.plugin.structure.intellij.problems.ReleaseDateInFuture
@@ -48,6 +47,22 @@ val knownMissingModuleDependencies: List<String> = java.util.List.of(
   "intellij.python.frontend",
 )
 
+/**
+ * The presigned native libraries of every JetBrains product: the Maven artifact name of each, as
+ * `getLibNameBySourceFile` reads it, to its folder under `lib/`. See [ProductProperties.presignedNativeLibs].
+ *
+ * One map for all products, because the dev distribution packs a content module jar once for all of them. Only the
+ * language servers ship `intellij-deps-rocksdbjni`.
+ */
+val PRESIGNED_NATIVE_LIBS: Map<String, String> = mapOf(
+  "pty4j" to "pty4j",
+  "jna" to "jna",
+  "native" to "native", // sqlite-native
+  "async-profiler" to "async-profiler",
+  "skiko-awt-runtime-all" to "skiko-awt-runtime-all",
+  "intellij-deps-rocksdbjni" to "rocksdbjni",
+)
+
 private val ALLOWED_PLUGIN_VENDORS: Set<String> = java.util.Set.of(
   "JetBrains", "JetBrains s.r.o.",
   "JetBrains, Google",
@@ -60,13 +75,7 @@ private val ALLOWED_PLUGIN_VENDORS: Set<String> = java.util.Set.of(
 abstract class JetBrainsProductProperties : ProductProperties() {
   init {
     scrambleMainJar = true
-    presignedNativeLibs = mapOf(
-      "pty4j" to "pty4j",
-      "jna" to "jna",
-      "native" to "native", // sqlite-native
-      "async-profiler" to "async-profiler",
-      "skiko-awt-runtime-all" to "skiko-awt-runtime-all",
-    )
+    presignedNativeLibs = PRESIGNED_NATIVE_LIBS
     includeIntoSourcesArchiveFilter = BiPredicate(::isCommunityModule)
     sbomOptions.creator = "Organization: ${Suppliers.JETBRAINS}"
     sbomOptions.license = SoftwareBillOfMaterials.Options.DistributionLicense.JETBRAINS
@@ -128,9 +137,6 @@ private fun isIntentionallyIgnored(problem: PluginProblem, pluginId: String?): B
       pluginId == "com.intellij.ko" || // Korean Language Pack / 한국어 언어 팩
       pluginId == "com.intellij.ja" || // Japanese Language Pack / 日本語言語パック
       pluginId == "com.intellij.clion.west" // CLion Integration for Zephyr® Project
-    is IdeBuildComponentsOutOfRange ->
-      // FIXME MP-8565, MRI-5336: KMM writes the monorepo SNAPSHOT marker to since-build
-      pluginId == "com.jetbrains.kmm"
     /**
      * According to https://plugins.jetbrains.com/docs/marketplace/add-required-parameters.html:
      * > Please make sure the `release-version` and the `version` parameters match.

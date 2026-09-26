@@ -865,10 +865,10 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           complex(False)
           divmod(False, False)
           divmod('foo', u'bar')
-      #         ^^^^^^^^^^^^^^^ WARNING No overload of 'divmod' matches the arguments. Argument types: (Literal["foo"], Literal["bar"]). Expected one of: (x: SupportsDivMod[_T_contra, _T_co], y: str), (x: str, y: SupportsRDivMod[str, _T_co])
+      #         ^^^^^^^^^^^^^^^ WARNING No overload of 'divmod' matches the arguments. Argument types: (Literal["foo"], Literal["bar"]). Expected one of: (x: SupportsDivMod[_T_contra, _T_co], y: _T_contra), (x: _T_contra, y: SupportsRDivMod[_T_contra, _T_co])
           pow(False, True)
           round(False, 'foo')
-      #        ^^^^^^^^^^^^^^ WARNING No overload of 'round' matches the arguments. Argument types: (Literal[False], Literal["foo"]). Expected one of: (number: _SupportsRound1[int], ndigits: None), (number: _SupportsRound2[int], ndigits: SupportsIndex)
+      #        ^^^^^^^^^^^^^^ WARNING No overload of 'round' matches the arguments. Argument types: (Literal[False], Literal["foo"]). Expected one of: (number: _SupportsRound1[_T], ndigits: None), (number: _SupportsRound2[_T], ndigits: SupportsIndex)
       """.trimIndent())
 
     @Test

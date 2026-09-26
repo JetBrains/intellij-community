@@ -10,7 +10,8 @@ import com.jetbrains.python.PythonInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.hatch.HATCH_TOML
@@ -65,7 +66,8 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
     module: Module, checkToml: CheckToml,
   ): EnvCheckerResult = reportRawProgress {
     it.text(PyBundle.message("sdk.set.up.hatch.project.analysis"))
-    val hatchService = module.getHatchService(localEel.toFileSystem()).getOr { return EnvCheckerResult.CannotConfigure }
+    val eel = module.project.getEelDescriptor().toEelApi()
+    val hatchService = module.getHatchService(eel.toFileSystem()).getOr { return EnvCheckerResult.CannotConfigure }
     val canManage = if (checkToml) hatchService.isHatchManagedProject() else true
     val intentionName = PyBundle.message("sdk.set.up.hatch.environment")
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
@@ -96,7 +98,7 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
     project = module.project,
     msg = PyBundle.message("sdk.set.up.hatch.environment")
   ) {
-    val fileSystem = localEel.toFileSystem()
+    val fileSystem = module.project.getEelDescriptor().toEelApi().toFileSystem()
     val hatchExecutablePath = HatchPyTool.getInstance().resolveExecutable(fileSystem)
                               ?: return@runWithModalBlockingOrInBackground Result.failure(HatchExecutableNotFoundHatchError(null))
     val hatchService = module.getHatchService(fileSystem, hatchExecutablePath.path).getOr { return@runWithModalBlockingOrInBackground it }

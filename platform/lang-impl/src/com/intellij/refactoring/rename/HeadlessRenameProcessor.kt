@@ -241,8 +241,9 @@ private fun headlessProcessorsOf(element: PsiElement): HeadlessProcessorLookup {
   val interactiveProcessor = RenamePsiElementProcessorBase.forPsiElement(element)
   return if (interactiveProcessor is RenamePsiElementProcessorBase.DefaultRenamePsiElementProcessor) {
     HeadlessProcessorLookup.Found(emptyList())
+  } else {
+    HeadlessProcessorLookup.Missing(interactiveProcessor.javaClass)
   }
-  else HeadlessProcessorLookup.Missing(interactiveProcessor.javaClass)
 }
 
 /**
@@ -406,8 +407,11 @@ internal class HeadlessRenameDriver(
     writeRefusal?.let {
       return HeadlessRenameResult.Failed(HeadlessRenameFailure.WRITE_FAILED, it.detail())
     }
-    return if (performed) HeadlessRenameResult.Applied(usages.size, affectedFiles, skippedFiles.toList(), notes)
-    else HeadlessRenameResult.Failed(HeadlessRenameFailure.UNKNOWN, "The write action did not reach the rename.")
+    return if (performed) {
+      HeadlessRenameResult.Applied(usages.size, affectedFiles, skippedFiles.toList(), notes)
+    } else {
+      HeadlessRenameResult.Failed(HeadlessRenameFailure.UNKNOWN, "The write action did not reach the rename.")
+    }
   }
 
   /**
@@ -649,6 +653,7 @@ internal class HeadlessRenameDriver(
     }
     catch (e: Throwable) {
       rethrowControlFlowException(e)
+      LOG.warn("The rename of $primaryElement stopped while it wrote", e)
       //provides notifications
       writeRefusal = WriteRefusal(e.message, renamedBefore(primaryElement), myAllRenames.size)
       return

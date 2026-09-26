@@ -74,6 +74,7 @@ dev_dist_plugin(
         "intellij.java.debugger.impl.backend",
         "intellij.java.execution.impl.frontend",
         "intellij.java.execution.impl.backend",
+        "intellij.java.execution.impl.dashboard",
         "intellij.java.langInjection",
         "intellij.java.langInjection.jps",
         "intellij.java.copyright",

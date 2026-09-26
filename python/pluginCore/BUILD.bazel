@@ -265,12 +265,9 @@ dev_dist_plugin(
 
 dev_dist_complex_plugin(
     artifact_inputs = {
-        "//python:python-community-impl.jar": "intellij.python.community.impl",
         "//python/pluginCore:community-plugin.jar": "intellij.python.community.plugin",
         "//commandInterface:commandInterface.jar": "intellij.commandInterface",
-        "//python/intellij.python.ml.features:ml-features.jar": "intellij.python.ml.features",
         "//libraries/jsr305:jsr305.jar": "intellij.libraries.jsr305",
-        "//libraries/libthrift:libthrift.jar": "intellij.libraries.libthrift",
         "//libraries/mlapi/catboost:catboost.jar": "intellij.libraries.mlapi.catboost",
         "//libraries/tuweni/toml:toml.jar": "intellij.libraries.tuweni.toml",
     },
@@ -327,6 +324,7 @@ dev_dist_complex_plugin(
         "//python/python-core-impl:community-core-impl_content_module_jar",
         "//python/impl.helperLocator:community-helpersLocator_content_module_jar",
         "//python/openapi:community_content_module_jar",
+        "//python:python-community-impl_content_module_jar",
         "//python/jcef:jcef_content_module_jar",
         "//python/python-exec-service:community-execService_content_module_jar",
         "//python/python-exec-service/execService.python:execService.python_content_module_jar",
@@ -355,6 +353,7 @@ dev_dist_complex_plugin(
         "//python/python-markdown:markdown_content_module_jar",
         "//python/python-minimap:minimap_content_module_jar",
         "//python/mcp:mcp_content_module_jar",
+        "//python/intellij.python.ml.features:ml-features_content_module_jar",
         "//python/terminal/shared:shared_content_module_jar",
         "//python/terminal/backend:backend_content_module_jar",
         "//python/terminal/frontend:frontend_content_module_jar",
@@ -368,13 +367,10 @@ dev_dist_complex_plugin(
         "//python/python-ruff:ruff_content_module_jar",
         "//python/python-pyrefly:pyrefly_content_module_jar",
         "//python/python-pyright:pyright_content_module_jar",
+        "//libraries/libthrift:libthrift_content_module_jar",
     ],
     libraries = {
-        "@lib//:python-community-impl-ml-completion-prev-exprs-models": "@lib//:python-community-impl-ml-completion-prev-exprs-models",
-        "@lib//:python-community-impl-completion-ranking-python-with-full-line": "@lib//:python-community-impl-completion-ranking-python-with-full-line",
-        "@lib//:python-ml-features-jetbrains-ml-models-python-imports-ranking-model": "@lib//:python-ml-features-jetbrains-ml-models-python-imports-ranking-model",
         "@lib//:libraries-jsr305-jsr305": "@lib//:libraries-jsr305-jsr305",
-        "@lib//:libraries-libthrift-libthrift": "@lib//:libraries-libthrift-libthrift",
         "@lib//:libraries-mlapi-catboost-jetbrains-mlapi-catboost": "@lib//:libraries-mlapi-catboost-jetbrains-mlapi-catboost",
         "@lib//:libraries-mlapi-catboost-jetbrains-mlapi-catboost-shadow-need-slf4j": "@lib//:libraries-mlapi-catboost-jetbrains-mlapi-catboost-shadow-need-slf4j",
         "@lib//:libraries-tuweni-toml-tuweni-toml": "@lib//:libraries-tuweni-toml-tuweni-toml",

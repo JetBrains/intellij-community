@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal">
+<idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.rhizomedb"/>
@@ -33,12 +33,19 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <module value="com.intellij.modules.execution.dashboard"/>
   <resource-bundle>messages.ActionsBundle</resource-bundle>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.runDashboardManagerProxy"
                     interface="com.intellij.execution.dashboard.RunDashboardManagerProxy" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.runDashboardGroupingRule"
                     interface="com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardGroupingRule" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.runDashboardDefaultTypesProvider"
+                    interface="com.intellij.execution.dashboard.RunDashboardDefaultTypesProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.runDashboardCustomizer"
+                    interface="com.intellij.execution.dashboard.RunDashboardCustomizer" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.legacyRunDashboardServiceSubstitutor"
+                    interface="com.intellij.execution.dashboard.LegacyRunDashboardServiceSubstitutor" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

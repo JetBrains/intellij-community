@@ -22,6 +22,8 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.keymap.impl.ActionProcessor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Key
@@ -49,6 +51,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -59,8 +62,11 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import java.awt.event.KeyEvent
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import javax.swing.JLabel
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
@@ -656,6 +662,41 @@ class ActionUpdaterTest {
     finally {
       registryKey.setValue(prevValue)
     }
+  }
+
+  @Test
+  fun testSuspendedEdtWriteActionDoesNotDeadlockUpdateForInputEvent() = timeoutRunBlocking {
+    // scenario: EDT updates a BGT action for an input event, and a suspended edtWriteAction starts during the update (IJPL-255143)
+    // expected: the write action does not take the write lock while EDT blocks, so the update and the write action both complete
+    val updateCount = AtomicInteger(0)
+    val updateStarted = CompletableDeferred<Unit>()
+    val action = object : AnAction() {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+      override fun actionPerformed(e: AnActionEvent) {}
+      override fun update(e: AnActionEvent) {
+        if (updateCount.getAndIncrement() == 0) {
+          updateStarted.complete(Unit)
+          // a pending write action cancels this read action, and the retry needs the read lock again
+          repeat(100) {
+            ProgressManager.checkCanceled()
+            TimeoutUtil.sleep(10)
+          }
+        }
+      }
+    }
+    val writeAction = launch(Dispatchers.Default) {
+      updateStarted.await()
+      edtWriteAction {}
+    }
+    val presentation = withContext(Dispatchers.UI) {
+      val inputEvent = KeyEvent(JLabel(), KeyEvent.KEY_PRESSED, 0L, 0, KeyEvent.VK_UNDEFINED, '\u0000')
+      Utils.runUpdateSessionForInputEvent(listOf(action), inputEvent, Utils.createAsyncDataContext(DataContext.EMPTY_CONTEXT),
+                                          ActionPlaces.KEYBOARD_SHORTCUT, object : ActionProcessor() {}, PresentationFactory()) { _, updater, _ ->
+        updater(action)
+      }
+    }
+    writeAction.join()
+    assertTrue(presentation != null, "The update must complete")
   }
 
   private suspend fun assertCyclicDependencyReported(group: ActionGroup) {

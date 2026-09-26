@@ -18,7 +18,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
@@ -114,13 +114,13 @@ interface UiPluginManagerController {
 
   suspend fun setPluginsAutoUpdateEnabled(enabled: Boolean)
 
-  suspend fun getPendingPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSourceId?
-  suspend fun getPendingPluginUpdateSources(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, PluginUpdateSourceId>
-  suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?)
-  suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?)
+  suspend fun getPendingPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSource?
+  suspend fun getPendingPluginUpdateSources(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, PluginUpdateSource>
+  suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSource?)
+  suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSource?)
   fun isPluginUpdateSourceVisibleInUI(): Boolean
   fun isMissingUpdateSourceWarningEnabled(): Boolean
-  suspend fun getAllPluginUpdateSources(): List<PluginUpdateSourceId>
+  suspend fun getAllPluginUpdateSources(): List<PluginUpdateSource>
 
   companion object {
     val EP_NAME: ExtensionPointName<UiPluginManagerController> = ExtensionPointName("com.intellij.uiPluginManagerController")

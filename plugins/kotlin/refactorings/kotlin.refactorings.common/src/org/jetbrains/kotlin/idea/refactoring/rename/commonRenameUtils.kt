@@ -90,8 +90,11 @@ internal fun <T> runProcessWithProgressIfOnEdt(
     project: Project,
     action: () -> T,
 ): T =
-    if (EDT.isCurrentThreadEdt()) runProcessWithProgressSynchronously(progressTitle, canBeCancelled = true, project, action)
-    else runReadActionBlocking(action)
+    if (EDT.isCurrentThreadEdt()) {
+        runProcessWithProgressSynchronously(progressTitle, canBeCancelled = true, project, action)
+    } else {
+        runReadActionBlocking(action)
+    }
 
 /**
  * Runs [computable] in a read action, and shows a modal progress only where one is of use.
@@ -104,8 +107,11 @@ internal fun <T> underModalProgressIfOnEdt(
     @NlsContexts.ProgressTitle progressTitle: String,
     computable: () -> T,
 ): T =
-    if (EDT.isCurrentThreadEdt()) ActionUtil.underModalProgress(project, progressTitle) { computable() }
-    else runReadActionBlocking(computable)
+    if (EDT.isCurrentThreadEdt()) {
+        ActionUtil.underModalProgress(project, progressTitle) { computable() }
+    } else {
+        runReadActionBlocking(computable)
+    }
 
 fun checkConflictsAndReplaceUsageInfos(
     element: PsiElement,

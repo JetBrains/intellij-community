@@ -479,6 +479,8 @@ private fun pumpWaiting(jobQueue: MessageQueue) {
   var job = jobQueue.current
   if (job != null) {
     if (job.bus.isDisposed) {
+      // the queue is thread-local, so a job left in it must not fail every later publish on this thread
+      jobQueue.current = null
       MessageBusImpl.LOG.error("Accessing disposed message bus ${job.bus} (job=$job)")
     }
     else {
@@ -497,6 +499,18 @@ private fun pumpWaiting(jobQueue: MessageQueue) {
 }
 
 private fun deliverMessage(job: Message, jobQueue: MessageQueue, prevError: Throwable?): Throwable? {
+  try {
+    return doDeliverMessage(job = job, jobQueue = jobQueue, prevError = prevError)
+  }
+  finally {
+    // a normal exit never leaves the job current; an abnormal one (e.g., a throwing logger) must not leave it either
+    if (jobQueue.current === job) {
+      jobQueue.current = null
+    }
+  }
+}
+
+private fun doDeliverMessage(job: Message, jobQueue: MessageQueue, prevError: Throwable?): Throwable? {
   ClientId.withExplicitClientId(job.clientId).use {
     jobQueue.current = job
     val handlers = job.handlers
@@ -818,7 +832,10 @@ private fun mergeErrors(prevError: Throwable?, newError: Throwable): Throwable {
     return newError
   }
   else {
-    prevError.addSuppressed(newError)
+    // a failed service rethrows one cached exception, so several handlers can throw the same object
+    if (prevError !== newError) {
+      prevError.addSuppressed(newError)
+    }
     return prevError
   }
 }

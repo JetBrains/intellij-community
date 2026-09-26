@@ -115,6 +115,12 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+    final PyType type = getBuiltinOrLiteralType();
+    // The type is null only when the project has no builtins.
+    return type != null ? type : PyAnyType.getUnknown();
+  }
+
+  private @Nullable PyType getBuiltinOrLiteralType() {
     final PyFile file = PyUtil.as(FileContextUtil.getContextFile(this), PyFile.class);
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(file == null ? this : file);
     final LanguageLevel languageLevel = file == null ? LanguageLevel.forElement(this) : file.getLanguageLevel();
@@ -125,7 +131,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl
         String prefix = PyStringLiteralCoreUtil.getPrefix(firstNode.getText());
         if (PyStringLiteralUtil.isTemplatePrefix(prefix)) {
           if (languageLevel.isOlderThan(LanguageLevel.PYTHON314)) {
-            return PyBuiltinCache.getInstance(this).getStrType();
+            return builtinCache.getStrType();
           }
           PyClassType templateClassType = getTemplateClassType();
           if (templateClassType != null) {
@@ -148,10 +154,9 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl
                                                                           (file != null &&
                                                                            file.hasImportFromFuture(FutureFeature.UNICODE_LITERALS)));
       if (PyTokenTypes.UNICODE_NODES.contains(type)) {
-        var result = languageLevel.isPython2() || !PyLiteralType.inferLiteralTypeForLiteralExpressions()
+        return languageLevel.isPython2() || !PyLiteralType.inferLiteralTypeForLiteralExpressions()
                ? builtinCache.getUnicodeType(languageLevel)
                : PyLiteralType.stringLiteral(this, getStringValue());
-        return result == null ? PyAnyType.getUnknown() : result;
       }
     }
     return builtinCache.getStrType();

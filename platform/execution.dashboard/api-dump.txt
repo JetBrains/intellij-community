@@ -1,0 +1,28 @@
+com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
+- a:addLink(java.lang.String,java.lang.Runnable):com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
+- a:addText(java.lang.String,com.intellij.ui.SimpleTextAttributes):com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
+- a:setClearText():com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
+- a:setIcon(javax.swing.Icon):com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
+a:com.intellij.execution.dashboard.RunDashboardCustomizer
+- sf:CUSTOMIZER_EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- sf:NODE_LINKS:com.intellij.openapi.util.Key
+- <init>():V
+- getPsiElement(com.intellij.execution.configurations.RunConfiguration):com.intellij.psi.PsiElement
+- a:isApplicable(com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.ui.RunContentDescriptor):Z
+- updatePresentation(com.intellij.execution.dashboard.RunDashboardCustomizationBuilder,com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.ui.RunContentDescriptor):Z
+- updatePresentation(com.intellij.ide.projectView.PresentationData,com.intellij.execution.dashboard.RunDashboardRunConfigurationNode):Z
+com.intellij.execution.dashboard.RunDashboardDefaultTypesProvider
+- a:getDefaultTypeIds(com.intellij.openapi.project.Project):java.util.Collection
+com.intellij.execution.dashboard.RunDashboardRunConfigurationNode
+- a:getConfigurationSettings():com.intellij.execution.RunnerAndConfigurationSettings
+- a:getContent():com.intellij.ui.content.Content
+- a:getDescriptor():com.intellij.execution.ui.RunContentDescriptor
+a:com.intellij.execution.dashboard.actions.ExecutorAction
+- com.intellij.openapi.project.DumbAwareAction
+- p:<init>():V
+- p:<init>(java.lang.String,java.lang.String,javax.swing.Icon):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- pa:getExecutor():com.intellij.execution.Executor
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+- pa:update(com.intellij.openapi.actionSystem.AnActionEvent,Z):V

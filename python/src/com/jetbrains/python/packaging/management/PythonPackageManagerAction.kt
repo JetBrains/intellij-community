@@ -11,6 +11,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -81,13 +82,40 @@ internal abstract class PythonPackageManagerAction<T : PythonPackageManager, V> 
           runReadAction {
             DaemonCodeAnalyzer.getInstance(psiFile.project).restart(psiFile, "PythonPackageManagerAction")
           }
-          manager.sdk.associatedModuleDir?.refresh(true, false)
+          manager.sdk.associatedModuleDir?.let { refreshAfterToolRun(it) }
         }
       }
     }
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+}
+
+/**
+ * Makes what the tool just wrote into [dir] visible — a `uv.lock` that was not there before, a rewritten `poetry.lock`.
+ *
+ * [VirtualFile.refresh] is not enough for a file that is *new*, which is why this exists. It does nothing at all unless
+ * the directory is already marked dirty, since an asynchronous non-recursive refresh does not force the mark
+ * (`RefreshSessionImpl.scan`: `forceRefresh = !recursive && !async`), and the only thing that would have marked it is
+ * the file watcher. Where the watcher does report the write, the refresh that follows is the watcher's own and arrives
+ * a moment later; where it does not — a container, a network filesystem, anything the backend cannot watch — nothing
+ * ever marks it and the file simply never appears.
+ *
+ * So the directory is marked here, and its children are re-listed first: a refresh only diffs names it can see, and
+ * only a directory whose children are all loaded is listed in full (`RefreshWorker.processQueue` picks
+ * `fullDirRefresh` over `partialDirRefresh` on `allChildrenLoaded`). Without that, a name VFS has never heard of is not
+ * looked for at all.
+ *
+ * Split mode is where this is felt, because there is no second chance there: the frontend's project tree is the
+ * backend's, pushed over RPC, and what pushes it is the backend's own `VFileCreateEvent`. No event, no node — the file
+ * stays invisible until something else happens to refresh that directory (PY-92487).
+ *
+ * Asynchronous, because this runs off the EDT inside the packaging command and a synchronous refresh would block it.
+ * Non-recursive: every one of these tools writes its lock file directly into the project directory, and descending from
+ * there would walk `.venv` and everything else under it.
+ */
+private fun refreshAfterToolRun(dir: VirtualFile) {
+  VfsUtil.markDirtyAndRefresh(true, false, true, dir)
 }
 
 internal inline fun <reified T : PythonPackageManager> AnActionEvent.getPythonPackageManager(): T? {

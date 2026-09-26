@@ -2,7 +2,7 @@
 package com.intellij.openapi.application
 
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.updateSettings.impl.createNightlyAndMarketplacePluginUpdateSourceId
@@ -184,70 +184,6 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
     }
   }
 
-  @Test
-  fun `plugin update sources allow updates from compatible source type`() {
-    val service = PluginUpdateSourceService.getInstance()
-    val firstMarketplace = service.createMarketplacePluginUpdateSourceId()
-    val secondMarketplace = service.createMarketplacePluginUpdateSourceId()
-    val firstNightlyRepositoryUrl = "https://nightly.example.com"
-    val secondNightlyRepositoryUrl = "https://nightly2.example.com"
-
-    withSystemProperty<RuntimeException>(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY,
-                                         "$firstNightlyRepositoryUrl,$secondNightlyRepositoryUrl") {
-      val firstNightlyRepository = service.createCustomRepositoryPluginUpdateSourceId(firstNightlyRepositoryUrl)
-      val secondNightlyRepository = service.createCustomRepositoryPluginUpdateSourceId(secondNightlyRepositoryUrl)
-      val firstCustomRepository = service.createCustomRepositoryPluginUpdateSourceId("https://custom.example.com")
-      val sameFirstCustomRepository = service.createCustomRepositoryPluginUpdateSourceId("https://custom.example.com")
-      val secondCustomRepository = service.createCustomRepositoryPluginUpdateSourceId("https://custom2.example.com")
-      val nightlyRepo = createNightlyPluginUpdateSourceId()
-
-      assertCanInstallUpdatesFromSymmetricallyOnlyWithinLists(
-        listOf(firstMarketplace, secondMarketplace),
-        listOf(firstNightlyRepository, secondNightlyRepository, nightlyRepo),
-        listOf(firstCustomRepository, sameFirstCustomRepository),
-        listOf(secondCustomRepository),
-      )
-
-      val nightlyAndMarketplaceSource = createNightlyAndMarketplacePluginUpdateSourceId()
-      for (source in listOf(firstNightlyRepository, secondNightlyRepository, nightlyRepo, firstMarketplace, secondMarketplace)) {
-        assertCanInstallUpdatesFrom(nightlyAndMarketplaceSource, source, true)
-      }
-
-      for (source in listOf(firstCustomRepository, sameFirstCustomRepository, secondCustomRepository)) {
-        assertCanInstallUpdatesFrom(nightlyAndMarketplaceSource, source, false)
-      }
-    }
-  }
-
-  private fun assertCanInstallUpdatesFrom(first: PluginUpdateSourceId, second: PluginUpdateSourceId, canInstallUpdates: Boolean) {
-    val message = "Should ${if (canInstallUpdates) "" else "not "}be able to install updates: $first from $second"
-    assertEquals(canInstallUpdates, first.canInstallUpdatesFrom(second), message)
-  }
-
-  private fun assertCanInstallUpdatesFromSymmetricallyOnlyWithinLists(vararg lists: List<PluginUpdateSourceId>) {
-    for (list in lists) {
-      for (firstIndex in list.indices) {
-        for (secondIndex in firstIndex + 1 until list.size) {
-          val first = list[firstIndex]
-          val second = list[secondIndex]
-          assertCanInstallUpdatesFrom(first, second, true)
-          assertCanInstallUpdatesFrom(second, first, true)
-        }
-      }
-    }
-
-    for (firstListIndex in lists.indices) {
-      for (secondListIndex in firstListIndex + 1 until lists.size) {
-        for (first in lists[firstListIndex]) {
-          for (second in lists[secondListIndex]) {
-            assertCanInstallUpdatesFrom(first, second, false)
-            assertCanInstallUpdatesFrom(second, first, false)
-          }
-        }
-      }
-    }
-  }
-
   private fun setMarketplacePlugins(plugins: List<RepositoryPluginMock>, knownPluginIds: Collection<String>) {
     server.createContext("/plugins/files/pluginsXMLIds.json") { handler ->
       handler.sendResponseHeaders(200, 0)
@@ -288,10 +224,10 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
                                allowBundledUpdate)
   }
 
-  private fun setPluginUpdateSources(pluginUpdateSourceId: PluginUpdateSourceId, vararg pluginIds: String) {
+  private fun setPluginUpdateSources(pluginUpdateSource: PluginUpdateSource, vararg pluginIds: String) {
     pluginIds.forEach { pluginId ->
       val id = PluginId.getId(pluginId)
-      PluginUpdateSourceService.getInstance().setPluginUpdateSourceId(id, pluginUpdateSourceId)
+      PluginUpdateSourceService.getInstance().setPluginUpdateSourceId(id, pluginUpdateSource)
       updateSourcePluginIds.add(id)
     }
   }

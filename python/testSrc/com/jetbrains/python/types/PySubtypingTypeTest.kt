@@ -625,7 +625,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       # PY-25989
       assert_type(max(1, 2.6), float | int)
       assert_type(max(2.6, 1), float | int)
-      max(1, object()) # WARNING Expected type 'Literal[1]' (matched generic type 'SupportsRichComparisonT ≤: SupportsDunderLT[Any] | SupportsDunderGT[Any]'), got 'object' instead
+      max(1, object()) # WARNING No overload of 'max' matches the arguments. Argument types: (Literal[1], object). Expected one of: (arg1: SupportsRichComparisonT, arg2: SupportsRichComparisonT, *_args: tuple[SupportsRichComparisonT, ...], key: None), (arg1: _T, arg2: _T, *_args: tuple[_T, ...], key: (_T) -> SupportsDunderLT[Any] | SupportsDunderGT[Any])
 
 
       def bar[T: int, str](v1: T, v2: T) -> T:
@@ -987,7 +987,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       b = B()
 
-      open(b) # WARNING Expected type 'int | str | bytes | PathLike[str] | PathLike[bytes]', got 'B' instead
+      open(b) # WARNING No overload of 'open' matches the arguments. Argument types: (B). Expected one of: (file: int | str | bytes | PathLike[str] | PathLike[bytes], mode: Literal["r+", "+r", "rt+", "r+t", "+rt", "tr+", "t+r", "+tr", "w+", "+w", "wt+", "w+t", "+wt", "tw+", "t+w", "+tw", "a+", "+a", "at+", "a+t", "+at", "ta+", "t+a", "+ta", "x+", "+x", "xt+", "x+t", "+xt", "tx+", "t+x", "+tx", "w", "wt", "tw", "a", "at", "ta", "x", "xt", "tx", "r", "rt", "tr", "U", "rU", "Ur", "rtU", "rUt", "Urt", "trU", "tUr", "Utr"], buffering: int, encoding: str | None, errors: str | None, newline: str | None, closefd: bool, opener: (str, int) -> int | None), (file: int | str | bytes | PathLike[str] | PathLike[bytes], mode: Literal["rb+", "r+b", "+rb", "br+", "b+r", "+br", "wb+", "w+b", "+wb", "bw+", "b+w", "+bw", "ab+", "a+b", "+ab", "ba+", "b+a", "+ba", "xb+", "x+b", "+xb", "bx+", "b+x", "+bx", "rb", "br", "rbU", "rUb", "Urb", "brU", "bUr", "Ubr", "wb", "bw", "ab", "ba", "xb", "bx"], buffering: Literal[0], encoding: None, errors: None, newline: None, closefd: bool, opener: (str, int) -> int | None), (file: int | str | bytes | PathLike[str] | PathLike[bytes], mode: Literal["rb+", "r+b", "+rb", "br+", "b+r", "+br", "wb+", "w+b", "+wb", "bw+", "b+w", "+bw", "ab+", "a+b", "+ab", "ba+", "b+a", "+ba", "xb+", "x+b", "+xb", "bx+", "b+x", "+bx"], buffering: Literal[-1, 1], encoding: None, errors: None, newline: None, closefd: bool, opener: (str, int) -> int | None), (file: int | str | bytes | PathLike[str] | PathLike[bytes], mode: Literal["wb", "bw", "ab", "ba", "xb", "bx"], buffering: Literal[-1, 1], encoding: None, errors: None, newline: None, closefd: bool, opener: (str, int) -> int | None), (file: int | str | bytes | PathLike[str] | PathLike[bytes], mode: Literal["rb", "br", "rbU", "rUb", "Urb", "brU", "bUr", "Ubr"], buffering: Literal[-1, 1], encoding: None, errors: None, newline: None, closefd: bool, opener: (str, int) -> int | None), (file: int | str | bytes | PathLike[str] | PathLike[bytes], mode: Literal["rb+", "r+b", "+rb", "br+", "b+r", "+br", "wb+", "w+b", "+wb", "bw+", "b+w", "+bw", "ab+", "a+b", "+ab", "ba+", "b+a", "+ba", "xb+", "x+b", "+xb", "bx+", "b+x", "+bx", "rb", "br", "rbU", "rUb", "Urb", "brU", "bUr", "Ubr", "wb", "bw", "ab", "ba", "xb", "bx"], buffering: int, encoding: None, errors: None, newline: None, closefd: bool, opener: (str, int) -> int | None), (file: int | str | bytes | PathLike[str] | PathLike[bytes], mode: str, buffering: int, encoding: str | None, errors: str | None, newline: str | None, closefd: bool, opener: (str, int) -> int | None)
 
       os.fspath(b) # WARNING No overload of 'fspath' matches the arguments. Argument types: (B). Expected one of: (path: str), (path: bytes), (path: PathLike[AnyStr])
       os.fsencode(b) # WARNING Expected type 'str | bytes | PathLike[str] | PathLike[bytes]', got 'B' instead
@@ -1081,9 +1081,9 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           float(False)
           complex(False)
           divmod(False, False)
-          divmod(b'foo', 'bar') # WARNING No overload of 'divmod' matches the arguments. Argument types: (bytes, Literal["bar"]). Expected one of: (x: SupportsDivMod[_T_contra, _T_co], y: str), (x: bytes, y: SupportsRDivMod[bytes, _T_co])
+          divmod(b'foo', 'bar') # WARNING No overload of 'divmod' matches the arguments. Argument types: (bytes, Literal["bar"]). Expected one of: (x: SupportsDivMod[_T_contra, _T_co], y: _T_contra), (x: _T_contra, y: SupportsRDivMod[_T_contra, _T_co])
           pow(False, True)
-          round(False, 'foo') # WARNING No overload of 'round' matches the arguments. Argument types: (Literal[False], Literal["foo"]). Expected one of: (number: _SupportsRound1[int], ndigits: None), (number: _SupportsRound2[int], ndigits: SupportsIndex)
+          round(False, 'foo') # WARNING No overload of 'round' matches the arguments. Argument types: (Literal[False], Literal["foo"]). Expected one of: (number: _SupportsRound1[_T], ndigits: None), (number: _SupportsRound2[_T], ndigits: SupportsIndex)
       """.trimIndent())
 
     @Test
@@ -1737,8 +1737,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
     @TestCaseOptions(assertRecursionPrevention = false)
     fun `map arguments in opposite order`() = test("""
       map('foo', lambda c: 42)
-      #   │      ^^^^^^^^^^^^ WARNING Expected type 'Iterable[_T1]', got '(c: Unknown) -> Literal[42]' instead
-      #   ^^^^^ WARNING Expected type '(_T1) -> _S', got 'Literal["foo"]' instead
+      #  ^^^^^^^^^^^^^^^^^^^^^ WARNING No overload of 'map' matches the arguments. Argument types: (Literal["foo"], (c: Unknown) -> Literal[42]). Expected one of: (func: (_T1) -> _S, iterable: Iterable[_T1], strict: bool), (func: (_T1, _T2) -> _S, iterable: Iterable[_T1], iter2: Iterable[_T2], strict: bool), (func: (_T1, _T2, _T3) -> _S, iterable: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3], strict: bool), (func: (_T1, _T2, _T3, _T4) -> _S, iterable: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3], iter4: Iterable[_T4], strict: bool), (func: (_T1, _T2, _T3, _T4, _T5) -> _S, iterable: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3], iter4: Iterable[_T4], iter5: Iterable[_T5], strict: bool), (func: (...) -> _S, iterable: Iterable[Any], iter2: Iterable[Any], iter3: Iterable[Any], iter4: Iterable[Any], iter5: Iterable[Any], iter6: Iterable[Any], *iterables: tuple[Iterable[Any], ...], strict: bool)
       """.trimIndent())
   }
 

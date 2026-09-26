@@ -74,6 +74,30 @@ public final class RuntimeModuleRepositorySerialization {
     throws IOException {
     saveToJar(descriptors, Collections.emptyList(), bootstrapModuleName, jarPath, generatorVersion);
   }
+
+  /**
+   * Gives the entries of the JAR file, which {@link #saveToJar(Collection, Collection, String, Path, int)} writes, to {@code consumer}.
+   * The caller writes them in the given order with its own ZIP writer.
+   */
+  @ApiStatus.Internal
+  public static void writeJarEntries(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors,
+                                     @NotNull Collection<RuntimePluginHeader> pluginHeaders,
+                                     @Nullable String bootstrapModuleName,
+                                     int generatorVersion,
+                                     @NotNull JarEntryConsumer consumer) throws IOException {
+    try {
+      JarFileSerializer.writeEntries(descriptors, pluginHeaders, bootstrapModuleName, generatorVersion, consumer);
+    }
+    catch (XMLStreamException e) {
+      throw new IOException(e);
+    }
+  }
+
+  @ApiStatus.Internal
+  @FunctionalInterface
+  public interface JarEntryConsumer {
+    void accept(@NotNull String name, byte @NotNull [] content) throws IOException;
+  }
   
   public static @NotNull RawRuntimeModuleRepositoryData loadFromCompactFile(@NotNull Path filePath) throws MalformedRepositoryException {
     try {

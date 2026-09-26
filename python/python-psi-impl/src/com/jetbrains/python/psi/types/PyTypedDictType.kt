@@ -3,10 +3,8 @@ package com.jetbrains.python.psi.types
 
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.isProtocol
-import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallSiteOwner
 import com.jetbrains.python.psi.PyClass
@@ -170,6 +168,18 @@ class PyTypedDictType private constructor(
     val isReadOnly: Boolean get() = qualifiers.isReadOnly
   }
 
+  /**
+   * A single failed TypedDict key, reported by [match] while a breakdown is being collected. Carries the raw
+   * value types ([expectedValue]/[actualValue]) so the caller ([PyTypeChecker]) can codify them against its
+   * anchor into a [PyMismatchStep.TypedDictKey]; [actualValue] is null for a [TypedDictKeyProblem.MISSING] key.
+   */
+  data class TypedDictKeyMismatch(
+    val key: String,
+    val problem: TypedDictKeyProblem,
+    val expectedValue: PyType?,
+    val actualValue: PyType?,
+  )
+
   companion object {
 
     const val TYPED_DICT_TOTAL_PARAMETER: String = "total"
@@ -292,7 +302,7 @@ class PyTypedDictType private constructor(
       expected: PyType,
       actual: PyTypedDictType,
       context: TypeEvalContext,
-      mismatch: ((ProblemMessage) -> Unit)? = null,
+      mismatch: ((TypedDictKeyMismatch) -> Unit)? = null,
     ): Boolean? {
       if (expected is PyClassType && expected !is PyTypedDictType && expected.isParameterized) {
         matchTypedDictWithCollection(expected, actual, context)?.let { return it }
@@ -312,30 +322,31 @@ class PyTypedDictType private constructor(
         }
         val actualField = actual.fields(context)[expectedKey]
         if (actualField == null) {
-          if (mismatch != null) mismatch(keyMissing(expectedKey))
+          if (mismatch != null) mismatch(TypedDictKeyMismatch(expectedKey, TypedDictKeyProblem.MISSING, expectedField.type, null))
           return false
         }
         if (!strictUnionMatch(expectedField.type, actualField.type, context)) {
-          if (mismatch != null) mismatch(keyTypeIncompatible(expectedKey))
+          if (mismatch != null) mismatch(TypedDictKeyMismatch(expectedKey, TypedDictKeyProblem.VALUE_TYPE, expectedField.type, actualField.type))
           return false
         }
         if (!expectedField.isReadOnly) {
           if (!(strictUnionMatch(actualField.type, expectedField.type, context) && !actualField.isReadOnly)) {
             // A mutable key is invariant: the value types must match both ways and the source key must stay writable.
-            if (mismatch != null) mismatch(if (actualField.isReadOnly) keyReadOnly(expectedKey) else keyTypeIncompatible(expectedKey))
+            val problem = if (actualField.isReadOnly) TypedDictKeyProblem.READONLY else TypedDictKeyProblem.VALUE_TYPE
+            if (mismatch != null) mismatch(TypedDictKeyMismatch(expectedKey, problem, expectedField.type, actualField.type))
             return false
           }
         }
         if (expectedField.isRequired) {
           if (!actualField.isRequired) {
-            if (mismatch != null) mismatch(keyRequiredMismatch(expectedKey))
+            if (mismatch != null) mismatch(TypedDictKeyMismatch(expectedKey, TypedDictKeyProblem.REQUIRED, expectedField.type, actualField.type))
             return false
           }
         }
         else {
           if (!expectedField.isReadOnly) {
             if (actualField.isRequired) {
-              if (mismatch != null) mismatch(keyRequiredMismatch(expectedKey))
+              if (mismatch != null) mismatch(TypedDictKeyMismatch(expectedKey, TypedDictKeyProblem.REQUIRED, expectedField.type, actualField.type))
               return false
             }
           }
@@ -343,19 +354,6 @@ class PyTypedDictType private constructor(
       }
       return true
     }
-
-    // Localized per-key reasons for the breakdown shown by PyTypeChecker.explainMismatch.
-    private fun keyMissing(key: String): ProblemMessage =
-      PyPsiBundle.problemMessage("INSP.type.checker.breakdown.typed.dict.key.missing", key)
-
-    private fun keyTypeIncompatible(key: String): ProblemMessage =
-      PyPsiBundle.problemMessage("INSP.type.checker.breakdown.typed.dict.key.type", key)
-
-    private fun keyReadOnly(key: String): ProblemMessage =
-      PyPsiBundle.problemMessage("INSP.type.checker.breakdown.typed.dict.key.readonly", key)
-
-    private fun keyRequiredMismatch(key: String): ProblemMessage =
-      PyPsiBundle.problemMessage("INSP.type.checker.breakdown.typed.dict.key.required", key)
 
     @ApiStatus.Internal
     @JvmStatic

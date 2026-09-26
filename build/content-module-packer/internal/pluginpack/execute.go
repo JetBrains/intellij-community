@@ -363,29 +363,18 @@ func (execution *Execution) resolveOperations(cache map[Reference]string, scratc
 	layouts := &layoutExecutor{execution: execution, resolveFile: resolve, scratch: scratch, transportRoots: make(map[string]string)}
 	operations := make([]resolvedOperation, 0, len(execution.recipe.Operations))
 	for _, operation := range execution.recipe.Operations {
-		if operation.Kind == "copy-tree" || operation.Kind == "layout-tree" || operation.Kind == "native-tree" {
+		if operation.Kind == "copy-tree" || operation.Kind == "layout-tree" {
 			var tree []resolvedOperation
 			var err error
-			switch operation.Kind {
-			case "copy-tree":
+			if operation.Kind == "copy-tree" {
 				tree, err = execution.resolveTree(operation)
-			case "layout-tree":
+			} else {
 				tree, err = layouts.tree(operation)
-			default:
-				tree, err = layouts.nativeTree(operation)
 			}
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", operation.Destination, err)
 			}
 			operations = append(operations, tree...)
-			continue
-		}
-		if operation.Kind == "layout-file" {
-			file, err := layouts.file(operation)
-			if err != nil {
-				return nil, fmt.Errorf("%s: %w", operation.Destination, err)
-			}
-			operations = append(operations, file)
 			continue
 		}
 		resolved := resolvedOperation{operation: operation}
@@ -443,11 +432,6 @@ func (execution *Execution) resolveOperations(cache map[Reference]string, scratc
 						return nil, err
 					}
 					archive := jarpack.Source{Path: file, Filter: filter, Manifest: manifest, EntryOverrides: make(map[string]jarpack.EntryOverride)}
-					if source.ReserveNatives {
-						if err := reserveNativeEntries(file, filter, archive.EntryOverrides); err != nil {
-							return nil, fmt.Errorf("%s: %w", operation.Destination, err)
-						}
-					}
 					for _, override := range source.Overrides {
 						file, err := resolve(override.Input)
 						if err != nil {

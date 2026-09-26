@@ -10,7 +10,7 @@ import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.util.Pair
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -85,7 +85,7 @@ class PluginManagerSession(val sessionId: String) {
 }
 @Serializable
 @ApiStatus.Internal
-data class PluginUpdateSourceState(val value: PluginUpdateSourceId?)
+data class PluginUpdateSourceState(val value: PluginUpdateSource?)
 
 @Serializable
 @ApiStatus.Internal

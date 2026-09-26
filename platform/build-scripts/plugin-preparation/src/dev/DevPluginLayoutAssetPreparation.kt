@@ -7,7 +7,11 @@ import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.FileSystems
 
-/** A semantic source that the dev-plugin generator resolves to declared Bazel inputs. */
+/**
+ * A semantic source that the dev-plugin generator resolves to declared Bazel inputs.
+ * A source names a label and never a pinned version. The dev-launch extension writes each pinned value into its own
+ * repository, so a version bump changes no plan file.
+ */
 @ApiStatus.Internal
 sealed interface DevPluginLayoutAssetSource {
   data class ModuleDirectory(@JvmField val moduleName: String, @JvmField val path: String) : DevPluginLayoutAssetSource
@@ -42,7 +46,7 @@ sealed interface DevPluginLayoutAssetSource {
   data class BazelTarget(
     @JvmField val label: String,
     @JvmField val kind: String,
-    /** A concrete name or a dependency-property template such as `archive-${version}.zip`. */
+    /** A concrete name without a version. */
     @JvmField val fileName: String,
     @JvmField val prefix: String? = null,
   ) : DevPluginLayoutAssetSource
@@ -59,11 +63,6 @@ sealed interface DevPluginLayoutAssetSource {
   data class ModuleLibrary(
     @JvmField val module: String,
     @JvmField val name: String,
-  ) : DevPluginLayoutAssetSource
-
-  data class DependencyProperty(
-    @JvmField val name: String,
-    @JvmField val format: String = "plain",
   ) : DevPluginLayoutAssetSource
 
   data class ExternalLocalizationTree(
@@ -188,7 +187,6 @@ data class DevPluginLayoutAssetMapping(
 data class DevPluginLayoutAssetTransform(
   @JvmField val kind: String,
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val stripComponents: Int = 0,
-  @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val text: String = "",
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val mappings: List<DevPluginLayoutAssetMapping> = emptyList(),
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val excludes: List<String> = emptyList(),
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val directoryExcludes: List<String> = emptyList(),
@@ -213,10 +211,6 @@ data class DevPluginLayoutAssetTransform(
 
     fun gzipXmlArchive(): DevPluginLayoutAssetTransform {
       return DevPluginLayoutAssetTransform(kind = "gzip-xml-archive")
-    }
-
-    fun inlineText(text: String = ""): DevPluginLayoutAssetTransform {
-      return DevPluginLayoutAssetTransform(kind = "inline-text", text = text)
     }
 
     fun treeMap(
@@ -247,16 +241,15 @@ data class DevPluginLayoutAssetPreparation(
 
 /**
  * Validates one layout-assets payload at generation time. The Go packer ports these rules to `plan.go`.
- * A `file` preparation holds one asset at its root: a plain copy of one file or an inline text. A `gzip-xml-archive`
- * asset requires the `entries` format.
+ * A `gzip-xml-archive` asset requires the `entries` format.
  */
 internal fun validateDevPluginLayoutAssetPreparation(
   preparation: DevPluginLayoutAssetPreparation,
   inputs: List<DevPluginReference>,
 ) {
-  require(preparation.format in setOf("entries", "file", "tree")) { "Unknown layout asset format '${preparation.format}'" }
+  require(preparation.format in setOf("entries", "tree")) { "Unknown layout asset format '${preparation.format}'" }
   require(preparation.assets.isNotEmpty()) { "A layout asset preparation requires assets" }
-  if (preparation.format == "file" || preparation.format == "tree" && preparation.root.isNotEmpty()) {
+  if (preparation.format == "tree" && preparation.root.isNotEmpty()) {
     validatePreparationPath(preparation.root)
   }
   else if (preparation.format == "entries") {
@@ -276,17 +269,15 @@ internal fun validateDevPluginLayoutAssetPreparation(
     else {
       validatePreparationPath(asset.destination)
     }
-    require(preparation.format != "file" || asset.destination == preparation.root) { "A file layout asset requires one asset at its root" }
     require(asset.mode == 0 || asset.mode in 1..511) { "Unsupported layout asset mode ${asset.mode}" }
     require(asset.sources.all { it in inputs.indices }) { "A layout asset has an invalid source index: ${asset.sources}" }
     if (transform == null) {
       require(asset.sources.size == 1) { "A direct layout asset requires one source" }
       continue
     }
-    require(transform.kind in setOf("archive-tree", "gzip-xml-archive", "inline-text", "tree-map")) {
+    require(transform.kind in setOf("archive-tree", "gzip-xml-archive", "tree-map")) {
       "Unknown layout asset transform '${transform.kind}'"
     }
-    require(preparation.format != "file" || transform.kind == "inline-text") { "A file layout asset allows a plain copy or inline text only" }
     require(transform.stripComponents >= 0) { "A layout asset strip count must not be negative" }
     require(transform.kind == "tree-map" || transform.excludes.isEmpty() && transform.directoryExcludes.isEmpty()) {
       "Only a tree-map transform accepts exclusions"
@@ -314,22 +305,16 @@ internal fun validateDevPluginLayoutAssetPreparation(
       FileSystems.getDefault().getPathMatcher("glob:${mapping.pattern}")
     }
     when (transform.kind) {
-      "archive-tree" -> require(asset.sources.size == 1 && transform.text.isEmpty()) {
+      "archive-tree" -> require(asset.sources.size == 1) {
         "An archive-tree transform requires one archive"
       }
       "gzip-xml-archive" -> require(preparation.format == "entries" && asset.sources.isNotEmpty() && transform.stripComponents == 0 &&
-                                              transform.text.isEmpty() && transform.mappings.isEmpty()) {
+                                              transform.mappings.isEmpty()) {
         "A gzip-xml-archive transform requires ordered archive inputs and an entries output"
       }
-      "inline-text" -> require(asset.sources.isEmpty() && transform.stripComponents == 0 && transform.mappings.isEmpty() &&
-                                       transform.text.none { it == '\r' || it == '\n' }) {
-        "An inline-text transform requires text without a newline and no inputs"
-      }
-      "tree-map" -> require(asset.sources.isNotEmpty() && transform.stripComponents == 0 && transform.text.isEmpty() &&
-                                    transform.mappings.isNotEmpty()) {
+      "tree-map" -> require(asset.sources.isNotEmpty() && transform.stripComponents == 0 && transform.mappings.isNotEmpty()) {
         "A tree-map transform requires ordered tree inputs and mappings"
       }
     }
   }
-  require(preparation.format != "file" || preparation.assets.size == 1) { "A file layout asset preparation requires one asset" }
 }

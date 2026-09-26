@@ -60,5 +60,7 @@ internal fun computePluginBuildNumber(buildNumber: String): String {
  * What a `.SNAPSHOT` suffix becomes, so that the version matches Semantic Versioning.
  *
  * A fixed number and not the build date, so that two builds of one commit state one version.
+ *
+ * Please update it together with `computePluginVersion` in community/platform/build-scripts/bazel-rules/ij-plugin-packager/src/IjPluginPackager.kt
  */
 private const val SNAPSHOT_VERSION_SEGMENT = "99999999"

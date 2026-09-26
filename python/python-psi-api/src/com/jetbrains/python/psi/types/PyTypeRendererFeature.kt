@@ -19,4 +19,10 @@ enum class PyTypeRendererFeature {
      * Render bounds and constraints of TypeVars.
      */
     TYPE_VAR_BOUNDS,
+
+    /**
+     * Render literal types bare, as just their value: `1` instead of `Literal[1]`, `'a' | 'b'` instead of
+     * `Literal['a', 'b']`. Used where the `Literal[...]` wrapper is redundant noise, such as the structural type diff.
+     */
+    BARE_LITERAL,
 }

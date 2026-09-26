@@ -61,7 +61,10 @@ public final class EditorLastActionTracker {
   static final class MyEditorFactoryListener implements EditorFactoryListener {
     @Override
     public void editorReleased(@NotNull EditorFactoryEvent event) {
-      EditorLastActionTracker tracker = getInstance();
+      EditorLastActionTracker tracker = getTrackerIfCreated();
+      if (tracker == null) {
+        return;
+      }
       EditorImpl killedEditor = (EditorImpl)event.getEditor();
       if (tracker.myCurrentEditor == killedEditor) {
         tracker.myCurrentEditor = null;

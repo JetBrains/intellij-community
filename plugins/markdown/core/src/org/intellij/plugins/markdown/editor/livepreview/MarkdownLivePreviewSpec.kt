@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
-/** Holds the live-preview state of an editor. Live preview is off until [setLivePreviewSupport] turns it on. */
+/** Holds the live-preview state of an editor. Live preview is off until [setLivePreviewEnabledness] turns it on. */
 private val LIVE_PREVIEW_KEY: Key<MutableStateFlow<Boolean>> = Key.create("markdown.live.preview")
 
 private fun Editor.livePreviewState(): MutableStateFlow<Boolean> {
@@ -23,24 +23,24 @@ private fun Editor.livePreviewState(): MutableStateFlow<Boolean> {
 }
 
 @ApiStatus.Experimental
-fun Editor.enableLivePreviewSupport() {
-  setLivePreviewSupport(true)
+fun Editor.enableLivePreview() {
+  setLivePreviewEnabledness(true)
 }
 
 /** Turns Markdown live preview on or off for this editor. */
 @ApiStatus.Experimental
-fun Editor.setLivePreviewSupport(enabled: Boolean) {
+fun Editor.setLivePreviewEnabledness(enabled: Boolean) {
   livePreviewState().value = enabled
 }
 
 @ApiStatus.Experimental
-fun Editor.supportsLivePreview(): Boolean {
+fun Editor.isLivePreviewEnabled(): Boolean {
   return getUserData(LIVE_PREVIEW_KEY)?.value == true
 }
 
-/** Emits the live-preview state of this editor each time [setLivePreviewSupport] changes it. */
+/** Emits the live-preview state of this editor each time [setLivePreviewEnabledness] changes it. */
 @ApiStatus.Internal
-fun Editor.livePreviewSupportFlow(): StateFlow<Boolean> {
+fun Editor.livePreviewEnablednessFlow(): StateFlow<Boolean> {
   return livePreviewState()
 }
 

@@ -1,0 +1,3 @@
+c:com.intellij.openapi.actionSystem.LangDataKeys
+- com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+- *sf:STRUCTURE_VIEW_TARGET_FILE_KEY:com.intellij.openapi.actionSystem.DataKey

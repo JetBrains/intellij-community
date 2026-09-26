@@ -6,7 +6,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.intellij.build.devDist.DISTRIBUTION_ASSET_SCOPE
 import org.jetbrains.intellij.build.devDist.PluginPackingPlan
 import org.jetbrains.intellij.build.devDist.PluginPackingPreparation
 import org.jetbrains.intellij.build.devDist.devDistSignature
@@ -28,9 +27,7 @@ data class DevPluginPreparationRecipe(
 
 /**
  * One operation of a plan file. A `module-filter` operation filters one module jar with Java globs. A `layout-assets`
- * operation writes a tree, a file or jar entries from [layoutAssets]. A `native-select` operation names one native
- * library archive: the Go packer reads the platform from the plan variant, reserves every native entry in the consuming
- * jar and writes the selected entries under the consuming tree.
+ * operation writes a tree, a file or jar entries from [layoutAssets].
  */
 @ApiStatus.Internal
 @OptIn(ExperimentalSerializationApi::class)
@@ -70,31 +67,23 @@ data class DevPluginPreparationOperation(
 
 /** The layout-assets transforms the Go remainder packer executes, with the plain copy of a `null` transform. */
 @ApiStatus.Internal
-val GO_LAYOUT_TRANSFORMS: Set<String> = java.util.Set.of("archive-tree", "gzip-xml-archive", "tree-map", "inline-text")
+val GO_LAYOUT_TRANSFORMS: Set<String> = java.util.Set.of("archive-tree", "gzip-xml-archive", "tree-map")
 
 /**
- * The one statement of what the Go remainder packer executes from a plan file. A `module-filter` operation, a
- * `native-select` operation and a `layout-assets` operation in every layout format (`tree`, `entries`, `file`) with
- * every transform in [GO_LAYOUT_TRANSFORMS] are Go-executed. [devPluginPreparationOperationSignature] refuses every
+ * The one statement of what the Go remainder packer executes from a plan file. A `module-filter` operation and a
+ * `layout-assets` operation in every layout format (`tree`, `entries`) with every transform in [GO_LAYOUT_TRANSFORMS]
+ * are Go-executed. [devPluginPreparationOperationSignature] refuses every
  * other operation, so a plan file never holds one. The chain of a complex plugin declares no preparation target, and
  * the Go packer reads the plan file directly.
  */
 @ApiStatus.Internal
 fun isGoExecutedOperation(operation: DevPluginPreparationOperation): Boolean {
-  if (operation.kind == "module-filter" || operation.kind == "native-select") return true
+  if (operation.kind == "module-filter") return true
   if (operation.kind != "layout-assets") return false
   val layoutAssets = requireNotNull(operation.layoutAssets) { "A layout-assets operation requires layout assets" }
-  return layoutAssets.format in setOf("tree", "entries", "file") &&
+  return layoutAssets.format in setOf("tree", "entries") &&
          layoutAssets.assets.all { asset -> asset.transform?.let { it.kind in GO_LAYOUT_TRANSFORMS } ?: true }
 }
-
-/**
- * True when the operation reads the chain's platform from the plan's `variant` at run time. A `native-select`
- * operation selects the native entries of its target platform. A plugin with such an operation is never neutral.
- * The generator keeps one record and one chain per platform, so the Go packer always parses a real platform id.
- */
-@ApiStatus.Internal
-fun readsPlatform(operation: DevPluginPreparationOperation): Boolean = operation.kind == "native-select"
 
 /**
  * Returns the SHA-256 signature for [PluginPackingPreparation.modelSignature].
@@ -114,27 +103,7 @@ fun devPluginPreparationOperationSignature(
 }
 
 /**
- * A native-select output has two consumers: one distribution-scoped tree asset that receives the selected natives and
- * one jar recipe with a prepared source that reserves every native entry.
- */
-@ApiStatus.Internal
-fun validateDevPluginNativeSelectConsumers(operation: DevPluginPreparationOperation, plan: PluginPackingPlan) {
-  val consumers = plan.assets.filter { operation.output in it.asset.inputs }
-  val trees = consumers.filter { planned ->
-    planned.artifact == null && planned.asset.kind == "tree" && planned.asset.inputs == listOf(operation.output) &&
-    !planned.asset.classPath && planned.asset.scope == DISTRIBUTION_ASSET_SCOPE
-  }
-  val jarSources = consumers.flatMap { it.asset.recipe?.sources.orEmpty() }.filter { it.input == operation.output }
-  require(
-    consumers.size == 2 && trees.size == 1 && jarSources.size == 1 &&
-    jarSources.single().kind == "prepared" && jarSources.single().filter == "prepared"
-  ) {
-    "Native selection '${operation.id}' requires one distribution tree consumer and one prepared jar source"
-  }
-}
-
-/**
- * A layout-assets output in the `tree` or `file` format has one consumer: the asset of that kind at the layout root.
+ * A layout-assets output in the `tree` format has one consumer: the tree asset at the layout root.
  * An `entries` output is a prepared jar source, which the jar recipe validation checks.
  */
 @ApiStatus.Internal
@@ -146,7 +115,7 @@ fun validateDevPluginLayoutAssetConsumers(operation: DevPluginPreparationOperati
   require(
     consumer != null && consumer.artifact == null && consumer.asset.kind == layoutAssets.format &&
     consumer.asset.destination == layoutAssets.root && consumer.asset.inputs == listOf(operation.output) &&
-    !consumer.asset.classPath && (layoutAssets.format == "tree" || consumer.asset.recipe == null)
+    !consumer.asset.classPath
   ) {
     "Layout asset preparation '${operation.id}' requires one ${layoutAssets.format} asset at '${layoutAssets.root}'"
   }
@@ -178,12 +147,6 @@ private fun validatePreparationOperation(operation: DevPluginPreparationOperatio
       validateDevPluginLayoutAssetPreparation(requireNotNull(operation.layoutAssets) { "A layout-assets operation requires layout assets" }, operation.inputs)
     }
     "module-filter" -> require(operation.filter.isEmpty()) { "A module-filter operation must not declare a filter" }
-    "native-select" -> {
-      require(version == 2) { "A native-select operation requires preparation recipe version 2" }
-      require(operation.excludes.isEmpty() && operation.manifest == "keep" && operation.filter == "library") {
-        "A native-select operation requires the original library policy"
-      }
-    }
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION", "removal")
 
 package com.jetbrains.python.packaging.management
@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.eel.EelApi
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiFile
 import com.intellij.python.pyproject.PyDependencyGroup
@@ -100,8 +101,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
    * Lifetime of every coroutine this manager starts. A child of the packaging scope of the project.
    */
   @ApiStatus.Internal
-  protected val managerScope: CoroutineScope =
-    PyPackageCoroutine.getScope(project).childScope("PythonPackageManager for ${sdk.name}")
+  protected val managerScope: CoroutineScope = PyPackageCoroutine.getScope(project).childScope("PythonPackageManager for ${sdk.name}")
 
   private val isInited = AtomicBoolean(false)
   private val packageReloadMutex = Mutex()
@@ -188,7 +188,11 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   }
 
   @ApiStatus.Internal
-  suspend fun uninstallPackage(vararg packages: String, workspaceMember: PyWorkspaceMember? = null, dependencyGroup: PyDependencyGroup? = null): PyResult<List<PythonPackage>> {
+  suspend fun uninstallPackage(
+    vararg packages: String,
+    workspaceMember: PyWorkspaceMember? = null,
+    dependencyGroup: PyDependencyGroup? = null,
+  ): PyResult<List<PythonPackage>> {
     if (sdk.isReadOnly) {
       return PyResult.localizedError(sdk.readOnlyErrorMessage)
     }
@@ -199,7 +203,9 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     waitForInit()
 
     val normalizedPackagesNames = packages.map { PyPackageName.normalizePackageName(it) }
-    uninstallPackageCommand(*normalizedPackagesNames.toTypedArray(), workspaceMember = workspaceMember, dependencyGroup = dependencyGroup).getOr { return it }
+    uninstallPackageCommand(*normalizedPackagesNames.toTypedArray(),
+                            workspaceMember = workspaceMember,
+                            dependencyGroup = dependencyGroup).getOr { return it }
     return reloadPackages()
   }
 
@@ -314,8 +320,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     }.getOrNull() ?: emptyList()
 
     val packageMap = loadedPackages.associateBy { it.name }
-    if (outdatedPackages == packageMap)
-      return
+    if (outdatedPackages == packageMap) return
 
     outdatedPackages = packageMap
     ApplicationManager.getApplication().messageBus.apply {
@@ -368,8 +373,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   open suspend fun installPackageDetachedCommand(
     installRequest: PythonPackageInstallRequest,
     options: List<String>,
-  ): PyResult<Unit> =
-    installPackageCommand(installRequest, options)
+  ): PyResult<Unit> = installPackageCommand(installRequest, options)
 
   @ApiStatus.Internal
   @CheckReturnValue
@@ -414,8 +418,8 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   /**
    * CLI tools exposed by this manager, used for command-mode completion and dispatch in the install dialog.
    */
-  @get:ApiStatus.Internal
-  open val cliSpecs: List<PythonManagerCliSpec> get() = emptyList()
+  @ApiStatus.Internal
+  open fun getCliSpecs(eelApi: EelApi): List<PythonManagerCliSpec> = emptyList()
 
   /**
    * Lists project top-level (declared) dependencies with caching based on dependency file modification time.
@@ -482,8 +486,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
   private suspend fun initInstalledPackages() {
     try {
-      if (isInited.getAndSet(true))
-        return
+      if (isInited.getAndSet(true)) return
       if (!PythonSdkType.isMock(sdk)) {
         loadPackagesImpl(isInit = true)
       }
@@ -674,8 +677,8 @@ interface PythonWorkspaceSupport {
   /**
    * Returns dependency groups per workspace member.
    * Each key is a workspace member, each value is the list of dependency groups from that member's pyproject.toml.
-  */
- suspend fun getDependencyGroups(projectName: ProjectName): Map<PyWorkspaceMember, List<PyDependencyGroup>> = emptyMap()
+   */
+  suspend fun getDependencyGroups(projectName: ProjectName): Map<PyWorkspaceMember, List<PyDependencyGroup>> = emptyMap()
 
   /**
    * Resolves the IntelliJ [Module] that corresponds to the given workspace member.

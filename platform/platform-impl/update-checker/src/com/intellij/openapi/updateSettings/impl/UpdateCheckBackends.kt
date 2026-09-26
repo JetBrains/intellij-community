@@ -201,7 +201,7 @@ internal class MarketplaceUpdateCheckPluginRepository : MarketplaceLikePluginRep
   }
 }
 
-internal fun getMatchingPluginUpdateSource(backend: RemotePluginRepository): PluginUpdateSourceId {
+internal fun getMatchingPluginUpdateSource(backend: RemotePluginRepository): PluginUpdateSource {
   return when (backend) {
     is MarketplaceLikePluginRepository -> PluginUpdateSourceService.getInstance().createMarketplacePluginUpdateSourceId()
     is CustomPluginRepository -> PluginUpdateSourceService.getInstance().createCustomRepositoryPluginUpdateSourceId(backend.host)

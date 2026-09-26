@@ -50,7 +50,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     super.setUp()
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorCreated(event: EditorFactoryEvent) {
-        if (event.editor.editorKind == EditorKind.UNTYPED) event.editor.enableLivePreviewSupport()
+        if (event.editor.editorKind == EditorKind.UNTYPED) event.editor.enableLivePreview()
       }
     }, testRootDisposable)
   }
@@ -252,7 +252,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     configure("# title\n\ntail<caret>")
     moveCaretTo(0)
     val inlay = myFixture.editor.inlayModel.getBlockElementsInRange(0, 7).single()
-    myFixture.editor.setLivePreviewSupport(false)
+    myFixture.editor.setLivePreviewEnabledness(false)
     MarkdownLivePreviewReconciler.getExisting(myFixture.editor)!!.reconcileNow()
     assertFalse(inlay.isValid)
     assertEmpty(headingFolds())
@@ -709,7 +709,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEmpty(checkboxInlays())
 
     configure("$content<caret>")
-    myFixture.editor.setLivePreviewSupport(false)
+    myFixture.editor.setLivePreviewEnabledness(false)
     myFixture.doHighlighting()
     waitForConcealed(emptyList())
     assertEmpty(checkboxInlays())
@@ -1417,11 +1417,11 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     configure("Some **bold** text<caret>")
     assertEquals(listOf("**", "**"), concealed())
 
-    myFixture.editor.setLivePreviewSupport(false)
+    myFixture.editor.setLivePreviewEnabledness(false)
     myFixture.doHighlighting()
     waitForConcealed(emptyList())
 
-    myFixture.editor.setLivePreviewSupport(true)
+    myFixture.editor.setLivePreviewEnabledness(true)
     myFixture.doHighlighting()
     waitForConcealed(listOf("**", "**"))
   }
@@ -1453,7 +1453,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals(1, thematicBreakHighlighters().size)
     assertEquals(1, imageInlays().size)
 
-    editor.setLivePreviewSupport(false)
+    editor.setLivePreviewEnabledness(false)
     reconciler.reconcileNow()
 
     assertEmpty(concealed())
@@ -1499,7 +1499,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val document = myFixture.editor.document
     val mainEditor = EditorFactory.getInstance().createEditor(document, project, myFixture.file.virtualFile, false, EditorKind.MAIN_EDITOR)
     try {
-      assertFalse(mainEditor.supportsLivePreview())
+      assertFalse(mainEditor.isLivePreviewEnabled())
       val reconciler = MarkdownLivePreviewReconciler.getOrCreate(mainEditor)!!
       reconciler.publishSpecs(computeLivePreviewSpecs(myFixture.file, myFixture.editor))
       assertEmpty("A main editor without live preview must show the raw source", concealed(mainEditor))

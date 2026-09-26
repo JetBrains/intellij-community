@@ -46,10 +46,6 @@ dev_dist_plugin(
             "intellij.libraries.assertj.swing",
             "@lib//:libraries-assertj-swing-assertj-swing",
         ],
-        "lib/modules/intellij.libraries.git.learning.project.jar": [
-            "intellij.libraries.git.learning.project",
-            "@lib//:libraries-git-learning-project-git-learning-project",
-        ],
     },
     main_module = "intellij.featuresTrainer",
 )
