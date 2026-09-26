@@ -28,7 +28,7 @@ import java.util.List;
  */
 @Subsystems.CodeInsight
 @Layers.Functional
-public class PyTypingTest extends PyTestCase {
+public class Py3TypingTest extends PyTestCase {
 
   public void testStringLiteralInjection() {
     doTestInjectedText("""

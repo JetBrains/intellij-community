@@ -10,10 +10,12 @@ import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-
+/**
+ * legacy suite. use `PyCodeInsightTestCase` suites instead
+ */
 @Subsystems.Inspections
 @Layers.Functional
-public class PyArgumentListInspectionTest extends PyInspectionTestCase {
+public class Py2ArgumentListInspectionTest extends PyInspectionTestCase {
 
   @Override
   protected @Nullable LightProjectDescriptor getProjectDescriptor() {

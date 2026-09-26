@@ -1154,7 +1154,6 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-80622"])
-    @TestCaseOptions(enableWeakWarnings = false)
     fun `augmented assignment type changes in loop`() = test("""
       class Counter:
           def __add__(self, other: int) -> int:
@@ -1255,7 +1254,6 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-80622"])
-    @TestCaseOptions(enableWeakWarnings = false)
     fun `augmented assignment union iadd and add`() = test("""
       class P:
           def __iadd__(self, other: int) -> P: ...
@@ -1288,7 +1286,6 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-80622"])
-    @TestCaseOptions(enableWeakWarnings = false)
     fun `augmented assignment union sub operator`() = test("""
       class A:
           def __isub__(self, other: int) -> int: ...

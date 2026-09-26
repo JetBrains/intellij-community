@@ -880,12 +880,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-53105"])
-    @TestCaseOptions(enableWeakWarnings = false)
     fun `weak union type of generic variadic method call receiver`() = test(
-      // The original `PyTypingTest` did not assert weak warnings. The new framework surfaces a
-      // `Member 'int' of ... does not have attribute 'get'` weak warning whose multi-word
-      // "WEAK WARNING" severity name cannot be expressed as a comment-span assertion; disable weak
-      // warnings to stay faithful to the original expectation.
       """
       from typing import Any, Generic, TypeVarTuple, Tuple
 
@@ -900,6 +895,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
 
       receiver: Any | int | StrBox = ...
       expr = receiver.get()
+      #│              ^^^ WEAK-WARNING Member 'int' of 'Any | int | StrBox' does not have attribute 'get'
       #└ TYPE tuple[str, int, float | int] | Unknown
       """.trimIndent())
 

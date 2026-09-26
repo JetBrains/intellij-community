@@ -25,6 +25,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * legacy suite. use `PyCodeInsightTestCase` suites instead
+ */
 @Subsystems.Inspections
 @Layers.Functional
 public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase {

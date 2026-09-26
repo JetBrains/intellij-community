@@ -128,7 +128,7 @@ To run one checker by hand: `uvx ty check test.py`, `uvx pyrefly check test.py`,
   refactorings, editing actions, etc. or there are many related test cases already present in one
   of the legacy tests that is yet to be ported.
 - Some legacy test classes have separate Python 2 and Python 3 variants, e.g.
-  `PyArgumentListInspectionTest` for Python 2 scenarios and `Py3ArgumentListInspectionTest` for
+  `Py2ArgumentListInspectionTest` for Python 2 scenarios and `Py3ArgumentListInspectionTest` for
   Python 3 scenarios. The main difference is that non-"Py3" versions of tests use the Python 2
   version of the standard library in the bundled copy of Typeshed. 
   When extending a legacy test, use the "Py3" version of a test class whenever it's available.

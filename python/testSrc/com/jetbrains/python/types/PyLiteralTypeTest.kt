@@ -691,10 +691,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-77937"])
-    @TestCaseOptions(enableWeakWarnings = false)
     fun `list of literal and literalstring widens to union`() = test(
-      // weak warnings disabled: with literal inference on, the `|` chain in the annotation
-      // triggers a spurious `__or__` weak-warning unrelated to the inferred element type
       """
       from typing import Literal, LiteralString
 
@@ -727,9 +724,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-77937"])
-    @TestCaseOptions(enableWeakWarnings = false)
     fun `set of literal and literalstring widens to union`() = test(
-      // weak warnings disabled: see `list of literal and literalstring widens to union`
       """
       from typing import Literal, LiteralString
 
@@ -767,9 +762,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-77937"])
-    @TestCaseOptions(enableWeakWarnings = false)
     fun `dict of literal unions widens to unions`() = test(
-      // weak warnings disabled: see `list of literal and literalstring widens to union`
       """
       from typing import Literal, LiteralString
 

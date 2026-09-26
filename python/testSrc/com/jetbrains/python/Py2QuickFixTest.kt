@@ -52,7 +52,6 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.quickFixes.PyRenameElementQuickFixTest
 import org.intellij.lang.regexp.inspection.RegExpRedundantEscapeInspection
 import org.jetbrains.annotations.NonNls
-import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyBoolean
 import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.ArgumentMatchers.anyString
@@ -61,7 +60,7 @@ import org.mockito.Mockito
 @TestDataPath("\$CONTENT_ROOT/../testData/inspections/")
 @Subsystems.QuickFixes
 @Layers.Functional
-class PyQuickFixTest : PyTestCase() {
+class Py2QuickFixTest : PyTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor? = ourPy2Descriptor
 
   @Throws(Exception::class)

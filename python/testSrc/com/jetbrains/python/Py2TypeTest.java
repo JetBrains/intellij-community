@@ -29,7 +29,7 @@ import java.util.List;
  */
 @Subsystems.CodeInsight
 @Layers.Functional
-public class PyTypeTest extends PyTestCase {
+public class Py2TypeTest extends PyTestCase {
 
   @Override
   protected @Nullable LightProjectDescriptor getProjectDescriptor() {
