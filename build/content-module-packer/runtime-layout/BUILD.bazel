@@ -1,0 +1,44 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_test")
+
+# A binary of its own: the layout of every product is assembled by it, and a change of another tool must not re-key it.
+go_binary(
+    name = "runtime-layout",
+    srcs = [
+        "assemble.go",
+        "descriptor.go",
+        "main.go",
+        "part.go",
+        "plan.go",
+        "targets.go",
+    ],
+    gc_linkopts = [
+        "-s",
+        "-w",
+    ],
+    importpath = "jetbrains.com/content-module-packer/runtime-layout",
+    pure = "on",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//build/content-module-packer/internal/planfile",
+        "//build/content-module-packer/internal/pluginpack",
+    ],
+)
+
+go_test(
+    name = "runtime-layout_test",
+    srcs = [
+        "assemble.go",
+        "assemble_test.go",
+        "descriptor.go",
+        "main.go",
+        "part.go",
+        "plan.go",
+        "plan_test.go",
+        "targets.go",
+    ],
+    pure = "on",
+    deps = [
+        "//build/content-module-packer/internal/planfile",
+        "//build/content-module-packer/internal/pluginpack",
+    ],
+)

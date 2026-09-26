@@ -6,6 +6,7 @@ load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "content_module_jar", "content_module_jar_target_name")
 load(":dev_dist_content.bzl", "DevDistContentInfo")
 load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_plugin_descriptor", "dev_dist_plugin_descriptor_target_name", "dev_dist_product_info", "dev_dist_product_info_transition")
+load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo")
 load(":dev_plugin_remainder.bzl", "DevPluginArtifactCatalogueInfo", "DevPluginGraphInfo", "DevPluginRemainderInfo", "dev_dist_complex_plugin", "dev_dist_complex_plugin_variant", "dev_plugin_artifact_catalogue", "dev_plugin_component", "dev_plugin_file_graph", "dev_plugin_remainder_from_plan", "platform_values_error")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo")
 
@@ -425,7 +426,7 @@ def _remainder_from_plan_test_impl(ctx):
     asserts.equals(env, ["true" if ctx.attr.separate_classpath_descriptor else "false"], classpath_reserialize)
     asserts.equals(env, [] if ctx.attr.separate_classpath_descriptor else [classpath_descriptor], reserialized_output)
     actions = analysistest.target_actions(env)
-    asserts.equals(env, ["PackDevPluginRemainder"], [action.mnemonic for action in actions])
+    asserts.equals(env, ["PackDevPluginRemainder", "DevDistRuntimeLayoutPart"], [action.mnemonic for action in actions])
     action = actions[0]
     asserts.equals(env, ctx.attr.graph[0].label, remainder.graph.label)
     asserts.equals(env, graph.execution_version, remainder.execution_version)
@@ -452,6 +453,26 @@ def _remainder_from_plan_test_impl(ctx):
         "--classpath=" + remainder.classpath.path,
     ], action.argv[1:])
     asserts.equals(env, [remainder.directory], target[DefaultInfo].files.to_list())
+
+    # The layout part comes from the same plan file and catalogue, in an action of its own that reads no packed byte.
+    layout = target[DevDistRuntimeLayoutInfo]
+    layout_action = actions[1]
+    asserts.equals(env, [layout.part], layout_action.outputs.to_list())
+    asserts.equals(env, classpath_descriptor.short_path, layout.descriptor.short_path)
+    layout_tool = layout_action.argv[0]
+    asserts.true(env, layout_tool.split("/")[-1].startswith("runtime-layout"), layout_tool)
+    layout_inputs = [file for file in layout_action.inputs.to_list() if not file.path.startswith(layout_tool)]
+    asserts.equals(env, sorted(_short_paths([graph.projection, catalogue.catalogue])), sorted(_short_paths(layout_inputs)))
+    asserts.equals(env, [
+        "plan-part",
+        "--plan=" + input_by_short_path[graph.projection.short_path].path,
+        "--catalogue=" + input_by_short_path[catalogue.catalogue.short_path].path,
+        "--descriptor-module=" + descriptor_info.plugin_main_module,
+        "--plugin-directory=plugins/test",
+        "--descriptor=" + layout.descriptor.path,
+        "--output=" + layout.part.path,
+    ], layout_action.argv[1:])
+
     groups = target[OutputGroupInfo]
     asserts.equals(env, [remainder.directory], groups.dev_dist_plugin_remainder.to_list())
     asserts.equals(env, [remainder.metadata], groups.file_metadata.to_list())
@@ -591,6 +612,11 @@ def _reused_component_test_impl(ctx):
     sources = [row["source"] for row in spec["independent"]]
     asserts.equals(env, 1, len(sources))
     asserts.true(env, sources[0].endswith("/" + content.jar.short_path.removeprefix("../")), sources[0])
+
+    # The component forwards the layout part of its remainder, and no action of its own writes one.
+    layout = ctx.attr.remainder[0][DevDistRuntimeLayoutInfo]
+    asserts.equals(env, layout.part.short_path, target[DevDistRuntimeLayoutInfo].part.short_path)
+    asserts.equals(env, _short_paths([layout.part, layout.descriptor]), _short_paths(target[OutputGroupInfo].dev_dist_runtime_layout.to_list()))
     return analysistest.end(env)
 
 _reused_component_test = analysistest.make(

@@ -68,6 +68,12 @@ dev_dist_tool(
     visibility = ["//visibility:public"],
 )
 
+dev_dist_tool(
+    name = "runtime_layout",
+    tool = "//build/content-module-packer/runtime-layout",
+    visibility = ["//visibility:public"],
+)
+
 dev_dist_content_test_suite(name = "dev_dist_content_tests")
 
 test_suite(

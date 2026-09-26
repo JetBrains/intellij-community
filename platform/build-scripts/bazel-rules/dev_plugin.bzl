@@ -25,12 +25,25 @@ load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistP
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo")
 
+DevDistRuntimeLayoutInfo = provider(
+    doc = """The layout part of one plugin component: which modules and libraries each of its jars merges.
+
+    The runtime module repository of a product reads the parts of its plugins, see `runtime-layout` in
+    `community/build/content-module-packer`. A simple plugin writes its part at analysis. A complex plugin derives it
+    from its resolved plan file.""",
+    fields = {
+        "part": "The part `File`, in the part format of `runtime-layout`.",
+        "descriptor": "The classpath descriptor whose `<content>` order the part follows. The part names it by its path.",
+    },
+)
+
 DevPluginInputsInfo = provider(
     doc = "The compiled inputs of one simple plugin, resolved in the neutral product configuration.",
     fields = {
         "module_jars": "dict of JPS module name to its output jar `File`.",
         "libraries": "dict of library token to `struct(label, jars)`. The token is the label string the plugin's `BUILD.bazel` writes.",
-        "content_jars": "dict of JPS module name to `struct(jar, metadata)`: the jar a `content_module_jar` target packed.",
+        "content_jars": """dict of JPS module name to `struct(jar, metadata, member_modules, library_jars)`: the jar a
+        `content_module_jar` target packed, and what it merges, see `ContentModuleJarInfo`.""",
         "files": "dict of label token to the tuple of regular `File`s the label produces. The token is the label string `files` names.",
         "content": "`DevDistContentInfo`: every raw module jar and library the plugin merges, the members of a reused content module jar included.",
     },
@@ -73,7 +86,7 @@ def _dev_plugin_inputs_impl(ctx):
             fail("%s packs no jar" % target.label, attr = "content_module_jars")
         if info.module_name in content_jars:
             fail("content module '%s' is packed twice" % info.module_name, attr = "content_module_jars")
-        content_jars[info.module_name] = struct(jar = jar, metadata = metadata)
+        content_jars[info.module_name] = struct(jar = jar, metadata = metadata, member_modules = info.member_modules, library_jars = info.library_jars)
         content_module_jars.extend(info.member_jars)
         content_library_jars.extend(info.library_jars)
 
@@ -255,6 +268,9 @@ def _dev_plugin_impl(ctx):
     module_owner = {}
     destinations = _new_destinations()
 
+    # The jars of the layout part in plan order, each with its merge-order members. The reused jars follow them.
+    layout_jars = []
+
     # The leaf refuses the content modules of its product's mode, and the shared packaging then ships none of them: a
     # refused module leaves every jar, and a jar that merges no module any more goes, with the libraries it merged. A
     # packaging a product states for itself keeps what `jars` names.
@@ -272,13 +288,16 @@ def _dev_plugin_impl(ctx):
         module_jars = []
         module_names = []
         library_entries = []
+        layout_members = []
         for token in tokens:
             if is_library_token(token):
                 entry = inputs.libraries.get(token)
                 if entry == None:
                     fail("'%s' names library %s, which `libraries` does not declare" % (destination, token), attr = "jars")
                 library_entries.append(entry)
+                layout_members.append({"library": token, "jars": [jar.path for jar in entry.jars]})
             else:
+                layout_members.append({"module": token})
                 jar = inputs.module_jars.get(token)
                 if jar == None:
                     fail("'%s' names module '%s', which `modules` does not declare" % (destination, token), attr = "jars")
@@ -311,6 +330,7 @@ def _dev_plugin_impl(ctx):
             metadata = metadata,
         )
         packed.append(struct(destination = destination, jar = output, metadata = metadata))
+        layout_jars.append({"destination": destination, "members": layout_members})
         if jar_spans != None:
             spans.append(jar_spans)
 
@@ -329,6 +349,12 @@ def _dev_plugin_impl(ctx):
         _claim_destination(destinations, destination, _REUSED, "jars")
         content = inputs.content_jars[name]
         packed.append(struct(destination = destination, jar = content.jar, metadata = content.metadata))
+        layout_jars.append({
+            "destination": destination,
+            "members": [{"module": module} for module in content.member_modules] +
+                       [{"library": entry.label, "jars": [jar.path for jar in entry.jars]} for entry in content.library_jars],
+            "reused": True,
+        })
 
     # The collector reads the jars in spec order and writes the classpath record in that order. `classpath_jars` states
     # the order when the plan's order is not the default one.
@@ -387,9 +413,21 @@ def _dev_plugin_impl(ctx):
         progress_message = "Collecting plugin component metadata %{label}",
     )
 
+    # Written at analysis, and built only when a runtime module repository asks for it.
+    runtime_layout = ctx.actions.declare_file(ctx.label.name + ".runtime-layout.json")
+    ctx.actions.write(runtime_layout, json.encode({
+        "version": 1,
+        "descriptorModule": main_module,
+        "directory": plugin_directory,
+        "order": "plugin",
+        "descriptor": classpath_descriptor.path,
+        "jars": layout_jars,
+    }) + "\n")
+
     payload = depset([entry.jar for entry in packed] + copied_files)
     return [
         DefaultInfo(files = depset([manifest, classpath]), runfiles = ctx.runfiles(transitive_files = payload)),
+        DevDistRuntimeLayoutInfo(part = runtime_layout, descriptor = classpath_descriptor),
         # The raw content, published beside the packed component: `dev_dist_plugin_content` unions it per product for
         # the fragment that lays the plugin out without packing it.
         inputs.content,
@@ -408,6 +446,8 @@ def _dev_plugin_impl(ctx):
             dev_dist_plugin_classpath = depset([classpath]),
             file_metadata = depset([entry.metadata for entry in packed]),
             trace_spans = depset(spans),
+            # The part and the descriptor it names, which a consumer of the part reads too.
+            dev_dist_runtime_layout = depset([runtime_layout, classpath_descriptor]),
         ),
     ]
 

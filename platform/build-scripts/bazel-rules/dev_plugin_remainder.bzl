@@ -7,7 +7,7 @@ load("//build:dev_launch_dependencies.bzl", "HOST_PLATFORMS", "platform_parts")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "library_entries", "module_output_jar")
 load(":dev_dist_content.bzl", "DevDistContentInfo")
 load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_neutral_product_transition")
-load(":dev_plugin.bzl", "dev_dist_plugin_directory")
+load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo", "dev_dist_plugin_directory")
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo")
 
@@ -693,7 +693,40 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
         arguments = [arguments],
         progress_message = "Packing plugin remainder %{label} from its plan file",
     )
-    return _remainder_providers(ctx, ctx.attr.graph, execution_version, directory, metadata, assets, classpath, independent_artifacts, content)
+
+    # The layout part of the plugin, derived from the same plan file. Built only when a runtime module repository asks for
+    # it, and apart from the packing action, so that it reads no packed byte.
+    runtime_layout = ctx.actions.declare_file(ctx.label.name + ".runtime-layout.json")
+    layout_arguments = ctx.actions.args()
+    layout_arguments.add("plan-part")
+    layout_arguments.add(projection, format = "--plan=%s")
+    layout_arguments.add(binding.catalogue, format = "--catalogue=%s")
+    layout_inputs = [projection, binding.catalogue]
+
+    # A reused jar is not in the catalogue, so its own target states the libraries it merges.
+    if reused_library_jars:
+        independent_libraries = ctx.actions.declare_file(ctx.label.name + ".independent-libraries.json")
+        ctx.actions.write(independent_libraries, json.encode({
+            "version": 1,
+            "libraries": [{"library": entry.label, "jars": [jar.path for jar in entry.jars]} for entry in reused_library_jars],
+        }) + "\n")
+        layout_arguments.add(independent_libraries, format = "--independent-libraries=%s")
+        layout_inputs.append(independent_libraries)
+    layout_arguments.add(descriptor_target[DevDistPluginDescriptorInfo].plugin_main_module, format = "--descriptor-module=%s")
+    layout_arguments.add(ctx.attr.plugin_directory, format = "--plugin-directory=%s")
+    layout_arguments.add(classpath_descriptor.path, format = "--descriptor=%s")
+    layout_arguments.add(runtime_layout, format = "--output=%s")
+    ctx.actions.run(
+        mnemonic = "DevDistRuntimeLayoutPart",
+        executable = ctx.executable._runtime_layout,
+        inputs = layout_inputs,
+        outputs = [runtime_layout],
+        arguments = [layout_arguments],
+        progress_message = "Deriving the runtime layout part of %{label} from its plan file",
+    )
+    return _remainder_providers(ctx, ctx.attr.graph, execution_version, directory, metadata, assets, classpath, independent_artifacts, content) + [
+        DevDistRuntimeLayoutInfo(part = runtime_layout, descriptor = classpath_descriptor),
+    ]
 
 dev_plugin_remainder_from_plan = rule(
     implementation = _dev_plugin_remainder_from_plan_impl,
@@ -725,6 +758,11 @@ Reset to the neutral product configuration like every compiled input: without th
 reaches each jar's module and compiles it a second time. No input of the action may overlap a reused jar.""",
         ),
         "_packer": _PACKER,
+        "_runtime_layout": attr.label(
+            default = "//platform/build-scripts/bazel-rules:runtime_layout",
+            executable = True,
+            cfg = "exec",
+        ),
         "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
     },
 )
@@ -836,6 +874,7 @@ def _dev_plugin_component_impl(ctx):
         DefaultInfo(files = depset([manifest, classpath]), runfiles = ctx.runfiles(transitive_files = payload)),
         # The raw content of the plugin, forwarded from the remainder: `dev_dist_plugin_content` unions it per product.
         ctx.attr.remainder[DevDistContentInfo],
+        ctx.attr.remainder[DevDistRuntimeLayoutInfo],
         IntellijDevFragmentInfo(
             name = ctx.attr.component_name,
             home = None,
@@ -852,13 +891,15 @@ def _dev_plugin_component_impl(ctx):
             dev_dist_plugin_classpath = depset([classpath]),
             file_metadata = depset([remainder.metadata] + [file for file in inputs if file not in [remainder.metadata, remainder.assets, remainder.classpath]]),
             trace_spans = depset(spans),
+            # The part and the descriptor it names, which a consumer of the part reads too.
+            dev_dist_runtime_layout = depset([ctx.attr.remainder[DevDistRuntimeLayoutInfo].part, ctx.attr.remainder[DevDistRuntimeLayoutInfo].descriptor]),
         ),
     ]
 
 dev_plugin_component = rule(
     implementation = _dev_plugin_component_impl,
     attrs = {
-        "remainder": attr.label(mandatory = True, providers = [DevPluginRemainderInfo]),
+        "remainder": attr.label(mandatory = True, providers = [DevPluginRemainderInfo, DevDistRuntimeLayoutInfo]),
         "independent_artifacts": attr.label_list(
             providers = [ContentModuleJarInfo],
             cfg = _module_transition,
