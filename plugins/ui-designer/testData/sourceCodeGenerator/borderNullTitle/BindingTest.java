@@ -22,6 +22,14 @@ public class BindingTest {
     super();
   }
 
+<<<<<<< HEAD:plugins/ui-designer/testData/sourceCodeGenerator/borderNullTitle/BindingTest.java
   private void createUIComponents() {
   }
+=======
+  JComponent getPreferredFocusedComponent();
+
+  int getContentsNumber();
+
+  boolean acceptsType(DiffViewerType type);
+>>>>>>> origin/115:platform/platform-api/src/com/intellij/openapi/diff/DiffViewer.java
 }

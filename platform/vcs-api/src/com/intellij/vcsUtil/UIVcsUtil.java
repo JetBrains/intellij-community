@@ -19,10 +19,16 @@ public final class UIVcsUtil {
   private UIVcsUtil() {
   }
 
+<<<<<<< HEAD
   @SuppressWarnings("unused") // Required for compatibility with external plugins.
   public static JPanel errorPanel(@NotNull @Nls String text, boolean isError) {
     final JLabel label = new JLabel(XmlStringUtil.wrapInHtml(escapeXmlAndAddBr(text)));
     label.setForeground(isError ? SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor() : NamedColorUtil.getInactiveTextColor());
+=======
+  public static JPanel errorPanel(final String text, boolean isError) {
+    final JLabel label = new JLabel("<html><body>" + StringUtil.escapeXml(text) + "</body></html>");
+    label.setForeground(isError ? SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor() : UIUtil.getInactiveTextColor());
+>>>>>>> origin/115
     final JPanel wrapper = new JPanel(new GridBagLayout());
     wrapper.add(label, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.insets(1), 0, 0));
     return wrapper;

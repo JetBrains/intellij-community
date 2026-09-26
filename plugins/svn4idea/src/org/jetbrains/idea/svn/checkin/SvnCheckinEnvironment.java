@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+<<<<<<< HEAD
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
@@ -35,6 +36,22 @@ import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
+=======
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.FunctionUtil;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PairConsumer;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.*;
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.*;
+>>>>>>> origin/115
 
 import java.io.File;
 import java.util.ArrayList;
@@ -63,6 +80,7 @@ public final class SvnCheckinEnvironment implements CheckinEnvironment {
 
   private void doCommit(@NotNull Collection<? extends FilePath> committables,
                         String comment,
+<<<<<<< HEAD
                         List<VcsException> exception,
                         @NotNull Set<? super String> feedback) {
     MultiMap<Pair<Url, WorkingCopyFormat>, FilePath> map = SvnUtil.splitIntoRepositoriesMap(mySvnVcs, committables, Convertor.self());
@@ -89,6 +107,45 @@ public final class SvnCheckinEnvironment implements CheckinEnvironment {
                                @NotNull Set<? super String> feedback,
                                @NotNull WorkingCopyFormat format)
   throws VcsException {
+=======
+                        boolean force,
+                        boolean recursive,
+                        List<VcsException> exception, final Set<String> feedback) {
+    final Collection<Collection<File>> collections = splitIntoWc(committables);
+    for (Collection<File> collection : collections) {
+      doCommitOneWc(collection, progress, committer, comment, force, recursive, exception, feedback);
+    }
+  }
+
+  private Collection<Collection<File>> splitIntoWc(Collection<File> committables) {
+    if (committables.size() == 1) {
+      return Collections.singletonList(committables);
+    }
+
+    final MultiMap<SVNURL, File> result = new MultiMap<SVNURL, File>();
+    for (File committable : committables) {
+      final RootUrlInfo path = mySvnVcs.getSvnFileUrlMapping().getWcRootForFilePath(committable);
+      result.putValue(path == null ? null : path.getRepositoryUrlUrl(), committable);
+    }
+
+    if (result.size() == 1) {
+      return Collections.singletonList(committables);
+    }
+    final Collection<Collection<File>> result2 = new ArrayList<Collection<File>>();
+    for (Map.Entry<SVNURL, Collection<File>> entry : result.entrySet()) {
+      result2.add(entry.getValue());
+    }
+    return result2;
+  }
+
+  private void doCommitOneWc(Collection<File> committables,
+                          ProgressIndicator progress,
+                          SVNCommitClient committer,
+                          String comment,
+                          boolean force,
+                          boolean recursive,
+                          List<VcsException> exception, final Set<String> feedback) {
+>>>>>>> origin/115
     if (committables.isEmpty()) {
       return;
     }

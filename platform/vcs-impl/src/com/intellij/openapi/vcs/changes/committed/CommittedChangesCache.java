@@ -571,7 +571,11 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
 
     myCachedIncomingChangeLists = result;
     debug("Incoming changes loaded");
+<<<<<<< HEAD
     fireIncomingChangesUpdated(result);
+=======
+    notifyIncomingChangesUpdated(result);
+>>>>>>> origin/115
     return result;
   }
 
@@ -747,10 +751,22 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     });
   }
 
+<<<<<<< HEAD
   private void fireIncomingChangesUpdated(@NotNull Collection<? extends CommittedChangeList> incomingChanges) {
     List<CommittedChangeList> incomingChangesCopy = unmodifiableOrEmptyList(new ArrayList<>(incomingChanges));
 
     invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.incomingChangesUpdated(incomingChangesCopy));
+=======
+  private void notifyIncomingChangesUpdated(@Nullable final Collection<CommittedChangeList> receivedChanges) {
+    final Collection<CommittedChangeList> changes = receivedChanges == null ? myCachedIncomingChangeLists : receivedChanges;
+    if (changes == null) {
+      final List<CommittedChangeList> lists = loadIncomingChanges(false);
+      myBus.syncPublisher(COMMITTED_TOPIC).incomingChangesUpdated(new ArrayList<CommittedChangeList>(lists));
+      return;
+    }
+    final ArrayList<CommittedChangeList> listCopy = new ArrayList<CommittedChangeList>(changes);
+    myBus.syncPublisher(COMMITTED_TOPIC).incomingChangesUpdated(listCopy);
+>>>>>>> origin/115
   }
 
   private void notifyRefreshError(final VcsException e) {

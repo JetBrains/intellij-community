@@ -14,8 +14,12 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+<<<<<<< HEAD
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+=======
+import com.intellij.openapi.util.IconLoader;
+>>>>>>> origin/115
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -276,7 +280,23 @@ public class PropertiesComponent extends JPanel {
         propValue = myVcs.getFactory(myFile).createPropertyClient()
           .getProperty(Target.on(myFile), SvnPropertyKeys.SVN_KEYWORDS, false, Revision.WORKING);
       }
+<<<<<<< HEAD
       catch (VcsException ignored) {
+=======
+      
+      SetKeywordsDialog dialog = new SetKeywordsDialog(project,
+                                                       propValue != null ? SVNPropertyValue.getPropertyAsString(propValue.getValue()) : null);
+      dialog.show();
+      if (dialog.isOK()) {
+        String value = dialog.getKeywords();
+        try {
+          wcClient.doSetProperty(myFile, SVNProperty.KEYWORDS, SVNPropertyValue.create(value), false, false, null);
+        }
+        catch (SVNException err) {
+          // show error message
+          VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not set property: " + err.getMessage(), MessageType.ERROR);
+        }
+>>>>>>> origin/115
       }
 
       SetKeywordsDialog dialog = new SetKeywordsDialog(project, propValue);
@@ -301,10 +321,22 @@ public class PropertiesComponent extends JPanel {
       e.getPresentation().setEnabled(myFile != null && getSelectedPropertyName() != null);
     }
 
+<<<<<<< HEAD
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       setProperty(getSelectedPropertyName(), null, false, true);
       updateFileView(false);
+=======
+    public void actionPerformed(AnActionEvent e) {
+      try {
+        myVcs.createWCClient().doSetProperty(myFile, getSelectedPropertyName(), null, true, false, null);
+      } catch (SVNException error) {
+        VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not set property: " + error.getMessage(), MessageType.ERROR);
+        // show error message.
+      }
+      setFile(myVcs, myFile);
+      updateFileStatus(false);
+>>>>>>> origin/115
     }
   }
 
@@ -330,7 +362,18 @@ public class PropertiesComponent extends JPanel {
       boolean recursive = false;
       if (dialog.showAndGet()) {
         recursive = dialog.isRecursive();
+<<<<<<< HEAD
         setProperty(dialog.getPropertyName(), dialog.getPropertyValue(), recursive, false);
+=======
+        SVNWCClient wcClient = myVcs.createWCClient();
+        try {
+          wcClient.doSetProperty(myFile, name, SVNPropertyValue.create(value), false, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, null, null);
+        }
+        catch (SVNException err) {
+          VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not set property: " + err.getMessage(), MessageType.ERROR);
+          // show error message
+        }
+>>>>>>> origin/115
       }
       updateFileView(recursive);
     }
@@ -357,7 +400,18 @@ public class PropertiesComponent extends JPanel {
       boolean recursive = false;
       if (dialog.showAndGet()) {
         recursive = dialog.isRecursive();
+<<<<<<< HEAD
         setProperty(dialog.getPropertyName(), dialog.getPropertyValue(), recursive, false);
+=======
+        SVNWCClient wcClient = myVcs.createWCClient();
+        try {
+          wcClient.doSetProperty(myFile, name, SVNPropertyValue.create(value), false, recursive, null);
+        }
+        catch (SVNException err) {
+          VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not set property: " + err.getMessage(), MessageType.ERROR);
+          // show error message
+        }
+>>>>>>> origin/115
       }
       updateFileView(recursive);
     }

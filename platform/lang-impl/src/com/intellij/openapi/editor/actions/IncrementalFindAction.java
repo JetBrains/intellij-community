@@ -33,6 +33,7 @@ public class IncrementalFindAction extends EditorAction implements ActionRemoteB
       myReplace = isReplace;
     }
 
+<<<<<<< HEAD
     @Override
     protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -43,6 +44,17 @@ public class IncrementalFindAction extends EditorAction implements ActionRemoteB
           FindUtil.configureFindModel(myReplace, editor, search.getFindModel(), false);
         }
         else {
+=======
+    public void execute(final Editor editor, DataContext dataContext) {
+      final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
+      if (!editor.isOneLineMode()) {
+        final JComponent headerComponent = editor.getHeaderComponent();
+        if (headerComponent instanceof EditorSearchComponent) {
+          EditorSearchComponent editorSearchComponent = (EditorSearchComponent)headerComponent;
+            headerComponent.requestFocus();
+          FindUtil.configureFindModel(myReplace, editor, editorSearchComponent.getFindModel(), false);
+        } else {
+>>>>>>> origin/115
           FindManager findManager = FindManager.getInstance(project);
           FindModel model;
           if (myReplace) {
@@ -52,6 +64,7 @@ public class IncrementalFindAction extends EditorAction implements ActionRemoteB
             model = new FindModel();
             model.copyFrom(findManager.getFindInFileModel());
           }
+<<<<<<< HEAD
           boolean consoleViewEditor = ConsoleViewUtil.isConsoleViewEditor(editor);
           FindUtil.configureFindModel(myReplace, editor, model, consoleViewEditor);
           EditorSearchSession.start(editor, model, project).getComponent()
@@ -61,6 +74,12 @@ public class IncrementalFindAction extends EditorAction implements ActionRemoteB
             FindUtil.updateFindInFileModel(project, model, true);
             FindUtil.updateFindNextModel(project, model);
           }
+=======
+          FindUtil.configureFindModel(myReplace, editor, model, true);
+          final EditorSearchComponent header = new EditorSearchComponent(editor, project, model);
+          editor.setHeaderComponent(header);
+          header.requestFocus();
+>>>>>>> origin/115
         }
       }
     }

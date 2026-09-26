@@ -147,6 +147,7 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
 
     final Language baseLanguage = file.getViewProvider().getBaseLanguage();
 
+<<<<<<< HEAD
     Language previousLanguage = null;
     for (int i = 0; i < startOffsets.length; ++i) {
       PsiElement element1 = file.findElementAt(startOffsets[i]);
@@ -176,6 +177,11 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
     List<SurroundDescriptor> surroundDescriptors = new ArrayList<>(LanguageSurrounders.INSTANCE.allForLanguage(previousLanguage));
     if (previousLanguage != baseLanguage) surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(baseLanguage));
     surroundDescriptors.add(CustomFoldingSurroundDescriptor.INSTANCE);
+=======
+    surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(l));
+    if (l != baseLanguage) surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(baseLanguage));
+   // surroundDescriptors.add(CustomFoldingSurroundDescriptor.INSTANCE);
+>>>>>>> origin/115
 
     int exclusiveCount = 0;
     List<SurroundDescriptor> exclusiveSurroundDescriptors = new ArrayList<>();

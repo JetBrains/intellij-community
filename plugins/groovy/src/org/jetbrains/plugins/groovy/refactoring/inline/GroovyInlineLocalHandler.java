@@ -2,6 +2,10 @@
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
+<<<<<<< HEAD
+=======
+import com.intellij.codeInsight.TargetElementUtilBase;
+>>>>>>> origin/115
 import com.intellij.lang.Language;
 import com.intellij.lang.refactoring.InlineActionHandler;
 import com.intellij.openapi.application.ApplicationManager;
@@ -104,7 +108,7 @@ public final class GroovyInlineLocalHandler extends InlineActionHandler {
           final PsiElement finalCur = cur;
           Instruction instruction = ControlFlowUtils.findInstruction(finalCur, flow.getFlow());
 
-          LOG.assertTrue(instruction != null);
+          LOG.assertTrue(instruction != null, "flow owner = " + controlFlowOwner.getText() + "\nref = " + finalCur.getText());
           final BitSet prev = writes.get(instruction.num());
           if (prev.cardinality() == 1) {
             writeInstr = flow.getFlow()[prev.nextSetBit(0)];

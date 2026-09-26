@@ -125,8 +125,17 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         ProgressTracker handler = new CheckoutEventHandler(vcs, false, ProgressManager.getInstance().getProgressIndicator());
         indicator.setText(message("progress.text.checking.out", target.getAbsolutePath()));
         try {
+<<<<<<< HEAD
           getFactory(vcs).createCheckoutClient()
             .checkout(Target.on(url), target, revision, depth, ignoreExternals, true, format, handler);
+=======
+          progressIndicator.setText(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
+          if (! WorkingCopyFormat.ONE_DOT_SEVEN.equals(SvnWorkingCopyFormatHolder.getPresetFormat())) {
+            client.getOperationsFactory().setPrimaryWcGeneration(SvnWcGeneration.V16);
+          }
+          client.doCheckout(SVNURL.parseURIEncoded(url), target, SVNRevision.UNDEFINED, revision, depth, true);
+          progressIndicator.checkCanceled();
+>>>>>>> origin/115
           checkoutSuccessful.set(Boolean.TRUE);
 
           return CloneStatus.SUCCESS;

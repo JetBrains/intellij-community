@@ -24,6 +24,17 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.ShareDialog;
+<<<<<<< HEAD
+=======
+import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNUpdateClient;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
+>>>>>>> origin/115
 
 import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.openapi.ui.Messages.YES;
@@ -112,7 +123,20 @@ public class ShareProjectAction extends BasicAction {
 
             progress(message("share.directory.checkout.back.progress.text", checkoutTarget.getPath()));
 
+<<<<<<< HEAD
             ClientFactory factory = SvnCheckoutProvider.getFactory(vcs);
+=======
+                if (indicator != null) {
+                  indicator.checkCanceled();
+                  indicator.setText(SvnBundle.message("share.directory.checkout.back.progress.text", checkoutUrl.toString()));
+                }
+                final SVNUpdateClient client = activeVcs.createUpdateClient();
+                if (! WorkingCopyFormat.ONE_DOT_SEVEN.equals(SvnWorkingCopyFormatHolder.getPresetFormat())) {
+                  client.getOperationsFactory().setPrimaryWcGeneration(SvnWcGeneration.V16);
+                }
+                client.doCheckout(checkoutUrl, path, SVNRevision.UNDEFINED, revision, SVNDepth.INFINITY, false);
+                SvnWorkingCopyFormatHolder.setPresetFormat(null);
+>>>>>>> origin/115
 
             factory.createCheckoutClient()
               .checkout(Target.on(checkoutTarget.getUrl()), virtualToIoFile(file), checkoutTarget.getPegRevision(), Depth.INFINITY,

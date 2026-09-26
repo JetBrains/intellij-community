@@ -48,6 +48,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
+<<<<<<< HEAD
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -72,6 +73,10 @@ import com.intellij.vcs.commit.SingleChangeListCommitWorkflowHandler;
 import com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
+=======
+import com.intellij.util.Consumer;
+import com.intellij.util.OnOffListener;
+>>>>>>> origin/115
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -808,10 +813,36 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
   }
 
+<<<<<<< HEAD
   private void refreshDetails(boolean fromModelRefresh, boolean async) {
     Runnable task = () -> {
       if (myDetailsSplitter.isOn()) {
         myDiffDetails.refresh(fromModelRefresh);
+=======
+  private static class DiffCommitMessageEditor extends CommitMessage implements Disposable {
+    private CommitChangeListDialog myCommitDialog;
+
+    public DiffCommitMessageEditor(final CommitChangeListDialog dialog) {
+      super(dialog.getProject());
+      getEditorField().setText(dialog.getCommitMessage());
+      myCommitDialog = dialog;
+      myCommitDialog.setMessageConsumer(new Consumer<String>() {
+        @Override
+        public void consume(String s) {
+          getEditorField().setText(s);
+        }
+      });
+    }
+
+    public void dispose() {
+      if (myCommitDialog != null) {
+        myCommitDialog.setMessageConsumer(null);
+        final String text = getEditorField().getText();
+        if (! Comparing.equal(myCommitDialog.getCommitMessage(), text)) {
+          myCommitDialog.setCommitMessage(text);
+        }
+        myCommitDialog = null;
+>>>>>>> origin/115
       }
     };
     if (async) {
@@ -890,5 +921,9 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       myPanel.setBounds(new Rectangle(0, 0, bounds.width - optionsWidth, bounds.height));
       myOptionsPanel.setBounds(new Rectangle(bounds.width - optionsWidth, 0, optionsWidth, bounds.height));
     }
+  }
+
+  public void setMessageConsumer(Consumer<String> messageConsumer) {
+    myCommitMessageArea.setMessageConsumer(messageConsumer);
   }
 }

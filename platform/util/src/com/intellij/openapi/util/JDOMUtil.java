@@ -584,6 +584,7 @@ public final class JDOMUtil {
   /**
    * Returns null if no escapement necessary.
    */
+<<<<<<< HEAD
   private static @Nullable String escapeChar(char c, boolean escapeApostrophes, boolean escapeSpaces, boolean escapeLineEnds) {
     switch (c) {
       case '\n':
@@ -604,6 +605,20 @@ public final class JDOMUtil {
         return escapeApostrophes ? "&apos;" : null;
       case '&':
         return "&amp;";
+=======
+  @Nullable
+  private static String escapeChar(char c, boolean escapeApostrophes, boolean escapeSpaces, boolean escapeLineEnds) {
+    switch (c) {
+      case '\n': return escapeLineEnds ? "&#10;" : null;
+      case '\r': return escapeLineEnds ? "&#13;" : null;
+      case '\t': return escapeLineEnds ? "&#9;" : null;
+      case ' ' : return escapeSpaces  ? "&#20" : null;
+      case '<':  return "&lt;";
+      case '>':  return "&gt;";
+      case '\"': return "&quot;";
+      case '\'': return escapeApostrophes ? "&apos;": null;
+      case '&':  return "&amp;";
+>>>>>>> origin/115
     }
     return null;
   }
@@ -613,10 +628,24 @@ public final class JDOMUtil {
     return escapeText(text, false, false);
   }
 
+<<<<<<< HEAD
   @Contract(pure = true)
   public static @NotNull String escapeText(@NotNull String text, boolean escapeSpaces, boolean escapeLineEnds) {
     return escapeText(text, false, escapeSpaces, escapeLineEnds);
   }
+=======
+  @NotNull
+  public static String escapeText(String text, boolean escapeSpaces, boolean escapeLineEnds) {
+    return escapeText(text, false, escapeSpaces, escapeLineEnds);
+  }
+
+  @NotNull
+  public static String escapeText(String text, boolean escapeApostrophes, boolean escapeSpaces, boolean escapeLineEnds) {
+    StringBuffer buffer = null;
+    for (int i = 0; i < text.length(); i++) {
+      final char ch = text.charAt(i);
+      final String quotation = escapeChar(ch, escapeApostrophes, escapeSpaces, escapeLineEnds);
+>>>>>>> origin/115
 
   @Contract(pure = true)
   public static @NotNull String escapeText(@NotNull String text, boolean escapeApostrophes, boolean escapeSpaces, boolean escapeLineEnds) {

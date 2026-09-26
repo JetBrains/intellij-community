@@ -88,6 +88,25 @@ import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
+<<<<<<< HEAD
+=======
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
+import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNDebugLogAdapter;
+import org.tmatesoft.svn.util.SVNLogType;
+>>>>>>> origin/115
 
 import java.io.File;
 import java.util.ArrayList;
@@ -318,7 +337,114 @@ public final class SvnVcs extends AbstractVcs {
     return myChangeProvider;
   }
 
+<<<<<<< HEAD
   @Override
+=======
+  public SVNRepository createRepository(String url) throws SVNException {
+    SVNRepository repos = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(url));
+    repos.setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    repos.setTunnelProvider(myConfiguration.getOptions(myProject));
+    return repos;
+  }
+
+  public SVNRepository createRepository(SVNURL url) throws SVNException {
+    SVNRepository repos = SVNRepositoryFactory.create(url);
+    repos.setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    repos.setTunnelProvider(myConfiguration.getOptions(myProject));
+    return repos;
+  }
+
+  private void createPool() {
+    final String property = System.getProperty(KEEP_CONNECTIONS_KEY);
+    final boolean keep;
+    if (StringUtil.isEmptyOrSpaces(property)) {
+      keep = ! ApplicationManager.getApplication().isUnitTestMode();  // default
+    } else {
+      keep = Boolean.getBoolean(KEEP_CONNECTIONS_KEY);
+    }
+    myPool = new DefaultSVNRepositoryPool(myConfiguration.getAuthenticationManager(this), null, 60*1000, keep);
+  }
+
+  private ISVNRepositoryPool getPool() {
+    return myPool;
+  }
+
+  public SVNUpdateClient createUpdateClient() {
+    final SVNUpdateClient client = new SVNUpdateClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
+  }
+
+  public SVNStatusClient createStatusClient() {
+    SVNStatusClient client = new SVNStatusClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    client.setIgnoreExternals(true);
+    return client;
+  }
+
+  public SVNWCClient createWCClient() {
+    final SVNWCClient client = new SVNWCClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
+  }
+
+  public SVNCopyClient createCopyClient() {
+    final SVNCopyClient client = new SVNCopyClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
+  }
+
+  public SVNMoveClient createMoveClient() {
+    final SVNMoveClient client = new SVNMoveClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
+  }
+
+  public SVNLogClient createLogClient() {
+    final SVNLogClient client = new SVNLogClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
+  }
+
+  public SVNCommitClient createCommitClient() {
+    final SVNCommitClient client = new SVNCommitClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
+  }
+
+  public SVNDiffClient createDiffClient() {
+    final SVNDiffClient client = new SVNDiffClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
+  }
+
+  public SVNChangelistClient createChangelistClient() {
+    final SVNChangelistClient client = new SVNChangelistClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
+  }
+
+  public SVNWCAccess createWCAccess() {
+    final SVNWCAccess access = SVNWCAccess.newInstance(null);
+    access.setOptions(myConfiguration.getOptions(myProject));
+    return access;
+  }
+
+  public ISVNOptions getSvnOptions() {
+    return myConfiguration.getOptions(myProject);
+  }
+
+  public ISVNAuthenticationManager getSvnAuthenticationManager() {
+    return myConfiguration.getAuthenticationManager(this);
+  }
+
+  void dumpFileStatus(FileStatus fs) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("FileStatus:" + fs.getText() + " " + fs.getColor() + " " + " " + fs.getClass().getName());
+    }
+  }
+
+>>>>>>> origin/115
   public UpdateEnvironment getIntegrateEnvironment() {
     if (mySvnIntegrateEnvironment == null) {
       mySvnIntegrateEnvironment = new SvnIntegrateEnvironment(this);
@@ -569,8 +695,14 @@ public final class SvnVcs extends AbstractVcs {
     final List<WCInfo> infos = new ArrayList<>();
     for (RootUrlInfo info : infoList) {
       final File file = info.getIoFile();
+<<<<<<< HEAD
 
       infos.add(new WCInfo(info, SvnUtil.isWorkingCopyRoot(file), SvnUtil.getDepth(this, file)));
+=======
+      infos.add(new WCInfo(file.getAbsolutePath(), info.getAbsoluteUrlAsUrl(),
+        info.getFormat(), info.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file), info.getType(),
+        SvnUtil.getDepth(this, file)));
+>>>>>>> origin/115
     }
     return infos;
   }
