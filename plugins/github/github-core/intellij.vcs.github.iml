@@ -93,7 +93,5 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
-    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
-    <orderEntry type="module" module-name="intellij.platform.eel" />
   </component>
 </module>

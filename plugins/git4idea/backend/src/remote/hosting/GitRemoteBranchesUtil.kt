@@ -165,23 +165,45 @@ object GitRemoteBranchesUtil {
     withBackgroundProgress(repository.project,
                            CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description")) {
       val branch = findOrCreateRemoteBranch(repository, remote, remoteBranch) ?: return@withBackgroundProgress
-
-      val fetchOk = withProgressText(GitBundle.message("progress.text.worktree.fetching.branch")) {
-        fetchBranch(repository, branch)
-      }
-      if (!fetchOk) return@withBackgroundProgress
-
-      // Reuse a local branch that already tracks the remote one, or shares the name a regular checkout would have
-      // assigned it (tracking may be missing depending on the user's `branch.autoSetupMerge` setting), so the
-      // worktree doesn't fail trying to create a branch that already exists.
-      val existingLocalBranch = findLocalBranchTrackingRemote(repository, branch)
-                                 ?: repository.branches.findLocalBranch(branch.nameForRemoteOperations)
-                                   ?.takeUnless { hasTrackingConflicts(mapOf(repository to it), branch.name) }
-      val ref: GitBranch = existingLocalBranch ?: branch
-      val newBranchName = if (existingLocalBranch == null) newLocalBranchPrefix?.let { "$it/${branch.nameForRemoteOperations}" } else null
-      GitCreateWorkingTreeService.getInstance()
-        .createOrOpenWorktreeForBranch(repository, ref, parentDir, worktreeName, place, newBranchName, onProjectOpened)
+      val newLocalBranchName = newLocalBranchPrefix?.let { "$it/${branch.nameForRemoteOperations}" }
+      fetchAndCheckoutInNewWorktreeUnderProgress(repository, branch, parentDir, worktreeName, place, newLocalBranchName, onProjectOpened)
     }
+  }
+
+  /**
+   * The directory for the review worktrees of [project].
+   * It is in the same Eel environment (WSL/Docker/local) as the project.
+   */
+  @RequiresBackgroundThread(generateAssertion = false)
+  fun getReviewWorktreesParentDir(project: Project): Path =
+    GitCreateWorkingTreeService.getSystemTempDir(project).resolve(REVIEW_WORKTREES_DIR_NAME)
+
+  private const val REVIEW_WORKTREES_DIR_NAME = "reviewWorktrees"
+
+  private suspend fun fetchAndCheckoutInNewWorktreeUnderProgress(
+    repository: GitRepository,
+    branch: GitRemoteBranch,
+    parentDir: Path,
+    worktreeName: String,
+    place: String,
+    newLocalBranchName: String?,
+    onProjectOpened: ((Project) -> Unit)?,
+  ) {
+    val fetchOk = withProgressText(GitBundle.message("progress.text.worktree.fetching.branch")) {
+      fetchBranch(repository, branch)
+    }
+    if (!fetchOk) return
+
+    // Reuse a local branch that already tracks the remote one, or shares the name a regular checkout would have
+    // assigned it (tracking may be missing depending on the user's `branch.autoSetupMerge` setting), so the
+    // worktree doesn't fail trying to create a branch that already exists.
+    val existingLocalBranch = findLocalBranchTrackingRemote(repository, branch)
+                               ?: repository.branches.findLocalBranch(branch.nameForRemoteOperations)
+                                 ?.takeUnless { hasTrackingConflicts(mapOf(repository to it), branch.name) }
+    val ref: GitBranch = existingLocalBranch ?: branch
+    val newBranchName = if (existingLocalBranch == null) newLocalBranchName else null
+    GitCreateWorkingTreeService.getInstance()
+      .createOrOpenWorktreeForBranch(repository, ref, parentDir, worktreeName, place, newBranchName, onProjectOpened)
   }
 
   suspend fun fetchAndShowRemoteBranchInLog(repository: GitRepository, branch: GitRemoteBranch, targetBranch: GitRemoteBranch?) {

@@ -10,7 +10,6 @@ import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.eel.provider.utils.EelSystemFolderUtils
 import git4idea.GitStandardRemoteBranch
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.GitHostingUrlUtil.getUriFromRemoteUrl
@@ -38,7 +37,6 @@ import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import java.net.URI
-import java.nio.file.Path
 
 private val LOG = logger<GHPRBranchesViewModel>()
 
@@ -130,7 +128,6 @@ class GHPRBranchesViewModel internal constructor(
   companion object {
 
     private const val WORKTREE_FROM_REVIEW_PLACE = "review.details.branch.popup"
-    private const val REVIEW_WORKTREES_DIR_NAME = "reviewWorktrees"
 
     // Used as a default value for HostedGitRepositoryRemote serverUri when it's not possible to find an existing remote.
     // Path is removed, to match to every URL with the same host.
@@ -150,11 +147,6 @@ class GHPRBranchesViewModel internal constructor(
 
     fun GHPullRequest.getBaseRemoteDescriptor(remoteUrlCoordinates: GitRemoteUrlCoordinates): HostedGitRepositoryRemote? =
       baseRepository?.getRemoteDescriptor(remoteUrlCoordinates)
-
-    // The parent dir must live in the same Eel environment (WSL/Docker/local) as the repository,
-    // otherwise the worktree ends up created on the wrong (e.g. host Windows) filesystem for a WSL project.
-    internal fun getReviewWorktreesParentDir(project: Project): Path =
-      EelSystemFolderUtils.getSystemFolder(project).resolve("tmp").resolve(REVIEW_WORKTREES_DIR_NAME)
 
     internal suspend fun fetchAndCheckoutBranch(remoteUrlCoordinates: GitRemoteUrlCoordinates, details: GHPullRequest) {
       val baseRepository = details.baseRepository ?: run {
@@ -193,7 +185,7 @@ class GHPRBranchesViewModel internal constructor(
       val prId = details.prId
       val worktreeName = "${remoteUrlCoordinates.repository.root.name}_PR_${details.number}"
       val parentDir = withContext(Dispatchers.IO) {
-        getReviewWorktreesParentDir(remoteUrlCoordinates.repository.project)
+        GitRemoteBranchesUtil.getReviewWorktreesParentDir(remoteUrlCoordinates.repository.project)
       }
       GitRemoteBranchesUtil.fetchAndCheckoutInNewWorktree(remoteUrlCoordinates.repository,
                                                           remoteDescriptor,
