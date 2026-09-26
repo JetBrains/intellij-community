@@ -3347,13 +3347,6 @@ f:com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile
 - s:create(com.intellij.openapi.vcs.changes.ContentRevision):com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile
 - getContentRevision():com.intellij.openapi.vcs.changes.ContentRevision
 - isDirectory():Z
-a:com.intellij.openapi.vcs.vfs.CustomisableUniqueNameEditorTabTitleProvider
-- com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- getEditorTabTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- a:getEditorTabTitle(com.intellij.openapi.vfs.VirtualFile,java.lang.String):java.lang.String
-- a:isApplicable(com.intellij.openapi.vfs.VirtualFile):Z
 c:com.intellij.openapi.vcs.vfs.VcsFileSystem
 - com.intellij.openapi.vfs.DeprecatedVirtualFileSystem
 - com.intellij.openapi.vfs.NonPhysicalFileSystem

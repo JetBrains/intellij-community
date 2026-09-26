@@ -259,6 +259,12 @@ f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OptionSet
 f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$PropNames
 e:com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
 - java.lang.Enum
+a:com.intellij.openapi.fileEditor.impl.CustomisableUniqueNameEditorTabTitleProvider
+- com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
+- <init>():V
+- f:getEditorTabTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- a:getEditorTabTitle(com.intellij.openapi.vfs.VirtualFile,java.lang.String):java.lang.String
+- a:isApplicable(com.intellij.openapi.vfs.VirtualFile):Z
 com.intellij.openapi.fileEditor.impl.EditorTabColorProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName

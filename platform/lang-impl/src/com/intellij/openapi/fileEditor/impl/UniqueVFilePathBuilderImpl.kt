@@ -230,15 +230,20 @@ private fun createAndCacheBuilders(
       continue
     }
 
-    var path = project.basePath
-    path = if (path == null) "" else FileUtilRt.toSystemIndependentName(path)
-    val builder = UniqueNameBuilder<VirtualFile>(path, File.separator)
-    for (virtualFile in files) {
-      val presentablePath = if (virtualFile is VirtualFilePathWrapper) virtualFile.presentablePath else virtualFile.path
-      builder.addPath(virtualFile, presentablePath)
-    }
+    val builder = createUniqueNameBuilder(project, files)
     valueMap.put(fileName, builder)
   }
+}
+
+private fun createUniqueNameBuilder(project: Project, files: Collection<VirtualFile>): UniqueNameBuilder<VirtualFile> {
+  var path = project.basePath
+  path = if (path == null) "" else FileUtilRt.toSystemIndependentName(path)
+  val builder = UniqueNameBuilder<VirtualFile>(path, File.separator)
+  for (virtualFile in files) {
+    val presentablePath = if (virtualFile is VirtualFilePathWrapper) virtualFile.presentablePath else virtualFile.path
+    builder.addPath(virtualFile, presentablePath)
+  }
+  return builder
 }
 
 @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)

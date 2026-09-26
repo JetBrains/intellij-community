@@ -1,14 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.vfs
 
+import com.intellij.openapi.fileEditor.impl.CustomisableUniqueNameEditorTabTitleProvider
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.vcs.vfs.CustomisableUniqueNameEditorTabTitleProvider
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.i18n.GitBundle
 
-internal class GitIndexVirtualFileTabTitleProvider : CustomisableUniqueNameEditorTabTitleProvider() {
+internal class GitIndexVirtualFileTabTitleProvider : CustomisableUniqueNameEditorTabTitleProvider(), DumbAware {
   override fun isApplicable(file: VirtualFile): Boolean = file is GitIndexVirtualFile
 
   override fun getEditorTabTitle(file: VirtualFile, baseUniqueName: String): String {

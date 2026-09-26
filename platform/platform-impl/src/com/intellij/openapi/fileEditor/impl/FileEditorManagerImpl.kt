@@ -83,7 +83,6 @@ import com.intellij.openapi.progress.impl.pumpEventsForHierarchy
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ex.ProjectEx
@@ -702,14 +701,9 @@ open class FileEditorManagerImpl(
     }
     else HtmlChunk.empty()
 
-    for (provider in EditorTabTitleProvider.EP_NAME.lazySequence()) {
-      val text = try {
-        provider.getEditorTabTooltipHtml(project, file) ?: continue
-      }
-      catch (_: IndexNotReadyException) {
-        continue
-      }
-      return prefix + text
+    val tooltip = EditorTabPresentationUtil.getCustomEditorTabTooltipHtml(project, file)
+    if (tooltip != null) {
+      return prefix + tooltip
     }
 
     val filePathString = FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
