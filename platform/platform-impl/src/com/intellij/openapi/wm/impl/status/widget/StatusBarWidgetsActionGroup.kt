@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -34,6 +35,8 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.UIBundle
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -172,9 +175,8 @@ class StatusBarActionManager(coroutineScope: CoroutineScope) {
     }
   }
 
-  init {
-    // create the action manager outside the listener, so that its first load is not counted as a slow listener
-    val actionManager = ActionManager.getInstance()
+  private val toggleActionRegistration: Job = coroutineScope.launch {
+    val actionManager = serviceAsync<ActionManager>()
     StatusBarWidgetFactory.EP_NAME.point.addExtensionPointListener(
       coroutineScope, true, object : ExtensionPointListener<StatusBarWidgetFactory> {
         override fun extensionAdded(extension: StatusBarWidgetFactory, pluginDescriptor: PluginDescriptor) {
@@ -186,7 +188,7 @@ class StatusBarActionManager(coroutineScope: CoroutineScope) {
               actionManager.registerAction(actionId, ToggleWidgetAction(extension))
             }
             else {
-              logger<StatusBarWidgetFactory>().debug("Skip $actionId - already registered as $oldAction");
+              logger<StatusBarWidgetFactory>().debug("Skip $actionId - already registered as $oldAction")
             }
           }
         }
@@ -198,6 +200,11 @@ class StatusBarActionManager(coroutineScope: CoroutineScope) {
           }
         }
       })
+  }
+
+  /** Suspends until [ActionManager] contains the toggle actions of the loaded widget factories. */
+  suspend fun awaitToggleActions() {
+    toggleActionRegistration.join()
   }
 
   internal fun getStatusBarToggleActions(): List<AnAction> {
