@@ -1,0 +1,6 @@
+{
+    "python.analysis.exclude": [
+        "*"
+    ],
+    "python.analysis.excludeLibraryDiagnostics": true
+}

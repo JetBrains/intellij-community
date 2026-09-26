@@ -9,6 +9,7 @@ android/apkanalyzer/gradle/integration-tests/projects
 android/android/native/diagnostics/heap
 android/aswb
 build/dependencies/build/android-sdk/
+build/dependencies/build/macos-sdk/
 out/
 platform/sqlite/target
 

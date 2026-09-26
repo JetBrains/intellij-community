@@ -14,7 +14,7 @@ jvm_library(
 
 jvm_library(
     name = "tests_test_lib",
-    testonly = True,
+    testonly = False,
     srcs = glob(
         [
             "testSrc/**/*.kt",
