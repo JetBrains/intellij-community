@@ -217,7 +217,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
       val handler = submitReviewInputHandler
       check(handler != null)
       val ctx = currentCoroutineContext()
-      val vm = GitLabMergeRequestSubmitReviewViewModelImpl(this, mergeRequest, currentUser, review) {
+      val vm = GitLabMergeRequestSubmitReviewViewModelImpl(this, project, mergeRequest, currentUser, review) {
         ctx.cancel()
       }
       handler.invoke(vm)

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.review
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiscussionsViewModel
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
@@ -34,6 +35,7 @@ interface GitLabMergeRequestReviewViewModel : CodeReviewDiscussionsViewModel {
 @ApiStatus.Internal
 open class GitLabMergeRequestReviewViewModelBase(
   protected val cs: CoroutineScope,
+  private val project: Project,
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
   initialViewOption: DiscussionsViewOption,
@@ -58,7 +60,7 @@ open class GitLabMergeRequestReviewViewModelBase(
       val handler = submitReviewInputHandler
       check(handler != null)
       val ctx = currentCoroutineContext()
-      val vm = GitLabMergeRequestSubmitReviewViewModelImpl(this, mergeRequest, currentUser, review) {
+      val vm = GitLabMergeRequestSubmitReviewViewModelImpl(this, project, mergeRequest, currentUser, review) {
         ctx.cancel()
       }
       handler.invoke(vm)

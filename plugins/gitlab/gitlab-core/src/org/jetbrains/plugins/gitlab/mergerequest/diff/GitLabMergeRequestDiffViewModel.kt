@@ -93,7 +93,7 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
   private val imageLoader: GitLabImageLoader,
 ) : GitLabMergeRequestDiffViewModel, GitLabMergeRequestReviewViewModelBase(
   parentCs.childScope("GitLab Merge Request Diff Review VM"),
-  currentUser, mergeRequest,
+  project, currentUser, mergeRequest,
   project.service<GitLabMergeRequestsPreferences>().diffReviewViewOption
 ) {
   private val preferences = project.service<GitLabMergeRequestsPreferences>()

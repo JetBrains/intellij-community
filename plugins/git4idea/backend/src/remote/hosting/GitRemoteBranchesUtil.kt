@@ -171,6 +171,31 @@ object GitRemoteBranchesUtil {
   }
 
   /**
+   * Same as the [HostedGitRepositoryRemote] overload, but for an already resolved remote [branch].
+   * The [branch] can be a [GitSpecialRefRemoteBranch], for example a merge request head ref.
+   *
+   * @param newLocalBranchName the name of the new local branch when no local branch tracks [branch].
+   * When it is `null`, the new local branch gets the remote branch name.
+   * Always give it for a [GitSpecialRefRemoteBranch], because a special ref name is not a valid local branch name.
+   * For example, private or deleted forks are fetched through `refs/merge-requests/<iid>/head`.
+   * Those get a local branch named `fork/<author>/<sourceBranch>`.
+   */
+  suspend fun fetchAndCheckoutInNewWorktree(
+    repository: GitRepository,
+    branch: GitRemoteBranch,
+    parentDir: Path,
+    worktreeName: String,
+    place: String,
+    newLocalBranchName: String? = null,
+    onProjectOpened: ((Project) -> Unit)? = null,
+  ) {
+    withBackgroundProgress(repository.project,
+                           CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description")) {
+      fetchAndCheckoutInNewWorktreeUnderProgress(repository, branch, parentDir, worktreeName, place, newLocalBranchName, onProjectOpened)
+    }
+  }
+
+  /**
    * The directory for the review worktrees of [project].
    * It is in the same Eel environment (WSL/Docker/local) as the project.
    */
@@ -197,8 +222,10 @@ object GitRemoteBranchesUtil {
     // Reuse a local branch that already tracks the remote one, or shares the name a regular checkout would have
     // assigned it (tracking may be missing depending on the user's `branch.autoSetupMerge` setting), so the
     // worktree doesn't fail trying to create a branch that already exists.
+    // A special ref has no tracking branch, so a local branch from an earlier worktree is found by its name.
+    val existingLocalBranchName = if (branch is GitSpecialRefRemoteBranch) newLocalBranchName else branch.nameForRemoteOperations
     val existingLocalBranch = findLocalBranchTrackingRemote(repository, branch)
-                               ?: repository.branches.findLocalBranch(branch.nameForRemoteOperations)
+                               ?: existingLocalBranchName?.let { repository.branches.findLocalBranch(it) }
                                  ?.takeUnless { hasTrackingConflicts(mapOf(repository to it), branch.name) }
     val ref: GitBranch = existingLocalBranch ?: branch
     val newBranchName = if (existingLocalBranch == null) newLocalBranchName else null

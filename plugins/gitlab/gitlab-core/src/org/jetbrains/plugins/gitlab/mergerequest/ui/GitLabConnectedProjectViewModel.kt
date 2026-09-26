@@ -9,37 +9,46 @@ import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.icon.CachingIconsProvider
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.remote.hosting.findHostedRemoteBranchTrackedByCurrent
+import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestFullDetails
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
@@ -50,11 +59,13 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsP
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestBranchUtil
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 @ApiStatus.Internal
 interface GitLabConnectedProjectViewModel {
   val connectionId: String
+  val projectCoordinates: GitLabProjectCoordinates
   val avatarIconProvider: IconsProvider<GitLabUserDTO>
   val accountVm: GitLabAccountViewModel
   val listVm: GitLabMergeRequestsListViewModel
@@ -71,6 +82,31 @@ interface GitLabConnectedProjectViewModel {
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun openMergeRequestTimeline(mrIid: String, focus: Boolean)
+
+  /**
+   * Opens the merge request details and the diff with the first change selected.
+   */
+  fun openMergeRequestInfoAndDiff(mrIid: String)
+
+  /**
+   * Whether a merge request branch can be checked out into a new Git worktree for the current repository.
+   */
+  val canCheckoutInNewWorktree: Boolean
+
+  /**
+   * Whether the source branch of the merge request is currently checked out in this project.
+   */
+  fun isCheckedOut(mrIid: String): Boolean
+
+  /**
+   * Fetch and checkout the source branch of the merge request into the current worktree.
+   */
+  fun checkoutMergeRequest(mrIid: String)
+
+  /**
+   * Fetch and checkout the source branch of the merge request into a new Git worktree.
+   */
+  fun checkoutMergeRequestInNewWorktree(mrIid: String)
 }
 
 @ApiStatus.Internal
@@ -84,6 +120,7 @@ abstract class GitLabConnectedProjectViewModelBase(
   protected val cs: CoroutineScope = parentCs.childScope(javaClass.name)
 
   override val connectionId: String = connection.id
+  override val projectCoordinates: GitLabProjectCoordinates = connection.repo.repository
 
   override val accountVm: GitLabAccountViewModel = GitLabAccountViewModelImpl(project, cs, connection.account, accountManager)
 
@@ -112,12 +149,14 @@ abstract class GitLabConnectedProjectViewModelBase(
     )
   }
 
+  private val preferredProjectAndAccount: Pair<GitLabProjectCoordinates, GitLabAccount> = connection.repo.repository to connection.account
+
   private val mergeRequestsVms = Caffeine.newBuilder().build<String, SharedFlow<Result<GitLabMergeRequestViewModels>>> { iid ->
     connection.projectData.mergeRequests.getShared(iid)
       .transformConsecutiveSuccesses {
         mapScoped {
           GitLabMergeRequestViewModels(project, this, connection.projectData, avatarIconProvider,
-                                       connection.imageLoader, it, connection.currentUser,
+                                       connection.imageLoader, it, connection.currentUser, preferredProjectAndAccount,
                                        ::openMergeRequestDetails, ::openMergeRequestTimeline, ::openMergeRequestDiff)
         }
       }
@@ -130,7 +169,7 @@ abstract class GitLabConnectedProjectViewModelBase(
   // (or otherwise missed by the initial lookup) is picked up on the next refresh without switching branches.
   private val mergeRequestOnCurrentBranchRefresh = merge(mergeRequestCreatedSignal, listVm.listUpdated)
 
-  private val mergeRequestOnCurrentBranch: Flow<String?> =
+  private val mergeRequestOnCurrentBranch: StateFlow<String?> =
     projectsManager.findHostedRemoteBranchTrackedByCurrent(connection.repo.gitRepository)
       .combine(mergeRequestOnCurrentBranchRefresh.withInitial(Unit)) { repoAndBranch, _ ->
         val (targetRepo, branch) = repoAndBranch ?: return@combine null
@@ -144,7 +183,7 @@ abstract class GitLabConnectedProjectViewModelBase(
           LOG.warn("Could not lookup a merge request for current branch", e)
           null
         }
-      }
+      }.stateIn(cs, SharingStarted.Eagerly, null)
 
   private suspend fun findOpenReviewIdByBranch(
     connection: GitLabProjectConnection,
@@ -158,7 +197,7 @@ abstract class GitLabConnectedProjectViewModelBase(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override val currentMergeRequestReviewVm: Flow<GitLabMergeRequestEditorReviewViewModel?> =
-    mergeRequestOnCurrentBranch.distinctUntilChanged().flatMapLatest { id ->
+    mergeRequestOnCurrentBranch.flatMapLatest { id ->
       if (id == null) flowOf(null) else mergeRequestsVms[id].map { it.getOrNull()?.editorReviewVm }
     }
 
@@ -171,13 +210,57 @@ abstract class GitLabConnectedProjectViewModelBase(
   override fun getDiffViewModel(mrIid: String): Flow<Result<GitLabMergeRequestDiffViewModel>> =
     mergeRequestsVms[mrIid].mapCatching { it.diffVm }
 
+  // Probably always empty because nothing writes to CachingGitLabProjectMergeRequestsStore.detailsCache
   override fun findMergeRequestDetails(mrIid: String): GitLabMergeRequestDetails? =
     connection.projectData.mergeRequests.findCachedDetails(mrIid)
+
+  private suspend fun loadMergeRequestFullDetails(mrIid: String): GitLabMergeRequestFullDetails? =
+    connection.projectData.mergeRequests.getShared(mrIid).first().onFailure {
+      LOG.warn("Failed to load merge request $mrIid for checkout", it)
+    }.getOrNull()?.details?.value
 
   override fun reloadMergeRequestDetails(mergeRequestId: String) {
     cs.launch {
       connection.projectData.mergeRequests.reloadMergeRequest(mergeRequestId)
     }
+  }
+
+  override fun openMergeRequestInfoAndDiff(mrIid: String) {
+    cs.launch {
+      withContext(Dispatchers.EDT) {
+        openMergeRequestDetails(mrIid, GitLabStatistics.ToolWindowOpenTabActionPlace.ACTION, true)
+      }
+      // The predicate runs while the view models flow is collected, so the view models stay alive during the diff opening.
+      mergeRequestsVms[mrIid].first { result ->
+        result.getOrNull()?.openDiffForAllChanges()
+        true
+      }
+    }
+  }
+
+  override val canCheckoutInNewWorktree: Boolean
+    get() = GitWorkingTreesService.isWorktreeCreationSupported(connection.repo.gitRepository)
+
+  override fun isCheckedOut(mrIid: String): Boolean =
+    mergeRequestOnCurrentBranch.value == mrIid
+
+  override fun checkoutMergeRequest(mrIid: String) {
+    cs.launch {
+      val details = loadMergeRequestFullDetails(mrIid) ?: return@launch
+      GitLabMergeRequestBranchUtil.fetchAndCheckoutBranch(connection.repo.gitRepository, connection.repo.repository.serverPath, details)
+    }
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.BRANCH_CHECKOUT)
+  }
+
+  override fun checkoutMergeRequestInNewWorktree(mrIid: String) {
+    cs.launch {
+      val details = loadMergeRequestFullDetails(mrIid) ?: return@launch
+      GitLabMergeRequestBranchUtil.fetchAndCheckoutBranchInNewWorktree(connection.repo.gitRepository,
+                                                                       connection.repo.repository.serverPath,
+                                                                       details,
+                                                                       preferredProjectAndAccount)
+    }
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.BRANCH_CHECKOUT)
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)

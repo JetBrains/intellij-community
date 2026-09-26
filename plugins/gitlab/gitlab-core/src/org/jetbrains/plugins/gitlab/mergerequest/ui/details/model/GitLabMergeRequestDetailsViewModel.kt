@@ -19,7 +19,9 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.reviewState
@@ -52,6 +54,7 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
   private val mergeRequest: GitLabMergeRequest,
   avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   htmlConverter: GitLabMarkdownToHtmlConverter,
+  preferredProjectAndAccount: Pair<GitLabProjectCoordinates, GitLabAccount>,
 ) : GitLabMergeRequestDetailsViewModel {
 
   private val cs = parentCs.childScope(this::class)
@@ -90,7 +93,8 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
     cs,
     mergeRequest,
     projectData.projectCoordinates.serverPath,
-    projectData.gitRemote
+    projectData.gitRemote,
+    preferredProjectAndAccount
   )
   override val statusVm = GitLabMergeRequestStatusViewModelImpl(
     project,

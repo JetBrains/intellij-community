@@ -5,23 +5,31 @@ import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.selectedItem
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
+import org.jetbrains.plugins.gitlab.mergerequest.data.loadRevisionsAndParseChanges
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffProcessorViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
@@ -36,6 +44,8 @@ import org.jetbrains.plugins.gitlab.ui.GitLabViewModelWithTextCompletion
 import org.jetbrains.plugins.gitlab.ui.GitLabViewModelWithTextCompletionImpl
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
+private val LOG = logger<GitLabMergeRequestViewModels>()
+
 /**
  * Collection of view models for different merge request views
  */
@@ -47,6 +57,7 @@ internal class GitLabMergeRequestViewModels(
   private val imageLoader: GitLabImageLoader,
   private val mergeRequest: GitLabMergeRequest,
   currentUser: GitLabUserDTO,
+  preferredProjectAndAccount: Pair<GitLabProjectCoordinates, GitLabAccount>,
   private val openMergeRequestDetails: (String, GitLabStatistics.ToolWindowOpenTabActionPlace, Boolean) -> Unit,
   private val openMergeRequestTimeline: (String, Boolean) -> Unit,
   private val openMergeRequestDiff: (String, Boolean) -> Unit,
@@ -68,7 +79,8 @@ internal class GitLabMergeRequestViewModels(
   private val cs = parentCs.childScope(javaClass.name)
 
   private val lazyDetailsVm = lazy {
-    GitLabMergeRequestDetailsViewModelImpl(project, cs, currentUser, projectData, mergeRequest, avatarIconProvider, htmlConverter).also {
+    GitLabMergeRequestDetailsViewModelImpl(project, cs, currentUser, projectData, mergeRequest, avatarIconProvider, htmlConverter,
+                                           preferredProjectAndAccount).also {
       setupDetailsVm(it)
     }
   }
@@ -99,6 +111,30 @@ internal class GitLabMergeRequestViewModels(
                                             discussionsVms, avatarIconProvider, imageLoader,
                                             openMergeRequestDetails, openMergeRequestDiff).apply {
       setup()
+    }
+  }
+
+  /**
+   * Opens the diff with all merge request changes and selects the first change.
+   * Opens an empty diff when the changes do not load.
+   */
+  suspend fun openDiffForAllChanges() {
+    // runCatchingUser logs a real error. The outer runCatching swallows a cancellation of the changes load,
+    // because an unrelated concurrent reload can cause it. The diff tab opens anyway.
+    // ensureActive() still lets the real ambient cancellation propagate.
+    val changes = runCatching {
+      runCatchingUser {
+        mergeRequest.changes.first().loadRevisionsAndParseChanges().changes
+      }.onFailure {
+        LOG.warn("Failed to load changes for MR ${mergeRequest.iid} to open in diff", it)
+      }.getOrNull()
+    }.getOrNull()
+    currentCoroutineContext().ensureActive()
+    if (!changes.isNullOrEmpty()) {
+      _diffVm.showChanges(ListSelection.createAt(changes, 0))
+    }
+    withContext(Dispatchers.EDT) {
+      openMergeRequestDiff(mergeRequest.iid, true)
     }
   }
 

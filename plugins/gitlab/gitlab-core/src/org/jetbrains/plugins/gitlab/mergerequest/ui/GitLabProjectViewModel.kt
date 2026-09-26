@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.createSingleProjectAndAccountState
@@ -117,10 +118,28 @@ class GitLabProjectViewModel(
     _activationRequests.tryEmit(Unit)
   }
 
-  internal fun activateAndAwaitProject(action: GitLabConnectedProjectViewModel.() -> Unit) {
+  /**
+   * @param preferredProjectAndAccount connects directly to this project and account.
+   * The [selectorVm] heuristics need exactly one known project and account, and a new merge request worktree can have more.
+   * [action] always runs against the view model for [preferredProjectAndAccount].
+   */
+  internal fun activateAndAwaitProject(
+    preferredProjectAndAccount: Pair<GitLabProjectCoordinates, GitLabAccount>? = null,
+    action: GitLabConnectedProjectViewModel.() -> Unit,
+  ) {
     cs.launch {
       _activationRequests.emit(Unit)
-      connectedProjectVm.filterNotNull().first().action()
+      val connectedProject = preferredProjectAndAccount?.let { (projectCoordinates, account) ->
+        val mapping = projectsManager.knownRepositoriesState
+          .first { mappings -> mappings.any { it.repository == projectCoordinates } }
+          .find { it.repository == projectCoordinates }
+        if (mapping != null) {
+          connect(mapping, account)
+          projectCoordinates
+        }
+        else null
+      }
+      connectedProjectVm.filterNotNull().first { connectedProject == null || it.projectCoordinates == connectedProject }.action()
     }
   }
 }

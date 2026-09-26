@@ -4,6 +4,10 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.review
 import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.ui.codereview.review.CodeReviewSubmitViewModel
 import com.intellij.collaboration.util.SingleCoroutineLauncher
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +44,22 @@ interface GitLabMergeRequestSubmitReviewViewModel : CodeReviewSubmitViewModel {
    */
   fun submit()
 
+  /**
+   * Whether the review happens in a dedicated Git worktree that can be removed after a submit.
+   * Controls the visibility of the "delete the worktree" option.
+   */
+  val canDeleteWorktree: Boolean
+
+  /**
+   * Whether to remove the review worktree after a successful submit. Only meaningful when [canDeleteWorktree].
+   */
+  val deleteWorktreeAfterSubmit: StateFlow<Boolean>
+
+  /**
+   * Update [deleteWorktreeAfterSubmit].
+   */
+  fun setDeleteWorktreeAfterSubmit(value: Boolean)
+
   data class SubmittableReview(val draftComments: Int, val isApprovedByViewer: Boolean)
 }
 
@@ -56,6 +76,7 @@ internal fun GitLabMergeRequest.getSubmittableReview(currentUser: GitLabUserDTO)
 
 internal class GitLabMergeRequestSubmitReviewViewModelImpl(
   parentCs: CoroutineScope,
+  private val project: Project,
   private val mergeRequest: GitLabMergeRequest,
   private val currentUser: GitLabUserDTO,
   currentReview: SubmittableReview,
@@ -63,6 +84,19 @@ internal class GitLabMergeRequestSubmitReviewViewModelImpl(
 ) : GitLabMergeRequestSubmitReviewViewModel {
   private val cs = parentCs.childScope(this::class, Dispatchers.Default)
   private val taskLauncher = SingleCoroutineLauncher(cs)
+
+  private val worktreeSessionState = project.service<GitLabReviewWorktreeSessionState>()
+
+  override val canDeleteWorktree: Boolean = GitWorkingTreesService.getInstance(project).isCurrentProjectLinkedWorktree()
+
+  // Unchecked on the first use. The last choice is kept for the rest of the IDE session.
+  private val _deleteWorktreeAfterSubmit = MutableStateFlow(worktreeSessionState.deleteWorktreeAfterSubmit)
+  override val deleteWorktreeAfterSubmit: StateFlow<Boolean> = _deleteWorktreeAfterSubmit.asStateFlow()
+
+  override fun setDeleteWorktreeAfterSubmit(value: Boolean) {
+    _deleteWorktreeAfterSubmit.value = value
+    worktreeSessionState.deleteWorktreeAfterSubmit = value
+  }
 
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy
   private val _error = MutableStateFlow<Throwable?>(null)
@@ -82,6 +116,7 @@ internal class GitLabMergeRequestSubmitReviewViewModelImpl(
         mergeRequest.submitDraftNotes()
         addNoteIfNotEmpty()
         mergeRequest.approve()
+        deleteWorktreeIfRequested()
         onDone()
         text.value = ""
       }
@@ -94,6 +129,7 @@ internal class GitLabMergeRequestSubmitReviewViewModelImpl(
         mergeRequest.submitDraftNotes()
         addNoteIfNotEmpty()
         mergeRequest.unApprove()
+        deleteWorktreeIfRequested()
         onDone()
         text.value = ""
       }
@@ -106,6 +142,7 @@ internal class GitLabMergeRequestSubmitReviewViewModelImpl(
         mergeRequest.submitDraftNotes()
         addNoteIfNotEmpty()
         mergeRequest.refreshData()
+        deleteWorktreeIfRequested()
         onDone()
         text.value = ""
       }
@@ -114,6 +151,13 @@ internal class GitLabMergeRequestSubmitReviewViewModelImpl(
 
   override fun cancel() {
     onDone()
+  }
+
+  private fun deleteWorktreeIfRequested() {
+    if (canDeleteWorktree && deleteWorktreeAfterSubmit.value) {
+      // Runs on the worktree service scope, so it survives when onDone() closes this project.
+      GitWorkingTreesService.getInstance(project).deleteCurrentProjectWorktree()
+    }
   }
 
   private suspend fun addNoteIfNotEmpty() {
@@ -131,4 +175,10 @@ internal class GitLabMergeRequestSubmitReviewViewModelImpl(
       _error.value = e
     }
   }
+}
+
+@Service(Service.Level.PROJECT)
+internal class GitLabReviewWorktreeSessionState {
+  @Volatile
+  var deleteWorktreeAfterSubmit: Boolean = false
 }

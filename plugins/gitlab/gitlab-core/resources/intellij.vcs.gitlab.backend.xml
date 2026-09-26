@@ -176,6 +176,10 @@
             icon="AllIcons.Actions.Refresh"/>
     <action id="GitLab.Merge.Request.Show"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestAction"/>
+    <action id="GitLab.Merge.Request.CheckoutBranch"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestCheckoutBranchAction"/>
+    <action id="GitLab.Merge.Request.OpenInWorktree"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestOpenInWorktreeAction"/>
     <action id="GitLab.Merge.Request.Open.Link"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestOpenURLAction"
             icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo"/>
@@ -228,6 +232,8 @@
 
     <group id="GitLab.Merge.Request.List.Actions">
       <reference ref="GitLab.Merge.Request.Show"/>
+      <reference ref="GitLab.Merge.Request.CheckoutBranch"/>
+      <reference ref="GitLab.Merge.Request.OpenInWorktree"/>
       <reference ref="GitLab.Merge.Request.Open.Link"/>
       <reference ref="GitLab.Merge.Request.Copy.Link"/>
       <separator/>

@@ -5,12 +5,14 @@ import com.intellij.collaboration.async.inverted
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.codereview.review.CodeReviewSubmitPopupHandler
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.ide.plugins.newui.InstallButton
+import com.intellij.ui.components.JBCheckBox
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -53,12 +55,26 @@ internal object GitLabMergeRequestSubmitReviewPopup : CodeReviewSubmitPopupHandl
         vm.submit()
       }
     }
-    return HorizontalListPanel(ACTIONS_GAP).apply {
+    val buttonsPanel = HorizontalListPanel(ACTIONS_GAP).apply {
       add(approveButton)
       add(unApproveButton)
       add(submitButton)
     }
+    if (!vm.canDeleteWorktree) return buttonsPanel
+
+    val deleteWorktreeCheckBox = JBCheckBox(GitLabBundle.message("merge.request.review.submit.delete.worktree"),
+                                            vm.deleteWorktreeAfterSubmit.value).apply {
+      isOpaque = false
+      bindDisabledIn(cs, vm.isBusy)
+      addActionListener { vm.setDeleteWorktreeAfterSubmit(isSelected) }
+    }
+    return VerticalListPanel(DELETE_WORKTREE_GAP).apply {
+      add(deleteWorktreeCheckBox)
+      add(buttonsPanel)
+    }
   }
+
+  private const val DELETE_WORKTREE_GAP = 6
 
   override val errorPresenter: ErrorStatusPresenter<Throwable> by lazy {
     ErrorStatusPresenter.simple(
