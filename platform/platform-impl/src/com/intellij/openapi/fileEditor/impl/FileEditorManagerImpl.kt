@@ -266,8 +266,13 @@ open class FileEditorManagerImpl(
 
   private val fileTitleUpdateChannel: MergingUpdateChannel<VirtualFile?> = MergingUpdateChannel(delay = 50.milliseconds) { toUpdate ->
     val allSplitters = getAllSplitters()
+    val clientFileEditorManagers = allClientFileEditorManagers
     for (file in toUpdate) {
       updateFileNames(allSplitters = allSplitters, file = file)
+
+      for (clientManager in clientFileEditorManagers) {
+        clientManager.updateFilePresentation(file)
+      }
     }
   }
 
@@ -511,7 +516,7 @@ open class FileEditorManagerImpl(
       fileUpdateChannel.start(receiveFilter = ::isFileOpen)
     }
     coroutineScope.launch(CoroutineName("FileEditorManagerImpl file title update")) {
-      fileTitleUpdateChannel.start(receiveFilter = { file -> file == null || isFileOpen(file) })
+      fileTitleUpdateChannel.start(receiveFilter = { file -> file == null || isFileOpenWithRemotes(file) })
     }
   }
 
@@ -711,7 +716,7 @@ open class FileEditorManagerImpl(
   }
 
   override fun updateFilePresentation(file: VirtualFile) {
-    if (!isFileOpen(file)) {
+    if (!isFileOpenWithRemotes(file)) {
       return
     }
     scheduleUpdateFileName(file)
@@ -733,7 +738,7 @@ open class FileEditorManagerImpl(
   }
 
   override fun updateFileName(file: VirtualFile) {
-    if (!isFileOpen(file)) {
+    if (!isFileOpenWithRemotes(file)) {
       return
     }
     scheduleUpdateFileName(file)

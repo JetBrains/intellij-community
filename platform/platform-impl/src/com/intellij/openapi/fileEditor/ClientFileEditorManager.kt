@@ -55,6 +55,14 @@ interface ClientFileEditorManager {
   fun closeFile(file: VirtualFile, closeAllCopies: Boolean)
   fun isFileOpen(file: VirtualFile): Boolean
 
+  /**
+   * Notifies that the presentation (tab title, tooltip) of the given file has changed and must be recomputed for the client.
+   * `null` if all the opened files needs to be updated.
+   *
+   * @see com.intellij.openapi.fileEditor.ex.FileEditorManagerEx.updateFilePresentation
+   */
+  fun updateFilePresentation(file: VirtualFile?) {}
+
   fun createComposite(
     file: VirtualFile,
     coroutineScope: CoroutineScope,

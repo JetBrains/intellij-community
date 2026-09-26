@@ -63,6 +63,14 @@ internal class UniqueVFilePathBuilderImpl : UniqueVFilePathBuilder() {
     )
   }
 
+  override fun getUniqueVirtualFilePathWithinFiles(
+    project: Project,
+    vFile: VirtualFile,
+    files: Collection<VirtualFile>,
+  ): @NlsSafe String {
+    return getUniqueNameAmongFiles(project, vFile, files)
+  }
+
   override fun withProject(project: Project): UniqueVFileProjectPathBuilder = UniqueVFileProjectPathBuilderImpl(project)
 }
 
@@ -233,6 +241,17 @@ private fun createAndCacheBuilders(
     val builder = createUniqueNameBuilder(project, files)
     valueMap.put(fileName, builder)
   }
+}
+
+private fun getUniqueNameAmongFiles(project: Project, file: VirtualFile, files: Collection<VirtualFile>): String {
+  val name = getName(file)
+  val sameNamedFiles = (files + file).filterTo(LinkedHashSet()) { it.isValid && getName(it) == name }
+  if (sameNamedFiles.size < 2) {
+    return name
+  }
+
+  val builder = createUniqueNameBuilder(project, sameNamedFiles)
+  return builder.getShortPath(file)
 }
 
 private fun createUniqueNameBuilder(project: Project, files: Collection<VirtualFile>): UniqueNameBuilder<VirtualFile> {

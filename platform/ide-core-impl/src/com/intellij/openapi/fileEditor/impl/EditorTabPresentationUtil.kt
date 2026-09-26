@@ -70,6 +70,48 @@ object EditorTabPresentationUtil {
     return null
   }
 
+  /**
+   * Same as [getCustomEditorTabTitleAsync] but with pre-computed 'unique' name for a file, as we cannot rely
+   * on the [UniqueNameEditorTabTitleProvider]/[UniqueVFilePathBuilder.getUniqueVirtualFilePathWithinOpenedFileEditors].
+   * They cache result per project regardless of the ClientId.
+   */
+  @Internal
+  suspend fun getCustomEditorTabTitleForRemote(
+    project: Project,
+    file: VirtualFile,
+    openedFiles: List<VirtualFile>,
+  ): @NlsContexts.TabTitle String? {
+    for (extension in EditorTabTitleProvider.EP_NAME.filterableLazySequence()) {
+      val provider = extension.instance ?: continue
+      val result = try {
+        if (provider is CustomisableUniqueNameEditorTabTitleProvider) {
+          if (!provider.isApplicable(file)) continue
+          val uniqueName = getUniqueNameEditorTabTitleAmongFilesAsync(project, file, openedFiles)
+          if (uniqueName == null || uniqueName == file.presentableName) continue
+          provider.getEditorTabTitle(file, uniqueName)
+        }
+        else if (provider is UniqueNameEditorTabTitleProvider) {
+          null // use Frontend-side presentation
+        }
+        else {
+          provider.getEditorTabTitleAsync(project, file)
+        }
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        thisLogger().error(PluginException(e, extension.pluginDescriptor.pluginId))
+        continue
+      }
+
+      if (!result.isNullOrEmpty()) {
+        return result
+      }
+    }
+    return null
+  }
+
   @Internal
   fun getCustomEditorTabTooltipHtml(project: Project, file: VirtualFile): HtmlChunk? {
     for (extension in EditorTabTitleProvider.EP_NAME.filterableLazySequence()) {

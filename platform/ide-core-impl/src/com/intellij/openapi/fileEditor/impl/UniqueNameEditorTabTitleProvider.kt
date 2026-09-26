@@ -17,6 +17,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.io.File
 
+/**
+ * This provider is not registered by default: [EditorTabPresentationUtil] calls [doGetUniqueNameEditorTabTitle] directly as fallback.
+ */
 open class UniqueNameEditorTabTitleProvider : EditorTabTitleProvider {
   override fun getEditorTabTitle(project: Project, file: VirtualFile): String? = doGetUniqueNameEditorTabTitle(project, file)
 }
@@ -108,6 +111,31 @@ internal suspend fun getUniqueNameEditorTabTitleAsync(project: Project, file: Vi
     hideKnownExtensionInTabs = uiSettings.hideKnownExtensionInTabs,
   )
   return uniqueName.takeIf { uniqueName != file.name }
+}
+
+/**
+ * The same as the default [com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider],
+ * but the unique name is computed among the given files instead of the files opened by the local client.
+ */
+internal suspend fun getUniqueNameEditorTabTitleAmongFilesAsync(
+  project: Project,
+  file: VirtualFile,
+  openedFiles: List<VirtualFile>,
+): @NlsSafe String? {
+  if (!shouldComputeUniqueTabNames(project)) {
+    return null
+  }
+
+  val uiSettings = UISettings.getInstance()
+  val uniqueFilePathBuilder = UniqueVFilePathBuilder.getInstance()
+  val uniqueName = readAction {
+    uniqueFilePathBuilder.getUniqueVirtualFilePathWithinFiles(project, file, openedFiles)
+  }
+  return getEditorTabText(
+    result = uniqueName,
+    separator = File.separator,
+    hideKnownExtensionInTabs = uiSettings.hideKnownExtensionInTabs,
+  ).takeIf { it != file.name }
 }
 
 private fun shouldComputeUniqueTabNames(project: Project): Boolean {
