@@ -4408,89 +4408,6 @@ java_library(
 )
 
 copy_file(
-    name = "javax.xml.bind/jaxb-api-2.3.1.jar_copy",
-    src = "@javax_xml_bind-jaxb-api-2_3_1_http//file",
-    out = "javax.xml.bind/jaxb-api-2.3.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "jaxb-api",
-    jar = "@javax_xml_bind-jaxb-api-2_3_1_http//file",
-    source_jar = "@javax_xml_bind-jaxb-api-2_3_1-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.glassfish.jaxb/jaxb-runtime-2.3.9.jar_copy",
-    src = "@org_glassfish_jaxb-jaxb-runtime-2_3_9_http//file",
-    out = "org.glassfish.jaxb/jaxb-runtime-2.3.9.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.glassfish.jaxb/txw2-2.3.9.jar_copy",
-    src = "@org_glassfish_jaxb-txw2-2_3_9_http//file",
-    out = "org.glassfish.jaxb/txw2-2.3.9.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.sun.istack/istack-commons-runtime-3.0.12.jar_copy",
-    src = "@com_sun_istack-istack-commons-runtime-3_0_12_http//file",
-    out = "com.sun.istack/istack-commons-runtime-3.0.12.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.sun.activation/jakarta.activation-1.2.2.jar_copy",
-    src = "@com_sun_activation-jakarta_activation-1_2_2_http//file",
-    out = "com.sun.activation/jakarta.activation-1.2.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "jaxb-runtime",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_glassfish_jaxb-jaxb-runtime-2_3_9_http_import",
-        ":org_glassfish_jaxb-txw2-2_3_9_http_import",
-        ":com_sun_istack-istack-commons-runtime-3_0_12_http_import",
-        ":com_sun_activation-jakarta_activation-1_2_2_http_import",
-    ],
-)
-
-jvm_import(
-    name = "org_glassfish_jaxb-jaxb-runtime-2_3_9_http_import",
-    jar = "@org_glassfish_jaxb-jaxb-runtime-2_3_9_http//file",
-    source_jar = "@org_glassfish_jaxb-jaxb-runtime-2_3_9-sources_http//file",
-)
-
-jvm_import(
-    name = "org_glassfish_jaxb-txw2-2_3_9_http_import",
-    jar = "@org_glassfish_jaxb-txw2-2_3_9_http//file",
-    source_jar = "@org_glassfish_jaxb-txw2-2_3_9-sources_http//file",
-)
-
-jvm_import(
-    name = "com_sun_istack-istack-commons-runtime-3_0_12_http_import",
-    jar = "@com_sun_istack-istack-commons-runtime-3_0_12_http//file",
-    source_jar = "@com_sun_istack-istack-commons-runtime-3_0_12-sources_http//file",
-)
-
-jvm_import(
-    name = "com_sun_activation-jakarta_activation-1_2_2_http_import",
-    jar = "@com_sun_activation-jakarta_activation-1_2_2_http//file",
-    source_jar = "@com_sun_activation-jakarta_activation-1_2_2-sources_http//file",
-)
-
-copy_file(
     name = "org.jetbrains.compose.components/components-ui-tooling-preview-desktop-1.9.0.jar_copy",
     src = "@org_jetbrains_compose_components-components-ui-tooling-preview-desktop-1_9_0_http//file",
     out = "org.jetbrains.compose.components/components-ui-tooling-preview-desktop-1.9.0.jar",
@@ -9721,6 +9638,89 @@ jvm_import(
     jar = "@javax_annotation-javax_annotation-api-1_3_2_http//file",
     source_jar = "@javax_annotation-javax_annotation-api-1_3_2-sources_http//file",
     visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "javax.xml.bind/jaxb-api-2.3.1.jar_copy",
+    src = "@javax_xml_bind-jaxb-api-2_3_1_http//file",
+    out = "javax.xml.bind/jaxb-api-2.3.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-jaxb-jaxb-api",
+    jar = "@javax_xml_bind-jaxb-api-2_3_1_http//file",
+    source_jar = "@javax_xml_bind-jaxb-api-2_3_1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.glassfish.jaxb/jaxb-runtime-2.3.9.jar_copy",
+    src = "@org_glassfish_jaxb-jaxb-runtime-2_3_9_http//file",
+    out = "org.glassfish.jaxb/jaxb-runtime-2.3.9.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.glassfish.jaxb/txw2-2.3.9.jar_copy",
+    src = "@org_glassfish_jaxb-txw2-2_3_9_http//file",
+    out = "org.glassfish.jaxb/txw2-2.3.9.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.sun.istack/istack-commons-runtime-3.0.12.jar_copy",
+    src = "@com_sun_istack-istack-commons-runtime-3_0_12_http//file",
+    out = "com.sun.istack/istack-commons-runtime-3.0.12.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.sun.activation/jakarta.activation-1.2.2.jar_copy",
+    src = "@com_sun_activation-jakarta_activation-1_2_2_http//file",
+    out = "com.sun.activation/jakarta.activation-1.2.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-jaxb-jaxb-runtime",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":org_glassfish_jaxb-jaxb-runtime-2_3_9_http_import",
+        ":org_glassfish_jaxb-txw2-2_3_9_http_import",
+        ":com_sun_istack-istack-commons-runtime-3_0_12_http_import",
+        ":com_sun_activation-jakarta_activation-1_2_2_http_import",
+    ],
+)
+
+jvm_import(
+    name = "org_glassfish_jaxb-jaxb-runtime-2_3_9_http_import",
+    jar = "@org_glassfish_jaxb-jaxb-runtime-2_3_9_http//file",
+    source_jar = "@org_glassfish_jaxb-jaxb-runtime-2_3_9-sources_http//file",
+)
+
+jvm_import(
+    name = "org_glassfish_jaxb-txw2-2_3_9_http_import",
+    jar = "@org_glassfish_jaxb-txw2-2_3_9_http//file",
+    source_jar = "@org_glassfish_jaxb-txw2-2_3_9-sources_http//file",
+)
+
+jvm_import(
+    name = "com_sun_istack-istack-commons-runtime-3_0_12_http_import",
+    jar = "@com_sun_istack-istack-commons-runtime-3_0_12_http//file",
+    source_jar = "@com_sun_istack-istack-commons-runtime-3_0_12-sources_http//file",
+)
+
+jvm_import(
+    name = "com_sun_activation-jakarta_activation-1_2_2_http_import",
+    jar = "@com_sun_activation-jakarta_activation-1_2_2_http//file",
+    source_jar = "@com_sun_activation-jakarta_activation-1_2_2-sources_http//file",
 )
 
 copy_file(

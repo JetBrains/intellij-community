@@ -1163,6 +1163,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/java-websocket/intellij.libraries.java.websocket.iml" filepath="$PROJECT_DIR$/libraries/java-websocket/intellij.libraries.java.websocket.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/javax/activation/intellij.libraries.javax.activation.iml" filepath="$PROJECT_DIR$/libraries/javax/activation/intellij.libraries.javax.activation.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/javax/annotation/intellij.libraries.javax.annotation.iml" filepath="$PROJECT_DIR$/libraries/javax/annotation/intellij.libraries.javax.annotation.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/jaxb/intellij.libraries.jaxb.iml" filepath="$PROJECT_DIR$/libraries/jaxb/intellij.libraries.jaxb.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jaxen/intellij.libraries.jaxen.iml" filepath="$PROJECT_DIR$/libraries/jaxen/intellij.libraries.jaxen.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jbr/intellij.libraries.jbr.iml" filepath="$PROJECT_DIR$/libraries/jbr/intellij.libraries.jbr.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jcef/intellij.libraries.jcef.iml" filepath="$PROJECT_DIR$/libraries/jcef/intellij.libraries.jcef.iml" />

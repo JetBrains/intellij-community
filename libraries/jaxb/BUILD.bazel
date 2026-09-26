@@ -1,0 +1,67 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.jaxb` start
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:libraries-jaxb-jaxb-api",
+        "@lib//:libraries-jaxb-jaxb-runtime",
+    ],
+    module = ":jaxb",
+)
+### auto-generated section `dev intellij.libraries.jaxb` end
+
+### auto-generated section `build intellij.libraries.jaxb` start
+jvm_library(
+    name = "jaxb",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jaxb",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-jaxb-jaxb-api",
+        "@lib//:libraries-jaxb-jaxb-runtime",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-jaxb-jaxb-api",
+        "@lib//:libraries-jaxb-jaxb-runtime",
+    ],
+)
+
+jvm_library(
+    name = "jaxb_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.jaxb",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-jaxb-jaxb-api",
+        "@lib//:libraries-jaxb-jaxb-runtime",
+    ],
+    runtime_deps = [":jaxb"],
+)
+### auto-generated section `build intellij.libraries.jaxb` end
+
+### auto-generated section `iml intellij.libraries.jaxb` start
+exports_files(
+    [
+        "intellij.libraries.jaxb.iml",
+        "resources/intellij.libraries.jaxb.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.jaxb` end

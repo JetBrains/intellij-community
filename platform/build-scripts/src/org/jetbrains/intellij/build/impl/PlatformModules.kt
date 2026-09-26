@@ -168,14 +168,6 @@ private fun createPlatformLayout(
   // the library is put to a separate JAR due to IJPL-248572; todo: include it only for Linux: IJPL-249098
   layout.withProjectLibraries(sequenceOf("jetbrains.intellij.deps.java.atk.wrapper.linux"))
 
-  // https://jetbrains.team/p/ij/reviews/67104/timeline
-  // https://youtrack.jetbrains.com/issue/IDEA-179784
-  // https://youtrack.jetbrains.com/issue/IDEA-205600
-  layout.withProjectLibraries(sequenceOf(
-    "jaxb-runtime",
-    "jaxb-api",
-  ))
-
   // the library is put to a separate JAR due to IJPL-248591; it would be better to get rid of it completely, see IJPL-749
   layout.withModuleLibrary(libraryName = "swingx", moduleName = "intellij.libraries.swingx")
 

@@ -82,7 +82,7 @@
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.java.compiler" />
-    <orderEntry type="library" scope="RUNTIME" name="jaxb-runtime" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jaxb" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />

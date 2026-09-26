@@ -86,6 +86,7 @@
     <module name="intellij.libraries.ion" loading="embedded"/>
     <module name="intellij.libraries.java.websocket"/>
     <module name="intellij.libraries.javax.annotation" loading="embedded"/>
+    <module name="intellij.libraries.jaxb" loading="embedded"/>
     <module name="intellij.libraries.jaxen" loading="embedded"/>
     <module name="intellij.libraries.jbr" loading="embedded"/>
     <module name="intellij.libraries.jcip" loading="embedded"/>

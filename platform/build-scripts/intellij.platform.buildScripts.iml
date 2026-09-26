@@ -142,8 +142,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="intellij-plugin-structure" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="jaxb-api" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="jaxb-runtime" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jaxb" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.javax.activation" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.teamcity.service.messages" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="RUNTIME" />

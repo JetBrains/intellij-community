@@ -152,7 +152,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.libraries.jsoup" />
-    <orderEntry type="library" name="jaxb-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jaxb" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore" />
     <orderEntry type="module" module-name="intellij.platform.ide" />

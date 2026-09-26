@@ -620,8 +620,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.javax.activation" />
     <orderEntry type="module" module-name="intellij.libraries.javax.annotation" />
-    <orderEntry type="library" name="jaxb-api" level="project" />
-    <orderEntry type="library" name="jaxb-runtime" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jaxb" />
     <orderEntry type="module-library">
       <library name="com.hankcs:aho-corasick-double-array-trie" type="repository">
         <properties include-transitive-deps="false" maven-id="com.hankcs:aho-corasick-double-array-trie:1.2.3">

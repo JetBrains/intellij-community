@@ -3459,76 +3459,6 @@ http_file(
 )
 
 http_file(
-    name = "javax_xml_bind-jaxb-api-2_3_1_http",
-    downloaded_file_path = "jaxb-api-2.3.1.jar",
-    sha256 = "88b955a0df57880a26a74708bc34f74dcaf8ebf4e78843a28b50eae945732b06",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1.jar",
-)
-
-http_file(
-    name = "javax_xml_bind-jaxb-api-2_3_1-sources_http",
-    downloaded_file_path = "jaxb-api-2.3.1-sources.jar",
-    sha256 = "d69dc2c28833df5fb6e916efae01477ae936326b342d479a43539b0131c96b9d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1-sources.jar",
-)
-
-http_file(
-    name = "org_glassfish_jaxb-jaxb-runtime-2_3_9_http",
-    downloaded_file_path = "jaxb-runtime-2.3.9.jar",
-    sha256 = "ba88e5bde7c0d878c3e1f2ec2fcabaf51d201eaf93b3bb9cfecfc1f11b2304d4",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/glassfish/jaxb/jaxb-runtime/2.3.9/jaxb-runtime-2.3.9.jar",
-)
-
-http_file(
-    name = "org_glassfish_jaxb-txw2-2_3_9_http",
-    downloaded_file_path = "txw2-2.3.9.jar",
-    sha256 = "973018b87af911ecf6e6d861dd0d6a477e4d8ae6a883ec5d073d3df1330b87f0",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/glassfish/jaxb/txw2/2.3.9/txw2-2.3.9.jar",
-)
-
-http_file(
-    name = "com_sun_istack-istack-commons-runtime-3_0_12_http",
-    downloaded_file_path = "istack-commons-runtime-3.0.12.jar",
-    sha256 = "27d85fc134c9271d5c79d3300fc4669668f017e72409727c428f54f2417f04cd",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/sun/istack/istack-commons-runtime/3.0.12/istack-commons-runtime-3.0.12.jar",
-)
-
-http_file(
-    name = "com_sun_activation-jakarta_activation-1_2_2_http",
-    downloaded_file_path = "jakarta.activation-1.2.2.jar",
-    sha256 = "02156773e4ae9d048d14a56ad35d644bee9f1052a791d072df3ded3c656e6e1a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/sun/activation/jakarta.activation/1.2.2/jakarta.activation-1.2.2.jar",
-)
-
-http_file(
-    name = "org_glassfish_jaxb-jaxb-runtime-2_3_9-sources_http",
-    downloaded_file_path = "jaxb-runtime-2.3.9-sources.jar",
-    sha256 = "0f584c02ac3fe74b04f07ae551abc837574169097b60bd39b2e78f5d712fc606",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/glassfish/jaxb/jaxb-runtime/2.3.9/jaxb-runtime-2.3.9-sources.jar",
-)
-
-http_file(
-    name = "org_glassfish_jaxb-txw2-2_3_9-sources_http",
-    downloaded_file_path = "txw2-2.3.9-sources.jar",
-    sha256 = "ce796ca9b1a3ce6ab4f5f01c5b515c394a3e00c18c3a4a97fbcf5dbb16dc1d2e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/glassfish/jaxb/txw2/2.3.9/txw2-2.3.9-sources.jar",
-)
-
-http_file(
-    name = "com_sun_istack-istack-commons-runtime-3_0_12-sources_http",
-    downloaded_file_path = "istack-commons-runtime-3.0.12-sources.jar",
-    sha256 = "6671fc2f26744067b7bdfda9d8112c02ae72fd298963a24addaca27587d07591",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/sun/istack/istack-commons-runtime/3.0.12/istack-commons-runtime-3.0.12-sources.jar",
-)
-
-http_file(
-    name = "com_sun_activation-jakarta_activation-1_2_2-sources_http",
-    downloaded_file_path = "jakarta.activation-1.2.2-sources.jar",
-    sha256 = "f8f52ce9df5d5d29c1778183d48214624caa36be202a7eff2cef5a0519f2aa53",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/sun/activation/jakarta.activation/1.2.2/jakarta.activation-1.2.2-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_compose_components-components-ui-tooling-preview-desktop-1_9_0_http",
     downloaded_file_path = "components-ui-tooling-preview-desktop-1.9.0.jar",
     sha256 = "ca0857dcde7cffff8eea3cce2940a285f219f673829f7f9a3381f767d224f411",
@@ -7887,6 +7817,76 @@ http_file(
     downloaded_file_path = "javax.annotation-api-1.3.2-sources.jar",
     sha256 = "128971e52e0d84a66e3b6e049dab8ad7b2c58b7e1ad37fa2debd3d40c2947b95",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/javax/annotation/javax.annotation-api/1.3.2/javax.annotation-api-1.3.2-sources.jar",
+)
+
+http_file(
+    name = "javax_xml_bind-jaxb-api-2_3_1_http",
+    downloaded_file_path = "jaxb-api-2.3.1.jar",
+    sha256 = "88b955a0df57880a26a74708bc34f74dcaf8ebf4e78843a28b50eae945732b06",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1.jar",
+)
+
+http_file(
+    name = "javax_xml_bind-jaxb-api-2_3_1-sources_http",
+    downloaded_file_path = "jaxb-api-2.3.1-sources.jar",
+    sha256 = "d69dc2c28833df5fb6e916efae01477ae936326b342d479a43539b0131c96b9d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1-sources.jar",
+)
+
+http_file(
+    name = "org_glassfish_jaxb-jaxb-runtime-2_3_9_http",
+    downloaded_file_path = "jaxb-runtime-2.3.9.jar",
+    sha256 = "ba88e5bde7c0d878c3e1f2ec2fcabaf51d201eaf93b3bb9cfecfc1f11b2304d4",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/glassfish/jaxb/jaxb-runtime/2.3.9/jaxb-runtime-2.3.9.jar",
+)
+
+http_file(
+    name = "org_glassfish_jaxb-txw2-2_3_9_http",
+    downloaded_file_path = "txw2-2.3.9.jar",
+    sha256 = "973018b87af911ecf6e6d861dd0d6a477e4d8ae6a883ec5d073d3df1330b87f0",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/glassfish/jaxb/txw2/2.3.9/txw2-2.3.9.jar",
+)
+
+http_file(
+    name = "com_sun_istack-istack-commons-runtime-3_0_12_http",
+    downloaded_file_path = "istack-commons-runtime-3.0.12.jar",
+    sha256 = "27d85fc134c9271d5c79d3300fc4669668f017e72409727c428f54f2417f04cd",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/sun/istack/istack-commons-runtime/3.0.12/istack-commons-runtime-3.0.12.jar",
+)
+
+http_file(
+    name = "com_sun_activation-jakarta_activation-1_2_2_http",
+    downloaded_file_path = "jakarta.activation-1.2.2.jar",
+    sha256 = "02156773e4ae9d048d14a56ad35d644bee9f1052a791d072df3ded3c656e6e1a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/sun/activation/jakarta.activation/1.2.2/jakarta.activation-1.2.2.jar",
+)
+
+http_file(
+    name = "org_glassfish_jaxb-jaxb-runtime-2_3_9-sources_http",
+    downloaded_file_path = "jaxb-runtime-2.3.9-sources.jar",
+    sha256 = "0f584c02ac3fe74b04f07ae551abc837574169097b60bd39b2e78f5d712fc606",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/glassfish/jaxb/jaxb-runtime/2.3.9/jaxb-runtime-2.3.9-sources.jar",
+)
+
+http_file(
+    name = "org_glassfish_jaxb-txw2-2_3_9-sources_http",
+    downloaded_file_path = "txw2-2.3.9-sources.jar",
+    sha256 = "ce796ca9b1a3ce6ab4f5f01c5b515c394a3e00c18c3a4a97fbcf5dbb16dc1d2e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/glassfish/jaxb/txw2/2.3.9/txw2-2.3.9-sources.jar",
+)
+
+http_file(
+    name = "com_sun_istack-istack-commons-runtime-3_0_12-sources_http",
+    downloaded_file_path = "istack-commons-runtime-3.0.12-sources.jar",
+    sha256 = "6671fc2f26744067b7bdfda9d8112c02ae72fd298963a24addaca27587d07591",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/sun/istack/istack-commons-runtime/3.0.12/istack-commons-runtime-3.0.12-sources.jar",
+)
+
+http_file(
+    name = "com_sun_activation-jakarta_activation-1_2_2-sources_http",
+    downloaded_file_path = "jakarta.activation-1.2.2-sources.jar",
+    sha256 = "f8f52ce9df5d5d29c1778183d48214624caa36be202a7eff2cef5a0519f2aa53",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/sun/activation/jakarta.activation/1.2.2/jakarta.activation-1.2.2-sources.jar",
 )
 
 http_file(

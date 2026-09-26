@@ -118,6 +118,9 @@ object LibraryModuleSets {
 
     module("intellij.libraries.java.websocket")
     embeddedModule("intellij.libraries.javax.annotation")
+    // embedded: JAXB left the JRE in Java 11, and plugins call `JAXBContext.newInstance` without a context classloader,
+    // so the API finds the runtime only when both are in the core classloader
+    embeddedModule("intellij.libraries.jaxb")
     // used by intellij.platform.util.jdom, so, embedded
     embeddedModule("intellij.libraries.jaxen")
     embeddedModule("intellij.libraries.jbr")

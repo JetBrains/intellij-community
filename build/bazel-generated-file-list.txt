@@ -503,6 +503,7 @@ libraries/java-diff-utils
 libraries/java-websocket
 libraries/javax/activation
 libraries/javax/annotation
+libraries/jaxb
 libraries/jaxen
 libraries/jbr
 libraries/jcef

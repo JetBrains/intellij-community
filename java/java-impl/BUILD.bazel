@@ -43,7 +43,7 @@ jvm_library(
         "//java/java-analysis-impl:analysis-impl",
         "//java/java-structure-view:structureView",
     ],
-    runtime_deps = ["@lib//:jaxb-runtime"],
+    runtime_deps = ["//libraries/jaxb"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -182,6 +182,7 @@ jvm_library(
         "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//libraries/jaxb:jaxb_test_lib",
         "//platform/platform-util-io-impl:ide-util-io-impl_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/platform-impl/internal:internal_test_lib",
