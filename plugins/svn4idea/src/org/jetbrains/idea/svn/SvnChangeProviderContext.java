@@ -260,6 +260,22 @@ class SvnChangeProviderContext implements StatusReceiver {
       processChangeInList(SvnContentRevision.createBaseRevision(myVcs, filePath, svnInfo.getRevision()),
                           CurrentContentRevision.create(filePath), FileStatus.MODIFIED, svnStatus.build());
     }
+<<<<<<< HEAD
+=======
+    catch (SVNException e) {
+      final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
+      if (SVNErrorCode.WC_PATH_NOT_FOUND.equals(errorCode) ||
+          SVNErrorCode.UNVERSIONED_RESOURCE.equals(errorCode)) {
+        return;
+      }
+      throw e;
+    }
+    final SVNStatus svnStatus = new SVNStatus();
+    svnStatus.setRevision(svnInfo.getRevision());
+    myChangelistBuilder.processChangeInList(createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, svnInfo.getRevision()),
+                                             CurrentContentRevision.create(filePath), FileStatus.MODIFIED, svnStatus), (String) null,
+                                            SvnVcs.getKey());
+>>>>>>> origin/115
   }
 
   private void processChangeInList(@Nullable ContentRevision beforeRevision,

@@ -135,10 +135,22 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   }
 
   @Before
+<<<<<<< HEAD
   public void before() throws Exception {
     myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     myTempDirFixture.setUp();
     resetCanonicalTempPathCache(myTempDirFixture.getTempDirPath());
+=======
+  public void setUp() throws Exception {
+    //System.setProperty("svnkit.wc.17", "false");
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+          myTempDirFixture = fixtureFactory.createTempDirTestFixture();
+          myTempDirFixture.setUp();
+>>>>>>> origin/115
 
     myPluginRoot = new File(getPluginHome());
     myClientBinaryPath = getSvnClientDirectory();

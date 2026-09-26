@@ -15,11 +15,33 @@
  */
 package com.intellij.codeInsight.navigation.actions;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+<<<<<<< HEAD:platform/lang-impl/src/com/intellij/codeInsight/navigation/actions/TypeDeclarationPlaceAwareProvider.java
 public interface TypeDeclarationPlaceAwareProvider extends TypeDeclarationProvider {
   PsiElement @Nullable [] getSymbolTypeDeclarations(@NotNull PsiElement symbol, Editor editor, int offset);
+=======
+/**
+ * @author Eugene.Kudelevsky
+ */
+public abstract class GotoDeclarationHandlerBase implements GotoDeclarationHandler {
+  @Nullable
+  @Override
+  public PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement, int offset, Editor editor) {
+    final PsiElement target = getGotoDeclarationTarget(sourceElement, editor);
+    return target != null ? new PsiElement[] {target} : null;
+  }
+
+  @Nullable
+  public abstract PsiElement getGotoDeclarationTarget(PsiElement sourceElement, Editor editor);
+
+  @Override
+  public String getActionText(DataContext context) {
+    return null;
+  }
+>>>>>>> origin/115:platform/lang-impl/src/com/intellij/codeInsight/navigation/actions/GotoDeclarationHandlerBase.java
 }

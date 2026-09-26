@@ -29,7 +29,11 @@ public final class FilePathComparator implements Comparator<VirtualFile> {
 
   @Override
   public int compare(final VirtualFile o1, final VirtualFile o2) {
+<<<<<<< HEAD
     if (Comparing.equal(o1, o2)) return 0;
+=======
+    if (o1 == o2) return 0;
+>>>>>>> origin/115
     return o1.getPath().compareTo(o2.getPath());
   }
 }

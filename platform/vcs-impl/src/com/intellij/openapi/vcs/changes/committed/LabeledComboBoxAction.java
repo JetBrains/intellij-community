@@ -34,4 +34,8 @@ public abstract class LabeledComboBoxAction extends ComboBoxAction {
     panel.setBorder(JBUI.Borders.empty(0, 6, 0, 3));
     return panel;
   }
+
+  protected JComboBox getComboBox() {
+    return myComboBox;
+  }
 }

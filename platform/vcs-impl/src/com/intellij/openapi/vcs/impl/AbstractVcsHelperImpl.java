@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+<<<<<<< HEAD
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -41,6 +42,11 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+=======
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.*;
+>>>>>>> origin/115
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -253,11 +259,19 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   private static String[] getExceptionMessages(@NotNull VcsException exception) {
     String[] messages = exception.getMessages();
     if (messages.length == 0) messages = new String[]{VcsBundle.message("exception.text.unknown.error")};
+<<<<<<< HEAD
     final List<String> list = new ArrayList<>();
     for (String message : messages) {
       list.addAll(StringUtil.split(StringUtil.convertLineSeparators(message), "\n"));
     }
     return ArrayUtilRt.toStringArray(list);
+=======
+    final List<String> list = new ArrayList<String>();
+    for (String message : messages) {
+      list.addAll(StringUtil.split(StringUtil.convertLineSeparators(message), "\n"));
+    }
+    return list.toArray(new String[list.size()]);
+>>>>>>> origin/115
   }
 
   private void showErrorsImpl(final boolean isEmpty,

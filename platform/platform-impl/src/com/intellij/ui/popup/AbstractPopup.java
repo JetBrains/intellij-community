@@ -1435,6 +1435,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
 
     myRequestorComponent = owner;
 
+<<<<<<< HEAD
     myPopupType = getMostSuitablePopupType();
     myNativePopup = myPopupType != PopupComponentFactory.PopupType.DIALOG;
     Component popupOwner = myOwner;
@@ -1477,6 +1478,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
       }
       setSize(targetBounds.getSize()); // Might need to make it smaller than its preferred size.
     }
+=======
+    boolean forcedDialog = myMayBeParent
+      || (SystemInfo.isMac && !(myOwner instanceof IdeFrame) && (myOwner != null && myOwner.isShowing()));
+>>>>>>> origin/115
 
     final JRootPane root = myContent.getRootPane();
 

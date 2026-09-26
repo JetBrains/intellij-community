@@ -18,6 +18,18 @@ package com.intellij.ui;
 /**
  * @author Konstantin Bulenkov
  */
+<<<<<<< HEAD:platform/platform-api/src/com/intellij/ui/ComponentWithFileColors.java
 public interface ComponentWithFileColors {
   boolean isFileColorsEnabled();
+=======
+public enum DiffViewerType {
+  contents,
+  merge,
+  binary,
+  external_files,
+  external_folders,
+  multiLayer,
+  empty,
+  unknown
+>>>>>>> origin/115:platform/platform-api/src/com/intellij/openapi/diff/DiffViewerType.java
 }

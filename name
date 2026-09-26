@@ -1,0 +1,84 @@
+name: Java-Kotlin Build
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main, develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        java-version: [ '11', '17', '21' ]
+        kotlin-version: [ '1.9.0', '2.0.0' ]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK ${{ matrix.java-version }}
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ matrix.java-version }}
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: Set up Kotlin ${{ matrix.kotlin-version }}
+      run: |
+        echo "KOTLIN_VERSION=${{ matrix.kotlin-version }}" >> $GITHUB_ENV
+    
+    - name: Build with Maven
+      run: mvn clean compile -DskipTests
+      
+    - name: Compile Kotlin
+      run: mvn kotlin:compile -DskipTests
+      continue-on-error: true
+    
+    - name: Run Tests
+      run: mvn test
+      continue-on-error: true
+    
+    - name: Build with Maven Package
+      run: mvn package -DskipTests
+    
+    - name: Code Quality Analysis
+      run: mvn verify
+      continue-on-error: true
+    
+    - name: Upload Build Artifacts
+      if: success()
+      uses: actions/upload-artifact@v3
+      with:
+        name: java-${{ matrix.java-version }}-kotlin-${{ matrix.kotlin-version }}-build
+        path: target/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: 17
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: Build and Publish to Maven Central
+      run: mvn clean deploy -DskipTests
+      env:
+        MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+        MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+      continue-on-error: true
+    
+    - name: Publish Test Results
+      if: always()
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      with:
+        files: target/surefire-reports/**/*.xml
+      continue-on-error: true

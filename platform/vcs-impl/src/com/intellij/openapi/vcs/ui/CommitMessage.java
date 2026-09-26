@@ -46,6 +46,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.EditorTextFieldProvider;
 import com.intellij.ui.ErrorStripeEditorCustomization;
 import com.intellij.ui.SeparatorFactory;
+<<<<<<< HEAD
 import com.intellij.ui.SoftWrapsEditorCustomization;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -60,6 +61,9 @@ import com.intellij.vcs.commit.message.BodyLimitSettings;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+=======
+import com.intellij.util.Consumer;
+>>>>>>> origin/115
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Box;
@@ -78,9 +82,16 @@ import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getBodyLimitSettings;
 import static javax.swing.BorderFactory.createEmptyBorder;
 
+<<<<<<< HEAD
 public class CommitMessage extends JPanel implements Disposable, UiCompatibleDataProvider, CommitMessageUi, CommitMessageI {
   public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
   public static final Key<Supplier<Iterable<Change>>> CHANGES_SUPPLIER_KEY = Key.create("Vcs.CommitMessage.CompletionContext");
+=======
+  public static final Key<DataContext> DATA_CONTEXT_KEY = Key.create("commit message data context");
+  private final EditorTextField myEditorField;
+  private final Project         myProject;
+  private Consumer<String> myMessageConsumer;
+>>>>>>> origin/115
 
   private final @NotNull JBLoadingPanel myLoadingPanel;
 
@@ -282,9 +293,18 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
     return myEditorField;
   }
 
+<<<<<<< HEAD
   @Override
   public @NotNull String getText() {
     return getComment();
+=======
+  public void setText(final String initialMessage) {
+    final String text = initialMessage == null ? "" : initialMessage;
+    myEditorField.setText(text);
+    if (myMessageConsumer != null) {
+      myMessageConsumer.consume(text);
+    }
+>>>>>>> origin/115
   }
 
   @Override
@@ -396,5 +416,9 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
       if (project == null || !isCommitMessage(editor.getDocument())) return null;
       return new ConditionalTrafficLightRenderer(project, editor);
     }
+  }
+
+  public void setMessageConsumer(Consumer<String> messageConsumer) {
+    myMessageConsumer = messageConsumer;
   }
 }

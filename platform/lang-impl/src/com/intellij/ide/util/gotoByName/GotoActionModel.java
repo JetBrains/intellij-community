@@ -216,8 +216,21 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     return false;
   }
 
+<<<<<<< HEAD
   @Override
   public void saveInitialCheckBoxState(boolean state) {
+=======
+  protected static Color defaultActionForeground(boolean isSelected, Presentation presentation) {
+    if (isSelected) {
+      return UIUtil.getListSelectionForeground();
+    }
+
+    if (!presentation.isEnabled() || !presentation.isVisible()) {
+      return UIUtil.getInactiveTextColor();
+    }
+
+    return UIUtil.getListForeground();
+>>>>>>> origin/115
   }
 
   @ApiStatus.Internal
@@ -482,6 +495,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
     List<ActionGroup> newPath = ContainerUtil.append(path, group);
     for (AnAction action : actions) {
+<<<<<<< HEAD
       if (action == null || action instanceof Separator) continue;
       if (action instanceof ActionGroup) {
         collectActions(actionGroups, (ActionGroup)action, newPath, showNonPopupGroups);
@@ -489,6 +503,17 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       else {
         GroupMapping mapping = actionGroups.computeIfAbsent(action, _ -> new GroupMapping(showNonPopupGroups));
         mapping.addPath(newPath);
+=======
+      if (action != null) {
+        if (action instanceof ActionGroup) {
+          final ActionGroup actionGroup = (ActionGroup)action;
+          final String groupName = actionGroup.getTemplatePresentation().getText();
+          collectActions(result, actionGroup, StringUtil.isEmpty(groupName) || !actionGroup.isPopup() ? containingGroupName : groupName);
+        } else {
+          final String groupName = group.getTemplatePresentation().getText();
+          result.put(action, groupName != null && groupName.length() > 0 ? groupName : containingGroupName);
+        }
+>>>>>>> origin/115
       }
     }
   }

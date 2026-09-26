@@ -93,6 +93,7 @@ public class CopiesPanel extends SimpleToolWindowPanel {
     myProject = project;
     myProject.getMessageBus().connect().subscribe(SvnVcs.ROOTS_RELOADED, (Consumer<Boolean>)this::rootsReloaded);
 
+<<<<<<< HEAD
     myPanel.setBorder(empty(2, 4));
     setContent(createScrollPane(myPanel));
 
@@ -102,6 +103,68 @@ public class CopiesPanel extends SimpleToolWindowPanel {
 
     rootsReloaded(true);
     refresh();
+=======
+    final Runnable focus = new Runnable() {
+      public void run() {
+        IdeFocusManager.getInstance(myProject).requestFocus(myRefreshLabel, true);
+      }
+    };
+    final Runnable refreshView = new Runnable() {
+      public void run() {
+        final List<WCInfo> infoList = myVcs.getAllWcInfos();
+        Runnable runnable = new Runnable() {
+          public void run() {
+            if (myCurrentInfoList != null) {
+              final List<OverrideEqualsWrapper<WCInfo>> newList =
+                ObjectsConvertor.convert(infoList, new Convertor<WCInfo, OverrideEqualsWrapper<WCInfo>>() {
+                  public OverrideEqualsWrapper<WCInfo> convert(WCInfo o) {
+                    return new OverrideEqualsWrapper<WCInfo>(InfoEqualityPolicy.getInstance(), o);
+                  }
+                }, ObjectsConvertor.NOT_NULL);
+
+              if (Comparing.haveEqualElements(newList, myCurrentInfoList)) {
+                myRefreshLabel.setEnabled(true);
+                return;
+              }
+              myCurrentInfoList = newList;
+            }
+            Collections.sort(infoList, WCComparator.getInstance());
+            updateList(infoList);
+            myRefreshLabel.setEnabled(true);
+            SwingUtilities.invokeLater(focus);
+          }
+        };
+        ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
+      }
+    };
+    final Runnable refreshOnPooled = new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().executeOnPooledThread(refreshView);
+      }
+    };
+    myConnection.subscribe(SvnVcs.ROOTS_RELOADED, refreshOnPooled);
+
+    final JPanel holderPanel = new JPanel(new BorderLayout());
+    FontMetrics fm = holderPanel.getFontMetrics(holderPanel.getFont());
+    myTextHeight = (int)(fm.getHeight() * 1.3);
+    myPanel = new JPanel(new GridBagLayout());
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(myPanel, BorderLayout.NORTH);
+    holderPanel.add(panel, BorderLayout.WEST);
+    myRefreshLabel = new MyLinkLabel(myTextHeight, "Refresh", new LinkListener() {
+      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+        if (myRefreshLabel.isEnabled()) {
+          myVcs.invokeRefreshSvnRoots(true);
+          myRefreshLabel.setEnabled(false);
+        }
+      }
+    });
+    myHolder = ScrollPaneFactory.createScrollPane(holderPanel);
+    myHolder.setBorder(null);
+    setFocusableForLinks(myRefreshLabel);
+    refreshOnPooled.run();
+    initView();
+>>>>>>> origin/115
   }
 
   @RequiresEdt

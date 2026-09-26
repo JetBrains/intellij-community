@@ -5,8 +5,14 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
+<<<<<<< HEAD
 import org.jetbrains.annotations.NotNull;
+=======
+import com.intellij.util.Consumer;
+import com.intellij.util.Processor;
+>>>>>>> origin/115
 
 import java.util.Collection;
 import java.util.Set;
@@ -76,5 +82,20 @@ public abstract class VcsDirtyScope {
    */
   public abstract boolean belongsTo(@NotNull final FilePath path);
 
+<<<<<<< HEAD
   public abstract boolean wasEveryThingDirty();
+=======
+  public abstract boolean belongsTo(final FilePath path, final Consumer<AbstractVcs> vcsConsumer);
+
+  public Collection<VirtualFile> getAffectedContentRootsWithCheck() {
+    return getAffectedContentRoots();
+  }
+  
+  public boolean wasEveryThingDirty() {
+    return false;
+  }
+
+  public void setWasEverythingDirty(boolean wasEverythingDirty) {
+  }
+>>>>>>> origin/115
 }

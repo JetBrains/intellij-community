@@ -23,8 +23,43 @@ public class UpdateSettings implements PersistentStateComponentWithModificationT
     return ApplicationManager.getApplication().getService(UpdateSettings.class);
   }
 
+<<<<<<< HEAD
   private UpdateOptions myState = new UpdateOptions();
 
+=======
+  public UpdateSettings() {
+    updateDefaultChannel();
+  }
+
+  private void updateDefaultChannel() {
+    if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
+      UPDATE_CHANNEL_TYPE = ChannelStatus.EAP_CODE;
+    }
+  }
+
+  public Element getState() {
+    Element element = new Element("state");
+    try {
+      DefaultJDOMExternalizer.writeExternal(this, element);
+    }
+    catch (WriteExternalException e) {
+      LOG.info(e);
+    }
+    return element;
+  }
+
+  public void loadState(final Element state) {
+    try {
+      DefaultJDOMExternalizer.readExternal(this, state);
+    }
+    catch (InvalidDataException e) {
+      LOG.info(e);
+    }
+    updateDefaultChannel();
+  }
+
+  @NotNull
+>>>>>>> origin/115
   @Override
   public @NotNull UpdateOptions getState() {
     return myState;

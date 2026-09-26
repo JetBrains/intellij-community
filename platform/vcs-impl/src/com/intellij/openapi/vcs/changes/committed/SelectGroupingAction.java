@@ -37,6 +37,7 @@ public class SelectGroupingAction extends LabeledComboBoxAction implements DumbA
     super(VcsBundle.message("committed.changes.group.title"));
     myProject = project;
     myBrowser = browser;
+    getComboBox().setPrototypeDisplayValue("Date+");
   }
 
   @Override
