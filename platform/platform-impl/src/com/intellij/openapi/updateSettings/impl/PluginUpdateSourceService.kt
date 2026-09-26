@@ -59,24 +59,24 @@ interface PluginUpdateSourceService {
     }
   }
 
-  fun getPluginUpdateSourceId(pluginId: PluginId): PluginUpdateSourceId?
+  fun getPluginUpdateSourceId(pluginId: PluginId): PluginUpdateSource?
 
-  fun setPluginUpdateSourceId(pluginId: PluginId, updateSourceId: PluginUpdateSourceId)
+  fun setPluginUpdateSourceId(pluginId: PluginId, updateSourceId: PluginUpdateSource)
 
   fun setPluginUpdateSourceId(plugin: PluginUiModel)
 
   fun erasePluginUpdateSourceId(pluginId: PluginId)
 
-  fun createMarketplacePluginUpdateSourceId(): PluginUpdateSourceId
+  fun createMarketplacePluginUpdateSourceId(): PluginUpdateSource
 
-  fun createCustomRepositoryPluginUpdateSourceId(host: String): PluginUpdateSourceId
+  fun createCustomRepositoryPluginUpdateSourceId(host: String): PluginUpdateSource
 
   fun isMissingPluginUpdateSource(plugin: PluginDescriptor): Boolean {
     return PluginUtils.isUpdateable(plugin) && getPluginUpdateSourceId(plugin.pluginId) == null
   }
 
-  fun getAllSources(): List<PluginUpdateSourceId>
+  fun getAllSources(): List<PluginUpdateSource>
 
   @TestOnly
-  fun getPersistedPluginUpdateSourceId(pluginId: PluginId): PluginUpdateSourceId?
+  fun getPersistedPluginUpdateSourceId(pluginId: PluginId): PluginUpdateSource?
 }

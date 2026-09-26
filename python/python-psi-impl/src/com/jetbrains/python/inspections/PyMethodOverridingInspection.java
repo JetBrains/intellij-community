@@ -107,7 +107,8 @@ public final class PyMethodOverridingInspection extends PyInspection {
 
         // Keep the headline's clickable `B.f()`/`A` links: feed the rich tooltip HTML, not the escaped description.
         String diff = PyTypeDiff.paramsDiffTooltip(baseMethodParameters, functionParameters,
-                                                   PyInspectionMessages.tooltipHeadline(msg), myTypeEvalContext);
+                                                   PyInspectionMessages.tooltipHeadline(msg), myTypeEvalContext,
+                                                   baseMethod.getTypeParameterList(), function.getTypeParameterList());
         ProblemMessage problemMessage = new ProblemMessage(msg.description(), diff);
         // The diff is the message tooltip; registerOverrideMismatch appends the breakdown below it on-the-fly.
         if (fix != null) {

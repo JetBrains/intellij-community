@@ -1,0 +1,17 @@
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>com.intellij.modules.jna</id>
+  <name>Java Native Access (JNA)</name>
+  <vendor>JetBrains</vendor>
+  <description><![CDATA[
+    Holds the one JNA copy and its jnidispatch native that other plugins reuse to call native code.
+  ]]></description>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.platform"/>
+  </dependencies>
+
+  <content namespace="jetbrains">
+    <module name="intellij.libraries.jna" loading="required"/>
+  </content>
+</idea-plugin>

@@ -26,11 +26,12 @@ DevDistPlatformPayloadInfo = provider(
     doc = "What a product's `lib/`-owning payload contains, split by which producer packs each jar.",
     fields = {
         "packed_jars": "depset of File: the `lib/<module>.jar`s a `content_module_jar` target packed.",
-        # Jars only in `packed_jars`, because the byte gate reads it as the set of jars to compare. The native tree a
-        # platform jar writes beside itself travels in the record, and the packed-jars component places it from there.
-        "packed_metadata": """depset of struct(jar, metadata, relative_path, native_tree, native_lib_dir): the metadata
-        and the destination of each packed jar, and its native tree with the `lib/` subdirectory the tree goes to.
-        `None` and empty for a jar without one.""",
+        # Jars only in `packed_jars`, because the byte gate reads it as the set of jars to compare. The native tree of a
+        # content module jar travels in the record, and the packed-jars component places it from there.
+        "packed_metadata": """depset of struct(jar, metadata, relative_path, native_tree, native_metadata,
+        native_lib_dir): the metadata and the destination of each packed jar, and the native tree of the payload's
+        platform with its own metadata and the `lib/` subdirectory the tree goes to. `None` and empty for a jar without
+        one.""",
         "packed_jar_names": """list of string: their destinations within `lib/`, sorted - the jar-name exclusion set.
 
         A destination, not a file name: a platform jar can name a subdirectory of `lib/`, and the fragment that must not
@@ -56,10 +57,18 @@ def _dev_dist_platform_payload_impl(ctx):
         packed_jars.append(info.jar)
         packed_destinations.append(struct(destination = info.relative_path, jar = info.jar))
 
-        # `getattr`, because only a platform jar can carry a native tree and `ContentModuleJarInfo` has no such field.
-        native_tree = getattr(info, "native_tree", None)
-        native_lib_dir = getattr(info, "native_lib_dir", "") if native_tree != None else ""
-        if native_tree != None:
+        # Only a content module jar carries natives, and it has a tree for each platform. The payload takes the one of
+        # its own platform.
+        native = None
+        native_lib_dir = ""
+        if ContentModuleJarInfo in target and info.native_trees:
+            if not ctx.attr.native_platform:
+                fail("%s: %s packs native files, so the payload needs native_platform" % (ctx.label, target.label), attr = "native_platform")
+            native = info.native_trees.get(ctx.attr.native_platform)
+            if native == None:
+                fail("%s: %s has no native tree for '%s'" % (ctx.label, target.label, ctx.attr.native_platform), attr = "native_platform")
+            native_lib_dir = info.native_lib_dir
+        if native != None:
             # One owner per `lib/<dir>/`, like one owner per jar destination below: two trees in one directory would
             # be two producers of whichever files they share.
             previous = native_dir_owners.get(native_lib_dir)
@@ -70,7 +79,8 @@ def _dev_dist_platform_payload_impl(ctx):
             jar = info.jar,
             metadata = info.metadata,
             relative_path = info.relative_path,
-            native_tree = native_tree,
+            native_tree = native.tree if native else None,
+            native_metadata = native.metadata if native else None,
             native_lib_dir = native_lib_dir,
         ))
         packed_member_jars.extend(info.member_jars)
@@ -162,6 +172,10 @@ dev_dist_platform_payload = rule(
                   "module that packs none has no such target, so this list *is* the handover set.",
             providers = [[ContentModuleJarInfo], [DevDistPlatformJarInfo]],
             mandatory = True,
+        ),
+        "native_platform": attr.string(
+            doc = "The `HOST_PLATFORMS` token of the payload's native trees. Configurable: the macro passes a " +
+                  "`select()` over the host when the set names no target platform. Empty when no packed jar has natives.",
         ),
     },
 )

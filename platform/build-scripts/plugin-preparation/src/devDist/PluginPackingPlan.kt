@@ -50,6 +50,7 @@ data class JarSourceRecipe(
 }
 
 @ApiStatus.Internal
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class JarWriterRecipe(
   @JvmField val manifest: String = "single-meaningful-source",
@@ -57,6 +58,11 @@ data class JarWriterRecipe(
   @JvmField val directoryEntries: Boolean = false,
   @JvmField val rewriteBootClassPath: Boolean = false,
   @JvmField val outputName: String = "",
+  /**
+   * The presigned native library whose native entries the jar leaves out, or empty. A jar with it and a jar without it
+   * differ, so a plugin reuses a natives jar only with a recipe that states the same library.
+   */
+  @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val nativeLib: String = "",
 )
 
 @ApiStatus.Internal
@@ -118,6 +124,19 @@ const val PLUGIN_ASSET_SCOPE: String = "plugin"
 
 @ApiStatus.Internal
 const val DISTRIBUTION_ASSET_SCOPE: String = "distribution"
+
+/**
+ * The input of the native tree a reused natives jar writes: `native-tree:<module>`. The tree asset is at the
+ * distribution root, and the reused `content_module_jar` of the module produces it.
+ */
+@ApiStatus.Internal
+const val NATIVE_TREE_INPUT_PREFIX: String = "native-tree:"
+
+/** Whether [asset] is the native tree of a reused natives jar, see [NATIVE_TREE_INPUT_PREFIX]. */
+@ApiStatus.Internal
+fun isNativeTreeAsset(asset: PluginPackingAsset): Boolean {
+  return asset.kind == "tree" && asset.inputs.singleOrNull()?.startsWith(NATIVE_TREE_INPUT_PREFIX) == true
+}
 
 @ApiStatus.Internal
 fun pluginPackingExecutionVersion(assets: List<PluginPackingAsset>): Int {
@@ -236,6 +255,13 @@ fun planPluginPacking(
   }
   val planned = assets.map { asset ->
     val recipe = asset.recipe
+    val nativeTreeModule = if (isNativeTreeAsset(asset)) asset.inputs.single().removePrefix(NATIVE_TREE_INPUT_PREFIX) else null
+    if (nativeTreeModule != null) {
+      require(asset.scope == DISTRIBUTION_ASSET_SCOPE) { "Plugin '$plugin' places the native tree '${asset.destination}' in the plugin" }
+      // No owner in a plan without reuse. The caller refuses a native tree that its final plan leaves unowned.
+      val owner = recipes.values.firstOrNull { it.module == nativeTreeModule && it.recipe.writer.nativeLib.isNotEmpty() }
+      return@map PlannedPluginAsset(asset = asset, artifact = owner)
+    }
     val artifact = if (recipe != null && recipe.sources.none { it.kind == "prepared" } &&
                        asset.inputs.toSet() == recipe.sources.mapTo(HashSet(), JarSourceRecipe::input)) {
       recipes.get(recipe to asset.mode)
@@ -276,7 +302,7 @@ fun planPluginPacking(
     requiredPreparations.add(preparation)
   }
   for (asset in planned) {
-    if (asset.artifact == null) {
+    if (asset.artifact == null && !isNativeTreeAsset(asset.asset)) {
       asset.asset.inputs.forEach(::requireInput)
     }
   }

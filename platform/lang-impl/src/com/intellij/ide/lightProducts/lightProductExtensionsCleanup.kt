@@ -18,7 +18,6 @@ import com.intellij.openapi.extensions.impl.unregisterExtensionsById
 import com.intellij.openapi.extensions.impl.unregisterExtensionsMatching
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.wm.StatusBarWidgetFactory
-import com.intellij.psi.search.FileTypeIndexImpl
 import com.intellij.psi.stubs.StubIndexExtension
 import com.intellij.util.application
 import com.intellij.util.indexing.FileBasedIndexExtension
@@ -101,17 +100,9 @@ val LIGHT_PRODUCT_INDEX_EXTENSION_POINTS: List<String> = listOf(
   IndexableSetContributor.EP_NAME.name,
 )
 
-/**
- * The index extensions that survive the cleanup.
- *
- * Removal of [FileTypeIndexImpl] gives "Index is not created for `filetypes`" errors.
- */
-private val KEPT_INDEX_EXTENSIONS = setOf(FileTypeIndexImpl::class.java.name)
-
 private fun unregisterIndexExtensions(checkNotInstantiated: Boolean) {
   for (pointName in LIGHT_PRODUCT_INDEX_EXTENSION_POINTS) {
-    application.extensionArea.getExtensionPoint<Any>(pointName)
-      .unregisterExtensionsMatching(checkNotInstantiated) { className, _ -> className !in KEPT_INDEX_EXTENSIONS }
+    application.extensionArea.getExtensionPoint<Any>(pointName).unregisterEverything(checkNotInstantiated)
   }
 }
 

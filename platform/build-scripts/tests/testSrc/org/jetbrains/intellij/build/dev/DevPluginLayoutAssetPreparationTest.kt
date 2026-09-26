@@ -4,7 +4,6 @@ import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
-import org.jetbrains.intellij.build.devDist.DISTRIBUTION_ASSET_SCOPE
 import org.jetbrains.intellij.build.devDist.JarSourceRecipe
 import org.jetbrains.intellij.build.devDist.JarWriterRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
@@ -38,31 +37,8 @@ internal class DevPluginLayoutAssetPreparationTest {
   }
 
   @Test
-  fun `a file layout asset holds one plain copy or one inline text at its root`() {
-    val inputs = listOf(DevPluginReference("build"))
-    val inline = DevPluginLayoutAsset(destination = "jre-build.txt", transform = DevPluginLayoutAssetTransform.inlineText("21.0.7"))
-    val copy = DevPluginLayoutAsset(destination = "jre-build.txt", sources = listOf(0))
-
-    validateLayoutAssets(DevPluginLayoutAssetPreparation(format = "file", root = "jre-build.txt", assets = listOf(inline)), inputs)
-    validateLayoutAssets(DevPluginLayoutAssetPreparation(format = "file", root = "jre-build.txt", assets = listOf(copy)), inputs)
-    assertThatThrownBy {
-      validateLayoutAssets(DevPluginLayoutAssetPreparation(format = "file", root = "jre-build.txt", assets = listOf(inline, copy)), inputs)
-    }.hasMessageContaining("requires one asset")
-    assertThatThrownBy {
-      validateLayoutAssets(DevPluginLayoutAssetPreparation(format = "file", root = "other.txt", assets = listOf(inline)), inputs)
-    }.hasMessageContaining("one asset at its root")
-    assertThatThrownBy {
-      validateLayoutAssets(DevPluginLayoutAssetPreparation(
-        format = "file", root = "jre-build.txt",
-        assets = listOf(copy.copy(transform = DevPluginLayoutAssetTransform.archiveTree())),
-      ), inputs)
-    }.hasMessageContaining("plain copy or inline text only")
-  }
-
-  @Test
   fun `every Go-executed operation binds its consumers in the plan`() {
     val treeAssets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0), transform = DevPluginLayoutAssetTransform.archiveTree(stripComponents = 1)))
-    val fileAssets = listOf(DevPluginLayoutAsset(destination = "jre-build.txt", transform = DevPluginLayoutAssetTransform.inlineText("21.0.7")))
     val operations = listOf(
       DevPluginPreparationOperation(
         id = "module-filter:module", input = DevPluginReference("module"), output = "module-filter:module:output", manifest = "drop",
@@ -75,14 +51,6 @@ internal class DevPluginLayoutAssetPreparationTest {
       DevPluginPreparationOperation(
         id = "layout-assets:gzip", kind = "layout-assets", inputs = listOf(DevPluginReference("dialects")), output = "layout-assets:gzip:output",
         manifest = "keep", layoutAssets = gzipXmlArchivePreparation(sources = listOf(0)),
-      ),
-      DevPluginPreparationOperation(
-        id = "layout-assets:file", kind = "layout-assets", output = "layout-assets:file:output",
-        manifest = "keep", layoutAssets = DevPluginLayoutAssetPreparation(format = "file", root = "jre-build.txt", assets = fileAssets),
-      ),
-      DevPluginPreparationOperation(
-        id = "native-select:library", kind = "native-select", input = DevPluginReference("library"), output = "native-select:library:output",
-        manifest = "keep", filter = "library",
       ),
     )
     assertThat(operations).allMatch(::isGoExecutedOperation)
@@ -98,14 +66,6 @@ internal class DevPluginLayoutAssetPreparationTest {
         PluginPackingAsset(
           destination = "lib/dialects.jar", inputs = listOf("layout-assets:gzip:output"),
           recipe = CanonicalJarRecipe(listOf(JarSourceRecipe("layout-assets:gzip:output", "prepared", "prepared")), JarWriterRecipe(manifest = "drop")),
-        ),
-        PluginPackingAsset(destination = "jre-build.txt", inputs = listOf("layout-assets:file:output"), classPath = false),
-        PluginPackingAsset(
-          destination = "lib/library.jar", inputs = listOf("native-select:library:output"),
-          recipe = CanonicalJarRecipe(listOf(JarSourceRecipe("native-select:library:output", "prepared", "prepared")), JarWriterRecipe(manifest = "keep")),
-        ),
-        PluginPackingAsset(
-          destination = "lib/native", inputs = listOf("native-select:library:output"), kind = "tree", classPath = false, scope = DISTRIBUTION_ASSET_SCOPE,
         ),
       ),
       preparations = operations.map { operation ->
@@ -123,13 +83,8 @@ internal class DevPluginLayoutAssetPreparationTest {
     for (operation in operations.filter { it.kind == "layout-assets" }) {
       validateDevPluginLayoutAssetConsumers(operation, plan)
     }
-    validateDevPluginNativeSelectConsumers(operations.last(), plan)
     val misplacedTree = operations[1].copy(layoutAssets = DevPluginLayoutAssetPreparation(format = "tree", root = "other", assets = treeAssets))
     assertThatThrownBy { validateDevPluginLayoutAssetConsumers(misplacedTree, plan) }.hasMessageContaining("one tree asset at 'other'")
-    val misplacedFile = operations[3].copy(layoutAssets = DevPluginLayoutAssetPreparation(format = "file", root = "other.txt", assets = fileAssets))
-    assertThatThrownBy { validateDevPluginLayoutAssetConsumers(misplacedFile, plan) }.hasMessageContaining("one file asset at 'other.txt'")
-    assertThatThrownBy { validateDevPluginNativeSelectConsumers(operations.last().copy(output = "module-filter:module:output"), plan) }
-      .hasMessageContaining("one distribution tree consumer and one prepared jar source")
   }
 
   @Test
@@ -139,15 +94,12 @@ internal class DevPluginLayoutAssetPreparationTest {
       id = "gzip", kind = "layout-assets", inputs = listOf(DevPluginReference("jar")), output = "gzip:output", manifest = "keep",
       layoutAssets = gzipXmlArchivePreparation(sources = listOf(0)),
     )
-    val inlineFile = DevPluginPreparationOperation(
-      id = "file", kind = "layout-assets", output = "file:output", manifest = "keep",
+    val file = DevPluginPreparationOperation(
+      id = "file", kind = "layout-assets", inputs = listOf(DevPluginReference("build")), output = "file:output", manifest = "keep",
       layoutAssets = DevPluginLayoutAssetPreparation(
         format = "file", root = "jre-build.txt",
-        assets = listOf(DevPluginLayoutAsset(destination = "jre-build.txt", transform = DevPluginLayoutAssetTransform.inlineText("21"))),
+        assets = listOf(DevPluginLayoutAsset(destination = "jre-build.txt", sources = listOf(0))),
       ),
-    )
-    val nativeSelect = DevPluginPreparationOperation(
-      id = "native", kind = "native-select", input = DevPluginReference("library"), output = "native:output", manifest = "keep", filter = "library",
     )
     val presigned = DevPluginPreparationOperation(
       id = "presigned", kind = "native-presigned", input = DevPluginReference("library"), output = "presigned:output", manifest = "keep", filter = "library",
@@ -155,26 +107,12 @@ internal class DevPluginLayoutAssetPreparationTest {
 
     assertThat(isGoExecutedOperation(moduleFilter)).isTrue()
     assertThat(isGoExecutedOperation(gzip)).isTrue()
-    assertThat(isGoExecutedOperation(inlineFile)).isTrue()
-    assertThat(isGoExecutedOperation(nativeSelect)).isTrue()
-    assertThat(readsPlatform(nativeSelect)).isTrue()
-    assertThat(listOf(moduleFilter, gzip, inlineFile).none(::readsPlatform)).isTrue()
+    assertThat(isGoExecutedOperation(file)).isFalse()
     assertThat(isGoExecutedOperation(presigned)).isFalse()
     assertThatThrownBy { devPluginPreparationOperationSignature(presigned, version = 2) }
       .hasMessageContaining("No Go operation executes 'presigned' of kind 'native-presigned'")
-  }
-
-  @Test
-  fun `a native-select operation requires the library policy and recipe version 2`() {
-    val nativeSelect = DevPluginPreparationOperation(
-      id = "native", kind = "native-select", input = DevPluginReference("library"), output = "native:output", manifest = "keep", filter = "library",
-    )
-
-    assertThat(devPluginPreparationOperationSignature(nativeSelect, version = 2)).isNotEmpty()
-    assertThatThrownBy { devPluginPreparationOperationSignature(nativeSelect, version = 1) }.hasMessageContaining("recipe version 2")
-    for (invalid in listOf(nativeSelect.copy(filter = "module"), nativeSelect.copy(filter = ""), nativeSelect.copy(manifest = "drop"), nativeSelect.copy(excludes = listOf("a/**")))) {
-      assertThatThrownBy { devPluginPreparationOperationSignature(invalid, version = 2) }.hasMessageContaining("original library policy")
-    }
+    assertThatThrownBy { devPluginPreparationOperationSignature(file, version = 2) }
+      .hasMessageContaining("No Go operation executes 'file' of kind 'layout-assets'")
   }
 
   @Test
@@ -247,13 +185,12 @@ internal class DevPluginLayoutAssetPreparationTest {
       archive.copy(includes = listOf("[")) to "archive",
       archive.copy(executables = listOf("")) to "archive",
       archive.copy(executables = listOf("{a")) to "archive",
-      DevPluginLayoutAssetTransform.inlineText("x").copy(executables = listOf("*")) to "archive",
     )
     for ((transform, input) in invalid) {
       assertThatThrownBy {
         validateLayoutAssets(DevPluginLayoutAssetPreparation(
           format = "tree", root = "bin",
-          assets = listOf(DevPluginLayoutAsset(destination = if (transform.kind == "inline-text") "bin/x" else "", sources = if (transform.kind == "inline-text") emptyList() else listOf(0), transform = transform)),
+          assets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0), transform = transform)),
         ), listOf(DevPluginReference(input)))
       }.isInstanceOf(IllegalArgumentException::class.java)
     }

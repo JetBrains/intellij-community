@@ -81,7 +81,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     }
     connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
 
-    myChangesSupport = project.getService(TodoViewChangesSupport.class);
+    myChangesSupport = TodoViewChangesSupport.getInstance(project);
     myChangesListener = myChangesSupport.installListener(project, connection,
                                                          () -> myContentManager,
                                                          () -> myChangeListTodosContent);

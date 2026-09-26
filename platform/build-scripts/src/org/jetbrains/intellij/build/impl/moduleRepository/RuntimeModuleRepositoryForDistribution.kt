@@ -25,12 +25,16 @@ import org.jetbrains.intellij.build.impl.layoutPlatformDistribution
 import org.jetbrains.intellij.build.impl.plugins.buildPlugins
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.io.ZipFileWriter
+import org.jetbrains.intellij.build.io.zipWriter
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.module.JpsModule
 import java.io.IOException
+import java.nio.ByteBuffer
 import java.nio.file.Path
 import java.util.Properties
+import java.util.zip.Deflater
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
@@ -328,11 +332,29 @@ private fun saveModuleRepository(descriptors: List<RawRuntimeModuleDescriptor>, 
     targetDirectory.createDirectories()
     RuntimeModuleRepositorySerialization.saveToCompactFile(descriptors,
                                                            pluginHeaders, bootstrapModuleName, targetDirectory.resolve(COMPACT_REPOSITORY_FILE_NAME), GENERATOR_VERSION)
-    RuntimeModuleRepositorySerialization.saveToJar(descriptors,
-                                                   pluginHeaders, bootstrapModuleName, targetDirectory.resolve(JAR_REPOSITORY_FILE_NAME), GENERATOR_VERSION)
+    writeModuleDescriptorsJar(descriptors, pluginHeaders, bootstrapModuleName, targetDirectory.resolve(JAR_REPOSITORY_FILE_NAME))
   }
   catch (e: IOException) {
     throw RuntimeException("Failed to save runtime module repository: ${e.message}", e)
+  }
+}
+
+/**
+ * Writes the JAR form of the repository. Entries carry no timestamp, so the same descriptors always give the same bytes.
+ */
+internal fun writeModuleDescriptorsJar(
+  descriptors: List<RawRuntimeModuleDescriptor>,
+  pluginHeaders: List<RuntimePluginHeader>,
+  bootstrapModuleName: String?,
+  jarFile: Path,
+) {
+  ZipFileWriter(
+    zipWriter(targetFile = jarFile, packageIndexBuilder = null, overwrite = true),
+    deflater = Deflater(Deflater.DEFAULT_COMPRESSION, true),
+  ).use { zipCreator ->
+    RuntimeModuleRepositorySerialization.writeJarEntries(descriptors, pluginHeaders, bootstrapModuleName, GENERATOR_VERSION) { name, content ->
+      zipCreator.compressedData(name, ByteBuffer.wrap(content))
+    }
   }
 }
 

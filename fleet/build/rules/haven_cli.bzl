@@ -26,7 +26,7 @@ def run_haven_cli(
         progress_message = ""):
     java_runtime = ctx.attr._tool_java_runtime[java_common.JavaRuntimeInfo]
     ctx.actions.run(
-        mnemonic = "HavenCli",  # ensure all haven-cli workers are shared regardless of the mnemonic of the action
+        mnemonic = mnemonic,
         inputs = inputs,
         outputs = outputs,
         tools = [ctx.file._haven_cli_launcher, ctx.file._haven_cli, java_runtime.files] + tools,
@@ -36,9 +36,10 @@ def run_haven_cli(
             "supports-multiplex-workers": "1",
             "supports-worker-cancellation": "1",
             "supports-path-mapping": "1",
+            "worker-key-mnemonic": "HavenCli",  # ensure all haven-cli workers are shared regardless of the mnemonic of the action
         },
         arguments = [
-            "-Xmx1g",
+            "-Xmx2g",
             ctx.file._haven_cli_launcher.path,
             ctx.file._haven_cli.path,
         ] + arguments,

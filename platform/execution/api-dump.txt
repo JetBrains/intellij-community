@@ -1169,7 +1169,7 @@ f:com.intellij.openapi.projectRoots.JdkUtil
 - s:useDynamicClasspath(com.intellij.openapi.project.Project):Z
 - s:useDynamicParameters():Z
 - s:useDynamicVMOptions():Z
-c:com.intellij.openapi.projectRoots.SimpleJavaSdkType
+f:com.intellij.openapi.projectRoots.SimpleJavaSdkType
 - com.intellij.openapi.projectRoots.SdkType
 - com.intellij.openapi.projectRoots.JavaSdkType
 - <init>():V
@@ -1180,14 +1180,13 @@ c:com.intellij.openapi.projectRoots.SimpleJavaSdkType
 - getPresentableName():java.lang.String
 - getToolsPath(com.intellij.openapi.projectRoots.Sdk):java.lang.String
 - getVMExecutablePath(com.intellij.openapi.projectRoots.Sdk):java.lang.String
-- f:getVersionString(java.lang.String):java.lang.String
+- getVersionString(java.lang.String):java.lang.String
 - isValidSdkHome(java.lang.String):Z
 - s:notSimpleJavaSdkType():java.util.function.Predicate
 - s:notSimpleJavaSdkType(java.util.function.Predicate):java.util.function.Predicate
 - s:notSimpleJavaSdkTypeIfAlternativeExists():java.util.function.Predicate
 - s:notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType():com.intellij.openapi.util.Condition
 - saveAdditionalData(com.intellij.openapi.projectRoots.SdkAdditionalData,org.jdom.Element):V
-- suggestHomePath():java.lang.String
 - suggestHomePaths():java.util.Collection
 - suggestHomePaths(com.intellij.openapi.project.Project):java.util.Collection
 - suggestSdkName(java.lang.String,java.lang.String):java.lang.String

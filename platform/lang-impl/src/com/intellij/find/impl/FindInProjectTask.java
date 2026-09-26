@@ -92,8 +92,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
-import static com.intellij.openapi.roots.impl.FilesScanExecutor.processOnAllThreadsInReadActionWithRetries;
 import static com.intellij.util.containers.ContainerUtil.sorted;
+import static com.intellij.util.indexing.UnindexedFilesUpdater.processOnAllThreadsInReadActionWithRetries;
 
 final class FindInProjectTask {
   private static final Logger LOG = Logger.getInstance(FindInProjectTask.class);

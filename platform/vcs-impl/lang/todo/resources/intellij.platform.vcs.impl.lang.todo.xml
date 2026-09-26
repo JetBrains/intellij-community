@@ -15,12 +15,14 @@
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.indexing.impl"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.rpc.topics"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.todo"/>
     <module name="intellij.platform.util.diff"/>
@@ -33,9 +35,7 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="com.intellij.ide.todo.TodoViewChangesSupport"
-                    serviceImplementation="com.intellij.ide.todo.TodoViewChangesSupportImpl"
-                    overrides="true"/>
+    <todoViewChangesSupportFactory implementation="com.intellij.ide.todo.TodoViewChangesSupportFactoryImpl"/>
 
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.TodoCheckinHandlerFactory" id="todo"/>
   </extensions>

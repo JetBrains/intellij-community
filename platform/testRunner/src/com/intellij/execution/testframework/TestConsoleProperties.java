@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.config.AbstractProperty;
@@ -263,5 +264,15 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
    */
   public void printExpectedActualHeader(Printer printer, String expected, String actual) {
     Printer.printExpectedActualHeader(printer, expected, actual);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull @NlsContexts.Label String getExpectedDiffContentTitle() {
+    return ExecutionBundle.message("diff.content.expected.title");
+  }
+
+  @ApiStatus.Internal
+  public @NotNull @NlsContexts.Label String getActualDiffContentTitle() {
+    return ExecutionBundle.message("diff.content.actual.title");
   }
 }

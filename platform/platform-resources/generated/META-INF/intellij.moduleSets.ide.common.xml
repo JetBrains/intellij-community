@@ -400,7 +400,6 @@
 
     <!-- region nested: compose -->
     <module name="intellij.libraries.jspecify"/>
-    <module name="intellij.libraries.skiko"/>
     <module name="intellij.libraries.coil"/>
     <module name="intellij.libraries.compose.swing"/>
     <module name="intellij.platform.compose"/>
@@ -429,6 +428,7 @@
     <module name="intellij.platform.debugger.impl.ui"/>
     <module name="intellij.platform.debugger"/>
     <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.debugger.impl.dashboard"/>
     <!-- endregion -->
 
     <!-- region nested: libraries.ide.common -->

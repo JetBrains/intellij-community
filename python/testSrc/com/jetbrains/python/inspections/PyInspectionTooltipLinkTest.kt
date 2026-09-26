@@ -215,7 +215,9 @@ class PyInspectionTooltipLinkTest : PyCodeInsightTestCase() {
       """.trimIndent(),
       "Expected type"
     )
-    assertTrue("incompatible with protocol" in info.toolTip!!, info.toolTip!!)
+    // The breakdown renders in prose ("'C' at 'a' is 'str', but 'int' was expected"); "was expected" is a
+    // stable marker that the breakdown landed in the tooltip below the headline.
+    assertTrue("was expected" in info.toolTip!!, info.toolTip!!)
     assertLink(info, "builtins.int")
     assertLink(info, "builtins.str")
     assertResolves("builtins.int")

@@ -8,23 +8,24 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.eel.EelApi
 import com.intellij.psi.PsiFile
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator.Companion.findPathInHelpers
+import com.intellij.python.pyproject.PyDependencyGroup
+import com.intellij.python.requirements.parser.PyRequirementParser
 import com.intellij.python.venv.MINIMUM_SUPPORTED_VENV_PYTHON_VERSION
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.PyRequirement
-import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.toPythonPackage
 import com.jetbrains.python.packaging.management.DependenciesExporter
-import com.intellij.python.pyproject.PyDependencyGroup
-import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonManagerCliSpec
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
@@ -49,9 +50,9 @@ import java.nio.file.Path
 @PyInternalExecApi
 open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
-  override val cliSpecs: List<PythonManagerCliSpec> = listOf(
-    PythonManagerCliSpec("pip", { sdk.homePath?.let { Path.of(it) } }, runAsModule = true)
-  )
+  override fun getCliSpecs(eelApi: EelApi): List<PythonManagerCliSpec> =
+    listOf(PythonManagerCliSpec("pip", { sdk.homePath?.let { Path.of(it) } }, runAsModule = true))
+
   private val engine = PipPackageManagerEngine(project, sdk)
 
   override val dependenciesExporter: DependenciesExporter?
@@ -92,7 +93,11 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
     vararg specifications: PythonRepositoryPackageSpecification,
   ): PyResult<Unit> = engine.updatePackageCommand(*specifications)
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> = engine.uninstallPackageCommand(*pythonPackages, workspaceMember = workspaceMember, dependencyGroup = dependencyGroup)
+  override suspend fun uninstallPackageCommand(
+    vararg pythonPackages: String,
+    workspaceMember: PyWorkspaceMember?,
+    dependencyGroup: PyDependencyGroup?,
+  ): PyResult<Unit> = engine.uninstallPackageCommand(*pythonPackages, workspaceMember = workspaceMember, dependencyGroup = dependencyGroup)
 
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> = engine.loadPackagesCommand()
 

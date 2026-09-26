@@ -66,8 +66,11 @@ class RenameJavaSyntheticPropertyHandler : AbstractReferenceSubstitutionRenameHa
         protected fun substituteElementToRename(element: PsiElement, askUser: Boolean): PsiElement {
             if (element !is SyntheticPropertyWrapper) return element
             val getter = element.getter
-            val superMethod = if (askUser) SuperMethodWarningUtil.checkSuperMethod(getter)
-            else getter.findDeepestSuperMethods().firstOrNull() ?: getter
+            val superMethod = if (askUser) {
+                SuperMethodWarningUtil.checkSuperMethod(getter)
+            } else {
+                getter.findDeepestSuperMethods().firstOrNull() ?: getter
+            }
             val setter = element.setter
             return SyntheticPropertyWrapper(element.manager,
                                             superMethod,

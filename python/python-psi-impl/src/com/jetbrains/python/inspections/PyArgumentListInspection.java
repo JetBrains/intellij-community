@@ -393,7 +393,7 @@ public final class PyArgumentListInspection extends PyInspection {
     final List<PyMismatchTooltips.Slot> argumentSlots = new ArrayList<>();
     for (PyExpression argument : node.getArguments()) {
       final boolean matched = ContainerUtil.exists(mappings, mapping -> !containsIdentity(mapping.getUnmappedArguments(), argument));
-      argumentSlots.add(PyMismatchTooltips.argumentSlot(argument, context.getType(argument), context, matched));
+      argumentSlots.add(PyMismatchTooltips.Slot.argument(argument, context.getType(argument), context, matched));
     }
 
     final List<List<PyMismatchTooltips.Slot>> expectedRows = new ArrayList<>();
@@ -404,8 +404,10 @@ public final class PyArgumentListInspection extends PyInspection {
       if (parameters != null) {
         for (PyCallableParameter parameter : parameters) {
           if (parameter.isPositionOnlySeparator() || parameter.isKeywordOnlySeparator()) continue;
-          final boolean matched = !containsIdentity(mapping.getUnmappedParameters(), parameter);
-          row.add(PyMismatchTooltips.parameterSlot(parameter, context, matched));
+          // An unfilled parameter is wholly missing: highlight its name AND type, not just the type — the whole
+          // parameter is the incompatibility (mirrors the surplus/missing-parameter convention of the structural diff).
+          final boolean missing = containsIdentity(mapping.getUnmappedParameters(), parameter);
+          row.add(PyMismatchTooltips.Slot.parameter(parameter, context, !missing, missing));
         }
       }
       expectedRows.add(row);

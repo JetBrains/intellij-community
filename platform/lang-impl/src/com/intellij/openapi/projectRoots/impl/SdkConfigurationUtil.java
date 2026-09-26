@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.Application;
@@ -33,12 +33,14 @@ import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import kotlinx.collections.immutable.ExtensionsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.awt.Component;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -77,7 +79,8 @@ public final class SdkConfigurationUtil {
       suggestedDir = getSuggestedSdkRoot(sdkTypes[0], Path.of(project.getProjectFilePath()));
     }
     else {
-      suggestedDir = getSuggestedSdkRoot(sdkTypes[0]);
+      var root = ExtensionsKt.toImmutableList(FileSystems.getDefault().getRootDirectories()).getFirst();
+      suggestedDir = getSuggestedSdkRoot(sdkTypes[0], root);
     }
     FileChooser.chooseFiles(descriptor, project, suggestedDir, new FileChooser.FileChooserConsumer() {
       @Override
@@ -504,14 +507,6 @@ public final class SdkConfigurationUtil {
       );
       consumer.consume(isAdjustedPathValid.get() ? adjustedPath : chosenPath);
     });
-  }
-
-  /**
-   * @deprecated Please use {@link SdkConfigurationUtil#getSuggestedSdkRoot(SdkType, Path)}
-   */
-  @Deprecated
-  public static @Nullable VirtualFile getSuggestedSdkRoot(@NotNull SdkType sdkType) {
-    return doGetSuggestedSdkRoot(sdkType.suggestHomePath());
   }
 
   public static @Nullable VirtualFile getSuggestedSdkRoot(@NotNull SdkType sdkType, @NotNull Path path) {

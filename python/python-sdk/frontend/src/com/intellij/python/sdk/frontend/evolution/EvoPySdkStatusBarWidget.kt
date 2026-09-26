@@ -41,8 +41,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import com.intellij.openapi.util.Disposer
-import com.intellij.python.sdk.common.evolution.evoRpc
-import com.intellij.python.sdk.common.evolution.requestPackageManagerActionIds
+import com.intellij.python.sdk.common.evolution.requestEvoPackageManagerActions
 import com.intellij.ui.awt.RelativePoint
 import java.awt.Point
 
@@ -161,6 +160,14 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     val shortcuts: List<EvoLeafDto>,
     /** When [shortcuts] was last read (epoch ms); the [SHORTCUTS_TTL_MS] window is measured from this moment. */
     val shortcutsAt: Long,
+    /**
+     * The package-manager rows that apply to [current] — the backend's answer, drawn as it comes.
+     *
+     * Which of that group's actions apply is decided on the backend, where the interpreter's package manager and its
+     * dependency file are: the actions are backend classes, so the frontend has nothing to ask (PY-92487). Empty when
+     * there is no interpreter, which is when none of them applies.
+     */
+    val packageManagerActions: List<EvoLeafDto> = emptyList(),
   )
 
   /**
@@ -257,9 +264,6 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
   @Volatile
   private var configuring: Boolean = false
 
-  @Volatile
-  private var packageManagerActionIds: List<String> = emptyList()
-
   init {
     scope.launch {
       requestEvoPyProjects(project.projectId()).collect { dtos ->
@@ -279,10 +283,6 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
         if (!inProgress) project.service<EvoConfiguringTracker>().nodeId = null   // stop attributing the fade to a tool
         update()
       }
-    }
-    
-    scope.launch {
-      packageManagerActionIds = requestPackageManagerActionIds()
     }
   }
 
@@ -379,12 +379,17 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
         // Waiting for all of it instead means one slow probe leaves the widget loading for as long as it takes.
         val interpreter = evoRpcOrNull { requestEvoCurrentInterpreter(projectId, askedProject) }
         publish(Cached(stamp, interpreter, prev?.nodes.orEmpty(), prev?.associated.orEmpty(),
-                       prev?.nodesAt ?: 0, prev?.shortcuts.orEmpty(), prev?.shortcutsAt ?: 0))
+                       prev?.nodesAt ?: 0, prev?.shortcuts.orEmpty(), prev?.shortcutsAt ?: 0,
+                       prev?.packageManagerActions.orEmpty()))
 
         // The "Shortcuts" autoconfigure suggestions are only shown (and only worth computing) when there is no interpreter.
         val shortcuts = if (interpreter == null) evoRpcOrNull { requestEvoShortcuts(projectId, askedProject) }.orEmpty() else emptyList()
+        // The package-manager rows act on the interpreter, so they are only worth asking for once there is one.
+        val packageManagerActions =
+          if (interpreter != null) evoRpcOrNull { requestEvoPackageManagerActions(projectId, askedProject) }.orEmpty() else emptyList()
         val now = System.currentTimeMillis()
-        publish(Cached(stamp, interpreter, nodesAsync.await(), prev?.associated.orEmpty(), now, shortcuts, now))
+        publish(Cached(stamp, interpreter, nodesAsync.await(), prev?.associated.orEmpty(), now, shortcuts, now,
+                       packageManagerActions))
         // The associated interpreters fill a submenu, so the widget and the popup never wait for them: reading one
         // costs a look at its interpreter, and a project with several system Pythons among them used to hold up the
         // whole load for as long as that took (PY-91967).
@@ -522,7 +527,7 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     expandToolsOnce = false
     val factory = EvoPySdkSwitchPopupFactory(project, target.key, target.name, structure.workspaceRootName(target),
                                              cached.current, cached.nodes, cached.associated, cached.shortcuts, scope,
-                                             expandTools = ::expandTools, packageManagerActionIds)
+                                             expandTools = ::expandTools, cached.packageManagerActions)
     val tree = reusable ?: factory.buildTree().also { popupTree = it; popupTreeKey = target.key }
     // Written on every open, not only where it changes: the tree is reused, so a fold left over from the last popup
     // would decide this one. Every open the user starts is folded; only the reopen the "Show more…" row asks for is

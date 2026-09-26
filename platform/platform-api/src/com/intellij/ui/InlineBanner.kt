@@ -201,10 +201,11 @@ open class InlineBanner private constructor(
     return label
   }
 
+  // Todo rename
   @ApiStatus.Internal
-  fun addDefaultButtonAction(name: @Nls String, action: Runnable): JButton {
+  fun addDefaultButtonAction(name: @Nls String, default: Boolean = true, action: Runnable): JButton {
     val button = object : JButton(name) {
-      override fun isDefaultButton() = true
+      override fun isDefaultButton() = default
     }
     button.isOpaque = false
     button.addActionListener {

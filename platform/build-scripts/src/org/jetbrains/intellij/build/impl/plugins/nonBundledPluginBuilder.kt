@@ -166,7 +166,6 @@ private fun buildNonBundledPlugins(
         }
         layout.versionEvaluator.evaluate(
           pluginXmlSupplier = pluginXmlSupplier,
-          ideBuildVersion = context.pluginBuildNumber,
           context = context,
         ).pluginVersion
       }

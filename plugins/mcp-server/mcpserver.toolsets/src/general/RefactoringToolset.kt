@@ -157,8 +157,9 @@ class RefactoringToolset : McpToolset {
       is HeadlessRenameResult.Failed ->
         if (analysis.kind == HeadlessRenameFailure.LANGUAGE_NOT_SUPPORTED) {
           return legacyRename(project, virtualFile, pathBefore, relativePathBefore, ready, newName, preview)
+        } else {
+          return outcomeResult(project, analysis, ready.resolvedSymbol)
         }
-        else return outcomeResult(project, analysis, ready.resolvedSymbol)
       else -> return outcomeResult(project, analysis, ready.resolvedSymbol)
     }
     val resolvedSymbol = readAction { plan.primaryElement?.let { getElementSymbolInfo(it) } } ?: ready.resolvedSymbol
@@ -247,11 +248,14 @@ class RefactoringToolset : McpToolset {
         ok = false,
         applied = false,
         resolvedSymbol = ready.resolvedSymbol,
-        error = if (!processor.refused) RenameError("not_applied", LEGACY_HINT)
-        else RenameError("write_failed",
-                         "The rename stopped while it wrote. " +
-                         "${processor.refusalMessage ?: "The language reported no reason."} " +
-                         "Read the files again before you retry."),
+        error = if (!processor.refused) {
+          RenameError("not_applied", LEGACY_HINT)
+        } else {
+          RenameError("write_failed",
+                      "The rename stopped while it wrote. " +
+                      "${processor.refusalMessage ?: "The language reported no reason."} " +
+                      "Read the files again before you retry.")
+        },
       )
     }
     return RenameResult(

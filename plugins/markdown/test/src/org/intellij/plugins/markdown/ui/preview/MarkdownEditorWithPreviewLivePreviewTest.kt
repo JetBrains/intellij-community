@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import org.intellij.plugins.markdown.editor.livepreview.supportsLivePreview
+import org.intellij.plugins.markdown.editor.livepreview.isLivePreviewEnabled
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -34,25 +34,25 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
 
   fun testLivePreviewLayoutMarksOnlyTheTextEditor() {
     val editorWithPreview = createEditor()
-    assertFalse(editorWithPreview.editor.supportsLivePreview())
+    assertFalse(editorWithPreview.editor.isLivePreviewEnabled())
 
     editorWithPreview.setLivePreviewLayout()
     assertEquals(Layout.SHOW_EDITOR, editorWithPreview.getLayout())
     assertTrue(editorWithPreview.isLivePreviewLayout)
-    assertTrue(editorWithPreview.editor.supportsLivePreview())
+    assertTrue(editorWithPreview.editor.isLivePreviewEnabled())
 
     editorWithPreview.setLayout(Layout.SHOW_EDITOR_AND_PREVIEW)
     assertFalse(editorWithPreview.isLivePreviewLayout)
-    assertFalse(editorWithPreview.editor.supportsLivePreview())
+    assertFalse(editorWithPreview.editor.isLivePreviewEnabled())
 
     editorWithPreview.setLivePreviewLayout()
     editorWithPreview.setLayout(Layout.SHOW_EDITOR)
-    assertFalse("Editor Only must turn live preview off", editorWithPreview.editor.supportsLivePreview())
+    assertFalse("Editor Only must turn live preview off", editorWithPreview.editor.isLivePreviewEnabled())
   }
 
   fun testNewEditorStartsInTheLastChosenLivePreviewLayout() {
     createEditor().setLivePreviewLayout()
-    assertTrue(createEditor().editor.supportsLivePreview())
+    assertTrue(createEditor().editor.isLivePreviewEnabled())
   }
 
   fun testRestoredLayoutWithPreviewTurnsLivePreviewOff() {
@@ -62,7 +62,7 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
     editorWithPreview.setState(MyFileEditorState(Layout.SHOW_PREVIEW, null, null, false))
 
     assertEquals(Layout.SHOW_PREVIEW, editorWithPreview.getLayout())
-    assertFalse(editorWithPreview.editor.supportsLivePreview())
+    assertFalse(editorWithPreview.editor.isLivePreviewEnabled())
   }
 
   fun testViewActionsPutLivePreviewBeforePreviewOnly() {

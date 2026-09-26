@@ -4,6 +4,7 @@ package com.intellij.ide.script;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginMainDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.ide.ui.IdeUiService;
@@ -36,6 +37,7 @@ import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -303,9 +305,8 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
         }
       }
       if (c == null) {
-        for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-          ClassLoader l = descriptor.getPluginClassLoader();
-          if (l == null || !hasBase && (l == guess1 || l == guess2)) continue;
+        for (ClassLoader l : allPluginClassLoaders()) {
+          if (!hasBase && (l == guess1 || l == guess2)) continue;
           try {
             if (hasBase) {
               l.loadClass(base);
@@ -377,9 +378,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
 
     // used by kotlin engine
     public @Unmodifiable @NotNull List<URL> getUrls() {
-      return JBIterable.of(PluginManagerCore.getPlugins())
-        .map(PluginDescriptor::getClassLoader)
-        .unique()
+      return allPluginClassLoaders()
         .flatMap(o -> {
           try {
             //noinspection unchecked
@@ -392,5 +391,19 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
         .unique()
         .toList();
     }
+  }
+
+  // A content module has its own classloader unless it is embedded, and the plugin classloader does not delegate to it.
+  private static @NotNull JBIterable<ClassLoader> allPluginClassLoaders() {
+    return JBIterable.of(PluginManagerCore.getPlugins())
+      .flatMap(IdeScriptEngineManagerImpl::pluginAndContentModuleClassLoaders)
+      .filter(Objects::nonNull)
+      .unique();
+  }
+
+  private static @NotNull JBIterable<ClassLoader> pluginAndContentModuleClassLoaders(@NotNull IdeaPluginDescriptor descriptor) {
+    JBIterable<ClassLoader> own = JBIterable.of(descriptor.getPluginClassLoader());
+    if (!(descriptor instanceof PluginMainDescriptor main)) return own;
+    return own.append(JBIterable.from(main.getContentModules()).map(PluginDescriptor::getPluginClassLoader));
   }
 }

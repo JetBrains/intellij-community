@@ -84,7 +84,7 @@ private val iconsByExtension: Map<String, Icon> = mapOf(
   "toml" to AllIcons.FileTypes.Toml,
   "ts" to AllIcons.FileTypes.TypeScript,
   "tsv" to AllIcons.FileTypes.Csv,
-  "tsx" to AllIcons.FileTypes.JavaScript,
+  "tsx" to AllIcons.FileTypes.TypeScript,
   "txt" to AllIcons.FileTypes.Text,
   "vue" to AllIcons.FileTypes.Vue,
   "webmanifest" to AllIcons.FileTypes.Manifest,

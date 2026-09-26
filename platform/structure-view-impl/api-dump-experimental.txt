@@ -1,7 +1,3 @@
-f:com.intellij.ide.impl.StructureViewWrapperImpl
-- com.intellij.ide.structureView.StructureViewWrapper
-- com.intellij.openapi.Disposable
-- *sf:STRUCTURE_VIEW_TARGET_FILE_KEY:com.intellij.openapi.actionSystem.DataKey
 *:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
 - *sf:Companion:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider$Companion
 - a:getElements(java.lang.Object):java.util.List

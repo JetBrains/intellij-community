@@ -2033,8 +2033,13 @@ class PyTypeHintsInspection : PyInspection() {
       when {
         !typeVarType.bound.isUnknown -> {
           if (!defaultTypes.all { PyTypeChecker.match(typeVarType.bound, it, myTypeEvalContext) }) {
-            registerProblem(defaultExpression, PyPsiBundle.message("INSP.type.hints.default.type.do.not.match.bounds"),
-                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+            val message = PyPsiBundle.message("INSP.type.hints.default.type.do.not.match.bounds")
+            // The aligned diff (for structural bounds) with the assignability breakdown appended below it on-the-fly.
+            val diff = PyTypeDiff.diffTooltip(typeVarType.bound, defaultType, myTypeEvalContext)
+            val problemMessage = PyInspectionMessages.ProblemMessage(message, diff ?: message)
+            registerProblemWithTooltip(defaultExpression, problemMessage, ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
+              PyTypeCheckerInspectionProblemRegistrar.breakdownTooltip(problemMessage, typeVarType.bound, defaultType, myTypeEvalContext, defaultExpression)
+            }
           }
         }
         typeVarType.constraints.isNotEmpty() -> {

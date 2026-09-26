@@ -8,7 +8,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.EelApi
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.pyproject.PyProjectToml
@@ -21,16 +21,13 @@ import com.intellij.python.uv.common.UV_TOOL_ID
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.uv.UV_LOCK
-import com.jetbrains.python.packaging.packageRequirements.packagesUnavailable
-import com.jetbrains.python.packaging.packageRequirements.cachedDependencyTree
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
-import com.jetbrains.python.orLogException
 import com.jetbrains.python.packaging.management.PythonManagerCliSpec
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -43,14 +40,17 @@ import com.jetbrains.python.packaging.packageRequirements.PackageCollectionPacka
 import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
 import com.jetbrains.python.packaging.packageRequirements.WorkspaceMemberPackageStructureNode
+import com.jetbrains.python.packaging.packageRequirements.cachedDependencyTree
 import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.packageRequirements.extractDeclaredDependencies
+import com.jetbrains.python.packaging.packageRequirements.packagesUnavailable
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.requirements.PyDependenciesFile
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.findModuleForSdk
+import com.jetbrains.python.uv.UV_LOCK
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -64,9 +64,10 @@ internal class UvPackageManager internal constructor(
   override val workspaceSupport: PythonWorkspaceSupport = UvWorkspaceSupport(project, sdk)
   override val installedPackagesIncludeTransitive: Boolean = true
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
-  override val cliSpecs: List<PythonManagerCliSpec> = listOf(
-    PythonManagerCliSpec("uv", { UvPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))?.path })
+  override fun getCliSpecs(eelApi: EelApi): List<PythonManagerCliSpec> = listOf(
+    PythonManagerCliSpec("uv", { UvPyTool.getInstance().resolveExecutable(EelFileSystem(eelApi))?.path })
   )
+
   override val treeProvider = cachedDependencyTree(
     lockFileName = UV_LOCK.value,
     dependencyFiles = { resolveDependencyFilesTree() },

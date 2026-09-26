@@ -12,8 +12,10 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.impl.conda.CondaPyTool
 import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils
 import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
+import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.sdk.backend.PythonEnvironment
 import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.getPythonInfo
@@ -25,21 +27,20 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.pathValidation.PlatformAndRoot
+import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
-import com.jetbrains.python.project.resolveFile
+import com.jetbrains.python.project.getEel
 import com.jetbrains.python.project.project
+import com.jetbrains.python.project.resolveFile
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.PythonSdkUpdater
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnvironment
-import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.pytools.resolveExecutable
-import com.intellij.python.community.impl.conda.CondaPyTool
-import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
@@ -84,7 +85,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
 
   private suspend fun checkManageableEnv(module: PyProject): EnvCheckerResult =
     withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
-      val condaPath = CondaPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))
+      val condaPath = CondaPyTool.getInstance().resolveExecutable(EelFileSystem(module.getEel()))
                       ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
       val intentionName = PyBundle.message("sdk.create.condaenv.suggestion")
 
@@ -139,9 +140,9 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
       return PyResult.localizedError(PyBundle.message("sdk.remote.target.are.not.supported.for.conda.environment"))
     }
 
-    // Again: only local conda is supported for now
-    val condaExecutable = CondaPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))
-    validateCondaPath(condaExecutable?.path?.pathString, PlatformAndRoot.local)?.let {
+    val eel = pyProject.getEel()
+    val condaExecutable = CondaPyTool.getInstance().resolveExecutable(EelFileSystem(eel))
+    validateCondaPath(condaExecutable?.path?.pathString, eel.getPlatformAndRoot())?.let {
       return PyResult.localizedError(it.message)
     }
 

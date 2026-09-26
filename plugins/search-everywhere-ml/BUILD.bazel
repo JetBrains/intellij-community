@@ -43,30 +43,9 @@ dev_dist_plugin(
             "intellij.searchEverywhereMl",
             "intellij.platform.ml.logs",
         ],
-        "lib/modules/intellij.searchEverywhereMl.typos.jar": [
-            "intellij.searchEverywhereMl.typos",
-            "@lib//:search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
-        ],
-        "lib/modules/intellij.searchEverywhereMl.ranking.core.jar": [
-            "intellij.searchEverywhereMl.ranking.core",
-            "@lib//:search_everywhere_ml-ranking-core-find-action-model",
-            "@lib//:search_everywhere_ml-ranking-core-find-action-model-experimental",
-            "@lib//:search_everywhere_ml-ranking-core-find-file-model",
-            "@lib//:search_everywhere_ml-ranking-core-find-file-model-experimental",
-            "@lib//:search_everywhere_ml-ranking-core-find-classes-model",
-            "@lib//:search_everywhere_ml-ranking-core-find-classes-model-experimental",
-        ],
         "lib/modules/intellij.libraries.mlapi.core.jar": [
             "intellij.libraries.mlapi.core",
             "@lib//:libraries-mlapi-core-jetbrains-mlapi-core",
-        ],
-        "lib/modules/intellij.libraries.search.everywhere.find.all.model.jar": [
-            "intellij.libraries.search.everywhere.find.all.model",
-            "@lib//:libraries-search-everywhere-find-all-model-find-all-model-experimental",
-        ],
-        "lib/modules/intellij.libraries.search.everywhere.find.ec.model.jar": [
-            "intellij.libraries.search.everywhere.find.ec.model",
-            "@lib//:libraries-search-everywhere-find-ec-model-find-ec-model-experimental",
         ],
         "lib/ai.grazie.emb.jar": ["@lib//:search_everywhere_ml-ai-grazie-emb"],
         "lib/ai.grazie.model.swagger.annotations.jvm.jar": ["@lib//:search_everywhere_ml-ai-grazie-model-swagger-annotations-jvm"],

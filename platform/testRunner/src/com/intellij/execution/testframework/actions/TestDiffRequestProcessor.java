@@ -14,6 +14,7 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestProxyRoot;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.ListSelection;
@@ -98,10 +99,13 @@ public final class TestDiffRequestProcessor {
       }
       DiffContent content2 = createContentWithTitle(myProject, myHyperlink.getRight(), file2, file1);
 
+      TestConsoleProperties properties = getTestConsoleProperties();
       String title1 = file1 != null ? ExecutionBundle.message("diff.content.expected.title.with.file.url", file1.getPresentableUrl())
-                                    : ExecutionBundle.message("diff.content.expected.title");
+                                    : properties != null ? properties.getExpectedDiffContentTitle()
+                                                         : ExecutionBundle.message("diff.content.expected.title");
       String title2 = file2 != null ? ExecutionBundle.message("diff.content.actual.title.with.file.url", file2.getPresentableUrl())
-                                    : ExecutionBundle.message("diff.content.actual.title");
+                                    : properties != null ? properties.getActualDiffContentTitle()
+                                                         : ExecutionBundle.message("diff.content.actual.title");
 
       return new SimpleDiffRequest(myHyperlink.getDiffTitle(), content, content2, title1, title2);
     }
@@ -112,6 +116,12 @@ public final class TestDiffRequestProcessor {
       Location<?> loc = testProxy.getLocation(myProject, testRoot.getTestConsoleProperties().getScope());
       if (loc == null) return null;
       return TestDiffProvider.getProviderByLanguage(loc.getPsiElement().getLanguage());
+    }
+
+    private @Nullable TestConsoleProperties getTestConsoleProperties() {
+      AbstractTestProxy testProxy = myHyperlink.getTestProxy();
+      TestProxyRoot testRoot = testProxy != null ? AbstractTestProxy.getTestRoot(testProxy) : null;
+      return testRoot != null ? testRoot.getTestConsoleProperties() : null;
     }
 
     @Override

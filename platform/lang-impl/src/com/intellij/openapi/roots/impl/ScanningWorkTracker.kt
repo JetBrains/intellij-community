@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * A read action that a [FilesScanExecutor] worker is currently inside.
+ * A read action that a [UnindexedFilesUpdater][com.intellij.util.indexing.UnindexedFilesUpdater] worker is currently inside.
  *
  * [indicator] is the per-item wrapper that the write-action-priority protocol is supposed to cancel, so it is both the
  * evidence that cancellation did or did not happen and the handle needed to repair it.
@@ -23,9 +23,9 @@ class ScanningReadAction(
 }
 
 /**
- * Knows which [FilesScanExecutor] workers currently hold a read action.
+ * Knows which [UnindexedFilesUpdater][com.intellij.util.indexing.UnindexedFilesUpdater] workers currently hold a read action.
  *
- * Nothing else can answer that question: the futures are a local variable of [FilesScanExecutor.runOnAllThreads], and
+ * Nothing else can answer that question: the futures are a local variable of [UnindexedFilesUpdater.runOnAllThreads][com.intellij.util.indexing.UnindexedFilesUpdater.runOnAllThreads], and
  * both the per-worker and the per-item progress wrappers are created inline and discarded.
  * `CoreProgressManager.getCurrentIndicators()` returns indicators without thread attribution, and
  * `getProgressStateRepresentation()` returns the attribution only as text -- neither gives a handle to cancel.

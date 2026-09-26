@@ -34,7 +34,6 @@
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.statistics"/>
-    <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.xml.parser"/>
@@ -47,6 +46,7 @@
     <extensionPoint qualifiedName="com.intellij.database.datagrid.cellViewerFactory" interface="com.intellij.database.run.ui.CellViewerFactory" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.database.minimizedFormatDetector" interface="com.intellij.database.run.ui.MinimizedFormatDetector" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.database.datagrid.customToolbarProvider" interface="com.intellij.database.datagrid.CustomGridToolbarProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.database.datagrid.structureViewModelFactory" interface="com.intellij.database.editor.GridStructureViewModelFactory" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -213,8 +213,6 @@
       <action id="Console.TableResult.HideColumn" class="com.intellij.database.run.actions.HideColumnAction"/>
       <action id="Console.TableResult.HideOtherColumns" class="com.intellij.database.run.actions.HideOtherColumnsAction"/>
       <action id="Console.TableResult.ShowAllColumns" class="com.intellij.database.run.actions.ShowAllColumnsAction"/>
-      <action id="Console.TableResult.ColumnsList" class="com.intellij.database.run.actions.ColumnsListAction"
-              use-shortcut-of="FileStructurePopup"/>
       <separator/>
       <reference ref="FitColumnWidthToViewport"/>
       <reference ref="ResetColumnsWidth"/>
@@ -345,7 +343,6 @@
       <reference ref="Console.TableResult.EditValueMaximized"/>
       <reference ref="Console.TableResult.AggregateView"/>
       <reference ref="Console.TableResult.HideEditMaximized"/>
-      <reference ref="Console.TableResult.ColumnsList"/>
       <separator/>
       <action id="Console.TableResult.ToggleFilters" class="com.intellij.database.run.actions.ToggleFilterComponentAction"/>
       <group id="Console.TableResult.PasteFormat" class="com.intellij.database.run.actions.ChoosePasteFormatAction"/>

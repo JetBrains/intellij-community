@@ -35,6 +35,7 @@ import com.jetbrains.python.psi.PyTypeAliasStatement
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeParser
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -44,7 +45,7 @@ import org.jetbrains.annotations.Nls
 object PyDocumentationLink {
 
   /** Prefix understood by `com.intellij.codeInsight.hint.ElementLinkHandler` for navigable tooltip links. */
-  private const val TOOLTIP_ELEMENT_LINK_PREFIX = "#element/"
+  internal const val TOOLTIP_ELEMENT_LINK_PREFIX = "#element/"
 
   private const val LINK_TYPE_CLASS = "#class#"
   private const val LINK_TYPE_PARAM = "#param#"
@@ -97,21 +98,26 @@ object PyDocumentationLink {
    * without a link, so it can still be navigated to visually even if it cannot be resolved from the tooltip.
    */
   @JvmStatic
-  fun toPossibleClassTooltipLink(typeName: @Nls String, anchor: PsiElement, context: TypeEvalContext): HtmlChunk {
-    val type = resolveNamedClassType(typeName, anchor, context)
+  fun toPossibleClassTooltipLink(typeName: @Nls String, anchor: PsiElement, context: TypeEvalContext): HtmlChunk =
+    toTypeTooltipLink(resolveNamedClassType(typeName, anchor, context), typeName)
+
+  /**
+   * Renders [displayName] as a clickable, highlighted type-name chunk for an inspection tooltip — the same
+   * `#element/<fqn>` link and builtin/keyword highlighting as [toPossibleClassTooltipLink], but from an already
+   * resolved [type], so a caller that holds the `PyType` need not re-resolve a name (and is not limited to types
+   * resolvable from an anchor). A non-class type, or a class with no qualified name, renders as highlighted text
+   * without a link.
+   */
+  @JvmStatic
+  fun toTypeTooltipLink(type: PyType?, displayName: @Nls String): HtmlChunk {
+    val pyClass = (type as? PyClassType)?.pyClass
+    val text = pyClass?.qualifiedName?.takeUnless { it.isEmpty() }
+                 ?.let { HtmlChunk.link("$TOOLTIP_ELEMENT_LINK_PREFIX$it", displayName) }
+               ?: HtmlChunk.text(displayName)
     return when {
-      type != null -> {
-        val qualifiedName = type.pyClass.qualifiedName
-        val text = if (!qualifiedName.isNullOrEmpty())
-          HtmlChunk.link("$TOOLTIP_ELEMENT_LINK_PREFIX$qualifiedName", typeName)
-        else
-          HtmlChunk.text(typeName)
-        if (type.isNoneType)
-          styledSpan(text, PyHighlighter.PY_KEYWORD)
-        else
-          styledReference(text, type.pyClass)
-      }
-      else -> HtmlChunk.text(typeName)
+      type.isNoneType -> styledSpan(text, PyHighlighter.PY_KEYWORD)
+      pyClass != null -> styledReference(text, pyClass)
+      else -> text
     }
   }
 

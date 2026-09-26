@@ -64,7 +64,11 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
       final PyType operandType = context.getType(getOperand());
       if (indexExpression instanceof PySliceItem) {
         if (operandType instanceof PyTupleType) {
-          return ((PyTupleType)operandType).isHomogeneous() ? operandType : PyBuiltinCache.getInstance(this).getTupleType();
+          if (((PyTupleType)operandType).isHomogeneous()) {
+            return operandType;
+          }
+          final PyClassType tupleType = PyBuiltinCache.getInstance(this).getTupleType();
+          return tupleType != null ? tupleType : PyAnyType.getUnknown();
         }
       }
       else {

@@ -20,6 +20,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.python.processOutput.common.ProcessOutputTopic
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.requirements.PyPackageVersionNormalizer
@@ -32,6 +36,7 @@ import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -65,6 +70,21 @@ import javax.swing.ListCellRenderer
 import javax.swing.SwingUtilities
 
 internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI(project) {
+  @Volatile
+  private var eel: EelApi? = null
+
+  @RequiresEdt
+  private fun getEelApi(): EelApi {
+    val currentEel = eel
+    if (currentEel != null) {
+      return currentEel
+    }
+    return runWithModalProgressBlocking(project, "...") {
+      project.getEelDescriptor().toEelApi()
+    }.also {
+      this.eel = it
+    }
+  }
 
   companion object {
     private const val LOCATION_SETTINGS_KEY: String = "py.install.package.dialog.popup"
@@ -513,6 +533,7 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
     })
   }
 
+  @RequiresEdt
   private fun handleTextChange() {
     val rawText = mySearchField.text
     val query = rawText.trim()
@@ -541,10 +562,12 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
    * no `cliSpecs` to match against, so the dialog falls back to search mode — the user can still
    * type the same string and see ordinary package matches.
    */
+  @RequiresEdt
   private fun isCommand(query: String): Boolean {
     if (!Registry.`is`("python.packaging.install.dialog.command.mode", false)) return false
     val sdk = packagingService.currentSdk ?: return false
-    return PythonPackageManager.forSdk(project, sdk).cliSpecs.any { query.startsWith("${it.executableName} ") }
+    val eel = getEelApi()
+    return PythonPackageManager.forSdk(project, sdk).getCliSpecs(eel).any { query.startsWith("${it.executableName} ") }
   }
 
   /**

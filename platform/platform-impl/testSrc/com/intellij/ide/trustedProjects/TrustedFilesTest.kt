@@ -121,30 +121,6 @@ class TrustedFilesTest {
     }
 
   @Test
-  fun `an evicted mark lifts the safe mode`(): Unit = timeoutRunBlocking {
-    Registry.get(TrustedFiles.SAFE_MODE_REGISTRY_KEY).setValue(true, asDisposable())
-    val project = projectFixture.get()
-    ExternallyOpenedFiles.getInstance().loadState(ExternallyOpenedFiles.State())
-
-    val outsidePath = tempPath.resolve("evicted.txt")
-    Files.writeString(outsidePath, "text")
-    val file = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(outsidePath))
-    TrustedFiles.markExternallyOpened(file)
-    assertFalse(TrustedFiles.isTrusted(file, project))
-
-    // 100 more externally opened files push the first mark out of the capped list
-    for (i in 0 until 100) {
-      val fillerPath = tempPath.resolve("filler-$i.txt")
-      Files.writeString(fillerPath, "text")
-      val filler = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(fillerPath))
-      TrustedFiles.markExternallyOpened(filler)
-    }
-
-    assertFalse(ExternallyOpenedFiles.getInstance().isMarked(outsidePath))
-    assertTrue(TrustedFiles.isTrusted(file, project))
-  }
-
-  @Test
   fun `a file inside a trusted project is trusted regardless of the external mark`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       Registry.get(TrustedFiles.SAFE_MODE_REGISTRY_KEY).setValue(true, asDisposable())
@@ -318,26 +294,37 @@ class TrustedFilesTest {
   }
 
   @Test
-  fun `the mark list is capped`(): Unit = timeoutRunBlocking {
+  fun `the mark list has no size cap`(): Unit = timeoutRunBlocking {
     val store = ExternallyOpenedFiles.getInstance()
     store.loadState(ExternallyOpenedFiles.State())
 
+    // a dropped mark would silently return the full functionality to a file the user never trusted
     val first = tempPath.resolve("file-0.txt")
-    for (i in 0 until 101) {
+    for (i in 0 until 1000) {
       store.mark(tempPath.resolve("file-$i.txt"))
     }
-    assertFalse(store.isMarked(first))
-    assertTrue(store.isMarked(tempPath.resolve("file-100.txt")))
-
-    // a repeated mark moves the entry to the fresh end instead of duplicating it
-    store.loadState(ExternallyOpenedFiles.State())
-    store.mark(first)
-    for (i in 1 until 100) {
-      store.mark(tempPath.resolve("file-$i.txt"))
-    }
-    store.mark(first)
-    store.mark(tempPath.resolve("file-100.txt"))
     assertTrue(store.isMarked(first))
+    assertTrue(store.isMarked(tempPath.resolve("file-999.txt")))
+    assertEquals(1000, store.state.paths.size)
+
+    // a repeated mark keeps the single entry
+    store.mark(first)
+    assertEquals(1000, store.state.paths.size)
+  }
+
+  @Test
+  fun `a directory is not marked`(): Unit = timeoutRunBlocking {
+    Registry.get(TrustedFiles.SAFE_MODE_REGISTRY_KEY).setValue(true, asDisposable())
+    val store = ExternallyOpenedFiles.getInstance()
+    store.loadState(ExternallyOpenedFiles.State())
+
+    // a dropped directory never opens in an editor, so its mark would only grow the store
+    val dirPath = tempPath.resolve("dropped-dir")
+    Files.createDirectories(dirPath)
+    val dir = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dirPath))
+    TrustedFiles.markExternallyOpened(dir)
+
+    assertFalse(store.isMarked(dirPath))
   }
 
   @Test

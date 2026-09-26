@@ -9,8 +9,6 @@ import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.regexp.psi.impl.RegExpElementImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,9 +55,6 @@ public final class RegExpReplacementUtil {
       if (RegExpElementImpl.isLiteralExpression(context)) {
         // otherwise, just pretend it is a Java-style string
         return StringUtil.escapeStringCharacters(text);
-      }
-      else if (context instanceof XmlElement) {
-        return XmlStringUtil.escapeString(text);
       }
     }
     return text;

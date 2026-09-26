@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.Constraints
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.HTMLVirtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
@@ -68,7 +69,8 @@ object WelcomeUtils {
   }
 
   private fun isNoUserDataOpened(manager: FileEditorManager): Boolean {
-    return manager.getAllEditors().isEmpty()
+    val editors = manager.getAllEditors()
+    return editors.isEmpty() || editors.all { it.getFile() is HTMLVirtualFile }
   }
 
   fun getWelcomeProjectIcon(project: Project): Icon? {

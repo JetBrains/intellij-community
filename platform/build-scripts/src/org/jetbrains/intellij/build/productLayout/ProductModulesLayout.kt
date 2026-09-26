@@ -18,11 +18,25 @@ import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 /**
- * The main module of the bundled plugin that owns the JNA and pty4j copies.
+ * The main module of the bundled plugin that owns the JNA copy.
  *
- * A product that bundles it ships `lib/jna/<arch>` and `lib/pty4j`, and its launcher gets the `jna.*` and `pty4j.*` JVM arguments.
+ * A product that bundles it ships `lib/jna/<arch>`, and its launcher gets the `jna.*` JVM arguments.
+ */
+const val JNA_PLUGIN_MODULE: String = "intellij.jna.plugin"
+
+/**
+ * The main module of the bundled plugin that owns the pty4j copy. The plugin depends on the plugin [JNA_PLUGIN_MODULE].
+ *
+ * A product that bundles it ships `lib/pty4j`, and its launcher gets the `pty4j.*` JVM argument.
  */
 const val PTY4J_PLUGIN_MODULE: String = "intellij.pty4j.plugin"
+
+/**
+ * The main module of the bundled plugin that owns the Skiko copy.
+ *
+ * A product that bundles it ships `lib/skiko-awt-runtime-all`, and its launcher gets the `skiko.*` JVM argument.
+ */
+const val SKIKO_PLUGIN_MODULE: String = "intellij.skiko.plugin"
 
 /**
  * Default bundled plugins for all products.
@@ -31,9 +45,11 @@ val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.dev",
   "intellij.java.aetherDependencyResolver.plugin",
   "intellij.jcef.plugin",
+  "intellij.grid.plugin",
+  JNA_PLUGIN_MODULE,
   PTY4J_PLUGIN_MODULE,
+  SKIKO_PLUGIN_MODULE,
   "intellij.platform.bookmarks.plugin",
-  "intellij.grid.core.plugin",
   "intellij.platform.navbar.plugin",
   "intellij.platform.problemView.plugin",
   "intellij.platform.testRunner.plugin",

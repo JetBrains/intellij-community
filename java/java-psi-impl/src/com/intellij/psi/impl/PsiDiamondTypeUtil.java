@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -9,6 +10,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiCallExpression;
 import com.intellij.psi.PsiClass;
@@ -44,12 +46,18 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public final class PsiDiamondTypeUtil {
   private static final Logger LOG = Logger.getInstance(PsiDiamondTypeUtil.class);
+
+  /**
+   * Limits the walk of {@link #changesNullability}, so that a recursive generic type cannot make it loop.
+   */
+  private static final int MAX_NULLABILITY_CHECK_DEPTH = 10;
 
   private PsiDiamondTypeUtil() {
   }
@@ -318,7 +326,7 @@ public final class PsiDiamondTypeUtil {
     for (int i = 0; i < typeParameters.length; i++) {
       PsiTypeParameter typeParameter = typeParameters[i];
       final PsiType inferredType = psiSubstitutor.getSubstitutionMap().get(typeParameter);
-      if (!typeArguments[i].equals(inferredType)) {
+      if (!typeArguments[i].equals(inferredType) || changesNullability(typeArguments[i], inferredType)) {
         return false;
       }
     }
@@ -339,7 +347,7 @@ public final class PsiDiamondTypeUtil {
     for (int i = 0, length = typeParameters.length; i < length; i++) {
       PsiTypeParameter typeParameter = typeParameters[i];
       final PsiType inferredType = psiSubstitutor.getSubstitutionMap().get(typeParameter);
-      if (!typeArguments[i].equals(inferredType)) {
+      if (!typeArguments[i].equals(inferredType) || changesNullability(typeArguments[i], inferredType)) {
         return false;
       }
       if (PsiUtil.resolveClassInType(method.getReturnType()) == typeParameter && PsiPrimitiveType.getUnboxedType(inferredType) != null) {
@@ -348,6 +356,49 @@ public final class PsiDiamondTypeUtil {
     }
 
     return checkParentApplicability(exprCopy);
+  }
+
+  /**
+   * A type argument and the type inferred for the same position may be equal as types and still differ in nullability,
+   * as {@link PsiType#equals(Object)} ignores the annotations. Removing such a type argument is not a no-op: it changes
+   * the nullability of the expression type. For example, inside a {@code @NullMarked} scope, the explicit {@code Object}
+   * in {@code stream.<Object>map(Foo::toNullable)} keeps the stream elements non-null, while the inferred type argument
+   * would be {@code @Nullable Object}.
+   * <p>
+   * Only a difference between two known nullabilities counts. An unspecified nullability on either side is not a change
+   * worth keeping the type argument for: it neither states an intent nor produces a warning of its own.
+   *
+   * @param typeArgument type argument written explicitly
+   * @param inferredType type inferred for the same position once the explicit type argument is removed
+   * @return true if the explicit type argument specifies a nullability that differs from the inferred one
+   */
+  private static boolean changesNullability(@NotNull PsiType typeArgument, @NotNull PsiType inferredType) {
+    return changesNullability(typeArgument, inferredType, 0);
+  }
+
+  private static boolean changesNullability(@NotNull PsiType typeArgument, @NotNull PsiType inferredType, int depth) {
+    if (depth > MAX_NULLABILITY_CHECK_DEPTH) return false;
+    Nullability nullability = typeArgument.getNullability().nullability();
+    Nullability inferredNullability = inferredType.getNullability().nullability();
+    if (nullability != Nullability.UNKNOWN && inferredNullability != Nullability.UNKNOWN && nullability != inferredNullability) {
+      return true;
+    }
+    if (typeArgument instanceof PsiArrayType && inferredType instanceof PsiArrayType) {
+      return changesNullability(((PsiArrayType)typeArgument).getComponentType(),
+                                ((PsiArrayType)inferredType).getComponentType(), depth + 1);
+    }
+    // A wildcard needs no branch of its own: PsiWildcardType#getNullability already reports the nullability of an
+    // `extends` bound, and a type argument that contains a wildcard does not reach here anyway, as capture conversion
+    // makes the inferred type unequal to the written one.
+    if (typeArgument instanceof PsiClassType && inferredType instanceof PsiClassType) {
+      PsiType[] parameters = ((PsiClassType)typeArgument).getParameters();
+      PsiType[] inferredParameters = ((PsiClassType)inferredType).getParameters();
+      if (parameters.length != inferredParameters.length) return false;
+      for (int i = 0; i < parameters.length; i++) {
+        if (changesNullability(parameters[i], inferredParameters[i], depth + 1)) return true;
+      }
+    }
+    return false;
   }
 
   private static boolean isInferenceEquivalent(PsiType[] typeArguments,

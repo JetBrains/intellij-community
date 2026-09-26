@@ -16,17 +16,15 @@ import java.nio.file.Path
  * VM options file) is never marked and stays trusted.
  *
  * The state is application-level, so a marked file stays a safe-mode candidate after
- * a restart and after a reopen from Recent Files. The list is capped: the oldest entry
- * is evicted first. A mark of a file under an explicitly trusted location is kept:
- * when the user revokes the trust, the file returns to the safe mode.
+ * a restart and after a reopen from Recent Files. The list has no size cap.
+ * A mark of a file under an explicitly trusted location is kept: when the user revokes
+ * the trust, the file returns to the safe mode.
  */
 @State(name = "ExternallyOpenedFiles",
        storages = [Storage(value = "externally-opened-files.xml", roamingType = RoamingType.DISABLED)])
 internal class ExternallyOpenedFiles : SerializablePersistentStateComponent<ExternallyOpenedFiles.State>(State()) {
   companion object {
     fun getInstance(): ExternallyOpenedFiles = service()
-
-    private const val MAX_ENTRIES = 100
   }
 
   data class State(
@@ -41,23 +39,11 @@ internal class ExternallyOpenedFiles : SerializablePersistentStateComponent<Exte
 
   fun isMarked(path: Path): Boolean = state.pathSet.contains(path.toString())
 
-  /**
-   * Marks [path] as opened from an external source. A repeated mark moves the entry to the fresh end.
-   * Returns `true` when the size cap evicted the oldest entry. The evicted path is unmarked now,
-   * so the caller must recompute the cached trust verdicts.
-   */
-  fun mark(path: Path): Boolean {
+  /** Marks [path] as opened from an external source. A repeated mark keeps the single entry. */
+  fun mark(path: Path) {
     val pathString = path.toString()
-    var evicted = false
     updateState { state ->
-      val paths = buildList {
-        addAll(state.paths)
-        remove(pathString)
-        add(pathString)
-      }
-      evicted = paths.size > MAX_ENTRIES
-      State(paths.takeLast(MAX_ENTRIES))
+      if (state.pathSet.contains(pathString)) state else State(state.paths + pathString)
     }
-    return evicted
   }
 }

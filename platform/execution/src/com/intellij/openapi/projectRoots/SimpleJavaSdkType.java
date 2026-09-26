@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.project.Project;
@@ -9,12 +9,14 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -23,7 +25,7 @@ import java.util.function.Predicate;
 /**
  * @author Gregory.Shrago
  */
-public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
+public final class SimpleJavaSdkType extends SdkType implements JavaSdkType {
   public static SimpleJavaSdkType getInstance() {
     return SdkType.findInstance(SimpleJavaSdkType.class);
   }
@@ -74,7 +76,8 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
   }
 
   @Override
-  public @Nullable String suggestHomePath() {
+  @ApiStatus.Internal
+  public @Nullable String suggestHomePath(@NotNull Path path) {
     return JdkFinder.getInstance().defaultJavaLocation();
   }
 
@@ -105,7 +108,7 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
   }
 
   @Override
-  public final String getVersionString(final @NotNull String sdkHome) {
+  public String getVersionString(final @NotNull String sdkHome) {
     JdkVersionDetector.JdkVersionInfo jdkInfo = SdkVersionUtil.getJdkVersionInfo(sdkHome);
     return jdkInfo != null ? JdkVersionDetector.formatVersionString(jdkInfo.version) : null;
   }
@@ -119,7 +122,8 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
 
   private static final Predicate<SdkTypeId> TRUE = sdkTypeId -> true;
   private static final Predicate<SdkTypeId> NOT_SIMPLE_JAVA_TYPE = sdkTypeId -> !(sdkTypeId instanceof SimpleJavaSdkType);
-  private static final Predicate<SdkTypeId> NOT_DEPENDENT_TYPE = sdkTypeId -> (sdkTypeId instanceof SdkType && ((SdkType)sdkTypeId).getDependencyType() == null);
+  private static final Predicate<SdkTypeId> NOT_DEPENDENT_TYPE =
+    sdkTypeId -> (sdkTypeId instanceof SdkType && ((SdkType)sdkTypeId).getDependencyType() == null);
 
   public static @NotNull Predicate<SdkTypeId> notSimpleJavaSdkType() {
     return NOT_SIMPLE_JAVA_TYPE;

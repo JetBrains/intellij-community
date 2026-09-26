@@ -24,7 +24,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import fleet.rpc.client.RpcClientDisconnectedException
@@ -292,19 +292,19 @@ class UiPluginManager {
     }
   }
 
-  suspend fun getPendingPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSourceId? {
+  suspend fun getPendingPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSource? {
     return getController().getPendingPluginUpdateSource(sessionId, pluginId)
   }
 
-  fun getPendingPluginUpdateSourcesSync(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, PluginUpdateSourceId> {
+  fun getPendingPluginUpdateSourcesSync(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, PluginUpdateSource> {
     return runBlockingMaybeCancellable { getController().getPendingPluginUpdateSources(sessionId, pluginIds)}
   }
 
-  suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
+  suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSource?) {
     getController().setPendingPluginUpdateSourceInSession(sessionId, pluginId, pluginUpdateSource)
   }
 
-  suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?){
+  suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSource?){
     getController().persistPluginUpdateSource(sessionId, pluginId, pluginUpdateSource)
   }
 
@@ -316,7 +316,7 @@ class UiPluginManager {
     return getController().isMissingUpdateSourceWarningEnabled()
   }
 
-  suspend fun getAllPluginUpdateSources(): List<PluginUpdateSourceId> {
+  suspend fun getAllPluginUpdateSources(): List<PluginUpdateSource> {
     return getController().getAllPluginUpdateSources()
   }
 

@@ -41,7 +41,7 @@ import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.getPresentableName
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
@@ -744,7 +744,7 @@ private data class CreateInstalledPanelModel(
   val errors: Map<PluginId, List<HtmlChunk>>,
   val visiblePluginsRequiresUltimate: Map<PluginId, Boolean>,
   val installationStates: Map<PluginId, PluginInstallationState>,
-  val updateSources: Map<PluginId, PluginUpdateSourceId>,
+  val updateSources: Map<PluginId, PluginUpdateSource>,
 )
 
 private fun PluginsGroup.loadIntoPreloadedModel(model: CreateInstalledPanelModel) {

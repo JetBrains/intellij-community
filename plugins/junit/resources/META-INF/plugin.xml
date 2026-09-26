@@ -18,6 +18,7 @@
   <content namespace="jetbrains">
     <module name="intellij.junit.properties"/>
     <module name="intellij.junit.vcs"/>
+    <module name="intellij.junit.dashboard"/>
   </content>
   <content>
     <module name="intellij.libraries.hamcrest" loading="embedded"/>
@@ -117,9 +118,6 @@
     <testDiscoveryProducer implementation="com.intellij.execution.testDiscovery.IntellijTestDiscoveryProducer"/>
     <implicitUsageProvider implementation="com.intellij.execution.junit.codeInspection.deadCode.JUnit5ImplicitUsageProvider"/>
     <predefinedMigrationMapProvider implementation="com.intellij.execution.junit2.refactoring.JUnit5Migration"/>
-
-    <runDashboardCustomizer implementation="com.intellij.execution.junit.JUnitRunDashboardCustomizer"
-                            order="before commonJavaCustomizer"/>
 
     <dependencySupport kind="java" coordinate="junit:junit" displayName="JUnit"/>
     <gotoRelatedProvider implementation="com.intellij.execution.junit.JUnitParameterizedFieldSourceGotoRelatedProvider"/>

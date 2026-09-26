@@ -66,10 +66,6 @@ dev_dist_plugin(
             "intellij.grazie.xml",
             "intellij.grazie.yaml",
         ],
-        "lib/modules/intellij.grazie.markdown.jar": [
-            "intellij.grazie.markdown",
-            "@lib//:grazie-markdown-ai-grazie-tasks-library-model-jvm",
-        ],
         "lib/intellij.libraries.ai.grazie.rule.engine.jar": [
             "intellij.libraries.ai.grazie.rule.engine",
             "@lib//:libraries-ai-grazie-rule-engine-ai-grazie-rule-engine",
@@ -88,16 +84,11 @@ dev_dist_plugin(
             "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-hunspell-en",
             "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-swagger-annotations-jvm",
         ],
-        "lib/modules/intellij.libraries.ai.grazie.semantic.engine.jar": [
-            "intellij.libraries.ai.grazie.semantic.engine",
-            "@lib//:libraries-ai-grazie-semantic-engine-ai-grazie-semantic-engine",
-        ],
-        "lib/intellij.libraries.kotlin.logging.jar": [
-            "intellij.libraries.kotlin.logging",
-            "@lib//:libraries-kotlin-logging-io-github-oshai-kotlin-logging-jvm",
-        ],
     },
     main_module = "intellij.grazie",
+    module_jar_paths = {
+        "intellij.libraries.kotlin.logging": "lib/intellij.libraries.kotlin.logging.jar",
+    },
     separate_jar = ["intellij.grazie.markdown"],
 )
 ### auto-generated section `dev intellij.grazie` end

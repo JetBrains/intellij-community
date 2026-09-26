@@ -1,0 +1,71 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.debugger.impl.dashboard` start
+content_module_jar(module = ":dashboard")
+### auto-generated section `dev intellij.platform.debugger.impl.dashboard` end
+
+### auto-generated section `build intellij.platform.debugger.impl.dashboard` start
+jvm_library(
+    name = "dashboard",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.debugger.impl.dashboard",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
+    deps = [
+        # do not sort,
+        "//platform/execution",
+        "//platform/util:util-ui",
+        "//platform/xdebugger-api:debugger",
+        "//platform/util",
+        "//platform/execution.dashboard",
+        "//platform/core-api:core",
+        "//platform/execution-impl",
+        "@lib//:kotlin-stdlib",
+    ],
+)
+
+jvm_library(
+    name = "dashboard_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.debugger.impl.dashboard",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":dashboard",
+        "//platform/execution:execution_test_lib",
+        "//platform/backend:backend_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/xdebugger-api:debugger_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/execution.dashboard:execution.dashboard_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.debugger.impl.dashboard` end
+
+### auto-generated section `iml intellij.platform.debugger.impl.dashboard` start
+exports_files(
+    [
+        "intellij.platform.debugger.impl.dashboard.iml",
+        "resources/intellij.platform.debugger.impl.dashboard.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.debugger.impl.dashboard` end

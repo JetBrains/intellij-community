@@ -35,6 +35,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -1565,37 +1566,45 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       override fun finish() {
         myWriteActionPending.get()[state.level()].incrementAndGet()
         val newThisLevelPermit = state.getThisThreadPermit()
-        require(newThisLevelPermit is ParallelizablePermit.WriteIntent) {
-          "When suspending write action is finishing, the thread must hold write-intent lock"
-        }
-        val (newWritePermits, newWritePermit) = try {
-          myWriteLockReacquisitionListener.zip(listOfReacquisitionData).forEachGuaranteed { (listener, data) ->
-            @Suppress("UNCHECKED_CAST")
-            val castedListener: WriteLockReacquisitionListener<Any> = listener as WriteLockReacquisitionListener<Any>
-            castedListener.beforeWriteLockReacquired(data)
+        try {
+          require(newThisLevelPermit is ParallelizablePermit.WriteIntent) {
+            "When suspending write action is finishing, the thread must hold write-intent lock"
           }
-          val newWritePermit = runSuspendMaybeConsuming(false) {
-            newThisLevelPermit.writeIntentPermit.acquireWriteActionPermit()
-          }
-          myWriteLockReacquisitionListener.zip(listOfReacquisitionData).forEachGuaranteed { (listener, data) ->
-            @Suppress("UNCHECKED_CAST")
-            val castedListener: WriteLockReacquisitionListener<Any> = listener as WriteLockReacquisitionListener<Any>
-            castedListener.afterWriteLockReacquired(data)
-          }
-          hack_setThisLevelPermit(newWritePermit)
-          val newWritePermits = Array(exposedPermitData.writeIntentStack.size) {
-            runSuspendMaybeConsuming(false) {
-              exposedPermitData.writeIntentStack[it].acquireWriteActionPermit()
+          val (newWritePermits, newWritePermit) = try {
+            myWriteLockReacquisitionListener.zip(listOfReacquisitionData).forEachGuaranteed { (listener, data) ->
+              @Suppress("UNCHECKED_CAST")
+              val castedListener: WriteLockReacquisitionListener<Any> = listener as WriteLockReacquisitionListener<Any>
+              castedListener.beforeWriteLockReacquired(data)
             }
+            val newWritePermit = installThreadContext(currentThreadContext() + NonCancellable, true) {
+              runSuspendMaybeConsuming(false) {
+                newThisLevelPermit.writeIntentPermit.acquireWriteActionPermit()
+              }
+            }
+            val newWritePermits = installThreadContext(currentThreadContext() + NonCancellable, true) {
+              Array(exposedPermitData.writeIntentStack.size) {
+                runSuspendMaybeConsuming(false) {
+                  exposedPermitData.writeIntentStack[it].acquireWriteActionPermit()
+                }
+              }
+            }
+            hack_setThisLevelPermit(newWritePermit)
+            myWriteLockReacquisitionListener.zip(listOfReacquisitionData).forEachGuaranteed { (listener, data) ->
+              @Suppress("UNCHECKED_CAST")
+              val castedListener: WriteLockReacquisitionListener<Any> = listener as WriteLockReacquisitionListener<Any>
+              castedListener.afterWriteLockReacquired(data)
+            }
+
+            newWritePermits to newWritePermit
           }
-          newWritePermits to newWritePermit
+          finally {
+            myWriteActionPending.get()[state.level()].decrementAndGet()
+          }
+          hack_setPublishedPermitData(exposedPermitData.copy(writePermitStack = newWritePermits, finalWritePermit = newWritePermit, originalWriteIntentPermit = newThisLevelPermit.writeIntentPermit, oldPermit = newThisLevelPermit.writeIntentPermit))
+          myWriteAcquired = Thread.currentThread()
+        } finally {
+          myWriteStackBase = prevBase
         }
-        finally {
-          myWriteActionPending.get()[state.level()].decrementAndGet()
-        }
-        hack_setPublishedPermitData(exposedPermitData.copy(writePermitStack = newWritePermits, finalWritePermit = newWritePermit, originalWriteIntentPermit = newThisLevelPermit.writeIntentPermit, oldPermit = newThisLevelPermit.writeIntentPermit))
-        myWriteAcquired = Thread.currentThread()
-        myWriteStackBase = prevBase
       }
     }
   }

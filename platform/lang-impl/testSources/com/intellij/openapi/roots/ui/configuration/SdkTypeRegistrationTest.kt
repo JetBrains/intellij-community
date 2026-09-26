@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.Disposable
@@ -13,6 +13,7 @@ import com.intellij.openapi.projectRoots.impl.UnknownSdkType
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.HeavyPlatformTestCase
 import org.jdom.Element
+import java.nio.file.Path
 
 class SdkTypeRegistrationTest : HeavyPlatformTestCase() {
   fun `test unregister sdk type and register again`() {
@@ -63,7 +64,7 @@ private class MockSdkType : SdkType("Mock") {
     fun getInstance() = findInstance(MockSdkType::class.java)
   }
 
-  override fun suggestHomePath(): String? = null
+  override fun suggestHomePath(path: Path): String? = null
 
   override fun isValidSdkHome(path: String): Boolean = false
 

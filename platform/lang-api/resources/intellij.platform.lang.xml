@@ -141,9 +141,6 @@
     <extensionPoint qualifiedName="com.intellij.consoleFilterProvider" interface="com.intellij.execution.filters.ConsoleFilterProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.invisibleHyperlinkFilterProvider" interface="com.intellij.execution.filters.InvisibleHyperlinkFilterProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.consoleInputFilterProvider" interface="com.intellij.execution.filters.ConsoleInputFilterProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.runDashboardCustomizer" interface="com.intellij.execution.dashboard.RunDashboardCustomizer" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.legacyRunDashboardServiceSubstitutor" interface="com.intellij.execution.dashboard.LegacyRunDashboardServiceSubstitutor" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.runDashboardDefaultTypesProvider" interface="com.intellij.execution.dashboard.RunDashboardDefaultTypesProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.serviceViewContributor" interface="com.intellij.execution.services.ServiceViewContributor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.parameterNameHintsSuppressor" dynamic="true" interface="com.intellij.codeInsight.hints.ParameterNameHintsSuppressor"/>

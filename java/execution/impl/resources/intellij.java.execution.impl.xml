@@ -115,7 +115,6 @@
                             order="first" id="VmOptionsCompletionContributor"/>
     <applicationService serviceInterface="com.intellij.execution.vmOptions.VMOptionsService"
                         serviceImplementation="com.intellij.execution.vmOptions.VMOptionsServiceImpl"/>
-    <runDashboardCustomizer implementation="com.intellij.execution.CommonJavaRunDashboardCustomizer" id="commonJavaCustomizer"/>
     <additionalLibraryRootsProvider implementation="com.intellij.execution.AlternativeSdkRootsProvider"/>
     <jdkUpdateCheckContributor implementation="com.intellij.execution.AlternativeSdkRootsProviderForJdkUpdate"/>
     <programRunner implementation="com.intellij.execution.jar.JarApplicationDebuggerRunner"/>

@@ -7,22 +7,27 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 
-internal abstract class OnceTask<T, C> {
+/** Caches a value or a failure selected by [shouldCacheFailure]. Other failures permit another attempt. */
+@ApiStatus.Internal
+@VisibleForTesting
+abstract class OnceTask<T, C>(private val shouldCacheFailure: (Throwable) -> Boolean) {
   private val state: MutableStateFlow<State<T, C>> = MutableStateFlow(State.Uninitialized)
 
   abstract suspend fun <R> executeUnderLockIfNotAlreadyAcquired(f: suspend () -> R): R
 
-  fun computedValue(): T? = (state.value as? State.Computed)?.value
+  fun computedValue(): Result<T>? = (state.value as? State.Computed)?.value
 
   suspend fun getOrCompute(
     onComputing: (Deferred<C>) -> Unit,
     action: suspend (CompletableDeferred<C>) -> T
   ): T {
-    (state.value as? State.Computed)?.let { return it.value }
+    (state.value as? State.Computed)?.let { return it.value.getOrThrow() }
     while (true) {
       val computed = executeUnderLockIfNotAlreadyAcquired { executeCriticalSection(onComputing, action) }
-      if (computed != null) return computed.value
+      if (computed != null) return computed.value.getOrThrow()
     }
   }
 
@@ -44,12 +49,15 @@ internal abstract class OnceTask<T, C> {
     }
     onComputing(newComputingState.context)
     val result = try {
-      action(newComputingState.context)
+      Result.success(action(newComputingState.context))
     }
     catch (e: Throwable) {
       newComputingState.context.completeExceptionally(e)
-      state.compareAndSet(newComputingState, State.Uninitialized)
-      throw e
+      if (!shouldCacheFailure(e)) {
+        state.compareAndSet(newComputingState, State.Uninitialized)
+        throw e
+      }
+      Result.failure(e)
     }
     return State.Computed(result).also { state.value = it }
   }
@@ -65,5 +73,5 @@ private sealed class State<out T, out C> {
   object Uninitialized : NotComputing<Nothing>()
   class Computing<C>(val context: CompletableDeferred<C>) : State<Nothing,  C>()
   sealed class NotComputing<T> : State<T, Nothing>()
-  class Computed<T>(val value: T) : NotComputing<T>()
+  class Computed<T>(val value: Result<T>) : NotComputing<T>()
 }

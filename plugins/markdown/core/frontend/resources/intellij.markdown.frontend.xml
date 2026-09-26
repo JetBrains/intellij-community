@@ -34,6 +34,9 @@
     <fileEditorProvider id="markdown-preview-editor" implementation="com.intellij.markdown.frontend.preview.MarkdownSplitEditorProvider"/>
     <applicationService serviceInterface="org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener"
                         serviceImplementation="com.intellij.markdown.frontend.preview.accessor.impl.MarkdownLinkOpenerImpl"/>
+    <registryKey key="markdown.live.preview.opening.timeout.ms"
+                 defaultValue="300"
+                 description="Time in milliseconds that an opening Markdown editor waits for live preview before it shows the source."/>
     <registryKey key="markdown.open.link.fallback"
                  defaultValue="false"
                  description="Should fallback to Markdown link opening implementation before the split."/>

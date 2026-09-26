@@ -2,8 +2,8 @@ from m1 import f, g, h
 
 def test_different_number_of_parameters():
     f(5)
-    f(<warning descr="Expected type 'int', got 'Literal[\"a\"]' instead">"a"</warning>)
-    f(<warning descr="Expected type 'int', got 'Literal[\"a\"]' instead">"a"</warning>)
+    f(<warning descr="No overload of 'f' matches the arguments. Argument types: (Literal[\"a\"]). Expected one of: (i: int), (i: int, s: str)">"a"</warning>)
+    f(<warning descr="No overload of 'f' matches the arguments. Argument types: (Literal[\"a\"]). Expected one of: (i: int), (i: int, s: str)">"a"</warning>)
 
     f(5, "a")
     f(<warning descr="Expected type 'int', got 'Literal[\"a\"]' instead">"a"</warning>, "b")
@@ -16,8 +16,8 @@ def test_different_number_of_parameters():
 
 def test_same_number_of_parameters_but_one_is_default():
     g(5)
-    g(<warning descr="Expected type 'int', got 'Literal[\"a\"]' instead">"a"</warning>)
-    g(<warning descr="Expected type 'int', got 'Literal[\"a\"]' instead">"a"</warning>)
+    g(<warning descr="No overload of 'g' matches the arguments. Argument types: (Literal[\"a\"]). Expected one of: (i: int, b: bool), (i: int, s: str)">"a"</warning>)
+    g(<warning descr="No overload of 'g' matches the arguments. Argument types: (Literal[\"a\"]). Expected one of: (i: int, b: bool), (i: int, s: str)">"a"</warning>)
 
     g<warning descr="No overload of 'g' matches the arguments. Argument types: (Literal[\"a\"], Literal[False]). Expected one of: (i: int, b: bool), (i: int, s: str)">("a", False)</warning>
     g<warning descr="No overload of 'g' matches the arguments. Argument types: (Literal[5], Literal[6]). Expected one of: (i: int, b: bool), (i: int, s: str)">(5, 6)</warning>
@@ -37,7 +37,7 @@ def test_same_number_of_parameters_but_one_is_default():
 
 def test_different_number_of_parameters_one_is_default():
     h(5)
-    h(<warning descr="No overload of 'h' matches the arguments. Argument types: ((x: Unknown) -> Unknown). Expected one of: (i: int), (i: str)">lambda x: x</warning>)
+    h(<warning descr="No overload of 'h' matches the arguments. Argument types: ((x: Unknown) -> Unknown). Expected one of: (i: int), (i: str, b: bool)">lambda x: x</warning>)
 
     h("a")
 

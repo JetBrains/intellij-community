@@ -89,21 +89,12 @@ data class PluginSymbolicNativeOccurrence(
   @JvmField val ordinal: Int,
 )
 
-/** A native requirement derived before replacement and bound to the original jar context. No archive has been opened. */
+/** A native requirement derived at one source occurrence of the original jar. No archive has been opened. */
 @ApiStatus.Internal
 data class PluginSymbolicNativeUse(
   @JvmField val occurrence: PluginSymbolicNativeOccurrence,
   @JvmField val handling: PluginSymbolicNativeHandling,
   @JvmField val distributionPrefix: String?,
-  @JvmField val preparationKeys: List<String>,
-  @JvmField val modelSignature: String,
-)
-
-/** Binds one occurrence to an existing effect. Its signature must match the derived requirement, including source filters. */
-@ApiStatus.Internal
-data class PluginSymbolicNativeBinding(
-  @JvmField val effectKey: String,
-  @JvmField val requirementSignature: String,
 )
 
 /**
@@ -113,7 +104,6 @@ data class PluginSymbolicNativeBinding(
  * [modulePatches] gives the final patch order, including the descriptor, after every declared patcher runs.
  * [preparedSourceManifests] is keyed by prepared output ID and records original counts and concrete execution policies.
  * A descriptor callback uses `descriptor`; scrambling reports a gap rather than an unsafe replacement.
- * [nativeBindings] selects occurrence-specific effects. Native effects must consume any preceding generic or Java-filter outputs.
  */
 @ApiStatus.Internal
 data class PluginSymbolicPreparationFacts(
@@ -121,7 +111,6 @@ data class PluginSymbolicPreparationFacts(
   @JvmField val modulePatches: Map<String, List<JarSourceRecipe>> = emptyMap(),
   @JvmField val dependencies: List<PluginPackingPreparation> = emptyList(),
   @JvmField val preparedSourceManifests: Map<String, PluginSymbolicPreparedSourceManifest> = emptyMap(),
-  @JvmField val nativeBindings: Map<PluginSymbolicNativeOccurrence, PluginSymbolicNativeBinding> = emptyMap(),
   /** Declared assets that need no Kotlin preparation. Keys use the same layout slots as [effects]. */
   @JvmField val declaredAssets: Map<String, List<PluginPackingAsset>> = emptyMap(),
   /** Selected layout callback slots that intentionally contribute nothing to this development variant. */
@@ -143,7 +132,6 @@ class PluginSymbolicLayout internal constructor(
   @JvmField val preparations: List<PluginPackingPreparation>,
   @JvmField val preparationRoots: List<String>,
   @JvmField val gaps: List<PluginSymbolicLayoutGap>,
-  @JvmField val nativeRequirements: List<PluginSymbolicNativeUse> = emptyList(),
 ) {
   /**
    * The plan file content and the reuse decision. [artifacts] are the jars the plugin may reuse; the result names the
@@ -234,6 +222,22 @@ class PluginSymbolicJarAssembly {
     jars.computeIfAbsent(destination) { SymbolicJar() }.sources.addAll(sources)
   }
 
+  /**
+   * Marks the jar at [destination] as the jar of the presigned native library [library]. The jar leaves the library's
+   * native entries out, and its native tree goes to [distributionPrefix] at the distribution root. Only a reused
+   * `content_module_jar` packs such a jar, and the tree is its output.
+   */
+  internal fun markNatives(destination: String, library: String, distributionPrefix: String, reportGap: (PluginSymbolicLayoutGap) -> Unit) {
+    val jar = jars.computeIfAbsent(destination) { SymbolicJar() }
+    val natives = PluginSymbolicJarNatives(library, distributionPrefix)
+    val previous = jar.natives
+    if (previous != null && previous != natives) {
+      reportGap(PluginSymbolicLayoutGap("native-library:$destination", "A jar merges two presigned native libraries: ${previous.library} and $library"))
+      return
+    }
+    jar.natives = natives
+  }
+
   fun assets(
     preparedSourceManifests: Map<String, PluginSymbolicPreparedSourceManifest> = emptyMap(),
     libraryFileCounts: Map<String, Int> = emptyMap(),
@@ -256,18 +260,40 @@ class PluginSymbolicJarAssembly {
         return@mapNotNull null
       }
       val sources = resolveSources(ordered)
+      val natives = jar.natives
       if (sources.isEmpty()) {
-        null
+        emptyList()
       }
-      else {
+      else if (natives == null) {
         val asset = PluginPackingAsset(
           destination = destination,
           inputs = sources.map { it.input }.distinct(),
           recipe = CanonicalJarRecipe(sources = sources, writer = JarWriterRecipe(mergeEntities = true, directoryEntries = jar.testOutput)),
         )
-        resolvePluginSymbolicManifest(asset, preparedSourceManifests, libraryFileCounts, reportGap)
+        listOf(resolvePluginSymbolicManifest(asset, preparedSourceManifests, libraryFileCounts, reportGap))
       }
-    }
+      else {
+        val owner = sources.first()
+        if (owner.kind != "module" || sources.drop(1).any { it.kind != "library" } || jar.testOutput) {
+          reportGap(PluginSymbolicLayoutGap("native-library:$destination", "A jar with a presigned native library must be one module jar with its libraries"))
+          return@mapNotNull null
+        }
+        listOf(
+          PluginPackingAsset(
+            destination = destination,
+            inputs = sources.map { it.input }.distinct(),
+            recipe = CanonicalJarRecipe(sources = sources, writer = JarWriterRecipe(mergeEntities = true, nativeLib = natives.library)),
+          ),
+          PluginPackingAsset(
+            destination = natives.distributionPrefix.removeSuffix("/"),
+            inputs = listOf(NATIVE_TREE_INPUT_PREFIX + owner.input),
+            kind = "tree",
+            classPath = false,
+            scope = DISTRIBUTION_ASSET_SCOPE,
+          ),
+        )
+      }
+    }.flatten()
   }
 
   private fun resolveSources(ordered: List<PluginSymbolicJarSource>): List<JarSourceRecipe> {
@@ -304,5 +330,8 @@ class PluginSymbolicJarAssembly {
     val modules = ArrayList<List<PluginSymbolicJarSource>>()
     var descriptorModuleSources: List<PluginSymbolicJarSource>? = null
     var testOutput = false
+    var natives: PluginSymbolicJarNatives? = null
   }
 }
+
+private data class PluginSymbolicJarNatives(val library: String, val distributionPrefix: String)

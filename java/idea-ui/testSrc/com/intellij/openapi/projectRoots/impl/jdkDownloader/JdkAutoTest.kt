@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.Disposable
@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.junit.Assert
 import org.junit.Test
+import java.nio.file.Path
 import java.util.function.Predicate
 
 class JdkAutoTest : JavaCodeInsightFixtureTestCase() {
@@ -185,7 +186,7 @@ class JdkAutoTest : JavaCodeInsightFixtureTestCase() {
   }
 
   private class AnotherJavaSdkType : SdkType("AnotherJavaSdk"), JavaSdkType {
-    override fun suggestHomePath(): String? = null
+    override fun suggestHomePath(path: Path): String? = null
 
     override fun isValidSdkHome(path: String): Boolean = false
 

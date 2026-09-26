@@ -250,8 +250,8 @@ class MPSProperties : JetBrainsProductProperties() {
     private fun patchPluginXml(): (PluginLayout.PluginLayoutSpec) -> Unit = { spec ->
       // The MPS version is not SemVer and not the IDE build scheme, so the descriptor version check must not run on it.
       spec.semanticVersioning = false
-      spec.withCustomVersion { _, ideBuildVersion, _ ->
-        PluginVersionEvaluatorResult(pluginVersion = mpsJavaPluginVersion(ideBuildVersion))
+      spec.withCustomVersion { _, context ->
+        PluginVersionEvaluatorResult(pluginVersion = mpsJavaPluginVersion(context.pluginBuildNumber))
       }
       spec.withRawPluginXmlPatcher { text, _ -> replaceJavaPluginTail(text) }
     }

@@ -10,7 +10,7 @@ import com.intellij.ide.plugins.newui.PluginUpdatesEvent
 import com.intellij.ide.plugins.newui.latestCustomRepositoryPlugins
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.util.text.HtmlChunk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -431,7 +431,7 @@ internal class UnifiedPluginRepositorySourceCoordinator(
     val installedModels = LinkedHashMap<PluginId, PluginUiModel>()
     val errors = LinkedHashMap<PluginId, List<HtmlChunk>>()
     val installationStates = LinkedHashMap<PluginId, PluginInstallationState>()
-    val updateSources = LinkedHashMap<PluginId, PluginUpdateSourceId>()
+    val updateSources = LinkedHashMap<PluginId, PluginUpdateSource>()
     val settledRepositoryPlugins = LinkedHashMap<String, List<PluginUiModel>>()
     val allRepositoryPlugins = ArrayList<PluginUiModel>()
     for ((repositoryId, entry) in entries) {

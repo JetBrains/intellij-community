@@ -280,6 +280,7 @@ grid/impl
 grid/impl-ide
 grid/json
 grid/plugin
+grid/structureview
 grid/types
 idea/customization/backend
 idea/customization/base
@@ -310,6 +311,7 @@ java/debugger/shared
 java/execution/backend
 java/execution/frontend
 java/execution/impl
+java/execution/impl/dashboard
 java/execution/openapi
 java/execution/shared
 java/ide-customization
@@ -1027,6 +1029,7 @@ platform/settings
 platform/settings-local
 platform/settings-sync-core
 platform/smRunner
+platform/smRunner/dashboard
 platform/smRunner/vcs
 platform/smart-update
 platform/sqlite
@@ -1122,6 +1125,7 @@ platform/vcs-impl/frontend
 platform/vcs-impl/lang
 platform/vcs-impl/lang/actions
 platform/vcs-impl/lang/todo
+platform/vcs-impl/lang/todo/frontend
 platform/vcs-impl/shared
 platform/vcs-log/api
 platform/vcs-log/graph
@@ -1145,6 +1149,7 @@ platform/xdebugger-api
 platform/xdebugger-impl
 platform/xdebugger-impl/backend
 platform/xdebugger-impl/bookmarks
+platform/xdebugger-impl/dashboard
 platform/xdebugger-impl/frontend
 platform/xdebugger-impl/rpc
 platform/xdebugger-impl/shared
@@ -1374,6 +1379,7 @@ plugins/javaFX/jps
 plugins/javaFX/sceneBuilder
 plugins/jcef/frontend
 plugins/jcef/plugin
+plugins/jna/plugin
 plugins/jshell
 plugins/jshell/console
 plugins/jshell/execution
@@ -1381,6 +1387,7 @@ plugins/jshell/frontend
 plugins/jshell/protocol
 plugins/jsonpath
 plugins/junit
+plugins/junit/dashboard
 plugins/junit/groovy-tests
 plugins/junit/java-tests
 plugins/junit/kotlin-tests-k2
@@ -1742,6 +1749,7 @@ plugins/sh/plugin
 plugins/sh/python
 plugins/sh/terminal
 plugins/sh/terminal/frontend
+plugins/skiko/plugin
 plugins/space/jps-plugin
 plugins/stats-collector
 plugins/stream-debugger
@@ -1993,6 +2001,7 @@ xml/plugin
 xml/relaxng
 xml/testFramework
 xml/tests
+xml/vcs
 xml/xml-analysis-api
 xml/xml-analysis-impl
 xml/xml-parser

@@ -1,0 +1,20 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.dashboard"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <runDashboardCustomizer implementation="com.intellij.platform.debugger.impl.dashboard.XDebuggerRunDashboardCustomizer" order="first"/>
+  </extensions>
+  <projectListeners>
+    <listener class="com.intellij.platform.debugger.impl.dashboard.XDebuggerRunDashboardUpdater"
+              topic="com.intellij.execution.ExecutionListener"/>
+  </projectListeners>
+</idea-plugin>

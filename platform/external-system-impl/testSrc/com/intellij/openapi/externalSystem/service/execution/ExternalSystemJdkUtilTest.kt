@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution
 
 import com.intellij.openapi.application.ApplicationManager
@@ -37,6 +37,7 @@ import org.jdom.Element
 import org.junit.Test
 import org.mockito.Mockito.mock
 import java.io.File
+import java.nio.file.Path
 
 class ExternalSystemJdkUtilTest : UsefulTestCase() {
 
@@ -206,7 +207,7 @@ class TestJavaDependentSdkType(val myName: String): JavaDependentSdkType(myName)
     fun getInstance(): TestJavaDependentSdkType = instance
   }
 
-  override fun suggestHomePath(): String? {
+  override fun suggestHomePath(path: Path): String? {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 

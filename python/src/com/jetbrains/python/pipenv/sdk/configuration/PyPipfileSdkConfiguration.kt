@@ -30,9 +30,9 @@ import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.jetbrains.python.sdk.pipenv.PIP_FILE
 import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData
-import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.impl.pipenv.PipEnvPyTool
 import com.intellij.python.pytools.resolveExecutable
+import com.jetbrains.python.module.getEel
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.pipenv.runPipEnv
 import com.jetbrains.python.sdk.pipenv.setupPipEnv
@@ -64,7 +64,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
   ): EnvCheckerResult = withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
     val pipfile =
       module.asPyProject()?.resolveFile(PIP_FILE)?.fileName ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
-    val pipEnvExecutable = PipEnvPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))?.path
+    val pipEnvExecutable = PipEnvPyTool.getInstance().resolveExecutable(EelFileSystem(module.getEel()))?.path
                            ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
     val canManage = pipEnvExecutable.isExecutable()
     val intentionName = PyBundle.message("sdk.create.pipenv.suggestion", pipfile)

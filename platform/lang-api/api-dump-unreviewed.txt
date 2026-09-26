@@ -913,29 +913,6 @@ c:com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel
 a:com.intellij.execution.ExecutionTargetProvider
 - sf:EXTENSION_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getTargets(com.intellij.openapi.project.Project,com.intellij.execution.configurations.RunConfiguration):java.util.List
-a:com.intellij.execution.dashboard.RunDashboardCustomizer
-- sf:NODE_LINKS:com.intellij.openapi.util.Key
-- a:isApplicable(com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.ui.RunContentDescriptor):Z
-- updatePresentation(com.intellij.ide.projectView.PresentationData,com.intellij.execution.dashboard.RunDashboardRunConfigurationNode):Z
-com.intellij.execution.dashboard.RunDashboardGroup
-- a:getIcon():javax.swing.Icon
-- a:getName():java.lang.String
-com.intellij.execution.dashboard.RunDashboardNode
-- getContent():com.intellij.ui.content.Content
-- getDescriptor():com.intellij.execution.ui.RunContentDescriptor
-- a:getProject():com.intellij.openapi.project.Project
-c:com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
-- com.intellij.ide.util.treeView.WeighedItem
-- sf:CONFIGURED:com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
-- sf:FAILED:com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
-- sf:STARTED:com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
-- sf:STOPPED:com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
-- <init>(java.lang.String,java.util.function.Supplier,javax.swing.Icon,I):V
-- getIcon():javax.swing.Icon
-- getId():java.lang.String
-- getName():java.lang.String
-- s:getStatusById(java.lang.String):com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
-- getWeight():I
 c:com.intellij.execution.filters.CompositeFilter
 - <init>(com.intellij.openapi.project.Project,java.util.List):V
 - applyFilter(java.lang.String,I):com.intellij.execution.filters.Filter$Result
@@ -2885,7 +2862,6 @@ f:com.intellij.openapi.projectRoots.impl.UnknownSdkType
 - isValidSdkHome(java.lang.String):Z
 - loadAdditionalData(org.jdom.Element):com.intellij.openapi.projectRoots.SdkAdditionalData
 - saveAdditionalData(com.intellij.openapi.projectRoots.SdkAdditionalData,org.jdom.Element):V
-- suggestHomePath():java.lang.String
 - suggestSdkName(java.lang.String,java.lang.String):java.lang.String
 c:com.intellij.openapi.projectRoots.ui.PathEditor
 - sf:INVALID_COLOR:java.awt.Color

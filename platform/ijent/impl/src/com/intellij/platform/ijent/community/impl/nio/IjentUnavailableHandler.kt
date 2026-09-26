@@ -31,27 +31,13 @@ import java.awt.Component
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-class IjentTimeoutException(message: String) : IOException(message)
-
-sealed class IjentUnavailableHandlerResult {
-  abstract fun throwException(): Nothing
-  class ProjectCloseDecision(val eelDescriptor: EelDescriptor) : IjentUnavailableHandlerResult() {
-    override fun throwException(): Nothing {
-      throw IjentTimeoutException("User decided to close the project without waiting for not responding ijent $eelDescriptor.")
-    }
-  }
-  class UnrelatedIjent(val eelDescriptor: EelDescriptor) : IjentUnavailableHandlerResult() {
-    override fun throwException(): Nothing {
-      throw IjentTimeoutException("User decided to close the target $eelDescriptor which is not related to any of open projects.")
-    }
-  }
-}
+/** Signals the user's final decision to stop waiting for IJent. */
+class IjentUnavailableUserDecisionException(message: String) : IOException(message)
 
 interface IjentUnavailableHandler {
-  suspend fun showModalDialog(eelDescriptor: EelDescriptor, uiHandle: ReconnectUiHandleImpl): IjentUnavailableHandlerResult
+  suspend fun showModalDialog(eelDescriptor: EelDescriptor, uiHandle: ReconnectUiHandleImpl): Nothing
   companion object {
     val EP_NAME: ExtensionPointName<IjentUnavailableHandler> = ExtensionPointName("com.intellij.project.root.unavailable")
   }
@@ -123,7 +109,7 @@ internal suspend fun <T> showModalDialogOnTimeout(eelDescriptor: EelDescriptor, 
         }
         else {
           try {
-            ijentUnavailableHandler.showModalDialog(eelDescriptor, uiHandle).throwException()
+            ijentUnavailableHandler.showModalDialog(eelDescriptor, uiHandle)
           }
           catch (e: Throwable) {
             uiHandle.setDialogSession(CompletableDeferred<ReconnectUiDialogImpl>().apply { completeExceptionally(e) })
@@ -157,9 +143,12 @@ private fun IjentCallerContext.unavailableDialogTimeout(): Duration {
   // The numbers here make no real sense. It's just some assumptions how long outage a user can tolerate.
   // It depends on which resources are locked by the requests that happen to freeze.
   return when {
-    isDispatchThread || isWrite -> 500.milliseconds
-    isRead -> 1.seconds
-    else -> 10.seconds
+    isDispatchThread || isWrite -> 1.seconds
+    isRead -> 5.seconds
+    // The timeout here should be longer than 10s because of IJPL-253468.
+    // Theoretically, in case of truly background operation, the dialog can be omited,
+    // but the background worker can hold some other resources which can also cause malfunctioning.
+    else -> 20.seconds
   }
 }
 

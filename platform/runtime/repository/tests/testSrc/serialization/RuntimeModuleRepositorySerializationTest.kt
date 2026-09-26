@@ -22,6 +22,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
+import java.time.LocalDateTime
+import java.util.zip.ZipFile
 
 class RuntimeModuleRepositorySerializationTest {
   @JvmField
@@ -51,6 +53,16 @@ class RuntimeModuleRepositorySerializationTest {
     }
   }
   
+  @Test
+  fun `jar entries have a fixed time`() {
+    val jarFilePath = tempDirectory.rootPath.resolve("module-descriptors.jar")
+    val descriptors = listOf(createModuleDescriptor("ij.platform.util", listOf("ij-util.jar"), emptyList()))
+    RuntimeModuleRepositorySerialization.saveToJar(descriptors, emptyList(), null, jarFilePath, 0)
+    val entryTimes = ZipFile(jarFilePath.toFile()).use { zip -> zip.entries().toList().associate { it.name to it.timeLocal } }
+    assertThat(entryTimes).containsOnlyKeys("META-INF/MANIFEST.MF", "ij.platform.util.xml")
+    assertThat(entryTimes.values).containsOnly(LocalDateTime.of(1980, 2, 1, 0, 0))
+  }
+
   @Test
   fun `two modules`() {
     check(listOf(

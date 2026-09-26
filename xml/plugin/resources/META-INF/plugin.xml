@@ -35,5 +35,6 @@
     <module name="intellij.xml.impl"/>
     <module name="intellij.xml.analysis.impl"/>
     <module name="intellij.xml.langInjection"/>
+    <module name="intellij.xml.vcs"/>
   </content>
 </idea-plugin>

@@ -9,6 +9,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyYieldExpression;
 import com.jetbrains.python.psi.types.PyAnyType;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyExpectedTypeJudgement;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -37,7 +38,7 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
       if (generatorDesc != null) {
         return generatorDesc.returnType;
       }
-      return PyBuiltinCache.getInstance(this).getNoneType();
+      return getNoneTypeOrUnknown();
     }
     else {
       return getSendType(context);
@@ -47,7 +48,7 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
   @Override
   public @Nullable PyType getYieldType(@NotNull TypeEvalContext context) {
     final PyExpression expr = getExpression();
-    final PyType type = expr != null ? context.getType(expr) : PyBuiltinCache.getInstance(this).getNoneType();
+    final PyType type = expr != null ? context.getType(expr) : getNoneTypeOrUnknown();
 
     if (isDelegating()) {
       return PyTargetExpressionImpl.getIterationType(type, this, false, context);
@@ -79,8 +80,14 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
       if (generatorDesc != null) {
         return generatorDesc.sendType;
       }
-      return PyBuiltinCache.getInstance(this).getNoneType();
+      return getNoneTypeOrUnknown();
     }
     return PyAnyType.getUnknown();
+  }
+
+  /** The type of `None`, or an unknown type when the project has no builtins. */
+  private @Nullable PyType getNoneTypeOrUnknown() {
+    final PyClassType noneType = PyBuiltinCache.getInstance(this).getNoneType();
+    return noneType != null ? noneType : PyAnyType.getUnknown();
   }
 }

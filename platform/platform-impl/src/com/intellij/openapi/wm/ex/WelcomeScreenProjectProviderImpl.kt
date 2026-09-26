@@ -49,7 +49,7 @@ internal class WelcomeScreenProjectSupportImpl : WelcomeScreenProjectSupport {
       catch (_: IOException) {
       }
     }
-    // the path is a system path, so TrustedProjects trusts it implicitly, without a persistent record
+
     serviceAsync<WindowsDefenderChecker>().markProjectPath(projectPath, /*skip =*/ true)
 
     val project = extension.doCreateOrOpenWelcomeScreenProjectForInternalUsage(projectPath, projectToClose, forceOpenInNewFrame)

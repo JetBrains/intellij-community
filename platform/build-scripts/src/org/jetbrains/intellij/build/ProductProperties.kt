@@ -7,7 +7,6 @@ import com.intellij.platform.buildScripts.licenses.COMMUNITY_LICENSES_LIST
 import com.intellij.platform.buildScripts.licenses.LibraryLicense
 import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
 import com.intellij.platform.runtime.product.ProductMode
-import com.intellij.util.text.SemVer
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
@@ -585,8 +584,8 @@ abstract class ProductProperties {
       }
 
       if (result.plugin.pluginVersion != null) {
-        val (os, arch) = SemVer.parseFromText(result.plugin.pluginVersion)!!.preRelease
-                           ?.let(OS_ARCH_SUFFIX::matchEntire)
+        val (os, arch) = result.plugin.pluginVersion
+                           ?.let(OS_ARCH_SUFFIX::find)
                            ?.groupValues?.let { it[1] to it[2] }
                          ?: (null to null)
 
@@ -627,7 +626,7 @@ abstract class ProductProperties {
   }
 }
 
-private val OS_ARCH_SUFFIX = Regex("^(windows|linux|macos|mac)-(x86_64|arm64)$")
+private val OS_ARCH_SUFFIX = Regex("(windows|linux|macos|mac)-(x86_64|arm64)")
 
 private class MissingDependencyError(override val message: String) : PluginProblem() {
   override val level = Level.ERROR

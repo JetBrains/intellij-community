@@ -276,7 +276,7 @@ func (s MergeSpec) Merge() ([]string, error) {
 	}
 	// After the jar, so a tree never exists without its jar. The native jar is still mapped: it is closed with the
 	// others when this returns.
-	if natives != nil {
+	if s.Native.WritesTree() {
 		if err := s.writeNativeTree(natives); err != nil {
 			return nil, err
 		}

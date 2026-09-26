@@ -176,7 +176,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
             }
           }
         }
-        return PyUtil.convertToType(literalKind, PyBuiltinCache.getInstance(this));
+        final PyType builtinType = PyUtil.convertToType(literalKind, PyBuiltinCache.getInstance(this));
+        return builtinType != null ? builtinType : PyAnyType.getUnknown();
       }
 
       final List<PyType> types = new ArrayList<>();

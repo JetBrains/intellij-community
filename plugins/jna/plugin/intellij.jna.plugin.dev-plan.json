@@ -1,0 +1,62 @@
+{
+    "version": 3,
+    "plugin": "intellij.jna.plugin",
+    "variant": "{platform}",
+    "layoutSignature": "{platform:layoutSignature}",
+    "assets": [
+        {
+            "destination": "lib/modules/intellij.libraries.jna.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.jna",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-jna-jna",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true,
+                    "nativeLib": "jna"
+                }
+            }
+        },
+        {
+            "destination": "lib/jna",
+            "inputs": [
+                "native-tree:intellij.libraries.jna"
+            ],
+            "kind": "tree",
+            "classPath": false,
+            "scope": "distribution"
+        },
+        {
+            "destination": "lib/jna-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.jna.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.jna.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        }
+    ]
+}

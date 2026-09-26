@@ -10,7 +10,7 @@ import com.intellij.ide.plugins.newui.PluginUpdatesEvent
 import com.intellij.ide.plugins.newui.UiPluginManager
 import com.intellij.ide.plugins.newui.calculateTags
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.util.text.HtmlChunk
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -53,7 +53,7 @@ internal data class PluginListModelData(
   val installedModels: Map<PluginId, PluginUiModel>,
   val errors: Map<PluginId, List<HtmlChunk>>,
   val installationStates: Map<PluginId, PluginInstallationState>,
-  val updateSources: Map<PluginId, PluginUpdateSourceId> = emptyMap(),
+  val updateSources: Map<PluginId, PluginUpdateSource> = emptyMap(),
 ) {
   companion object {
     val EMPTY: PluginListModelData = PluginListModelData(emptyMap(), emptyMap(), emptyMap(), emptyMap())
@@ -131,7 +131,7 @@ internal fun buildLocalSnapshot(
   enabledStates: Map<PluginId, Boolean>,
   errors: Map<PluginId, List<HtmlChunk>>,
   installationStates: Map<PluginId, PluginInstallationState>,
-  updateSources: Map<PluginId, PluginUpdateSourceId> = emptyMap(),
+  updateSources: Map<PluginId, PluginUpdateSource> = emptyMap(),
   restrictions: Map<PluginId, Boolean>,
   tags: Map<PluginId, List<String>> = emptyMap(),
 ): UnifiedPluginLocalSnapshot {

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.application.edtWriteAction
@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.writeText
+import com.intellij.platform.eel.EelApi
 import com.intellij.psi.PsiFile
 import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils.ENV_YAML_FILE_NAME
 import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils.ENV_YML_FILE_NAME
@@ -22,7 +23,7 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.toPythonPackages
-import com.jetbrains.python.conda.loadLocalPythonCondaPath
+import com.jetbrains.python.conda.loadPythonCondaPath
 import com.jetbrains.python.packaging.management.DependenciesExporter
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
@@ -52,8 +53,8 @@ internal class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
   private val condaPackageEngine = CondaPackageManagerEngine(sdk)
   private val pipPackageEngine = PipPackageManagerEngine(project, sdk)
 
-  override val cliSpecs: List<PythonManagerCliSpec> = listOf(
-    PythonManagerCliSpec("conda", { loadLocalPythonCondaPath() }),
+  override fun getCliSpecs(eelApi: EelApi): List<PythonManagerCliSpec> = listOf(
+    PythonManagerCliSpec("conda", { loadPythonCondaPath(eelApi.descriptor) }),
   )
 
   override val dependenciesExporter: DependenciesExporter

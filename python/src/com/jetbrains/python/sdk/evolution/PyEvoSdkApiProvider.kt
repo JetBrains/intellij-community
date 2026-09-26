@@ -15,10 +15,17 @@ import com.github.benmanes.caffeine.cache.Expiry
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -32,6 +39,7 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.psi.PsiManager
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.installer.PySdkToInstallManager
@@ -124,12 +132,16 @@ import java.nio.file.Path
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.pathString
+import kotlin.time.Duration as KotlinDuration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTimedValue
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
@@ -145,6 +157,17 @@ private val LOG = logger<PyEvoSdkApiProvider>()
 
 /** The platform group holding every tool's package-manager actions (uv lock/sync, conda export/update, …). */
 private const val PACKAGE_MANAGER_ACTIONS_GROUP: String = "PythonPackageManagerActions"
+
+/**
+ * How long a rebuild waits for the interpreter's own background refresh before going ahead regardless — see
+ * [PyEvoSdkApiImpl.awaitSdkQuiet]. Generous, because the slow part is skeleton generation on a fresh environment; past
+ * it the interpreter is most likely held by something that will not let go on its own, and waiting longer only makes
+ * the widget look stuck.
+ */
+private val SDK_QUIESCE_TIMEOUT: KotlinDuration = 20.seconds
+
+/** How often [PyEvoSdkApiImpl.awaitSdkQuiet] re-asks. `isUpdateScheduled` is a lock and a set lookup, so this is cheap. */
+private val SDK_QUIESCE_POLL: KotlinDuration = 200.milliseconds
 
 /**
  * The statistics identity of [nodeId], taken from the provider that owns it.
@@ -782,6 +805,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     val homePath = request.envHomePath.toNioPathOrNull()
                    ?: return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.env.not.found", request.envHomePath))
     return withSdkConfigurationLock(workspace.project) {
+      awaitSdkQuiet(homePath)
       val baseToken = inToolTrace(workspace.project, traceId, nodeId) {
         installedBaseToken(request.baseToken, request.installPythonVersion, fileSystem, workspace.baseDir)
       }
@@ -794,6 +818,35 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
       PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk, false)
       EvoSelectResultDto.Ok
     }
+  }
+
+  /**
+   * Waits, briefly, for the background refresh of the interpreter at [homePath] to finish before its environment is
+   * destroyed.
+   *
+   * A refresh runs that interpreter — it reads its version, its paths, its packages, and generates its skeletons — and
+   * on Windows a running executable cannot be deleted at all. So a rebuild started while one is in flight deletes
+   * everything around `python.exe` and then fails on the binary itself, leaving a half-emptied environment that the
+   * create step cannot use either (PY-92488).
+   *
+   * A rebuild is what makes this likely rather than rare: it ends by refreshing the SDK it rebuilt
+   * ([refreshRebuiltSdk]), so a second rebuild of the same environment races the first one's refresh. Deleting also
+   * fires VFS events under the interpreter's own roots, and those schedule a refresh of their own
+   * (`PythonPackageManagerServiceImpl` watches them).
+   *
+   * Waiting rather than refusing, because the refresh ends on its own and the user asked for a rebuild. The wait is
+   * bounded because nothing here can make it end: skeleton generation on a fresh environment runs for a while, and a
+   * console or a debug session holding the interpreter never ends by itself. Past the bound the rebuild goes ahead and
+   * reports what it finds — which, where the interpreter is genuinely held, is the message [deleteEnvDir] gives an
+   * `AccessDeniedException`, naming the environment as in use rather than saying only that a delete failed.
+   */
+  private suspend fun awaitSdkQuiet(homePath: Path) {
+    val sdk = PythonSdkUtil.getAllSdks().firstOrNull { it.homePath?.toNioPathOrNull() == homePath } ?: return
+    withTimeoutOrNull(SDK_QUIESCE_TIMEOUT) {
+      while (PythonSdkUpdater.isUpdateScheduled(sdk)) {
+        delay(SDK_QUIESCE_POLL)
+      }
+    } ?: LOG.info("Evo: '${sdk.name}' is still refreshing after ${SDK_QUIESCE_TIMEOUT}; rebuilding anyway")
   }
 
   /**
@@ -1011,11 +1064,54 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
   override suspend fun sdkConfigurationInProgress(projectId: ProjectId): Flow<Boolean> =
     projectId.findProjectOrNull()?.isSdkConfigurationInProgress ?: flowOf(false)
 
-  override suspend fun listPackageManagerActionIds(): List<String> {
+  override suspend fun listPackageManagerActions(projectId: ProjectId, pyProjectKey: String): List<EvoLeafDto> {
+    val target = resolveTarget(projectId, pyProjectKey) ?: return emptyList()
     val group = ActionUtil.getAction(PACKAGE_MANAGER_ACTIONS_GROUP) as? DefaultActionGroup ?: return emptyList()
     val actionManager = ActionManager.getInstance()
-    
-    return group.getChildren(actionManager).filterNot { it is Separator }.mapNotNull { actionManager.getId(it) }
+    val context = target.dependencyFileContext() ?: return emptyList()
+
+    // Each action gates itself in `update()`, by resolving its package manager from the dependency file in the context
+    // it is given. Run that here rather than let the frontend do it: these are backend classes, so a frontend
+    // ActionManager answers with the delegating wrapper registered for the id, whose update() decides nothing and
+    // leaves every row visible (PY-92487).
+    return group.getChildren(actionManager).filterNot { it is Separator }.mapNotNull { action ->
+      val actionId = actionManager.getId(action) ?: return@mapNotNull null
+      val presentation = action.templatePresentation.clone()
+      val event = AnActionEvent.createEvent(context, presentation, ActionPlaces.POPUP, ActionUiKind.POPUP, null)
+      ActionUtil.updateAction(action, event)
+      if (!presentation.isVisible) return@mapNotNull null
+      EvoLeafDto(
+        title = presentation.text ?: actionId,
+        description = presentation.description,
+        icon = (presentation.icon ?: AllIcons.Actions.Install).rpcId(),
+        kind = EvoLeafKind.ACTION,
+        actionId = actionId,
+      )
+    }
+  }
+
+  /**
+   * The context a package-manager action is updated and run against: this target's interpreter's dependency file.
+   *
+   * Never the file the editor happens to show. The rows act on the interpreter the widget speaks for, and an action
+   * taking its file from the editor would write to an unrelated one — conda's "export to environment.yml" over an open
+   * `pyproject.toml`. `null` when the interpreter has no dependency file, which is a statement rather than a gap: no
+   * row of this group applies to such an interpreter, so none is offered.
+   */
+  private suspend fun EvoTarget.dependencyFileContext(): DataContext? {
+    val project = workspace.project
+    val sdk = pyProject.module.findPythonSdk() ?: return null
+    // `PythonPackageManager.forSdk` reads `sdk.pySdkAdditionalData`, which throws on an SDK created without any.
+    // Test the precondition instead of catching, as getCurrentInterpreter does for the same call.
+    if (sdk.sdkAdditionalData !is PythonSdkAdditionalData) return null
+    val file = PythonPackageManager.forSdk(project, sdk).getRootDependenciesFile()?.virtualFile ?: return null
+    // PythonPackageManagerAction.actionPerformed bails out without a PSI file (it restarts the daemon on it).
+    val psiFile = readAction { PsiManager.getInstance(project).findFile(file) }
+    return SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(CommonDataKeys.VIRTUAL_FILE, file)
+      .apply { if (psiFile != null) add(CommonDataKeys.PSI_FILE, psiFile) }
+      .build()
   }
 
   /**
@@ -1136,6 +1232,9 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     val target = resolveTarget(projectId, pyProjectKey)
                  ?: return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.pyproject.not.found", pyProjectKey))
     val project = target.workspace.project
+    // A package-manager row: its actionId is the platform action's own id, and it is run against the same dependency
+    // file it was gated on — never the editor's, which is unrelated to the interpreter the row acts for.
+    if (nodeId == EvoNodeIds.PACKAGE_MANAGER) return target.performPackageManagerAction(actionId)
     // Only the "advanced" node (AdvancedEvoEnvironmentProvider) exposes backend actions today; its actionId is the
     // index into collectAddInterpreterActions. Resolved after `project` so a malformed id is reported rather than
     // dropped — an unreported failure here would read as the action never having been clicked.
@@ -1163,6 +1262,36 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
                  }
     withContext(Dispatchers.EDT) { action.createDialog()?.show() }
     PyEvoWidgetCollector.backendActionPerformed(project, evoNodeStats(nodeId), PyEvoWidgetCollector.Outcome.OK)
+    return EvoSelectResultDto.Ok
+  }
+
+  /**
+   * Runs the `PythonPackageManagerActions` row [actionId] on this target's dependency file.
+   *
+   * The action is updated once more before it is performed, against the same context
+   * [dependencyFileContext] built to gate it: the row was drawn when the popup was built, and the project may have
+   * moved on since. An action that no longer applies is reported as a failure rather than run on a stale answer.
+   *
+   * The action itself does its own background work — `PythonPackageManagerAction.actionPerformed` launches a coroutine
+   * — so this returns as soon as it has been dispatched, exactly as the "advanced" branch returns once its dialog has
+   * been shown.
+   */
+  private suspend fun EvoTarget.performPackageManagerAction(actionId: String): EvoSelectResultDto {
+    val project = workspace.project
+    val stats = evoNodeStats(EvoNodeIds.PACKAGE_MANAGER)
+    fun failed(): EvoSelectResultDto {
+      PyEvoWidgetCollector.backendActionPerformed(project, stats, PyEvoWidgetCollector.Outcome.ERROR)
+      return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.select.failed"))
+    }
+
+    val action = ActionUtil.getAction(actionId) ?: return failed()
+    val context = dependencyFileContext() ?: return failed()
+    val presentation = action.templatePresentation.clone()
+    val event = AnActionEvent.createEvent(context, presentation, ActionPlaces.POPUP, ActionUiKind.POPUP, null)
+    ActionUtil.updateAction(action, event)
+    if (!presentation.isVisible || !presentation.isEnabled) return failed()
+    withContext(Dispatchers.EDT) { ActionUtil.performAction(action, event) }
+    PyEvoWidgetCollector.backendActionPerformed(project, stats, PyEvoWidgetCollector.Outcome.OK)
     return EvoSelectResultDto.Ok
   }
 

@@ -20,6 +20,8 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListCompExpression;
+import com.jetbrains.python.psi.types.PyAnyType;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
@@ -49,6 +51,7 @@ public class PyListCompExpressionImpl extends PyComprehensionElementImpl impleme
       final PyType elementType = PyLiteralType.upcastLiteralToClass(getResultElementType(resultExpr, context));
       return new PyCollectionTypeImpl(list, false, Collections.singletonList(elementType));
     }
-    return cache.getListType();
+    final PyClassType listType = cache.getListType();
+    return listType != null ? listType : PyAnyType.getUnknown();
   }
 }

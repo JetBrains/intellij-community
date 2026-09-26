@@ -25,7 +25,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.HtmlChunk
@@ -925,7 +925,7 @@ class ListPluginComponent private constructor(
   }
 
   private fun createUnknownUpdateSourceWarningPanel(
-    pluginUpdateSource: PluginUpdateSourceId?,
+    pluginUpdateSource: PluginUpdateSource?,
     installationState: PluginInstallationState?,
   ) {
     if (shouldHidePluginUpdateSourceUI(installationState)) {

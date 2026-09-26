@@ -3,6 +3,23 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.mcpserver.plugin` start
 dev_dist_plugin(
+    classpath_jars = [
+        # do not sort,
+        "lib/intellij.mcpserver.jar",
+        "lib/modules/intellij.mcpserver.toolsets.jar",
+        "lib/intellij.mcpserver.stdio.jar",
+        "lib/modules/intellij.mcpserver.vcs.jar",
+        "lib/modules/intellij.mcpserver.terminal.jar",
+        "lib/modules/intellij.mcpserver.terminal.frontend.jar",
+        "lib/modules/intellij.mcpserver.frontend.jar",
+        "lib/intellij.libraries.kotlin.logging.jar",
+        "lib/intellij.libraries.mcp.kotlin.sdk.jar",
+        "lib/modules/intellij.libraries.night.config.toml.jar",
+        "lib/intellij.libraries.ktor.server.content.negotiation.jar",
+        "lib/intellij.libraries.ktor.server.sse.jar",
+        "lib/intellij.libraries.schema.kenerator.jar",
+        "lib/mcpserver-plugin.jar",
+    ],
     content_modules = [
         # do not sort,
         "intellij.mcpserver",
@@ -36,17 +53,9 @@ dev_dist_plugin(
         "intellij.mcpserver.vcs",
     ],
     jars = {
-        "lib/intellij.libraries.kotlin.logging.jar": [
-            "intellij.libraries.kotlin.logging",
-            "@lib//:libraries-kotlin-logging-io-github-oshai-kotlin-logging-jvm",
-        ],
         "lib/intellij.libraries.mcp.kotlin.sdk.jar": [
             "intellij.libraries.mcp.kotlin.sdk",
             "@lib//:libraries-mcp-kotlin-sdk-io-modelcontextprotocol-kotlin-sdk",
-        ],
-        "lib/modules/intellij.libraries.night.config.toml.jar": [
-            "intellij.libraries.night.config.toml",
-            "@lib//:libraries-night-config-toml-night-config-toml",
         ],
         "lib/intellij.libraries.ktor.server.content.negotiation.jar": [
             "intellij.libraries.ktor.server.content.negotiation",
@@ -75,6 +84,7 @@ dev_dist_plugin(
     module_jar_paths = {
         "intellij.mcpserver": "lib/intellij.mcpserver.jar",
         "intellij.mcpserver.stdio": "lib/intellij.mcpserver.stdio.jar",
+        "intellij.libraries.kotlin.logging": "lib/intellij.libraries.kotlin.logging.jar",
     },
 )
 ### auto-generated section `dev intellij.mcpserver.plugin` end

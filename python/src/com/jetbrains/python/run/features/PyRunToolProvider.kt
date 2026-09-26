@@ -1,11 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run.features
 
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
@@ -133,11 +134,11 @@ abstract class PySdkRunToolProvider<T : PyFlavorData, U : PythonSdkFlavor<T>>(
   override suspend fun getRunToolParameters(sdk: Sdk, inlineScriptTarget: Path?): PyRunToolParameters {
     val additionalData = sdk.pySdkAdditionalData
     val fileSystem = when (additionalData) {
-      is PyTargetAwareAdditionalData -> additionalData.targetEnvironmentConfiguration?.let {
-        TargetFileSystem(it, PythonLanguageRuntimeConfiguration())
-      } ?: localEel.toFileSystem()
-      else -> localEel.toFileSystem()
-    }
+                       is PyTargetAwareAdditionalData -> additionalData.targetEnvironmentConfiguration?.let {
+                         TargetFileSystem(it, PythonLanguageRuntimeConfiguration())
+                       }
+                       else -> null
+                     } ?: Path.of(sdk.homePath!!).getEelDescriptor().toEelApi().toFileSystem()
 
     @Suppress("UNCHECKED_CAST") // Checked by isAvailable and the flavor's data contract
     val flavorAndData = additionalData.flavorAndData as PyFlavorAndData<T, U>

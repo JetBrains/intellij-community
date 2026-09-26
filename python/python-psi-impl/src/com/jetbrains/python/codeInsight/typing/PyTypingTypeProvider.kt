@@ -221,7 +221,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return Ref(param.toKeywordContainerType(type))
     }
     if (PyNames.NONE == param.defaultValueText) {
-      return Ref(PyUnionType.unionOrUnknown(type, PyBuiltinCache.getInstance(param).noneType))
+      return Ref(PyUnionType.unionOrUnknown(type, PyBuiltinCache.getInstance(param).noneType ?: PyAnyType.unknown))
     }
     if (context.typeContext.maySwitchToAST(param)) {
       val defaultValue = param.defaultValue
@@ -574,7 +574,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         val isAsync = ASYNC_GENERATOR == qName
         if (!isAsync && GENERATOR != qName) return null
 
-        val noneType: PyType? = PyBuiltinCache.getInstance(type.pyClass).noneType
+        val noneType: PyType? = PyBuiltinCache.getInstance(type.pyClass).noneType ?: PyAnyType.unknown
 
         var yieldType: PyType? = PyAnyType.unknown
         var sendType = noneType
@@ -1565,7 +1565,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       if (typeHint is PyNoneLiteralExpression ||
           typeHint is PyReferenceExpression && PyNames.NONE == typeHint.text
       ) {
-        return Ref(PyBuiltinCache.getInstance(resolved).noneType)
+        return Ref(PyBuiltinCache.getInstance(resolved).noneType ?: PyAnyType.unknown)
       }
       return null
     }
@@ -1799,7 +1799,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
           if (argExpr != null) {
             argType = getType(argExpr, context).derefOrUnknown()
           }
-          return Ref(PyUnionType.unionOrUnknown(argType, PyBuiltinCache.getInstance(element).noneType))
+          return Ref(PyUnionType.unionOrUnknown(argType, PyBuiltinCache.getInstance(element).noneType ?: PyAnyType.unknown))
         }
       }
       return null

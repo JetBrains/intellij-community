@@ -76,6 +76,7 @@ import com.jetbrains.python.psi.impl.IntentionalUnstubbing;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
@@ -117,7 +118,7 @@ public abstract class PyTestCase extends UsefulTestCase {
     myFixture.setUp();
 
     // Enable Any/Unknown type support by default in all tests; opt out per method or class with @PyAnyTypeDisabled.
-    Registry.get("python.type.any").setValue(!isPyAnyTypeDisabledForCurrentTest());
+    Registry.get(PyAnyType.REGISTRY_KEY).setValue(!isPyAnyTypeDisabledForCurrentTest());
   }
 
   private boolean isPyAnyTypeDisabledForCurrentTest() {
@@ -160,7 +161,7 @@ public abstract class PyTestCase extends UsefulTestCase {
       addSuppressedException(e);
     }
     finally {
-      Registry.get("python.type.any").resetToDefault();
+      Registry.get(PyAnyType.REGISTRY_KEY).resetToDefault();
       super.tearDown();
     }
   }
@@ -738,7 +739,7 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   protected static void withNewAnyTypeEnabled(@NotNull Runnable test) {
-    var key = Registry.get("python.type.any");
+    var key = Registry.get(PyAnyType.REGISTRY_KEY);
     var previousValue = key.asBoolean();
     try {
       key.setValue(true);

@@ -1,0 +1,29 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.grid.core.impl"/>
+    <module name="intellij.grid.impl"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.structureView"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij.database.datagrid">
+    <structureViewModelFactory implementation="com.intellij.grid.structureview.TableEditorStructureViewModelFactory"/>
+  </extensions>
+
+  <actions resource-bundle="messages.DataGridBundle">
+    <action id="Console.TableResult.ColumnsList" class="com.intellij.grid.structureview.ColumnsListAction"
+            use-shortcut-of="FileStructurePopup">
+      <add-to-group group-id="Console.TableResult.ColumnHeaderPopup" anchor="after"
+                    relative-to-action="Console.TableResult.ShowAllColumns"/>
+      <add-to-group group-id="Console.TableResult.Options" anchor="after"
+                    relative-to-action="Console.TableResult.HideEditMaximized"/>
+    </action>
+  </actions>
+</idea-plugin>

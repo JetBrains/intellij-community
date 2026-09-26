@@ -2,7 +2,7 @@
 package com.intellij.openapi.application
 
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceInitializationActivity
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceInitializer
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
@@ -17,8 +17,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertNotNull
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 
 @TestApplication
 @RegistryKey(key = "platform.enable.plugin.update.source.feature", value = "true")
@@ -147,6 +148,29 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
     }
   }
 
+  @Test
+  fun `enforced initialization returns success result`() {
+    setCustomRepositoryHosts(emptyList())
+    setInstalledPluginMocks(installedPlugin(UNKNOWN_PLUGIN))
+
+    val result = PluginUpdateSourceInitializer.enforceInitialization()
+
+    val success = assertIs<PluginUpdateSourceInitializer.Result.Success>(result)
+    assertTrue(success.loadedPluginsWithoutUpdateSource >= 1)
+  }
+
+  @Test
+  fun `enforced initialization returns repository URL in failure result`() {
+    val brokenServer = createTestServer()
+    brokenServer.httpServer.stop(0)
+    setCustomRepositoryHosts(listOf(brokenServer.url))
+
+    val result = PluginUpdateSourceInitializer.enforceInitialization()
+
+    val failure = assertIs<PluginUpdateSourceInitializer.Result.Failure>(result)
+    assertTrue(assertNotNull(failure.errorMessage).contains(brokenServer.url))
+  }
+
   private fun setCustomRepositoryHosts(hosts: List<String>) {
     originalCustomRepositoryHosts = originalCustomRepositoryHosts ?: UpdateSettings.getInstance().storedPluginHosts.toList()
     restoreCustomRepositoryHosts(hosts)
@@ -169,13 +193,13 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
     }
   }
 
-  private fun pluginUpdateSourcesByPluginId(): Map<String, PluginUpdateSourceId?> {
+  private fun pluginUpdateSourcesByPluginId(): Map<String, PluginUpdateSource?> {
     return TESTED_PLUGIN_IDS.associateWith { pluginId ->
       PluginUpdateSourceService.getInstance().getPersistedPluginUpdateSourceId(pluginId(pluginId))
     }
   }
 
-  private fun assertPluginUpdateSource(pluginId: String, expectedUpdateSourceId: PluginUpdateSourceId) {
+  private fun assertPluginUpdateSource(pluginId: String, expectedUpdateSourceId: PluginUpdateSource) {
     assertEquals(expectedUpdateSourceId, PluginUpdateSourceService.getInstance().getPersistedPluginUpdateSourceId(pluginId(pluginId)))
   }
 

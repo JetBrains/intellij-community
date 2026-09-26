@@ -26,7 +26,8 @@ import (
 //
 // `native-tree=`, `native-variant=` and `native-lib=` together put a group in natives mode; see NativeSpec. They come
 // as three lines rather than one because each is a different kind of value: an output path, a platform token and a
-// library name. Two of the three is a recipe that says one thing and packs another, so it is refused.
+// library name. `native-lib=` alone only reserves the library's native entries and writes no tree. Any other subset is
+// a recipe that says one thing and packs another, so it is refused.
 func ParseFlagFile(path string, baseDir string) ([]MergeSpec, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -182,6 +183,9 @@ func ParseFlagFile(path string, baseDir string) ([]MergeSpec, error) {
 		if spec.RejectNativeEntries {
 			return nil, fmt.Errorf("%s: `reject-native-entries=true` cannot be combined with a native tree", spec.Output)
 		}
+		if !spec.Native.WritesTree() {
+			continue
+		}
 		tree := spec.Native.Tree
 		_, outputConflict := seen[tree]
 		if outputConflict || metadataPaths[tree] || nativeTrees[tree] || tree == trace {
@@ -229,8 +233,11 @@ func (lines nativeLines) spec() (*NativeSpec, error) {
 	if lines.tree == "" && lines.variant == "" && lines.lib == "" {
 		return nil, nil
 	}
+	if lines.tree == "" && lines.variant == "" {
+		return &NativeSpec{LibName: lines.lib}, nil
+	}
 	if lines.tree == "" || lines.variant == "" || lines.lib == "" {
-		return nil, fmt.Errorf("`native-tree=`, `native-variant=` and `native-lib=` are required together")
+		return nil, fmt.Errorf("`native-tree=` and `native-variant=` require each other and `native-lib=`")
 	}
 	family, arch, err := nativelib.ParseVariant(lines.variant)
 	if err != nil {

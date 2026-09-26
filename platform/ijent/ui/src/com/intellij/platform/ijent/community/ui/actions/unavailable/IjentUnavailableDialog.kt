@@ -26,8 +26,7 @@ import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.ijent.IjentCallerContext
 import com.intellij.platform.ijent.IjentMachine
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandler
-import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult
-import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult.ProjectCloseDecision
+import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableUserDecisionException
 import com.intellij.platform.ijent.community.impl.nio.ReconnectUiDialogImpl
 import com.intellij.platform.ijent.community.impl.nio.ReconnectUiHandleImpl
 import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
@@ -55,17 +54,20 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import javax.swing.JComponent
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.time.Duration.Companion.seconds
 
-private class EdtOnceTask : OnceTask<IjentUnavailableHandlerResult, ReconnectUiDialogImpl>() {
+private class EdtOnceTask : OnceTask<Nothing, ReconnectUiDialogImpl>(
+  shouldCacheFailure = { it is IjentUnavailableUserDecisionException },
+) {
   override suspend fun <R> executeUnderLockIfNotAlreadyAcquired(f: suspend () -> R): R {
     return if (checkNotNull(IjentCallerContext.getSaved()).isDispatchThread) {
       check(ApplicationManager.getApplication().isDispatchThread)
@@ -89,10 +91,12 @@ private class EdtOnceTask : OnceTask<IjentUnavailableHandlerResult, ReconnectUiD
  * that generation is closed and new projects are opened on the same IJent.
  */
 @Service
-private class NotRespondingFilesystemDialogService {
+@ApiStatus.Internal
+@VisibleForTesting
+class NotRespondingFilesystemDialogService {
   private val pendingRequests = ConcurrentHashMap<EelDescriptor, Pair<List<Project>, EdtOnceTask>>()
-  suspend fun doOnceOrWait(ijentId: EelDescriptor, dialogParams: IjentUnavailableDialogHandler.DialogParams, onComputing: (Deferred<ReconnectUiDialogImpl>) -> Unit, f: suspend (CompletableDeferred<ReconnectUiDialogImpl>) -> IjentUnavailableHandlerResult): IjentUnavailableHandlerResult {
-    val onceTask = pendingRequests.compute(ijentId) { _, v ->
+  suspend fun doOnceOrWait(dialogParams: IjentUnavailableDialogHandler.DialogParams, onComputing: (Deferred<ReconnectUiDialogImpl>) -> Unit, f: suspend (CompletableDeferred<ReconnectUiDialogImpl>) -> Nothing): Nothing {
+    val onceTask = pendingRequests.compute(dialogParams.eelDescriptor) { _, v ->
       when (dialogParams) {
         is IjentUnavailableDialogHandler.DialogParams.ProjectIjent -> {
           when {
@@ -119,8 +123,10 @@ private class NotRespondingFilesystemDialogService {
   }
 }
 
-internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
-  override suspend fun showModalDialog(eelDescriptor: EelDescriptor, uiHandle: ReconnectUiHandleImpl): IjentUnavailableHandlerResult {
+@ApiStatus.Internal
+@VisibleForTesting
+class IjentUnavailableDialogHandler : IjentUnavailableHandler {
+  override suspend fun showModalDialog(eelDescriptor: EelDescriptor, uiHandle: ReconnectUiHandleImpl): Nothing {
     val activeProject = ProjectUtil.getActiveProject()
     val dialogParams = ProjectManager.getInstance().openProjects.filter {
       it.getEelDescriptor() == eelDescriptor
@@ -132,7 +138,7 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
       DialogParams.ProjectIjent(eelDescriptor, it)
     } ?: DialogParams.UnrelatedIjent(eelDescriptor, ProjectManager.getInstance().defaultProject)
     LOG.warn("Ijent is unavailable. Modal dialog will be shown.")
-    return NotRespondingFilesystemDialogService.getInstance().doOnceOrWait(eelDescriptor, dialogParams, uiHandle::setDialogSession) { dialogSession ->
+    return NotRespondingFilesystemDialogService.getInstance().doOnceOrWait(dialogParams, uiHandle::setDialogSession) { dialogSession ->
       coroutineScope {
         val logJob = launch(Dispatchers.IO) {
           val ijentSession = eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()
@@ -169,9 +175,9 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
     class UnrelatedIjent(override val eelDescriptor: EelDescriptor, val defaultProject: Project) : DialogParams()
   }
 
-  private suspend fun showCloseProjectDialog(dialogSession: CompletableDeferred<ReconnectUiDialogImpl>, dialogParams: DialogParams): IjentUnavailableHandlerResult {
+  private suspend fun showCloseProjectDialog(dialogSession: CompletableDeferred<ReconnectUiDialogImpl>, dialogParams: DialogParams): Nothing {
     val coroutineContext = currentCoroutineContext()
-    val closeDecision = suspendCancellableCoroutine { cont ->
+    suspendCancellableCoroutine<Nothing> { cont ->
       val builder = DialogBuilder(dialogParams.projectList.first()).apply {
         setTitle(IjentImplBundle.message("dialog.title.ijent.unavailable"))
         setCenterPanel(createCenterPanel(dialogParams))
@@ -212,11 +218,15 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
               WelcomeFrame.showIfNoProjectOpened()
             }
             dialogParams.eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()?.close()
-            cont.resume(ProjectCloseDecision(dialogParams.eelDescriptor))
+            throw IjentUnavailableUserDecisionException(
+              "The user chose to close the project instead of waiting for IJent ${dialogParams.eelDescriptor}."
+            )
           }
           is DialogParams.UnrelatedIjent -> {
             dialogParams.eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()?.close()
-            cont.resume(IjentUnavailableHandlerResult.UnrelatedIjent(dialogParams.eelDescriptor))
+            throw IjentUnavailableUserDecisionException(
+              "The user chose to stop IJent ${dialogParams.eelDescriptor}, which has no open projects."
+            )
           }
         }
       }
@@ -224,7 +234,6 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
         cont.resumeWithException(IllegalStateException("Unexpected exit code: $exitCode"))
       }
     }
-    return closeDecision
   }
 
   private fun Panel.createDefaultPanel(dialogParams: DialogParams) {

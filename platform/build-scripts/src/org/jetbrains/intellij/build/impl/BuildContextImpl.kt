@@ -51,7 +51,9 @@ import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.jarCache.JarCacheManager
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.intellij.build.jarCache.NonCachingJarCacheManager
+import org.jetbrains.intellij.build.productLayout.JNA_PLUGIN_MODULE
 import org.jetbrains.intellij.build.productLayout.PTY4J_PLUGIN_MODULE
+import org.jetbrains.intellij.build.productLayout.SKIKO_PLUGIN_MODULE
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.intellij.build.productRunner.createDevModeProductRunner
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -466,18 +468,24 @@ class BuildContextImpl internal constructor(
     jvmArgs.add("-Didea.vendor.name=${applicationInfo.shortCompanyName}")
     jvmArgs.add("-Didea.paths.selector=${systemSelector}")
 
-    // `intellij.pty4j.plugin` owns the JNA and pty4j copies and places `lib/jna` and `lib/pty4j`
-    if (getBundledPluginModules().contains(PTY4J_PLUGIN_MODULE)) {
+    val bundledPluginModules = getBundledPluginModules()
+    // `intellij.jna.plugin` owns the JNA copy and places `lib/jna`
+    if (bundledPluginModules.contains(JNA_PLUGIN_MODULE)) {
       // require bundled JNA dispatcher lib
       jvmArgs.add("-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".quoteIfNeeded())
       jvmArgs.add("-Djna.nosys=true")
       jvmArgs.add("-Djna.noclasspath=true")
+    }
+    // `intellij.pty4j.plugin` owns the pty4j copy and places `lib/pty4j`
+    if (bundledPluginModules.contains(PTY4J_PLUGIN_MODULE)) {
       jvmArgs.add("-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".quoteIfNeeded())
     }
     jvmArgs.add("-Dio.netty.allocator.type=pooled")
 
-    // require bundled Skiko
-    jvmArgs.add("-Dskiko.library.path=${macroName}/lib/skiko-awt-runtime-all".quoteIfNeeded())
+    // `intellij.skiko.plugin` owns the Skiko copy and places `lib/skiko-awt-runtime-all`
+    if (bundledPluginModules.contains(SKIKO_PLUGIN_MODULE)) {
+      jvmArgs.add("-Dskiko.library.path=${macroName}/lib/skiko-awt-runtime-all".quoteIfNeeded())
+    }
 
     if (useModularLoader || generateRuntimeModuleRepository) {
       jvmArgs.add("-Dintellij.platform.runtime.repository.path=${macroName}/${MODULE_DESCRIPTORS_COMPACT_PATH}".quoteIfNeeded())

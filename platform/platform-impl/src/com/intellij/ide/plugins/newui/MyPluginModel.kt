@@ -37,7 +37,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.okCancel
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
@@ -1266,7 +1266,7 @@ open class MyPluginModel @JvmOverloads constructor(
 
   fun updateUiAfterUpdateSourceChange(
     pluginId: PluginId,
-    pluginUpdateSource: PluginUpdateSourceId?,
+    pluginUpdateSource: PluginUpdateSource?,
   ) {
     forEachDetailPanel { pageComponent ->
       if (pageComponent.isShowingPlugin(pluginId)) {

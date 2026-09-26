@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.conda
 
 import com.intellij.execution.target.FullPathOnTarget
@@ -9,7 +9,7 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
-import com.jetbrains.python.conda.saveLocalPythonCondaPath
+import com.jetbrains.python.conda.savePythonCondaPath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.psi.LanguageLevel
@@ -77,7 +77,7 @@ internal suspend fun PyCondaCommand.createCondaSdkFromExistingEnvironment(
 
   sdk.pythonInterpreter()
   if (targetConfig == null) {
-    saveLocalPythonCondaPath(Path.of(fullCondaPathOnTarget))
+    savePythonCondaPath(Path.of(fullCondaPathOnTarget))
   }
   sdkType.setupSdkPaths(sdk)
   return PyResult.success(sdk)
@@ -116,7 +116,7 @@ internal suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(
     workingDirectory = workingDirectory,
   ).getOr { return it }
   if (targetConfig == null) {
-    saveLocalPythonCondaPath(Path.of(this@createCondaSdkAlongWithNewEnv.fullCondaPathOnTarget))
+    savePythonCondaPath(Path.of(this@createCondaSdkAlongWithNewEnv.fullCondaPathOnTarget))
   }
 
   return PyResult.success(sdk)

@@ -1323,7 +1323,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       d.get(undefined2) # ERROR Unresolved reference 'undefined2'
       d.get("str")
       d.get(1)
-      #     └ WARNING Expected type 'str', got 'Literal[1]' instead
+      #     └ WARNING No overload of 'get' matches the arguments. Argument types: (Literal[1]). Expected one of: (key: str), (key: str, default: str), (key: str, default: _T)
       """.trimIndent())
 
     @Test

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.services.systemPython.impl.providers
 
 import com.intellij.openapi.diagnostic.Logger
@@ -23,10 +23,6 @@ internal class AsdfSystemPythonProvider : SystemPythonProvider {
   }
 
   override suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>> {
-    if (useLegacyPythonProvider()) {
-      return PyResult.success(emptySet())
-    }
-
     val pythons = withContext(Dispatchers.IO) {
       val env = try {
         eelApi.exec.fetchLoginShellEnvVariables()
