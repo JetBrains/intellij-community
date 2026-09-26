@@ -102,7 +102,6 @@ sealed interface DevBuildOutput {
   data class Component(
     @JvmField val fragment: DevBuildFragment,
     @JvmField val manifestFile: Path,
-    @JvmField val pluginClasspathPrefixFile: Path? = null,
   ) : DevBuildOutput {
     init {
       require(!fragment.isComplete) { "A complete dev distribution must use DevBuildOutput.Complete" }
@@ -450,25 +449,6 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
             }
           }
           else null
-
-          request.componentOutput?.pluginClasspathPrefixFile?.let { prefixFile ->
-            fork("write plugin classpath prefix") {
-              val requiredPlatformLayout = checkNotNull(platformLayoutAwaited) {
-                "The '${request.fragment}' fragment must lay out the platform to describe the product"
-              }
-              val byteOut = ByteArrayOutputStream()
-              DataOutputStream(byteOut).use { out ->
-                writePluginClassPathPrefix(
-                  out = out,
-                  platformLayout = requiredPlatformLayout,
-                  descriptorCacheContainer = requiredPlatformLayout.descriptorCacheContainer,
-                  context = context,
-                )
-              }
-              prefixFile.parent?.createDirectories()
-              Files.write(prefixFile, byteOut.toByteArray())
-            }
-          }
 
           if (context.generateRuntimeModuleRepository && request.fragment.isComplete) {
             fork("generate runtime repository") {
@@ -855,9 +835,9 @@ internal fun configureDevModeBuildOptions(options: BuildOptions, request: BuildR
   // A dev assembly can contain uncommitted changes, so HEAD does not identify its contents.
   // Avoid coupling assembly to the mutable checkout solely for production provenance metadata.
   options.storeGitRevision = false
-  // Only the fragment that packs the core jars or writes the `plugin-classpath.txt` prefix has anywhere to put the
-  // inlined content-module descriptors; for the rest, resolving them only makes every content module's jar an input.
-  options.embedProductContentModuleDescriptors = request.fragment.ownsProductDescriptorJars || request.componentOutput?.pluginClasspathPrefixFile != null
+  // Only the fragment that packs the core jars has anywhere to put the inlined content-module descriptors; for the rest,
+  // resolving them only makes every content module's jar an input.
+  options.embedProductContentModuleDescriptors = request.fragment.ownsProductDescriptorJars
 }
 
 /** [scratchDir] holds throwaway build data (`temp`, `artifacts`); it is separate from [buildDir] when the latter must contain only the distribution. */

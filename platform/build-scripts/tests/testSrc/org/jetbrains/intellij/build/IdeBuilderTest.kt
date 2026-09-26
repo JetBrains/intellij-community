@@ -291,49 +291,6 @@ class IdeBuilderTest {
   }
 
   @Test
-  fun thePlatformFragmentInlinesTheProductDescriptorBecauseItPacksTheJarThatCarriesIt() {
-    val options = BuildOptions()
-
-    configureDevModeBuildOptions(
-      options = options,
-      request = createBuildRequest(
-        fragment = DevBuildFragment(
-          name = "platform_lib",
-          platform = PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.EXCLUDE),
-          platformResources = false,
-          plugins = null,
-          runtimeModuleRepository = false,
-        ),
-      ),
-      buildOptionsTemplate = BuildOptions(),
-    )
-
-    assertThat(options.embedProductContentModuleDescriptors).isTrue()
-  }
-
-  @Test
-  fun theFragmentWritingTheClasspathPrefixInlinesTheProductDescriptorWhateverElseItOwns() {
-    val options = BuildOptions()
-
-    configureDevModeBuildOptions(
-      options = options,
-      request = createBuildRequest(
-        fragment = DevBuildFragment(
-          name = "platform_lib",
-          platform = PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.ONLY),
-          platformResources = false,
-          plugins = null,
-          runtimeModuleRepository = false,
-        ),
-        pluginClasspathPrefixFile = tempDir.resolve("plugin-classpath-prefix"),
-      ),
-      buildOptionsTemplate = BuildOptions(),
-    )
-
-    assertThat(options.embedProductContentModuleDescriptors).isTrue()
-  }
-
-  @Test
   fun aCompleteDistributionInlinesTheProductDescriptor() {
     val options = BuildOptions()
 
@@ -742,7 +699,6 @@ class IdeBuilderTest {
     os: OsFamily = OsFamily.currentOs,
     arch: JvmArchitecture = JvmArchitecture.currentJvmArch,
     fragment: DevBuildFragment = DevBuildFragment.COMPLETE,
-    pluginClasspathPrefixFile: Path? = null,
   ): BuildRequest {
     return BuildRequest(
       platformPrefix = "idea",
@@ -756,7 +712,6 @@ class IdeBuilderTest {
       output = if (fragment.isComplete) DevBuildOutput.Complete else DevBuildOutput.Component(
         fragment = fragment,
         manifestFile = tempDir.resolve("${fragment.name}.component.json"),
-        pluginClasspathPrefixFile = pluginClasspathPrefixFile,
       ),
     )
   }

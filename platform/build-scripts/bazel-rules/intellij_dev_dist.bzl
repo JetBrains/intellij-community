@@ -185,7 +185,7 @@ IntellijDevFragmentInfo = provider(
         "manifest": "The fragment manifest.",
         "payload": "The already-existing files a `home`-less component's manifest names, or None; the composer stages them.",
         "plugin_classpath_part": "This fragment's plugin-classpath records, or None if it built no plugin.",
-        "plugin_classpath_prefix": "The plugin-classpath prefix, or None if another fragment produces it.",
+        "plugin_classpath_prefix": "The plugin-classpath prefix, or None if another component produces it.",
         "inputs_manifest": "The label-to-path manifest of the fragment's declared Bazel inputs.",
         "unused_inputs": "The declared inputs the assembly never resolved - declared minus these is what it used.",
     },
@@ -394,7 +394,7 @@ intellij_project_model_tree = rule(
 )
 
 # The selector values `DevDistMain` accepts, mirrored here so a typo in a BUILD file fails at analysis time.
-_PLATFORM_SELECTORS = ["", "except", "only"]
+_PLATFORM_SELECTORS = ["", "only"]
 
 def _add_target_platform_args(args, target_platform):
     if target_platform:
@@ -448,14 +448,13 @@ def _fragment_impl(ctx):
     _add_target_platform_args(args, ctx.attr.target_platform)
 
     if ctx.attr.platform:
+        if not ctx.attr.platform_payload:
+            fail("%s: platform needs platform_payload, which names the jars" % ctx.label, attr = "platform_payload")
         args.add("--platform=" + ctx.attr.platform)
-        if ctx.attr.platform_payload:
-            # Empty for a `lib/`-owning fragment of a product whose payload packs nothing per module: `except` then owns
-            # all of `lib/`, which is what it meant before any of these jars were handed over.
-            args.add_all(
-                ctx.attr.platform_payload[DevDistPlatformPayloadInfo].packed_jar_names,
-                format_each = "--platform-jar=%s",
-            )
+        args.add_all(
+            ctx.attr.platform_payload[DevDistPlatformPayloadInfo].packed_jar_names,
+            format_each = "--platform-jar=%s",
+        )
     runtime_module_repository_layout = None
     if ctx.attr.runtime_module_repository:
         # The assembler lays the platform and the bundled plugins out without files, then writes only `modules/`.
@@ -467,12 +466,6 @@ def _fragment_impl(ctx):
         runtime_module_repository_layout = ctx.actions.declare_file(ctx.label.name + ".runtime-module-repository-layout.json")
         args.add("--runtime-module-repository-layout=" + runtime_module_repository_layout.path)
         outputs.append(runtime_module_repository_layout)
-
-    plugin_classpath_prefix = None
-    if ctx.attr.produces_plugin_classpath_prefix:
-        plugin_classpath_prefix = ctx.actions.declare_file(ctx.label.name + ".plugin-classpath-prefix")
-        args.add("--plugin-classpath-prefix=" + plugin_classpath_prefix.path)
-        outputs.append(plugin_classpath_prefix)
 
     args.add_all(ctx.files.preloaded_manifests, format_each = "--preloaded-manifest=%s")
     args.add("--preloaded-only")
@@ -523,7 +516,7 @@ def _fragment_impl(ctx):
             payload = None,
             manifest = component_manifest,
             plugin_classpath_part = None,
-            plugin_classpath_prefix = plugin_classpath_prefix,
+            plugin_classpath_prefix = None,
             inputs_manifest = bazel_inputs_manifest,
             unused_inputs = unused_inputs,
         ),
@@ -532,9 +525,8 @@ def _fragment_impl(ctx):
 intellij_dev_fragment = rule(
     doc = """One independently cacheable slice of a dev distribution.
 
-    What the fragment owns is a selector over names, not a file list. `platform` owns the `lib/` jars by a generated
-    jar-name set: every jar `except` the named ones, or `only` them. `runtime_module_repository` owns `modules/`, the
-    runtime module repository a row asks for. No fragment writes `bin` and the product metadata: a consuming repository
+    What the fragment owns is a selector over names, not a file list. `platform = "only"` owns the `lib/` jars that a
+    generated jar-name set names. `runtime_module_repository` owns `modules/`, the runtime module repository. No fragment writes `bin` and the product metadata: a consuming repository
     renders them with `dev_dist_product_files` and places them with a component. No fragment owns a plugin directory:
     the packed plugin components do, and the composer checks that the components of one distribution partition it
     exactly.
@@ -546,18 +538,14 @@ intellij_dev_fragment = rule(
         "platform_prefix": attr.string(mandatory = True),
         "target_platform": attr.string(default = ""),
         "fragment_name": attr.string(mandatory = True, doc = "Identifies this fragment in its manifest, its mnemonic and the composer's completeness check."),
-        "platform": attr.string(default = "", values = _PLATFORM_SELECTORS, doc = "Which `lib/` jars this fragment owns - all `except` the packed ones, or `only` those; empty means none."),
+        "platform": attr.string(default = "", values = _PLATFORM_SELECTORS, doc = "Which `lib/` jars this fragment owns: `only` the packed ones, or none when empty."),
         "runtime_module_repository": attr.bool(default = False, doc = "Whether this fragment owns `modules/module-descriptors.dat` and `modules/module-descriptors.jar`."),
         "platform_payload": attr.label(
             providers = [DevDistPlatformPayloadInfo],
-            doc = "The `lib/` jar file names `platform` reads, as the target that derives them: with `except`, the " +
-                  "jars another component provides and this fragment must therefore not pack; with `only`, the jars " +
-                  "it packs and nothing else. `intellij_dev_packed_jars_component` reads the same provider, so an " +
-                  "`except` fragment and it partition the `lib/` jars exactly; the composer fails on a path both " +
-                  "provide. The fragment still reports those jars' core-classpath entries - deciding that needs the " +
-                  "platform layout, which the packer does not have.",
+            doc = "The `lib/` jar file names `platform` reads, as the target that derives them: the jars that " +
+                  "`intellij_dev_packed_jars_component` provides, which this fragment packs the way `JarPackager` " +
+                  "packs them.",
         ),
-        "produces_plugin_classpath_prefix": attr.bool(default = False, doc = "Whether this fragment writes the `plugin-classpath.txt` prefix; exactly one fragment of a distribution does."),
         "project_model_tree": attr.label(providers = [IntellijProjectModelTreeInfo], mandatory = True, doc = "The materialized project model tree this fragment reads. A consuming repository can share one tree with every fragment."),
         "bazel_targets_json": attr.label(allow_single_file = True, mandatory = True),
         "build_inputs": attr.label(providers = [IntellijDevBuildInputsInfo], mandatory = True),

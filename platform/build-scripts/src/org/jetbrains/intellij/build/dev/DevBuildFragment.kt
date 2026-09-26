@@ -7,16 +7,14 @@ import org.jetbrains.intellij.build.impl.ModuleItem
 /**
  * Which independently cacheable slice of a dev distribution one assembly produces.
  *
- * A complete distribution is [COMPLETE] - one assembly, everything in it. Anything else is a fragment: a caller
- * assembles several of them, each cached and invalidated on its own, and composes the results with
- * `composeDevBuildComponents`. The producers of one distribution must partition it exactly. A complement assembles
- * what nobody claimed, so nothing is silently dropped: [PlatformJarSelector.Mode.EXCLUDE] takes every `lib/` jar the
- * per-module packing actions do not pack. The plugin directories come from the packed plugin components, so no
- * fragment owns one.
+ * A complete distribution is [COMPLETE] - one assembly, everything in it. Anything else is a fragment. No
+ * distribution composes a fragment now: the fragments are the references of the `jars`, `replay` and `runtime-repo`
+ * gates, which pack the same files as a second producer. The plugin directories come from the packed plugin
+ * components, so no fragment owns one.
  */
 @ApiStatus.Internal
 data class DevBuildFragment(
-  /** Identifies the fragment in its component manifest and in diagnostics; `platform_lib`, `platform_runtime_module_repository`. */
+  /** Identifies the fragment in its component manifest and in diagnostics; `platform_lib_reference`, `platform_runtime_module_repository_reference`. */
   @JvmField val name: String,
   /** The `lib/` jars this fragment owns, or `null` if it owns none. */
   @JvmField val platform: PlatformJarSelector?,
@@ -65,9 +63,8 @@ data class DevBuildFragment(
   /**
    * Whether this fragment can pack the jar that the inlined product descriptor ends up in.
    *
-   * A fragment that owns `lib/` by exclusion holds the application-info module when no packing target takes its jar. The
-   * reference of the `jars` gate packs the handed-over jars, and the application-info module jar is one of them. So
-   * both need the descriptors inlined. A frontend is the exception: a jar of its own carries the root descriptor, see
+   * The reference of the `jars` gate packs the handed-over jars, and the application-info module jar is one of them. So
+   * it needs the descriptors inlined. A frontend is the exception: a jar of its own carries the root descriptor, see
    * [org.jetbrains.intellij.build.BuildOptions.embedProductContentModuleDescriptors]. `layoutPlatform` fails when a
    * fragment without the inlined descriptors packs the application-info module after all.
    */
@@ -95,16 +92,7 @@ data class PlatformJarSelector(
 ) {
   enum class Mode {
     /**
-     * Every `lib/` jar except [jars].
-     *
-     * [jars] are jar names another producer packs and the distribution composes in as a component of its own:
-     * `jvm_library` packs a content module's jar from the jars it merges alone, declaring no project model, so those
-     * jars survive a model edit that re-keys every fragment. A fragment must not pack them too - the composer fails on
-     * a path two components both provide - and must not resolve their modules either, since a declared module output is
-     * what makes a source edit re-run this action.
-     *
-     * The component of those jars lists the ones of the core classpath, so this fragment lists only the jars it packs.
-     * The plan generator decides them with `contentModuleJarCoreClasspathEntries`.
+     * Every `lib/` jar except [jars]. Only [ALL] uses it, with no [jars], for a complete assembly.
      */
     EXCLUDE,
 

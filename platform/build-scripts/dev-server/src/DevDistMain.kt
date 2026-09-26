@@ -92,9 +92,8 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
   // one, so it has to say which fragment it was
   Span.current().setAttribute("fragment", fragment.name)
   val componentManifest = options.optionalPath("--component-manifest")
-  val pluginClasspathPrefix = options.optionalPath("--plugin-classpath-prefix")
   val output = if (fragment.isComplete) {
-    require(componentManifest == null && pluginClasspathPrefix == null) {
+    require(componentManifest == null) {
       "Component output options require --fragment"
     }
     DevBuildOutput.Complete
@@ -103,7 +102,6 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
     DevBuildOutput.Component(
       fragment = fragment,
       manifestFile = checkNotNull(componentManifest) { "--component-manifest is required for fragment '$fragment'" },
-      pluginClasspathPrefixFile = pluginClasspathPrefix,
     )
   }
   options.optionalPath("--bazel-targets-json")?.let { path ->
@@ -185,13 +183,12 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
 private fun parseFragment(options: CommandLineOptions): DevBuildFragment {
   val name = options.optional("--fragment")
   val platform = options.optional("--platform")?.let { value ->
-    // The jars are named rather than derived: a fragment must own exactly the complement of what the distribution
-    // composes in as the packed-jars component, and both sides read one generated list.
+    // The jars are named rather than derived: the reference of the `jars` gate packs exactly the jars of the packed-jars
+    // component, and both sides read one generated list.
     val jars = options.list("--platform-jar").toSet()
     when (value) {
-      "except" -> PlatformJarSelector(jars = jars, mode = PlatformJarSelector.Mode.EXCLUDE)
       "only" -> PlatformJarSelector(jars = jars, mode = PlatformJarSelector.Mode.ONLY)
-      else -> error("Unknown --platform value '$value', expected except or only")
+      else -> error("Unknown --platform value '$value', expected only")
     }
   }
   val runtimeModuleRepository = options.optionalBoolean("--runtime-module-repository") ?: false
