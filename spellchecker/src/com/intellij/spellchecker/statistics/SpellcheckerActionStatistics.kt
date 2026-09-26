@@ -8,21 +8,21 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.project.Project
+import com.intellij.spellchecker.ApplicationDictionaryLayer
 import com.intellij.spellchecker.DictionaryLayer
-import com.intellij.spellchecker.util.SpellCheckerBundle
+import com.intellij.spellchecker.ProjectDictionaryLayer
 
 object SpellcheckerActionStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("spellchecker.events", 4)
+  private const val APPLICATION_LEVEL = "application-level"
+  private const val PROJECT_LEVEL = "project-level"
+
+  private val GROUP = EventLogGroup("spellchecker.events", 5)
 
   private val DOMAIN_FIELD = EventFields.String("domain", listOf("code", "comment", "literal", "commit"))
   private val DICTIONARY_LAYER_FIELD = EventFields.String(
-    "dictionary_layer",
-    listOf(
-      SpellCheckerBundle.message("dictionary.name.project.level"),
-      SpellCheckerBundle.message("dictionary.name.application.level")
-    )
+    "dictionary_layer", listOf(PROJECT_LEVEL, APPLICATION_LEVEL)
   )
   private val SUGGESTION_INDEX_FIELD = EventFields.Int("suggestion_index")
   private val TOTAL_SUGGESTIONS_FIELD = EventFields.Int("total_suggestions")
@@ -68,7 +68,11 @@ object SpellcheckerActionStatistics : CounterUsagesCollector() {
   @JvmStatic
   fun saveToPerformed(tracker: SpellcheckerRateTracker, dictionaryLayer: DictionaryLayer?) {
     val events = buildCommonEvents(tracker)
-    dictionaryLayer?.let { events.add(DICTIONARY_LAYER_FIELD.with(it.name)) }
+    when (dictionaryLayer) {
+      is ProjectDictionaryLayer -> events.add(DICTIONARY_LAYER_FIELD.with(PROJECT_LEVEL))
+      ApplicationDictionaryLayer -> events.add(DICTIONARY_LAYER_FIELD.with(APPLICATION_LEVEL))
+      else -> Unit
+    }
     saveToInvokedEvent.log(tracker.project, events)
   }
 
