@@ -66,14 +66,14 @@ But... Please double-check the dumps it changed before pushing.
 [Spectre](https://spectre.sebastiano.dev) drives a real Compose Desktop window, so its tests need a display and a
 non-headless JVM. That rules out `jps_test`, which forces `-Djava.awt.headless=true` and puts the IntelliJ test
 runtime on the classpath — the latter would hide exactly the standalone-runtime leaks these tests exist to catch.
-The lane therefore uses the `spectre_test` macro in [spectre.bzl](../spectre.bzl), which runs the JUnit Platform
+The lane therefore uses the `standalone_e2e_test` macro in [standalone-e2e.bzl](../standalone-e2e.bzl), which runs the JUnit Platform
 console launcher on a classpath containing only the module under test, Compose, and Spectre.
 
 These are ordinary test targets. On any machine with a display they run as part of `bazel test //platform/jewel/...`,
 or on their own:
 
 ```bash
-./bazel.cmd test //platform/jewel/int-ui/int-ui-standalone-tests:jewel-intUi-standalone-spectre-tests
+./bazel.cmd test //platform/jewel/int-ui/int-ui-standalone-tests:jewel-intUi-standalone-e2e-tests
 ```
 
 Windows will open and close on your desktop while they run; synthetic input goes to the test window, so you can keep
@@ -82,13 +82,13 @@ working, but do not be surprised by the flicker.
 Every Spectre target is tagged `requires-display`. That tag is both the CI routing hint and the escape hatch: a lane
 that genuinely has no display skips them with `--test_tag_filters=-requires-display`.
 
-### Scope: standalone only
+### Scope: standalone here, the bridge next door
 
-This lane covers **standalone** Jewel, and cannot be extended to the IJP bridge. Spectre automates a Compose Desktop
-window; inside the IDE a Jewel popup is a `JBPopup` hosting a `ComposePanel`, and the application under test is the
-IDE itself. So `JBPopupRenderer` and the other bridge renderers currently have **no headful coverage at all** — only
-the Compose UI unit tests in `ui-tests`. That gap is JEWEL-1397, which is IDE Starter / UI Driver work rather than
-Spectre work. Do not try to add a bridge test to `src/spectreTest`; it cannot run there.
+This lane covers **standalone** Jewel, and a bridge test cannot be added to `src/spectreTest`: Spectre automates a
+Compose Desktop window, whereas inside the IDE a Jewel popup is a `JBPopup` hosting a `ComposePanel` and the
+application under test is the IDE itself.
+
+The IDE is covered by a separate test that shares its scenarios with this lane. See [End-to-end tests](e2e-tests.md).
 
 ### Adding a Spectre test
 
@@ -108,7 +108,7 @@ instead of a green one that ran nothing.
 ### CI
 
 Spectre targets are meant to run on **both** CI systems, and neither needs a target list — both select by tag, so a
-new `spectre_test` target anywhere under `platform/jewel` joins CI on its own:
+new `standalone_e2e_test` target anywhere under `platform/jewel` joins CI on its own:
 
 ```bash
 bazel test //platform/jewel/... --build_tests_only --test_tag_filters=requires-display

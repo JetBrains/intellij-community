@@ -40,6 +40,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.JewelFlags
+import org.jetbrains.jewel.intui.standalone.awaitWindow
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.intui.standalone.window.Window as JewelWindow
 import org.jetbrains.jewel.ui.component.ComboBox
@@ -384,13 +385,5 @@ private class MatrixApp(private val content: @Composable () -> Unit) {
         window.set(null)
     }
 
-    suspend fun awaitWindow(): ComposeWindow {
-        repeat(300) {
-            window.get()?.let {
-                return it
-            }
-            delay(100.milliseconds)
-        }
-        error("The Compose test window was not created")
-    }
+    suspend fun awaitWindow(): ComposeWindow = window.awaitWindow()
 }

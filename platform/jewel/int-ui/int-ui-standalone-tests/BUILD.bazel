@@ -1,12 +1,12 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("//platform/jewel:spectre.bzl", "spectre_test")
+load("//platform/jewel:standalone-e2e.bzl", "standalone_e2e_test")
 
 # Headful Spectre UI tests (JEWEL-1390). Hand-written, and outside the JPS model on purpose:
 # the closure must stay standalone; StandaloneRuntimeSmokeTest is what enforces that.
 create_kotlinc_options(
-    name = "custom_jewel-intUi-standalone-spectre-tests",
+    name = "custom_jewel-intUi-standalone-e2e-tests",
     opt_in = [
         "androidx.compose.ui.ExperimentalComposeUiApi",
         "androidx.compose.foundation.ExperimentalFoundationApi",
@@ -16,15 +16,15 @@ create_kotlinc_options(
     x_context_parameters = True,
 )
 
-spectre_test(
-    name = "jewel-intUi-standalone-spectre-tests",
+standalone_e2e_test(
+    name = "jewel-intUi-standalone-e2e-tests",
     srcs = glob(
         ["src/spectreTest/kotlin/**/*.kt"],
         allow_empty = True,
     ),
     # The tests assert that JDialogRenderer, not the Compose popup, is the renderer under test.
     jvm_flags = ["-Djewel.customPopupRender=true"],
-    kotlinc_opts = ":custom_jewel-intUi-standalone-spectre-tests",
+    kotlinc_opts = ":custom_jewel-intUi-standalone-e2e-tests",
     module_name = "intellij.platform.jewel.intUi.standalone.spectreTests",
     visibility = ["//visibility:public"],
     # Icon resources only; adds no IntelliJ Platform classes to the closure.
@@ -32,6 +32,8 @@ spectre_test(
     deps = [
         "//libraries/compose-foundation-desktop",
         "//libraries/junit5",
+        "//platform/jewel/showcase-e2e:showcase-e2e-scenarios",
+        "//platform/jewel/samples/showcase",
         "//libraries/kotlinx/coroutines/core",
         "//platform/jewel/foundation",
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",

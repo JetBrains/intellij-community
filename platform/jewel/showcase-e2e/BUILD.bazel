@@ -1,0 +1,22 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+# Popup scenarios shared by the two end-to-end lanes: Spectre in-process against the standalone sample, and Spectre
+# attached over IPC against the IDE. Hand-written and outside the JPS model, like the lanes themselves.
+#
+# Depends on nothing but the Kotlin stdlib and coroutines on purpose. The standalone lane asserts that no IntelliJ
+# Platform class reaches its runtime closure, and Spectre types would tie the scenarios to one host's automator.
+jvm_library(
+    name = "showcase-e2e-scenarios",
+    testonly = True,
+    srcs = glob(
+        ["src/main/kotlin/**/*.kt"],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.jewel.showcaseE2eScenarios",
+    # Any package under platform/jewel may depend on this; nothing outside Jewel should.
+    visibility = ["//platform/jewel:__subpackages__"],
+    deps = [
+        "//libraries/kotlinx/coroutines/core",
+        "@lib//:kotlin-stdlib",
+    ],
+)

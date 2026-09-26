@@ -8,6 +8,7 @@ on:
       # checks is validated by the checks it changes rather than by the next unrelated Jewel PR.
       - ".github/workflows/jewel-checks.yml"
       - ".github/actions/setup-kotlin/**"
+      - ".github/actions/jewel-prepare-runner-storage/**"
 
 defaults:
   run:
@@ -200,48 +201,8 @@ jobs:
 
       # The API check compiles every community module, which does not fit a hosted runner's stock
       # resources. Same preparation as .github/actions/build_ide, which builds the IDE on ubuntu-latest.
-      - name: Free disk space
-        # language=bash
-        run: |
-          echo "Disk space before cleanup:"
-          df -h /
-          # Pre-installed toolchains the API check doesn't need.
-          sudo rm -rf \
-            /usr/share/dotnet \
-            /usr/share/swift \
-            /usr/share/miniconda \
-            /usr/local/lib/android \
-            /usr/local/share/boost \
-            /usr/local/share/powershell \
-            /usr/local/share/chromium \
-            /usr/local/lib/node_modules \
-            /opt/ghc \
-            /opt/hostedtoolcache/CodeQL \
-            /opt/hostedtoolcache/Ruby \
-            /opt/hostedtoolcache/PyPy \
-            /opt/hostedtoolcache/go \
-            /opt/microsoft \
-            /opt/google \
-            /imagegeneration \
-            /var/cache/apt/archives
-          sudo apt-get -y clean
-          docker image prune --all --force || true
-          docker builder prune --all --force || true
-          echo "Disk space after cleanup:"
-          df -h /
-
-      - name: Expand swap
-        # language=bash
-        run: |
-          # Bazel's JVM workers may hit OOM (exit 137) with the default 16 GB RAM and 4 GB swap.
-          # /mnt on hosted runners has ~70 GB free, so move swap there and grow it.
-          sudo swapoff -a || true
-          sudo rm -f /mnt/swapfile /swapfile
-          sudo fallocate -l 30G /mnt/swapfile
-          sudo chmod 600 /mnt/swapfile
-          sudo mkswap /mnt/swapfile
-          sudo swapon /mnt/swapfile
-          free -h
+      - name: Free disk space + Expand swap
+        uses: ./.github/actions/jewel-prepare-runner-storage
 
       - uses: actions/cache@v6.1.0
         name: Cache for jps-bootstrap
@@ -326,6 +287,14 @@ jobs:
       - uses: actions/checkout@v7.0.1
         name: Check out repository
 
+      # The IDE end-to-end test loads the JPS module graph, which includes the android modules.
+      - uses: actions/checkout@v7.0.1
+        name: Checkout JetBrains/android submodule
+        with:
+          repository: JetBrains/android
+          path: android
+          ref: master
+
       - name: Install Xvfb
         # libxrandr2 and libxinerama1 are dlopened, so nothing reports them missing.
         # language=bash
@@ -341,12 +310,14 @@ jobs:
             libgl1 \
             libfontconfig1
 
+      # The IDE end-to-end test has its own job. Its build compiles the whole platform, and the standalone tests
+      # time out when they run while that build is going on.
       - name: Run the Spectre headful UI tests
         run: |
           xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" \
             ./bazel.cmd test //platform/jewel/... \
               --build_tests_only \
-              --test_tag_filters=requires-display \
+              --test_tag_filters=requires-display,-jewel-ide-e2e \
               --test_output=errors
 
       - name: Upload Bazel test logs
@@ -373,12 +344,22 @@ jobs:
       - uses: actions/checkout@v7.0.1
         name: Check out repository
 
+      # The IDE end-to-end test loads the JPS module graph, which includes the android modules.
+      - uses: actions/checkout@v7.0.1
+        name: Checkout JetBrains/android submodule
+        with:
+          repository: JetBrains/android
+          path: android
+          ref: master
+
       - name: Run the Spectre headful UI tests
         # Not redundant: JDialogRenderer uses RenderSettings.SwingGraphics on Windows.
+        # The IDE end-to-end test has its own job. Its build compiles the whole platform, and the standalone tests
+        # time out when they run while that build is going on.
         run: >
           ./bazel.cmd test //platform/jewel/...
           --build_tests_only
-          --test_tag_filters=requires-display
+          --test_tag_filters=requires-display,-jewel-ide-e2e
           --test_output=errors
 
       - name: Upload Bazel test logs
@@ -387,6 +368,115 @@ jobs:
         with:
           name: spectre-test-logs-windows
           path: out/bazel-testlogs/platform/jewel/**
+          retention-days: 7
+          if-no-files-found: ignore
+
+  ide_e2e_tests:
+    name: Jewel IDE end-to-end tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - uses: actions/checkout@v7.0.1
+        name: Check out repository
+
+      # The IDE end-to-end test loads the JPS module graph, which includes the android modules.
+      - uses: actions/checkout@v7.0.1
+        name: Checkout JetBrains/android submodule
+        with:
+          repository: JetBrains/android
+          path: android
+          ref: master
+
+      # The IDE end-to-end test builds a dev IDE from every community module. Same preparation as the API check.
+      - name: Free disk space + Expand swap
+        uses: ./.github/actions/jewel-prepare-runner-storage
+
+      - name: Install Xvfb
+        # libxrandr2 and libxinerama1 are dlopened, so nothing reports them missing.
+        # language=bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            xvfb \
+            libxrender1 \
+            libxtst6 \
+            libxi6 \
+            libxrandr2 \
+            libxinerama1 \
+            libgl1 \
+            libfontconfig1
+
+      - name: Run the IDE end-to-end test
+        run: |
+          xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" \
+            ./bazel.cmd test //platform/jewel/... \
+              --build_tests_only \
+              --test_tag_filters=jewel-ide-e2e \
+              --test_output=errors
+
+      - name: Upload Bazel test logs
+        uses: actions/upload-artifact@v7.0.1
+        if: failure()
+        with:
+          name: ide-e2e-test-logs
+          # The second path holds the IDE's own logs, screenshots and thread dumps.
+          path: |
+            out/bazel-testlogs/platform/jewel/**
+            out/ide-tests/tests/**/log/**
+          retention-days: 7
+          if-no-files-found: ignore
+
+  ide_e2e_tests_windows:
+    name: Jewel IDE end-to-end tests (Windows)
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      # Kotlin test data blows past MAX_PATH, so checkout fails with "Filename too long" without this.
+      - name: Enable long paths
+        run: git config --global core.longpaths true
+
+      - uses: actions/checkout@v7.0.1
+        name: Check out repository
+
+      # The IDE end-to-end test loads the JPS module graph, which includes the android modules.
+      - uses: actions/checkout@v7.0.1
+        name: Checkout JetBrains/android submodule
+        with:
+          repository: JetBrains/android
+          path: android
+          ref: master
+
+      # The IDE end-to-end test copies every community module into its runfiles, which does not fit on C:.
+      - name: Put Bazel's output on the larger drive
+        shell: pwsh
+        run: |
+          "startup --output_user_root=D:/b`ncommon --disk_cache=D:/bc" | Out-File -Encoding ascii .bazelrc-user.bazelrc
+          Get-PSDrive C, D | Format-Table Name, Used, Free
+
+      - name: Run the IDE end-to-end test
+        # --enable_runfiles is for the IDE test. See platform/jewel/docs/e2e-tests.md.
+        run: >
+          ./bazel.cmd test //platform/jewel/...
+          --build_tests_only
+          --test_tag_filters=jewel-ide-e2e
+          --enable_runfiles
+          --test_output=errors
+
+      - name: Upload Bazel test logs
+        uses: actions/upload-artifact@v7.0.1
+        if: failure()
+        with:
+          name: ide-e2e-test-logs-windows
+          # The second path holds the IDE's own logs, screenshots and thread dumps.
+          path: |
+            out/bazel-testlogs/platform/jewel/**
+            out/ide-tests/tests/**/log/**
           retention-days: 7
           if-no-files-found: ignore
 
