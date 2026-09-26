@@ -139,6 +139,12 @@ data class BuildRequest(
    */
   @JvmField val generateRuntimeModuleRepository: Boolean = false,
 
+  /**
+   * Where the runtime module repository fragment also writes the `RuntimeModuleRepositoryLayout` it generates the
+   * repository from, or `null` for none. `./build/dev-dist.cmd runtime-repo` reads it.
+   */
+  @JvmField val runtimeModuleRepositoryLayoutFile: Path? = null,
+
   @JvmField val scrambleTool: ScrambleTool? = null,
 
   @JvmField val writeCoreClasspath: Boolean = true,
@@ -1051,6 +1057,7 @@ private fun generateRuntimeModuleRepositoryFragment(
       targetDirectory = runDir,
       context = context,
       platformLayout = platformLayout,
+      layoutFile = request.runtimeModuleRepositoryLayoutFile,
     )
     // The dry plugin layout may leave plugin trees; this fragment owns only modules/.
     NioFiles.deleteRecursively(runDir.resolve("plugins"))

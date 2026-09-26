@@ -122,6 +122,8 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
   // the option absent nothing is recorded and nothing is written, so an assembly that is not asked for its recipe is
   // byte-for-byte the assembly it was.
   val planFile = options.optionalPath("--plan")
+  // The layout the runtime module repository fragment generates the repository from, a side output like the recipe.
+  val runtimeModuleRepositoryLayoutFile = options.optionalPath("--runtime-module-repository-layout")
   configurePreloadedDownloads(options)
   options.checkNoUnknownOptions()
 
@@ -143,6 +145,7 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
       // the IDE is started by `PreBuiltDevMain`, which resets the classloader itself, so the boot classpath is not the final one
       isBootClassPathCorrect = false,
       generateRuntimeModuleRepository = generateRuntimeModuleRepository,
+      runtimeModuleRepositoryLayoutFile = runtimeModuleRepositoryLayoutFile,
       runDirOverride = outputDir,
       scratchDir = scratchDir,
       buildDateInSeconds = buildDateInSeconds,

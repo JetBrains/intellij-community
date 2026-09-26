@@ -301,10 +301,16 @@ def _fragment_test_impl(ctx):
     inputs = ctx.attr.build_inputs[IntellijDevBuildInputsInfo]
     actions = [action for action in analysistest.target_actions(env) if action.mnemonic.startswith("IntellijDev")]
     asserts.equals(env, 1, len(actions))
+    layout = target[OutputGroupInfo].runtime_module_repository_layout.to_list()
+    asserts.equals(env, 1, len(layout))
     if actions:
         action = actions[0]
         for file in inputs.files.to_list():
             asserts.true(env, file in action.inputs.to_list(), file.path)
+
+        # The runtime module repository fragment also writes the layout it generates the repository from, beside the home.
+        asserts.true(env, layout[0] in action.outputs.to_list())
+        asserts.true(env, "--runtime-module-repository-layout=" + layout[0].path in action.argv)
 
     # A fragment builds no plugin, so it declares no plugin output: the packed plugin components own that group.
     asserts.false(env, hasattr(target[OutputGroupInfo], "dev_dist_plugin_outputs"))

@@ -456,10 +456,17 @@ def _fragment_impl(ctx):
                 ctx.attr.platform_payload[DevDistPlatformPayloadInfo].packed_jar_names,
                 format_each = "--platform-jar=%s",
             )
+    runtime_module_repository_layout = None
     if ctx.attr.runtime_module_repository:
         # The assembler lays the platform and the bundled plugins out without files, then writes only `modules/`.
         args.add("--runtime-module-repository")
         args.add("--generate-runtime-module-repository")
+
+        # The layout the repository is generated from, the reference of `./build/dev-dist.cmd runtime-repo`. Not in the
+        # home, so no distribution composes it.
+        runtime_module_repository_layout = ctx.actions.declare_file(ctx.label.name + ".runtime-module-repository-layout.json")
+        args.add("--runtime-module-repository-layout=" + runtime_module_repository_layout.path)
+        outputs.append(runtime_module_repository_layout)
 
     plugin_classpath_prefix = None
     if ctx.attr.produces_plugin_classpath_prefix:
@@ -508,6 +515,7 @@ def _fragment_impl(ctx):
             trace_spans = _spans_output_group([spans], [ctx.attr.project_model_tree]),
             # This fragment's executed recipe. Nothing is propagated into it: the tree runs no assembler.
             dev_dist_plans = _plans_output_group([plan], []),
+            runtime_module_repository_layout = depset([runtime_module_repository_layout] if runtime_module_repository_layout else []),
         ),
         IntellijDevFragmentInfo(
             name = ctx.attr.fragment_name,
