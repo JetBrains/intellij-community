@@ -16,7 +16,7 @@ const testTargets = `{
     "p.other": {"moduleLibraries": {"shared": {"target": "@lib//:p-other-shared", "jars": ["external/lib+/shared.jar"], "jarTargets": ["@lib//:shared.jar"]}}}
   },
   "projectLibraries": {
-    "a": {"target": "@lib//:a", "jars": ["external/lib+/a1.jar", "external/lib+/a2.jar"]},
+    "a": {"target": "@lib//:a", "jars": ["external/lib+/a1.jar", "external/lib+/a2.jar"], "jarTargets": ["@lib//:a/a1.jar", "@lib//:a/a2.jar"]},
     "alpha": {"target": "@lib//:alpha", "jars": ["external/lib+/alpha.jar"]},
     "zeta": {"target": "@lib//libs/zeta", "jars": ["external/lib+/zeta.jar"]},
     "shared1": {"target": "@lib//:shared1", "jars": ["external/lib+/shared.jar"], "jarTargets": ["@lib//:shared.jar"]},
@@ -179,6 +179,7 @@ func TestLibraryResolution(t *testing.T) {
 		{member{Library: "@lib//libs/zeta"}, nil, jpsLibrary{projectLibraryKind, "zeta"}},
 		{member{Library: "@lib//:p-main-b"}, nil, jpsLibrary{moduleLibraryKind, "p.main"}},
 		{member{Library: "@@lib+//:b/b-1.0.jar", Jars: []string{"bazel-out/bin/external/lib+/b/b-1.0.jar"}}, nil, jpsLibrary{moduleLibraryKind, "p.main"}},
+		{member{Library: "@lib//:a/a2.jar", Jars: []string{"external/lib+/a2.jar"}}, nil, jpsLibrary{projectLibraryKind, "a"}},
 		{member{Library: "//unknown:label", Jars: []string{"external/lib+/a1.jar", "external/lib+/a2.jar"}}, nil, jpsLibrary{projectLibraryKind, "a"}},
 		{member{Library: "@lib//:shared.jar"}, []string{"p.main", "p.other"}, jpsLibrary{moduleLibraryKind, "p.other"}},
 		{member{Library: "//unknown:label", Jars: []string{"external/lib+/shared.jar"}}, []string{"p.other"}, jpsLibrary{moduleLibraryKind, "p.other"}},

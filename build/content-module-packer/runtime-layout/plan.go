@@ -12,8 +12,9 @@ import (
 //
 // Each jar asset of the plugin scope is one jar of the part, in plan order. A `module` source is a member, and so is a
 // `prepared` source whose `module-filter` operation reads a module. A `library` source is a member with the files that
-// the catalogue lists for it. A `file` source, such as the patched descriptor, and a `layout-assets` output merge no
-// module. The plan file keeps the ID of a library, which is the label of its container.
+// the catalogue lists for it. An `archive` source is a member with its one catalogue file: the plan names a single jar
+// of a library by the label of that jar. A `file` source, such as the patched descriptor, and a `layout-assets` output
+// merge no module. The plan file keeps the ID of a library, which is the label of its container.
 //
 // A reused content module jar is not in the catalogue, because its own target packs it. independentLibraries states
 // the libraries of such jars, by label.
@@ -68,6 +69,12 @@ func partFromPlan(plan *planfile.File, catalogue *pluginpack.Catalogue, independ
 					return nil, fmt.Errorf("%s merges the library %s, which neither the catalogue nor a reused jar lists", planAsset.Destination, source.Input)
 				}
 				members = append(members, member{Library: source.Input, Jars: files})
+			case "archive":
+				root, found := roots[source.Input]
+				if !found {
+					return nil, fmt.Errorf("%s merges the archive %s, which the catalogue does not list", planAsset.Destination, source.Input)
+				}
+				members = append(members, member{Library: source.Input, Jars: []string{root}})
 			}
 		}
 		if len(members) == 0 {

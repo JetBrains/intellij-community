@@ -27,6 +27,9 @@ const testPlan = `{
       {"input": "p.other", "kind": "module", "filter": "module-v1"},
       {"input": "@lib//:a", "kind": "library", "filter": "library-v1"}
     ], "writer": {"manifest": "drop", "mergeEntities": true}}},
+    {"destination": "lib/a2.jar", "recipe": {"sources": [
+      {"input": "@lib//:a/a2.jar", "kind": "archive", "filter": "library-v1"}
+    ], "writer": {"mergeEntities": true}}},
     {"destination": "lib/resources.jar", "recipe": {"sources": [
       {"input": "layout-assets:0:output", "kind": "prepared", "filter": "prepared"}
     ], "writer": {"manifest": "drop", "mergeEntities": true}}},
@@ -75,6 +78,7 @@ func TestPlanPart(t *testing.T) {
 		{Destination: "lib/modules/p.content.jar", Members: modules("p.content")},
 		{Destination: "lib/modules/p.natives.jar", Members: append(modules("p.natives"), member{Library: "@lib//:natives", Jars: []string{"external/lib+/natives.jar"}})},
 		{Destination: "lib/p.jar", Members: append(modules("p.main", "p.other"), member{Library: "@lib//:a", Jars: []string{"external/lib+/a1.jar", "external/lib+/a2.jar"}})},
+		{Destination: "lib/a2.jar", Members: []member{{Library: "@lib//:a/a2.jar", Jars: []string{"external/lib+/a2.jar"}}}},
 	}}
 	if !reflect.DeepEqual(actual, expected) {
 		t.Fatalf("part:\n  actual   %+v\n  expected %+v", actual, expected)
@@ -90,6 +94,7 @@ func TestPlanPartRefusals(t *testing.T) {
 		message string
 	}{
 		{strings.Replace(testPlan, `"@lib//:a", "kind": "library"`, `"@lib//:unknown", "kind": "library"`, 1), "neither the catalogue nor a reused jar"},
+		{strings.Replace(testPlan, `"@lib//:a/a2.jar", "kind": "archive"`, `"@lib//:a/unknown.jar", "kind": "archive"`, 1), "which the catalogue does not list"},
 		{strings.Replace(testPlan, `{"destination": "lib/p.jar",`, `{"scope": "distribution", "destination": "lib/p.jar",`, 1), "distribution scope"},
 		{strings.Replace(testPlan, `{"destination": "lib/p.jar",`, `{"destination": "p.jar",`, 1), "not under lib/"},
 	} {
