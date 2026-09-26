@@ -26,6 +26,8 @@ type productDescriptorRequest struct {
 	scrambled  map[string]bool
 	// pluginClassPathPrefix, when set, receives the prefix of `plugins/plugin-classpath.txt`.
 	pluginClassPathPrefix string
+	// classpathDescriptor, when set, receives the descriptor of that prefix alone, with no header.
+	classpathDescriptor string
 }
 
 func runProductDescriptor(lines []string) int {
@@ -40,13 +42,18 @@ func runProductDescriptor(lines []string) int {
 		return 1
 	}
 	outputs := map[string]string{parsed.output: content.text}
-	if parsed.pluginClassPathPrefix != "" {
-		prefix, err := pluginClassPathPrefix(content, parsed.mainModule)
+	if parsed.pluginClassPathPrefix != "" || parsed.classpathDescriptor != "" {
+		descriptor, err := classpathDescriptor(content, parsed.mainModule)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR: could not write the plugin classpath prefix (module=%s): %v\n", parsed.mainModule, err)
 			return 1
 		}
-		outputs[parsed.pluginClassPathPrefix] = prefix
+		if parsed.pluginClassPathPrefix != "" {
+			outputs[parsed.pluginClassPathPrefix] = pluginClassPathPrefix(descriptor)
+		}
+		if parsed.classpathDescriptor != "" {
+			outputs[parsed.classpathDescriptor] = descriptor
+		}
 	}
 	for file, text := range outputs {
 		if err := writeOutput(file, text); err != nil {
@@ -63,11 +70,17 @@ const pluginClassPathFormatVersion = 3
 
 // pluginClassPathPrefix is `writePluginClassPathPrefix` (`classpath.kt`): the format version, the size of the product
 // descriptor as a big-endian 32-bit integer, and the product descriptor.
-//
-// The descriptor is `createCachedProductDescriptor`. It loads the product descriptor, so every embedded body becomes
-// text, and it embeds a descriptor into every `<module/>` that is still empty. So a scrambled module gets its
-// descriptor here, and no filter runs.
-func pluginClassPathPrefix(content productContent, mainModule string) (string, error) {
+func pluginClassPathPrefix(descriptor string) string {
+	header := make([]byte, 5)
+	header[0] = pluginClassPathFormatVersion
+	binary.BigEndian.PutUint32(header[1:], uint32(len(descriptor)))
+	return string(header) + descriptor
+}
+
+// classpathDescriptor is `createCachedProductDescriptor`. It loads the product descriptor, so every embedded body
+// becomes text, and it embeds a descriptor into every `<module/>` that is still empty. So a scrambled module gets its
+// descriptor here, and no filter runs. The runtime module repository reads the same descriptor as the core plugin.
+func classpathDescriptor(content productContent, mainModule string) (string, error) {
 	element, err := descriptorxml.Read(content.text)
 	if err != nil {
 		return "", err
@@ -76,11 +89,7 @@ func pluginClassPathPrefix(content productContent, mainModule string) (string, e
 	if err := structural.EmbedContentModules(element, request, content.cache, content.resolver); err != nil {
 		return "", err
 	}
-	descriptor := descriptorxml.Write(element)
-	header := make([]byte, 5)
-	header[0] = pluginClassPathFormatVersion
-	binary.BigEndian.PutUint32(header[1:], uint32(len(descriptor)))
-	return string(header) + descriptor, nil
+	return descriptorxml.Write(element), nil
 }
 
 // resolveProductDescriptor is the part of `processAndGetProductPluginContentModules` (`productModuleLayout.kt`) that
@@ -119,6 +128,8 @@ func parseProductDescriptorRequest(lines []string) (productDescriptorRequest, er
 				parsed.scrambled[value] = true
 			case "--plugin-classpath-prefix":
 				parsed.pluginClassPathPrefix = value
+			case "--classpath-descriptor":
+				parsed.classpathDescriptor = value
 			default:
 				err = fmt.Errorf("unknown product descriptor option '%s'", option)
 			}

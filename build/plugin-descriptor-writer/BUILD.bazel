@@ -208,7 +208,10 @@ diff_test(
 
 descriptor_action_test(
     name = "product_descriptor_action_test",
-    extra_output_suffixes = [".plugin-classpath-prefix"],
+    extra_output_suffixes = [
+        ".plugin-classpath-prefix",
+        ".classpath.xml",
+    ],
     mnemonic = "DevDistProductDescriptor",
     mode = "--product-descriptor",
     target_under_test = ":product_descriptor",

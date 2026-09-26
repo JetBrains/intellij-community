@@ -91,9 +91,14 @@ func TestPluginClassPathPrefixEmbedsAScrambledModule(t *testing.T) {
 		"--product-descriptor", "--out=" + filepath.Join(dir, "plugin.xml"), "--source=" + source, "--main-module=intellij.product",
 		"--descriptor=a.b.xml=" + filepath.Join(dir, "a.b.xml"), "--descriptor=closed.source.xml=" + filepath.Join(dir, "closed.source.xml"),
 		"--scrambled-content-module=closed.source", "--plugin-classpath-prefix=" + prefix,
+		"--classpath-descriptor=" + filepath.Join(dir, "classpath.xml"),
 	})
 	if code != 0 {
 		t.Fatalf("exit %d", code)
+	}
+	// The classpath descriptor is the descriptor of the prefix, with no header.
+	if got, want := read(t, filepath.Join(dir, "classpath.xml")), read(t, prefix)[5:]; got != want {
+		t.Errorf("classpath descriptor got:\n%s\nwant:\n%s", got, want)
 	}
 	if got, want := read(t, filepath.Join(dir, "plugin.xml")), `<idea-plugin>
   <content>

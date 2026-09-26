@@ -25,10 +25,11 @@ def _dev_dist_product_descriptor_impl(ctx):
     args.add_all(ctx.attr.refused_content_modules, format_each = "--refused-content-module=%s")
     args.add_all(ctx.attr.scrambled_content_modules, format_each = "--scrambled-content-module=%s")
     args.add(ctx.outputs.plugin_classpath_prefix, format = "--plugin-classpath-prefix=%s")
+    args.add(ctx.outputs.classpath_descriptor, format = "--classpath-descriptor=%s")
     ctx.actions.run(
         mnemonic = "DevDistProductDescriptor",
         inputs = depset([source] + declared.inputs),
-        outputs = [output, ctx.outputs.plugin_classpath_prefix],
+        outputs = [output, ctx.outputs.plugin_classpath_prefix, ctx.outputs.classpath_descriptor],
         executable = ctx.executable._resolver,
         arguments = [args],
         progress_message = "Resolving the product descriptor of %{label}",
@@ -38,9 +39,13 @@ def _dev_dist_product_descriptor_impl(ctx):
 _dev_dist_product_descriptor = rule(
     doc = """Resolves the product descriptor, and writes the prefix of `plugins/plugin-classpath.txt` from it.
 
-The prefix is a predeclared output, `<name>.plugin-classpath-prefix`, so a component names it by its label.""",
+The prefix is a predeclared output, `<name>.plugin-classpath-prefix`, so a component names it by its label. So is the
+descriptor of that prefix alone, `<name>.classpath.xml`: the core plugin descriptor of the runtime module repository.""",
     implementation = _dev_dist_product_descriptor_impl,
-    outputs = {"plugin_classpath_prefix": "%{name}.plugin-classpath-prefix"},
+    outputs = {
+        "plugin_classpath_prefix": "%{name}.plugin-classpath-prefix",
+        "classpath_descriptor": "%{name}.classpath.xml",
+    },
     attrs = {
         "source": attr.label(
             mandatory = True,
