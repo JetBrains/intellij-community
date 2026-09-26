@@ -349,3 +349,28 @@ func TestCustomPathContentModules(t *testing.T) {
 		t.Fatalf("a reused jar at a custom path was accepted: %v", err)
 	}
 }
+
+// A jar with the module libraries of a placed content module follows that module in the content pass. A jar with the
+// module libraries of the main module starts the layout pass, so a reused jar with a later `<content>` index goes
+// before it.
+func TestModuleLibraryJarsFollowTheirPass(t *testing.T) {
+	p := &part{Version: partVersion, DescriptorModule: "p.main", Directory: "plugins/p", Order: pluginOrder, Descriptor: "plugin.xml", Jars: []partJar{
+		{Destination: "lib/modules/p.content.jar", Members: modules("p.content")},
+		{Destination: "lib/p.jar", Members: modules("p.main", "p.other")},
+		{Destination: "lib/b.jar", Members: []member{{Library: "@lib//:p-main-b"}}},
+		{Destination: "lib/modules/p.reused.jar", Members: modules("p.reused"), Reused: true},
+	}}
+	content := []contentModule{{name: "p.content"}, {name: "p.reused"}}
+	result, err := assemble([]assembledPart{{part: p, content: content}}, testIndex(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var actual []string
+	for _, e := range result.Plugins[0].Entries {
+		actual = append(actual, e.Kind+":"+e.Name)
+	}
+	expected := []string{"module:p.content", "module:p.reused", "module:p.main", "module:p.other", "moduleLibrary:p.main"}
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("entries:\n  actual   %q\n  expected %q", actual, expected)
+	}
+}
