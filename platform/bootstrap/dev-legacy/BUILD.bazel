@@ -17,7 +17,7 @@ jvm_library(
         # do not sort,
         "//libraries/jetbrains/annotations",
         "//platform/boot",
-        "//platform/build-scripts/dev-server:buildScripts-devBuildServer",
+        "//platform/build-scripts/dev-server-legacy:buildScripts-devBuildServer-legacy",
         "//platform/util-class-loader:util-classLoader",
     ],
 )
@@ -36,7 +36,7 @@ jvm_library(
         ":dev-legacy",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/boot:boot_test_lib",
-        "//platform/build-scripts/dev-server:buildScripts-devBuildServer_test_lib",
+        "//platform/build-scripts/dev-server-legacy:buildScripts-devBuildServer-legacy_test_lib",
         "//platform/util-class-loader:util-classLoader_test_lib",
     ],
 )

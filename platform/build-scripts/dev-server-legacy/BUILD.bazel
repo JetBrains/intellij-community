@@ -5,9 +5,9 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 # that binary is `//build:dev_dist_assembler` in the ultimate repository, and its community counterpart will
 # live beside the community jar set the same way.
 
-### auto-generated section `build intellij.platform.buildScripts.devBuildServer` start
+### auto-generated section `build intellij.platform.buildScripts.devBuildServer.legacy` start
 jvm_library(
-    name = "buildScripts-devBuildServer",
+    name = "buildScripts-devBuildServer-legacy",
     srcs = glob(
         [
             "src/**/*.kt",
@@ -16,7 +16,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.platform.buildScripts.devBuildServer",
+    module_name = "intellij.platform.buildScripts.devBuildServer.legacy",
     visibility = ["//visibility:public"],
     runtime_deps = ["//libraries/xz"],
     deps = [
@@ -52,17 +52,17 @@ jvm_library(
 )
 
 jvm_library(
-    name = "buildScripts-devBuildServer_test_lib",
+    name = "buildScripts-devBuildServer-legacy_test_lib",
     testonly = True,
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.platform.buildScripts.devBuildServer",
+    module_name = "intellij.platform.buildScripts.devBuildServer.legacy",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":buildScripts-devBuildServer",
+        ":buildScripts-devBuildServer-legacy",
         "//platform/build-scripts/plugin-preparation:plugin-preparation_test_lib",
         "//platform/build-scripts:build-scripts_test_lib",
         "//platform/build-scripts/dev-launch:dev-launch_test_lib",
@@ -91,13 +91,13 @@ jvm_library(
         "//platform/devIdeConfig:devIdeConfig_test_lib",
     ],
 )
-### auto-generated section `build intellij.platform.buildScripts.devBuildServer` end
+### auto-generated section `build intellij.platform.buildScripts.devBuildServer.legacy` end
 
-### auto-generated section `iml intellij.platform.buildScripts.devBuildServer` start
+### auto-generated section `iml intellij.platform.buildScripts.devBuildServer.legacy` start
 exports_files(
     [
-        "intellij.platform.buildScripts.devBuildServer.iml",
+        "intellij.platform.buildScripts.devBuildServer.legacy.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.platform.buildScripts.devBuildServer` end
+### auto-generated section `iml intellij.platform.buildScripts.devBuildServer.legacy` end

@@ -94,7 +94,7 @@
   {kind: "moduleId", id: "intellij.platform.buildScripts.api", moduleKind: "shared"},
   {kind: "moduleId", id: "intellij.platform.buildScripts.bazel", moduleKind: "shared"},
   {kind: "moduleId", id: "intellij.platform.buildScripts.codeOptimizer", moduleKind: "shared"},
-  {kind: "moduleId", id: "intellij.platform.buildScripts.devBuildServer", moduleKind: "shared"},
+  {kind: "moduleId", id: "intellij.platform.buildScripts.devBuildServer.legacy", moduleKind: "shared"},
   {kind: "moduleId", id: "intellij.platform.buildScripts.downloader", moduleKind: "shared"},
   {kind: "moduleId", id: "intellij.platform.buildScripts.licenses", moduleKind: "shared"},
   {kind: "moduleId", id: "intellij.platform.buildScripts.productDsl", moduleKind: "shared"},

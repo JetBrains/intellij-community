@@ -729,7 +729,7 @@ platform/build-scripts/bazel-rules/searchable-options-injector
 platform/build-scripts/codeOptimizer
 platform/build-scripts/concurrency
 platform/build-scripts/dev-launch
-platform/build-scripts/dev-server
+platform/build-scripts/dev-server-legacy
 platform/build-scripts/downloader
 platform/build-scripts/icons
 platform/build-scripts/licenses

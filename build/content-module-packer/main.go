@@ -273,7 +273,7 @@ func packOne(ctx context.Context, spec jarpack.MergeSpec, verifyCRC bool, tracer
 		// sites, under one rule rather than two: take the work where adjacent work on the same bytes dominates it, gate
 		// it where nothing does. There, every `Files.size` sits immediately before a whole-file copy of that file; here
 		// it is a bare syscall beside about a millisecond of packing, across ~2 500 actions. See the rule stated in
-		// `platform/build-scripts/dev-server/src/DevDistTrace.kt`.
+		// `platform/build-scripts/dev-server-legacy/src/DevDistTrace.kt`.
 		// Merge reports what it merged, not how big the result is. Not
 		// on the failure path, where the size of a half-written jar means nothing.
 		if info, statErr := os.Stat(spec.Output); statErr == nil {
