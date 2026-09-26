@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"slices"
 	"strings"
 )
@@ -126,6 +127,12 @@ func orderAssets(p *part, content []contentModule, libraries *libraryIndex) ([]a
 		for index := range p.Jars {
 			order = append(order, index)
 		}
+		if p.JarOrder != "" {
+			var err error
+			if order, err = orderByJarOrder(p); err != nil {
+				return nil, err
+			}
+		}
 	} else {
 		var err error
 		if order, err = pluginAssetOrder(p, content, contentIndex, resolved); err != nil {
@@ -150,6 +157,40 @@ func orderAssets(p *part, content []contentModule, libraries *libraryIndex) ([]a
 		assets = append(assets, asset{destination: p.Jars[index].Destination, modules: append(modules, other...), libraries: resolved[index]})
 	}
 	return assets, nil
+}
+
+// orderByJarOrder orders the jars of a layout part by its jar order file. The file and the part must name the same
+// jars: a jar that one of them lacks has no producer or no place.
+func orderByJarOrder(p *part) ([]int, error) {
+	data, err := os.ReadFile(p.JarOrder)
+	if err != nil {
+		return nil, err
+	}
+	byDestination := make(map[string]int, len(p.Jars))
+	for index, jar := range p.Jars {
+		byDestination[strings.TrimPrefix(jar.Destination, "lib/")] = index
+	}
+	order := make([]int, 0, len(p.Jars))
+	var unknown []string
+	for _, line := range strings.Split(string(data), "\n") {
+		if line == "" {
+			continue
+		}
+		index, found := byDestination[line]
+		if !found {
+			unknown = append(unknown, line)
+			continue
+		}
+		order = append(order, index)
+		delete(byDestination, line)
+	}
+	if len(unknown) != 0 {
+		return nil, fmt.Errorf("the jar order %s names jars that the part does not pack: %s", p.JarOrder, strings.Join(unknown, ", "))
+	}
+	if len(byDestination) != 0 {
+		return nil, fmt.Errorf("the jar order %s does not name the packed jars %s", p.JarOrder, strings.Join(sortedKeys(byDestination), ", "))
+	}
+	return order, nil
 }
 
 // pluginAssetOrder merges the reused jars of a plugin part into the order of its other jars.

@@ -27,8 +27,11 @@ type part struct {
 	Directory string `json:"directory"`
 	Order     string `json:"order"`
 	// Descriptor is the plugin descriptor whose `<content>` order a plugin part follows.
-	Descriptor string    `json:"descriptor,omitempty"`
-	Jars       []partJar `json:"jars"`
+	Descriptor string `json:"descriptor,omitempty"`
+	// JarOrder is the platform jar order file of a layout part, one `lib/`-relative destination on each line. The
+	// assembly orders the jars by it. Without it, the part order stays.
+	JarOrder string    `json:"jarOrder,omitempty"`
+	Jars     []partJar `json:"jars"`
 }
 
 type partJar struct {
@@ -81,6 +84,9 @@ func (p *part) validate() error {
 	case layoutOrder:
 	default:
 		return fmt.Errorf("the part of '%s' has the order %q, but %q or %q is expected", p.DescriptorModule, p.Order, pluginOrder, layoutOrder)
+	}
+	if p.JarOrder != "" && p.Order != layoutOrder {
+		return fmt.Errorf("the part of '%s' names a jar order, but only a layout part takes one", p.DescriptorModule)
 	}
 	if strings.HasPrefix(p.Directory, "/") || strings.HasSuffix(p.Directory, "/") {
 		return fmt.Errorf("the part of '%s' has the directory %q, which is not relative", p.DescriptorModule, p.Directory)

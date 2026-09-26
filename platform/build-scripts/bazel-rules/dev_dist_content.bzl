@@ -36,6 +36,9 @@ DevDistPlatformPayloadInfo = provider(
 
         A destination, not a file name: a platform jar can name a subdirectory of `lib/`, and the fragment that must not
         pack it matches this against the destination its own plan states.""",
+        "layout": """list of struct(destination, member_modules, library_jars), sorted by destination: what each packed
+        jar merges, in merge order, as `ContentModuleJarInfo` and `DevDistPlatformJarInfo` state it. The runtime module
+        repository reads it as the layout of the core plugin.""",
         "declared_modules": """depset of string: the payload modules whose inputs a fragment still declares.
 
         The payload minus everything a packed jar already holds. `intellij_dev_build_inputs` keeps an `owned_inputs`
@@ -51,6 +54,7 @@ def _dev_dist_platform_payload_impl(ctx):
     packed_member_names = []
     packed_library_jars = []
     packed_destinations = []
+    layout = []
     native_dir_owners = {}
     for target in ctx.attr.packed:
         info = target[ContentModuleJarInfo] if ContentModuleJarInfo in target else target[DevDistPlatformJarInfo]
@@ -86,6 +90,7 @@ def _dev_dist_platform_payload_impl(ctx):
         packed_member_jars.extend(info.member_jars)
         packed_member_names.extend(info.member_modules)
         packed_library_jars.extend(info.library_jars)
+        layout.append(struct(destination = info.relative_path, member_modules = info.member_modules, library_jars = info.library_jars))
 
     packed = depset(packed_jars)
 
@@ -123,6 +128,7 @@ def _dev_dist_platform_payload_impl(ctx):
             packed_jars = packed,
             packed_metadata = depset(packed_metadata),
             packed_jar_names = sorted(owner_by_name.keys()),
+            layout = sorted(layout, key = lambda entry: entry.destination),
             declared_modules = depset(declared_modules),
         ),
         # The reference target's whole declaration: it packs the handed-over jars the `JarPackager` way, so what it reads

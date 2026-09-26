@@ -375,3 +375,34 @@ func TestProjectLibraryJarStartsTheLayoutPass(t *testing.T) {
 		t.Fatalf("entries:\n  actual   %q\n  expected %q", actual, expected)
 	}
 }
+
+// A platform part orders its jars by its jar order file. A jar that the file or the part lacks fails the assembly.
+func TestPlatformJarOrder(t *testing.T) {
+	order := writeFile(t, "idea.platform-jars.txt", "nio-fs.jar\nutil.jar\next/platform-main.jar\n")
+	p := &part{Version: partVersion, DescriptorModule: "intellij.idea.customization", Order: layoutOrder, JarOrder: order, Jars: []partJar{
+		{Destination: "lib/ext/platform-main.jar", Members: modules("intellij.platform.main")},
+		{Destination: "lib/nio-fs.jar", Members: modules("intellij.platform.core.nio.fs")},
+		{Destination: "lib/util.jar", Members: modules("intellij.platform.util", "intellij.platform.util.base")},
+	}}
+	result, err := assemble([]assembledPart{{part: p}}, testIndex(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := []string{"intellij.platform.core.nio.fs", "intellij.platform.util", "intellij.platform.util.base", "intellij.platform.main"}
+	if actual := entryModules(result.Plugins[0]); !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("module order = %q", actual)
+	}
+	if path := result.Plugins[0].Entries[3].Path; path == nil || *path != "lib/ext/platform-main.jar" {
+		t.Fatalf("path = %v", path)
+	}
+	p.JarOrder = writeFile(t, "short.platform-jars.txt", "nio-fs.jar\nutil.jar\nextra.jar\n")
+	if _, err := assemble([]assembledPart{{part: p}}, testIndex(t)); err == nil ||
+		!strings.Contains(err.Error(), "does not pack: extra.jar") {
+		t.Fatalf("an unknown jar was accepted: %v", err)
+	}
+	p.JarOrder = writeFile(t, "missing.platform-jars.txt", "nio-fs.jar\nutil.jar\n")
+	if _, err := assemble([]assembledPart{{part: p}}, testIndex(t)); err == nil ||
+		!strings.Contains(err.Error(), "does not name the packed jars ext/platform-main.jar") {
+		t.Fatalf("an unordered jar was accepted: %v", err)
+	}
+}

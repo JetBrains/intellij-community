@@ -237,6 +237,16 @@ def _platform_payload_test_impl(ctx):
         records[natives.jar],
     )
     asserts.equals(env, sorted(ctx.attr.expected_declared_modules), sorted(payload.declared_modules.to_list()))
+
+    # What each packed jar merges, sorted by destination. The runtime module repository orders it by the platform jar order.
+    asserts.equals(
+        env,
+        sorted([
+            struct(destination = info.relative_path, member_modules = info.member_modules, library_jars = info.library_jars)
+            for info in [packed, nested, natives]
+        ], key = lambda entry: entry.destination),
+        payload.layout,
+    )
     asserts.equals(env, list(packed.member_jars) + list(natives.member_jars), reference.module_jars.to_list())
     asserts.equals(env, list(packed.library_jars), reference.library_jars.to_list())
     return analysistest.end(env)
